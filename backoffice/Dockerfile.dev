@@ -1,0 +1,24 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY backoffice/package*.json ./
+RUN npm install
+
+# Copy shared-types first
+COPY shared-types/ ./shared-types/
+
+# Copy backoffice source files
+COPY backoffice/ .
+
+# Expose port for Next.js dev server
+EXPOSE 3000
+
+# Set environment variables to disable webpack cache and telemetry
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV WEBPACK_DISABLE_CACHE=1
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# Start Next.js in development mode with hot reload
+CMD ["npm", "run", "dev"]

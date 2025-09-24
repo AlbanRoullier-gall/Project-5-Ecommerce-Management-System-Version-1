@@ -1,0 +1,19 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY frontend/package*.json ./
+RUN npm install
+
+# Copy shared-types first
+COPY shared-types/ ./shared-types/
+
+# Copy frontend source files
+COPY frontend/ .
+
+# Expose port for Next.js dev server
+EXPOSE 3000
+
+# Start Next.js in development mode with hot reload
+CMD ["npm", "run", "dev"]

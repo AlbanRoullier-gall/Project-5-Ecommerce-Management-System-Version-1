@@ -1,0 +1,28 @@
+{
+  "name": "order-service",
+  "version": "1.0.0",
+  "description": "Order Microservice for E-commerce",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "migrate": "node src/migrations/migrate.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1",
+    "joi": "^17.9.2",
+    "morgan": "^1.10.0",
+    "axios": "^1.5.0",
+    "stripe": "^13.5.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.6.2"
+  }
+}

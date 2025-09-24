@@ -1,0 +1,6 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="300" fill="#f0f0f0"/>
+  <rect x="50" y="50" width="200" height="200" fill="#e0e0e0" stroke="#ccc" stroke-width="2"/>
+  <text x="150" y="140" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="16">Image Produit</text>
+  <text x="150" y="160" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="12">Non disponible</text>
+</svg>
