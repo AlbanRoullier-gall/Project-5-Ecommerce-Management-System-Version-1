@@ -3,7 +3,9 @@ version: "3.8"
 services:
   # API Gateway
   api-gateway:
-    build: ./api-gateway
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile.dev
     ports:
       - "13000:3000"
     environment:
@@ -17,6 +19,10 @@ services:
       - PAYMENT_SERVICE_URL=http://payment-service:3006
       - EMAIL_SERVICE_URL=http://email-service:3007
       - AUTH_SERVICE_URL=http://auth-service:3008
+    volumes:
+      - ./api-gateway/src:/app/src
+      - ./shared-types:/app/shared-types
+      - /app/node_modules
     depends_on:
       - customer-service
       - product-service
@@ -132,7 +138,7 @@ services:
       context: .
       dockerfile: ./frontend/Dockerfile.dev
     ports:
-      - "13008:3000"
+      - "13010:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:13000
       - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
@@ -282,7 +288,7 @@ services:
   auth-service:
     build: ./services/auth-service
     ports:
-      - "13011:3008"
+      - "13008:3008"
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://auth_user:auth_password@auth-db:5432/auth_db

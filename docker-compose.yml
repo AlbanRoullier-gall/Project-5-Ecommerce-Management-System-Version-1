@@ -123,7 +123,7 @@ services:
   auth-service:
     build: ./services/auth-service
     ports:
-      - "13011:3008"
+      - "13008:3008"
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://auth_user:auth_password@auth-db:5432/auth_db

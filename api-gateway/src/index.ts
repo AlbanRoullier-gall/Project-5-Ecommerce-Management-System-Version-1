@@ -19,19 +19,55 @@
 // IMPORTS ET CONFIGURATION
 // ===========================================
 
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const morgan = require("morgan");
-const axios = require("axios");
-require("dotenv").config();
+import express, { Request, Response, NextFunction } from "express";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import axios, { AxiosResponse, AxiosRequestConfig } from "axios";
+import dotenv from "dotenv";
+
+// Types partagés
+import {
+  // Auth types
+  LoginRequest,
+  RegisterRequest,
+  AuthResponse,
+
+  // Product types
+  Product,
+  Category,
+  CreateProductRequest,
+  UpdateProductRequest,
+  CreateCategoryRequest,
+  UpdateCategoryRequest,
+
+  // Contact types
+  ContactFormData,
+  ContactResponse,
+
+  // API Response types
+  ApiResponse,
+} from "./types";
+
+// Middlewares de validation
+import {
+  validateLogin,
+  validateRegister,
+  validateContact,
+  validateCreateProduct,
+  validateUpdateProduct,
+  validateCreateCategory,
+  validateUpdateCategory,
+} from "./middlewares/validation";
+
+dotenv.config();
 
 // ===========================================
 // INITIALISATION DE L'APPLICATION
 // ===========================================
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT: number = parseInt(process.env["PORT"] || "3000", 10);
 
 // ===========================================
 // CONFIGURATION DES SERVICES
@@ -41,10 +77,16 @@ const PORT = process.env.PORT || 3000;
  * URLs des microservices
  * Ces URLs pointent vers les services backend correspondants
  */
-const SERVICE_URLS = {
-  EMAIL: process.env.EMAIL_SERVICE_URL || "http://localhost:13007",
-  PRODUCT: process.env.PRODUCT_SERVICE_URL || "http://localhost:13002",
-  AUTH: process.env.AUTH_SERVICE_URL || "http://localhost:3008",
+interface ServiceUrls {
+  EMAIL: string;
+  PRODUCT: string;
+  AUTH: string;
+}
+
+const SERVICE_URLS: ServiceUrls = {
+  EMAIL: process.env["EMAIL_SERVICE_URL"] || "http://localhost:13007",
+  PRODUCT: process.env["PRODUCT_SERVICE_URL"] || "http://localhost:13002",
+  AUTH: process.env["AUTH_SERVICE_URL"] || "http://localhost:13008",
 };
 
 // ===========================================
@@ -89,6 +131,21 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(morgan("combined"));
 
 // ===========================================
+// TYPES POUR LES FONCTIONS DE PROXY
+// ===========================================
+
+interface ProxyConfig extends AxiosRequestConfig {
+  method: string;
+  url: string;
+  headers: Record<string, string>;
+  timeout: number;
+  data?: any;
+  params?: Record<string, any>;
+}
+
+// Interface supprimée car non utilisée
+
+// ===========================================
 // ROUTES UTILITAIRES
 // ===========================================
 
@@ -97,7 +154,7 @@ app.use(morgan("combined"));
  * Utilisé par les scripts de monitoring et Docker
  * @route GET /health
  */
-app.get("/health", (req, res) => {
+app.get("/health", (_req: Request, res: Response) => {
   res.json({
     status: "OK",
     service: "api-gateway",
@@ -109,7 +166,7 @@ app.get("/health", (req, res) => {
  * Information sur l'API Gateway
  * @route GET /api/info
  */
-app.get("/api/info", (req, res) => {
+app.get("/api/info", (_req: Request, res: Response) => {
   res.json({
     message: "API Gateway - E-commerce Platform",
     version: "1.0.0",
@@ -123,21 +180,25 @@ app.get("/api/info", (req, res) => {
 
 /**
  * Fonction générique de proxy vers le service d'email
- * @param {Object} req - Requête Express
- * @param {Object} res - Réponse Express
- * @param {string} path - Chemin de l'endpoint dans le service email
+ * @param req - Requête Express
+ * @param res - Réponse Express
+ * @param path - Chemin de l'endpoint dans le service email
  */
-const proxyToEmailService = async (req, res, path = "") => {
+const proxyToEmailService = async (
+  req: Request,
+  res: Response,
+  path: string = ""
+): Promise<void> => {
   try {
-    const method = req.method;
-    const url = `${SERVICE_URLS.EMAIL}/api${path}`;
-    const headers = {
+    const method: string = req.method;
+    const url: string = `${SERVICE_URLS.EMAIL}/api${path}`;
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...req.headers,
+      ...(req.headers as Record<string, string>),
     };
-    delete headers.host; // Supprimer le header host pour éviter les conflits
+    delete headers["host"]; // Supprimer le header host pour éviter les conflits
 
-    const config = {
+    const config: ProxyConfig = {
       method,
       url,
       headers,
@@ -151,17 +212,18 @@ const proxyToEmailService = async (req, res, path = "") => {
 
     // Ajouter les paramètres de requête
     if (Object.keys(req.query).length > 0) {
-      config.params = req.query;
+      config.params = req.query as Record<string, any>;
     }
 
-    const response = await axios(config);
+    const response: AxiosResponse<ContactResponse> = await axios(config);
     res.status(response.status).json(response.data);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error proxying to email service:", error.message);
 
     // Transmettre l'erreur originale du service si disponible
     if (error.response && error.response.data) {
-      return res.status(error.response.status).json(error.response.data);
+      res.status(error.response.status).json(error.response.data);
+      return;
     }
 
     // Sinon, message générique
@@ -174,21 +236,25 @@ const proxyToEmailService = async (req, res, path = "") => {
 
 /**
  * Fonction générique de proxy vers le service d'authentification
- * @param {Object} req - Requête Express
- * @param {Object} res - Réponse Express
- * @param {string} path - Chemin de l'endpoint dans le service auth
+ * @param req - Requête Express
+ * @param res - Réponse Express
+ * @param path - Chemin de l'endpoint dans le service auth
  */
-const proxyToAuthService = async (req, res, path = "") => {
+const proxyToAuthService = async (
+  req: Request,
+  res: Response,
+  path: string = ""
+): Promise<void> => {
   try {
-    const method = req.method;
-    const url = `${SERVICE_URLS.AUTH}/api${path}`;
-    const headers = {
+    const method: string = req.method;
+    const url: string = `${SERVICE_URLS.AUTH}/api${path}`;
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...req.headers,
+      ...(req.headers as Record<string, string>),
     };
-    delete headers.host; // Supprimer le header host pour éviter les conflits
+    delete headers["host"]; // Supprimer le header host pour éviter les conflits
 
-    const config = {
+    const config: ProxyConfig = {
       method,
       url,
       headers,
@@ -202,17 +268,18 @@ const proxyToAuthService = async (req, res, path = "") => {
 
     // Ajouter les paramètres de requête
     if (Object.keys(req.query).length > 0) {
-      config.params = req.query;
+      config.params = req.query as Record<string, any>;
     }
 
-    const response = await axios(config);
+    const response: AxiosResponse<AuthResponse> = await axios(config);
     res.status(response.status).json(response.data);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error proxying to auth service:", error.message);
 
     // Transmettre l'erreur originale du service si disponible
     if (error.response && error.response.data) {
-      return res.status(error.response.status).json(error.response.data);
+      res.status(error.response.status).json(error.response.data);
+      return;
     }
 
     // Sinon, message générique
@@ -225,19 +292,23 @@ const proxyToAuthService = async (req, res, path = "") => {
 
 /**
  * Fonction générique de proxy vers le service de produits
- * @param {Object} req - Requête Express
- * @param {Object} res - Réponse Express
- * @param {string} path - Chemin de l'endpoint dans le service product
+ * @param req - Requête Express
+ * @param res - Réponse Express
+ * @param path - Chemin de l'endpoint dans le service product
  */
-const proxyToProductService = async (req, res, path = "") => {
+const proxyToProductService = async (
+  req: Request,
+  res: Response,
+  path: string = ""
+): Promise<void> => {
   try {
-    const method = req.method;
-    const url = `${SERVICE_URLS.PRODUCT}/api${path}`;
+    const method: string = req.method;
+    const url: string = `${SERVICE_URLS.PRODUCT}/api${path}`;
 
     // Headers essentiels uniquement
-    const headers = {
-      Authorization: req.headers.authorization,
-      Accept: req.headers.accept || "application/json",
+    const headers: Record<string, string> = {
+      Authorization: req.headers.authorization as string,
+      Accept: (req.headers.accept as string) || "application/json",
     };
 
     // Supprimer les headers undefined
@@ -247,7 +318,7 @@ const proxyToProductService = async (req, res, path = "") => {
       }
     });
 
-    const config = {
+    const config: ProxyConfig = {
       method,
       url,
       headers,
@@ -257,24 +328,27 @@ const proxyToProductService = async (req, res, path = "") => {
     // Ajouter le body pour les requêtes POST, PUT, PATCH
     if (["POST", "PUT", "PATCH"].includes(method)) {
       config.data = req.body || {};
-      config.headers["Content-Type"] = "application/json";
+      config.headers!["Content-Type"] = "application/json";
     }
 
     // Ajouter les paramètres de requête
     if (Object.keys(req.query).length > 0) {
-      config.params = req.query;
+      config.params = req.query as Record<string, any>;
     }
 
     console.log(`Proxying ${method} ${path} to product service`);
-    const response = await axios(config);
+    const response: AxiosResponse<
+      ApiResponse<Product | Product[] | Category | Category[]>
+    > = await axios(config);
     res.status(response.status).json(response.data);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error proxying to product service:", error.message);
     console.error("Error details:", error.response?.data);
 
     // Transmettre l'erreur originale du service si disponible
     if (error.response && error.response.data) {
-      return res.status(error.response.status).json(error.response.data);
+      res.status(error.response.status).json(error.response.data);
+      return;
     }
 
     // Sinon, message générique
@@ -294,22 +368,28 @@ const proxyToProductService = async (req, res, path = "") => {
  */
 
 // Inscription d'un nouvel utilisateur
-app.post("/api/auth/register", (req, res) =>
-  proxyToAuthService(req, res, "/auth/register")
+app.post(
+  "/api/auth/register",
+  validateRegister,
+  (req: Request<{}, AuthResponse, RegisterRequest>, res: Response) =>
+    proxyToAuthService(req, res, "/auth/register")
 );
 
 // Connexion d'un utilisateur
-app.post("/api/auth/login", (req, res) =>
-  proxyToAuthService(req, res, "/auth/login")
+app.post(
+  "/api/auth/login",
+  validateLogin,
+  (req: Request<{}, AuthResponse, LoginRequest>, res: Response) =>
+    proxyToAuthService(req, res, "/auth/login")
 );
 
 // Demande de réinitialisation de mot de passe
-app.post("/api/auth/forgot-password", (req, res) =>
+app.post("/api/auth/forgot-password", (req: Request, res: Response) =>
   proxyToAuthService(req, res, "/auth/forgot-password")
 );
 
 // Réinitialisation de mot de passe avec token
-app.post("/api/auth/reset-password", (req, res) =>
+app.post("/api/auth/reset-password", (req: Request, res: Response) =>
   proxyToAuthService(req, res, "/auth/reset-password")
 );
 
@@ -318,32 +398,34 @@ app.post("/api/auth/reset-password", (req, res) =>
  */
 
 // Récupération du profil utilisateur
-app.get("/api/auth/profile", (req, res) =>
+app.get("/api/auth/profile", (req: Request, res: Response) =>
   proxyToAuthService(req, res, "/auth/profile")
 );
 
 // Mise à jour du profil utilisateur
-app.put("/api/auth/profile", (req, res) =>
+app.put("/api/auth/profile", (req: Request, res: Response) =>
   proxyToAuthService(req, res, "/auth/profile")
 );
 
 // Changement de mot de passe
-app.post("/api/auth/change-password", (req, res) =>
+app.post("/api/auth/change-password", (req: Request, res: Response) =>
   proxyToAuthService(req, res, "/auth/change-password")
 );
 
 // Récupération des sessions actives
-app.get("/api/auth/sessions", (req, res) =>
+app.get("/api/auth/sessions", (req: Request, res: Response) =>
   proxyToAuthService(req, res, "/auth/sessions")
 );
 
 // Suppression d'une session spécifique
-app.delete("/api/auth/sessions/:sessionId", (req, res) =>
-  proxyToAuthService(req, res, `/auth/sessions/${req.params.sessionId}`)
+app.delete(
+  "/api/auth/sessions/:sessionId",
+  (req: Request<{ sessionId: string }>, res: Response) =>
+    proxyToAuthService(req, res, `/auth/sessions/${req.params.sessionId}`)
 );
 
 // Déconnexion de l'utilisateur
-app.post("/api/auth/logout", (req, res) =>
+app.post("/api/auth/logout", (req: Request, res: Response) =>
   proxyToAuthService(req, res, "/auth/logout")
 );
 
@@ -356,8 +438,11 @@ app.post("/api/auth/logout", (req, res) =>
  * Proxy vers le service d'email pour l'envoi de messages
  * @route POST /api/contact
  */
-app.post("/api/contact", (req, res) =>
-  proxyToEmailService(req, res, "/contact")
+app.post(
+  "/api/contact",
+  validateContact,
+  (req: Request<{}, ContactResponse, ContactFormData>, res: Response) =>
+    proxyToEmailService(req, res, "/contact")
 );
 
 // ===========================================
@@ -369,18 +454,21 @@ app.post("/api/contact", (req, res) =>
  * Proxy vers le service de produits pour servir les images
  * @route GET /api/products/images/:filename
  */
-app.get("/api/products/images/:filename", (req, res) => {
-  // Rediriger directement vers le service product pour les images
-  const imageUrl = `${SERVICE_URLS.PRODUCT}/uploads/products/${req.params.filename}`;
-  res.redirect(imageUrl);
-});
+app.get(
+  "/api/products/images/:filename",
+  (req: Request<{ filename: string }>, res: Response) => {
+    // Rediriger directement vers le service product pour les images
+    const imageUrl: string = `${SERVICE_URLS.PRODUCT}/uploads/products/${req.params.filename}`;
+    res.redirect(imageUrl);
+  }
+);
 
 /**
  * Récupération des produits avec leurs images
  * Proxy vers le service de produits qui gère la logique des images
  * @route GET /api/admin/products
  */
-app.get("/api/admin/products", (req, res) =>
+app.get("/api/admin/products", (req: Request, res: Response) =>
   proxyToProductService(req, res, "/admin/products")
 );
 
@@ -389,33 +477,55 @@ app.get("/api/admin/products", (req, res) =>
  */
 
 // Récupération d'un produit spécifique
-app.get("/api/admin/products/:id", (req, res) =>
-  proxyToProductService(req, res, `/admin/products/${req.params.id}`)
+app.get(
+  "/api/admin/products/:id",
+  (req: Request<{ id: string }>, res: Response) =>
+    proxyToProductService(req, res, `/admin/products/${req.params.id}`)
 );
 
 // Création d'un nouveau produit
-app.post("/api/admin/products", (req, res) =>
-  proxyToProductService(req, res, "/admin/products")
+app.post(
+  "/api/admin/products",
+  validateCreateProduct,
+  (
+    req: Request<{}, ApiResponse<Product>, CreateProductRequest>,
+    res: Response
+  ) => proxyToProductService(req, res, "/admin/products")
 );
 
 // Mise à jour d'un produit existant
-app.put("/api/admin/products/:id", (req, res) =>
-  proxyToProductService(req, res, `/admin/products/${req.params.id}`)
+app.put(
+  "/api/admin/products/:id",
+  validateUpdateProduct,
+  (
+    req: Request<{ id: string }, ApiResponse<Product>, UpdateProductRequest>,
+    res: Response
+  ) => proxyToProductService(req, res, `/admin/products/${req.params.id}`)
 );
 
 // Suppression d'un produit
-app.delete("/api/admin/products/:id", (req, res) =>
-  proxyToProductService(req, res, `/admin/products/${req.params.id}`)
+app.delete(
+  "/api/admin/products/:id",
+  (req: Request<{ id: string }>, res: Response) =>
+    proxyToProductService(req, res, `/admin/products/${req.params.id}`)
 );
 
 // Activation d'un produit
-app.post("/api/admin/products/:id/activate", (req, res) =>
-  proxyToProductService(req, res, `/admin/products/${req.params.id}/activate`)
+app.post(
+  "/api/admin/products/:id/activate",
+  (req: Request<{ id: string }>, res: Response) =>
+    proxyToProductService(req, res, `/admin/products/${req.params.id}/activate`)
 );
 
 // Désactivation d'un produit
-app.post("/api/admin/products/:id/deactivate", (req, res) =>
-  proxyToProductService(req, res, `/admin/products/${req.params.id}/deactivate`)
+app.post(
+  "/api/admin/products/:id/deactivate",
+  (req: Request<{ id: string }>, res: Response) =>
+    proxyToProductService(
+      req,
+      res,
+      `/admin/products/${req.params.id}/deactivate`
+    )
 );
 
 // ===========================================
@@ -427,23 +537,35 @@ app.post("/api/admin/products/:id/deactivate", (req, res) =>
  */
 
 // Récupération de toutes les catégories
-app.get("/api/admin/categories", (req, res) =>
+app.get("/api/admin/categories", (req: Request, res: Response) =>
   proxyToProductService(req, res, "/admin/categories")
 );
 
 // Création d'une nouvelle catégorie
-app.post("/api/admin/categories", (req, res) =>
-  proxyToProductService(req, res, "/admin/categories")
+app.post(
+  "/api/admin/categories",
+  validateCreateCategory,
+  (
+    req: Request<{}, ApiResponse<Category>, CreateCategoryRequest>,
+    res: Response
+  ) => proxyToProductService(req, res, "/admin/categories")
 );
 
 // Mise à jour d'une catégorie existante
-app.put("/api/admin/categories/:id", (req, res) =>
-  proxyToProductService(req, res, `/admin/categories/${req.params.id}`)
+app.put(
+  "/api/admin/categories/:id",
+  validateUpdateCategory,
+  (
+    req: Request<{ id: string }, ApiResponse<Category>, UpdateCategoryRequest>,
+    res: Response
+  ) => proxyToProductService(req, res, `/admin/categories/${req.params.id}`)
 );
 
 // Suppression d'une catégorie
-app.delete("/api/admin/categories/:id", (req, res) =>
-  proxyToProductService(req, res, `/admin/categories/${req.params.id}`)
+app.delete(
+  "/api/admin/categories/:id",
+  (req: Request<{ id: string }>, res: Response) =>
+    proxyToProductService(req, res, `/admin/categories/${req.params.id}`)
 );
 
 // ===========================================
@@ -454,7 +576,7 @@ app.delete("/api/admin/categories/:id", (req, res) =>
  * Middleware global de gestion des erreurs
  * Capture toutes les erreurs non gérées
  */
-app.use((err, req, res, next) => {
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error("Unhandled error:", err.stack);
   res.status(500).json({
     error: "Internal server error",
@@ -466,7 +588,7 @@ app.use((err, req, res, next) => {
  * Middleware de gestion des routes non trouvées
  * Retourne une erreur 404 pour toutes les routes non définies
  */
-app.use("*", (req, res) => {
+app.use("*", (req: Request, res: Response) => {
   res.status(404).json({
     error: "Route not found",
     message: `The requested route ${req.method} ${req.originalUrl} does not exist`,
