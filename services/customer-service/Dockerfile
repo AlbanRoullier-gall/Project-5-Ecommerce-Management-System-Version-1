@@ -2,10 +2,21 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
-RUN npm install --omit=dev
+COPY tsconfig.json ./
 
-COPY . .
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY src/ ./src/
+
+# Build TypeScript
+RUN npm run build
+
+# Remove dev dependencies
+RUN npm prune --production
 
 EXPOSE 3001
 

@@ -1,0 +1,190 @@
+/**
+ * CustomerAddressRepository
+ * Handles database operations for CustomerAddress entities
+ */
+import { Pool } from "pg";
+import CustomerAddress from "../models/CustomerAddress";
+
+class CustomerAddressRepository {
+  private pool: Pool;
+
+  constructor(pool: Pool) {
+    this.pool = pool;
+  }
+
+  /**
+   * Get address by ID
+   * @param {number} id Address ID
+   * @returns {Promise<CustomerAddress|null>} CustomerAddress or null if not found
+   */
+  async getById(id: number): Promise<CustomerAddress | null> {
+    try {
+      const result = await this.pool.query(
+        `SELECT address_id, customer_id, address_type, address, postal_code, city, 
+                country_id, is_default, created_at, updated_at
+         FROM customer_addresses 
+         WHERE address_id = $1`,
+        [id]
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return CustomerAddress.fromDbRow(result.rows[0]);
+    } catch (error) {
+      console.error("Error getting address by ID:", error);
+      throw new Error("Failed to retrieve address");
+    }
+  }
+
+  /**
+   * Get address by ID with joins
+   * @param {number} id Address ID
+   * @returns {Promise<CustomerAddress|null>} CustomerAddress with joined data or null if not found
+   */
+  async getByIdWithJoins(id: number): Promise<CustomerAddress | null> {
+    try {
+      const result = await this.pool.query(
+        `SELECT ca.address_id, ca.customer_id, ca.address_type, ca.address, ca.postal_code, 
+                ca.city, ca.country_id, ca.is_default, ca.created_at, ca.updated_at,
+                co.country_name
+         FROM customer_addresses ca
+         LEFT JOIN countries co ON ca.country_id = co.country_id
+         WHERE ca.address_id = $1`,
+        [id]
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return CustomerAddress.fromDbRowWithJoins(result.rows[0]);
+    } catch (error) {
+      console.error("Error getting address by ID with joins:", error);
+      throw new Error("Failed to retrieve address");
+    }
+  }
+
+  /**
+   * List addresses by customer
+   * @param {number} customerId Customer ID
+   * @returns {Promise<CustomerAddress[]>} Array of addresses
+   */
+  async listByCustomer(customerId: number): Promise<CustomerAddress[]> {
+    try {
+      const result = await this.pool.query(
+        `SELECT address_id, customer_id, address_type, address, postal_code, city, 
+                country_id, is_default, created_at, updated_at
+         FROM customer_addresses 
+         WHERE customer_id = $1
+         ORDER BY is_default DESC, created_at DESC`,
+        [customerId]
+      );
+
+      return result.rows.map((row) => CustomerAddress.fromDbRow(row));
+    } catch (error) {
+      console.error("Error listing addresses by customer:", error);
+      throw new Error("Failed to retrieve addresses");
+    }
+  }
+
+  /**
+   * Save new address
+   * @param {CustomerAddress} address CustomerAddress entity to save
+   * @returns {Promise<CustomerAddress>} Saved address with ID
+   */
+  async save(address: CustomerAddress): Promise<CustomerAddress> {
+    try {
+      const validation = address.validate();
+      if (!validation.isValid) {
+        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
+      }
+
+      const result = await this.pool.query(
+        `INSERT INTO customer_addresses (customer_id, address_type, address, postal_code, 
+                                       city, country_id, is_default, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+         RETURNING address_id, customer_id, address_type, address, postal_code, city, 
+                   country_id, is_default, created_at, updated_at`,
+        [
+          address.customerId,
+          address.addressType,
+          address.address,
+          address.postalCode,
+          address.city,
+          address.countryId,
+          address.isDefault,
+        ]
+      );
+
+      return CustomerAddress.fromDbRow(result.rows[0]);
+    } catch (error) {
+      console.error("Error saving address:", error);
+      throw new Error("Failed to save address");
+    }
+  }
+
+  /**
+   * Update existing address
+   * @param {CustomerAddress} address CustomerAddress entity to update
+   * @returns {Promise<CustomerAddress>} Updated address
+   */
+  async update(address: CustomerAddress): Promise<CustomerAddress> {
+    try {
+      const validation = address.validate();
+      if (!validation.isValid) {
+        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
+      }
+
+      const result = await this.pool.query(
+        `UPDATE customer_addresses 
+         SET customer_id = $1, address_type = $2, address = $3, postal_code = $4, 
+             city = $5, country_id = $6, is_default = $7, updated_at = NOW()
+         WHERE address_id = $8
+         RETURNING address_id, customer_id, address_type, address, postal_code, city, 
+                   country_id, is_default, created_at, updated_at`,
+        [
+          address.customerId,
+          address.addressType,
+          address.address,
+          address.postalCode,
+          address.city,
+          address.countryId,
+          address.isDefault,
+          address.addressId,
+        ]
+      );
+
+      if (result.rows.length === 0) {
+        throw new Error("Address not found");
+      }
+
+      return CustomerAddress.fromDbRow(result.rows[0]);
+    } catch (error) {
+      console.error("Error updating address:", error);
+      throw new Error("Failed to update address");
+    }
+  }
+
+  /**
+   * Delete address
+   * @param {CustomerAddress} address CustomerAddress entity to delete
+   * @returns {Promise<boolean>} True if deleted successfully
+   */
+  async delete(address: CustomerAddress): Promise<boolean> {
+    try {
+      const result = await this.pool.query(
+        "DELETE FROM customer_addresses WHERE address_id = $1 RETURNING address_id",
+        [address.addressId]
+      );
+
+      return result.rows.length > 0;
+    } catch (error) {
+      console.error("Error deleting address:", error);
+      throw new Error("Failed to delete address");
+    }
+  }
+}
+
+export default CustomerAddressRepository;
