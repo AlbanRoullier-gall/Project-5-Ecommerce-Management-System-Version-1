@@ -4,7 +4,9 @@ import {
   Category,
   PaginationParams,
   ApiResponse,
-} from "../shared-types";
+  CreateProductRequest,
+  UpdateProductRequest,
+} from "../../../shared-types";
 import { productService } from "../services/productService";
 
 interface UseProductsReturn {
@@ -20,8 +22,11 @@ interface UseProductsReturn {
   } | null;
   fetchProducts: (params?: PaginationParams) => Promise<void>;
   fetchCategories: () => Promise<void>;
-  createProduct: (productData: any) => Promise<Product | null>;
-  updateProduct: (id: number, productData: any) => Promise<Product | null>;
+  createProduct: (productData: CreateProductRequest) => Promise<Product | null>;
+  updateProduct: (
+    id: number,
+    productData: UpdateProductRequest
+  ) => Promise<Product | null>;
   deleteProduct: (id: number) => Promise<boolean>;
   activateProduct: (id: number) => Promise<boolean>;
   deactivateProduct: (id: number) => Promise<boolean>;
@@ -90,7 +95,7 @@ export const useProducts = (): UseProductsReturn => {
   }, []);
 
   const createProduct = useCallback(
-    async (productData: any): Promise<Product | null> => {
+    async (productData: CreateProductRequest): Promise<Product | null> => {
       try {
         setError(null);
 
@@ -117,7 +122,10 @@ export const useProducts = (): UseProductsReturn => {
   );
 
   const updateProduct = useCallback(
-    async (id: number, productData: any): Promise<Product | null> => {
+    async (
+      id: number,
+      productData: UpdateProductRequest
+    ): Promise<Product | null> => {
       try {
         setError(null);
 

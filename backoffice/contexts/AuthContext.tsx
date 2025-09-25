@@ -7,7 +7,11 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import { User } from "../shared-types";
+import {
+  User,
+  RegisterRequest,
+  UpdateProfileRequest,
+} from "../../shared-types";
 import authService from "../lib/services/authService";
 
 interface AuthContextType {
@@ -16,19 +20,9 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    role?: "admin" | "customer";
-  }) => Promise<void>;
+  register: (userData: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
-  updateProfile: (profileData: {
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-  }) => Promise<void>;
+  updateProfile: (profileData: UpdateProfileRequest) => Promise<void>;
   changePassword: (
     currentPassword: string,
     newPassword: string
@@ -87,13 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (userData: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    role?: "admin" | "customer";
-  }) => {
+  const register = async (userData: RegisterRequest) => {
     try {
       const response = await authService.register(userData);
       setUser(response.user);
@@ -114,11 +102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const updateProfile = async (profileData: {
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-  }) => {
+  const updateProfile = async (profileData: UpdateProfileRequest) => {
     try {
       const response = await authService.updateProfile(profileData);
       setUser(response.user);

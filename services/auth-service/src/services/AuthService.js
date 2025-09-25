@@ -26,11 +26,23 @@ class AuthService {
    */
   async registerUser(data) {
     try {
-      const { email, password, firstName, lastName, role = "customer" } = data;
+      const {
+        email,
+        password,
+        confirmPassword,
+        firstName,
+        lastName,
+        role = "customer",
+      } = data;
 
       // Validate input
       if (!User.validateEmail(email)) {
         throw new Error("Invalid email format");
+      }
+
+      // Validate password confirmation
+      if (confirmPassword && password !== confirmPassword) {
+        throw new Error("Passwords do not match");
       }
 
       const passwordValidation = User.validatePassword(password);

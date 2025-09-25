@@ -2,21 +2,17 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { LoginRequest, RegisterRequest } from "../shared-types";
+import {
+  LoginRequest,
+  RegisterRequest,
+  AuthFormData,
+} from "../../shared-types";
 
 interface AuthFormProps {
   mode: "login" | "register";
   onSubmit: (data: LoginRequest | RegisterRequest) => void;
   isLoading?: boolean;
   error?: string;
-}
-
-interface AuthFormData {
-  email: string;
-  password: string;
-  confirmPassword?: string;
-  firstName?: string;
-  lastName?: string;
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({
