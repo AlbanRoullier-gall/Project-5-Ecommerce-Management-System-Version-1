@@ -2,10 +2,13 @@
  * CategoryRepository
  * Handles database operations for Category entities
  */
-const Category = require("../models/Category");
+import { Pool } from "pg";
+import Category from "../models/Category";
 
-class CategoryRepository {
-  constructor(pool) {
+export default class CategoryRepository {
+  private pool: Pool;
+
+  constructor(pool: Pool) {
     this.pool = pool;
   }
 
@@ -14,7 +17,7 @@ class CategoryRepository {
    * @param {number} id Category ID
    * @returns {Promise<Category|null>} Category or null if not found
    */
-  async getById(id) {
+  async getById(id: number): Promise<Category | null> {
     try {
       const result = await this.pool.query(
         `SELECT id, name, description, created_at, updated_at
@@ -38,7 +41,7 @@ class CategoryRepository {
    * List all categories
    * @returns {Promise<Category[]>} Array of categories
    */
-  async listAll() {
+  async listAll(): Promise<Category[]> {
     try {
       const result = await this.pool.query(
         `SELECT id, name, description, created_at, updated_at
@@ -58,7 +61,7 @@ class CategoryRepository {
    * @param {Category} category Category entity to save
    * @returns {Promise<Category>} Saved category with ID
    */
-  async save(category) {
+  async save(category: Category): Promise<Category> {
     try {
       const validation = category.validate();
       if (!validation.isValid) {
@@ -84,7 +87,7 @@ class CategoryRepository {
    * @param {Category} category Category entity to update
    * @returns {Promise<Category>} Updated category
    */
-  async update(category) {
+  async update(category: Category): Promise<Category> {
     try {
       const validation = category.validate();
       if (!validation.isValid) {
@@ -115,7 +118,7 @@ class CategoryRepository {
    * @param {Category} category Category entity to delete
    * @returns {Promise<boolean>} True if deleted successfully
    */
-  async delete(category) {
+  async delete(category: Category): Promise<boolean> {
     try {
       const result = await this.pool.query(
         "DELETE FROM categories WHERE id = $1 RETURNING id",
@@ -135,10 +138,13 @@ class CategoryRepository {
    * @param {number|null} excludeId Category ID to exclude from check (for updates)
    * @returns {Promise<boolean>} True if name exists
    */
-  async nameExists(name, excludeId = null) {
+  async nameExists(
+    name: string,
+    excludeId: number | null = null
+  ): Promise<boolean> {
     try {
       let query = "SELECT id FROM categories WHERE name = $1";
-      const params = [name];
+      const params: any[] = [name];
 
       if (excludeId) {
         query += " AND id != $2";
@@ -158,7 +164,7 @@ class CategoryRepository {
    * @param {number} categoryId Category ID
    * @returns {Promise<number>} Number of products in category
    */
-  async countProducts(categoryId) {
+  async countProducts(categoryId: number): Promise<number> {
     try {
       const result = await this.pool.query(
         "SELECT COUNT(*) FROM products WHERE category_id = $1",
@@ -178,7 +184,18 @@ class CategoryRepository {
    * @param {Object} options Search options
    * @returns {Promise<Object>} Categories and pagination info
    */
-  async searchByName(searchTerm, options = {}) {
+  async searchByName(
+    searchTerm: string,
+    options: { page?: number; limit?: number } = {}
+  ): Promise<{
+    categories: Category[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }> {
     try {
       const { page = 1, limit = 10 } = options;
       const offset = (page - 1) * limit;
@@ -201,10 +218,10 @@ class CategoryRepository {
       return {
         categories: result.rows.map((row) => Category.fromDbRow(row)),
         pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
+          page: parseInt(page.toString()),
+          limit: parseInt(limit.toString()),
           total: parseInt(countResult.rows[0].count),
-          pages: Math.ceil(countResult.rows[0].count / limit),
+          pages: Math.ceil(parseInt(countResult.rows[0].count) / limit),
         },
       };
     } catch (error) {
@@ -212,6 +229,13 @@ class CategoryRepository {
       throw new Error("Failed to search categories");
     }
   }
-}
 
-module.exports = CategoryRepository;
+  /**
+   * Find category by ID (alias for getById)
+   * @param {number} id Category ID
+   * @returns {Promise<Category|null>} Category or null if not found
+   */
+  async findById(id: number): Promise<Category | null> {
+    return this.getById(id);
+  }
+}

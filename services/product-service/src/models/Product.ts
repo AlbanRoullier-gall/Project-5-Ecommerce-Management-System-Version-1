@@ -2,30 +2,44 @@
  * Product ORM Entity
  * Represents a product with pricing and category information
  */
-class Product {
-  constructor(data = {}) {
-    this.id = data.id || null;
-    this.name = data.name || "";
-    this.description = data.description || "";
-    this.price = data.price || 0;
-    this.vatRate = data.vatRate || 0;
-    this.categoryId = data.categoryId || null;
-    this.isActive = data.isActive !== undefined ? data.isActive : true;
-    this.createdAt = data.createdAt || null;
-    this.updatedAt = data.updatedAt || null;
+import { ProductData, ProductDbRow } from "../types";
+
+export default class Product {
+  public id: number | null;
+  public name: string;
+  public description: string;
+  public price: number;
+  public vatRate: number;
+  public categoryId: number | null;
+  public isActive: boolean;
+  public createdAt: Date | null;
+  public updatedAt: Date | null;
+  public categoryName?: string | undefined;
+  public images?: any[];
+
+  constructor(data: ProductData = {} as ProductData) {
+    this.id = data.id ?? null;
+    this.name = data.name ?? "";
+    this.description = data.description ?? "";
+    this.price = data.price ?? 0;
+    this.vatRate = data.vatRate ?? 0;
+    this.categoryId = data.categoryId ?? null;
+    this.isActive = data.isActive ?? true;
+    this.createdAt = data.createdAt ?? null;
+    this.updatedAt = data.updatedAt ?? null;
   }
 
   /**
    * Activate the product
    */
-  activate() {
+  activate(): void {
     this.isActive = true;
   }
 
   /**
    * Deactivate the product
    */
-  deactivate() {
+  deactivate(): void {
     this.isActive = false;
   }
 
@@ -33,7 +47,7 @@ class Product {
    * Get price with VAT included
    * @returns {number} Price with VAT
    */
-  getPriceWithVAT() {
+  getPriceWithVAT(): number {
     return this.price * (1 + this.vatRate / 100);
   }
 
@@ -41,17 +55,17 @@ class Product {
    * Convert entity to database row format
    * @returns {Object} Database row
    */
-  toDbRow() {
+  toDbRow(): ProductDbRow {
     return {
-      id: this.id,
+      id: this.id!,
       name: this.name,
       description: this.description,
       price: this.price,
       vat_rate: this.vatRate,
-      category_id: this.categoryId,
+      category_id: this.categoryId!,
       is_active: this.isActive,
-      created_at: this.createdAt,
-      updated_at: this.updatedAt,
+      created_at: this.createdAt!,
+      updated_at: this.updatedAt!,
     };
   }
 
@@ -60,7 +74,7 @@ class Product {
    * @param {Object} row Database row
    * @returns {Product} Product instance
    */
-  static fromDbRow(row) {
+  static fromDbRow(row: ProductDbRow): Product {
     return new Product({
       id: row.id,
       name: row.name,
@@ -79,9 +93,11 @@ class Product {
    * @param {Object} row Database row with joins
    * @returns {Product} Product instance with additional fields
    */
-  static fromDbRowWithJoins(row) {
+  static fromDbRowWithJoins(
+    row: ProductDbRow & { category_name?: string }
+  ): Product {
     const product = Product.fromDbRow(row);
-    product.categoryName = row.category_name;
+    product.categoryName = row.category_name ?? undefined;
     return product;
   }
 
@@ -89,7 +105,7 @@ class Product {
    * Convert to public DTO
    * @returns {Object} Public product data
    */
-  toPublicDTO() {
+  toPublicDTO(): any {
     return {
       id: this.id,
       name: this.name,
@@ -108,8 +124,8 @@ class Product {
    * Validate entity data
    * @returns {Object} Validation result
    */
-  validate() {
-    const errors = [];
+  validate(): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
 
     if (!this.name || this.name.trim().length === 0) {
       errors.push("Product name is required");
@@ -145,5 +161,3 @@ class Product {
     };
   }
 }
-
-module.exports = Product;

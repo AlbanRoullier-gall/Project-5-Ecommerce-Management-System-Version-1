@@ -2,20 +2,28 @@
  * Category ORM Entity
  * Represents a product category
  */
-class Category {
-  constructor(data = {}) {
-    this.id = data.id || null;
-    this.name = data.name || "";
-    this.description = data.description || "";
-    this.createdAt = data.createdAt || null;
-    this.updatedAt = data.updatedAt || null;
+import { CategoryData, CategoryDbRow } from "../types";
+
+export default class Category {
+  public id: number | null;
+  public name: string;
+  public description: string;
+  public createdAt: Date | null;
+  public updatedAt: Date | null;
+
+  constructor(data: CategoryData = {} as CategoryData) {
+    this.id = data.id ?? null;
+    this.name = data.name ?? "";
+    this.description = data.description ?? "";
+    this.createdAt = data.createdAt ?? null;
+    this.updatedAt = data.updatedAt ?? null;
   }
 
   /**
    * Get full name of the category
    * @returns {string} Full category name
    */
-  getFullName() {
+  getFullName(): string {
     return this.name;
   }
 
@@ -23,13 +31,13 @@ class Category {
    * Convert entity to database row format
    * @returns {Object} Database row
    */
-  toDbRow() {
+  toDbRow(): CategoryDbRow {
     return {
-      id: this.id,
+      id: this.id!,
       name: this.name,
       description: this.description,
-      created_at: this.createdAt,
-      updated_at: this.updatedAt,
+      created_at: this.createdAt!,
+      updated_at: this.updatedAt!,
     };
   }
 
@@ -38,7 +46,7 @@ class Category {
    * @param {Object} row Database row
    * @returns {Category} Category instance
    */
-  static fromDbRow(row) {
+  static fromDbRow(row: CategoryDbRow): Category {
     return new Category({
       id: row.id,
       name: row.name,
@@ -52,7 +60,7 @@ class Category {
    * Convert to public DTO
    * @returns {Object} Public category data
    */
-  toPublicDTO() {
+  toPublicDTO(): any {
     return {
       id: this.id,
       name: this.name,
@@ -67,8 +75,8 @@ class Category {
    * Validate entity data
    * @returns {Object} Validation result
    */
-  validate() {
-    const errors = [];
+  validate(): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
 
     if (!this.name || this.name.trim().length === 0) {
       errors.push("Category name is required");
@@ -88,5 +96,3 @@ class Category {
     };
   }
 }
-
-module.exports = Category;

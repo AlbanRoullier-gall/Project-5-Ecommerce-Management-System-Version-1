@@ -3,9 +3,12 @@ FROM node:18-alpine
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --omit=dev
+COPY tsconfig.json ./
+RUN npm install
 
-COPY . .
+COPY src/ ./src/
+RUN npm run build
+RUN npm prune --production
 
 EXPOSE 3007
 

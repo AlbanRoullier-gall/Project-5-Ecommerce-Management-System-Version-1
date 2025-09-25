@@ -47,7 +47,7 @@ import {
 
   // API Response types
   ApiResponse,
-} from "@shared-types";
+} from "../shared-types";
 
 // Middlewares de validation
 import {
@@ -108,6 +108,7 @@ app.use(
     origin: [
       "http://localhost:13008", // Backoffice
       "http://localhost:13009", // Frontend
+      "http://localhost:13010", // Frontend (correct port)
       "http://localhost:3000", // API Gateway (dev)
       "http://localhost:3001", // Autres services (dev)
     ],

@@ -5,7 +5,7 @@ services:
   api-gateway:
     build:
       context: .
-      dockerfile: api-gateway/Dockerfile
+      dockerfile: api-gateway/Dockerfile.dev
     ports:
       - "13000:3000"
     environment:
@@ -21,6 +21,7 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:3008
     volumes:
       - ./api-gateway/src:/app/src
+      - ./shared-types:/app/shared-types
       - /app/node_modules
     depends_on:
       - customer-service
@@ -35,13 +36,18 @@ services:
 
   # Customer Service
   customer-service:
-    build: ./services/customer-service
+    build:
+      context: ./services/customer-service
+      dockerfile: Dockerfile.dev
     ports:
       - "13001:3001"
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://customer_user:customer_password@customer-db:5432/customer_db
       - JWT_SECRET=your-jwt-secret-key
+    volumes:
+      - ./services/customer-service/src:/app/src
+      - /app/node_modules
     depends_on:
       customer-db:
         condition: service_healthy
@@ -54,19 +60,27 @@ services:
 
   # Product Service
   product-service:
-    build: ./services/product-service
+    build:
+      context: ./services/product-service
+      dockerfile: Dockerfile.dev
     ports:
       - "13002:3002"
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://product_user:product_password@product-db:5432/product_db
       - JWT_SECRET=your-jwt-secret-key
+    volumes:
+      - ./services/product-service/src:/app/src
+      - /app/node_modules
     depends_on:
-      - product-db
+      product-db:
+        condition: service_healthy
 
   # Order Service
   order-service:
-    build: ./services/order-service
+    build:
+      context: ./services/order-service
+      dockerfile: Dockerfile.dev
     ports:
       - "13003:3003"
     environment:
@@ -74,12 +88,18 @@ services:
       - DATABASE_URL=postgresql://order_user:order_password@order-db:5432/order_db
       - JWT_SECRET=your-jwt-secret-key
       - STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+    volumes:
+      - ./services/order-service/src:/app/src
+      - /app/node_modules
     depends_on:
-      - order-db
+      order-db:
+        condition: service_healthy
 
   # Cart Service
   cart-service:
-    build: ./services/cart-service
+    build:
+      context: ./services/cart-service
+      dockerfile: Dockerfile.dev
     ports:
       - "13004:3004"
     environment:
@@ -87,25 +107,38 @@ services:
       - DATABASE_URL=postgresql://cart_user:cart_password@cart-db:5432/cart_db
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=your-jwt-secret-key
+    volumes:
+      - ./services/cart-service/src:/app/src
+      - /app/node_modules
     depends_on:
-      - cart-db
-      - redis
+      cart-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   # Website Content Service
   website-content-service:
-    build: ./services/website-content-service
+    build:
+      context: ./services/website-content-service
+      dockerfile: Dockerfile.dev
     ports:
       - "13005:3005"
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://content_user:content_password@content-db:5432/website_content_db
       - JWT_SECRET=your-jwt-secret-key
+    volumes:
+      - ./services/website-content-service/src:/app/src
+      - /app/node_modules
     depends_on:
-      - content-db
+      content-db:
+        condition: service_healthy
 
   # Payment Service
   payment-service:
-    build: ./services/payment-service
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile.dev
     ports:
       - "13006:3006"
     environment:
@@ -114,12 +147,18 @@ services:
       - STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
       - STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
       - JWT_SECRET=your-jwt-secret-key
+    volumes:
+      - ./services/payment-service/src:/app/src
+      - /app/node_modules
     depends_on:
-      - payment-db
+      payment-db:
+        condition: service_healthy
 
   # Email Service
   email-service:
-    build: ./services/email-service
+    build:
+      context: ./services/email-service
+      dockerfile: Dockerfile.dev
     ports:
       - "13007:3007"
     environment:
@@ -128,8 +167,12 @@ services:
       - GMAIL_USER=your-email@gmail.com
       - GMAIL_APP_PASSWORD=your-gmail-app-password
       - JWT_SECRET=your-jwt-secret-key
+    volumes:
+      - ./services/email-service/src:/app/src
+      - /app/node_modules
     depends_on:
-      - email-db
+      email-db:
+        condition: service_healthy
 
   # Frontend (Client) - Mode développement
   frontend:

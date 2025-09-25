@@ -2,35 +2,52 @@
  * ProductImage ORM Entity
  * Represents an image associated with a product
  */
-class ProductImage {
-  constructor(data = {}) {
-    this.id = data.id || null;
-    this.productId = data.productId || null;
-    this.filename = data.filename || "";
-    this.filePath = data.filePath || "";
-    this.fileSize = data.fileSize || 0;
-    this.mimeType = data.mimeType || "";
-    this.width = data.width || 0;
-    this.height = data.height || 0;
-    this.altText = data.altText || "";
-    this.description = data.description || "";
-    this.isActive = data.isActive !== undefined ? data.isActive : true;
-    this.orderIndex = data.orderIndex || 0;
-    this.createdAt = data.createdAt || null;
-    this.updatedAt = data.updatedAt || null;
+import { ProductImageData, ProductImageDbRow } from "../types";
+
+export default class ProductImage {
+  public id: number | null;
+  public productId: number | null;
+  public filename: string;
+  public filePath: string;
+  public fileSize: number;
+  public mimeType: string;
+  public width: number;
+  public height: number;
+  public altText: string;
+  public description: string;
+  public isActive: boolean;
+  public orderIndex: number;
+  public createdAt: Date | null;
+  public updatedAt: Date | null;
+
+  constructor(data: ProductImageData = {} as ProductImageData) {
+    this.id = data.id ?? null;
+    this.productId = data.productId ?? null;
+    this.filename = data.filename ?? "";
+    this.filePath = data.filePath ?? "";
+    this.fileSize = data.fileSize ?? 0;
+    this.mimeType = data.mimeType ?? "";
+    this.width = data.width ?? 0;
+    this.height = data.height ?? 0;
+    this.altText = data.altText ?? "";
+    this.description = data.description ?? "";
+    this.isActive = data.isActive ?? true;
+    this.orderIndex = data.orderIndex ?? 0;
+    this.createdAt = data.createdAt ?? null;
+    this.updatedAt = data.updatedAt ?? null;
   }
 
   /**
    * Activate the image
    */
-  activate() {
+  activate(): void {
     this.isActive = true;
   }
 
   /**
    * Deactivate the image
    */
-  deactivate() {
+  deactivate(): void {
     this.isActive = false;
   }
 
@@ -38,7 +55,7 @@ class ProductImage {
    * Get URL for the image
    * @returns {string} Image URL
    */
-  getUrl() {
+  getUrl(): string {
     // In a real application, this would construct the full URL
     return `/uploads/products/${this.filename}`;
   }
@@ -47,10 +64,10 @@ class ProductImage {
    * Convert entity to database row format
    * @returns {Object} Database row
    */
-  toDbRow() {
+  toDbRow(): ProductImageDbRow {
     return {
-      id: this.id,
-      product_id: this.productId,
+      id: this.id!,
+      product_id: this.productId!,
       filename: this.filename,
       file_path: this.filePath,
       file_size: this.fileSize,
@@ -61,8 +78,8 @@ class ProductImage {
       description: this.description,
       is_active: this.isActive,
       order_index: this.orderIndex,
-      created_at: this.createdAt,
-      updated_at: this.updatedAt,
+      created_at: this.createdAt!,
+      updated_at: this.updatedAt!,
     };
   }
 
@@ -71,7 +88,7 @@ class ProductImage {
    * @param {Object} row Database row
    * @returns {ProductImage} ProductImage instance
    */
-  static fromDbRow(row) {
+  static fromDbRow(row: ProductImageDbRow): ProductImage {
     return new ProductImage({
       id: row.id,
       productId: row.product_id,
@@ -94,7 +111,7 @@ class ProductImage {
    * Convert to public DTO
    * @returns {Object} Public image data
    */
-  toPublicDTO() {
+  toPublicDTO(): any {
     return {
       id: this.id,
       productId: this.productId,
@@ -118,8 +135,8 @@ class ProductImage {
    * Validate entity data
    * @returns {Object} Validation result
    */
-  validate() {
-    const errors = [];
+  validate(): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
 
     if (!this.productId) {
       errors.push("Product ID is required");
@@ -159,5 +176,3 @@ class ProductImage {
     };
   }
 }
-
-module.exports = ProductImage;

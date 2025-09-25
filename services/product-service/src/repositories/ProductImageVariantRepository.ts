@@ -2,10 +2,13 @@
  * ProductImageVariantRepository
  * Handles database operations for ProductImageVariant entities
  */
-const ProductImageVariant = require("../models/ProductImageVariant");
+import { Pool } from "pg";
+import ProductImageVariant from "../models/ProductImageVariant";
 
-class ProductImageVariantRepository {
-  constructor(pool) {
+export default class ProductImageVariantRepository {
+  private pool: Pool;
+
+  constructor(pool: Pool) {
     this.pool = pool;
   }
 
@@ -14,7 +17,7 @@ class ProductImageVariantRepository {
    * @param {number} id Variant ID
    * @returns {Promise<ProductImageVariant|null>} ProductImageVariant or null if not found
    */
-  async getById(id) {
+  async getById(id: number): Promise<ProductImageVariant | null> {
     try {
       const result = await this.pool.query(
         `SELECT id, image_id, variant_type, file_path, width, height, file_size, 
@@ -40,7 +43,7 @@ class ProductImageVariantRepository {
    * @param {number} imageId Image ID
    * @returns {Promise<ProductImageVariant[]>} Array of variants
    */
-  async listByImage(imageId) {
+  async listByImage(imageId: number): Promise<ProductImageVariant[]> {
     try {
       const result = await this.pool.query(
         `SELECT id, image_id, variant_type, file_path, width, height, file_size, 
@@ -64,7 +67,10 @@ class ProductImageVariantRepository {
    * @param {string} variantType Variant type
    * @returns {Promise<ProductImageVariant|null>} Variant or null if not found
    */
-  async getByImageAndType(imageId, variantType) {
+  async getByImageAndType(
+    imageId: number,
+    variantType: string
+  ): Promise<ProductImageVariant | null> {
     try {
       const result = await this.pool.query(
         `SELECT id, image_id, variant_type, file_path, width, height, file_size, 
@@ -90,7 +96,7 @@ class ProductImageVariantRepository {
    * @param {ProductImageVariant} variant Variant entity to save
    * @returns {Promise<ProductImageVariant>} Saved variant with ID
    */
-  async save(variant) {
+  async save(variant: ProductImageVariant): Promise<ProductImageVariant> {
     try {
       const validation = variant.validate();
       if (!validation.isValid) {
@@ -126,7 +132,7 @@ class ProductImageVariantRepository {
    * @param {ProductImageVariant} variant Variant entity to update
    * @returns {Promise<ProductImageVariant>} Updated variant
    */
-  async update(variant) {
+  async update(variant: ProductImageVariant): Promise<ProductImageVariant> {
     try {
       const validation = variant.validate();
       if (!validation.isValid) {
@@ -168,7 +174,7 @@ class ProductImageVariantRepository {
    * @param {ProductImageVariant} variant Variant entity to delete
    * @returns {Promise<boolean>} True if deleted successfully
    */
-  async delete(variant) {
+  async delete(variant: ProductImageVariant): Promise<boolean> {
     try {
       const result = await this.pool.query(
         "DELETE FROM product_image_variants WHERE id = $1 RETURNING id",
@@ -188,7 +194,10 @@ class ProductImageVariantRepository {
    * @param {string} variantType Variant type
    * @returns {Promise<boolean>} True if deleted successfully
    */
-  async deleteByImageAndType(imageId, variantType) {
+  async deleteByImageAndType(
+    imageId: number,
+    variantType: string
+  ): Promise<boolean> {
     try {
       const result = await this.pool.query(
         "DELETE FROM product_image_variants WHERE image_id = $1 AND variant_type = $2 RETURNING id",
@@ -207,7 +216,7 @@ class ProductImageVariantRepository {
    * @param {number} imageId Image ID
    * @returns {Promise<number>} Number of variants deleted
    */
-  async deleteAllByImage(imageId) {
+  async deleteAllByImage(imageId: number): Promise<number> {
     try {
       const result = await this.pool.query(
         "DELETE FROM product_image_variants WHERE image_id = $1 RETURNING id",
@@ -226,7 +235,7 @@ class ProductImageVariantRepository {
    * @param {number} imageId Image ID
    * @returns {Promise<number>} Number of variants
    */
-  async countByImage(imageId) {
+  async countByImage(imageId: number): Promise<number> {
     try {
       const result = await this.pool.query(
         "SELECT COUNT(*) FROM product_image_variants WHERE image_id = $1",
@@ -246,7 +255,7 @@ class ProductImageVariantRepository {
    * @param {string} variantType Variant type
    * @returns {Promise<boolean>} True if variant exists
    */
-  async variantExists(imageId, variantType) {
+  async variantExists(imageId: number, variantType: string): Promise<boolean> {
     try {
       const result = await this.pool.query(
         "SELECT id FROM product_image_variants WHERE image_id = $1 AND variant_type = $2",
@@ -260,5 +269,3 @@ class ProductImageVariantRepository {
     }
   }
 }
-
-module.exports = ProductImageVariantRepository;

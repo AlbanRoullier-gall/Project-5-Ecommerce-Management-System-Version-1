@@ -2,17 +2,28 @@
  * ProductService
  * Business logic layer for product management
  */
-const Category = require("../models/Category");
-const Product = require("../models/Product");
-const ProductImage = require("../models/ProductImage");
-const ProductImageVariant = require("../models/ProductImageVariant");
-const CategoryRepository = require("../repositories/CategoryRepository");
-const ProductRepository = require("../repositories/ProductRepository");
-const ProductImageRepository = require("../repositories/ProductImageRepository");
-const ProductImageVariantRepository = require("../repositories/ProductImageVariantRepository");
+import { Pool } from "pg";
+import Category from "../models/Category";
+import Product from "../models/Product";
+import ProductImage from "../models/ProductImage";
+import CategoryRepository from "../repositories/CategoryRepository";
+import ProductRepository from "../repositories/ProductRepository";
+import ProductImageRepository from "../repositories/ProductImageRepository";
+import ProductImageVariantRepository from "../repositories/ProductImageVariantRepository";
+import {
+  ProductData,
+  CategoryData,
+  ProductListOptions,
+  ProductListResult,
+} from "../types";
 
-class ProductService {
-  constructor(pool) {
+export default class ProductService {
+  private categoryRepository: CategoryRepository;
+  private productRepository: ProductRepository;
+  private imageRepository: ProductImageRepository;
+  private variantRepository: ProductImageVariantRepository;
+
+  constructor(pool: Pool) {
     this.categoryRepository = new CategoryRepository(pool);
     this.productRepository = new ProductRepository(pool);
     this.imageRepository = new ProductImageRepository(pool);
@@ -26,7 +37,7 @@ class ProductService {
    * @param {Object} data Category data
    * @returns {Promise<Category>} Created category
    */
-  async createCategory(data) {
+  async createCategory(data: CategoryData): Promise<Category> {
     try {
       // Check if category name already exists
       const nameExists = await this.categoryRepository.nameExists(data.name);
@@ -51,7 +62,7 @@ class ProductService {
    * @param {Object} data Update data
    * @returns {Promise<Category>} Updated category
    */
-  async updateCategory(id, data) {
+  async updateCategory(id: number, data: CategoryData): Promise<Category> {
     try {
       const category = await this.categoryRepository.getById(id);
       if (!category) {
@@ -85,7 +96,7 @@ class ProductService {
    * @param {number} id Category ID
    * @returns {Promise<boolean>} True if deleted successfully
    */
-  async deleteCategory(id) {
+  async deleteCategory(id: number): Promise<boolean> {
     try {
       const category = await this.categoryRepository.getById(id);
       if (!category) {
@@ -106,10 +117,24 @@ class ProductService {
   }
 
   /**
+   * Get category by ID
+   * @param {number} id Category ID
+   * @returns {Promise<Category|null>} Category or null if not found
+   */
+  async getCategoryById(id: number): Promise<Category | null> {
+    try {
+      return await this.categoryRepository.getById(id);
+    } catch (error) {
+      console.error("Error getting category by ID:", error);
+      throw error;
+    }
+  }
+
+  /**
    * List all categories
    * @returns {Promise<Category[]>} Array of categories
    */
-  async listCategories() {
+  async listCategories(): Promise<Category[]> {
     try {
       return await this.categoryRepository.listAll();
     } catch (error) {
@@ -125,7 +150,7 @@ class ProductService {
    * @param {Object} data Product data
    * @returns {Promise<Product>} Created product
    */
-  async createProduct(data) {
+  async createProduct(data: ProductData): Promise<Product> {
     try {
       // Check if product name already exists
       const nameExists = await this.productRepository.nameExists(data.name);
@@ -156,7 +181,7 @@ class ProductService {
    * @param {Object} data Update data
    * @returns {Promise<Product>} Updated product
    */
-  async updateProduct(id, data) {
+  async updateProduct(id: number, data: ProductData): Promise<Product> {
     try {
       const product = await this.productRepository.getById(id);
       if (!product) {
@@ -174,7 +199,7 @@ class ProductService {
         }
       }
 
-      // If category is being updated, verify it exists
+      // Verify category exists if being updated
       if (data.categoryId && data.categoryId !== product.categoryId) {
         const category = await this.categoryRepository.getById(data.categoryId);
         if (!category) {
@@ -198,56 +223,22 @@ class ProductService {
    * @param {number} id Product ID
    * @returns {Promise<boolean>} True if deleted successfully
    */
-  async deleteProduct(id) {
+  async deleteProduct(id: number): Promise<boolean> {
     try {
       const product = await this.productRepository.getById(id);
       if (!product) {
         throw new Error("Product not found");
       }
 
-      // Delete all image variants first
+      // Delete all images first
       const images = await this.imageRepository.listByProduct(id);
-      for (const image of images) {
-        await this.variantRepository.deleteAllByImage(image.id);
-      }
-
-      // Delete all images
       for (const image of images) {
         await this.imageRepository.delete(image);
       }
 
-      // Delete product
       return await this.productRepository.delete(product);
     } catch (error) {
       console.error("Error deleting product:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * List products with pagination and search
-   * @param {Object} options Pagination and search options
-   * @returns {Promise<Object>} Products and pagination info
-   */
-  async listProducts(options = {}) {
-    try {
-      return await this.productRepository.listAll(options);
-    } catch (error) {
-      console.error("Error listing products:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * List products by category
-   * @param {number} categoryId Category ID
-   * @returns {Promise<Product[]>} Array of products in category
-   */
-  async listProductsByCategory(categoryId) {
-    try {
-      return await this.productRepository.listByCategory(categoryId);
-    } catch (error) {
-      console.error("Error listing products by category:", error);
       throw error;
     }
   }
@@ -257,7 +248,7 @@ class ProductService {
    * @param {number} id Product ID
    * @returns {Promise<Product|null>} Product or null if not found
    */
-  async getProductById(id) {
+  async getProductById(id: number): Promise<Product | null> {
     try {
       return await this.productRepository.getByIdWithJoins(id);
     } catch (error) {
@@ -267,11 +258,49 @@ class ProductService {
   }
 
   /**
+   * List products with pagination and search
+   * @param {Object} options List options
+   * @returns {Promise<Object>} Products and pagination info
+   */
+  async listProducts(
+    options: ProductListOptions = {}
+  ): Promise<ProductListResult> {
+    try {
+      return await this.productRepository.listAll(options);
+    } catch (error) {
+      console.error("Error listing products:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Toggle product status (active/inactive)
+   * @param {number} id Product ID
+   * @returns {Promise<Product>} Updated product
+   */
+  async toggleProductStatus(id: number): Promise<Product> {
+    try {
+      const product = await this.productRepository.getById(id);
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      // Toggle status
+      product.isActive = !product.isActive;
+
+      return await this.productRepository.update(product);
+    } catch (error) {
+      console.error("Error toggling product status:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Activate product
    * @param {number} id Product ID
    * @returns {Promise<boolean>} True if activated successfully
    */
-  async activateProduct(id) {
+  async activateProduct(id: number): Promise<boolean> {
     try {
       return await this.productRepository.activate(id);
     } catch (error) {
@@ -285,7 +314,7 @@ class ProductService {
    * @param {number} id Product ID
    * @returns {Promise<boolean>} True if deactivated successfully
    */
-  async deactivateProduct(id) {
+  async deactivateProduct(id: number): Promise<boolean> {
     try {
       return await this.productRepository.deactivate(id);
     } catch (error) {
@@ -297,12 +326,40 @@ class ProductService {
   // Image management methods
 
   /**
+   * List images for a product
+   * @param {number} productId Product ID
+   * @returns {Promise<ProductImage[]>} Array of images
+   */
+  async listImages(productId: number): Promise<ProductImage[]> {
+    try {
+      return await this.imageRepository.listByProduct(productId);
+    } catch (error) {
+      console.error("Error listing images:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get image by ID
+   * @param {number} id Image ID
+   * @returns {Promise<ProductImage|null>} Image or null if not found
+   */
+  async getImageById(id: number): Promise<ProductImage | null> {
+    try {
+      return await this.imageRepository.getById(id);
+    } catch (error) {
+      console.error("Error getting image by ID:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Add image to product
    * @param {number} productId Product ID
    * @param {Object} imageData Image data
    * @returns {Promise<ProductImage>} Created image
    */
-  async addImage(productId, imageData) {
+  async addImage(productId: number, imageData: any): Promise<ProductImage> {
     try {
       // Verify product exists
       const product = await this.productRepository.getById(productId);
@@ -331,20 +388,19 @@ class ProductService {
 
   /**
    * Update image
-   * @param {number} imageId Image ID
-   * @param {Object} imageData Image data
+   * @param {number} id Image ID
+   * @param {Object} data Update data
    * @returns {Promise<ProductImage>} Updated image
    */
-  async updateImage(imageId, imageData) {
+  async updateImage(id: number, data: any): Promise<ProductImage> {
     try {
-      const image = await this.imageRepository.getById(imageId);
+      const image = await this.imageRepository.getById(id);
       if (!image) {
         throw new Error("Image not found");
       }
 
       // Update image entity
-      Object.assign(image, imageData);
-      image.id = imageId; // Ensure ID is preserved
+      Object.assign(image, data);
 
       return await this.imageRepository.update(image);
     } catch (error) {
@@ -355,20 +411,16 @@ class ProductService {
 
   /**
    * Delete image
-   * @param {number} imageId Image ID
+   * @param {number} id Image ID
    * @returns {Promise<boolean>} True if deleted successfully
    */
-  async deleteImage(imageId) {
+  async deleteImage(id: number): Promise<boolean> {
     try {
-      const image = await this.imageRepository.getById(imageId);
+      const image = await this.imageRepository.getById(id);
       if (!image) {
         throw new Error("Image not found");
       }
 
-      // Delete all variants first
-      await this.variantRepository.deleteAllByImage(imageId);
-
-      // Delete image
       return await this.imageRepository.delete(image);
     } catch (error) {
       console.error("Error deleting image:", error);
@@ -377,213 +429,140 @@ class ProductService {
   }
 
   /**
-   * List images for product
+   * Reorder images for a product
    * @param {number} productId Product ID
-   * @returns {Promise<ProductImage[]>} Array of images
+   * @param {number[]} imageIds Array of image IDs in new order
+   * @returns {Promise<boolean>} True if reordered successfully
    */
-  async listImages(productId) {
+  async reorderImages(productId: number, imageIds: number[]): Promise<boolean> {
     try {
-      return await this.imageRepository.listActiveByProduct(productId);
-    } catch (error) {
-      console.error("Error listing images:", error);
-      throw error;
-    }
-  }
+      // Verify all images belong to the product
+      const images = await this.imageRepository.listByProduct(productId);
+      const productImageIds = images.map((img) => img.id);
 
-  /**
-   * Activate image
-   * @param {number} imageId Image ID
-   * @returns {Promise<boolean>} True if activated successfully
-   */
-  async activateImage(imageId) {
-    try {
-      return await this.imageRepository.activate(imageId);
-    } catch (error) {
-      console.error("Error activating image:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Deactivate image
-   * @param {number} imageId Image ID
-   * @returns {Promise<boolean>} True if deactivated successfully
-   */
-  async deactivateImage(imageId) {
-    try {
-      return await this.imageRepository.deactivate(imageId);
-    } catch (error) {
-      console.error("Error deactivating image:", error);
-      throw error;
-    }
-  }
-
-  // Image variant management methods
-
-  /**
-   * Add image variant
-   * @param {number} imageId Image ID
-   * @param {Object} variantData Variant data
-   * @returns {Promise<ProductImageVariant>} Created variant
-   */
-  async addImageVariant(imageId, variantData) {
-    try {
-      // Verify image exists
-      const image = await this.imageRepository.getById(imageId);
-      if (!image) {
-        throw new Error("Image not found");
-      }
-
-      // Check if variant type already exists for this image
-      const variantExists = await this.variantRepository.variantExists(
-        imageId,
-        variantData.variantType
-      );
-      if (variantExists) {
-        throw new Error("Variant type already exists for this image");
-      }
-
-      // Create variant entity
-      const variant = new ProductImageVariant({
-        ...variantData,
-        imageId,
-      });
-
-      return await this.variantRepository.save(variant);
-    } catch (error) {
-      console.error("Error adding image variant:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Update image variant
-   * @param {number} variantId Variant ID
-   * @param {Object} variantData Variant data
-   * @returns {Promise<ProductImageVariant>} Updated variant
-   */
-  async updateImageVariant(variantId, variantData) {
-    try {
-      const variant = await this.variantRepository.getById(variantId);
-      if (!variant) {
-        throw new Error("Variant not found");
-      }
-
-      // If variant type is being updated, check for conflicts
-      if (
-        variantData.variantType &&
-        variantData.variantType !== variant.variantType
-      ) {
-        const variantExists = await this.variantRepository.variantExists(
-          variant.imageId,
-          variantData.variantType
-        );
-        if (variantExists) {
-          throw new Error("Variant type already exists for this image");
+      for (const imageId of imageIds) {
+        if (!productImageIds.includes(imageId)) {
+          throw new Error("Image does not belong to this product");
         }
       }
 
-      // Update variant entity
-      Object.assign(variant, variantData);
-      variant.id = variantId; // Ensure ID is preserved
-
-      return await this.variantRepository.update(variant);
-    } catch (error) {
-      console.error("Error updating image variant:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Delete image variant
-   * @param {number} variantId Variant ID
-   * @returns {Promise<boolean>} True if deleted successfully
-   */
-  async deleteImageVariant(variantId) {
-    try {
-      const variant = await this.variantRepository.getById(variantId);
-      if (!variant) {
-        throw new Error("Variant not found");
+      // Update order for each image
+      for (let i = 0; i < imageIds.length; i++) {
+        await this.imageRepository.updateOrder(imageIds[i], i);
       }
 
-      return await this.variantRepository.delete(variant);
+      return true;
     } catch (error) {
-      console.error("Error deleting image variant:", error);
+      console.error("Error reordering images:", error);
       throw error;
     }
   }
 
   /**
-   * List image variants
-   * @param {number} imageId Image ID
-   * @returns {Promise<ProductImageVariant[]>} Array of variants
+   * Create a new product image
+   * @param {Object} data Image data
+   * @returns {Promise<ProductImage>} Created image
    */
-  async listImageVariants(imageId) {
+  async createImage(data: any): Promise<ProductImage> {
     try {
-      return await this.variantRepository.listByImage(imageId);
+      const image = new ProductImage(data);
+      const createdImage = await this.imageRepository.create(image);
+      return createdImage;
     } catch (error) {
-      console.error("Error listing image variants:", error);
+      console.error("Error creating image:", error);
       throw error;
     }
   }
 
   /**
-   * Get top products (for admin dashboard)
-   * @param {number} limit Number of products to return
-   * @returns {Promise<Array>} List of top products
-   */
-  async getTopProducts(limit = 5) {
-    try {
-      // For now, return the most recent products
-      // In a real implementation, this would be based on sales data
-      const products = await this.productRepository.list({
-        limit: limit,
-        orderBy: "created_at",
-        orderDirection: "DESC",
-      });
-
-      return products;
-    } catch (error) {
-      console.error("Error getting top products:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Toggle product status (active/inactive)
+   * Update a product
    * @param {number} id Product ID
+   * @param {Object} data Product data
    * @returns {Promise<Product>} Updated product
    */
-  async toggleProductStatus(id) {
+  async updateProduct(id: number, data: any): Promise<Product> {
     try {
-      const product = await this.productRepository.getById(id);
-      if (!product) {
-        throw new Error("Product not found");
-      }
-
-      // Toggle the isActive status
-      const newStatus = !product.isActive;
-
-      // Use direct database update to avoid validation issues
-      const result = await this.productRepository.pool.query(
-        `UPDATE products 
-         SET is_active = $1, updated_at = NOW()
-         WHERE id = $2
-         RETURNING id, name, description, price, vat_rate, category_id, 
-                   is_active, created_at, updated_at`,
-        [newStatus, id]
-      );
-
-      if (result.rows.length === 0) {
-        throw new Error("Product not found");
-      }
-
-      return Product.fromDbRow(result.rows[0]);
+      const product = await this.productRepository.update(id, data);
+      return product;
     } catch (error) {
-      console.error("Error toggling product status:", error);
+      console.error("Error updating product:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a product
+   * @param {number} id Product ID
+   * @returns {Promise<boolean>} Success status
+   */
+  async deleteProduct(id: number): Promise<boolean> {
+    try {
+      const success = await this.productRepository.delete(id);
+      return success;
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Activate a product
+   * @param {number} id Product ID
+   * @returns {Promise<Product>} Activated product
+   */
+  async activateProduct(id: number): Promise<Product> {
+    try {
+      const product = await this.productRepository.activate(id);
+      return product;
+    } catch (error) {
+      console.error("Error activating product:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Deactivate a product
+   * @param {number} id Product ID
+   * @returns {Promise<Product>} Deactivated product
+   */
+  async deactivateProduct(id: number): Promise<Product> {
+    try {
+      const product = await this.productRepository.deactivate(id);
+      return product;
+    } catch (error) {
+      console.error("Error deactivating product:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete an image
+   * @param {number} productId Product ID
+   * @param {number} imageId Image ID
+   * @returns {Promise<boolean>} Success status
+   */
+  async deleteImage(productId: number, imageId: number): Promise<boolean> {
+    try {
+      const success = await this.imageRepository.delete(imageId);
+      return success;
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a category by ID
+   * @param {number} id Category ID
+   * @returns {Promise<Category>} Category
+   */
+  async getCategoryById(id: number): Promise<Category> {
+    try {
+      const category = await this.categoryRepository.findById(id);
+      return category;
+    } catch (error) {
+      console.error("Error getting category:", error);
       throw error;
     }
   }
 }
-
-module.exports = ProductService;

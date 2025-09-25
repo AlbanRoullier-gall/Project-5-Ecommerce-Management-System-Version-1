@@ -2,10 +2,13 @@
  * ProductImageRepository
  * Handles database operations for ProductImage entities
  */
-const ProductImage = require("../models/ProductImage");
+import { Pool } from "pg";
+import ProductImage from "../models/ProductImage";
 
-class ProductImageRepository {
-  constructor(pool) {
+export default class ProductImageRepository {
+  private pool: Pool;
+
+  constructor(pool: Pool) {
     this.pool = pool;
   }
 
@@ -14,7 +17,7 @@ class ProductImageRepository {
    * @param {number} id Image ID
    * @returns {Promise<ProductImage|null>} ProductImage or null if not found
    */
-  async getById(id) {
+  async getById(id: number): Promise<ProductImage | null> {
     try {
       const result = await this.pool.query(
         `SELECT id, product_id, filename, file_path, file_size, mime_type, width, 
@@ -40,7 +43,7 @@ class ProductImageRepository {
    * @param {number} productId Product ID
    * @returns {Promise<ProductImage[]>} Array of images
    */
-  async listByProduct(productId) {
+  async listByProduct(productId: number): Promise<ProductImage[]> {
     try {
       const result = await this.pool.query(
         `SELECT id, product_id, filename, file_path, file_size, mime_type, width, 
@@ -63,7 +66,7 @@ class ProductImageRepository {
    * @param {number} productId Product ID
    * @returns {Promise<ProductImage[]>} Array of active images
    */
-  async listActiveByProduct(productId) {
+  async listActiveByProduct(productId: number): Promise<ProductImage[]> {
     try {
       const result = await this.pool.query(
         `SELECT id, product_id, filename, file_path, file_size, mime_type, width, 
@@ -86,7 +89,7 @@ class ProductImageRepository {
    * @param {ProductImage} image Image entity to save
    * @returns {Promise<ProductImage>} Saved image with ID
    */
-  async save(image) {
+  async save(image: ProductImage): Promise<ProductImage> {
     try {
       const validation = image.validate();
       if (!validation.isValid) {
@@ -128,7 +131,7 @@ class ProductImageRepository {
    * @param {ProductImage} image Image entity to update
    * @returns {Promise<ProductImage>} Updated image
    */
-  async update(image) {
+  async update(image: ProductImage): Promise<ProductImage> {
     try {
       const validation = image.validate();
       if (!validation.isValid) {
@@ -176,7 +179,7 @@ class ProductImageRepository {
    * @param {ProductImage} image Image entity to delete
    * @returns {Promise<boolean>} True if deleted successfully
    */
-  async delete(image) {
+  async delete(image: ProductImage): Promise<boolean> {
     try {
       const result = await this.pool.query(
         "DELETE FROM product_images WHERE id = $1 RETURNING id",
@@ -195,7 +198,7 @@ class ProductImageRepository {
    * @param {number} id Image ID
    * @returns {Promise<boolean>} True if activated successfully
    */
-  async activate(id) {
+  async activate(id: number): Promise<boolean> {
     try {
       const result = await this.pool.query(
         "UPDATE product_images SET is_active = true, updated_at = NOW() WHERE id = $1 RETURNING id",
@@ -214,7 +217,7 @@ class ProductImageRepository {
    * @param {number} id Image ID
    * @returns {Promise<boolean>} True if deactivated successfully
    */
-  async deactivate(id) {
+  async deactivate(id: number): Promise<boolean> {
     try {
       const result = await this.pool.query(
         "UPDATE product_images SET is_active = false, updated_at = NOW() WHERE id = $1 RETURNING id",
@@ -234,7 +237,7 @@ class ProductImageRepository {
    * @param {number} orderIndex New order index
    * @returns {Promise<boolean>} True if updated successfully
    */
-  async updateOrder(id, orderIndex) {
+  async updateOrder(id: number, orderIndex: number): Promise<boolean> {
     try {
       const result = await this.pool.query(
         "UPDATE product_images SET order_index = $1, updated_at = NOW() WHERE id = $2 RETURNING id",
@@ -253,7 +256,7 @@ class ProductImageRepository {
    * @param {number} productId Product ID
    * @returns {Promise<number>} Number of images
    */
-  async countByProduct(productId) {
+  async countByProduct(productId: number): Promise<number> {
     try {
       const result = await this.pool.query(
         "SELECT COUNT(*) FROM product_images WHERE product_id = $1",
@@ -272,7 +275,7 @@ class ProductImageRepository {
    * @param {number} productId Product ID
    * @returns {Promise<number>} Next order index
    */
-  async getNextOrderIndex(productId) {
+  async getNextOrderIndex(productId: number): Promise<number> {
     try {
       const result = await this.pool.query(
         "SELECT MAX(order_index) FROM product_images WHERE product_id = $1",
@@ -285,6 +288,64 @@ class ProductImageRepository {
       throw new Error("Failed to get next order index");
     }
   }
-}
 
-module.exports = ProductImageRepository;
+  /**
+   * Create a new image
+   * @param {ProductImage} image Image entity to create
+   * @returns {Promise<ProductImage>} Created image
+   */
+  async create(image: ProductImage): Promise<ProductImage> {
+    try {
+      const validation = image.validate();
+      if (!validation.isValid) {
+        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
+      }
+
+      const result = await this.pool.query(
+        `INSERT INTO product_images (product_id, filename, file_path, file_size, 
+                                   mime_type, width, height, alt_text, description, 
+                                   is_active, order_index, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+         RETURNING id, product_id, filename, file_path, file_size, mime_type, 
+                   width, height, alt_text, description, is_active, order_index, 
+                   created_at, updated_at`,
+        [
+          image.productId,
+          image.filename,
+          image.filePath,
+          image.fileSize,
+          image.mimeType,
+          image.width,
+          image.height,
+          image.altText,
+          image.description,
+          image.isActive,
+          image.orderIndex,
+        ]
+      );
+
+      return ProductImage.fromDbRow(result.rows[0]);
+    } catch (error) {
+      console.error("Error creating image:", error);
+      throw new Error("Failed to create image");
+    }
+  }
+
+  /**
+   * Delete an image
+   * @param {number} id Image ID
+   * @returns {Promise<boolean>} Success status
+   */
+  async delete(id: number): Promise<boolean> {
+    try {
+      const result = await this.pool.query(
+        "DELETE FROM product_images WHERE id = $1",
+        [id]
+      );
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      throw error;
+    }
+  }
+}

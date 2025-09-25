@@ -6,13 +6,16 @@
  */
 
 // ===== IMPORTS ET CONFIGURATION =====
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const morgan = require("morgan");
-const nodemailer = require("nodemailer");
-const Joi = require("joi");
-require("dotenv").config();
+import express, { Request, Response, NextFunction } from "express";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import nodemailer, { Transporter } from "nodemailer";
+import Joi from "joi";
+import dotenv from "dotenv";
+import { ContactEmailRequest, MailOptions } from "./types";
+
+dotenv.config();
 
 // Configuration du serveur Express
 const app = express();
@@ -22,7 +25,7 @@ const PORT = process.env.PORT || 3007;
  * Configuration du transporteur email avec Gmail
  * Utilise les identifiants Gmail pour l'envoi d'emails
  */
-const transporter = nodemailer.createTransport({
+const transporter: Transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: "u4999410740@gmail.com",
@@ -39,15 +42,13 @@ app.use(cors()); // Gestion CORS
 app.use(express.json()); // Parsing JSON
 app.use(morgan("combined")); // Logging des requêtes
 
-// Note: Pas de schéma de validation Joi global - validation manuelle dans les routes
-
 // ===== ROUTES =====
 
 /**
  * Route de santé du service
  * Permet de vérifier que le service email fonctionne correctement
  */
-app.get("/health", (req, res) => {
+app.get("/health", (req: Request, res: Response): void => {
   res.json({ status: "OK", service: "email-service" });
 });
 
@@ -65,28 +66,30 @@ app.get("/health", (req, res) => {
  * @param {string} [req.body.subject] - Sujet du message (optionnel)
  * @param {string} [req.body.message] - Message du client (optionnel)
  */
-app.post("/api/contact", async (req, res) => {
+app.post("/api/contact", async (req: Request, res: Response): Promise<void> => {
   try {
     // ===== VALIDATION DES DONNÉES =====
     /**
      * Validation de l'email (seul champ obligatoire)
      * Les autres champs sont optionnels avec des valeurs par défaut
      */
-    const { email } = req.body;
+    const { email } = req.body as ContactEmailRequest;
     if (!email) {
-      return res.status(400).json({
+      res.status(400).json({
         error: "Validation error",
         details: "Email is required",
       });
+      return;
     }
 
     // Validation du format email avec Joi
     const emailValidation = Joi.string().email().validate(email);
     if (emailValidation.error) {
-      return res.status(400).json({
+      res.status(400).json({
         error: "Validation error",
         details: "Email must be valid",
       });
+      return;
     }
 
     // ===== EXTRACTION ET PRÉPARATION DES DONNÉES =====
@@ -150,7 +153,7 @@ Répondre à: ${email}
      * Options pour l'email envoyé à l'entreprise
      * Le replyTo permet de répondre directement au client
      */
-    const mailOptions = {
+    const mailOptions: MailOptions = {
       from: "u4999410740@gmail.com",
       to: "u4999410740@gmail.com", // Adresse email de l'entreprise
       replyTo: email, // Permet de répondre directement au client
@@ -230,7 +233,7 @@ L'équipe Nature de Pierre
       /**
        * Configuration de l'email de confirmation
        */
-      const confirmationMailOptions = {
+      const confirmationMailOptions: MailOptions = {
         from: "u4999410740@gmail.com",
         to: email, // Email du client
         subject: `Confirmation de réception - ${displaySubject}`,
@@ -278,7 +281,7 @@ L'équipe Nature de Pierre
  * Middleware de gestion des erreurs globales
  * Capture toutes les erreurs non gérées dans l'application
  */
-app.use((err, req, res, next) => {
+app.use((err: any, req: Request, res: Response, next: NextFunction): void => {
   console.error(err.stack);
   res.status(500).json({ error: "Erreur interne du serveur" });
 });
@@ -287,7 +290,7 @@ app.use((err, req, res, next) => {
  * Handler pour les routes non trouvées (404)
  * Doit être placé en dernier pour capturer toutes les routes non définies
  */
-app.use("*", (req, res) => {
+app.use("*", (req: Request, res: Response): void => {
   res.status(404).json({ error: "Route non trouvée" });
 });
 
