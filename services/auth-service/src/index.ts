@@ -10,29 +10,32 @@
  */
 
 // ===== IMPORTS ET CONFIGURATION =====
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const jwt = require("jsonwebtoken");
-const { Pool } = require("pg");
-const Joi = require("joi");
-const morgan = require("morgan");
-const { v4: uuidv4 } = require("uuid");
-const AuthService = require("./services/AuthService");
-require("dotenv").config();
+import express, { Request, Response, NextFunction } from "express";
+import cors from "cors";
+import helmet from "helmet";
+import jwt from "jsonwebtoken";
+import { Pool } from "pg";
+import Joi from "joi";
+import morgan from "morgan";
+// import { v4 as uuidv4 } from 'uuid'; // Not used in this file
+import { AuthService } from "./services/AuthService";
+import { JWTPayload } from "./types";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Configuration du serveur Express
 const app = express();
-const PORT = process.env.PORT || 3008;
+const PORT = process.env["PORT"] || 3008;
 
 /**
  * Configuration de la connexion à la base de données PostgreSQL
  * SSL activé en production pour la sécurité
  */
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env["DATABASE_URL"],
   ssl:
-    process.env.NODE_ENV === "production"
+    process.env["NODE_ENV"] === "production"
       ? { rejectUnauthorized: false }
       : false,
 });
@@ -53,7 +56,7 @@ app.use(morgan("combined")); // Logging des requêtes
  * Configuration du secret JWT pour la signature des tokens
  * Utilise une variable d'environnement ou une valeur par défaut
  */
-const JWT_SECRET = process.env.JWT_SECRET || "your-jwt-secret-key";
+const JWT_SECRET = process.env["JWT_SECRET"] || "your-jwt-secret-key";
 
 // ===== MIDDLEWARES D'AUTHENTIFICATION =====
 /**
@@ -61,19 +64,25 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-jwt-secret-key";
  * Vérifie la validité du token dans l'en-tête Authorization
  * Ajoute les informations utilisateur à req.user si valide
  */
-const authenticateToken = (req, res, next) => {
+const authenticateToken = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ error: "Access token required" });
+    res.status(401).json({ error: "Access token required" });
+    return;
   }
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
+  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
     if (err) {
-      return res.status(403).json({ error: "Invalid or expired token" });
+      res.status(403).json({ error: "Invalid or expired token" });
+      return;
     }
-    req.user = user;
+    (req as any).user = user;
     next();
   });
 };
@@ -83,9 +92,15 @@ const authenticateToken = (req, res, next) => {
  * Doit être utilisé après authenticateToken
  * Vérifie que l'utilisateur a le rôle "admin"
  */
-const authenticateAdmin = (req, res, next) => {
-  if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({ error: "Admin access required" });
+const authenticateAdmin = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const user = (req as any).user as JWTPayload;
+  if (!user || user.role !== "admin") {
+    res.status(403).json({ error: "Admin access required" });
+    return;
   }
   next();
 };
@@ -146,7 +161,7 @@ const updateUserSchema = Joi.object({
  * Route de santé du service
  * Permet de vérifier que le service d'authentification fonctionne correctement
  */
-app.get("/health", (req, res) => {
+app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "OK", service: "auth-service" });
 });
 
@@ -163,11 +178,13 @@ app.get("/health", (req, res) => {
  *
  * @returns {Object} Utilisateur créé et token JWT
  */
-app.post("/api/auth/register", async (req, res) => {
+app.post("/api/auth/register", async (req: Request, res: Response) => {
   try {
     const { error, value } = registerSchema.validate(req.body);
     if (error) {
-      return res.status(400).json({ error: error.details[0].message });
+      return res
+        .status(400)
+        .json({ error: error.details[0]?.message || "Validation error" });
     }
 
     const user = await authService.registerUser(value);
@@ -175,12 +192,12 @@ app.post("/api/auth/register", async (req, res) => {
     // Generate JWT token
     const token = authService.generateJWT(user);
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "User registered successfully",
       user: user.toPublicDTO(),
       token,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Registration error:", error);
     if (error.message === "User with this email already exists") {
       return res.status(409).json({ error: error.message });
@@ -204,11 +221,13 @@ app.post("/api/auth/register", async (req, res) => {
  *
  * @returns {Object} Utilisateur et token JWT
  */
-app.post("/api/auth/login", async (req, res) => {
+app.post("/api/auth/login", async (req: Request, res: Response) => {
   try {
     const { error, value } = loginSchema.validate(req.body);
     if (error) {
-      return res.status(400).json({ error: error.details[0].message });
+      return res
+        .status(400)
+        .json({ error: error.details[0]?.message || "Validation error" });
     }
 
     const { email, password } = value;
@@ -217,12 +236,12 @@ app.post("/api/auth/login", async (req, res) => {
     // Génération du token JWT
     const token = authService.generateJWT(user);
 
-    res.json({
+    return res.json({
       message: "Login successful",
       user: user.toPublicDTO(),
       token,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Login error:", error);
     if (
       error.message === "Invalid credentials" ||
@@ -241,18 +260,23 @@ app.post("/api/auth/login", async (req, res) => {
  *
  * @returns {Object} Profil de l'utilisateur
  */
-app.get("/api/auth/profile", authenticateToken, async (req, res) => {
-  try {
-    const user = await authService.getUserById(req.user.userId);
-    res.json(user.toPublicDTO());
-  } catch (error) {
-    console.error("Profile error:", error);
-    if (error.message === "User not found") {
-      return res.status(404).json({ error: error.message });
+app.get(
+  "/api/auth/profile",
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user as JWTPayload;
+      const userProfile = await authService.getUserById(user.userId);
+      res.json(userProfile.toPublicDTO());
+    } catch (error: any) {
+      console.error("Profile error:", error);
+      if (error.message === "User not found") {
+        return res.status(404).json({ error: error.message });
+      }
+      res.status(500).json({ error: "Internal server error" });
     }
-    res.status(500).json({ error: "Internal server error" });
   }
-});
+);
 
 /**
  * Route pour mettre à jour le profil de l'utilisateur connecté
@@ -266,39 +290,50 @@ app.get("/api/auth/profile", authenticateToken, async (req, res) => {
  *
  * @returns {Object} Profil mis à jour
  */
-app.put("/api/auth/profile", authenticateToken, async (req, res) => {
-  try {
-    const { error, value } = updateUserSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ error: error.details[0].message });
-    }
+app.put(
+  "/api/auth/profile",
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    try {
+      const { error, value } = updateUserSchema.validate(req.body);
+      if (error) {
+        return res
+          .status(400)
+          .json({ error: error.details[0]?.message || "Validation error" });
+      }
 
-    // Les utilisateurs ne peuvent modifier que certains champs de leur profil
-    const allowedFields = {
-      firstName: value.firstName,
-      lastName: value.lastName,
-    };
-    if (value.email && req.user.email !== value.email) {
-      allowedFields.email = value.email;
-    }
+      const user = (req as any).user as JWTPayload;
 
-    const user = await authService.updateUser(req.user.userId, allowedFields);
+      // Les utilisateurs ne peuvent modifier que certains champs de leur profil
+      const allowedFields: any = {
+        firstName: value.firstName,
+        lastName: value.lastName,
+      };
+      if (value.email && user.email !== value.email) {
+        allowedFields.email = value.email;
+      }
 
-    res.json({
-      message: "Profile updated successfully",
-      user: user.toPublicDTO(),
-    });
-  } catch (error) {
-    console.error("Profile update error:", error);
-    if (error.message === "User not found") {
-      return res.status(404).json({ error: error.message });
+      const updatedUser = await authService.updateUser(
+        user.userId,
+        allowedFields
+      );
+
+      res.json({
+        message: "Profile updated successfully",
+        user: updatedUser.toPublicDTO(),
+      });
+    } catch (error: any) {
+      console.error("Profile update error:", error);
+      if (error.message === "User not found") {
+        return res.status(404).json({ error: error.message });
+      }
+      if (error.message === "Invalid email format") {
+        return res.status(400).json({ error: error.message });
+      }
+      res.status(500).json({ error: "Internal server error" });
     }
-    if (error.message === "Invalid email format") {
-      return res.status(400).json({ error: error.message });
-    }
-    res.status(500).json({ error: "Internal server error" });
   }
-});
+);
 
 // ===== ROUTES DE GESTION DES MOTS DE PASSE =====
 /**
@@ -311,37 +346,44 @@ app.put("/api/auth/profile", authenticateToken, async (req, res) => {
  *
  * @returns {Object} Message de succès
  */
-app.post("/api/auth/change-password", authenticateToken, async (req, res) => {
-  try {
-    const { error, value } = changePasswordSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ error: error.details[0].message });
-    }
+app.post(
+  "/api/auth/change-password",
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    try {
+      const { error, value } = changePasswordSchema.validate(req.body);
+      if (error) {
+        return res
+          .status(400)
+          .json({ error: error.details[0]?.message || "Validation error" });
+      }
 
-    const { currentPassword, newPassword } = value;
-    await authService.changePassword(
-      req.user.userId,
-      currentPassword,
-      newPassword
-    );
+      const { currentPassword, newPassword } = value;
+      const user = (req as any).user as JWTPayload;
+      await authService.changePassword(
+        user.userId,
+        currentPassword,
+        newPassword
+      );
 
-    res.json({
-      message: "Password changed successfully",
-    });
-  } catch (error) {
-    console.error("Password change error:", error);
-    if (error.message === "User not found") {
-      return res.status(404).json({ error: error.message });
+      res.json({
+        message: "Password changed successfully",
+      });
+    } catch (error: any) {
+      console.error("Password change error:", error);
+      if (error.message === "User not found") {
+        return res.status(404).json({ error: error.message });
+      }
+      if (error.message === "Current password is incorrect") {
+        return res.status(400).json({ error: error.message });
+      }
+      if (error.message.includes("Password validation failed")) {
+        return res.status(400).json({ error: error.message });
+      }
+      res.status(500).json({ error: "Internal server error" });
     }
-    if (error.message === "Current password is incorrect") {
-      return res.status(400).json({ error: error.message });
-    }
-    if (error.message.includes("Password validation failed")) {
-      return res.status(400).json({ error: error.message });
-    }
-    res.status(500).json({ error: "Internal server error" });
   }
-});
+);
 
 /**
  * Route pour demander une réinitialisation de mot de passe
@@ -352,7 +394,7 @@ app.post("/api/auth/change-password", authenticateToken, async (req, res) => {
  *
  * @returns {Object} Token de réinitialisation (dev uniquement)
  */
-app.post("/api/auth/forgot-password", async (req, res) => {
+app.post("/api/auth/forgot-password", async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -373,7 +415,7 @@ app.post("/api/auth/forgot-password", async (req, res) => {
       resetToken, // Uniquement pour le développement - à supprimer en production
       expiresAt,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Forgot password error:", error);
     if (error.message === "User not found") {
       return res.status(404).json({ error: error.message });
@@ -392,11 +434,13 @@ app.post("/api/auth/forgot-password", async (req, res) => {
  *
  * @returns {Object} Message de succès
  */
-app.post("/api/auth/reset-password", async (req, res) => {
+app.post("/api/auth/reset-password", async (req: Request, res: Response) => {
   try {
     const { error, value } = resetPasswordSchema.validate(req.body);
     if (error) {
-      return res.status(400).json({ error: error.details[0].message });
+      return res
+        .status(400)
+        .json({ error: error.details[0]?.message || "Validation error" });
     }
 
     const { token, newPassword } = value;
@@ -405,7 +449,7 @@ app.post("/api/auth/reset-password", async (req, res) => {
     res.json({
       message: "Password reset successfully",
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Password reset error:", error);
     if (error.message === "Password reset not found") {
       return res.status(404).json({ error: error.message });
@@ -432,12 +476,12 @@ app.get(
   "/api/admin/users",
   authenticateToken,
   authenticateAdmin,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { role } = req.query;
-      const users = await authService.listUsers(role);
+      const users = await authService.listUsers(role as string);
       res.json(users.map((user) => user.toPublicDTO()));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Admin users list error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
@@ -454,12 +498,12 @@ app.get(
   "/api/admin/users/:id",
   authenticateToken,
   authenticateAdmin,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const user = await authService.getUserById(parseInt(id));
+      const user = await authService.getUserById(parseInt(id!));
       res.json(user.toPublicDTO());
-    } catch (error) {
+    } catch (error: any) {
       console.error("Admin user details error:", error);
       if (error.message === "User not found") {
         return res.status(404).json({ error: error.message });
@@ -481,21 +525,23 @@ app.put(
   "/api/admin/users/:id",
   authenticateToken,
   authenticateAdmin,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { error, value } = updateUserSchema.validate(req.body);
       if (error) {
-        return res.status(400).json({ error: error.details[0].message });
+        return res
+          .status(400)
+          .json({ error: error.details[0]?.message || "Validation error" });
       }
 
-      const user = await authService.updateUser(parseInt(id), value);
+      const user = await authService.updateUser(parseInt(id!), value);
 
       res.json({
         message: "User updated successfully",
         user: user.toPublicDTO(),
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Admin user update error:", error);
       if (error.message === "User not found") {
         return res.status(404).json({ error: error.message });
@@ -518,15 +564,15 @@ app.delete(
   "/api/admin/users/:id",
   authenticateToken,
   authenticateAdmin,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      await authService.deleteUser(parseInt(id));
+      await authService.deleteUser(parseInt(id!));
 
       res.json({
         message: "User deleted successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Admin user deletion error:", error);
       if (error.message === "User not found") {
         return res.status(404).json({ error: error.message });
@@ -546,15 +592,15 @@ app.post(
   "/api/admin/users/:id/activate",
   authenticateToken,
   authenticateAdmin,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      await authService.activateUser(parseInt(id));
+      await authService.activateUser(parseInt(id!));
 
       res.json({
         message: "User activated successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Admin user activation error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
@@ -571,15 +617,15 @@ app.post(
   "/api/admin/users/:id/deactivate",
   authenticateToken,
   authenticateAdmin,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      await authService.deactivateUser(parseInt(id));
+      await authService.deactivateUser(parseInt(id!));
 
       res.json({
         message: "User deactivated successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Admin user deactivation error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
@@ -593,15 +639,20 @@ app.post(
  *
  * @returns {Array} Liste des sessions actives
  */
-app.get("/api/auth/sessions", authenticateToken, async (req, res) => {
-  try {
-    const sessions = await authService.getUserSessions(req.user.userId);
-    res.json(sessions.map((session) => session.toPublicDTO()));
-  } catch (error) {
-    console.error("User sessions error:", error);
-    res.status(500).json({ error: "Internal server error" });
+app.get(
+  "/api/auth/sessions",
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user as JWTPayload;
+      const sessions = await authService.getUserSessions(user.userId);
+      res.json(sessions.map((session) => session.toPublicDTO()));
+    } catch (error: any) {
+      console.error("User sessions error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
-});
+);
 
 /**
  * Route pour supprimer une session spécifique
@@ -613,15 +664,15 @@ app.get("/api/auth/sessions", authenticateToken, async (req, res) => {
 app.delete(
   "/api/auth/sessions/:sessionId",
   authenticateToken,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { sessionId } = req.params;
-      await authService.deleteSession(parseInt(sessionId));
+      await authService.deleteSession(parseInt(sessionId!));
 
       res.json({
         message: "Session deleted successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Session deletion error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
@@ -634,18 +685,22 @@ app.delete(
  *
  * @returns {Object} Message de succès
  */
-app.post("/api/auth/logout", authenticateToken, async (req, res) => {
-  try {
-    // Dans une vraie application, on invaliderait le token JWT
-    // Pour l'instant, on retourne juste un message de succès
-    res.json({
-      message: "Logout successful",
-    });
-  } catch (error) {
-    console.error("Logout error:", error);
-    res.status(500).json({ error: "Internal server error" });
+app.post(
+  "/api/auth/logout",
+  authenticateToken,
+  async (_req: Request, res: Response) => {
+    try {
+      // Dans une vraie application, on invaliderait le token JWT
+      // Pour l'instant, on retourne juste un message de succès
+      res.json({
+        message: "Logout successful",
+      });
+    } catch (error: any) {
+      console.error("Logout error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
-});
+);
 
 // ===== ROUTES DE MAINTENANCE (ADMIN UNIQUEMENT) =====
 /**
@@ -658,14 +713,14 @@ app.post(
   "/api/admin/cleanup/sessions",
   authenticateToken,
   authenticateAdmin,
-  async (req, res) => {
+  async (_req: Request, res: Response) => {
     try {
       const deletedCount = await authService.cleanupExpiredSessions();
       res.json({
         message: "Expired sessions cleaned up",
         deletedCount,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Session cleanup error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
@@ -682,14 +737,14 @@ app.post(
   "/api/admin/cleanup/password-resets",
   authenticateToken,
   authenticateAdmin,
-  async (req, res) => {
+  async (_req: Request, res: Response) => {
     try {
       const deletedCount = await authService.cleanupExpiredPasswordResets();
       res.json({
         message: "Expired password resets cleaned up",
         deletedCount,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Password reset cleanup error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
@@ -701,7 +756,7 @@ app.post(
  * Middleware de gestion des erreurs globales
  * Capture toutes les erreurs non gérées dans l'application
  */
-app.use((err, req, res, next) => {
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ error: "Something went wrong!" });
 });
@@ -710,7 +765,7 @@ app.use((err, req, res, next) => {
  * Handler pour les routes non trouvées (404)
  * Doit être placé en dernier pour capturer toutes les routes non définies
  */
-app.use("*", (req, res) => {
+app.use("*", (_req: Request, res: Response) => {
   res.status(404).json({ error: "Route not found" });
 });
 
@@ -722,4 +777,4 @@ app.listen(PORT, () => {
   console.log(`Auth service running on port ${PORT}`);
 });
 
-module.exports = app;
+export default app;

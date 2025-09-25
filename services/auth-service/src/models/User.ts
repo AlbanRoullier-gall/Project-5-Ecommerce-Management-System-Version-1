@@ -2,48 +2,59 @@
  * User Model
  * Represents a user in the authentication system
  */
-const bcrypt = require("bcryptjs");
+import bcrypt from "bcryptjs";
+import { UserData, UserPublicDTO, PasswordValidationResult } from "../types";
 
-class User {
-  constructor(data) {
-    this.userId = data.user_id;
+export class User {
+  public readonly userId: number;
+  public readonly email: string;
+  public readonly passwordHash: string;
+  public readonly firstName: string;
+  public readonly lastName: string;
+  public readonly role: "admin" | "customer";
+  public readonly isActive: boolean;
+  public readonly createdAt: Date;
+  public readonly updatedAt: Date;
+
+  constructor(data: UserData) {
+    this.userId = data.user_id!;
     this.email = data.email;
     this.passwordHash = data.password_hash;
     this.firstName = data.first_name;
     this.lastName = data.last_name;
     this.role = data.role;
     this.isActive = data.is_active;
-    this.createdAt = data.created_at;
-    this.updatedAt = data.updated_at;
+    this.createdAt = data.created_at!;
+    this.updatedAt = data.updated_at!;
   }
 
   /**
    * Get full name
    * @returns {string} Full name
    */
-  fullName() {
+  fullName(): string {
     return `${this.firstName} ${this.lastName}`.trim();
   }
 
   /**
    * Activate user
    */
-  activate() {
-    this.isActive = true;
+  activate(): void {
+    (this as any).isActive = true;
   }
 
   /**
    * Deactivate user
    */
-  deactivate() {
-    this.isActive = false;
+  deactivate(): void {
+    (this as any).isActive = false;
   }
 
   /**
    * Check if user is admin
    * @returns {boolean} True if admin
    */
-  isAdmin() {
+  isAdmin(): boolean {
     return this.role === "admin";
   }
 
@@ -51,7 +62,7 @@ class User {
    * Check if user is customer
    * @returns {boolean} True if customer
    */
-  isCustomer() {
+  isCustomer(): boolean {
     return this.role === "customer";
   }
 
@@ -60,7 +71,7 @@ class User {
    * @param {string} password Plain password
    * @returns {Promise<boolean>} True if valid
    */
-  async validatePassword(password) {
+  async validatePassword(password: string): Promise<boolean> {
     return await bcrypt.compare(password, this.passwordHash);
   }
 
@@ -69,7 +80,7 @@ class User {
    * @param {string} password Plain password
    * @returns {Promise<string>} Hashed password
    */
-  static async hashPassword(password) {
+  static async hashPassword(password: string): Promise<string> {
     const saltRounds = 10;
     return await bcrypt.hash(password, saltRounds);
   }
@@ -79,8 +90,8 @@ class User {
    * @param {string} password Plain password
    * @returns {Object} Validation result
    */
-  static validatePassword(password) {
-    const errors = [];
+  static validatePassword(password: string): PasswordValidationResult {
+    const errors: string[] = [];
 
     if (!password) {
       errors.push("Password is required");
@@ -113,7 +124,7 @@ class User {
    * @param {string} email Email address
    * @returns {boolean} True if valid
    */
-  static validateEmail(email) {
+  static validateEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
@@ -122,7 +133,7 @@ class User {
    * Convert to public DTO (without sensitive data)
    * @returns {Object} Public user data
    */
-  toPublicDTO() {
+  toPublicDTO(): UserPublicDTO {
     return {
       userId: this.userId,
       email: this.email,
@@ -140,7 +151,7 @@ class User {
    * Convert to database object
    * @returns {Object} Database object
    */
-  toDatabaseObject() {
+  toDatabaseObject(): UserData {
     return {
       user_id: this.userId,
       email: this.email,
@@ -154,5 +165,3 @@ class User {
     };
   }
 }
-
-module.exports = User;

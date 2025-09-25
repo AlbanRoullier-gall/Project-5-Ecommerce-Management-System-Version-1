@@ -2,10 +2,14 @@
  * UserRepository
  * Data access layer for User entities
  */
-const User = require("../models/User");
+import { Pool } from "pg";
+import { User } from "../models/User";
+import { UserData } from "../types";
 
-class UserRepository {
-  constructor(pool) {
+export class UserRepository {
+  private pool: Pool;
+
+  constructor(pool: Pool) {
     this.pool = pool;
   }
 
@@ -14,7 +18,7 @@ class UserRepository {
    * @param {number} id User ID
    * @returns {Promise<User|null>} User or null
    */
-  async getById(id) {
+  async getById(id: number): Promise<User | null> {
     try {
       const query = `
         SELECT user_id, email, password_hash, first_name, last_name, role, 
@@ -28,7 +32,7 @@ class UserRepository {
         return null;
       }
 
-      return new User(result.rows[0]);
+      return new User(result.rows[0] as UserData);
     } catch (error) {
       console.error("Error getting user by ID:", error);
       throw error;
@@ -40,7 +44,7 @@ class UserRepository {
    * @param {string} email User email
    * @returns {Promise<User|null>} User or null
    */
-  async getByEmail(email) {
+  async getByEmail(email: string): Promise<User | null> {
     try {
       const query = `
         SELECT user_id, email, password_hash, first_name, last_name, role, 
@@ -54,7 +58,7 @@ class UserRepository {
         return null;
       }
 
-      return new User(result.rows[0]);
+      return new User(result.rows[0] as UserData);
     } catch (error) {
       console.error("Error getting user by email:", error);
       throw error;
@@ -65,7 +69,7 @@ class UserRepository {
    * List all active users
    * @returns {Promise<User[]>} List of users
    */
-  async listAllActive() {
+  async listAllActive(): Promise<User[]> {
     try {
       const query = `
         SELECT user_id, email, password_hash, first_name, last_name, role, 
@@ -76,7 +80,7 @@ class UserRepository {
       `;
       const result = await this.pool.query(query);
 
-      return result.rows.map((row) => new User(row));
+      return result.rows.map((row) => new User(row as UserData));
     } catch (error) {
       console.error("Error listing active users:", error);
       throw error;
@@ -88,7 +92,7 @@ class UserRepository {
    * @param {string} role User role
    * @returns {Promise<User[]>} List of users
    */
-  async listByRole(role) {
+  async listByRole(role: string): Promise<User[]> {
     try {
       const query = `
         SELECT user_id, email, password_hash, first_name, last_name, role, 
@@ -99,7 +103,7 @@ class UserRepository {
       `;
       const result = await this.pool.query(query, [role]);
 
-      return result.rows.map((row) => new User(row));
+      return result.rows.map((row) => new User(row as UserData));
     } catch (error) {
       console.error("Error listing users by role:", error);
       throw error;
@@ -111,7 +115,7 @@ class UserRepository {
    * @param {User} user User to save
    * @returns {Promise<User>} Saved user
    */
-  async save(user) {
+  async save(user: User): Promise<User> {
     try {
       const query = `
         INSERT INTO users (email, password_hash, first_name, last_name, role, is_active)
@@ -129,7 +133,7 @@ class UserRepository {
       ];
 
       const result = await this.pool.query(query, values);
-      return new User(result.rows[0]);
+      return new User(result.rows[0] as UserData);
     } catch (error) {
       console.error("Error saving user:", error);
       throw error;
@@ -141,7 +145,7 @@ class UserRepository {
    * @param {User} user User to update
    * @returns {Promise<User>} Updated user
    */
-  async update(user) {
+  async update(user: User): Promise<User> {
     try {
       const query = `
         UPDATE users 
@@ -167,7 +171,7 @@ class UserRepository {
         throw new Error("User not found");
       }
 
-      return new User(result.rows[0]);
+      return new User(result.rows[0] as UserData);
     } catch (error) {
       console.error("Error updating user:", error);
       throw error;
@@ -179,12 +183,12 @@ class UserRepository {
    * @param {User} user User to delete
    * @returns {Promise<boolean>} True if deleted
    */
-  async delete(user) {
+  async delete(user: User): Promise<boolean> {
     try {
       const query = "DELETE FROM users WHERE user_id = $1";
       const result = await this.pool.query(query, [user.userId]);
 
-      return result.rowCount > 0;
+      return result.rowCount! > 0;
     } catch (error) {
       console.error("Error deleting user:", error);
       throw error;
@@ -196,7 +200,7 @@ class UserRepository {
    * @param {string} email Email to check
    * @returns {Promise<boolean>} True if exists
    */
-  async existsByEmail(email) {
+  async existsByEmail(email: string): Promise<boolean> {
     try {
       const query = "SELECT 1 FROM users WHERE email = $1 LIMIT 1";
       const result = await this.pool.query(query, [email.toLowerCase()]);
@@ -214,7 +218,7 @@ class UserRepository {
    * @param {string} passwordHash New password hash
    * @returns {Promise<boolean>} True if updated
    */
-  async updatePassword(userId, passwordHash) {
+  async updatePassword(userId: number, passwordHash: string): Promise<boolean> {
     try {
       const query = `
         UPDATE users 
@@ -223,7 +227,7 @@ class UserRepository {
       `;
       const result = await this.pool.query(query, [passwordHash, userId]);
 
-      return result.rowCount > 0;
+      return result.rowCount! > 0;
     } catch (error) {
       console.error("Error updating password:", error);
       throw error;
@@ -235,7 +239,7 @@ class UserRepository {
    * @param {number} userId User ID
    * @returns {Promise<boolean>} True if activated
    */
-  async activate(userId) {
+  async activate(userId: number): Promise<boolean> {
     try {
       const query = `
         UPDATE users 
@@ -244,7 +248,7 @@ class UserRepository {
       `;
       const result = await this.pool.query(query, [userId]);
 
-      return result.rowCount > 0;
+      return result.rowCount! > 0;
     } catch (error) {
       console.error("Error activating user:", error);
       throw error;
@@ -256,7 +260,7 @@ class UserRepository {
    * @param {number} userId User ID
    * @returns {Promise<boolean>} True if deactivated
    */
-  async deactivate(userId) {
+  async deactivate(userId: number): Promise<boolean> {
     try {
       const query = `
         UPDATE users 
@@ -265,12 +269,10 @@ class UserRepository {
       `;
       const result = await this.pool.query(query, [userId]);
 
-      return result.rowCount > 0;
+      return result.rowCount! > 0;
     } catch (error) {
       console.error("Error deactivating user:", error);
       throw error;
     }
   }
 }
-
-module.exports = UserRepository;

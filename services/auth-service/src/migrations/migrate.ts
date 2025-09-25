@@ -1,17 +1,19 @@
-const { Pool } = require("pg");
-const fs = require("fs");
-const path = require("path");
-require("dotenv").config();
+import { Pool } from "pg";
+import fs from "fs";
+import path from "path";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env["DATABASE_URL"],
   ssl:
-    process.env.NODE_ENV === "production"
+    process.env["NODE_ENV"] === "production"
       ? { rejectUnauthorized: false }
       : false,
 });
 
-async function runMigrations() {
+export async function runMigrations(): Promise<void> {
   const client = await pool.connect();
 
   try {
@@ -85,5 +87,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-
-module.exports = { runMigrations };

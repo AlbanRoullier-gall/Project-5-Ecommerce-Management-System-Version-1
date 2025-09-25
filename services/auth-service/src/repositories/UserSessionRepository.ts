@@ -2,10 +2,14 @@
  * UserSessionRepository
  * Data access layer for UserSession entities
  */
-const UserSession = require("../models/UserSession");
+import { Pool } from "pg";
+import { UserSession } from "../models/UserSession";
+import { UserSessionData } from "../types";
 
-class UserSessionRepository {
-  constructor(pool) {
+export class UserSessionRepository {
+  private pool: Pool;
+
+  constructor(pool: Pool) {
     this.pool = pool;
   }
 
@@ -14,7 +18,7 @@ class UserSessionRepository {
    * @param {number} id Session ID
    * @returns {Promise<UserSession|null>} Session or null
    */
-  async getById(id) {
+  async getById(id: number): Promise<UserSession | null> {
     try {
       const query = `
         SELECT session_id, user_id, token_hash, expires_at, created_at
@@ -27,7 +31,7 @@ class UserSessionRepository {
         return null;
       }
 
-      return new UserSession(result.rows[0]);
+      return new UserSession(result.rows[0] as UserSessionData);
     } catch (error) {
       console.error("Error getting session by ID:", error);
       throw error;
@@ -39,7 +43,7 @@ class UserSessionRepository {
    * @param {string} tokenHash Token hash
    * @returns {Promise<UserSession|null>} Session or null
    */
-  async getByTokenHash(tokenHash) {
+  async getByTokenHash(tokenHash: string): Promise<UserSession | null> {
     try {
       const query = `
         SELECT session_id, user_id, token_hash, expires_at, created_at
@@ -52,7 +56,7 @@ class UserSessionRepository {
         return null;
       }
 
-      return new UserSession(result.rows[0]);
+      return new UserSession(result.rows[0] as UserSessionData);
     } catch (error) {
       console.error("Error getting session by token hash:", error);
       throw error;
@@ -64,7 +68,7 @@ class UserSessionRepository {
    * @param {number} userId User ID
    * @returns {Promise<UserSession[]>} List of sessions
    */
-  async listByUser(userId) {
+  async listByUser(userId: number): Promise<UserSession[]> {
     try {
       const query = `
         SELECT session_id, user_id, token_hash, expires_at, created_at
@@ -74,7 +78,7 @@ class UserSessionRepository {
       `;
       const result = await this.pool.query(query, [userId]);
 
-      return result.rows.map((row) => new UserSession(row));
+      return result.rows.map((row) => new UserSession(row as UserSessionData));
     } catch (error) {
       console.error("Error listing sessions by user:", error);
       throw error;
@@ -86,7 +90,7 @@ class UserSessionRepository {
    * @param {number} userId User ID
    * @returns {Promise<UserSession[]>} List of active sessions
    */
-  async listActiveByUser(userId) {
+  async listActiveByUser(userId: number): Promise<UserSession[]> {
     try {
       const query = `
         SELECT session_id, user_id, token_hash, expires_at, created_at
@@ -96,7 +100,7 @@ class UserSessionRepository {
       `;
       const result = await this.pool.query(query, [userId]);
 
-      return result.rows.map((row) => new UserSession(row));
+      return result.rows.map((row) => new UserSession(row as UserSessionData));
     } catch (error) {
       console.error("Error listing active sessions by user:", error);
       throw error;
@@ -108,7 +112,7 @@ class UserSessionRepository {
    * @param {UserSession} session Session to save
    * @returns {Promise<UserSession>} Saved session
    */
-  async save(session) {
+  async save(session: UserSession): Promise<UserSession> {
     try {
       const query = `
         INSERT INTO user_sessions (user_id, token_hash, expires_at)
@@ -118,7 +122,7 @@ class UserSessionRepository {
       const values = [session.userId, session.tokenHash, session.expiresAt];
 
       const result = await this.pool.query(query, values);
-      return new UserSession(result.rows[0]);
+      return new UserSession(result.rows[0] as UserSessionData);
     } catch (error) {
       console.error("Error saving session:", error);
       throw error;
@@ -130,7 +134,7 @@ class UserSessionRepository {
    * @param {UserSession} session Session to update
    * @returns {Promise<UserSession>} Updated session
    */
-  async update(session) {
+  async update(session: UserSession): Promise<UserSession> {
     try {
       const query = `
         UPDATE user_sessions 
@@ -151,7 +155,7 @@ class UserSessionRepository {
         throw new Error("Session not found");
       }
 
-      return new UserSession(result.rows[0]);
+      return new UserSession(result.rows[0] as UserSessionData);
     } catch (error) {
       console.error("Error updating session:", error);
       throw error;
@@ -163,12 +167,12 @@ class UserSessionRepository {
    * @param {UserSession} session Session to delete
    * @returns {Promise<boolean>} True if deleted
    */
-  async delete(session) {
+  async delete(session: UserSession): Promise<boolean> {
     try {
       const query = "DELETE FROM user_sessions WHERE session_id = $1";
       const result = await this.pool.query(query, [session.sessionId]);
 
-      return result.rowCount > 0;
+      return result.rowCount! > 0;
     } catch (error) {
       console.error("Error deleting session:", error);
       throw error;
@@ -180,12 +184,12 @@ class UserSessionRepository {
    * @param {number} sessionId Session ID
    * @returns {Promise<boolean>} True if deleted
    */
-  async deleteById(sessionId) {
+  async deleteById(sessionId: number): Promise<boolean> {
     try {
       const query = "DELETE FROM user_sessions WHERE session_id = $1";
       const result = await this.pool.query(query, [sessionId]);
 
-      return result.rowCount > 0;
+      return result.rowCount! > 0;
     } catch (error) {
       console.error("Error deleting session by ID:", error);
       throw error;
@@ -197,12 +201,12 @@ class UserSessionRepository {
    * @param {number} userId User ID
    * @returns {Promise<number>} Number of deleted sessions
    */
-  async deleteByUser(userId) {
+  async deleteByUser(userId: number): Promise<number> {
     try {
       const query = "DELETE FROM user_sessions WHERE user_id = $1";
       const result = await this.pool.query(query, [userId]);
 
-      return result.rowCount;
+      return result.rowCount!;
     } catch (error) {
       console.error("Error deleting sessions by user:", error);
       throw error;
@@ -213,13 +217,13 @@ class UserSessionRepository {
    * Delete expired sessions
    * @returns {Promise<number>} Number of deleted sessions
    */
-  async deleteExpired() {
+  async deleteExpired(): Promise<number> {
     try {
       const query =
         "DELETE FROM user_sessions WHERE expires_at < CURRENT_TIMESTAMP";
       const result = await this.pool.query(query);
 
-      return result.rowCount;
+      return result.rowCount!;
     } catch (error) {
       console.error("Error deleting expired sessions:", error);
       throw error;
@@ -231,7 +235,7 @@ class UserSessionRepository {
    * @param {number} userId User ID
    * @returns {Promise<number>} Number of active sessions
    */
-  async countActiveByUser(userId) {
+  async countActiveByUser(userId: number): Promise<number> {
     try {
       const query = `
         SELECT COUNT(*) as count
@@ -247,5 +251,3 @@ class UserSessionRepository {
     }
   }
 }
-
-module.exports = UserSessionRepository;

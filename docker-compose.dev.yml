@@ -285,13 +285,18 @@ services:
   # Redis for caching and cart storage
   # Auth Service
   auth-service:
-    build: ./services/auth-service
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile.dev
     ports:
       - "13008:3008"
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://auth_user:auth_password@auth-db:5432/auth_db
       - JWT_SECRET=your-jwt-secret-key
+    volumes:
+      - ./services/auth-service/src:/app/src
+      - /app/node_modules
     depends_on:
       auth-db:
         condition: service_healthy

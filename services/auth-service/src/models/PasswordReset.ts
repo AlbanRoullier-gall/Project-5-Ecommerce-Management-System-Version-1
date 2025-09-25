@@ -2,20 +2,29 @@
  * PasswordReset Model
  * Represents a password reset request in the authentication system
  */
-class PasswordReset {
-  constructor(data) {
-    this.resetId = data.reset_id;
+import crypto from "crypto";
+import { PasswordResetData, PasswordResetPublicDTO } from "../types";
+
+export class PasswordReset {
+  public readonly resetId: number;
+  public readonly userId: number;
+  public readonly resetToken: string;
+  public readonly expiresAt: Date;
+  public readonly createdAt: Date;
+
+  constructor(data: PasswordResetData) {
+    this.resetId = data.reset_id!;
     this.userId = data.user_id;
     this.resetToken = data.reset_token;
     this.expiresAt = data.expires_at;
-    this.createdAt = data.created_at;
+    this.createdAt = data.created_at!;
   }
 
   /**
    * Check if reset token is expired
    * @returns {boolean} True if expired
    */
-  isExpired() {
+  isExpired(): boolean {
     return new Date() > new Date(this.expiresAt);
   }
 
@@ -23,22 +32,22 @@ class PasswordReset {
    * Check if reset token is valid (not expired)
    * @returns {boolean} True if valid
    */
-  isValid() {
+  isValid(): boolean {
     return !this.isExpired();
   }
 
   /**
    * Invalidate reset token (set to expired)
    */
-  invalidate() {
-    this.expiresAt = new Date();
+  invalidate(): void {
+    (this as any).expiresAt = new Date();
   }
 
   /**
    * Get time until expiration in milliseconds
    * @returns {number} Time until expiration
    */
-  getTimeUntilExpiration() {
+  getTimeUntilExpiration(): number {
     const now = new Date();
     const expiry = new Date(this.expiresAt);
     return expiry.getTime() - now.getTime();
@@ -49,8 +58,7 @@ class PasswordReset {
    * @param {number} length Token length
    * @returns {string} Random token
    */
-  static generateToken(length = 32) {
-    const crypto = require("crypto");
+  static generateToken(length: number = 32): string {
     return crypto.randomBytes(length).toString("hex");
   }
 
@@ -59,8 +67,7 @@ class PasswordReset {
    * @param {string} token Plain token
    * @returns {string} Hashed token
    */
-  static hashToken(token) {
-    const crypto = require("crypto");
+  static hashToken(token: string): string {
     return crypto.createHash("sha256").update(token).digest("hex");
   }
 
@@ -70,7 +77,7 @@ class PasswordReset {
    * @param {string} hash Token hash
    * @returns {boolean} True if valid
    */
-  static verifyToken(token, hash) {
+  static verifyToken(token: string, hash: string): boolean {
     return PasswordReset.hashToken(token) === hash;
   }
 
@@ -78,7 +85,7 @@ class PasswordReset {
    * Convert to public DTO
    * @returns {Object} Public reset data
    */
-  toPublicDTO() {
+  toPublicDTO(): PasswordResetPublicDTO {
     return {
       resetId: this.resetId,
       userId: this.userId,
@@ -93,7 +100,7 @@ class PasswordReset {
    * Convert to database object
    * @returns {Object} Database object
    */
-  toDatabaseObject() {
+  toDatabaseObject(): PasswordResetData {
     return {
       reset_id: this.resetId,
       user_id: this.userId,
@@ -103,5 +110,3 @@ class PasswordReset {
     };
   }
 }
-
-module.exports = PasswordReset;

@@ -2,21 +2,18 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Install ts-node-dev globally for development
+RUN npm install -g ts-node-dev
+
 # Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install all dependencies (including dev dependencies for TypeScript compilation)
+# Install all dependencies (including dev dependencies)
 RUN npm ci
 
 # Copy source code
 COPY src/ ./src/
-
-# Build TypeScript
-RUN npm run build
-
-# Remove dev dependencies to reduce image size
-RUN npm prune --production
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
@@ -28,4 +25,5 @@ USER nodejs
 
 EXPOSE 3008
 
-CMD ["npm", "start"]
+# Use ts-node-dev for hot reloading in development
+CMD ["npm", "run", "dev"]

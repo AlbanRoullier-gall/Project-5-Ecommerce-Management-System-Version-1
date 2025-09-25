@@ -2,10 +2,14 @@
  * PasswordResetRepository
  * Data access layer for PasswordReset entities
  */
-const PasswordReset = require("../models/PasswordReset");
+import { Pool } from "pg";
+import { PasswordReset } from "../models/PasswordReset";
+import { PasswordResetData } from "../types";
 
-class PasswordResetRepository {
-  constructor(pool) {
+export class PasswordResetRepository {
+  private pool: Pool;
+
+  constructor(pool: Pool) {
     this.pool = pool;
   }
 
@@ -14,7 +18,7 @@ class PasswordResetRepository {
    * @param {number} id Reset ID
    * @returns {Promise<PasswordReset|null>} Reset or null
    */
-  async getById(id) {
+  async getById(id: number): Promise<PasswordReset | null> {
     try {
       const query = `
         SELECT reset_id, user_id, reset_token, expires_at, created_at
@@ -27,7 +31,7 @@ class PasswordResetRepository {
         return null;
       }
 
-      return new PasswordReset(result.rows[0]);
+      return new PasswordReset(result.rows[0] as PasswordResetData);
     } catch (error) {
       console.error("Error getting password reset by ID:", error);
       throw error;
@@ -39,7 +43,7 @@ class PasswordResetRepository {
    * @param {string} token Reset token
    * @returns {Promise<PasswordReset|null>} Reset or null
    */
-  async getByToken(token) {
+  async getByToken(token: string): Promise<PasswordReset | null> {
     try {
       const query = `
         SELECT reset_id, user_id, reset_token, expires_at, created_at
@@ -52,7 +56,7 @@ class PasswordResetRepository {
         return null;
       }
 
-      return new PasswordReset(result.rows[0]);
+      return new PasswordReset(result.rows[0] as PasswordResetData);
     } catch (error) {
       console.error("Error getting password reset by token:", error);
       throw error;
@@ -64,7 +68,7 @@ class PasswordResetRepository {
    * @param {number} userId User ID
    * @returns {Promise<PasswordReset[]>} List of resets
    */
-  async listByUser(userId) {
+  async listByUser(userId: number): Promise<PasswordReset[]> {
     try {
       const query = `
         SELECT reset_id, user_id, reset_token, expires_at, created_at
@@ -74,7 +78,9 @@ class PasswordResetRepository {
       `;
       const result = await this.pool.query(query, [userId]);
 
-      return result.rows.map((row) => new PasswordReset(row));
+      return result.rows.map(
+        (row: any) => new PasswordReset(row as PasswordResetData)
+      );
     } catch (error) {
       console.error("Error listing password resets by user:", error);
       throw error;
@@ -86,7 +92,7 @@ class PasswordResetRepository {
    * @param {number} userId User ID
    * @returns {Promise<PasswordReset[]>} List of active resets
    */
-  async listActiveByUser(userId) {
+  async listActiveByUser(userId: number): Promise<PasswordReset[]> {
     try {
       const query = `
         SELECT reset_id, user_id, reset_token, expires_at, created_at
@@ -96,7 +102,9 @@ class PasswordResetRepository {
       `;
       const result = await this.pool.query(query, [userId]);
 
-      return result.rows.map((row) => new PasswordReset(row));
+      return result.rows.map(
+        (row: any) => new PasswordReset(row as PasswordResetData)
+      );
     } catch (error) {
       console.error("Error listing active password resets by user:", error);
       throw error;
@@ -108,7 +116,7 @@ class PasswordResetRepository {
    * @param {PasswordReset} reset Reset to save
    * @returns {Promise<PasswordReset>} Saved reset
    */
-  async save(reset) {
+  async save(reset: PasswordReset): Promise<PasswordReset> {
     try {
       const query = `
         INSERT INTO password_resets (user_id, reset_token, expires_at)
@@ -118,7 +126,7 @@ class PasswordResetRepository {
       const values = [reset.userId, reset.resetToken, reset.expiresAt];
 
       const result = await this.pool.query(query, values);
-      return new PasswordReset(result.rows[0]);
+      return new PasswordReset(result.rows[0] as PasswordResetData);
     } catch (error) {
       console.error("Error saving password reset:", error);
       throw error;
@@ -130,7 +138,7 @@ class PasswordResetRepository {
    * @param {PasswordReset} reset Reset to update
    * @returns {Promise<PasswordReset>} Updated reset
    */
-  async update(reset) {
+  async update(reset: PasswordReset): Promise<PasswordReset> {
     try {
       const query = `
         UPDATE password_resets 
@@ -151,7 +159,7 @@ class PasswordResetRepository {
         throw new Error("Password reset not found");
       }
 
-      return new PasswordReset(result.rows[0]);
+      return new PasswordReset(result.rows[0] as PasswordResetData);
     } catch (error) {
       console.error("Error updating password reset:", error);
       throw error;
@@ -163,12 +171,12 @@ class PasswordResetRepository {
    * @param {PasswordReset} reset Reset to delete
    * @returns {Promise<boolean>} True if deleted
    */
-  async delete(reset) {
+  async delete(reset: PasswordReset): Promise<boolean> {
     try {
       const query = "DELETE FROM password_resets WHERE reset_id = $1";
       const result = await this.pool.query(query, [reset.resetId]);
 
-      return result.rowCount > 0;
+      return result.rowCount! > 0;
     } catch (error) {
       console.error("Error deleting password reset:", error);
       throw error;
@@ -180,12 +188,12 @@ class PasswordResetRepository {
    * @param {number} resetId Reset ID
    * @returns {Promise<boolean>} True if deleted
    */
-  async deleteById(resetId) {
+  async deleteById(resetId: number): Promise<boolean> {
     try {
       const query = "DELETE FROM password_resets WHERE reset_id = $1";
       const result = await this.pool.query(query, [resetId]);
 
-      return result.rowCount > 0;
+      return result.rowCount! > 0;
     } catch (error) {
       console.error("Error deleting password reset by ID:", error);
       throw error;
@@ -197,12 +205,12 @@ class PasswordResetRepository {
    * @param {number} userId User ID
    * @returns {Promise<number>} Number of deleted resets
    */
-  async deleteByUser(userId) {
+  async deleteByUser(userId: number): Promise<number> {
     try {
       const query = "DELETE FROM password_resets WHERE user_id = $1";
       const result = await this.pool.query(query, [userId]);
 
-      return result.rowCount;
+      return result.rowCount!;
     } catch (error) {
       console.error("Error deleting password resets by user:", error);
       throw error;
@@ -213,13 +221,13 @@ class PasswordResetRepository {
    * Delete expired password resets
    * @returns {Promise<number>} Number of deleted resets
    */
-  async deleteExpired() {
+  async deleteExpired(): Promise<number> {
     try {
       const query =
         "DELETE FROM password_resets WHERE expires_at < CURRENT_TIMESTAMP";
       const result = await this.pool.query(query);
 
-      return result.rowCount;
+      return result.rowCount!;
     } catch (error) {
       console.error("Error deleting expired password resets:", error);
       throw error;
@@ -231,7 +239,7 @@ class PasswordResetRepository {
    * @param {number} userId User ID
    * @returns {Promise<number>} Number of active resets
    */
-  async countActiveByUser(userId) {
+  async countActiveByUser(userId: number): Promise<number> {
     try {
       const query = `
         SELECT COUNT(*) as count
@@ -247,5 +255,3 @@ class PasswordResetRepository {
     }
   }
 }
-
-module.exports = PasswordResetRepository;
