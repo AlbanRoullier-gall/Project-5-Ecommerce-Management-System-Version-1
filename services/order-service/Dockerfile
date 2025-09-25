@@ -2,11 +2,16 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
-COPY tsconfig.json ./
+# Copy shared-types depuis la racine du projet
+COPY shared-types/ ./shared-types/
+
+# Copy package files
+COPY services/order-service/package*.json ./
+COPY services/order-service/tsconfig.json ./
 RUN npm install
 
-COPY src/ ./src/
+# Copy source code
+COPY services/order-service/src/ ./src/
 RUN npm run build
 RUN npm prune --production
 

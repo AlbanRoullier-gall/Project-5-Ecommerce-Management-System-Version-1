@@ -3,7 +3,9 @@ version: "3.8"
 services:
   # API Gateway
   api-gateway:
-    build: ./api-gateway
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
     ports:
       - "13000:3000"
     environment:
@@ -30,7 +32,9 @@ services:
 
   # Customer Service
   customer-service:
-    build: ./services/customer-service
+    build:
+      context: .
+      dockerfile: services/customer-service/Dockerfile
     ports:
       - "13001:3001"
     environment:
@@ -42,7 +46,9 @@ services:
 
   # Product Service
   product-service:
-    build: ./services/product-service
+    build:
+      context: .
+      dockerfile: services/product-service/Dockerfile
     ports:
       - "13002:3002"
     environment:
@@ -54,7 +60,9 @@ services:
 
   # Order Service
   order-service:
-    build: ./services/order-service
+    build:
+      context: .
+      dockerfile: services/order-service/Dockerfile
     ports:
       - "13003:3003"
     environment:
@@ -67,7 +75,9 @@ services:
 
   # Cart Service
   cart-service:
-    build: ./services/cart-service
+    build:
+      context: .
+      dockerfile: services/cart-service/Dockerfile
     ports:
       - "13004:3004"
     environment:
@@ -81,7 +91,9 @@ services:
 
   # Website Content Service
   website-content-service:
-    build: ./services/website-content-service
+    build:
+      context: .
+      dockerfile: services/website-content-service/Dockerfile
     ports:
       - "13005:3005"
     environment:
@@ -93,7 +105,9 @@ services:
 
   # Payment Service
   payment-service:
-    build: ./services/payment-service
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
     ports:
       - "13006:3006"
     environment:
@@ -107,7 +121,9 @@ services:
 
   # Email Service
   email-service:
-    build: ./services/email-service
+    build:
+      context: .
+      dockerfile: services/email-service/Dockerfile
     ports:
       - "13007:3007"
     environment:
@@ -121,7 +137,9 @@ services:
 
   # Auth Service
   auth-service:
-    build: ./services/auth-service
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
     ports:
       - "13008:3008"
     environment:
@@ -133,7 +151,9 @@ services:
 
   # Frontend (Client)
   frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
     ports:
       - "13010:3000"
     environment:

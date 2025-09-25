@@ -37,8 +37,8 @@ services:
   # Customer Service
   customer-service:
     build:
-      context: ./services/customer-service
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: services/customer-service/Dockerfile.dev
     ports:
       - "13001:3001"
     environment:
@@ -61,8 +61,8 @@ services:
   # Product Service
   product-service:
     build:
-      context: ./services/product-service
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: services/product-service/Dockerfile.dev
     ports:
       - "13002:3002"
     environment:
@@ -79,8 +79,8 @@ services:
   # Order Service
   order-service:
     build:
-      context: ./services/order-service
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: services/order-service/Dockerfile.dev
     ports:
       - "13003:3003"
     environment:
@@ -98,8 +98,8 @@ services:
   # Cart Service
   cart-service:
     build:
-      context: ./services/cart-service
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: services/cart-service/Dockerfile.dev
     ports:
       - "13004:3004"
     environment:
@@ -119,8 +119,8 @@ services:
   # Website Content Service
   website-content-service:
     build:
-      context: ./services/website-content-service
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: services/website-content-service/Dockerfile.dev
     ports:
       - "13005:3005"
     environment:
@@ -137,8 +137,8 @@ services:
   # Payment Service
   payment-service:
     build:
-      context: ./services/payment-service
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: services/payment-service/Dockerfile.dev
     ports:
       - "13006:3006"
     environment:
@@ -157,8 +157,8 @@ services:
   # Email Service
   email-service:
     build:
-      context: ./services/email-service
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: services/email-service/Dockerfile.dev
     ports:
       - "13007:3007"
     environment:
@@ -329,8 +329,8 @@ services:
   # Auth Service
   auth-service:
     build:
-      context: ./services/auth-service
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: services/auth-service/Dockerfile.dev
     ports:
       - "13008:3008"
     environment:

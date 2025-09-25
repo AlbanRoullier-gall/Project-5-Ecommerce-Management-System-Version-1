@@ -2,15 +2,18 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Copy shared-types depuis la racine du projet
+COPY shared-types/ ./shared-types/
+
 # Copy package files
-COPY package*.json ./
-COPY tsconfig.json ./
+COPY services/customer-service/package*.json ./
+COPY services/customer-service/tsconfig.json ./
 
 # Install dependencies
 RUN npm install
 
 # Copy source code
-COPY src/ ./src/
+COPY services/customer-service/src/ ./src/
 
 # Build TypeScript
 RUN npm run build

@@ -5,7 +5,6 @@ WORKDIR /app
 
 # Copier shared-types depuis la racine du projet
 COPY shared-types/ ./shared-types/
-RUN echo "=== DEBUG: Contenu de shared-types ===" && ls -la ./shared-types/ && echo "=== FIN DEBUG ==="
 
 # Copier la configuration de l'api-gateway
 COPY api-gateway/package*.json ./
@@ -19,7 +18,6 @@ COPY api-gateway/src/ ./src/
 
 # Compiler TypeScript
 RUN npm run build
-RUN echo "=== DEBUG: Contenu de dist après build ===" && ls -la ./dist/ && echo "=== FIN DEBUG ==="
 
 # Étape 2 : Runtime
 FROM node:18-alpine AS runtime
@@ -33,8 +31,6 @@ WORKDIR /app
 # Copier les fichiers compilés depuis l'étape builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/shared-types ./shared-types
-RUN echo "=== DEBUG: Contenu final de dist ===" && ls -la ./dist/ && echo "=== FIN DEBUG ==="
-RUN echo "=== DEBUG: Contenu final de shared-types ===" && ls -la ./shared-types/ && echo "=== FIN DEBUG ==="
 
 # Copier package.json pour les dépendances de production
 COPY api-gateway/package*.json ./

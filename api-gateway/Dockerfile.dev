@@ -7,15 +7,15 @@ RUN apk add --no-cache curl
 # Définir le répertoire de travail
 WORKDIR /app
 
+# Copier shared-types depuis la racine du projet
+COPY shared-types/ ./shared-types/
+
 # Copier les fichiers de configuration
 COPY api-gateway/package*.json ./
 COPY api-gateway/tsconfig.json ./
 
 # Installer toutes les dépendances (dev + prod)
 RUN npm ci
-
-# Créer le répertoire pour les types partagés
-RUN mkdir -p shared-types
 
 # Copier le code source
 COPY api-gateway/src/ ./src/
