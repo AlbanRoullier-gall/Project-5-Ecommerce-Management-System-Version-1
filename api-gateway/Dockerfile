@@ -1,5 +1,28 @@
-# API Gateway - TypeScript (Production)
-FROM node:18-alpine
+# API Gateway - Multi-stage build avec contexte partagé
+# Étape 1 : Build
+FROM node:18 AS builder
+WORKDIR /app
+
+# Copier shared-types depuis la racine du projet
+COPY shared-types/ ./shared-types/
+RUN echo "=== DEBUG: Contenu de shared-types ===" && ls -la ./shared-types/ && echo "=== FIN DEBUG ==="
+
+# Copier la configuration de l'api-gateway
+COPY api-gateway/package*.json ./
+COPY api-gateway/tsconfig.json ./
+
+# Installer les dépendances
+RUN npm ci
+
+# Copier le code source
+COPY api-gateway/src/ ./src/
+
+# Compiler TypeScript
+RUN npm run build
+RUN echo "=== DEBUG: Contenu de dist après build ===" && ls -la ./dist/ && echo "=== FIN DEBUG ==="
+
+# Étape 2 : Runtime
+FROM node:18-alpine AS runtime
 
 # Installer curl pour les health checks
 RUN apk add --no-cache curl
@@ -7,24 +30,17 @@ RUN apk add --no-cache curl
 # Définir le répertoire de travail
 WORKDIR /app
 
-# Copier les fichiers de configuration
-COPY package*.json ./
-COPY tsconfig.json ./
+# Copier les fichiers compilés depuis l'étape builder
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/shared-types ./shared-types
+RUN echo "=== DEBUG: Contenu final de dist ===" && ls -la ./dist/ && echo "=== FIN DEBUG ==="
+RUN echo "=== DEBUG: Contenu final de shared-types ===" && ls -la ./shared-types/ && echo "=== FIN DEBUG ==="
 
-# Installer toutes les dépendances
-RUN npm ci
+# Copier package.json pour les dépendances de production
+COPY api-gateway/package*.json ./
 
-# Créer le répertoire pour les types partagés
-RUN mkdir -p shared-types
-
-# Copier le code source
-COPY src/ ./src/
-
-# Compiler TypeScript
-RUN npm run build
-
-# Supprimer les dépendances de développement
-RUN npm prune --production
+# Installer seulement les dépendances de production
+RUN npm ci --only=production
 
 # Exposer le port
 EXPOSE 3000
@@ -38,4 +54,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3000/health || exit 1
 
 # Commande de démarrage
-CMD ["npm", "start"]
+CMD ["node", "dist/src/index.js"]

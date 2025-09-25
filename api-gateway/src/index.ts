@@ -47,7 +47,7 @@ import {
 
   // API Response types
   ApiResponse,
-} from "./types";
+} from "@shared-types";
 
 // Middlewares de validation
 import {

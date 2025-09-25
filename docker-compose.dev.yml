@@ -4,8 +4,8 @@ services:
   # API Gateway
   api-gateway:
     build:
-      context: ./api-gateway
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: api-gateway/Dockerfile
     ports:
       - "13000:3000"
     environment:
@@ -21,7 +21,6 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:3008
     volumes:
       - ./api-gateway/src:/app/src
-      - ./shared-types:/app/shared-types
       - /app/node_modules
     depends_on:
       - customer-service
