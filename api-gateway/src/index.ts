@@ -29,36 +29,21 @@ import dotenv from "dotenv";
 // Types partagés
 import {
   // Auth types
-  LoginRequest,
-  RegisterRequest,
-  AuthResponse,
+  LoginData,
+  RegisterData,
 
   // Product types
-  Product,
-  Category,
-  CreateProductRequest,
-  UpdateProductRequest,
-  CreateCategoryRequest,
-  UpdateCategoryRequest,
+  ProductData,
+  CategoryData,
+  ProductUpdateData,
+  CategoryUpdateData,
 
   // Contact types
-  ContactFormData,
-  ContactResponse,
-
-  // API Response types
-  ApiResponse,
+  ContactEmailRequest,
+  ContactEmailResponse,
 } from "../shared-types";
 
-// Middlewares de validation
-import {
-  validateLogin,
-  validateRegister,
-  validateContact,
-  validateCreateProduct,
-  validateUpdateProduct,
-  validateCreateCategory,
-  validateUpdateCategory,
-} from "./middlewares/validation";
+// Middlewares de validation supprimés
 
 dotenv.config();
 
@@ -216,7 +201,7 @@ const proxyToEmailService = async (
       config.params = req.query as Record<string, any>;
     }
 
-    const response: AxiosResponse<ContactResponse> = await axios(config);
+    const response: AxiosResponse<ContactEmailResponse> = await axios(config);
     res.status(response.status).json(response.data);
   } catch (error: any) {
     console.error("Error proxying to email service:", error.message);
@@ -272,7 +257,7 @@ const proxyToAuthService = async (
       config.params = req.query as Record<string, any>;
     }
 
-    const response: AxiosResponse<AuthResponse> = await axios(config);
+    const response: AxiosResponse<any> = await axios(config);
     res.status(response.status).json(response.data);
   } catch (error: any) {
     console.error("Error proxying to auth service:", error.message);
@@ -338,9 +323,7 @@ const proxyToProductService = async (
     }
 
     console.log(`Proxying ${method} ${path} to product service`);
-    const response: AxiosResponse<
-      ApiResponse<Product | Product[] | Category | Category[]>
-    > = await axios(config);
+    const response: AxiosResponse<any> = await axios(config);
     res.status(response.status).json(response.data);
   } catch (error: any) {
     console.error("Error proxying to product service:", error.message);
@@ -371,17 +354,13 @@ const proxyToProductService = async (
 // Inscription d'un nouvel utilisateur
 app.post(
   "/api/auth/register",
-  validateRegister,
-  (req: Request<{}, AuthResponse, RegisterRequest>, res: Response) =>
+  (req: Request<{}, any, RegisterData>, res: Response) =>
     proxyToAuthService(req, res, "/auth/register")
 );
 
 // Connexion d'un utilisateur
-app.post(
-  "/api/auth/login",
-  validateLogin,
-  (req: Request<{}, AuthResponse, LoginRequest>, res: Response) =>
-    proxyToAuthService(req, res, "/auth/login")
+app.post("/api/auth/login", (req: Request<{}, any, LoginData>, res: Response) =>
+  proxyToAuthService(req, res, "/auth/login")
 );
 
 // Demande de réinitialisation de mot de passe
@@ -441,8 +420,7 @@ app.post("/api/auth/logout", (req: Request, res: Response) =>
  */
 app.post(
   "/api/contact",
-  validateContact,
-  (req: Request<{}, ContactResponse, ContactFormData>, res: Response) =>
+  (req: Request<{}, any, ContactEmailRequest>, res: Response) =>
     proxyToEmailService(req, res, "/contact")
 );
 
@@ -487,21 +465,15 @@ app.get(
 // Création d'un nouveau produit
 app.post(
   "/api/admin/products",
-  validateCreateProduct,
-  (
-    req: Request<{}, ApiResponse<Product>, CreateProductRequest>,
-    res: Response
-  ) => proxyToProductService(req, res, "/admin/products")
+  (req: Request<{}, any, ProductData>, res: Response) =>
+    proxyToProductService(req, res, "/admin/products")
 );
 
 // Mise à jour d'un produit existant
 app.put(
   "/api/admin/products/:id",
-  validateUpdateProduct,
-  (
-    req: Request<{ id: string }, ApiResponse<Product>, UpdateProductRequest>,
-    res: Response
-  ) => proxyToProductService(req, res, `/admin/products/${req.params.id}`)
+  (req: Request<{ id: string }, any, ProductUpdateData>, res: Response) =>
+    proxyToProductService(req, res, `/admin/products/${req.params.id}`)
 );
 
 // Suppression d'un produit
@@ -545,21 +517,15 @@ app.get("/api/admin/categories", (req: Request, res: Response) =>
 // Création d'une nouvelle catégorie
 app.post(
   "/api/admin/categories",
-  validateCreateCategory,
-  (
-    req: Request<{}, ApiResponse<Category>, CreateCategoryRequest>,
-    res: Response
-  ) => proxyToProductService(req, res, "/admin/categories")
+  (req: Request<{}, any, CategoryData>, res: Response) =>
+    proxyToProductService(req, res, "/admin/categories")
 );
 
 // Mise à jour d'une catégorie existante
 app.put(
   "/api/admin/categories/:id",
-  validateUpdateCategory,
-  (
-    req: Request<{ id: string }, ApiResponse<Category>, UpdateCategoryRequest>,
-    res: Response
-  ) => proxyToProductService(req, res, `/admin/categories/${req.params.id}`)
+  (req: Request<{ id: string }, any, CategoryUpdateData>, res: Response) =>
+    proxyToProductService(req, res, `/admin/categories/${req.params.id}`)
 );
 
 // Suppression d'une catégorie

@@ -185,10 +185,17 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:13000
       - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
       - NODE_ENV=development
+      - WATCHPACK_POLLING=true
     volumes:
-      - ./frontend:/app
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/styles:/app/styles
+      - ./frontend/pages:/app/pages
+      - ./frontend/components:/app/components
+      - ./frontend/lib:/app/lib
       - ./shared-types:/app/shared-types
       - /app/node_modules
+      - /app/.next
     depends_on:
       - api-gateway
 

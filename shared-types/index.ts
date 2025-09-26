@@ -1,168 +1,203 @@
 // Types partagés entre les microservices et les frontends
+// Seuls les types réellement utilisés par les services sont conservés
 
 // ===========================================
-// CONTACT TYPES
+// AUTHENTICATION TYPES
 // ===========================================
 
-export interface ContactFormData {
-  name: string;
+export interface JWTPayload {
+  userId: number;
   email: string;
-  subject: string;
-  message: string;
+  role: "admin" | "customer";
+  firstName: string;
+  lastName: string;
 }
 
-export interface ContactResponse {
-  message: string;
-  messageId?: string;
+export interface RegisterData {
+  email: string;
+  password: string;
+  confirmPassword?: string;
+  firstName: string;
+  lastName: string;
+  role?: "admin" | "customer";
 }
 
-export interface ConfirmationEmailData {
-  customerName: string;
-  customerEmail: string;
-  subject: string;
-  message: string;
+export interface LoginData {
+  email: string;
+  password: string;
+}
+
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ResetPasswordData {
+  token: string;
+  newPassword: string;
+}
+
+export interface UpdateUserData {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  role?: "admin" | "customer";
+  isActive?: boolean;
 }
 
 // ===========================================
 // CUSTOMER TYPES
 // ===========================================
 
-export interface Customer {
-  customerId: number;
+export interface CustomerData {
   civilityId: number;
   firstName: string;
   lastName: string;
   email: string;
+  password: string;
   socioProfessionalCategoryId: number;
   phoneNumber?: string;
-  birthday?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  civility?: string;
-  socioProfessionalCategory?: string;
+  birthday?: Date;
 }
 
-export interface CustomerAddress {
-  addressId: number;
-  customerId: number;
+export interface CustomerUpdateData {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  birthday?: Date;
+}
+
+export interface AddressData {
   addressType: "shipping" | "billing";
   address: string;
   postalCode: string;
   city: string;
   countryId: number;
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
-  countryName?: string;
+  isDefault?: boolean;
 }
 
-export interface CustomerCompany {
-  companyId: number;
-  customerId: number;
-  companyName: string;
-  siretNumber?: string;
-  vatNumber?: string;
-  createdAt: string;
-  updatedAt: string;
+export interface CustomerListOptions {
+  page: number;
+  limit: number;
+  search: string;
+  activeOnly: boolean;
 }
 
-export interface Civility {
-  civilityId: number;
-  abbreviation: string;
-  createdAt: string;
-}
-
-export interface Country {
-  countryId: number;
-  countryName: string;
-  createdAt: string;
-}
-
-export interface SocioProfessionalCategory {
-  categoryId: number;
-  categoryName: string;
-  createdAt: string;
+export interface CustomerListResult {
+  customers: any[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 // ===========================================
 // PRODUCT TYPES
 // ===========================================
 
-export interface Category {
-  id: number;
+export interface ProductData {
+  id?: number;
   name: string;
   description?: string;
-  createdAt: string;
-  updatedAt: string;
-  fullName?: string; // Added from category service
-}
-
-export interface Product {
-  id: number;
-  name: string;
-  description?: string;
-  price: number | string; // Support both number and string formats
-  vatRate: number | string; // Support both number and string formats
+  price: number;
+  vatRate: number;
   categoryId: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  categoryName?: string;
-  priceWithVAT?: number; // Added from product service
-  images?: ProductImage[];
+  isActive?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface ProductImage {
-  id: number;
+export interface ProductUpdateData {
+  name?: string;
+  description?: string;
+  price?: number;
+  vatRate?: number;
+  categoryId?: number;
+  isActive?: boolean;
+}
+
+export interface CategoryData {
+  id?: number;
+  name: string;
+  description?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface CategoryUpdateData {
+  name?: string;
+  description?: string;
+}
+
+export interface ProductImageData {
+  id?: number;
   productId: number;
   filename: string;
   filePath: string;
   fileSize: number;
   mimeType: string;
-  width?: number;
-  height?: number;
+  width: number;
+  height: number;
   altText?: string;
   description?: string;
-  isActive: boolean;
-  orderIndex: number;
-  createdAt: string;
-  updatedAt: string;
+  isActive?: boolean;
+  orderIndex?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface ProductImageVariant {
-  id: number;
-  imageId: number;
-  variantType: string;
-  filePath: string;
-  width?: number;
-  height?: number;
-  fileSize?: number;
-  quality?: number;
-  createdAt: string;
+export interface ProductImageUpdateData {
+  altText?: string;
+  description?: string;
+  isActive?: boolean;
+  orderIndex?: number;
+}
+
+export interface ProductListOptions {
+  page?: number;
+  limit?: number;
+  categoryId?: number;
+  search?: string;
+  activeOnly?: boolean;
+}
+
+export interface ProductListResult {
+  products: any[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+export interface ImageUploadOptions {
+  altText?: string;
+  description?: string;
+  orderIndex?: number;
 }
 
 // ===========================================
 // ORDER TYPES
 // ===========================================
 
-export interface Order {
-  id: number;
+export interface OrderData {
+  id?: number;
   customerId: number;
   customerSnapshot: any;
   totalAmountHT: number;
   totalAmountTTC: number;
   paymentMethod: string;
   notes?: string;
-  createdAt: string;
-  updatedAt: string;
-  items?: OrderItem[];
-  addresses?: OrderAddress[];
+  items?: OrderItemData[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface OrderItem {
-  id: number;
-  orderId: number;
+export interface OrderItemData {
+  id?: number;
+  orderId?: number;
   productId: number;
   quantity: number;
   unitPriceHT: number;
@@ -170,29 +205,39 @@ export interface OrderItem {
   vatRate: number;
   totalPriceHT: number;
   totalPriceTTC: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface CreditNote {
-  id: number;
+export interface OrderUpdateData {
+  customerId?: number;
+  customerSnapshot?: any;
+  totalAmountHT?: number;
+  totalAmountTTC?: number;
+  paymentMethod?: string;
+  notes?: string;
+  items?: OrderItemData[];
+}
+
+export interface CreditNoteData {
+  id?: number;
   customerId: number;
   orderId: number;
   totalAmountHT: number;
   totalAmountTTC: number;
   reason: string;
   description?: string;
-  issueDate: string;
+  issueDate: Date;
   paymentMethod: string;
   notes?: string;
-  createdAt: string;
-  updatedAt: string;
-  items?: CreditNoteItem[];
+  items?: CreditNoteItemData[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface CreditNoteItem {
-  id: number;
-  creditNoteId: number;
+export interface CreditNoteItemData {
+  id?: number;
+  creditNoteId?: number;
   productId: number;
   quantity: number;
   unitPriceHT: number;
@@ -200,17 +245,91 @@ export interface CreditNoteItem {
   vatRate: number;
   totalPriceHT: number;
   totalPriceTTC: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface OrderAddress {
-  id: number;
+export interface OrderAddressData {
+  id?: number;
   orderId: number;
   type: "shipping" | "billing";
   addressSnapshot: any;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface OrderListOptions {
+  page?: number;
+  limit?: number;
+  customerId?: number;
+  status?: string;
+  sort?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface OrderListResult {
+  orders: any[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+export interface OrderStatistics {
+  totalOrders: number;
+  totalRevenue: number;
+  averageOrderValue: number;
+  ordersByStatus: { [key: string]: number };
+  revenueByPeriod: { [key: string]: number };
+}
+
+// ===========================================
+// PAYMENT TYPES
+// ===========================================
+
+export interface PaymentIntentData {
+  orderId: number;
+  amount: number;
+  currency: string;
+  paymentMethod: string;
+}
+
+export interface ConfirmPaymentData {
+  paymentIntentId: string;
+  paymentMethodId?: string;
+}
+
+export interface PaymentIntentResponse {
+  id: number;
+  stripePaymentIntentId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  clientSecret: string;
+  createdAt: Date;
+}
+
+export interface PaymentStatusResponse {
+  id: number;
+  stripePaymentIntentId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PaymentListResponse {
+  payments: PaymentStatusResponse[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
 // ===========================================
@@ -223,320 +342,120 @@ export interface CartItem {
   unitPriceHT: number;
   vatRate: number;
   quantity: number;
-  image?: string;
+  image?: string | null;
+}
+
+export interface CartTotals {
+  totalHT: number;
+  totalTTC: number;
+  totalVAT: number;
 }
 
 export interface Cart {
   items: CartItem[];
-  totals: {
-    totalHT: number;
-    totalTTC: number;
-    totalVAT: number;
-  };
+  totals: CartTotals;
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  price: number;
+  vat_rate: number;
+  is_active: boolean;
+  images?: Array<{
+    file_path: string;
+  }>;
+}
+
+export interface CartItemRequest {
+  productId: number;
+  quantity: number;
+}
+
+export interface OrderItem {
+  productId: number;
+  quantity: number;
+  unitPriceHT: number;
+  vatRate: number;
+}
+
+export interface CartOrderData {
+  customerId: number;
+  items: OrderItem[];
+  totals: CartTotals;
 }
 
 // ===========================================
-// PAYMENT TYPES
+// EMAIL TYPES
 // ===========================================
 
-export interface PaymentIntent {
-  id: number;
-  stripePaymentIntentId: string;
-  customerId: number;
-  orderId: number;
-  amount: number;
-  currency: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
+export interface ContactEmailRequest {
+  email: string;
+  name?: string;
+  subject?: string;
+  message?: string;
 }
 
-export interface PaymentMethod {
-  id: number;
-  stripePaymentMethodId: string;
-  customerId: number;
-  type: string;
-  cardLast4?: string;
-  cardBrand?: string;
-  cardExpMonth?: number;
-  cardExpYear?: number;
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
+export interface ContactEmailResponse {
+  message: string;
+  messageId: string;
 }
 
-export interface Refund {
-  id: number;
-  stripeRefundId: string;
-  paymentIntentId: number;
-  amount: number;
-  currency: string;
-  reason?: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
+export interface EmailTemplate {
+  html: string;
+  text: string;
+}
+
+export interface MailOptions {
+  from: string;
+  to: string;
+  replyTo?: string;
+  subject: string;
+  html: string;
+  text: string;
 }
 
 // ===========================================
 // WEBSITE CONTENT TYPES
 // ===========================================
 
-export interface WebsitePage {
-  pageId: number;
+export interface WebsitePageData {
+  id?: number;
   pageSlug: string;
   pageTitle: string;
   markdownContent: string;
-  htmlContent: string;
-  version: number;
-  creationTimestamp: string;
-  lastUpdateTimestamp: string;
+  htmlContent?: string;
+  createdAt?: Date | undefined;
+  updatedAt?: Date | undefined;
 }
 
-export interface WebsitePageVersion {
-  versionId: number;
-  parentPageId: number;
+export interface WebsitePageUpdateData {
+  pageSlug?: string;
+  pageTitle?: string;
+  markdownContent?: string;
+}
+
+export interface WebsitePageVersionData {
+  id?: number;
+  pageId: number;
+  versionNumber: number;
   markdownContent: string;
-  htmlContent: string;
-  version: number;
-  creationTimestamp: string;
+  htmlContent?: string;
+  createdAt?: Date | undefined;
 }
 
-// ===========================================
-// API RESPONSE TYPES
-// ===========================================
+export interface PageListOptions {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
 
-export interface ApiResponse<T> {
-  data?: T;
-  message?: string;
-  error?: string;
-  pagination?: {
+export interface PageListResult {
+  pages: WebsitePageData[];
+  pagination: {
     page: number;
     limit: number;
     total: number;
     pages: number;
   };
-}
-
-export interface PaginationParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-}
-
-// ===========================================
-// AUTH TYPES
-// ===========================================
-
-export interface User {
-  userId: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: "admin" | "customer";
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AuthToken {
-  userId: number;
-  email: string;
-  role: "admin" | "customer";
-  iat: number;
-  exp: number;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface AuthFormData {
-  email: string;
-  password: string;
-  confirmPassword?: string;
-  firstName?: string;
-  lastName?: string;
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  role?: "admin" | "customer";
-}
-
-export interface AdminRegisterRequest {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  role: "admin";
-}
-
-export interface CustomerRegisterRequest {
-  civilityId: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  socioProfessionalCategoryId: number;
-  phoneNumber?: string;
-  birthday?: string;
-}
-
-export interface CreateCustomerRequest {
-  civilityId: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  socioProfessionalCategoryId: number;
-  phoneNumber?: string;
-  birthday?: string;
-}
-
-export interface CreateProductRequest {
-  name: string;
-  description?: string;
-  price: number;
-  vatRate: number;
-  categoryId: number;
-  isActive?: boolean;
-}
-
-export interface CreateProductWithImagesRequest {
-  name: string;
-  description?: string;
-  price: number;
-  vatRate: number;
-  categoryId: number;
-  isActive?: boolean;
-  images?: File[];
-}
-
-export interface UpdateProductRequest {
-  name?: string;
-  description?: string;
-  price?: number;
-  vatRate?: number;
-  categoryId?: number;
-  isActive?: boolean;
-}
-
-export interface CreateCategoryRequest {
-  name: string;
-  description?: string;
-}
-
-export interface UpdateCategoryRequest {
-  name?: string;
-  description?: string;
-}
-
-export interface AuthResponse {
-  user: User;
-  token: string;
-  message: string;
-}
-
-export interface LoginResponse {
-  user: User;
-  token: string;
-  message: string;
-}
-
-export interface RegisterResponse {
-  user: User;
-  token: string;
-  message: string;
-}
-
-export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-}
-
-export interface ForgotPasswordRequest {
-  email: string;
-}
-
-export interface ResetPasswordRequest {
-  token: string;
-  newPassword: string;
-}
-
-// ===========================================
-// IMAGE UPLOAD TYPES
-// ===========================================
-
-export interface ImageUploadResponse {
-  id: number;
-  filename: string;
-  filePath: string;
-  fileSize: number;
-  mimeType: string;
-  width?: number;
-  height?: number;
-  altText?: string;
-  description?: string;
-  orderIndex: number;
-  createdAt: string;
-}
-
-export interface CreateProductWithImagesResponse {
-  message: string;
-  product: Product;
-  images: ImageUploadResponse[];
-}
-
-export interface UpdateProfileRequest {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-}
-
-// ===========================================
-// EVENT TYPES
-// ===========================================
-
-export interface DomainEvent {
-  eventId: string;
-  eventType: string;
-  aggregateId: string;
-  aggregateType: string;
-  eventData: any;
-  metadata: {
-    correlationId: string;
-    causationId?: string;
-    timestamp: string;
-    version: number;
-  };
-}
-
-export interface OrderConfirmedEvent {
-  orderId: number;
-  customerId: number;
-  totalAmount: number;
-  items: OrderItem[];
-  timestamp: string;
-}
-
-export interface PaymentProcessedEvent {
-  paymentIntentId: string;
-  orderId: number;
-  customerId: number;
-  amount: number;
-  status: string;
-  timestamp: string;
-}
-
-export interface EmailSentEvent {
-  emailId: number;
-  customerId: number;
-  type: string;
-  status: string;
-  timestamp: string;
 }
