@@ -1,14 +1,11 @@
 import {
-  LoginRequest,
-  RegisterRequest,
-  LoginResponse,
-  RegisterResponse,
-  User,
-  ChangePasswordRequest,
-  ForgotPasswordRequest,
-  ResetPasswordRequest,
-  UpdateProfileRequest,
-} from "../shared-types";
+  LoginData,
+  RegisterData,
+  JWTPayload,
+  ChangePasswordData,
+  ResetPasswordData,
+  UpdateUserData,
+} from "../../../shared-types";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:13000";
@@ -53,8 +50,13 @@ class AuthService {
   }
 
   // Authentication methods
-  async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await this.makeRequest<LoginResponse>("/login", {
+  async login(
+    credentials: LoginData
+  ): Promise<{ token: string; user: JWTPayload }> {
+    const response = await this.makeRequest<{
+      token: string;
+      user: JWTPayload;
+    }>("/login", {
       method: "POST",
       body: JSON.stringify(credentials),
     });
@@ -68,8 +70,13 @@ class AuthService {
     return response;
   }
 
-  async register(userData: RegisterRequest): Promise<RegisterResponse> {
-    const response = await this.makeRequest<RegisterResponse>("/register", {
+  async register(
+    userData: RegisterData
+  ): Promise<{ token: string; user: JWTPayload }> {
+    const response = await this.makeRequest<{
+      token: string;
+      user: JWTPayload;
+    }>("/register", {
       method: "POST",
       body: JSON.stringify(userData),
     });
@@ -98,23 +105,26 @@ class AuthService {
   }
 
   // Profile management
-  async getProfile(): Promise<User> {
-    return await this.makeRequest<User>("/profile", {
+  async getProfile(): Promise<JWTPayload> {
+    return await this.makeRequest<JWTPayload>("/profile", {
       method: "GET",
     });
   }
 
   async updateProfile(
-    profileData: UpdateProfileRequest
-  ): Promise<{ user: User; message: string }> {
-    return await this.makeRequest<{ user: User; message: string }>("/profile", {
-      method: "PUT",
-      body: JSON.stringify(profileData),
-    });
+    profileData: UpdateUserData
+  ): Promise<{ user: JWTPayload; message: string }> {
+    return await this.makeRequest<{ user: JWTPayload; message: string }>(
+      "/profile",
+      {
+        method: "PUT",
+        body: JSON.stringify(profileData),
+      }
+    );
   }
 
   async changePassword(
-    passwordData: ChangePasswordRequest
+    passwordData: ChangePasswordData
   ): Promise<{ message: string }> {
     return await this.makeRequest<{ message: string }>("/change-password", {
       method: "POST",
@@ -123,9 +133,9 @@ class AuthService {
   }
 
   // Password reset
-  async forgotPassword(
-    data: ForgotPasswordRequest
-  ): Promise<{ message: string; resetToken?: string; expiresAt?: string }> {
+  async forgotPassword(data: {
+    email: string;
+  }): Promise<{ message: string; resetToken?: string; expiresAt?: string }> {
     return await this.makeRequest<{
       message: string;
       resetToken?: string;
@@ -136,9 +146,7 @@ class AuthService {
     });
   }
 
-  async resetPassword(
-    data: ResetPasswordRequest
-  ): Promise<{ message: string }> {
+  async resetPassword(data: ResetPasswordData): Promise<{ message: string }> {
     return await this.makeRequest<{ message: string }>("/reset-password", {
       method: "POST",
       body: JSON.stringify(data),
@@ -151,7 +159,7 @@ class AuthService {
     return localStorage.getItem("auth_token");
   }
 
-  getCurrentUser(): User | null {
+  getCurrentUser(): JWTPayload | null {
     if (typeof window === "undefined") return null;
     const userStr = localStorage.getItem("user");
     return userStr ? JSON.parse(userStr) : null;

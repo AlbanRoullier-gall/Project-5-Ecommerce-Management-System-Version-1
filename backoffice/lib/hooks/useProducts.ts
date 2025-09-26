@@ -1,17 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Product,
-  Category,
-  PaginationParams,
-  ApiResponse,
-  CreateProductRequest,
-  UpdateProductRequest,
+  ProductData,
+  CategoryData,
+  ProductListOptions,
+  ProductListResult,
 } from "../../../shared-types";
 import { productService } from "../services/productService";
 
 interface UseProductsReturn {
-  products: Product[];
-  categories: Category[];
+  products: ProductData[];
+  categories: CategoryData[];
   loading: boolean;
   error: string | null;
   pagination: {
@@ -20,13 +18,13 @@ interface UseProductsReturn {
     total: number;
     pages: number;
   } | null;
-  fetchProducts: (params?: PaginationParams) => Promise<void>;
+  fetchProducts: (params?: ProductListOptions) => Promise<void>;
   fetchCategories: () => Promise<void>;
-  createProduct: (productData: CreateProductRequest) => Promise<Product | null>;
+  createProduct: (productData: ProductData) => Promise<ProductData | null>;
   updateProduct: (
     id: number,
-    productData: UpdateProductRequest
-  ) => Promise<Product | null>;
+    productData: ProductData
+  ) => Promise<ProductData | null>;
   deleteProduct: (id: number) => Promise<boolean>;
   activateProduct: (id: number) => Promise<boolean>;
   deactivateProduct: (id: number) => Promise<boolean>;
@@ -34,8 +32,8 @@ interface UseProductsReturn {
 }
 
 export const useProducts = (): UseProductsReturn => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<ProductData[]>([]);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<{
@@ -45,22 +43,18 @@ export const useProducts = (): UseProductsReturn => {
     pages: number;
   } | null>(null);
 
-  const fetchProducts = useCallback(async (params?: PaginationParams) => {
+  const fetchProducts = useCallback(async (params?: ProductListOptions) => {
     try {
       setLoading(true);
       setError(null);
 
-      const response: ApiResponse<Product[]> = await productService.getProducts(
+      const response: ProductListResult = await productService.getProducts(
         params
       );
 
-      if (response.data) {
-        setProducts(response.data);
-        if (response.pagination) {
-          setPagination(response.pagination);
-        }
-      } else if (response.error) {
-        setError(response.error);
+      setProducts(response.products);
+      if (response.pagination) {
+        setPagination(response.pagination);
       }
     } catch (err) {
       setError(
@@ -77,14 +71,8 @@ export const useProducts = (): UseProductsReturn => {
     try {
       setError(null);
 
-      const response: ApiResponse<Category[]> =
-        await productService.getCategories();
-
-      if (response.data) {
-        setCategories(response.data);
-      } else if (response.error) {
-        setError(response.error);
-      }
+      const categories: CategoryData[] = await productService.getCategories();
+      setCategories(categories);
     } catch (err) {
       setError(
         err instanceof Error
@@ -95,20 +83,15 @@ export const useProducts = (): UseProductsReturn => {
   }, []);
 
   const createProduct = useCallback(
-    async (productData: CreateProductRequest): Promise<Product | null> => {
+    async (productData: ProductData): Promise<ProductData | null> => {
       try {
         setError(null);
 
-        const response: ApiResponse<Product> =
-          await productService.createProduct(productData);
-
-        if (response.data) {
-          await fetchProducts(); // Refresh the list
-          return response.data;
-        } else if (response.error) {
-          setError(response.error);
-        }
-        return null;
+        const product: ProductData = await productService.createProduct(
+          productData
+        );
+        await fetchProducts(); // Refresh the list
+        return product;
       } catch (err) {
         setError(
           err instanceof Error
@@ -124,21 +107,17 @@ export const useProducts = (): UseProductsReturn => {
   const updateProduct = useCallback(
     async (
       id: number,
-      productData: UpdateProductRequest
-    ): Promise<Product | null> => {
+      productData: ProductData
+    ): Promise<ProductData | null> => {
       try {
         setError(null);
 
-        const response: ApiResponse<Product> =
-          await productService.updateProduct(id, productData);
-
-        if (response.data) {
-          await fetchProducts(); // Refresh the list
-          return response.data;
-        } else if (response.error) {
-          setError(response.error);
-        }
-        return null;
+        const product: ProductData = await productService.updateProduct(
+          id,
+          productData
+        );
+        await fetchProducts(); // Refresh the list
+        return product;
       } catch (err) {
         setError(
           err instanceof Error
@@ -156,17 +135,9 @@ export const useProducts = (): UseProductsReturn => {
       try {
         setError(null);
 
-        const response: ApiResponse<void> = await productService.deleteProduct(
-          id
-        );
-
-        if (!response.error) {
-          await fetchProducts(); // Refresh the list
-          return true;
-        } else {
-          setError(response.error);
-          return false;
-        }
+        await productService.deleteProduct(id);
+        await fetchProducts(); // Refresh the list
+        return true;
       } catch (err) {
         setError(
           err instanceof Error
@@ -184,16 +155,9 @@ export const useProducts = (): UseProductsReturn => {
       try {
         setError(null);
 
-        const response: ApiResponse<Product> =
-          await productService.activateProduct(id);
-
-        if (response.data) {
-          await fetchProducts(); // Refresh the list
-          return true;
-        } else if (response.error) {
-          setError(response.error);
-        }
-        return false;
+        await productService.activateProduct(id);
+        await fetchProducts(); // Refresh the list
+        return true;
       } catch (err) {
         setError(
           err instanceof Error
@@ -211,16 +175,9 @@ export const useProducts = (): UseProductsReturn => {
       try {
         setError(null);
 
-        const response: ApiResponse<Product> =
-          await productService.deactivateProduct(id);
-
-        if (response.data) {
-          await fetchProducts(); // Refresh the list
-          return true;
-        } else if (response.error) {
-          setError(response.error);
-        }
-        return false;
+        await productService.deactivateProduct(id);
+        await fetchProducts(); // Refresh the list
+        return true;
       } catch (err) {
         setError(
           err instanceof Error

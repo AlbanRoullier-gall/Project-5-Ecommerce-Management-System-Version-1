@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Category } from "../shared-types";
+import { CategoryData } from "../../shared-types";
 import { useCategories } from "../lib/hooks/useCategories";
 import CategoryModal from "./CategoryModal";
 import CategoryFilters from "./CategoryFilters";
@@ -23,12 +23,12 @@ const CategoryList: React.FC<CategoryListProps> = ({ className = "" }) => {
     refreshCategories,
   } = useCategories();
 
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+  const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(
     null
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(
+  const [categoryToDelete, setCategoryToDelete] = useState<CategoryData | null>(
     null
   );
   const [isDeleting, setIsDeleting] = useState(false);
@@ -40,7 +40,7 @@ const CategoryList: React.FC<CategoryListProps> = ({ className = "" }) => {
     sortBy: "name",
   });
 
-  const handleEditCategory = (category: Category) => {
+  const handleEditCategory = (category: CategoryData) => {
     setSelectedCategory(category);
     setIsModalOpen(true);
   };
@@ -66,7 +66,7 @@ const CategoryList: React.FC<CategoryListProps> = ({ className = "" }) => {
     setIsInfoModalOpen(true);
   };
 
-  const handleDeleteCategory = (category: Category) => {
+  const handleDeleteCategory = (category: CategoryData) => {
     setCategoryToDelete(category);
     setIsDeleteModalOpen(true);
   };
@@ -76,7 +76,7 @@ const CategoryList: React.FC<CategoryListProps> = ({ className = "" }) => {
 
     setIsDeleting(true);
     try {
-      const success = await deleteCategory(categoryToDelete.id);
+      const success = await deleteCategory(categoryToDelete.id!);
       if (success) {
         setIsDeleteModalOpen(false);
         setCategoryToDelete(null);
@@ -135,8 +135,8 @@ const CategoryList: React.FC<CategoryListProps> = ({ className = "" }) => {
       return true;
     })
     .sort((a, b) => {
-      let aValue: any = a[filters.sortBy as keyof Category];
-      let bValue: any = b[filters.sortBy as keyof Category];
+      let aValue: any = a[filters.sortBy as keyof CategoryData];
+      let bValue: any = b[filters.sortBy as keyof CategoryData];
 
       if (filters.sortBy === "createdAt") {
         aValue = new Date(aValue).getTime();
@@ -217,10 +217,10 @@ const CategoryList: React.FC<CategoryListProps> = ({ className = "" }) => {
                 <td>
                   <div className="category-name">
                     <strong>{category.name}</strong>
-                    {category.fullName &&
-                      category.fullName !== category.name && (
+                    {(category as any).fullName &&
+                      (category as any).fullName !== category.name && (
                         <div className="category-fullname">
-                          {category.fullName}
+                          {(category as any).fullName}
                         </div>
                       )}
                   </div>
@@ -239,10 +239,14 @@ const CategoryList: React.FC<CategoryListProps> = ({ className = "" }) => {
                   </div>
                 </td>
                 <td>
-                  <span className="date">{formatDate(category.createdAt)}</span>
+                  <span className="date">
+                    {formatDate(category.createdAt?.toString() || "")}
+                  </span>
                 </td>
                 <td>
-                  <span className="date">{formatDate(category.updatedAt)}</span>
+                  <span className="date">
+                    {formatDate(category.updatedAt?.toString() || "")}
+                  </span>
                 </td>
                 <td>
                   <div className="action-buttons">
@@ -279,9 +283,7 @@ const CategoryList: React.FC<CategoryListProps> = ({ className = "" }) => {
           <button
             className="btn btn-secondary"
             disabled={pagination.page === 1}
-            onClick={() =>
-              fetchCategories({ ...filters, page: pagination.page - 1 })
-            }
+            onClick={() => fetchCategories()}
           >
             Précédent
           </button>
@@ -294,9 +296,7 @@ const CategoryList: React.FC<CategoryListProps> = ({ className = "" }) => {
           <button
             className="btn btn-secondary"
             disabled={pagination.page === pagination.pages}
-            onClick={() =>
-              fetchCategories({ ...filters, page: pagination.page + 1 })
-            }
+            onClick={() => fetchCategories()}
           >
             Suivant
           </button>

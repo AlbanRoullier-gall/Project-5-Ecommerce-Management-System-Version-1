@@ -1,20 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Product,
-  Category,
-  CreateProductRequest,
-  CreateProductWithImagesRequest,
-  UpdateProductRequest,
-} from "../../shared-types";
+import { ProductData, CategoryData } from "../../shared-types";
 import { useProducts } from "../lib/hooks/useProducts";
 import { productService } from "../lib/services/productService";
 import ImageUpload from "./ImageUpload";
 
 interface ProductModalProps {
-  product: Product | null;
-  categories: Category[];
+  product: ProductData | null;
+  categories: CategoryData[];
   onClose: () => void;
   onProductCreated?: () => void;
   onShowInfo?: (title: string, message: string) => void;
@@ -56,8 +50,8 @@ const ProductModal: React.FC<ProductModalProps> = ({
           typeof product.vatRate === "string"
             ? parseFloat(product.vatRate)
             : product.vatRate,
-        categoryId: product.categoryId,
-        isActive: product.isActive,
+        categoryId: product.categoryId!,
+        isActive: product.isActive!,
       });
     } else {
       setFormData({
@@ -65,7 +59,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
         description: "",
         price: 0,
         vatRate: 20,
-        categoryId: categories.length > 0 ? categories[0].id : 0,
+        categoryId: categories.length > 0 ? categories[0].id! : 0,
         isActive: true,
       });
     }
@@ -115,7 +109,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     try {
       if (product) {
         // Update existing product
-        const updateData: UpdateProductRequest = {
+        const updateData: ProductData = {
           name: formData.name,
           description: formData.description,
           price: formData.price,
@@ -124,7 +118,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
           isActive: formData.isActive,
         };
 
-        const updatedProduct = await updateProduct(product.id, updateData);
+        const updatedProduct = await updateProduct(product.id!, updateData);
         if (updatedProduct) {
           console.log("Produit mis à jour avec succès");
 
@@ -133,18 +127,8 @@ const ProductModal: React.FC<ProductModalProps> = ({
             console.log("Suppression des images:", imagesToDelete);
             for (const imageId of imagesToDelete) {
               try {
-                const deleteResult = await productService.deleteImage(
-                  product.id,
-                  imageId
-                );
-                if (deleteResult.error) {
-                  console.error(
-                    "Erreur lors de la suppression de l'image:",
-                    deleteResult.error
-                  );
-                } else {
-                  console.log("Image supprimée avec succès:", imageId);
-                }
+                await productService.deleteImage(product.id!, imageId);
+                console.log("Image supprimée avec succès:", imageId);
               } catch (error) {
                 console.error(
                   "Erreur lors de la suppression de l'image:",
@@ -158,22 +142,11 @@ const ProductModal: React.FC<ProductModalProps> = ({
           if (selectedImages && selectedImages.length > 0) {
             console.log("Ajout de nouvelles images:", selectedImages.length);
             try {
-              const addImagesResult = await productService.addImagesToProduct(
-                product.id,
+              await productService.addImagesToProduct(
+                product.id!,
                 selectedImages
               );
-
-              if (addImagesResult.error) {
-                console.error(
-                  "Erreur lors de l'ajout des images:",
-                  addImagesResult.error
-                );
-              } else {
-                console.log(
-                  "Images ajoutées avec succès:",
-                  addImagesResult.data?.images?.length || 0
-                );
-              }
+              console.log("Images ajoutées avec succès");
             } catch (error) {
               console.error("Erreur lors de l'ajout des images:", error);
             }
@@ -205,7 +178,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
         // Create new product
         if (selectedImages.length > 0) {
           // Create product with images
-          const createData: CreateProductWithImagesRequest = {
+          const createData: ProductData & { images: File[] } = {
             name: formData.name,
             description: formData.description,
             price: formData.price,
@@ -218,9 +191,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
           const result = await productService.createProductWithImages(
             createData
           );
-          if (result.data) {
+          if (result) {
             console.log("Produit créé avec succès avec images");
-            console.log("Images créées:", result.data.images?.length || 0);
+            console.log("Images créées:", (result as any).images?.length || 0);
             // Appeler le callback pour rafraîchir la liste
             onProductCreated?.();
             // Fermer la modal principale
@@ -229,18 +202,19 @@ const ProductModal: React.FC<ProductModalProps> = ({
             onShowInfo?.(
               "✅ Succès",
               `Le produit a été créé avec succès avec ${
-                result.data.images?.length || 0
+                (result as any).images?.length || 0
               } image(s).`
             );
           } else {
             console.log("Échec de la création du produit avec images");
             setError(
-              result.error || "Échec de la création du produit avec images"
+              (result as any).error ||
+                "Échec de la création du produit avec images"
             );
           }
         } else {
           // Create product without images (existing logic)
-          const createData: CreateProductRequest = {
+          const createData: ProductData = {
             name: formData.name,
             description: formData.description,
             price: formData.price,
@@ -393,97 +367,106 @@ const ProductModal: React.FC<ProductModalProps> = ({
               <label>Images du produit</label>
 
               {/* Afficher les images existantes si on modifie un produit */}
-              {product && product.images && product.images.length > 0 && (
-                <div className="existing-images">
-                  <h4>Images actuelles :</h4>
-                  <div className="existing-images-grid">
-                    {product.images
-                      .filter((image) => !imagesToDelete.includes(image.id))
-                      .map((image, index) => (
-                        <div
-                          key={image.id || index}
-                          className="existing-image-item"
-                        >
-                          <div className="image-container">
-                            <img
-                              src={`/uploads/products/${image.filename}`}
-                              alt={image.altText || product.name}
-                              className="existing-image-thumbnail"
-                              onError={(e) => {
-                                console.log(
-                                  "Image load error:",
-                                  image.filename
-                                );
-                                e.currentTarget.style.display = "none";
-                                e.currentTarget.nextElementSibling.style.display =
-                                  "flex";
-                              }}
-                            />
-                            <div
-                              className="no-image-fallback"
-                              style={{ display: "none" }}
-                            >
-                              <span>📷</span>
-                            </div>
-                            <button
-                              type="button"
-                              className="delete-image-btn"
-                              onClick={() => handleDeleteImage(image.id)}
-                              title="Supprimer cette image"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                          <div className="image-info">
-                            <p className="image-filename">{image.filename}</p>
-                            {image.altText && (
-                              <p className="image-alt">{image.altText}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-
-                  {/* Afficher les images marquées pour suppression */}
-                  {imagesToDelete.length > 0 && (
-                    <div className="deleted-images-section">
-                      <h5 className="deleted-images-title">
-                        🗑️ Images à supprimer ({imagesToDelete.length})
-                      </h5>
-                      <div className="deleted-images-list">
-                        {imagesToDelete.map((imageId) => {
-                          const image = product.images?.find(
-                            (img) => img.id === imageId
-                          );
-                          return image ? (
-                            <div key={imageId} className="deleted-image-item">
-                              <div className="deleted-image-info">
-                                <span className="deleted-image-icon">📷</span>
-                                <span
-                                  className="deleted-image-name"
-                                  title={image.filename}
-                                >
-                                  {image.filename.length > 30
-                                    ? `${image.filename.substring(0, 30)}...`
-                                    : image.filename}
-                                </span>
+              {product &&
+                (product as any).images &&
+                (product as any).images.length > 0 && (
+                  <div className="existing-images">
+                    <h4>Images actuelles :</h4>
+                    <div className="existing-images-grid">
+                      {(product as any).images
+                        .filter(
+                          (image: any) => !imagesToDelete.includes(image.id)
+                        )
+                        .map((image: any, index: number) => (
+                          <div
+                            key={image.id || index}
+                            className="existing-image-item"
+                          >
+                            <div className="image-container">
+                              <img
+                                src={`/uploads/products/${image.filename}`}
+                                alt={image.altText || product.name}
+                                className="existing-image-thumbnail"
+                                onError={(e) => {
+                                  console.log(
+                                    "Image load error:",
+                                    image.filename
+                                  );
+                                  e.currentTarget.style.display = "none";
+                                  const nextElement = e.currentTarget
+                                    .nextElementSibling as HTMLElement;
+                                  if (nextElement) {
+                                    nextElement.style.display = "flex";
+                                  }
+                                }}
+                              />
+                              <div
+                                className="no-image-fallback"
+                                style={{ display: "none" }}
+                              >
+                                <span>📷</span>
                               </div>
                               <button
                                 type="button"
-                                className="cancel-delete-btn"
-                                onClick={() => handleCancelDeleteImage(imageId)}
-                                title="Annuler la suppression"
+                                className="delete-image-btn"
+                                onClick={() => handleDeleteImage(image.id)}
+                                title="Supprimer cette image"
                               >
-                                ↶ Annuler
+                                ✕
                               </button>
                             </div>
-                          ) : null;
-                        })}
-                      </div>
+                            <div className="image-info">
+                              <p className="image-filename">{image.filename}</p>
+                              {image.altText && (
+                                <p className="image-alt">{image.altText}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                     </div>
-                  )}
-                </div>
-              )}
+
+                    {/* Afficher les images marquées pour suppression */}
+                    {imagesToDelete.length > 0 && (
+                      <div className="deleted-images-section">
+                        <h5 className="deleted-images-title">
+                          🗑️ Images à supprimer ({imagesToDelete.length})
+                        </h5>
+                        <div className="deleted-images-list">
+                          {imagesToDelete.map((imageId) => {
+                            const image = (product as any).images?.find(
+                              (img: any) => img.id === imageId
+                            );
+                            return image ? (
+                              <div key={imageId} className="deleted-image-item">
+                                <div className="deleted-image-info">
+                                  <span className="deleted-image-icon">📷</span>
+                                  <span
+                                    className="deleted-image-name"
+                                    title={image.filename}
+                                  >
+                                    {image.filename.length > 30
+                                      ? `${image.filename.substring(0, 30)}...`
+                                      : image.filename}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  className="cancel-delete-btn"
+                                  onClick={() =>
+                                    handleCancelDeleteImage(imageId)
+                                  }
+                                  title="Annuler la suppression"
+                                >
+                                  ↶ Annuler
+                                </button>
+                              </div>
+                            ) : null;
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
               {/* Section pour ajouter de nouvelles images */}
               <div className="new-images-section">
@@ -494,14 +477,16 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 </h4>
                 <ImageUpload
                   onImagesChange={setSelectedImages}
-                  maxImages={product ? 3 - (product.images?.length || 0) : 3}
+                  maxImages={
+                    product ? 3 - ((product as any).images?.length || 0) : 3
+                  }
                   disabled={loading}
                 />
                 {product && (
                   <small className="image-help">
                     Vous pouvez ajouter jusqu'à{" "}
-                    {3 - (product.images?.length || 0)} nouvelles images. Les
-                    images existantes seront conservées.
+                    {3 - ((product as any).images?.length || 0)} nouvelles
+                    images. Les images existantes seront conservées.
                   </small>
                 )}
               </div>

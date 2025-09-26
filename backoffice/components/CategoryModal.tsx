@@ -1,17 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Category,
-  CreateCategoryRequest,
-  UpdateCategoryRequest,
-} from "../shared-types";
+import { CategoryData } from "../../shared-types";
 import { useCategories } from "../lib/hooks/useCategories";
 
 interface CategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  category?: Category | null;
+  category?: CategoryData | null;
   onCategoryCreated?: () => void;
   onShowInfo?: (title: string, message: string) => void;
 }
@@ -81,12 +77,12 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
 
       if (category) {
         // Update existing category
-        const updateData: UpdateCategoryRequest = {
+        const updateData: CategoryData = {
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
         };
 
-        const updatedCategory = await updateCategory(category.id, updateData);
+        const updatedCategory = await updateCategory(category.id!, updateData);
         if (updatedCategory) {
           console.log("Catégorie mise à jour avec succès");
           // Appeler le callback pour rafraîchir la liste
@@ -104,7 +100,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
         }
       } else {
         // Create new category
-        const createData: CreateCategoryRequest = {
+        const createData: CategoryData = {
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
         };

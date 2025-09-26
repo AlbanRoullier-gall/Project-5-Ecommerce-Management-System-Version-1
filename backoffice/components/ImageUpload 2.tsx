@@ -1,9 +1,9 @@
 import React, { useState, useRef } from "react";
-import { ProductImage } from "../../shared-types";
+import { ProductImageData } from "../../shared-types";
 
 interface ImageUploadProps {
   productId: number;
-  images: ProductImage[];
+  images: ProductImageData[];
   onImageUpload: (
     productId: number,
     file: File,
@@ -55,7 +55,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           continue;
         }
 
-        await onImageUpload(productId, file, "", "", images.length + i);
+        await onImageUpload(productId!, file, "", "", images.length + i);
       }
     } catch (error) {
       console.error("Erreur lors de l'upload:", error);
@@ -88,7 +88,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const handleDeleteImage = async (imageId: number) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cette image ?")) {
       try {
-        await onImageDelete(productId, imageId);
+        await onImageDelete(productId!, imageId);
       } catch (error) {
         console.error("Erreur lors de la suppression:", error);
         alert("Erreur lors de la suppression de l'image.");
@@ -174,7 +174,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             <div key={image.id} className="relative group">
               <div className="aspect-w-16 aspect-h-12 bg-gray-100 rounded-lg overflow-hidden">
                 <img
-                  src={`/api/products/${productId}/images/${image.filename}`}
+                  src={`/api/products/${productId!}/images/${image.filename}`}
                   alt={image.altText || `Image ${index + 1}`}
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -186,7 +186,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
               {/* Bouton de suppression */}
               <button
-                onClick={() => handleDeleteImage(image.id)}
+                onClick={() => handleDeleteImage(image.id!)}
                 className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                 title="Supprimer l'image"
               >

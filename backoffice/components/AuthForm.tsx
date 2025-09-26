@@ -2,15 +2,11 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import {
-  LoginRequest,
-  RegisterRequest,
-  AuthFormData,
-} from "../../shared-types";
+import { LoginData, RegisterData } from "../../shared-types";
 
 interface AuthFormProps {
   mode: "login" | "register";
-  onSubmit: (data: LoginRequest | RegisterRequest) => void;
+  onSubmit: (data: LoginData | RegisterData) => void;
   isLoading?: boolean;
   error?: string;
 }
@@ -21,7 +17,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
   isLoading = false,
   error,
 }) => {
-  const [formData, setFormData] = useState<AuthFormData>({
+  const [formData, setFormData] = useState<any>({
     email: "",
     password: "",
     confirmPassword: "",
@@ -29,18 +25,18 @@ const AuthForm: React.FC<AuthFormProps> = ({
     lastName: "",
   });
 
-  const [errors, setErrors] = useState<Partial<AuthFormData>>({});
+  const [errors, setErrors] = useState<any>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       [name]: value,
     }));
 
     // Clear error when user starts typing
-    if (errors[name as keyof AuthFormData]) {
-      setErrors((prev) => ({
+    if (errors[name]) {
+      setErrors((prev: any) => ({
         ...prev,
         [name]: undefined,
       }));
@@ -48,7 +44,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<AuthFormData> = {};
+    const newErrors: any = {};
 
     // Email validation
     if (!formData.email) {

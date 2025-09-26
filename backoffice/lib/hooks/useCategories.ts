@@ -1,15 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import {
-  Category,
-  ApiResponse,
-  CreateCategoryRequest,
-  UpdateCategoryRequest,
-  PaginationParams,
-} from "../shared-types";
+import { CategoryData } from "../../../shared-types";
 import { productService } from "../services/productService";
 
 interface UseCategoriesReturn {
-  categories: Category[];
+  categories: CategoryData[];
   loading: boolean;
   error: string | null;
   pagination: {
@@ -18,20 +12,18 @@ interface UseCategoriesReturn {
     total: number;
     pages: number;
   } | null;
-  fetchCategories: (params?: PaginationParams) => Promise<void>;
-  createCategory: (
-    categoryData: CreateCategoryRequest
-  ) => Promise<Category | null>;
+  fetchCategories: () => Promise<void>;
+  createCategory: (categoryData: CategoryData) => Promise<CategoryData | null>;
   updateCategory: (
     id: number,
-    categoryData: UpdateCategoryRequest
-  ) => Promise<Category | null>;
+    categoryData: CategoryData
+  ) => Promise<CategoryData | null>;
   deleteCategory: (id: number) => Promise<boolean>;
   refreshCategories: () => Promise<void>;
 }
 
 export const useCategories = (): UseCategoriesReturn => {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<{
@@ -41,30 +33,24 @@ export const useCategories = (): UseCategoriesReturn => {
     pages: number;
   } | null>(null);
 
-  const fetchCategories = useCallback(async (params?: PaginationParams) => {
+  const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response: ApiResponse<Category[]> =
-        await productService.getCategories();
+      const categories: CategoryData[] = await productService.getCategories();
+      setCategories(categories);
 
-      if (response.data) {
-        setCategories(response.data);
-        // Simuler la pagination pour les catégories
-        const total = response.data.length;
-        const limit = params?.limit || 10;
-        const page = params?.page || 1;
-        setPagination({
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit),
-        });
-      } else {
-        setError(response.error || "Aucune catégorie trouvée");
-        setPagination(null);
-      }
+      // Simuler la pagination pour les catégories
+      const total = categories.length;
+      const limit = 10;
+      const page = 1;
+      setPagination({
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      });
     } catch (err) {
       console.error("Error fetching categories:", err);
       setError(
@@ -79,21 +65,16 @@ export const useCategories = (): UseCategoriesReturn => {
   }, []);
 
   const createCategory = useCallback(
-    async (categoryData: CreateCategoryRequest): Promise<Category | null> => {
+    async (categoryData: CategoryData): Promise<CategoryData | null> => {
       try {
         setLoading(true);
         setError(null);
 
-        const response: ApiResponse<Category> =
-          await productService.createCategory(categoryData);
-
-        if (response.data) {
-          await fetchCategories(); // Refresh the list
-          return response.data;
-        } else {
-          setError("Erreur lors de la création de la catégorie");
-          return null;
-        }
+        const category: CategoryData = await productService.createCategory(
+          categoryData
+        );
+        await fetchCategories(); // Refresh the list
+        return category;
       } catch (err) {
         console.error("Error creating category:", err);
         setError(
@@ -112,22 +93,18 @@ export const useCategories = (): UseCategoriesReturn => {
   const updateCategory = useCallback(
     async (
       id: number,
-      categoryData: UpdateCategoryRequest
-    ): Promise<Category | null> => {
+      categoryData: CategoryData
+    ): Promise<CategoryData | null> => {
       try {
         setLoading(true);
         setError(null);
 
-        const response: ApiResponse<Category> =
-          await productService.updateCategory(id, categoryData);
-
-        if (response.data) {
-          await fetchCategories(); // Refresh the list
-          return response.data;
-        } else {
-          setError("Erreur lors de la mise à jour de la catégorie");
-          return null;
-        }
+        const category: CategoryData = await productService.updateCategory(
+          id,
+          categoryData
+        );
+        await fetchCategories(); // Refresh the list
+        return category;
       } catch (err) {
         console.error("Error updating category:", err);
         setError(

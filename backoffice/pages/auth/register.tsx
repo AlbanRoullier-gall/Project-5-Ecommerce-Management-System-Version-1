@@ -7,7 +7,7 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import AuthForm from "../../components/AuthForm";
 import { useAuth } from "../../contexts/AuthContext";
-import { RegisterRequest } from "../shared-types";
+import { RegisterData } from "../../../shared-types";
 
 const RegisterPage: React.FC = () => {
   const router = useRouter();
@@ -22,7 +22,7 @@ const RegisterPage: React.FC = () => {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  const handleRegister = async (data: RegisterRequest) => {
+  const handleRegister = async (data: RegisterData) => {
     setIsSubmitting(true);
     setError("");
 
@@ -74,7 +74,7 @@ const RegisterPage: React.FC = () => {
           <div className="auth-page-container">
             <AuthForm
               mode="register"
-              onSubmit={handleRegister}
+              onSubmit={handleRegister as any}
               isLoading={isSubmitting}
               error={error}
             />

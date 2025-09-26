@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Product } from "../shared-types";
+import { ProductData } from "../../shared-types";
 import { useProducts } from "../lib/hooks/useProducts";
 import ProductModal from "./ProductModal";
 import ProductFilters from "./ProductFilters";
@@ -25,13 +25,17 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
     deactivateProduct,
   } = useProducts();
 
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [infoMessage, setInfoMessage] = useState("");
   const [infoTitle, setInfoTitle] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [productToDelete, setProductToDelete] = useState<ProductData | null>(
+    null
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [filters, setFilters] = useState({
     search: "",
@@ -41,7 +45,7 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
     sortOrder: "asc" as "asc" | "desc",
   });
 
-  const handleEditProduct = (product: Product) => {
+  const handleEditProduct = (product: ProductData) => {
     setSelectedProduct(product);
     setIsModalOpen(true);
   };
@@ -67,7 +71,7 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
     setIsInfoModalOpen(true);
   };
 
-  const handleDeleteProduct = (product: Product) => {
+  const handleDeleteProduct = (product: ProductData) => {
     setProductToDelete(product);
     setIsDeleteModalOpen(true);
   };
@@ -77,7 +81,7 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
 
     setIsDeleting(true);
     try {
-      const success = await deleteProduct(productToDelete.id);
+      const success = await deleteProduct(productToDelete.id!);
       if (success) {
         setIsDeleteModalOpen(false);
         setProductToDelete(null);
@@ -104,12 +108,12 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
     }
   };
 
-  const handleToggleStatus = async (product: Product) => {
+  const handleToggleStatus = async (product: ProductData) => {
     let success = false;
 
     if (product.isActive) {
       // Le produit est actif, on le désactive
-      success = await deactivateProduct(product.id);
+      success = await deactivateProduct(product.id!);
       if (success) {
         setInfoTitle("✅ Succès");
         setInfoMessage(
@@ -119,7 +123,7 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
       }
     } else {
       // Le produit est inactif, on l'active
-      success = await activateProduct(product.id);
+      success = await activateProduct(product.id!);
       if (success) {
         setInfoTitle("✅ Succès");
         setInfoMessage(
@@ -191,8 +195,8 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
           bValue = typeof b.price === "string" ? parseFloat(b.price) : b.price;
           break;
         case "createdAt":
-          aValue = new Date(a.createdAt).getTime();
-          bValue = new Date(b.createdAt).getTime();
+          aValue = new Date(a.createdAt || 0).getTime();
+          bValue = new Date(b.createdAt || 0).getTime();
           break;
         default:
           aValue = a.name.toLowerCase();
@@ -274,27 +278,38 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
                     {(() => {
                       console.log(
                         `Product ${product.name} images:`,
-                        product.images
+                        (product as any).images
                       );
-                      if (product.images && product.images.length > 0) {
+                      if (
+                        (product as any).images &&
+                        (product as any).images.length > 0
+                      ) {
                         console.log(
                           `First image for ${product.name}:`,
-                          product.images[0]
+                          (product as any).images[0]
                         );
                         return (
                           <>
                             <img
-                              src={`/uploads/products/${product.images[0].filename}`}
-                              alt={product.images[0].altText || product.name}
+                              src={`/uploads/products/${
+                                (product as any).images[0].filename
+                              }`}
+                              alt={
+                                (product as any).images[0].altText ||
+                                product.name
+                              }
                               className="product-thumbnail"
                               onError={(e) => {
                                 console.log(
                                   "Image load error:",
-                                  product.images[0].filename
+                                  (product as any).images[0].filename
                                 );
                                 e.currentTarget.style.display = "none";
-                                e.currentTarget.nextElementSibling.style.display =
-                                  "flex";
+                                const nextElement = e.currentTarget
+                                  .nextElementSibling as HTMLElement;
+                                if (nextElement) {
+                                  nextElement.style.display = "flex";
+                                }
                               }}
                             />
                             <div
@@ -326,7 +341,7 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
                     )}
                   </div>
                 </td>
-                <td>{product.categoryName || "Non catégorisé"}</td>
+                <td>{(product as any).categoryName || "Non catégorisé"}</td>
                 <td>
                   <span className="price">{formatPrice(product.price)}</span>
                 </td>
@@ -348,7 +363,9 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
                   </span>
                 </td>
                 <td>
-                  <span className="date">{formatDate(product.createdAt)}</span>
+                  <span className="date">
+                    {formatDate(product.createdAt?.toString() || "")}
+                  </span>
                 </td>
                 <td>
                   <div className="actions">

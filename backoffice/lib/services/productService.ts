@@ -1,70 +1,30 @@
 import {
-  Product,
-  Category,
-  ApiResponse,
-  PaginationParams,
-  CreateProductRequest,
-  CreateProductWithImagesRequest,
-  CreateProductWithImagesResponse,
-  UpdateProductRequest,
-  CreateCategoryRequest,
-  UpdateCategoryRequest,
-  ImageUploadResponse,
+  ProductData,
+  CategoryData,
+  ProductImageData,
+  ProductListOptions,
+  ProductListResult,
+  ImageUploadOptions,
 } from "../../../shared-types";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:13000";
 
 class ProductService {
-  private async makeRequest<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
-    const url = `${API_BASE_URL}${endpoint}`;
-
-    const response = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-      ...options,
-    });
-
-    if (!response.ok) {
-      // Essayer de récupérer le message d'erreur de l'API
-      try {
-        const errorData = await response.json();
-        const error = new Error(
-          errorData.error || `HTTP error! status: ${response.status}`
-        );
-        // Préserver le code de statut HTTP
-        (error as any).status = response.status;
-        throw error;
-      } catch (parseError) {
-        // Si on ne peut pas parser le JSON, utiliser le message générique
-        const error = new Error(`HTTP error! status: ${response.status}`);
-        (error as any).status = response.status;
-        throw error;
-      }
-    }
-
-    return response.json();
-  }
-
   // ===========================================
   // PRODUCT METHODS
   // ===========================================
 
-  async getProducts(
-    params?: PaginationParams
-  ): Promise<ApiResponse<Product[]>> {
+  async getProducts(params?: ProductListOptions): Promise<ProductListResult> {
     const searchParams = new URLSearchParams();
 
     if (params?.page) searchParams.append("page", params.page.toString());
     if (params?.limit) searchParams.append("limit", params.limit.toString());
     if (params?.search) searchParams.append("search", params.search);
-    if (params?.sortBy) searchParams.append("sortBy", params.sortBy);
-    if (params?.sortOrder) searchParams.append("sortOrder", params.sortOrder);
+    if (params?.categoryId)
+      searchParams.append("categoryId", params.categoryId.toString());
+    if (params?.activeOnly !== undefined)
+      searchParams.append("activeOnly", params.activeOnly.toString());
 
     const queryString = searchParams.toString();
     const endpoint = `/api/admin/products${
@@ -95,23 +55,18 @@ class ProductService {
       const data = await response.json();
 
       // L'API retourne { products: [...], pagination: {...} }
-      // On doit adapter le format pour correspondre à ApiResponse<Product[]>
+      // On doit adapter le format pour correspondre à ProductListResult
       return {
-        data: data.products || [],
+        products: data.products || [],
         pagination: data.pagination,
-        message: "Products retrieved successfully",
       };
     } catch (error) {
       console.error("Error fetching products:", error);
-      return {
-        data: undefined,
-        error:
-          error instanceof Error ? error.message : "Failed to fetch products",
-      };
+      throw error;
     }
   }
 
-  async getProduct(id: number): Promise<ApiResponse<Product>> {
+  async getProduct(id: number): Promise<ProductData> {
     // Récupérer le token d'authentification depuis le localStorage
     const token =
       typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
@@ -119,16 +74,22 @@ class ProductService {
       throw new Error("Authentication token not found");
     }
 
-    return this.makeRequest<Product>(`/api/admin/products/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/admin/products/${id}`, {
       headers: {
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.product || data;
   }
 
-  async createProduct(
-    productData: CreateProductRequest
-  ): Promise<ApiResponse<Product>> {
+  async createProduct(productData: ProductData): Promise<ProductData> {
     try {
       // Récupérer le token d'authentification depuis le localStorage
       const token =
@@ -159,25 +120,17 @@ class ProductService {
 
       const data = await response.json();
       // Le serveur retourne { message: "...", product: {...} }
-      // On doit adapter pour correspondre à ApiResponse<Product>
-      return {
-        data: data.product,
-        message: data.message,
-      };
+      return data.product || data;
     } catch (error) {
       console.error("Error creating product:", error);
-      return {
-        data: undefined,
-        error:
-          error instanceof Error ? error.message : "Failed to create product",
-      };
+      throw error;
     }
   }
 
   async updateProduct(
     id: number,
-    productData: UpdateProductRequest
-  ): Promise<ApiResponse<Product>> {
+    productData: ProductData
+  ): Promise<ProductData> {
     try {
       // Récupérer le token d'authentification depuis le localStorage
       const token =
@@ -208,22 +161,14 @@ class ProductService {
 
       const data = await response.json();
       // Le serveur retourne { message: "...", product: {...} }
-      // On doit adapter pour correspondre à ApiResponse<Product>
-      return {
-        data: data.product,
-        message: data.message,
-      };
+      return data.product || data;
     } catch (error) {
       console.error("Error updating product:", error);
-      return {
-        data: undefined,
-        error:
-          error instanceof Error ? error.message : "Failed to update product",
-      };
+      throw error;
     }
   }
 
-  async deleteProduct(id: number): Promise<ApiResponse<void>> {
+  async deleteProduct(id: number): Promise<void> {
     // Récupérer le token d'authentification depuis le localStorage
     const token =
       typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
@@ -231,17 +176,22 @@ class ProductService {
       throw new Error("Authentication token not found");
     }
 
-    return this.makeRequest<void>(`/api/admin/products/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/admin/products/${id}`, {
       method: "DELETE",
       headers: {
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
   }
 
   async createProductWithImages(
-    productData: CreateProductWithImagesRequest
-  ): Promise<ApiResponse<CreateProductWithImagesResponse>> {
+    productData: ProductData & { images: File[] }
+  ): Promise<ProductData> {
     try {
       // Récupérer le token d'authentification depuis le localStorage
       const token =
@@ -295,29 +245,18 @@ class ProductService {
       }
 
       const data = await response.json();
-      return {
-        data: data,
-        message: data.message,
-      };
+      return data.product || data;
     } catch (error) {
       console.error("Error creating product with images:", error);
-      return {
-        data: undefined,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to create product with images",
-      };
+      throw error;
     }
   }
 
   async uploadImage(
     productId: number,
     image: File,
-    altText?: string,
-    description?: string,
-    orderIndex?: number
-  ): Promise<ApiResponse<ImageUploadResponse>> {
+    options?: ImageUploadOptions
+  ): Promise<ProductImageData> {
     try {
       // Récupérer le token d'authentification depuis le localStorage
       const token =
@@ -331,10 +270,11 @@ class ProductService {
       // Create FormData for multipart upload
       const formData = new FormData();
       formData.append("image", image);
-      if (altText) formData.append("altText", altText);
-      if (description) formData.append("description", description);
-      if (orderIndex !== undefined)
-        formData.append("orderIndex", orderIndex.toString());
+      if (options?.altText) formData.append("altText", options.altText);
+      if (options?.description)
+        formData.append("description", options.description);
+      if (options?.orderIndex !== undefined)
+        formData.append("orderIndex", options.orderIndex.toString());
 
       const response = await fetch(
         `${API_BASE_URL}/api/admin/products/${productId}/images`,
@@ -358,21 +298,14 @@ class ProductService {
       }
 
       const data = await response.json();
-      return {
-        data: data.image,
-        message: data.message,
-      };
+      return data.image || data;
     } catch (error) {
       console.error("Error uploading image:", error);
-      return {
-        data: undefined,
-        error:
-          error instanceof Error ? error.message : "Failed to upload image",
-      };
+      throw error;
     }
   }
 
-  async activateProduct(id: number): Promise<ApiResponse<Product>> {
+  async activateProduct(id: number): Promise<ProductData> {
     try {
       // Récupérer le token d'authentification depuis le localStorage
       const token =
@@ -405,21 +338,14 @@ class ProductService {
       }
 
       const data = await response.json();
-      return {
-        data: data.product,
-        message: data.message,
-      };
+      return data.product || data;
     } catch (error) {
       console.error("Error activating product:", error);
-      return {
-        data: undefined,
-        error:
-          error instanceof Error ? error.message : "Failed to activate product",
-      };
+      throw error;
     }
   }
 
-  async deactivateProduct(id: number): Promise<ApiResponse<Product>> {
+  async deactivateProduct(id: number): Promise<ProductData> {
     try {
       // Récupérer le token d'authentification depuis le localStorage
       const token =
@@ -452,19 +378,10 @@ class ProductService {
       }
 
       const data = await response.json();
-      return {
-        data: data.product,
-        message: data.message,
-      };
+      return data.product || data;
     } catch (error) {
       console.error("Error deactivating product:", error);
-      return {
-        data: undefined,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to deactivate product",
-      };
+      throw error;
     }
   }
 
@@ -472,7 +389,7 @@ class ProductService {
   // CATEGORY METHODS
   // ===========================================
 
-  async getCategories(): Promise<ApiResponse<Category[]>> {
+  async getCategories(): Promise<CategoryData[]> {
     try {
       // Récupérer le token d'authentification depuis le localStorage
       const token =
@@ -495,23 +412,14 @@ class ProductService {
       }
 
       const data = await response.json();
-
-      // L'API retourne directement un tableau, on doit l'envelopper dans ApiResponse
-      return {
-        data: data,
-        message: "Categories retrieved successfully",
-      };
+      return data;
     } catch (error) {
       console.error("Error fetching categories:", error);
-      return {
-        data: undefined,
-        error:
-          error instanceof Error ? error.message : "Failed to fetch categories",
-      };
+      throw error;
     }
   }
 
-  async getCategory(id: number): Promise<ApiResponse<Category>> {
+  async getCategory(id: number): Promise<CategoryData> {
     // Récupérer le token d'authentification depuis le localStorage
     const token =
       typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
@@ -519,16 +427,22 @@ class ProductService {
       throw new Error("Authentication token not found");
     }
 
-    return this.makeRequest<Category>(`/api/admin/categories/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/admin/categories/${id}`, {
       headers: {
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.category || data;
   }
 
-  async createCategory(
-    categoryData: CreateCategoryRequest
-  ): Promise<ApiResponse<Category>> {
+  async createCategory(categoryData: CategoryData): Promise<CategoryData> {
     try {
       // Récupérer le token d'authentification depuis le localStorage
       const token =
@@ -559,25 +473,17 @@ class ProductService {
 
       const data = await response.json();
       // Le serveur retourne { message: "...", category: {...} }
-      // On doit adapter pour correspondre à ApiResponse<Category>
-      return {
-        data: data.category,
-        message: data.message,
-      };
+      return data.category || data;
     } catch (error) {
       console.error("Error creating category:", error);
-      return {
-        data: undefined,
-        error:
-          error instanceof Error ? error.message : "Failed to create category",
-      };
+      throw error;
     }
   }
 
   async updateCategory(
     id: number,
-    categoryData: UpdateCategoryRequest
-  ): Promise<ApiResponse<Category>> {
+    categoryData: CategoryData
+  ): Promise<CategoryData> {
     try {
       // Récupérer le token d'authentification depuis le localStorage
       const token =
@@ -611,22 +517,14 @@ class ProductService {
 
       const data = await response.json();
       // Le serveur retourne { message: "...", category: {...} }
-      // On doit adapter pour correspondre à ApiResponse<Category>
-      return {
-        data: data.category,
-        message: data.message,
-      };
+      return data.category || data;
     } catch (error) {
       console.error("Error updating category:", error);
-      return {
-        data: undefined,
-        error:
-          error instanceof Error ? error.message : "Failed to update category",
-      };
+      throw error;
     }
   }
 
-  async deleteCategory(id: number): Promise<ApiResponse<void>> {
+  async deleteCategory(id: number): Promise<void> {
     try {
       // Récupérer le token d'authentification depuis le localStorage
       const token =
@@ -637,12 +535,25 @@ class ProductService {
         throw new Error("Authentication token not found");
       }
 
-      return await this.makeRequest<void>(`/api/admin/categories/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/api/admin/categories/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 409) {
+          const customError = new Error("CATEGORY_HAS_PRODUCTS");
+          (customError as any).status = 409;
+          throw customError;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
     } catch (error: any) {
       // Si c'est une erreur 409 (Conflict), c'est probablement parce que la catégorie a des produits
       if (error.status === 409) {
@@ -654,10 +565,7 @@ class ProductService {
     }
   }
 
-  async deleteImage(
-    productId: number,
-    imageId: number
-  ): Promise<ApiResponse<any>> {
+  async deleteImage(productId: number, imageId: number): Promise<void> {
     try {
       const token =
         typeof window !== "undefined"
@@ -690,25 +598,17 @@ class ProductService {
         throw error;
       }
 
-      const data = await response.json();
-      return {
-        data: data,
-        message: data.message || "Image deleted successfully",
-      };
+      // Image deleted successfully
     } catch (error) {
       console.error("Error deleting image:", error);
-      return {
-        data: null,
-        error:
-          error instanceof Error ? error.message : "Failed to delete image",
-      };
+      throw error;
     }
   }
 
   async addImagesToProduct(
     productId: number,
     images: File[]
-  ): Promise<ApiResponse<CreateProductWithImagesResponse>> {
+  ): Promise<ProductData> {
     try {
       const token =
         typeof window !== "undefined"
@@ -751,19 +651,10 @@ class ProductService {
       }
 
       const data = await response.json();
-      return {
-        data: data,
-        message: data.message,
-      };
+      return data.product || data;
     } catch (error) {
       console.error("Error adding images to product:", error);
-      return {
-        data: null,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to add images to product",
-      };
+      throw error;
     }
   }
 }

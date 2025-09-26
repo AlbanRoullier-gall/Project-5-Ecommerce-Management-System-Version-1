@@ -7,7 +7,7 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import AuthForm from "../../components/AuthForm";
 import { useAuth } from "../../contexts/AuthContext";
-import { LoginRequest } from "../shared-types";
+import { LoginData } from "../../../shared-types";
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
@@ -22,7 +22,7 @@ const LoginPage: React.FC = () => {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  const handleLogin = async (data: LoginRequest) => {
+  const handleLogin = async (data: LoginData) => {
     setIsSubmitting(true);
     setError("");
 

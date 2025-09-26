@@ -7,22 +7,18 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import {
-  User,
-  RegisterRequest,
-  UpdateProfileRequest,
-} from "../../shared-types";
+import { JWTPayload, RegisterData, UpdateUserData } from "../../shared-types";
 import authService from "../lib/services/authService";
 
 interface AuthContextType {
-  user: User | null;
+  user: JWTPayload | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: RegisterRequest) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
-  updateProfile: (profileData: UpdateProfileRequest) => Promise<void>;
+  updateProfile: (profileData: UpdateUserData) => Promise<void>;
   changePassword: (
     currentPassword: string,
     newPassword: string
@@ -38,7 +34,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<JWTPayload | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Initialize auth state on mount
@@ -81,7 +77,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (userData: RegisterRequest) => {
+  const register = async (userData: RegisterData) => {
     try {
       const response = await authService.register(userData);
       setUser(response.user);
@@ -102,7 +98,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const updateProfile = async (profileData: UpdateProfileRequest) => {
+  const updateProfile = async (profileData: UpdateUserData) => {
     try {
       const response = await authService.updateProfile(profileData);
       setUser(response.user);

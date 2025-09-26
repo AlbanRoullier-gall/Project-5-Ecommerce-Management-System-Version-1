@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Category } from "../shared-types";
+import { CategoryData } from "../../shared-types";
 
 interface ProductFiltersProps {
   filters: {
@@ -11,7 +11,7 @@ interface ProductFiltersProps {
     sortBy: string;
     sortOrder: "asc" | "desc";
   };
-  categories: Category[];
+  categories: CategoryData[];
   onFiltersChange: (filters: any) => void;
 }
 
