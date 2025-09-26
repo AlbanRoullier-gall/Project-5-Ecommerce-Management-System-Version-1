@@ -1,67 +1,10 @@
-import { Request } from "express";
+/**
+ * Type definitions for the payment service
+ * Import des types partagés et des types spécifiques à la base de données
+ */
 
-export interface AuthenticatedRequest extends Request {
-  user: {
-    customerId: number;
-    email: string;
-    role: string;
-  };
-  headers: { [key: string]: string | string[] | undefined };
-  params: { [key: string]: string };
-  body: any;
-}
+// Import des types partagés
+export * from "../../../shared-types";
 
-export interface PaymentIntentData {
-  orderId: number;
-  amount: number;
-  currency: string;
-  paymentMethod: string;
-}
-
-export interface ConfirmPaymentData {
-  paymentIntentId: string;
-  paymentMethodId?: string;
-}
-
-export interface PaymentIntentResponse {
-  id: number;
-  stripePaymentIntentId: string;
-  amount: number;
-  currency: string;
-  status: string;
-  clientSecret: string;
-  createdAt: Date;
-}
-
-export interface PaymentStatusResponse {
-  id: number;
-  stripePaymentIntentId: string;
-  amount: number;
-  currency: string;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface PaymentListResponse {
-  payments: PaymentStatusResponse[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
-  };
-}
-
-// Database row types
-export interface PaymentIntentDbRow {
-  id: number;
-  stripe_payment_intent_id: string;
-  customer_id: number;
-  order_id: number;
-  amount: number;
-  currency: string;
-  status: string;
-  created_at: Date;
-  updated_at: Date;
-}
+// Import des types spécifiques à la base de données
+export * from "./payment-database";

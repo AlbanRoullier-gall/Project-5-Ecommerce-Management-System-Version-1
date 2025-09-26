@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { LoginData, RegisterData } from "../../shared-types";
+import { LoginData, RegisterData } from "../../../shared-types";
 
 interface AuthFormProps {
   mode: "login" | "register";

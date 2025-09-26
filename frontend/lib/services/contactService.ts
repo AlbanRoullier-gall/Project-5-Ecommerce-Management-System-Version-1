@@ -1,12 +1,16 @@
-import { ContactFormData, ContactResponse } from "../../shared-types";
+import {
+  ContactEmailRequest,
+  ContactEmailResponse,
+} from "../../../shared-types";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:13000";
+  (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_API_URL) ||
+  "http://localhost:13000";
 
 export class ContactService {
   static async sendContactEmail(
-    formData: ContactFormData
-  ): Promise<ContactResponse> {
+    formData: ContactEmailRequest
+  ): Promise<ContactEmailResponse> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/contact`, {
         method: "POST",
@@ -21,7 +25,7 @@ export class ContactService {
         throw new Error(errorData.error || "Erreur lors de l'envoi de l'email");
       }
 
-      const data: ContactResponse = await response.json();
+      const data: ContactEmailResponse = await response.json();
       return data;
     } catch (error) {
       console.error("Erreur ContactService:", error);

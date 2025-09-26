@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CategoryData } from "../../shared-types";
+import { CategoryData } from "../../../shared-types";
 import { useCategories } from "../lib/hooks/useCategories";
 import CategoryModal from "./CategoryModal";
 import CategoryFilters from "./CategoryFilters";

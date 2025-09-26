@@ -1,52 +1,10 @@
-import { Request } from "express";
+/**
+ * Type definitions for the customer service
+ * Import des types partagés et des types spécifiques à la base de données
+ */
 
-export interface AuthenticatedRequest extends Request {
-  user: {
-    customerId: number;
-    email: string;
-    role: string;
-  };
-}
+// Import des types partagés
+export * from "../../../shared-types";
 
-export interface CustomerData {
-  civilityId: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  socioProfessionalCategoryId: number;
-  phoneNumber?: string;
-  birthday?: Date;
-}
-
-export interface CustomerUpdateData {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phoneNumber?: string;
-  birthday?: Date;
-}
-
-export interface AddressData {
-  addressType: "shipping" | "billing";
-  address: string;
-  postalCode: string;
-  city: string;
-  countryId: number;
-  isDefault?: boolean;
-}
-
-export interface CustomerListOptions {
-  page: number;
-  limit: number;
-  search: string;
-  activeOnly: boolean;
-}
-
-export interface CustomerListResult {
-  customers: any[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+// Import des types spécifiques à la base de données
+export * from "./customer-database";

@@ -7,7 +7,11 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import { JWTPayload, RegisterData, UpdateUserData } from "../../shared-types";
+import {
+  JWTPayload,
+  RegisterData,
+  UpdateUserData,
+} from "../../../shared-types";
 import authService from "../lib/services/authService";
 
 interface AuthContextType {

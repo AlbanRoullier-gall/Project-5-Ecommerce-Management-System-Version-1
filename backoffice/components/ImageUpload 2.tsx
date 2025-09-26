@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { ProductImageData } from "../../shared-types";
+import { ProductImageData } from "../../../shared-types";
 
 interface ImageUploadProps {
   productId: number;

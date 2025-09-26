@@ -7,7 +7,7 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import AuthForm from "../../components/AuthForm";
 import { useAuth } from "../../contexts/AuthContext";
-import { RegisterData } from "../../../shared-types";
+import { RegisterData } from "../../../../shared-types";
 
 const RegisterPage: React.FC = () => {
   const router = useRouter();

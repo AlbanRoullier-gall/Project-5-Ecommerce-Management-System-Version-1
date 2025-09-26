@@ -7,7 +7,7 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import AuthForm from "../../components/AuthForm";
 import { useAuth } from "../../contexts/AuthContext";
-import { LoginData } from "../../../shared-types";
+import { LoginData } from "../../../../shared-types";
 
 const LoginPage: React.FC = () => {
   const router = useRouter();

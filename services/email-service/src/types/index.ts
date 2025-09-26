@@ -1,33 +1,10 @@
-export interface ContactEmailRequest {
-  email: string;
-  name?: string;
-  subject?: string;
-  message?: string;
-}
+/**
+ * Type definitions for the email service
+ * Import des types partagés et des types spécifiques à la base de données
+ */
 
-export interface ContactEmailResponse {
-  message: string;
-  messageId: string;
-}
+// Import des types partagés
+export * from "../../../shared-types";
 
-export interface EmailTemplate {
-  html: string;
-  text: string;
-}
-
-export interface MailOptions {
-  from: string;
-  to: string;
-  replyTo?: string;
-  subject: string;
-  html: string;
-  text: string;
-}
-
-export interface EmailServiceConfig {
-  service: string;
-  auth: {
-    user: string;
-    pass: string;
-  };
-}
+// Import des types spécifiques à la base de données
+export * from "./email-database";

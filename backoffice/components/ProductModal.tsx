@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ProductData, CategoryData } from "../../shared-types";
+import { ProductData, CategoryData } from "../../../shared-types";
 import { useProducts } from "../lib/hooks/useProducts";
 import { productService } from "../lib/services/productService";
 import ImageUpload from "./ImageUpload";

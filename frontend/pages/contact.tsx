@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Head from "next/head";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { ContactFormData } from "../shared-types";
+import { ContactEmailRequest } from "../../shared-types";
 import { ContactService } from "../lib/services/contactService";
 
 export default function Contact() {
-  const [formData, setFormData] = useState<ContactFormData>({
-    name: "",
+  const [formData, setFormData] = useState<ContactEmailRequest>({
     email: "",
+    name: "",
     subject: "",
     message: "",
   });
@@ -36,8 +36,8 @@ export default function Contact() {
 
       // Reset form
       setFormData({
-        name: "",
         email: "",
+        name: "",
         subject: "",
         message: "",
       });
