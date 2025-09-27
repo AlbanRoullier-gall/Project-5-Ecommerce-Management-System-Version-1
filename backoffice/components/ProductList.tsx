@@ -7,6 +7,7 @@ import ProductModal from "./ProductModal";
 import ProductFilters from "./ProductFilters";
 import InfoModal from "./InfoModal";
 import DeleteConfirmModal from "./DeleteConfirmModal";
+import { Button, LoadingSpinner } from "./common";
 
 interface ProductListProps {
   className?: string;
@@ -218,7 +219,7 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
   if (loading && products.length === 0) {
     return (
       <div className={`product-list ${className}`}>
-        <div className="loading">Chargement des produits...</div>
+        <LoadingSpinner size="lg" text="Chargement des produits..." />
       </div>
     );
   }
@@ -226,7 +227,9 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
   if (error) {
     return (
       <div className={`product-list ${className}`}>
-        <div className="error">Erreur : {error}</div>
+        <div className="error bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          Erreur : {error}
+        </div>
       </div>
     );
   }
@@ -241,9 +244,9 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
             {filteredProducts.length > 1 ? "s" : ""} trouvé
             {filteredProducts.length > 1 ? "s" : ""}
           </span>
-          <button className="btn btn-primary" onClick={handleCreateProduct}>
+          <Button variant="primary" onClick={handleCreateProduct}>
             Nouveau Produit
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -368,30 +371,31 @@ const ProductList: React.FC<ProductListProps> = ({ className = "" }) => {
                   </span>
                 </td>
                 <td>
-                  <div className="actions">
-                    <button
-                      className="btn btn-sm btn-secondary"
+                  <div className="actions flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="secondary"
                       onClick={() => handleEditProduct(product)}
                       title="Modifier"
                     >
                       ✎
-                    </button>
-                    <button
-                      className={`btn btn-sm ${
-                        product.isActive ? "btn-warning" : "btn-success"
-                      }`}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={product.isActive ? "warning" : "success"}
                       onClick={() => handleToggleStatus(product)}
                       title={product.isActive ? "Désactiver" : "Activer"}
                     >
                       {product.isActive ? "⏸" : "▶"}
-                    </button>
-                    <button
-                      className="btn btn-sm btn-danger"
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
                       onClick={() => handleDeleteProduct(product)}
                       title="Supprimer"
                     >
                       ✕
-                    </button>
+                    </Button>
                   </div>
                 </td>
               </tr>

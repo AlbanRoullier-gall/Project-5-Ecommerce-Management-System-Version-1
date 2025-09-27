@@ -9,7 +9,6 @@ import ProductImage from "../models/ProductImage";
 import CategoryRepository from "../repositories/CategoryRepository";
 import ProductRepository from "../repositories/ProductRepository";
 import ProductImageRepository from "../repositories/ProductImageRepository";
-import ProductImageVariantRepository from "../repositories/ProductImageVariantRepository";
 import {
   ProductData,
   CategoryData,
@@ -21,13 +20,11 @@ export default class ProductService {
   private categoryRepository: CategoryRepository;
   private productRepository: ProductRepository;
   private imageRepository: ProductImageRepository;
-  private variantRepository: ProductImageVariantRepository;
 
   constructor(pool: Pool) {
     this.categoryRepository = new CategoryRepository(pool);
     this.productRepository = new ProductRepository(pool);
     this.imageRepository = new ProductImageRepository(pool);
-    this.variantRepository = new ProductImageVariantRepository(pool);
   }
 
   // Category management methods

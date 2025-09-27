@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Modal, Button } from "./common";
 
 interface InfoModalProps {
   isOpen: boolean;
@@ -15,45 +16,17 @@ const InfoModal: React.FC<InfoModalProps> = ({
   title,
   message,
 }) => {
-  if (!isOpen) return null;
-
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content info-modal">
-        <div className="modal-header">
-          <h3>{title}</h3>
-          <button className="modal-close" onClick={onClose}>
-            ✕
-          </button>
-        </div>
-
-        <div className="modal-body">
-          <div className="info-icon">ℹ️</div>
-          <div className="info-message">
-            {message.split("\n").map((line, index) => (
-              <p
-                key={index}
-                style={{ margin: line.trim() ? "0.5rem 0" : "0.25rem 0" }}
-              >
-                {line}
-              </p>
-            ))}
-          </div>
-        </div>
-
+    <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
+      <div className="modal-body">
+        <p className="text-gray-700 mb-6">{message}</p>
         <div className="modal-actions">
-          <button className="btn btn-primary" onClick={onClose}>
-            Compris
-          </button>
+          <Button variant="primary" onClick={onClose} fullWidth>
+            OK
+          </Button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 

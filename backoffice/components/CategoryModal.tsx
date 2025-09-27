@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { CategoryData } from "../../shared-types";
 import { useCategories } from "../lib/hooks/useCategories";
+import { Modal, Button, FormField } from "./common";
 
 interface CategoryModalProps {
   isOpen: boolean;
@@ -129,78 +130,72 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>{category ? "Modifier la catégorie" : "Nouvelle catégorie"}</h3>
-          <button
-            className="modal-close"
-            onClick={handleClose}
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={category ? "Modifier la catégorie" : "Nouvelle catégorie"}
+      size="md"
+      closeOnOverlayClick={!loading}
+    >
+      <form onSubmit={handleSubmit} className="product-form">
+        {error && (
+          <div className="error-message bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
+            {error}
+          </div>
+        )}
+
+        <div className="form-content space-y-4">
+          <FormField
+            label="Nom de la catégorie"
+            name="name"
+            type="text"
+            value={formData.name}
+            onChange={handleInputChange}
+            placeholder="Ex: Électronique, Maison & Jardin..."
+            required
             disabled={loading}
-          >
-            ✕
-          </button>
+            error={
+              error && formData.name.trim() === ""
+                ? "Le nom est obligatoire"
+                : undefined
+            }
+          />
+
+          <FormField
+            label="Description"
+            name="description"
+            type="textarea"
+            value={formData.description}
+            onChange={handleInputChange}
+            placeholder="Description de la catégorie (optionnel)"
+            rows={4}
+            disabled={loading}
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="product-form">
-          {error && <div className="error-message">{error}</div>}
-
-          <div className="form-content">
-            <div className="form-group">
-              <label htmlFor="name">Nom de la catégorie *</label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                disabled={loading}
-                placeholder="Ex: Électronique, Maison & Jardin..."
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="description">Description</label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows={4}
-                disabled={loading}
-                placeholder="Description de la catégorie (optionnel)"
-              />
-            </div>
-          </div>
-
-          <div className="modal-actions">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleClose}
-              disabled={loading}
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading || !formData.name.trim()}
-            >
-              {loading
-                ? "Enregistrement..."
-                : category
-                ? "Mettre à jour"
-                : "Créer"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="modal-actions flex gap-3 mt-6">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleClose}
+            disabled={loading}
+            className="flex-1"
+          >
+            Annuler
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={loading || !formData.name.trim()}
+            loading={loading}
+            className="flex-1"
+          >
+            {category ? "Mettre à jour" : "Créer"}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 };
 

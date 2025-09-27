@@ -61,21 +61,6 @@ async function migrate(): Promise<void> {
       )
     `);
 
-    // Create product_image_variants table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS product_image_variants (
-        id SERIAL PRIMARY KEY,
-        image_id INTEGER REFERENCES product_images(id) ON DELETE CASCADE,
-        variant_type VARCHAR(50) NOT NULL,
-        file_path VARCHAR(255) NOT NULL,
-        width INTEGER,
-        height INTEGER,
-        file_size INTEGER,
-        quality INTEGER,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-
     // Create indexes
     await pool.query(
       "CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id)"
@@ -88,9 +73,6 @@ async function migrate(): Promise<void> {
     );
     await pool.query(
       "CREATE INDEX IF NOT EXISTS idx_product_images_active ON product_images(is_active)"
-    );
-    await pool.query(
-      "CREATE INDEX IF NOT EXISTS idx_product_image_variants_image_id ON product_image_variants(image_id)"
     );
 
     // Insert default categories

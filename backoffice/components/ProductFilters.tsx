@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { CategoryData } from "../../shared-types";
+import { Button } from "./common";
 
 interface ProductFiltersProps {
   filters: {
@@ -117,13 +118,13 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         </div>
       </div>
 
-      <div className="filter-actions">
-        <button className="btn btn-primary" onClick={handleApplyFilters}>
+      <div className="filter-actions flex gap-3">
+        <Button variant="primary" onClick={handleApplyFilters}>
           Appliquer les filtres
-        </button>
-        <button className="btn btn-secondary" onClick={handleResetFilters}>
+        </Button>
+        <Button variant="secondary" onClick={handleResetFilters}>
           Réinitialiser
-        </button>
+        </Button>
       </div>
     </div>
   );

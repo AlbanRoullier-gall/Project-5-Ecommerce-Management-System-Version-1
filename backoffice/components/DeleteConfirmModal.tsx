@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Modal, Button } from "./common";
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
@@ -23,59 +24,45 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   isLoading = false,
   warningMessage,
 }) => {
-  if (!isOpen) return null;
-
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && !isLoading) {
-      onClose();
-    }
-  };
-
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content delete-confirm-modal">
-        <div className="modal-header">
-          <h3>{title}</h3>
-          <button
-            className="modal-close"
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="sm"
+      closeOnOverlayClick={!isLoading}
+    >
+      <div className="modal-body text-center">
+        <div className="text-6xl mb-4">🗑️</div>
+        <p className="text-gray-700 mb-4">{message}</p>
+        <p className="font-semibold text-gray-900 mb-4">"{itemName}"</p>
+
+        {warningMessage && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-6">
+            <p className="text-yellow-800 text-sm">{warningMessage}</p>
+          </div>
+        )}
+
+        <div className="modal-actions flex gap-3">
+          <Button
+            variant="secondary"
             onClick={onClose}
             disabled={isLoading}
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="modal-body">
-          <div className="delete-icon">🗑️</div>
-          <p className="delete-message">{message}</p>
-          <div className="delete-item-name">"{itemName}"</div>
-
-          {warningMessage && (
-            <div className="warning-message">
-              <div className="warning-icon">⚠️</div>
-              <p>{warningMessage}</p>
-            </div>
-          )}
-        </div>
-
-        <div className="modal-actions">
-          <button
-            className="btn btn-secondary"
-            onClick={onClose}
-            disabled={isLoading}
+            className="flex-1"
           >
             Annuler
-          </button>
-          <button
-            className="btn btn-danger"
+          </Button>
+          <Button
+            variant="danger"
             onClick={onConfirm}
-            disabled={isLoading}
+            loading={isLoading}
+            className="flex-1"
           >
             {isLoading ? "Suppression..." : "Supprimer"}
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 
