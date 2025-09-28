@@ -1,10 +1,14 @@
 /**
  * UserRepository
- * Data access layer for User entities
+ * Couche d'accès aux données pour les utilisateurs
+ *
+ * Architecture : Repository pattern
+ * - Travaille uniquement avec les modèles User
+ * - Correspond exactement à la table users
+ * - Pas de logique métier, uniquement l'accès aux données
  */
 import { Pool } from "pg";
-import { User } from "../models/User";
-import { UserData } from "../types";
+import { User, UserData } from "../models/User";
 
 export class UserRepository {
   private pool: Pool;
@@ -14,15 +18,13 @@ export class UserRepository {
   }
 
   /**
-   * Get user by ID
-   * @param {number} id User ID
-   * @returns {Promise<User|null>} User or null
+   * Récupérer un utilisateur par ID
    */
   async getById(id: number): Promise<User | null> {
     try {
       const query = `
-        SELECT user_id, email, password_hash, first_name, last_name, role, 
-               is_active, created_at, updated_at
+        SELECT user_id, email, password_hash, first_name, last_name, 
+               role, is_active, created_at, updated_at
         FROM users 
         WHERE user_id = $1
       `;
@@ -40,15 +42,13 @@ export class UserRepository {
   }
 
   /**
-   * Get user by email
-   * @param {string} email User email
-   * @returns {Promise<User|null>} User or null
+   * Récupérer un utilisateur par email
    */
   async getByEmail(email: string): Promise<User | null> {
     try {
       const query = `
-        SELECT user_id, email, password_hash, first_name, last_name, role, 
-               is_active, created_at, updated_at
+        SELECT user_id, email, password_hash, first_name, last_name, 
+               role, is_active, created_at, updated_at
         FROM users 
         WHERE email = $1
       `;
@@ -66,65 +66,19 @@ export class UserRepository {
   }
 
   /**
-   * List all active users
-   * @returns {Promise<User[]>} List of users
-   */
-  async listAllActive(): Promise<User[]> {
-    try {
-      const query = `
-        SELECT user_id, email, password_hash, first_name, last_name, role, 
-               is_active, created_at, updated_at
-        FROM users 
-        WHERE is_active = true
-        ORDER BY created_at DESC
-      `;
-      const result = await this.pool.query(query);
-
-      return result.rows.map((row) => new User(row as UserData));
-    } catch (error) {
-      console.error("Error listing active users:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * List users by role
-   * @param {string} role User role
-   * @returns {Promise<User[]>} List of users
-   */
-  async listByRole(role: string): Promise<User[]> {
-    try {
-      const query = `
-        SELECT user_id, email, password_hash, first_name, last_name, role, 
-               is_active, created_at, updated_at
-        FROM users 
-        WHERE role = $1 AND is_active = true
-        ORDER BY created_at DESC
-      `;
-      const result = await this.pool.query(query, [role]);
-
-      return result.rows.map((row) => new User(row as UserData));
-    } catch (error) {
-      console.error("Error listing users by role:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Save new user
-   * @param {User} user User to save
-   * @returns {Promise<User>} Saved user
+   * Créer un nouvel utilisateur
    */
   async save(user: User): Promise<User> {
     try {
       const query = `
         INSERT INTO users (email, password_hash, first_name, last_name, role, is_active)
         VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING user_id, email, password_hash, first_name, last_name, role, 
-                  is_active, created_at, updated_at
+        RETURNING user_id, email, password_hash, first_name, last_name, 
+                  role, is_active, created_at, updated_at
       `;
+
       const values = [
-        user.email.toLowerCase(),
+        user.email,
         user.passwordHash,
         user.firstName,
         user.lastName,
@@ -141,9 +95,7 @@ export class UserRepository {
   }
 
   /**
-   * Update user
-   * @param {User} user User to update
-   * @returns {Promise<User>} Updated user
+   * Mettre à jour un utilisateur
    */
   async update(user: User): Promise<User> {
     try {
@@ -152,11 +104,12 @@ export class UserRepository {
         SET email = $1, password_hash = $2, first_name = $3, last_name = $4, 
             role = $5, is_active = $6, updated_at = CURRENT_TIMESTAMP
         WHERE user_id = $7
-        RETURNING user_id, email, password_hash, first_name, last_name, role, 
-                  is_active, created_at, updated_at
+        RETURNING user_id, email, password_hash, first_name, last_name, 
+                  role, is_active, created_at, updated_at
       `;
+
       const values = [
-        user.email.toLowerCase(),
+        user.email,
         user.passwordHash,
         user.firstName,
         user.lastName,
@@ -166,11 +119,6 @@ export class UserRepository {
       ];
 
       const result = await this.pool.query(query, values);
-
-      if (result.rows.length === 0) {
-        throw new Error("User not found");
-      }
-
       return new User(result.rows[0] as UserData);
     } catch (error) {
       console.error("Error updating user:", error);
@@ -179,15 +127,12 @@ export class UserRepository {
   }
 
   /**
-   * Delete user
-   * @param {User} user User to delete
-   * @returns {Promise<boolean>} True if deleted
+   * Supprimer un utilisateur
    */
   async delete(user: User): Promise<boolean> {
     try {
       const query = "DELETE FROM users WHERE user_id = $1";
       const result = await this.pool.query(query, [user.userId]);
-
       return result.rowCount! > 0;
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -196,82 +141,15 @@ export class UserRepository {
   }
 
   /**
-   * Check if email exists
-   * @param {string} email Email to check
-   * @returns {Promise<boolean>} True if exists
+   * Vérifier si un email existe
    */
-  async existsByEmail(email: string): Promise<boolean> {
+  async emailExists(email: string): Promise<boolean> {
     try {
-      const query = "SELECT 1 FROM users WHERE email = $1 LIMIT 1";
+      const query = "SELECT 1 FROM users WHERE email = $1";
       const result = await this.pool.query(query, [email.toLowerCase()]);
-
       return result.rows.length > 0;
     } catch (error) {
       console.error("Error checking email existence:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Update user password
-   * @param {number} userId User ID
-   * @param {string} passwordHash New password hash
-   * @returns {Promise<boolean>} True if updated
-   */
-  async updatePassword(userId: number, passwordHash: string): Promise<boolean> {
-    try {
-      const query = `
-        UPDATE users 
-        SET password_hash = $1, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = $2
-      `;
-      const result = await this.pool.query(query, [passwordHash, userId]);
-
-      return result.rowCount! > 0;
-    } catch (error) {
-      console.error("Error updating password:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Activate user
-   * @param {number} userId User ID
-   * @returns {Promise<boolean>} True if activated
-   */
-  async activate(userId: number): Promise<boolean> {
-    try {
-      const query = `
-        UPDATE users 
-        SET is_active = true, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = $1
-      `;
-      const result = await this.pool.query(query, [userId]);
-
-      return result.rowCount! > 0;
-    } catch (error) {
-      console.error("Error activating user:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Deactivate user
-   * @param {number} userId User ID
-   * @returns {Promise<boolean>} True if deactivated
-   */
-  async deactivate(userId: number): Promise<boolean> {
-    try {
-      const query = `
-        UPDATE users 
-        SET is_active = false, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = $1
-      `;
-      const result = await this.pool.query(query, [userId]);
-
-      return result.rowCount! > 0;
-    } catch (error) {
-      console.error("Error deactivating user:", error);
       throw error;
     }
   }

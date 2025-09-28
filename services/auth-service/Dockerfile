@@ -1,34 +1,59 @@
+# ===== IMAGE DE BASE =====
 FROM node:18-alpine
 
+# ===== MÉTADONNÉES =====
+LABEL maintainer="auth-service"
+LABEL description="Authentication Microservice with Auto-Migrations"
+LABEL version="1.0.0"
+
+# ===== CONFIGURATION DE L'ENVIRONNEMENT =====
 WORKDIR /app
 
-# Copy shared-types depuis la racine du projet
+# ===== INSTALLATION DES DÉPENDANCES SYSTÈME =====
+# Installation de curl pour les healthchecks
+RUN apk add --no-cache curl
+
+# ===== COPIE DES TYPES PARTAGÉS =====
+# Copier les types partagés depuis la racine du projet
 COPY shared-types/ ./shared-types/
 
-# Copy package files
+# ===== GESTION DES DÉPENDANCES NODE.JS =====
+# Copier les fichiers de configuration
 COPY services/auth-service/package*.json ./
 COPY services/auth-service/tsconfig.json ./
 
-# Install all dependencies (including dev dependencies for TypeScript compilation)
-RUN npm ci
+# Installer toutes les dépendances (dev + prod pour la compilation TypeScript)
+RUN npm ci --only=production=false
 
-# Copy source code
+# ===== COPIE DU CODE SOURCE =====
+# Copier le code source TypeScript
 COPY services/auth-service/src/ ./src/
 
-# Build TypeScript
+# ===== COMPILATION TYPESCRIPT =====
+# Compiler le TypeScript vers JavaScript
 RUN npm run build
 
-# Remove dev dependencies to reduce image size
+# ===== OPTIMISATION DE L'IMAGE =====
+# Supprimer les dépendances de développement pour réduire la taille
 RUN npm prune --production
 
-# Create non-root user
+# ===== SÉCURITÉ =====
+# Créer un utilisateur non-root pour la sécurité
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
 
-# Change ownership of the app directory
+# Changer la propriété du répertoire de l'application
 RUN chown -R nodejs:nodejs /app
 USER nodejs
 
+# ===== CONFIGURATION DU RÉSEAU =====
 EXPOSE 3008
 
+# ===== HEALTHCHECK =====
+# Vérification de santé du service
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3008/api/health || exit 1
+
+# ===== COMMANDE DE DÉMARRAGE =====
+# Le service exécute automatiquement les migrations au démarrage
 CMD ["npm", "start"]

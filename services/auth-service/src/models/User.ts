@@ -1,10 +1,41 @@
 /**
  * User Model
- * Represents a user in the authentication system
+ * Représente un utilisateur dans le système d'authentification
+ *
+ * Architecture : Modèle centré sur la base de données
+ * - Correspond exactement à la table `users`
+ * - Contient la logique métier de l'utilisateur
+ * - Validation et transformation des données
  */
 import bcrypt from "bcryptjs";
-import { UserData, UserPublicDTO, PasswordValidationResult } from "../types";
 
+/**
+ * Interface correspondant exactement à la table users
+ */
+export interface UserData {
+  user_id: number | null;
+  email: string;
+  password_hash: string;
+  first_name: string;
+  last_name: string;
+  role: "admin" | "customer";
+  is_active: boolean;
+  created_at: Date | null;
+  updated_at: Date | null;
+}
+
+/**
+ * Résultat de validation du mot de passe
+ */
+export interface PasswordValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+/**
+ * Classe User - Modèle principal
+ * Correspond exactement à la structure de la base de données
+ */
 export class User {
   public readonly userId: number;
   public readonly email: string;
@@ -29,100 +60,77 @@ export class User {
   }
 
   /**
-   * Get full name
-   * @returns {string} Full name
-   */
-  fullName(): string {
-    return `${this.firstName} ${this.lastName}`.trim();
-  }
-
-  /**
-   * Activate user
-   */
-  activate(): void {
-    (this as any).isActive = true;
-  }
-
-  /**
-   * Deactivate user
-   */
-  deactivate(): void {
-    (this as any).isActive = false;
-  }
-
-  /**
-   * Check if user is admin
-   * @returns {boolean} True if admin
+   * Vérifier si l'utilisateur est un administrateur
    */
   isAdmin(): boolean {
     return this.role === "admin";
   }
 
   /**
-   * Check if user is customer
-   * @returns {boolean} True if customer
+   * Vérifier si l'utilisateur est un client
    */
   isCustomer(): boolean {
     return this.role === "customer";
   }
 
   /**
-   * Validate password
-   * @param {string} password Plain password
-   * @returns {Promise<boolean>} True if valid
+   * Obtenir le nom complet
    */
-  async validatePassword(password: string): Promise<boolean> {
+  fullName(): string {
+    return `${this.firstName} ${this.lastName}`;
+  }
+
+  /**
+   * Vérifier un mot de passe
+   */
+  async verifyPassword(password: string): Promise<boolean> {
     return await bcrypt.compare(password, this.passwordHash);
   }
 
   /**
-   * Hash password
-   * @param {string} password Plain password
-   * @returns {Promise<string>} Hashed password
+   * Hasher un mot de passe
    */
   static async hashPassword(password: string): Promise<string> {
-    const saltRounds = 10;
+    const saltRounds = 12;
     return await bcrypt.hash(password, saltRounds);
   }
 
   /**
-   * Validate password strength
-   * @param {string} password Plain password
-   * @returns {Object} Validation result
+   * Valider la force d'un mot de passe
    */
   static validatePassword(password: string): PasswordValidationResult {
     const errors: string[] = [];
 
-    if (!password) {
-      errors.push("Password is required");
-    } else {
-      if (password.length < 6) {
-        errors.push("Password must be at least 6 characters long");
-      }
-      if (password.length > 128) {
-        errors.push("Password must be less than 128 characters");
-      }
-      if (!/[a-z]/.test(password)) {
-        errors.push("Password must contain at least one lowercase letter");
-      }
-      if (!/[A-Z]/.test(password)) {
-        errors.push("Password must contain at least one uppercase letter");
-      }
-      if (!/\d/.test(password)) {
-        errors.push("Password must contain at least one number");
-      }
+    if (password.length < 8) {
+      errors.push("Le mot de passe doit contenir au moins 8 caractères");
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      errors.push("Le mot de passe doit contenir au moins une majuscule");
+    }
+
+    if (!/[a-z]/.test(password)) {
+      errors.push("Le mot de passe doit contenir au moins une minuscule");
+    }
+
+    if (!/[0-9]/.test(password)) {
+      errors.push("Le mot de passe doit contenir au moins un chiffre");
+    }
+
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      errors.push(
+        "Le mot de passe doit contenir au moins un caractère spécial"
+      );
     }
 
     return {
       isValid: errors.length === 0,
-      errors: errors,
+      errors,
     };
   }
 
   /**
-   * Validate email format
-   * @param {string} email Email address
-   * @returns {boolean} True if valid
+   * Valider un email
    */
   static validateEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -130,10 +138,9 @@ export class User {
   }
 
   /**
-   * Convert to public DTO (without sensitive data)
-   * @returns {Object} Public user data
+   * Convertir en objet public (sans données sensibles)
    */
-  toPublicDTO(): UserPublicDTO {
+  toPublicObject() {
     return {
       userId: this.userId,
       email: this.email,
@@ -148,8 +155,7 @@ export class User {
   }
 
   /**
-   * Convert to database object
-   * @returns {Object} Database object
+   * Convertir en objet pour la base de données
    */
   toDatabaseObject(): UserData {
     return {
