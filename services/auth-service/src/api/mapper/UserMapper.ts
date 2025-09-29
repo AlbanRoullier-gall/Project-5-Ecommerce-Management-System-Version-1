@@ -46,6 +46,12 @@ export class UserMapper {
     if (userUpdateDTO.email !== undefined) {
       updateData.email = userUpdateDTO.email;
     }
+    if (userUpdateDTO.role !== undefined) {
+      updateData.role = userUpdateDTO.role;
+    }
+    if (userUpdateDTO.isActive !== undefined) {
+      updateData.is_active = userUpdateDTO.isActive;
+    }
 
     return updateData;
   }
