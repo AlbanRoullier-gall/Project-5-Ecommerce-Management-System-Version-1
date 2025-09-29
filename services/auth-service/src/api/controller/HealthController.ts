@@ -22,4 +22,28 @@ export class HealthController {
       res.status(500).json(ResponseMapper.healthError());
     }
   }
+
+  /**
+   * Vérification détaillée de la santé du service
+   */
+  async detailedHealthCheck(_req: Request, res: Response): Promise<void> {
+    try {
+      const healthDetails = {
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        service: "auth-service",
+        version: "v1",
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        environment: process.env["NODE_ENV"] || "development",
+        database: process.env["DATABASE_URL"] ? "connected" : "not configured",
+        jwt: process.env["JWT_SECRET"] ? "configured" : "default",
+      };
+
+      res.json(healthDetails);
+    } catch (error: any) {
+      console.error("Detailed health check error:", error);
+      res.status(500).json(ResponseMapper.healthError());
+    }
+  }
 }

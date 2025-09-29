@@ -134,6 +134,10 @@ export class ApiRouter {
       this.healthController.healthCheck(req, res);
     });
 
+    app.get("/api/health/detailed", (req: Request, res: Response) => {
+      this.healthController.detailedHealthCheck(req, res);
+    });
+
     // ===== ROUTES D'AUTHENTIFICATION =====
     app.post(
       "/api/auth/register",
