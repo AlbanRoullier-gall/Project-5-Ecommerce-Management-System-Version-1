@@ -62,18 +62,6 @@ class Civility {
   }
 
   /**
-   * Convert to public DTO
-   * @returns {Object} Public civility data
-   */
-  toPublicDTO(): CivilityPublicDTO {
-    return {
-      civilityId: this.civilityId,
-      abbreviation: this.abbreviation,
-      createdAt: this.createdAt,
-    };
-  }
-
-  /**
    * Validate entity data
    * @returns {Object} Validation result
    */

@@ -62,18 +62,6 @@ class Country {
   }
 
   /**
-   * Convert to public DTO
-   * @returns {Object} Public country data
-   */
-  toPublicDTO(): CountryPublicDTO {
-    return {
-      countryId: this.countryId,
-      countryName: this.countryName,
-      createdAt: this.createdAt,
-    };
-  }
-
-  /**
    * Validate entity data
    * @returns {Object} Validation result
    */

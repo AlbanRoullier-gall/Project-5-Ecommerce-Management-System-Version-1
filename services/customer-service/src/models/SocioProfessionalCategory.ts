@@ -64,18 +64,6 @@ class SocioProfessionalCategory {
   }
 
   /**
-   * Convert to public DTO
-   * @returns {Object} Public category data
-   */
-  toPublicDTO(): SocioProfessionalCategoryPublicDTO {
-    return {
-      categoryId: this.categoryId,
-      categoryName: this.categoryName,
-      createdAt: this.createdAt,
-    };
-  }
-
-  /**
    * Validate entity data
    * @returns {Object} Validation result
    */

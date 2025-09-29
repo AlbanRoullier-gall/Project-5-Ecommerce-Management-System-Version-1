@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS customers (
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
     socio_professional_category_id INTEGER NOT NULL REFERENCES socio_professional_categories(category_id),
     phone_number VARCHAR(20),
     birthday DATE,
@@ -35,7 +34,6 @@ COMMENT ON COLUMN customers.civility_id IS 'Reference to civility';
 COMMENT ON COLUMN customers.first_name IS 'First name of the customer';
 COMMENT ON COLUMN customers.last_name IS 'Last name of the customer';
 COMMENT ON COLUMN customers.email IS 'Email address of the customer';
-COMMENT ON COLUMN customers.password_hash IS 'Hashed password of the customer';
 COMMENT ON COLUMN customers.socio_professional_category_id IS 'Reference to socio-professional category';
 COMMENT ON COLUMN customers.phone_number IS 'Phone number of the customer';
 COMMENT ON COLUMN customers.birthday IS 'Birthday of the customer';

@@ -22,16 +22,7 @@ export interface CustomerCompanyDbRow {
   updated_at?: Date | null;
 }
 
-export interface CustomerCompanyPublicDTO {
-  companyId: number | null;
-  customerId: number | null;
-  companyName: string;
-  siretNumber: string;
-  vatNumber: string;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-  companyInfo: string;
-}
+// CustomerCompanyPublicDTO moved to /api/dto/CompanyDTO.ts
 
 export interface ValidationResult {
   isValid: boolean;
@@ -99,23 +90,6 @@ class CustomerCompany {
       createdAt: row.created_at ?? null,
       updatedAt: row.updated_at ?? null,
     });
-  }
-
-  /**
-   * Convert to public DTO
-   * @returns {Object} Public company data
-   */
-  toPublicDTO(): CustomerCompanyPublicDTO {
-    return {
-      companyId: this.companyId,
-      customerId: this.customerId,
-      companyName: this.companyName,
-      siretNumber: this.siretNumber,
-      vatNumber: this.vatNumber,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      companyInfo: this.getCompanyInfo(),
-    };
   }
 
   /**

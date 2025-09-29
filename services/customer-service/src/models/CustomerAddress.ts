@@ -28,19 +28,7 @@ export interface CustomerAddressDbRow {
   updated_at?: Date | null;
 }
 
-export interface CustomerAddressPublicDTO {
-  addressId: number | null;
-  customerId: number | null;
-  addressType: string;
-  address: string;
-  postalCode: string;
-  city: string;
-  countryId: number | null;
-  isDefault: boolean;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-  formattedAddress: string;
-}
+// CustomerAddressPublicDTO moved to /api/dto/AddressDTO.ts
 
 export interface ValidationResult {
   isValid: boolean;
@@ -138,26 +126,6 @@ class CustomerAddress {
     const address = CustomerAddress.fromDbRow(row);
     address.countryName = row.country_name;
     return address;
-  }
-
-  /**
-   * Convert to public DTO
-   * @returns {Object} Public address data
-   */
-  toPublicDTO(): CustomerAddressPublicDTO {
-    return {
-      addressId: this.addressId,
-      customerId: this.customerId,
-      addressType: this.addressType,
-      address: this.address,
-      postalCode: this.postalCode,
-      city: this.city,
-      countryId: this.countryId,
-      isDefault: this.isDefault,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      formattedAddress: this.formatAddress(),
-    };
   }
 
   /**

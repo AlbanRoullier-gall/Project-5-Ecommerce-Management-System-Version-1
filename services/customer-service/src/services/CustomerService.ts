@@ -1,21 +1,19 @@
 /**
  * CustomerService
  * Business logic layer for customer management
+ *
+ * Architecture : Service pattern
+ * - Business logic orchestration
+ * - Data validation and transformation
+ * - Repository coordination
  */
-import bcrypt from "bcryptjs";
 import { Pool } from "pg";
-import Customer from "../models/Customer";
+import Customer, { CustomerData } from "../models/Customer";
 import CustomerAddress from "../models/CustomerAddress";
 import CustomerCompany from "../models/CustomerCompany";
 import CustomerRepository from "../repositories/CustomerRepository";
 import CustomerAddressRepository from "../repositories/CustomerAddressRepository";
 import CustomerCompanyRepository from "../repositories/CustomerCompanyRepository";
-import {
-  CustomerData,
-  CustomerUpdateData,
-  AddressData,
-  CustomerListOptions,
-} from "../types";
 
 class CustomerService {
   private customerRepository: CustomerRepository;
@@ -28,37 +26,33 @@ class CustomerService {
     this.companyRepository = new CustomerCompanyRepository(pool);
   }
 
+  // ===== MÉTHODES UTILITAIRES =====
+
+  // ===== CRÉATION DE CLIENTS =====
+
   /**
-   * Create a new customer
-   * @param {Object} data Customer data
-   * @returns {Promise<Customer>} Created customer
+   * Créer un nouveau client
    */
-  async createCustomer(data: CustomerData): Promise<Customer> {
+  async createCustomer(data: Partial<CustomerData>): Promise<Customer> {
     try {
-      const { email, password, ...customerData } = data;
-
       // Check if email already exists
-      const existingCustomer = await this.customerRepository.getByEmail(email);
-      if (existingCustomer) {
-        throw new Error("Customer with this email already exists");
+      if (!data.email) {
+        throw new Error("L'email est obligatoire");
       }
-
-      // Validate password
-      const passwordValidation = Customer.validatePassword(password);
-      if (!passwordValidation.isValid) {
-        throw new Error(
-          `Password validation failed: ${passwordValidation.errors.join(", ")}`
-        );
+      const emailExists = await this.customerRepository.emailExists(data.email);
+      if (emailExists) {
+        throw new Error("Un client avec cet email existe déjà");
       }
-
-      // Hash password
-      const passwordHash = await bcrypt.hash(password, 10);
 
       // Create customer entity
       const customer = new Customer({
-        ...customerData,
-        email,
-        passwordHash,
+        civilityId: data.civilityId || null,
+        firstName: data.firstName || "",
+        lastName: data.lastName || "",
+        email: data.email,
+        socioProfessionalCategoryId: data.socioProfessionalCategoryId || null,
+        phoneNumber: data.phoneNumber || null,
+        birthday: data.birthday || null,
         isActive: true,
       });
 
@@ -101,15 +95,14 @@ class CustomerService {
     }
   }
 
+  // ===== MISE À JOUR DE CLIENTS =====
+
   /**
-   * Update customer
-   * @param {number} id Customer ID
-   * @param {Object} data Update data
-   * @returns {Promise<Customer>} Updated customer
+   * Mettre à jour un client
    */
   async updateCustomer(
     id: number,
-    data: CustomerUpdateData
+    data: Partial<CustomerData>
   ): Promise<Customer> {
     try {
       const customer = await this.customerRepository.getById(id);
@@ -128,11 +121,12 @@ class CustomerService {
         }
       }
 
-      // Update customer entity
-      Object.assign(customer, data);
-      customer.customerId = id; // Ensure ID is preserved
-
-      return await this.customerRepository.update(customer);
+      // Create updated customer with merge (like auth-service)
+      const updatedCustomer = this.customerRepository.createCustomerWithMerge(
+        customer,
+        data
+      );
+      return await this.customerRepository.update(updatedCustomer);
     } catch (error) {
       console.error("Error updating customer:", error);
       throw error;
@@ -158,9 +152,64 @@ class CustomerService {
     }
   }
 
+  // ===== GESTION DES ADRESSES =====
+
   /**
-   * List active customers
-   * @returns {Promise<Customer[]>} Array of active customers
+   * Créer une nouvelle adresse
+   */
+  async createCustomerAddress(
+    customerId: number,
+    addressData: any
+  ): Promise<CustomerAddress> {
+    try {
+      // Vérifier que le client existe
+      const customer = await this.customerRepository.getById(customerId);
+      if (!customer) {
+        throw new Error("Client non trouvé");
+      }
+
+      // Créer l'adresse
+      const address = new CustomerAddress(addressData);
+      address.customerId = customerId;
+
+      return await this.addressRepository.save(address);
+    } catch (error) {
+      console.error("Error creating customer address:", error);
+      throw error;
+    }
+  }
+
+  // ===== GESTION DES ENTREPRISES =====
+
+  /**
+   * Créer une nouvelle entreprise
+   */
+  async createCustomerCompany(
+    customerId: number,
+    companyData: any
+  ): Promise<CustomerCompany> {
+    try {
+      // Vérifier que le client existe
+      const customer = await this.customerRepository.getById(customerId);
+      if (!customer) {
+        throw new Error("Client non trouvé");
+      }
+
+      // Créer l'entreprise
+      const company = new CustomerCompany(companyData);
+      company.customerId = customerId;
+
+      return await this.companyRepository.save(company);
+    } catch (error) {
+      console.error("Error creating customer company:", error);
+      throw error;
+    }
+  }
+
+  // ===== LISTES ET RECHERCHES =====
+
+  /**
+   * Lister les clients actifs
    */
   async listActiveCustomers(): Promise<Customer[]> {
     try {
@@ -177,7 +226,12 @@ class CustomerService {
    * @returns {Promise<Object>} Customers and pagination info
    */
   async listCustomers(
-    options: CustomerListOptions = {
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      activeOnly?: boolean;
+    } = {
       page: 1,
       limit: 10,
       search: "",
@@ -206,7 +260,7 @@ class CustomerService {
    */
   async addAddress(
     customerId: number,
-    addressData: AddressData
+    addressData: any
   ): Promise<CustomerAddress> {
     try {
       // Verify customer exists
@@ -252,7 +306,7 @@ class CustomerService {
    */
   async updateAddress(
     addressId: number,
-    addressData: Partial<AddressData>
+    addressData: any
   ): Promise<CustomerAddress> {
     try {
       const address = await this.addressRepository.getById(addressId);

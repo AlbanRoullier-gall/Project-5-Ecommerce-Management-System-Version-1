@@ -37,7 +37,7 @@ class CustomerRepository {
   async getById(id: number): Promise<Customer | null> {
     try {
       const result = await this.pool.query(
-        `SELECT customer_id, civility_id, first_name, last_name, email, password_hash, 
+        `SELECT customer_id, civility_id, first_name, last_name, email, 
                 socio_professional_category_id, phone_number, birthday, is_active, 
                 created_at, updated_at
          FROM customers 
@@ -95,7 +95,7 @@ class CustomerRepository {
   async getByEmail(email: string): Promise<Customer | null> {
     try {
       const result = await this.pool.query(
-        `SELECT customer_id, civility_id, first_name, last_name, email, password_hash, 
+        `SELECT customer_id, civility_id, first_name, last_name, email, 
                 socio_professional_category_id, phone_number, birthday, is_active, 
                 created_at, updated_at
          FROM customers 
@@ -228,7 +228,7 @@ class CustomerRepository {
       }
 
       const result = await this.pool.query(
-        `INSERT INTO customers (civility_id, first_name, last_name, email, password_hash, 
+        `INSERT INTO customers (civility_id, first_name, last_name, email, 
                                socio_professional_category_id, phone_number, birthday, is_active, 
                                created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
@@ -240,7 +240,6 @@ class CustomerRepository {
           customer.firstName,
           customer.lastName,
           customer.email,
-          customer.passwordHash,
           customer.socioProfessionalCategoryId,
           customer.phoneNumber,
           customer.birthday,
@@ -347,26 +346,27 @@ class CustomerRepository {
   }
 
   /**
-   * Update customer password
-   * @param {number} customerId Customer ID
-   * @param {string} passwordHash New password hash
-   * @returns {Promise<boolean>} True if updated successfully
+   * Create customer with merge of data (like auth-service)
    */
-  async updatePassword(
-    customerId: number,
-    passwordHash: string
-  ): Promise<boolean> {
-    try {
-      const result = await this.pool.query(
-        "UPDATE customers SET password_hash = $1, updated_at = NOW() WHERE customer_id = $2 RETURNING customer_id",
-        [passwordHash, customerId]
-      );
-
-      return result.rows.length > 0;
-    } catch (error) {
-      console.error("Error updating customer password:", error);
-      throw new Error("Failed to update password");
-    }
+  createCustomerWithMerge(
+    existingCustomer: Customer,
+    updateData: Partial<any>
+  ): Customer {
+    return new Customer({
+      customerId: existingCustomer.customerId,
+      civilityId: updateData.civilityId ?? existingCustomer.civilityId,
+      firstName: updateData.firstName ?? existingCustomer.firstName,
+      lastName: updateData.lastName ?? existingCustomer.lastName,
+      email: updateData.email ?? existingCustomer.email,
+      socioProfessionalCategoryId:
+        updateData.socioProfessionalCategoryId ??
+        existingCustomer.socioProfessionalCategoryId,
+      phoneNumber: updateData.phoneNumber ?? existingCustomer.phoneNumber,
+      birthday: updateData.birthday ?? existingCustomer.birthday,
+      isActive: updateData.isActive ?? existingCustomer.isActive,
+      createdAt: existingCustomer.createdAt,
+      updatedAt: null,
+    });
   }
 }
 

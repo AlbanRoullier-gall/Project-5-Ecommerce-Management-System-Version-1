@@ -138,4 +138,5 @@ if (require.main === module) {
   migrate().catch(console.error);
 }
 
+export { migrate as runMigrations };
 export default migrate;
