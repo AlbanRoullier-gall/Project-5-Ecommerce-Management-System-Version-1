@@ -141,6 +141,23 @@ export class UserRepository {
   }
 
   /**
+   * Créer un utilisateur avec fusion de données
+   */
+  createUserWithMerge(existingUser: User, updateData: Partial<UserData>): User {
+    return new User({
+      user_id: existingUser.userId,
+      email: updateData.email ?? existingUser.email,
+      password_hash: updateData.password_hash ?? existingUser.passwordHash,
+      first_name: updateData.first_name ?? existingUser.firstName,
+      last_name: updateData.last_name ?? existingUser.lastName,
+      role: updateData.role ?? existingUser.role,
+      is_active: updateData.is_active ?? existingUser.isActive,
+      created_at: existingUser.createdAt,
+      updated_at: null,
+    });
+  }
+
+  /**
    * Vérifier si un email existe
    */
   async emailExists(email: string): Promise<boolean> {

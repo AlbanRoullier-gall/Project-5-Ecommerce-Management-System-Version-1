@@ -17,6 +17,7 @@ import morgan from "morgan";
 import { AuthService } from "../services/AuthService";
 import { AuthController, HealthController } from "./controller";
 import { JWTPayload } from "../models/JWTPayload";
+import { ResponseMapper } from "./mapper/ResponseMapper";
 
 export class ApiRouter {
   private authController: AuthController;
@@ -52,7 +53,9 @@ export class ApiRouter {
     const token = authHeader && authHeader.split(" ")[1];
 
     if (!token) {
-      res.status(401).json({ error: "Token d'accès requis" });
+      res
+        .status(401)
+        .json(ResponseMapper.authenticationError("Token d'accès requis"));
       return;
     }
 
@@ -61,7 +64,9 @@ export class ApiRouter {
       (req as any).user = decoded;
       next();
     } catch (error) {
-      res.status(403).json({ error: "Token invalide" });
+      res
+        .status(403)
+        .json(ResponseMapper.authenticationError("Token invalide"));
     }
   };
 
@@ -106,7 +111,11 @@ export class ApiRouter {
       if (error) {
         res
           .status(400)
-          .json({ error: error.details[0]?.message || "Validation error" });
+          .json(
+            ResponseMapper.validationError(
+              error.details[0]?.message || "Validation error"
+            )
+          );
         return;
       }
       next();
@@ -179,12 +188,12 @@ export class ApiRouter {
     // ===== GESTION DES ERREURS GLOBALES =====
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       console.error(err.stack);
-      res.status(500).json({ error: "Erreur interne du serveur" });
+      res.status(500).json(ResponseMapper.internalServerError());
     });
 
     // Handler pour les routes non trouvées (404)
     app.use("*", (_req: Request, res: Response) => {
-      res.status(404).json({ error: "Route non trouvée" });
+      res.status(404).json(ResponseMapper.error("Route non trouvée", 404));
     });
   }
 }

@@ -19,12 +19,7 @@ export class HealthController {
       res.json(response);
     } catch (error: any) {
       console.error("Health check error:", error);
-      res.status(500).json({
-        status: "unhealthy",
-        timestamp: new Date().toISOString(),
-        service: "auth-service",
-        error: "Service indisponible",
-      });
+      res.status(500).json(ResponseMapper.healthError());
     }
   }
 }

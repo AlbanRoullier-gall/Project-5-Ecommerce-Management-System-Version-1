@@ -11,13 +11,9 @@ import { Request, Response } from "express";
 import { AuthService } from "../../services/AuthService";
 import {
   UserRegistrationDTO,
-  UserRegistrationResponseDTO,
   UserLoginDTO,
-  UserLoginResponseDTO,
   UserUpdateDTO,
-  UserUpdateResponseDTO,
   PasswordChangeDTO,
-  PasswordChangeResponseDTO,
   AuthenticatedUserDTO,
 } from "../dto";
 import { UserMapper, ResponseMapper } from "../mapper";
@@ -45,21 +41,20 @@ export class AuthController {
 
       // Convertir en DTO de réponse
       const userPublicDTO = UserMapper.userToPublicDTO(user);
-      const response: UserRegistrationResponseDTO =
-        ResponseMapper.registerSuccess(userPublicDTO, token);
+      const response = ResponseMapper.registerSuccess(userPublicDTO, token);
 
       res.status(201).json(response);
     } catch (error: any) {
       console.error("Registration error:", error);
       if (error.message.includes("existe déjà")) {
-        res.status(409).json({ error: error.message });
+        res.status(409).json(ResponseMapper.conflictError(error.message));
         return;
       }
       if (error.message.includes("invalide")) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json(ResponseMapper.validationError(error.message));
         return;
       }
-      res.status(500).json({ error: "Erreur interne du serveur" });
+      res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
@@ -78,10 +73,7 @@ export class AuthController {
 
       // Convertir en DTO de réponse
       const userPublicDTO = UserMapper.userToPublicDTO(user);
-      const response: UserLoginResponseDTO = ResponseMapper.loginSuccess(
-        userPublicDTO,
-        token
-      );
+      const response = ResponseMapper.loginSuccess(userPublicDTO, token);
 
       res.json(response);
     } catch (error: any) {
@@ -90,10 +82,10 @@ export class AuthController {
         error.message.includes("invalides") ||
         error.message.includes("désactivé")
       ) {
-        res.status(401).json({ error: error.message });
+        res.status(401).json(ResponseMapper.authenticationError(error.message));
         return;
       }
-      res.status(500).json({ error: "Erreur interne du serveur" });
+      res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
@@ -105,7 +97,7 @@ export class AuthController {
       const jwtPayload = (req as any).user;
       const user: AuthenticatedUserDTO =
         UserMapper.jwtPayloadToAuthenticatedUserDTO(jwtPayload);
-      const userProfile = await this.authService.getUserById(user.userId);
+      const userProfile = await this.authService.getUserProfile(user.userId);
 
       // Convertir en DTO de réponse
       const userPublicDTO = UserMapper.userToPublicDTO(userProfile);
@@ -114,7 +106,7 @@ export class AuthController {
       res.json(response);
     } catch (error: any) {
       console.error("Get profile error:", error);
-      res.status(500).json({ error: "Erreur interne du serveur" });
+      res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
@@ -139,13 +131,12 @@ export class AuthController {
 
       // Convertir en DTO de réponse
       const userPublicDTO = UserMapper.userToPublicDTO(updatedUser);
-      const response: UserUpdateResponseDTO =
-        ResponseMapper.profileUpdateSuccess(userPublicDTO);
+      const response = ResponseMapper.profileUpdateSuccess(userPublicDTO);
 
       res.json(response);
     } catch (error: any) {
       console.error("Update profile error:", error);
-      res.status(500).json({ error: "Erreur interne du serveur" });
+      res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
@@ -167,8 +158,7 @@ export class AuthController {
       );
 
       // Réponse de succès
-      const response: PasswordChangeResponseDTO =
-        ResponseMapper.passwordChangeSuccess();
+      const response = ResponseMapper.passwordChangeSuccess();
 
       res.json(response);
     } catch (error: any) {
@@ -177,10 +167,10 @@ export class AuthController {
         error.message.includes("incorrect") ||
         error.message.includes("invalide")
       ) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json(ResponseMapper.validationError(error.message));
         return;
       }
-      res.status(500).json({ error: "Erreur interne du serveur" });
+      res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
@@ -196,7 +186,7 @@ export class AuthController {
       res.json(response);
     } catch (error: any) {
       console.error("Logout error:", error);
-      res.status(500).json({ error: "Erreur interne du serveur" });
+      res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 }

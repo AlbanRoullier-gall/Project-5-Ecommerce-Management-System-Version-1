@@ -10,10 +10,3 @@ export interface PasswordChangeDTO {
   currentPassword: string;
   newPassword: string;
 }
-
-/**
- * DTO pour la réponse de changement de mot de passe
- */
-export interface PasswordChangeResponseDTO {
-  message: string;
-}

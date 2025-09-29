@@ -136,38 +136,4 @@ export class User {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
-
-  /**
-   * Convertir en objet public (sans données sensibles)
-   */
-  toPublicObject() {
-    return {
-      userId: this.userId,
-      email: this.email,
-      firstName: this.firstName,
-      lastName: this.lastName,
-      fullName: this.fullName(),
-      role: this.role,
-      isActive: this.isActive,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-    };
-  }
-
-  /**
-   * Convertir en objet pour la base de données
-   */
-  toDatabaseObject(): UserData {
-    return {
-      user_id: this.userId,
-      email: this.email,
-      password_hash: this.passwordHash,
-      first_name: this.firstName,
-      last_name: this.lastName,
-      role: this.role,
-      is_active: this.isActive,
-      created_at: this.createdAt,
-      updated_at: this.updatedAt,
-    };
-  }
 }

@@ -54,7 +54,17 @@ export class UserMapper {
    * Convertir un User en UserPublicDTO
    */
   static userToPublicDTO(user: User): UserPublicDTO {
-    return user.toPublicObject() as UserPublicDTO;
+    return {
+      userId: user.userId,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      fullName: user.fullName(),
+      role: user.role,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 
   /**

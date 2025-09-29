@@ -23,6 +23,32 @@ export class AuthService {
     this.jwtSecret = process.env["JWT_SECRET"] || "your-jwt-secret-key";
   }
 
+  // ===== MÉTHODES UTILITAIRES =====
+
+  /**
+   * Récupérer un utilisateur par ID avec vérification
+   */
+  private async getUserById(userId: number): Promise<User> {
+    const user = await this.userRepository.getById(userId);
+    if (!user) {
+      throw new Error("Utilisateur non trouvé");
+    }
+    return user;
+  }
+
+  /**
+   * Valider un mot de passe avec message d'erreur formaté
+   */
+  private validatePasswordWithError(
+    password: string,
+    context: string = "Mot de passe"
+  ): void {
+    const validation = User.validatePassword(password);
+    if (!validation.isValid) {
+      throw new Error(`${context} invalide: ${validation.errors.join(", ")}`);
+    }
+  }
+
   // ===== INSCRIPTION =====
 
   /**
@@ -50,12 +76,7 @@ export class AuthService {
       }
 
       // Validation du mot de passe
-      const passwordValidation = User.validatePassword(password);
-      if (!passwordValidation.isValid) {
-        throw new Error(
-          `Mot de passe invalide: ${passwordValidation.errors.join(", ")}`
-        );
-      }
+      this.validatePasswordWithError(password);
 
       // Vérifier si l'email existe déjà
       const existingUser = await this.userRepository.getByEmail(email);
@@ -130,17 +151,13 @@ export class AuthService {
   // ===== GESTION DU PROFIL =====
 
   /**
-   * Récupérer un utilisateur par ID
+   * Récupérer le profil utilisateur
    */
-  async getUserById(userId: number): Promise<User> {
+  async getUserProfile(userId: number): Promise<User> {
     try {
-      const user = await this.userRepository.getById(userId);
-      if (!user) {
-        throw new Error("Utilisateur non trouvé");
-      }
-      return user;
+      return await this.getUserById(userId);
     } catch (error) {
-      console.error("Error getting user by ID:", error);
+      console.error("Error getting user profile:", error);
       throw error;
     }
   }
@@ -153,19 +170,11 @@ export class AuthService {
     updateData: Partial<UserData>
   ): Promise<User> {
     try {
-      const user = await this.userRepository.getById(userId);
-      if (!user) {
-        throw new Error("Utilisateur non trouvé");
-      }
-
-      // Créer l'utilisateur mis à jour
-      const updatedUser = new User({
-        ...user.toDatabaseObject(),
-        ...updateData,
-        user_id: userId,
-        updated_at: null, // Sera mis à jour par le trigger de la DB
-      });
-
+      const user = await this.getUserById(userId);
+      const updatedUser = this.userRepository.createUserWithMerge(
+        user,
+        updateData
+      );
       return await this.userRepository.update(updatedUser);
     } catch (error) {
       console.error("Error updating user:", error);
@@ -194,24 +203,14 @@ export class AuthService {
       }
 
       // Valider le nouveau mot de passe
-      const passwordValidation = User.validatePassword(newPassword);
-      if (!passwordValidation.isValid) {
-        throw new Error(
-          `Nouveau mot de passe invalide: ${passwordValidation.errors.join(
-            ", "
-          )}`
-        );
-      }
+      this.validatePasswordWithError(newPassword, "Nouveau mot de passe");
 
       // Hasher le nouveau mot de passe
       const newPasswordHash = await User.hashPassword(newPassword);
 
-      // Mettre à jour l'utilisateur
-      const updatedUser = new User({
-        ...user.toDatabaseObject(),
+      // Créer l'utilisateur mis à jour avec le nouveau mot de passe
+      const updatedUser = this.userRepository.createUserWithMerge(user, {
         password_hash: newPasswordHash,
-        user_id: userId,
-        updated_at: null,
       });
 
       await this.userRepository.update(updatedUser);
