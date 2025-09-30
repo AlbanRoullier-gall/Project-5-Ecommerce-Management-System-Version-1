@@ -12,15 +12,15 @@
  * Interface correspondant exactement à la table orders
  */
 export interface OrderData {
-  id: number | null;
-  customer_id: number | null;
+  id: number;
+  customer_id: number;
   customer_snapshot: any | null;
   total_amount_ht: number;
   total_amount_ttc: number;
-  payment_method: string;
-  notes: string;
-  created_at: Date | null;
-  updated_at: Date | null;
+  payment_method: string | null;
+  notes: string | null;
+  created_at: Date;
+  updated_at: Date;
 }
 
 /**
@@ -32,15 +32,15 @@ export interface OrderValidationResult {
 }
 
 class Order {
-  public readonly id: number | null;
-  public readonly customerId: number | null;
+  public readonly id: number;
+  public readonly customerId: number;
   public readonly customerSnapshot: any | null;
   public readonly totalAmountHT: number;
   public readonly totalAmountTTC: number;
-  public readonly paymentMethod: string;
-  public readonly notes: string;
-  public readonly createdAt: Date | null;
-  public readonly updatedAt: Date | null;
+  public readonly paymentMethod: string | null;
+  public readonly notes: string | null;
+  public readonly createdAt: Date;
+  public readonly updatedAt: Date;
 
   // Additional fields for joins
   public customerFirstName?: string;
@@ -78,6 +78,7 @@ class Order {
       this.customerId !== null &&
       this.totalAmountHT >= 0 &&
       this.totalAmountTTC >= 0 &&
+      this.paymentMethod !== null &&
       this.paymentMethod.length > 0
     );
   }

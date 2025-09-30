@@ -35,15 +35,13 @@ export interface OrderUpdateDTO {
  * Order public DTO (for API responses)
  */
 export interface OrderPublicDTO {
-  id: number | null;
-  customerId: number | null;
+  id: number;
+  customerId: number;
   customerSnapshot: any | null;
   totalAmountHT: number;
   totalAmountTTC: number;
-  paymentMethod: string;
-  notes: string;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  paymentMethod: string | null;
+  notes: string | null;
   customerFirstName?: string;
   customerLastName?: string;
   customerEmail?: string;

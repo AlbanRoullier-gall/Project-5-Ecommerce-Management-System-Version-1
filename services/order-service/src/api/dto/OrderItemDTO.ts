@@ -39,15 +39,13 @@ export interface OrderItemUpdateDTO {
  * OrderItem public DTO (for API responses)
  */
 export interface OrderItemPublicDTO {
-  id: number | null;
-  orderId: number | null;
-  productId: number | null;
+  id: number;
+  orderId: number;
+  productId: number;
   productSnapshot: any | null;
   quantity: number;
   unitPriceHT: number;
   unitPriceTTC: number;
   totalPriceHT: number;
   totalPriceTTC: number;
-  createdAt: Date | null;
-  updatedAt: Date | null;
 }

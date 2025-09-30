@@ -12,17 +12,17 @@
  * Interface correspondant exactement à la table order_items
  */
 export interface OrderItemData {
-  id: number | null;
-  order_id: number | null;
-  product_id: number | null;
+  id: number;
+  order_id: number;
+  product_id: number;
   quantity: number;
   unit_price_ht: number;
   unit_price_ttc: number;
   vat_rate: number;
   total_price_ht: number;
   total_price_ttc: number;
-  created_at: Date | null;
-  updated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 }
 
 /**
@@ -34,17 +34,17 @@ export interface OrderItemValidationResult {
 }
 
 class OrderItem {
-  public readonly id: number | null;
-  public readonly orderId: number | null;
-  public readonly productId: number | null;
+  public readonly id: number;
+  public readonly orderId: number;
+  public readonly productId: number;
   public readonly quantity: number;
   public readonly unitPriceHT: number;
   public readonly unitPriceTTC: number;
   public readonly vatRate: number;
   public readonly totalPriceHT: number;
   public readonly totalPriceTTC: number;
-  public readonly createdAt: Date | null;
-  public readonly updatedAt: Date | null;
+  public readonly createdAt: Date;
+  public readonly updatedAt: Date;
 
   constructor(data: OrderItemData) {
     this.id = data.id;

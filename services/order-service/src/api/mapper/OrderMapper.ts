@@ -86,8 +86,6 @@ export class OrderMapper {
       totalAmountTTC: order.totalAmountTTC,
       paymentMethod: order.paymentMethod,
       notes: order.notes,
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt,
       customerFirstName: order.customerFirstName,
       customerLastName: order.customerLastName,
       customerEmail: order.customerEmail,
@@ -146,8 +144,6 @@ export class OrderMapper {
       unitPriceTTC: orderItem.unitPriceTTC,
       totalPriceHT: orderItem.totalPriceHT,
       totalPriceTTC: orderItem.totalPriceTTC,
-      createdAt: orderItem.createdAt,
-      updatedAt: orderItem.updatedAt,
     };
   }
 
