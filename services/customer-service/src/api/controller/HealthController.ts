@@ -45,9 +45,10 @@ export class HealthController {
         database: await this.checkDatabaseConnection(),
       };
 
-      res.json(
-        ResponseMapper.success("Detailed health check completed", healthData)
-      );
+      res.json({
+        message: "Detailed health check completed",
+        ...healthData
+      });
     } catch (error) {
       console.error("Detailed health check error:", error);
       res.status(500).json(ResponseMapper.internalServerError());

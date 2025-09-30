@@ -22,6 +22,12 @@ export class AddressController {
   async getCustomerAddresses(req: Request, res: Response): Promise<void> {
     try {
       const { customerId } = req.params;
+      
+      if (!customerId) {
+        res.status(400).json({ error: "Customer ID is required" });
+        return;
+      }
+      
       const addresses = await this.customerService.listCustomerAddresses(
         parseInt(customerId)
       );
@@ -43,6 +49,12 @@ export class AddressController {
   async createAddress(req: Request, res: Response): Promise<void> {
     try {
       const { customerId } = req.params;
+      
+      if (!customerId) {
+        res.status(400).json({ error: "Customer ID is required" });
+        return;
+      }
+      
       const addressCreateDTO: AddressCreateDTO = req.body;
       const addressData =
         CustomerMapper.addressCreateDTOToAddressData(addressCreateDTO);
@@ -74,6 +86,12 @@ export class AddressController {
   async updateAddress(req: Request, res: Response): Promise<void> {
     try {
       const { addressId } = req.params;
+      
+      if (!addressId) {
+        res.status(400).json({ error: "Address ID is required" });
+        return;
+      }
+      
       const addressUpdateDTO: AddressUpdateDTO = req.body;
       const updateData =
         CustomerMapper.addressUpdateDTOToAddressData(addressUpdateDTO);
@@ -101,6 +119,12 @@ export class AddressController {
   async deleteAddress(req: Request, res: Response): Promise<void> {
     try {
       const { addressId } = req.params;
+      
+      if (!addressId) {
+        res.status(400).json({ error: "Address ID is required" });
+        return;
+      }
+      
       const success = await this.customerService.deleteAddress(
         parseInt(addressId)
       );

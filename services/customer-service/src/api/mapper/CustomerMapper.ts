@@ -7,8 +7,12 @@
  * - Séparation claire des responsabilités
  */
 import Customer, { CustomerData } from "../../models/Customer";
-import CustomerAddress, { CustomerAddressData } from "../../models/CustomerAddress";
-import CustomerCompany, { CustomerCompanyData } from "../../models/CustomerCompany";
+import CustomerAddress, {
+  CustomerAddressData,
+} from "../../models/CustomerAddress";
+import CustomerCompany, {
+  CustomerCompanyData,
+} from "../../models/CustomerCompany";
 import {
   CustomerCreateDTO,
   CustomerUpdateDTO,
@@ -27,7 +31,9 @@ export class CustomerMapper {
   /**
    * Convertir un CustomerCreateDTO en données Customer
    */
-  static customerCreateDTOToCustomerData(dto: CustomerCreateDTO): Partial<CustomerData> {
+  static customerCreateDTOToCustomerData(
+    dto: CustomerCreateDTO
+  ): Partial<CustomerData> {
     return {
       civilityId: dto.civilityId,
       firstName: dto.firstName,
@@ -42,7 +48,9 @@ export class CustomerMapper {
   /**
    * Convertir un CustomerUpdateDTO en données Customer
    */
-  static customerUpdateDTOToCustomerData(dto: CustomerUpdateDTO): Partial<CustomerData> {
+  static customerUpdateDTOToCustomerData(
+    dto: CustomerUpdateDTO
+  ): Partial<CustomerData> {
     const updateData: Partial<CustomerData> = {};
 
     if (dto.firstName !== undefined) updateData.firstName = dto.firstName;
@@ -50,7 +58,8 @@ export class CustomerMapper {
     if (dto.email !== undefined) updateData.email = dto.email;
     if (dto.socioProfessionalCategoryId !== undefined)
       updateData.socioProfessionalCategoryId = dto.socioProfessionalCategoryId;
-    if (dto.phoneNumber !== undefined) updateData.phoneNumber = dto.phoneNumber || null;
+    if (dto.phoneNumber !== undefined)
+      updateData.phoneNumber = dto.phoneNumber || null;
     if (dto.birthday !== undefined)
       updateData.birthday = dto.birthday ? new Date(dto.birthday) : null;
 
@@ -87,7 +96,9 @@ export class CustomerMapper {
   /**
    * Convertir un AddressCreateDTO en données Address
    */
-  static addressCreateDTOToAddressData(dto: AddressCreateDTO): Partial<CustomerAddressData> {
+  static addressCreateDTOToAddressData(
+    dto: AddressCreateDTO
+  ): Partial<CustomerAddressData> {
     return {
       addressType: dto.addressType,
       address: dto.address,
@@ -101,7 +112,9 @@ export class CustomerMapper {
   /**
    * Convertir un AddressUpdateDTO en données Address
    */
-  static addressUpdateDTOToAddressData(dto: AddressUpdateDTO): Partial<CustomerAddressData> {
+  static addressUpdateDTOToAddressData(
+    dto: AddressUpdateDTO
+  ): Partial<CustomerAddressData> {
     const updateData: Partial<CustomerAddressData> = {};
 
     if (dto.addressType !== undefined) updateData.addressType = dto.addressType;
@@ -144,7 +157,9 @@ export class CustomerMapper {
   /**
    * Convertir un CompanyCreateDTO en données Company
    */
-  static companyCreateDTOToCompanyData(dto: CompanyCreateDTO): Partial<CustomerCompanyData> {
+  static companyCreateDTOToCompanyData(
+    dto: CompanyCreateDTO
+  ): Partial<CustomerCompanyData> {
     return {
       companyName: dto.companyName,
       siretNumber: dto.siretNumber || "",
@@ -155,11 +170,14 @@ export class CustomerMapper {
   /**
    * Convertir un CompanyUpdateDTO en données Company
    */
-  static companyUpdateDTOToCompanyData(dto: CompanyUpdateDTO): Partial<CustomerCompanyData> {
+  static companyUpdateDTOToCompanyData(
+    dto: CompanyUpdateDTO
+  ): Partial<CustomerCompanyData> {
     const updateData: Partial<CustomerCompanyData> = {};
 
     if (dto.companyName !== undefined) updateData.companyName = dto.companyName;
-    if (dto.siretNumber !== undefined) updateData.siretNumber = dto.siretNumber || "";
+    if (dto.siretNumber !== undefined)
+      updateData.siretNumber = dto.siretNumber || "";
     if (dto.vatNumber !== undefined) updateData.vatNumber = dto.vatNumber || "";
 
     return updateData;

@@ -45,7 +45,13 @@ class CustomerService {
       }
 
       // Validate required fields
-      if (!data.civilityId || !data.firstName || !data.lastName || !data.email || !data.socioProfessionalCategoryId) {
+      if (
+        !data.civilityId ||
+        !data.firstName ||
+        !data.lastName ||
+        !data.email ||
+        !data.socioProfessionalCategoryId
+      ) {
         throw new Error("Tous les champs obligatoires doivent être fournis");
       }
 
@@ -63,7 +69,7 @@ class CustomerService {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      
+
       const customer = new Customer(customerData);
 
       // Save customer
