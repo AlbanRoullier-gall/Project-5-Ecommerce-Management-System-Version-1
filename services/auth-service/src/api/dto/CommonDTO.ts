@@ -15,6 +15,4 @@ export interface UserPublicDTO {
   fullName: string;
   role: "admin" | "customer";
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
 }

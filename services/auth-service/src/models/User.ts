@@ -13,15 +13,28 @@ import bcrypt from "bcryptjs";
  * Interface correspondant exactement à la table users
  */
 export interface UserData {
-  user_id: number | null;
+  user_id: number;
   email: string;
   password_hash: string;
   first_name: string;
   last_name: string;
   role: "admin" | "customer";
   is_active: boolean;
-  created_at: Date | null;
-  updated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+/**
+ * Interface pour les données d'entrée utilisateur (insertions)
+ */
+export interface UserDataInput {
+  user_id?: number;
+  email: string;
+  password_hash: string;
+  first_name: string;
+  last_name: string;
+  role: "admin" | "customer";
+  is_active: boolean;
 }
 
 /**
@@ -48,15 +61,15 @@ export class User {
   public readonly updatedAt: Date;
 
   constructor(data: UserData) {
-    this.userId = data.user_id!;
+    this.userId = data.user_id;
     this.email = data.email;
     this.passwordHash = data.password_hash;
     this.firstName = data.first_name;
     this.lastName = data.last_name;
     this.role = data.role;
     this.isActive = data.is_active;
-    this.createdAt = data.created_at!;
-    this.updatedAt = data.updated_at!;
+    this.createdAt = data.created_at;
+    this.updatedAt = data.updated_at;
   }
 
   /**

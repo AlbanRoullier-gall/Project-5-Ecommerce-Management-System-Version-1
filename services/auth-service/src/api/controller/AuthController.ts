@@ -30,7 +30,7 @@ export class AuthController {
 
       // Convertir DTO en données utilisateur
       const userData =
-        UserMapper.userRegistrationDTOToUserData(userRegistrationDTO);
+        UserMapper.userRegistrationDTOToUserDataInput(userRegistrationDTO);
 
       // Inscrire l'utilisateur
       const { user, token } = await this.authService.registerUser(
@@ -121,7 +121,7 @@ export class AuthController {
         UserMapper.jwtPayloadToAuthenticatedUserDTO(jwtPayload);
 
       // Convertir DTO en données de mise à jour
-      const updateData = UserMapper.userUpdateDTOToUserData(userUpdateDTO);
+      const updateData = UserMapper.userUpdateDTOToUserDataInput(userUpdateDTO);
 
       // Mettre à jour l'utilisateur
       const updatedUser = await this.authService.updateUser(

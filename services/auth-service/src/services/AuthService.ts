@@ -10,7 +10,7 @@
  */
 import { Pool } from "pg";
 import jwt, { SignOptions } from "jsonwebtoken";
-import { User, UserData } from "../models/User";
+import { User, UserData, UserDataInput } from "../models/User";
 import { JWTPayload } from "../models/JWTPayload";
 import { UserRepository } from "../repositories/UserRepository";
 
@@ -55,7 +55,7 @@ export class AuthService {
    * Inscrire un nouvel utilisateur
    */
   async registerUser(
-    userData: Partial<UserData>,
+    userData: Partial<UserDataInput>,
     password: string,
     confirmPassword?: string
   ): Promise<{ user: User; token: string }> {
@@ -87,15 +87,15 @@ export class AuthService {
       // Créer l'utilisateur
       const passwordHash = await User.hashPassword(password);
       const user = new User({
-        user_id: null,
+        user_id: 0, // Sera remplacé par la DB
         email: email.toLowerCase(),
         password_hash: passwordHash,
         first_name: first_name,
         last_name: last_name,
         role: role as "admin" | "customer",
         is_active: true,
-        created_at: null,
-        updated_at: null,
+        created_at: new Date(),
+        updated_at: new Date(),
       });
 
       // Sauvegarder en base
