@@ -1,11 +1,19 @@
-import { Pool } from "pg";
-import WebsitePageVersion from "../models/WebsitePageVersion";
-
 /**
  * WebsitePageVersionRepository
  * Handles database operations for WebsitePageVersion entities
+ *
+ * Architecture : Repository pattern
+ * - Database abstraction
+ * - Query optimization
+ * - Error handling
  */
-export default class WebsitePageVersionRepository {
+
+import { Pool } from "pg";
+import WebsitePageVersion, {
+  WebsitePageVersionData,
+} from "../models/WebsitePageVersion";
+
+export class WebsitePageVersionRepository {
   private pool: Pool;
 
   constructor(pool: Pool) {
@@ -13,17 +21,46 @@ export default class WebsitePageVersionRepository {
   }
 
   /**
+   * Create a new version
+   * @param {Partial<WebsitePageVersionData>} versionData Version data
+   * @returns {Promise<WebsitePageVersion>} Created version
+   */
+  async createVersion(
+    versionData: Partial<WebsitePageVersionData>
+  ): Promise<WebsitePageVersion> {
+    try {
+      const query = `
+        INSERT INTO website_page_versions (parent_page_id, markdown_content, html_content, version)
+        VALUES ($1, $2, $3, $4)
+        RETURNING version_id, parent_page_id, markdown_content, html_content, version, creation_timestamp
+      `;
+
+      const values = [
+        versionData.parent_page_id,
+        versionData.markdown_content,
+        versionData.html_content,
+        versionData.version,
+      ];
+
+      const result = await this.pool.query(query, values);
+      return new WebsitePageVersion(result.rows[0] as WebsitePageVersionData);
+    } catch (error) {
+      console.error("Error creating version:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Get version by ID
    * @param {number} id Version ID
-   * @returns {Promise<WebsitePageVersion|null>} WebsitePageVersion or null if not found
+   * @returns {Promise<WebsitePageVersion|null>} Version or null if not found
    */
-  async getById(id: number): Promise<WebsitePageVersion | null> {
+  async getVersionById(id: number): Promise<WebsitePageVersion | null> {
     try {
       const result = await this.pool.query(
-        `SELECT id, page_id, version_number, markdown_content, html_content, 
-                created_at
+        `SELECT version_id, parent_page_id, markdown_content, html_content, version, creation_timestamp
          FROM website_page_versions 
-         WHERE id = $1`,
+         WHERE version_id = $1`,
         [id]
       );
 
@@ -31,52 +68,28 @@ export default class WebsitePageVersionRepository {
         return null;
       }
 
-      return WebsitePageVersion.fromDbRow(result.rows[0]);
+      return new WebsitePageVersion(result.rows[0] as WebsitePageVersionData);
     } catch (error) {
       console.error("Error getting version by ID:", error);
-      throw new Error("Failed to retrieve version");
+      throw error;
     }
   }
 
   /**
-   * List versions by page ID
-   * @param {number} pageId Parent page ID
-   * @returns {Promise<WebsitePageVersion[]>} Array of versions
-   */
-  async listByPage(pageId: number): Promise<WebsitePageVersion[]> {
-    try {
-      const result = await this.pool.query(
-        `SELECT id, page_id, version_number, markdown_content, html_content, 
-                created_at
-         FROM website_page_versions 
-         WHERE page_id = $1
-         ORDER BY version_number DESC`,
-        [pageId]
-      );
-
-      return result.rows.map((row) => WebsitePageVersion.fromDbRow(row));
-    } catch (error) {
-      console.error("Error listing versions by page:", error);
-      throw new Error("Failed to retrieve versions");
-    }
-  }
-
-  /**
-   * Get specific version by page ID and version number
-   * @param {number} pageId Parent page ID
+   * Get version by page ID and version number
+   * @param {number} pageId Page ID
    * @param {number} versionNumber Version number
-   * @returns {Promise<WebsitePageVersion|null>} WebsitePageVersion or null if not found
+   * @returns {Promise<WebsitePageVersion|null>} Version or null if not found
    */
-  async getByPageAndVersion(
+  async getVersionByPageAndNumber(
     pageId: number,
     versionNumber: number
   ): Promise<WebsitePageVersion | null> {
     try {
       const result = await this.pool.query(
-        `SELECT id, page_id, version_number, markdown_content, html_content, 
-                created_at
+        `SELECT version_id, parent_page_id, markdown_content, html_content, version, creation_timestamp
          FROM website_page_versions 
-         WHERE page_id = $1 AND version_number = $2`,
+         WHERE parent_page_id = $1 AND version = $2`,
         [pageId, versionNumber]
       );
 
@@ -84,101 +97,123 @@ export default class WebsitePageVersionRepository {
         return null;
       }
 
-      return WebsitePageVersion.fromDbRow(result.rows[0]);
+      return new WebsitePageVersion(result.rows[0] as WebsitePageVersionData);
     } catch (error) {
-      console.error("Error getting version by page and version:", error);
-      throw new Error("Failed to retrieve version");
+      console.error("Error getting version by page and number:", error);
+      throw error;
     }
   }
 
   /**
-   * Save new version
-   * @param {WebsitePageVersion} version Version entity to save
-   * @returns {Promise<WebsitePageVersion>} Saved version with ID
+   * Update version
+   * @param {number} id Version ID
+   * @param {Partial<WebsitePageVersionData>} versionData Version data to update
+   * @returns {Promise<WebsitePageVersion|null>} Updated version or null if not found
    */
-  async save(version: WebsitePageVersion): Promise<WebsitePageVersion> {
+  async updateVersion(
+    id: number,
+    versionData: Partial<WebsitePageVersionData>
+  ): Promise<WebsitePageVersion | null> {
     try {
-      const validation = version.validate();
-      if (!validation.isValid) {
-        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
+      const setClause = [];
+      const values = [];
+      let paramCount = 0;
+
+      if (versionData.markdown_content !== undefined) {
+        setClause.push(`markdown_content = $${++paramCount}`);
+        values.push(versionData.markdown_content);
       }
 
-      const result = await this.pool.query(
-        `INSERT INTO website_page_versions (page_id, version_number, markdown_content, html_content, 
-                                          created_at)
-         VALUES ($1, $2, $3, $4, NOW())
-         RETURNING id, page_id, version_number, markdown_content, html_content, 
-                   created_at`,
-        [
-          version.parentPageId,
-          version.versionNumber,
-          version.markdownContent,
-          version.htmlContent,
-        ]
-      );
+      if (versionData.html_content !== undefined) {
+        setClause.push(`html_content = $${++paramCount}`);
+        values.push(versionData.html_content);
+      }
 
-      return WebsitePageVersion.fromDbRow(result.rows[0]);
+      if (versionData.version !== undefined) {
+        setClause.push(`version = $${++paramCount}`);
+        values.push(versionData.version);
+      }
+
+      if (setClause.length === 0) {
+        throw new Error("No fields to update");
+      }
+
+      const query = `
+        UPDATE website_page_versions 
+        SET ${setClause.join(", ")}
+        WHERE version_id = $${++paramCount}
+        RETURNING version_id, parent_page_id, markdown_content, html_content, version, creation_timestamp
+      `;
+
+      values.push(id);
+
+      const result = await this.pool.query(query, values);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return new WebsitePageVersion(result.rows[0] as WebsitePageVersionData);
     } catch (error) {
-      console.error("Error saving version:", error);
-      throw new Error("Failed to save version");
+      console.error("Error updating version:", error);
+      throw error;
     }
   }
 
   /**
    * Delete version
-   * @param {WebsitePageVersion} version Version entity to delete
-   * @returns {Promise<boolean>} True if deleted successfully
+   * @param {number} id Version ID
+   * @returns {Promise<boolean>} True if deleted, false if not found
    */
-  async delete(version: WebsitePageVersion): Promise<boolean> {
+  async deleteVersion(id: number): Promise<boolean> {
     try {
-      const result = await this.pool.query(
-        "DELETE FROM website_page_versions WHERE id = $1 RETURNING id",
-        [version.versionId]
-      );
-
-      return result.rows.length > 0;
+      const query = "DELETE FROM website_page_versions WHERE version_id = $1";
+      const result = await this.pool.query(query, [id]);
+      return result.rowCount! > 0;
     } catch (error) {
       console.error("Error deleting version:", error);
-      throw new Error("Failed to delete version");
+      throw error;
     }
   }
 
   /**
-   * Delete version by page ID and version number
-   * @param {number} pageId Parent page ID
-   * @param {number} versionNumber Version number
-   * @returns {Promise<boolean>} True if deleted successfully
+   * List versions for a page
+   * @param {number} pageId Page ID
+   * @returns {Promise<WebsitePageVersion[]>} Array of versions
    */
-  async deleteByPageAndVersion(
-    pageId: number,
-    versionNumber: number
-  ): Promise<boolean> {
+  async listVersionsByPage(pageId: number): Promise<WebsitePageVersion[]> {
     try {
       const result = await this.pool.query(
-        "DELETE FROM website_page_versions WHERE page_id = $1 AND version_number = $2 RETURNING id",
-        [pageId, versionNumber]
+        `SELECT version_id, parent_page_id, markdown_content, html_content, version, creation_timestamp
+         FROM website_page_versions 
+         WHERE parent_page_id = $1 
+         ORDER BY version DESC`,
+        [pageId]
       );
 
-      return result.rows.length > 0;
+      return result.rows.map(
+        (row) => new WebsitePageVersion(row as WebsitePageVersionData)
+      );
     } catch (error) {
-      console.error("Error deleting version by page and version:", error);
-      throw new Error("Failed to delete version");
+      console.error("Error listing versions:", error);
+      throw error;
     }
   }
 
   /**
    * Get latest version for a page
-   * @param {number} pageId Parent page ID
-   * @returns {Promise<WebsitePageVersion|null>} Latest version or null if none found
+   * @param {number} pageId Page ID
+   * @returns {Promise<WebsitePageVersion|null>} Latest version or null if not found
    */
-  async getLatestVersion(pageId: number): Promise<WebsitePageVersion | null> {
+  async getLatestVersionByPage(
+    pageId: number
+  ): Promise<WebsitePageVersion | null> {
     try {
       const result = await this.pool.query(
-        `SELECT id, page_id, version_number, markdown_content, html_content, 
-                created_at
+        `SELECT version_id, parent_page_id, markdown_content, html_content, version, creation_timestamp
          FROM website_page_versions 
-         WHERE page_id = $1
-         ORDER BY version_number DESC
+         WHERE parent_page_id = $1 
+         ORDER BY version DESC 
          LIMIT 1`,
         [pageId]
       );
@@ -187,49 +222,27 @@ export default class WebsitePageVersionRepository {
         return null;
       }
 
-      return WebsitePageVersion.fromDbRow(result.rows[0]);
+      return new WebsitePageVersion(result.rows[0] as WebsitePageVersionData);
     } catch (error) {
       console.error("Error getting latest version:", error);
-      throw new Error("Failed to retrieve latest version");
+      throw error;
     }
   }
 
   /**
-   * Get version count for a page
-   * @param {number} pageId Parent page ID
-   * @returns {Promise<number>} Number of versions
+   * Delete all versions for a page
+   * @param {number} pageId Page ID
+   * @returns {Promise<boolean>} True if deleted
    */
-  async getVersionCount(pageId: number): Promise<number> {
+  async deleteVersionsByPage(pageId: number): Promise<boolean> {
     try {
-      const result = await this.pool.query(
-        "SELECT COUNT(*) FROM website_page_versions WHERE page_id = $1",
-        [pageId]
-      );
-
-      return parseInt(result.rows[0].count);
+      const query =
+        "DELETE FROM website_page_versions WHERE parent_page_id = $1";
+      const result = await this.pool.query(query, [pageId]);
+      return result.rowCount! > 0;
     } catch (error) {
-      console.error("Error getting version count:", error);
-      throw new Error("Failed to retrieve version count");
-    }
-  }
-
-  /**
-   * Check if version exists for a page
-   * @param {number} pageId Parent page ID
-   * @param {number} versionNumber Version number
-   * @returns {Promise<boolean>} True if version exists
-   */
-  async versionExists(pageId: number, versionNumber: number): Promise<boolean> {
-    try {
-      const result = await this.pool.query(
-        "SELECT id FROM website_page_versions WHERE page_id = $1 AND version_number = $2",
-        [pageId, versionNumber]
-      );
-
-      return result.rows.length > 0;
-    } catch (error) {
-      console.error("Error checking version existence:", error);
-      throw new Error("Failed to check version existence");
+      console.error("Error deleting versions by page:", error);
+      throw error;
     }
   }
 }
