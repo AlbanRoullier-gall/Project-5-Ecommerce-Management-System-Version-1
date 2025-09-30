@@ -10,7 +10,7 @@
  */
 import { Pool } from "pg";
 import jwt, { SignOptions } from "jsonwebtoken";
-import { User, UserData, UserDataInput } from "../models/User";
+import { User, UserData } from "../models/User";
 import { JWTPayload } from "../models/JWTPayload";
 import { UserRepository } from "../repositories/UserRepository";
 
@@ -55,7 +55,7 @@ export class AuthService {
    * Inscrire un nouvel utilisateur
    */
   async registerUser(
-    userData: Partial<UserDataInput>,
+    userData: Partial<UserData>,
     password: string,
     confirmPassword?: string
   ): Promise<{ user: User; token: string }> {

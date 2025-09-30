@@ -24,18 +24,6 @@ export interface UserData {
   updated_at: Date;
 }
 
-/**
- * Interface pour les données d'entrée utilisateur (insertions)
- */
-export interface UserDataInput {
-  user_id?: number;
-  email: string;
-  password_hash: string;
-  first_name: string;
-  last_name: string;
-  role: "admin" | "customer";
-  is_active: boolean;
-}
 
 /**
  * Résultat de validation du mot de passe

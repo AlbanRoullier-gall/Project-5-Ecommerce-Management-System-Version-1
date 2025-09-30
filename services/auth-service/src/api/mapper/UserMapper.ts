@@ -6,7 +6,7 @@
  * - Conversion DTO ↔ Model
  * - Séparation claire des responsabilités
  */
-import { User, UserDataInput } from "../../models/User";
+import { User, UserData } from "../../models/User";
 import {
   UserPublicDTO,
   UserRegistrationDTO,
@@ -16,11 +16,11 @@ import {
 
 export class UserMapper {
   /**
-   * Convertir un UserRegistrationDTO en UserDataInput
+   * Convertir un UserRegistrationDTO en UserData
    */
-  static userRegistrationDTOToUserDataInput(
+  static userRegistrationDTOToUserData(
     userRegistrationDTO: UserRegistrationDTO
-  ): Partial<UserDataInput> {
+  ): Partial<UserData> {
     return {
       email: userRegistrationDTO.email,
       first_name: userRegistrationDTO.firstName,
@@ -30,12 +30,12 @@ export class UserMapper {
   }
 
   /**
-   * Convertir un UserUpdateDTO en UserDataInput
+   * Convertir un UserUpdateDTO en UserData
    */
-  static userUpdateDTOToUserDataInput(
+  static userUpdateDTOToUserData(
     userUpdateDTO: UserUpdateDTO
-  ): Partial<UserDataInput> {
-    const updateData: Partial<UserDataInput> = {};
+  ): Partial<UserData> {
+    const updateData: Partial<UserData> = {};
 
     if (userUpdateDTO.firstName !== undefined) {
       updateData.first_name = userUpdateDTO.firstName;

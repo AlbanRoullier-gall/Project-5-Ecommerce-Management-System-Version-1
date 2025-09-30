@@ -8,7 +8,7 @@
  * - Pas de logique métier, uniquement l'accès aux données
  */
 import { Pool } from "pg";
-import { User, UserData, UserDataInput } from "../models/User";
+import { User, UserData } from "../models/User";
 
 export class UserRepository {
   private pool: Pool;
@@ -143,7 +143,10 @@ export class UserRepository {
   /**
    * Créer un utilisateur avec fusion de données
    */
-  createUserWithMerge(existingUser: User, updateData: Partial<UserDataInput>): User {
+  createUserWithMerge(
+    existingUser: User,
+    updateData: Partial<UserData>
+  ): User {
     return new User({
       user_id: existingUser.userId,
       email: updateData.email ?? existingUser.email,
