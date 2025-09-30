@@ -36,18 +36,16 @@ export interface CustomerUpdateDTO {
  * Types alignés exactement avec le modèle Customer
  */
 export interface CustomerPublicDTO {
-  customerId: number | null;
-  civilityId: number | null;
+  customerId: number;
+  civilityId: number;
   firstName: string;
   lastName: string;
   fullName: string;
   email: string;
-  socioProfessionalCategoryId: number | null;
+  socioProfessionalCategoryId: number;
   phoneNumber: string | null;
-  birthday: Date | null; // Aligné avec le modèle Customer
+  birthday: Date | null;
   isActive: boolean;
-  createdAt: Date | null;
-  updatedAt: Date | null;
 }
 
 /**

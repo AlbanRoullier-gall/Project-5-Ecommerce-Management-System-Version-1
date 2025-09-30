@@ -44,17 +44,27 @@ class CustomerService {
         throw new Error("Un client avec cet email existe déjà");
       }
 
-      // Create customer entity
-      const customer = new Customer({
-        civilityId: data.civilityId || null,
-        firstName: data.firstName || "",
-        lastName: data.lastName || "",
+      // Validate required fields
+      if (!data.civilityId || !data.firstName || !data.lastName || !data.email || !data.socioProfessionalCategoryId) {
+        throw new Error("Tous les champs obligatoires doivent être fournis");
+      }
+
+      // Create customer entity with temporary data for insertion
+      const customerData: CustomerData = {
+        customerId: 0, // Will be replaced by DB
+        civilityId: data.civilityId,
+        firstName: data.firstName,
+        lastName: data.lastName,
         email: data.email,
-        socioProfessionalCategoryId: data.socioProfessionalCategoryId || null,
+        socioProfessionalCategoryId: data.socioProfessionalCategoryId,
         phoneNumber: data.phoneNumber || null,
         birthday: data.birthday || null,
         isActive: true,
-      });
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      const customer = new Customer(customerData);
 
       // Save customer
       const savedCustomer = await this.customerRepository.save(customer);

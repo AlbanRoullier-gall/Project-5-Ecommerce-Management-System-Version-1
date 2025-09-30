@@ -3,16 +3,16 @@
  * Represents a customer's address (shipping or billing)
  */
 export interface CustomerAddressData {
-  addressId?: number | null;
-  customerId?: number | null;
-  addressType?: string;
-  address?: string;
-  postalCode?: string;
-  city?: string;
-  countryId?: number | null;
-  isDefault?: boolean;
-  createdAt?: Date | null;
-  updatedAt?: Date | null;
+  addressId: number;
+  customerId: number;
+  addressType: string;
+  address: string;
+  postalCode: string;
+  city: string;
+  countryId: number;
+  isDefault: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // CustomerAddressPublicDTO moved to /api/dto/AddressDTO.ts
@@ -23,29 +23,29 @@ export interface ValidationResult {
 }
 
 class CustomerAddress {
-  public addressId: number | null;
-  public customerId: number | null;
+  public addressId: number;
+  public customerId: number;
   public addressType: string;
   public address: string;
   public postalCode: string;
   public city: string;
-  public countryId: number | null;
+  public countryId: number;
   public isDefault: boolean;
-  public createdAt: Date | null;
-  public updatedAt: Date | null;
+  public createdAt: Date;
+  public updatedAt: Date;
   public countryName?: string | undefined;
 
-  constructor(data: CustomerAddressData = {}) {
-    this.addressId = data.addressId || null;
-    this.customerId = data.customerId || null;
-    this.addressType = data.addressType || "";
-    this.address = data.address || "";
-    this.postalCode = data.postalCode || "";
-    this.city = data.city || "";
-    this.countryId = data.countryId || null;
-    this.isDefault = data.isDefault !== undefined ? data.isDefault : false;
-    this.createdAt = data.createdAt || null;
-    this.updatedAt = data.updatedAt || null;
+  constructor(data: CustomerAddressData) {
+    this.addressId = data.addressId;
+    this.customerId = data.customerId;
+    this.addressType = data.addressType;
+    this.address = data.address;
+    this.postalCode = data.postalCode;
+    this.city = data.city;
+    this.countryId = data.countryId;
+    this.isDefault = data.isDefault;
+    this.createdAt = data.createdAt;
+    this.updatedAt = data.updatedAt;
   }
 
   /**

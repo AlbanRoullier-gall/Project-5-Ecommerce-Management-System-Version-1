@@ -32,14 +32,12 @@ export interface AddressUpdateDTO {
  * Types alignés exactement avec le modèle CustomerAddress
  */
 export interface AddressPublicDTO {
-  addressId: number | null;
-  customerId: number | null;
-  addressType: string; // Aligné avec le modèle CustomerAddress
+  addressId: number;
+  customerId: number;
+  addressType: string;
   address: string;
   postalCode: string;
   city: string;
-  countryId: number | null;
+  countryId: number;
   isDefault: boolean;
-  createdAt: Date | null;
-  updatedAt: Date | null;
 }

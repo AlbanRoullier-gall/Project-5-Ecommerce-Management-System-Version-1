@@ -69,10 +69,8 @@ export class CustomerMapper {
       email: customer.email,
       socioProfessionalCategoryId: customer.socioProfessionalCategoryId,
       phoneNumber: customer.phoneNumber,
-      birthday: customer.birthday, // Aligné avec le modèle (Date | null)
+      birthday: customer.birthday,
       isActive: customer.isActive,
-      createdAt: customer.createdAt,
-      updatedAt: customer.updatedAt,
       fullName: customer.fullName(),
     };
   }
@@ -123,14 +121,12 @@ export class CustomerMapper {
     return {
       addressId: address.addressId,
       customerId: address.customerId,
-      addressType: address.addressType, // Aligné avec le modèle (string)
+      addressType: address.addressType,
       address: address.address,
       postalCode: address.postalCode,
       city: address.city,
       countryId: address.countryId,
       isDefault: address.isDefault,
-      createdAt: address.createdAt,
-      updatedAt: address.updatedAt,
     };
   }
 

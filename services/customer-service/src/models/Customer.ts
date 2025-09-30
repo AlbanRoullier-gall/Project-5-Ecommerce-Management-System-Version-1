@@ -3,17 +3,17 @@
  * Represents a customer with personal information and authentication
  */
 export interface CustomerData {
-  customerId?: number | null;
-  civilityId?: number | null;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  socioProfessionalCategoryId?: number | null;
-  phoneNumber?: string | null;
-  birthday?: Date | null;
-  isActive?: boolean;
-  createdAt?: Date | null;
-  updatedAt?: Date | null;
+  customerId: number;
+  civilityId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  socioProfessionalCategoryId: number;
+  phoneNumber: string | null;
+  birthday: Date | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // CustomerPublicDTO moved to /api/dto/CustomerDTO.ts
@@ -24,32 +24,32 @@ export interface ValidationResult {
 }
 
 class Customer {
-  public customerId: number | null;
-  public civilityId: number | null;
+  public customerId: number;
+  public civilityId: number;
   public firstName: string;
   public lastName: string;
   public email: string;
-  public socioProfessionalCategoryId: number | null;
+  public socioProfessionalCategoryId: number;
   public phoneNumber: string | null;
   public birthday: Date | null;
   public isActive: boolean;
-  public createdAt: Date | null;
-  public updatedAt: Date | null;
+  public createdAt: Date;
+  public updatedAt: Date;
   public civility?: any;
   public socioProfessionalCategory?: any;
 
-  constructor(data: CustomerData = {}) {
-    this.customerId = data.customerId || null;
-    this.civilityId = data.civilityId || null;
-    this.firstName = data.firstName || "";
-    this.lastName = data.lastName || "";
-    this.email = data.email || "";
-    this.socioProfessionalCategoryId = data.socioProfessionalCategoryId || null;
-    this.phoneNumber = data.phoneNumber || null;
-    this.birthday = data.birthday || null;
-    this.isActive = data.isActive !== undefined ? data.isActive : true;
-    this.createdAt = data.createdAt || null;
-    this.updatedAt = data.updatedAt || null;
+  constructor(data: CustomerData) {
+    this.customerId = data.customerId;
+    this.civilityId = data.civilityId;
+    this.firstName = data.firstName;
+    this.lastName = data.lastName;
+    this.email = data.email;
+    this.socioProfessionalCategoryId = data.socioProfessionalCategoryId;
+    this.phoneNumber = data.phoneNumber;
+    this.birthday = data.birthday;
+    this.isActive = data.isActive;
+    this.createdAt = data.createdAt;
+    this.updatedAt = data.updatedAt;
   }
 
   /**

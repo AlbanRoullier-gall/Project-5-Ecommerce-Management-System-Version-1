@@ -349,7 +349,7 @@ class CustomerRepository {
    */
   createCustomerWithMerge(
     existingCustomer: Customer,
-    updateData: Partial<any>
+    updateData: Partial<CustomerData>
   ): Customer {
     return new Customer({
       customerId: existingCustomer.customerId,
@@ -364,7 +364,7 @@ class CustomerRepository {
       birthday: updateData.birthday ?? existingCustomer.birthday,
       isActive: updateData.isActive ?? existingCustomer.isActive,
       createdAt: existingCustomer.createdAt,
-      updatedAt: null,
+      updatedAt: new Date(),
     });
   }
 }
