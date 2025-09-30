@@ -3,7 +3,7 @@ FROM node:18-alpine
 
 # ===== MÉTADONNÉES =====
 LABEL maintainer="email-service"
-LABEL description="Email Microservice for E-commerce Platform"
+LABEL description="Email Microservice"
 LABEL version="1.0.0"
 
 # ===== CONFIGURATION DE L'ENVIRONNEMENT =====
@@ -55,5 +55,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:3006/api/health || exit 1
 
 # ===== COMMANDE DE DÉMARRAGE =====
-# Le service démarre directement sans migrations (pas de base de données)
 CMD ["npm", "start"]

@@ -3,7 +3,7 @@ FROM node:18-alpine
 
 # ===== MÉTADONNÉES =====
 LABEL maintainer="email-service-dev"
-LABEL description="Email Microservice - Development Mode for E-commerce Platform"
+LABEL description="Email Microservice - Development Mode"
 LABEL version="1.0.0-dev"
 
 # ===== CONFIGURATION DE L'ENVIRONNEMENT =====
@@ -55,5 +55,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # ===== COMMANDE DE DÉMARRAGE EN DÉVELOPPEMENT =====
 # Utilise ts-node-dev pour le hot reloading
-# Pas de migrations car pas de base de données
 CMD ["npm", "run", "dev"]

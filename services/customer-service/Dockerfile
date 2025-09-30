@@ -47,12 +47,12 @@ RUN chown -R nodejs:nodejs /app
 USER nodejs
 
 # ===== CONFIGURATION DU RÉSEAU =====
-EXPOSE 3001
+EXPOSE 3005
 
 # ===== HEALTHCHECK =====
 # Vérification de santé du service
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:3001/api/health || exit 1
+  CMD curl -f http://localhost:3005/api/health || exit 1
 
 # ===== COMMANDE DE DÉMARRAGE =====
 # Le service exécute automatiquement les migrations au démarrage
