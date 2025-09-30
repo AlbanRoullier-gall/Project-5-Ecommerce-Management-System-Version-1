@@ -14,7 +14,7 @@
 export interface OrderStatisticsRequestDTO {
   startDate?: string;
   endDate?: string;
-  customerId?: number;
+  customerId?: number | undefined;
   status?: string;
 }
 

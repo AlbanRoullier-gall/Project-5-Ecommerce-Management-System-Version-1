@@ -14,7 +14,7 @@ export interface OrderListOptions {
   page?: number;
   limit?: number;
   search?: string;
-  customerId?: number;
+  customerId?: number | undefined;
   status?: string;
   startDate?: string;
   endDate?: string;

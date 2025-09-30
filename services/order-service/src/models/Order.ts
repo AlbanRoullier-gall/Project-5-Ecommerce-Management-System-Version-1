@@ -8,8 +8,6 @@
  * - Validation et transformation des données
  */
 
-import { PaymentMethod } from "../types/Enums";
-
 /**
  * Interface correspondant exactement à la table orders
  */
@@ -19,7 +17,7 @@ export interface OrderData {
   customer_snapshot: any | null;
   total_amount_ht: number;
   total_amount_ttc: number;
-  payment_method: PaymentMethod | null;
+  payment_method: string | null;
   notes: string | null;
   created_at: Date;
   updated_at: Date;
@@ -39,7 +37,7 @@ class Order {
   public readonly customerSnapshot: any | null;
   public readonly totalAmountHT: number;
   public readonly totalAmountTTC: number;
-  public readonly paymentMethod: PaymentMethod | null;
+  public readonly paymentMethod: string | null;
   public readonly notes: string | null;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
@@ -115,15 +113,8 @@ class Order {
       errors.push("Payment method is required");
     }
 
-    if (
-      this.paymentMethod &&
-      !Object.values(PaymentMethod).includes(this.paymentMethod)
-    ) {
-      errors.push(
-        `Payment method must be one of: ${Object.values(PaymentMethod).join(
-          ", "
-        )}`
-      );
+    if (this.paymentMethod && this.paymentMethod.trim().length === 0) {
+      errors.push("Payment method cannot be empty");
     }
 
     return {

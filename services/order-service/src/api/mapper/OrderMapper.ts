@@ -99,8 +99,9 @@ export class OrderMapper {
    */
   static orderItemCreateDTOToOrderItemData(
     dto: OrderItemCreateDTO
-  ): Partial<OrderItemData> {
+  ): OrderItemData {
     return {
+      id: 0, // Will be set by the database
       order_id: dto.orderId,
       product_id: dto.productId,
       quantity: dto.quantity,
@@ -109,6 +110,8 @@ export class OrderMapper {
       vat_rate: dto.vatRate,
       total_price_ht: dto.totalPriceHT,
       total_price_ttc: dto.totalPriceTTC,
+      created_at: new Date(),
+      updated_at: new Date(),
     };
   }
 
@@ -254,6 +257,7 @@ export class OrderMapper {
       quantity: creditNoteItem.quantity,
       unitPriceHT: creditNoteItem.unitPriceHT,
       unitPriceTTC: creditNoteItem.unitPriceTTC,
+      vatRate: creditNoteItem.vatRate || 0,
       totalPriceHT: creditNoteItem.totalPriceHT,
       totalPriceTTC: creditNoteItem.totalPriceTTC,
       createdAt: creditNoteItem.createdAt,

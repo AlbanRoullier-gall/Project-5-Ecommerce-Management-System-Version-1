@@ -26,25 +26,15 @@ export class ProductImageRepository {
   async createImage(imageData: ProductImageData): Promise<ProductImage> {
     try {
       const query = `
-        INSERT INTO product_images (product_id, filename, file_path, file_size, mime_type, 
-                                   width, height, alt_text, description, is_active, order_index, 
-                                   created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
-        RETURNING id, product_id, filename, file_path, file_size, mime_type, width, height, 
-                  alt_text, description, is_active, order_index, created_at, updated_at
+        INSERT INTO product_images (product_id, filename, file_path, order_index)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, product_id, filename, file_path, order_index
       `;
 
       const values = [
         imageData.product_id,
         imageData.filename,
         imageData.file_path,
-        imageData.file_size,
-        imageData.mime_type,
-        imageData.width,
-        imageData.height,
-        imageData.alt_text,
-        imageData.description,
-        imageData.is_active,
         imageData.order_index,
       ];
 
@@ -64,8 +54,7 @@ export class ProductImageRepository {
   async getImageById(id: number): Promise<ProductImage | null> {
     try {
       const query = `
-        SELECT id, product_id, filename, file_path, file_size, mime_type, width, height, 
-               alt_text, description, is_active, order_index, created_at, updated_at
+        SELECT id, product_id, filename, file_path, order_index
         FROM product_images 
         WHERE id = $1
       `;
@@ -106,34 +95,6 @@ export class ProductImageRepository {
         setClause.push(`file_path = $${++paramCount}`);
         values.push(imageData.file_path);
       }
-      if (imageData.file_size !== undefined) {
-        setClause.push(`file_size = $${++paramCount}`);
-        values.push(imageData.file_size);
-      }
-      if (imageData.mime_type !== undefined) {
-        setClause.push(`mime_type = $${++paramCount}`);
-        values.push(imageData.mime_type);
-      }
-      if (imageData.width !== undefined) {
-        setClause.push(`width = $${++paramCount}`);
-        values.push(imageData.width);
-      }
-      if (imageData.height !== undefined) {
-        setClause.push(`height = $${++paramCount}`);
-        values.push(imageData.height);
-      }
-      if (imageData.alt_text !== undefined) {
-        setClause.push(`alt_text = $${++paramCount}`);
-        values.push(imageData.alt_text);
-      }
-      if (imageData.description !== undefined) {
-        setClause.push(`description = $${++paramCount}`);
-        values.push(imageData.description);
-      }
-      if (imageData.is_active !== undefined) {
-        setClause.push(`is_active = $${++paramCount}`);
-        values.push(imageData.is_active);
-      }
       if (imageData.order_index !== undefined) {
         setClause.push(`order_index = $${++paramCount}`);
         values.push(imageData.order_index);
@@ -149,8 +110,7 @@ export class ProductImageRepository {
         UPDATE product_images 
         SET ${setClause.join(", ")}
         WHERE id = $${++paramCount}
-        RETURNING id, product_id, filename, file_path, file_size, mime_type, width, height, 
-                  alt_text, description, is_active, order_index, created_at, updated_at
+        RETURNING id, product_id, filename, file_path, order_index
       `;
 
       const result = await this.pool.query(query, values);
@@ -190,11 +150,10 @@ export class ProductImageRepository {
   async listImagesByProduct(productId: number): Promise<ProductImage[]> {
     try {
       const query = `
-        SELECT id, product_id, filename, file_path, file_size, mime_type, width, height, 
-               alt_text, description, is_active, order_index, created_at, updated_at
+        SELECT id, product_id, filename, file_path, order_index
         FROM product_images 
-        WHERE product_id = $1 AND is_active = true
-        ORDER BY order_index ASC, created_at ASC
+        WHERE product_id = $1
+        ORDER BY order_index ASC
       `;
 
       const result = await this.pool.query(query, [productId]);

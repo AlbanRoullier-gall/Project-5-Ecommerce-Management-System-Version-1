@@ -73,15 +73,15 @@ export default class OrderService {
 
       // Créer la commande
       const order = await this.orderRepository.createOrder({
-        id: null,
+        id: 0, // Will be set by the database
         customer_id: orderData.customer_id,
         customer_snapshot: orderData.customer_snapshot || null,
         total_amount_ht: orderData.total_amount_ht,
         total_amount_ttc: orderData.total_amount_ttc,
         payment_method: orderData.payment_method,
         notes: orderData.notes || "",
-        created_at: null,
-        updated_at: null,
+        created_at: new Date(),
+        updated_at: new Date(),
       });
 
       return order;
@@ -169,6 +169,7 @@ export default class OrderService {
 
       if (
         orderData.payment_method !== undefined &&
+        orderData.payment_method !== null &&
         orderData.payment_method.trim().length === 0
       ) {
         throw new Error("Payment method cannot be empty");

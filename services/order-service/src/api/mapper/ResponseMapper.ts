@@ -96,6 +96,18 @@ export class ResponseMapper {
   }
 
   /**
+   * OrderItem retrieved response
+   */
+  static orderItemRetrieved(orderItem: any) {
+    return {
+      message: "Order item retrieved successfully",
+      orderItem,
+      timestamp: new Date().toISOString(),
+      status: 200,
+    };
+  }
+
+  /**
    * OrderItem updated response
    */
   static orderItemUpdated(orderItem: any) {

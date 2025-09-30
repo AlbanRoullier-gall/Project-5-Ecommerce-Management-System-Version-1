@@ -132,12 +132,6 @@ export class ProductMapper {
       product_id: dto.productId,
       filename: dto.filename,
       file_path: dto.filePath,
-      file_size: dto.fileSize,
-      mime_type: dto.mimeType,
-      width: dto.width || 0,
-      height: dto.height || 0,
-      alt_text: dto.altText || "",
-      description: dto.description || "",
       order_index: dto.orderIndex || 0,
     };
   }
@@ -151,12 +145,6 @@ export class ProductMapper {
     const data: Partial<ProductImageData> = {};
     if (dto.filename !== undefined) data.filename = dto.filename;
     if (dto.filePath !== undefined) data.file_path = dto.filePath;
-    if (dto.fileSize !== undefined) data.file_size = dto.fileSize;
-    if (dto.mimeType !== undefined) data.mime_type = dto.mimeType;
-    if (dto.width !== undefined) data.width = dto.width;
-    if (dto.height !== undefined) data.height = dto.height;
-    if (dto.altText !== undefined) data.alt_text = dto.altText;
-    if (dto.description !== undefined) data.description = dto.description;
     if (dto.orderIndex !== undefined) data.order_index = dto.orderIndex;
     return data;
   }
@@ -170,15 +158,7 @@ export class ProductMapper {
       productId: image.productId,
       filename: image.filename,
       filePath: image.filePath,
-      fileSize: image.fileSize,
-      mimeType: image.mimeType,
-      width: image.width,
-      height: image.height,
-      altText: image.altText,
-      description: image.description,
       orderIndex: image.orderIndex,
-      createdAt: image.createdAt,
-      updatedAt: image.updatedAt,
     };
   }
 }

@@ -13,17 +13,6 @@ export enum ProductStatus {
 }
 
 /**
- * Image MIME types supported
- */
-export enum ImageMimeType {
-  JPEG = "image/jpeg",
-  PNG = "image/png",
-  WEBP = "image/webp",
-  GIF = "image/gif",
-  SVG = "image/svg+xml",
-}
-
-/**
  * Product sort options
  */
 export enum ProductSortBy {

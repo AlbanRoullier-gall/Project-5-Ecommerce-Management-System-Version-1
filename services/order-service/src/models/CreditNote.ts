@@ -19,7 +19,7 @@ export interface CreditNoteData {
   total_amount_ttc: number;
   reason: string;
   description: string | null;
-  issue_date: Date;
+  issue_date: Date | null;
   payment_method: string;
   notes: string | null;
   created_at: Date;
@@ -42,7 +42,7 @@ class CreditNote {
   public readonly totalAmountTTC: number;
   public readonly reason: string;
   public readonly description: string | null;
-  public readonly issueDate: Date;
+  public readonly issueDate: Date | null;
   public readonly paymentMethod: string;
   public readonly notes: string | null;
   public readonly createdAt: Date;

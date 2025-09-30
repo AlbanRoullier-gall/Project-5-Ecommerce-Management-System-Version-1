@@ -8,8 +8,6 @@
  * - Type safety
  */
 
-import { PaymentMethod } from "../../types/Enums";
-
 /**
  * Order creation DTO
  */
@@ -18,7 +16,7 @@ export interface OrderCreateDTO {
   customerSnapshot: any;
   totalAmountHT: number;
   totalAmountTTC: number;
-  paymentMethod: PaymentMethod;
+  paymentMethod: string | null;
   notes?: string;
 }
 
@@ -29,7 +27,7 @@ export interface OrderUpdateDTO {
   customerSnapshot?: any;
   totalAmountHT?: number;
   totalAmountTTC?: number;
-  paymentMethod?: PaymentMethod;
+  paymentMethod?: string | null;
   notes?: string;
 }
 
@@ -42,7 +40,7 @@ export interface OrderPublicDTO {
   customerSnapshot: any | null;
   totalAmountHT: number;
   totalAmountTTC: number;
-  paymentMethod: PaymentMethod | null;
+  paymentMethod: string | null;
   notes: string | null;
   customerFirstName?: string;
   customerLastName?: string;
