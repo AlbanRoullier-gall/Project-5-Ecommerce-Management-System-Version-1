@@ -2,80 +2,53 @@
  * Category ORM Entity
  * Represents a product category
  */
-import { CategoryData, CategoryDbRow } from "../types";
 
-export default class Category {
-  public id: number | null;
-  public name: string;
-  public description: string;
-  public createdAt: Date | null;
-  public updatedAt: Date | null;
+/**
+ * Interface correspondant exactement à la table categories
+ */
+export interface CategoryData {
+  id: number | null;
+  name: string;
+  description: string | null;
+  created_at: Date | null;
+  updated_at: Date | null;
+}
 
-  constructor(data: CategoryData = {} as CategoryData) {
-    this.id = data.id ?? null;
-    this.name = data.name ?? "";
-    this.description = data.description ?? "";
-    this.createdAt = data.createdAt ?? null;
-    this.updatedAt = data.updatedAt ?? null;
+/**
+ * Résultat de validation de la catégorie
+ */
+export interface CategoryValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+class Category {
+  public readonly id: number | null;
+  public readonly name: string;
+  public readonly description: string;
+  public readonly createdAt: Date | null;
+  public readonly updatedAt: Date | null;
+
+  constructor(data: CategoryData) {
+    this.id = data.id;
+    this.name = data.name;
+    this.description = data.description || "";
+    this.createdAt = data.created_at;
+    this.updatedAt = data.updated_at;
   }
 
   /**
-   * Get full name of the category
-   * @returns {string} Full category name
+   * Vérifier si la catégorie est valide
    */
-  getFullName(): string {
-    return this.name;
+  isValid(): boolean {
+    return this.name.length > 0;
   }
 
   /**
-   * Convert entity to database row format
-   * @returns {Object} Database row
+   * Valider les données de la catégorie
+   * @returns {Object} Résultat de validation
    */
-  toDbRow(): CategoryDbRow {
-    return {
-      id: this.id!,
-      name: this.name,
-      description: this.description,
-      created_at: this.createdAt!,
-      updated_at: this.updatedAt!,
-    };
-  }
-
-  /**
-   * Create entity from database row
-   * @param {Object} row Database row
-   * @returns {Category} Category instance
-   */
-  static fromDbRow(row: CategoryDbRow): Category {
-    return new Category({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    });
-  }
-
-  /**
-   * Convert to public DTO
-   * @returns {Object} Public category data
-   */
-  toPublicDTO(): any {
-    return {
-      id: this.id,
-      name: this.name,
-      description: this.description,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      fullName: this.getFullName(),
-    };
-  }
-
-  /**
-   * Validate entity data
-   * @returns {Object} Validation result
-   */
-  validate(): { isValid: boolean; errors: string[] } {
+  validate(): CategoryValidationResult {
     const errors: string[] = [];
 
     if (!this.name || this.name.trim().length === 0) {
@@ -83,11 +56,7 @@ export default class Category {
     }
 
     if (this.name && this.name.length > 100) {
-      errors.push("Category name must be 100 characters or less");
-    }
-
-    if (this.description && this.description.length > 500) {
-      errors.push("Description must be 500 characters or less");
+      errors.push("Category name must be less than 100 characters");
     }
 
     return {
@@ -96,3 +65,5 @@ export default class Category {
     };
   }
 }
+
+export default Category;

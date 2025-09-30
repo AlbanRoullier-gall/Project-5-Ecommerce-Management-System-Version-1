@@ -18,6 +18,7 @@ export interface CreditNoteItemData {
   quantity: number;
   unit_price_ht: number;
   unit_price_ttc: number;
+  vat_rate: number;
   total_price_ht: number;
   total_price_ttc: number;
   created_at: Date | null;
@@ -39,6 +40,7 @@ class CreditNoteItem {
   public readonly quantity: number;
   public readonly unitPriceHT: number;
   public readonly unitPriceTTC: number;
+  public readonly vatRate: number;
   public readonly totalPriceHT: number;
   public readonly totalPriceTTC: number;
   public readonly createdAt: Date | null;
@@ -51,6 +53,7 @@ class CreditNoteItem {
     this.quantity = data.quantity;
     this.unitPriceHT = data.unit_price_ht;
     this.unitPriceTTC = data.unit_price_ttc;
+    this.vatRate = data.vat_rate;
     this.totalPriceHT = data.total_price_ht;
     this.totalPriceTTC = data.total_price_ttc;
     this.createdAt = data.created_at;

@@ -105,10 +105,10 @@ export class OrderMapper {
     return {
       order_id: dto.orderId,
       product_id: dto.productId,
-      product_snapshot: null, // Will be set by service
       quantity: dto.quantity,
       unit_price_ht: dto.unitPriceHT,
       unit_price_ttc: dto.unitPriceTTC,
+      vat_rate: dto.vatRate,
       total_price_ht: dto.totalPriceHT,
       total_price_ttc: dto.totalPriceTTC,
     };
@@ -121,9 +121,11 @@ export class OrderMapper {
     dto: OrderItemUpdateDTO
   ): Partial<OrderItemData> {
     const data: Partial<OrderItemData> = {};
+    if (dto.productId !== undefined) data.product_id = dto.productId;
     if (dto.quantity !== undefined) data.quantity = dto.quantity;
     if (dto.unitPriceHT !== undefined) data.unit_price_ht = dto.unitPriceHT;
     if (dto.unitPriceTTC !== undefined) data.unit_price_ttc = dto.unitPriceTTC;
+    if (dto.vatRate !== undefined) data.vat_rate = dto.vatRate;
     if (dto.totalPriceHT !== undefined) data.total_price_ht = dto.totalPriceHT;
     if (dto.totalPriceTTC !== undefined)
       data.total_price_ttc = dto.totalPriceTTC;
@@ -274,10 +276,7 @@ export class OrderMapper {
     return {
       order_id: dto.orderId,
       address_type: dto.addressType,
-      address: dto.address,
-      postal_code: dto.postalCode,
-      city: dto.city,
-      country_id: dto.countryId,
+      address_snapshot: dto.addressSnapshot,
     };
   }
 
@@ -289,10 +288,8 @@ export class OrderMapper {
   ): Partial<OrderAddressData> {
     const data: Partial<OrderAddressData> = {};
     if (dto.addressType !== undefined) data.address_type = dto.addressType;
-    if (dto.address !== undefined) data.address = dto.address;
-    if (dto.postalCode !== undefined) data.postal_code = dto.postalCode;
-    if (dto.city !== undefined) data.city = dto.city;
-    if (dto.countryId !== undefined) data.country_id = dto.countryId;
+    if (dto.addressSnapshot !== undefined)
+      data.address_snapshot = dto.addressSnapshot;
     return data;
   }
 
@@ -304,10 +301,7 @@ export class OrderMapper {
       id: orderAddress.id,
       orderId: orderAddress.orderId,
       addressType: orderAddress.addressType,
-      address: orderAddress.address,
-      postalCode: orderAddress.postalCode,
-      city: orderAddress.city,
-      countryId: orderAddress.countryId,
+      addressSnapshot: orderAddress.addressSnapshot,
       createdAt: orderAddress.createdAt,
       updatedAt: orderAddress.updatedAt,
     };

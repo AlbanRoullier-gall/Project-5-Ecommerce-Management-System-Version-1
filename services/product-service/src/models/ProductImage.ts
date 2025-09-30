@@ -1,146 +1,88 @@
 /**
  * ProductImage ORM Entity
- * Represents an image associated with a product
+ * Represents a product image
  */
-import { ProductImageData, ProductImageDbRow } from "../types";
 
-export default class ProductImage {
-  public id: number | null;
-  public productId: number | null;
-  public filename: string;
-  public filePath: string;
-  public fileSize: number;
-  public mimeType: string;
-  public width: number;
-  public height: number;
-  public altText: string;
-  public description: string;
-  public isActive: boolean;
-  public orderIndex: number;
-  public createdAt: Date | null;
-  public updatedAt: Date | null;
+/**
+ * Interface correspondant exactement à la table product_images
+ */
+export interface ProductImageData {
+  id: number | null;
+  product_id: number;
+  filename: string;
+  file_path: string;
+  file_size: number;
+  mime_type: string;
+  width: number;
+  height: number;
+  alt_text: string | null;
+  description: string | null;
+  is_active: boolean;
+  order_index: number;
+  created_at: Date | null;
+  updated_at: Date | null;
+}
 
-  constructor(data: ProductImageData = {} as ProductImageData) {
-    this.id = data.id ?? null;
-    this.productId = data.productId ?? null;
-    this.filename = data.filename ?? "";
-    this.filePath = data.filePath ?? "";
-    this.fileSize = data.fileSize ?? 0;
-    this.mimeType = data.mimeType ?? "";
-    this.width = data.width ?? 0;
-    this.height = data.height ?? 0;
-    this.altText = data.altText ?? "";
-    this.description = data.description ?? "";
-    this.isActive = data.isActive ?? true;
-    this.orderIndex = data.orderIndex ?? 0;
-    this.createdAt = data.createdAt ?? null;
-    this.updatedAt = data.updatedAt ?? null;
+/**
+ * Résultat de validation de l'image de produit
+ */
+export interface ProductImageValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+class ProductImage {
+  public readonly id: number | null;
+  public readonly productId: number | null;
+  public readonly filename: string;
+  public readonly filePath: string;
+  public readonly fileSize: number;
+  public readonly mimeType: string;
+  public readonly width: number;
+  public readonly height: number;
+  public readonly altText: string;
+  public readonly description: string;
+  public readonly isActive: boolean;
+  public readonly orderIndex: number;
+  public readonly createdAt: Date | null;
+  public readonly updatedAt: Date | null;
+
+  constructor(data: ProductImageData) {
+    this.id = data.id;
+    this.productId = data.product_id;
+    this.filename = data.filename;
+    this.filePath = data.file_path;
+    this.fileSize = data.file_size;
+    this.mimeType = data.mime_type;
+    this.width = data.width;
+    this.height = data.height;
+    this.altText = data.alt_text || "";
+    this.description = data.description || "";
+    this.isActive = data.is_active;
+    this.orderIndex = data.order_index;
+    this.createdAt = data.created_at;
+    this.updatedAt = data.updated_at;
   }
 
   /**
-   * Activate the image
+   * Vérifier si l'image est valide
    */
-  activate(): void {
-    this.isActive = true;
+  isValid(): boolean {
+    return (
+      this.filename.length > 0 &&
+      this.filePath.length > 0 &&
+      this.fileSize > 0 &&
+      this.mimeType.length > 0 &&
+      this.productId !== null
+    );
   }
 
   /**
-   * Deactivate the image
+   * Valider les données de l'image
+   * @returns {Object} Résultat de validation
    */
-  deactivate(): void {
-    this.isActive = false;
-  }
-
-  /**
-   * Get URL for the image
-   * @returns {string} Image URL
-   */
-  getUrl(): string {
-    // In a real application, this would construct the full URL
-    return `/uploads/products/${this.filename}`;
-  }
-
-  /**
-   * Convert entity to database row format
-   * @returns {Object} Database row
-   */
-  toDbRow(): ProductImageDbRow {
-    return {
-      id: this.id!,
-      product_id: this.productId!,
-      filename: this.filename,
-      file_path: this.filePath,
-      file_size: this.fileSize,
-      mime_type: this.mimeType,
-      width: this.width,
-      height: this.height,
-      alt_text: this.altText,
-      description: this.description,
-      is_active: this.isActive,
-      order_index: this.orderIndex,
-      created_at: this.createdAt!,
-      updated_at: this.updatedAt!,
-    };
-  }
-
-  /**
-   * Create entity from database row
-   * @param {Object} row Database row
-   * @returns {ProductImage} ProductImage instance
-   */
-  static fromDbRow(row: ProductImageDbRow): ProductImage {
-    return new ProductImage({
-      id: row.id,
-      productId: row.product_id,
-      filename: row.filename,
-      filePath: row.file_path,
-      fileSize: row.file_size,
-      mimeType: row.mime_type,
-      width: row.width,
-      height: row.height,
-      altText: row.alt_text,
-      description: row.description,
-      isActive: row.is_active,
-      orderIndex: row.order_index,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    });
-  }
-
-  /**
-   * Convert to public DTO
-   * @returns {Object} Public image data
-   */
-  toPublicDTO(): any {
-    return {
-      id: this.id,
-      productId: this.productId,
-      filename: this.filename,
-      filePath: this.filePath,
-      fileSize: this.fileSize,
-      mimeType: this.mimeType,
-      width: this.width,
-      height: this.height,
-      altText: this.altText,
-      description: this.description,
-      isActive: this.isActive,
-      orderIndex: this.orderIndex,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      url: this.getUrl(),
-    };
-  }
-
-  /**
-   * Validate entity data
-   * @returns {Object} Validation result
-   */
-  validate(): { isValid: boolean; errors: string[] } {
+  validate(): ProductImageValidationResult {
     const errors: string[] = [];
-
-    if (!this.productId) {
-      errors.push("Product ID is required");
-    }
 
     if (!this.filename || this.filename.trim().length === 0) {
       errors.push("Filename is required");
@@ -150,24 +92,24 @@ export default class ProductImage {
       errors.push("File path is required");
     }
 
-    if (this.fileSize < 0) {
-      errors.push("File size must be positive");
+    if (this.fileSize <= 0) {
+      errors.push("File size must be greater than 0");
+    }
+
+    if (!this.mimeType || this.mimeType.trim().length === 0) {
+      errors.push("MIME type is required");
+    }
+
+    if (!this.productId || this.productId <= 0) {
+      errors.push("Product ID is required and must be positive");
     }
 
     if (this.width < 0) {
-      errors.push("Width must be positive");
+      errors.push("Width must be non-negative");
     }
 
     if (this.height < 0) {
-      errors.push("Height must be positive");
-    }
-
-    if (this.orderIndex < 0) {
-      errors.push("Order index must be positive");
-    }
-
-    if (this.mimeType && !this.mimeType.startsWith("image/")) {
-      errors.push("MIME type must be an image type");
+      errors.push("Height must be non-negative");
     }
 
     return {
@@ -176,3 +118,5 @@ export default class ProductImage {
     };
   }
 }
+
+export default ProductImage;

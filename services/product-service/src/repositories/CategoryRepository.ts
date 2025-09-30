@@ -1,11 +1,17 @@
 /**
- * CategoryRepository
- * Handles database operations for Category entities
+ * Category Repository
+ * Database operations for categories
+ *
+ * Architecture : Repository pattern
+ * - Data access abstraction
+ * - Database operations
+ * - Type safety
  */
-import { Pool } from "pg";
-import Category from "../models/Category";
 
-export default class CategoryRepository {
+import { Pool } from "pg";
+import Category, { CategoryData } from "../models/Category";
+
+export class CategoryRepository {
   private pool: Pool;
 
   constructor(pool: Pool) {
@@ -13,229 +19,172 @@ export default class CategoryRepository {
   }
 
   /**
+   * Create a new category
+   * @param {CategoryData} categoryData Category data
+   * @returns {Promise<Category>} Created category
+   */
+  async createCategory(categoryData: CategoryData): Promise<Category> {
+    try {
+      const query = `
+        INSERT INTO categories (name, description, created_at, updated_at)
+        VALUES ($1, $2, NOW(), NOW())
+        RETURNING id, name, description, created_at, updated_at
+      `;
+
+      const values = [categoryData.name, categoryData.description];
+
+      const result = await this.pool.query(query, values);
+      return new Category(result.rows[0] as CategoryData);
+    } catch (error) {
+      console.error("Error creating category:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Get category by ID
    * @param {number} id Category ID
    * @returns {Promise<Category|null>} Category or null if not found
    */
-  async getById(id: number): Promise<Category | null> {
+  async getCategoryById(id: number): Promise<Category | null> {
     try {
-      const result = await this.pool.query(
-        `SELECT id, name, description, created_at, updated_at
-         FROM categories 
-         WHERE id = $1`,
-        [id]
-      );
+      const query = `
+        SELECT id, name, description, created_at, updated_at
+        FROM categories 
+        WHERE id = $1
+      `;
+
+      const result = await this.pool.query(query, [id]);
 
       if (result.rows.length === 0) {
         return null;
       }
 
-      return Category.fromDbRow(result.rows[0]);
+      return new Category(result.rows[0] as CategoryData);
     } catch (error) {
       console.error("Error getting category by ID:", error);
-      throw new Error("Failed to retrieve category");
+      throw error;
     }
   }
 
   /**
-   * List all categories
-   * @returns {Promise<Category[]>} Array of categories
+   * Update category
+   * @param {number} id Category ID
+   * @param {Partial<CategoryData>} categoryData Category data to update
+   * @returns {Promise<Category|null>} Updated category or null if not found
    */
-  async listAll(): Promise<Category[]> {
+  async updateCategory(
+    id: number,
+    categoryData: Partial<CategoryData>
+  ): Promise<Category | null> {
     try {
-      const result = await this.pool.query(
-        `SELECT id, name, description, created_at, updated_at
-         FROM categories 
-         ORDER BY name`
-      );
+      const setClause = [];
+      const values = [];
+      let paramCount = 0;
 
-      return result.rows.map((row) => Category.fromDbRow(row));
-    } catch (error) {
-      console.error("Error listing categories:", error);
-      throw new Error("Failed to retrieve categories");
-    }
-  }
-
-  /**
-   * Save new category
-   * @param {Category} category Category entity to save
-   * @returns {Promise<Category>} Saved category with ID
-   */
-  async save(category: Category): Promise<Category> {
-    try {
-      const validation = category.validate();
-      if (!validation.isValid) {
-        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
+      if (categoryData.name !== undefined) {
+        setClause.push(`name = $${++paramCount}`);
+        values.push(categoryData.name);
+      }
+      if (categoryData.description !== undefined) {
+        setClause.push(`description = $${++paramCount}`);
+        values.push(categoryData.description);
       }
 
-      const result = await this.pool.query(
-        `INSERT INTO categories (name, description, created_at, updated_at)
-         VALUES ($1, $2, NOW(), NOW())
-         RETURNING id, name, description, created_at, updated_at`,
-        [category.name, category.description]
-      );
-
-      return Category.fromDbRow(result.rows[0]);
-    } catch (error) {
-      console.error("Error saving category:", error);
-      throw new Error("Failed to save category");
-    }
-  }
-
-  /**
-   * Update existing category
-   * @param {Category} category Category entity to update
-   * @returns {Promise<Category>} Updated category
-   */
-  async update(category: Category): Promise<Category> {
-    try {
-      const validation = category.validate();
-      if (!validation.isValid) {
-        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
+      if (setClause.length === 0) {
+        throw new Error("No fields to update");
       }
 
-      const result = await this.pool.query(
-        `UPDATE categories 
-         SET name = $1, description = $2, updated_at = NOW()
-         WHERE id = $3
-         RETURNING id, name, description, created_at, updated_at`,
-        [category.name, category.description, category.id]
-      );
+      setClause.push(`updated_at = NOW()`);
+      values.push(id);
+
+      const query = `
+        UPDATE categories 
+        SET ${setClause.join(", ")}
+        WHERE id = $${++paramCount}
+        RETURNING id, name, description, created_at, updated_at
+      `;
+
+      const result = await this.pool.query(query, values);
 
       if (result.rows.length === 0) {
-        throw new Error("Category not found");
+        return null;
       }
 
-      return Category.fromDbRow(result.rows[0]);
+      return new Category(result.rows[0] as CategoryData);
     } catch (error) {
       console.error("Error updating category:", error);
-      throw new Error("Failed to update category");
+      throw error;
     }
   }
 
   /**
    * Delete category
-   * @param {Category} category Category entity to delete
-   * @returns {Promise<boolean>} True if deleted successfully
+   * @param {number} id Category ID
+   * @returns {Promise<boolean>} True if deleted, false if not found
    */
-  async delete(category: Category): Promise<boolean> {
+  async deleteCategory(id: number): Promise<boolean> {
     try {
-      const result = await this.pool.query(
-        "DELETE FROM categories WHERE id = $1 RETURNING id",
-        [category.id]
-      );
+      // Check if category has products
+      const checkQuery =
+        "SELECT COUNT(*) as count FROM products WHERE category_id = $1";
+      const checkResult = await this.pool.query(checkQuery, [id]);
+      const productCount = parseInt(checkResult.rows[0].count);
 
-      return result.rows.length > 0;
+      if (productCount > 0) {
+        throw new Error("Cannot delete category with existing products");
+      }
+
+      const query = "DELETE FROM categories WHERE id = $1";
+      const result = await this.pool.query(query, [id]);
+      return result.rowCount! > 0;
     } catch (error) {
       console.error("Error deleting category:", error);
-      throw new Error("Failed to delete category");
+      throw error;
+    }
+  }
+
+  /**
+   * List all categories
+   * @returns {Promise<Category[]>} List of categories
+   */
+  async listCategories(): Promise<Category[]> {
+    try {
+      const query = `
+        SELECT id, name, description, created_at, updated_at
+        FROM categories 
+        ORDER BY name ASC
+      `;
+
+      const result = await this.pool.query(query);
+      return result.rows.map((row) => new Category(row as CategoryData));
+    } catch (error) {
+      console.error("Error listing categories:", error);
+      throw error;
     }
   }
 
   /**
    * Check if category name exists
-   * @param {string} name Category name to check
-   * @param {number|null} excludeId Category ID to exclude from check (for updates)
+   * @param {string} name Category name
+   * @param {number} excludeId Category ID to exclude from check
    * @returns {Promise<boolean>} True if name exists
    */
-  async nameExists(
-    name: string,
-    excludeId: number | null = null
-  ): Promise<boolean> {
+  async categoryNameExists(name: string, excludeId?: number): Promise<boolean> {
     try {
-      let query = "SELECT id FROM categories WHERE name = $1";
-      const params: any[] = [name];
+      let query = "SELECT COUNT(*) as count FROM categories WHERE name = $1";
+      const values = [name];
 
       if (excludeId) {
         query += " AND id != $2";
-        params.push(excludeId);
+        values.push(excludeId.toString());
       }
 
-      const result = await this.pool.query(query, params);
-      return result.rows.length > 0;
+      const result = await this.pool.query(query, values);
+      return parseInt(result.rows[0].count) > 0;
     } catch (error) {
-      console.error("Error checking category name existence:", error);
-      throw new Error("Failed to check category name existence");
+      console.error("Error checking category name:", error);
+      throw error;
     }
-  }
-
-  /**
-   * Count products in category
-   * @param {number} categoryId Category ID
-   * @returns {Promise<number>} Number of products in category
-   */
-  async countProducts(categoryId: number): Promise<number> {
-    try {
-      const result = await this.pool.query(
-        "SELECT COUNT(*) FROM products WHERE category_id = $1",
-        [categoryId]
-      );
-
-      return parseInt(result.rows[0].count);
-    } catch (error) {
-      console.error("Error counting products in category:", error);
-      throw new Error("Failed to count products in category");
-    }
-  }
-
-  /**
-   * Search categories by name
-   * @param {string} searchTerm Search term
-   * @param {Object} options Search options
-   * @returns {Promise<Object>} Categories and pagination info
-   */
-  async searchByName(
-    searchTerm: string,
-    options: { page?: number; limit?: number } = {}
-  ): Promise<{
-    categories: Category[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      pages: number;
-    };
-  }> {
-    try {
-      const { page = 1, limit = 10 } = options;
-      const offset = (page - 1) * limit;
-
-      const result = await this.pool.query(
-        `SELECT id, name, description, created_at, updated_at
-         FROM categories 
-         WHERE name ILIKE $1
-         ORDER BY name
-         LIMIT $2 OFFSET $3`,
-        [`%${searchTerm}%`, limit, offset]
-      );
-
-      // Get total count
-      const countResult = await this.pool.query(
-        "SELECT COUNT(*) FROM categories WHERE name ILIKE $1",
-        [`%${searchTerm}%`]
-      );
-
-      return {
-        categories: result.rows.map((row) => Category.fromDbRow(row)),
-        pagination: {
-          page: parseInt(page.toString()),
-          limit: parseInt(limit.toString()),
-          total: parseInt(countResult.rows[0].count),
-          pages: Math.ceil(parseInt(countResult.rows[0].count) / limit),
-        },
-      };
-    } catch (error) {
-      console.error("Error searching categories:", error);
-      throw new Error("Failed to search categories");
-    }
-  }
-
-  /**
-   * Find category by ID (alias for getById)
-   * @param {number} id Category ID
-   * @returns {Promise<Category|null>} Category or null if not found
-   */
-  async findById(id: number): Promise<Category | null> {
-    return this.getById(id);
   }
 }

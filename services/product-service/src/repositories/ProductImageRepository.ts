@@ -1,11 +1,17 @@
 /**
- * ProductImageRepository
- * Handles database operations for ProductImage entities
+ * ProductImage Repository
+ * Database operations for product images
+ *
+ * Architecture : Repository pattern
+ * - Data access abstraction
+ * - Database operations
+ * - Type safety
  */
-import { Pool } from "pg";
-import ProductImage from "../models/ProductImage";
 
-export default class ProductImageRepository {
+import { Pool } from 'pg';
+import ProductImage, { ProductImageData } from '../models/ProductImage';
+
+export class ProductImageRepository {
   private pool: Pool;
 
   constructor(pool: Pool) {
@@ -13,338 +19,203 @@ export default class ProductImageRepository {
   }
 
   /**
+   * Create a new product image
+   * @param {ProductImageData} imageData Image data
+   * @returns {Promise<ProductImage>} Created image
+   */
+  async createImage(imageData: ProductImageData): Promise<ProductImage> {
+    try {
+      const query = `
+        INSERT INTO product_images (product_id, filename, file_path, file_size, mime_type, 
+                                   width, height, alt_text, description, is_active, order_index, 
+                                   created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+        RETURNING id, product_id, filename, file_path, file_size, mime_type, width, height, 
+                  alt_text, description, is_active, order_index, created_at, updated_at
+      `;
+
+      const values = [
+        imageData.product_id,
+        imageData.filename,
+        imageData.file_path,
+        imageData.file_size,
+        imageData.mime_type,
+        imageData.width,
+        imageData.height,
+        imageData.alt_text,
+        imageData.description,
+        imageData.is_active,
+        imageData.order_index,
+      ];
+
+      const result = await this.pool.query(query, values);
+      return new ProductImage(result.rows[0] as ProductImageData);
+    } catch (error) {
+      console.error('Error creating product image:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get image by ID
    * @param {number} id Image ID
-   * @returns {Promise<ProductImage|null>} ProductImage or null if not found
+   * @returns {Promise<ProductImage|null>} Image or null if not found
    */
-  async getById(id: number): Promise<ProductImage | null> {
+  async getImageById(id: number): Promise<ProductImage | null> {
     try {
-      const result = await this.pool.query(
-        `SELECT id, product_id, filename, file_path, file_size, mime_type, width, 
-                height, alt_text, description, is_active, order_index, created_at, updated_at
-         FROM product_images 
-         WHERE id = $1`,
-        [id]
-      );
+      const query = `
+        SELECT id, product_id, filename, file_path, file_size, mime_type, width, height, 
+               alt_text, description, is_active, order_index, created_at, updated_at
+        FROM product_images 
+        WHERE id = $1
+      `;
 
+      const result = await this.pool.query(query, [id]);
+      
       if (result.rows.length === 0) {
         return null;
       }
 
-      return ProductImage.fromDbRow(result.rows[0]);
+      return new ProductImage(result.rows[0] as ProductImageData);
     } catch (error) {
-      console.error("Error getting image by ID:", error);
-      throw new Error("Failed to retrieve image");
+      console.error('Error getting image by ID:', error);
+      throw error;
     }
   }
 
   /**
-   * List images by product ID
-   * @param {number} productId Product ID
-   * @returns {Promise<ProductImage[]>} Array of images
+   * Update image
+   * @param {number} id Image ID
+   * @param {Partial<ProductImageData>} imageData Image data to update
+   * @returns {Promise<ProductImage|null>} Updated image or null if not found
    */
-  async listByProduct(productId: number): Promise<ProductImage[]> {
+  async updateImage(id: number, imageData: Partial<ProductImageData>): Promise<ProductImage | null> {
     try {
-      const result = await this.pool.query(
-        `SELECT id, product_id, filename, file_path, file_size, mime_type, width, 
-                height, alt_text, description, is_active, order_index, created_at, updated_at
-         FROM product_images 
-         WHERE product_id = $1
-         ORDER BY order_index, created_at`,
-        [productId]
-      );
+      const setClause = [];
+      const values = [];
+      let paramCount = 0;
 
-      return result.rows.map((row) => ProductImage.fromDbRow(row));
-    } catch (error) {
-      console.error("Error listing images by product:", error);
-      throw new Error("Failed to retrieve images");
-    }
-  }
-
-  /**
-   * List active images by product ID
-   * @param {number} productId Product ID
-   * @returns {Promise<ProductImage[]>} Array of active images
-   */
-  async listActiveByProduct(productId: number): Promise<ProductImage[]> {
-    try {
-      const result = await this.pool.query(
-        `SELECT id, product_id, filename, file_path, file_size, mime_type, width, 
-                height, alt_text, description, is_active, order_index, created_at, updated_at
-         FROM product_images 
-         WHERE product_id = $1 AND is_active = true
-         ORDER BY order_index, created_at`,
-        [productId]
-      );
-
-      return result.rows.map((row) => ProductImage.fromDbRow(row));
-    } catch (error) {
-      console.error("Error listing active images by product:", error);
-      throw new Error("Failed to retrieve active images");
-    }
-  }
-
-  /**
-   * Save new image
-   * @param {ProductImage} image Image entity to save
-   * @returns {Promise<ProductImage>} Saved image with ID
-   */
-  async save(image: ProductImage): Promise<ProductImage> {
-    try {
-      const validation = image.validate();
-      if (!validation.isValid) {
-        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
+      if (imageData.filename !== undefined) {
+        setClause.push(`filename = $${++paramCount}`);
+        values.push(imageData.filename);
+      }
+      if (imageData.file_path !== undefined) {
+        setClause.push(`file_path = $${++paramCount}`);
+        values.push(imageData.file_path);
+      }
+      if (imageData.file_size !== undefined) {
+        setClause.push(`file_size = $${++paramCount}`);
+        values.push(imageData.file_size);
+      }
+      if (imageData.mime_type !== undefined) {
+        setClause.push(`mime_type = $${++paramCount}`);
+        values.push(imageData.mime_type);
+      }
+      if (imageData.width !== undefined) {
+        setClause.push(`width = $${++paramCount}`);
+        values.push(imageData.width);
+      }
+      if (imageData.height !== undefined) {
+        setClause.push(`height = $${++paramCount}`);
+        values.push(imageData.height);
+      }
+      if (imageData.alt_text !== undefined) {
+        setClause.push(`alt_text = $${++paramCount}`);
+        values.push(imageData.alt_text);
+      }
+      if (imageData.description !== undefined) {
+        setClause.push(`description = $${++paramCount}`);
+        values.push(imageData.description);
+      }
+      if (imageData.is_active !== undefined) {
+        setClause.push(`is_active = $${++paramCount}`);
+        values.push(imageData.is_active);
+      }
+      if (imageData.order_index !== undefined) {
+        setClause.push(`order_index = $${++paramCount}`);
+        values.push(imageData.order_index);
       }
 
-      const result = await this.pool.query(
-        `INSERT INTO product_images (product_id, filename, file_path, file_size, 
-                                   mime_type, width, height, alt_text, description, 
-                                   is_active, order_index, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
-         RETURNING id, product_id, filename, file_path, file_size, mime_type, 
-                   width, height, alt_text, description, is_active, order_index, 
-                   created_at, updated_at`,
-        [
-          image.productId,
-          image.filename,
-          image.filePath,
-          image.fileSize,
-          image.mimeType,
-          image.width,
-          image.height,
-          image.altText,
-          image.description,
-          image.isActive,
-          image.orderIndex,
-        ]
-      );
-
-      return ProductImage.fromDbRow(result.rows[0]);
-    } catch (error) {
-      console.error("Error saving image:", error);
-      throw new Error("Failed to save image");
-    }
-  }
-
-  /**
-   * Update existing image
-   * @param {ProductImage} image Image entity to update
-   * @returns {Promise<ProductImage>} Updated image
-   */
-  async update(image: ProductImage): Promise<ProductImage> {
-    try {
-      const validation = image.validate();
-      if (!validation.isValid) {
-        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
+      if (setClause.length === 0) {
+        throw new Error('No fields to update');
       }
 
-      const result = await this.pool.query(
-        `UPDATE product_images 
-         SET product_id = $1, filename = $2, file_path = $3, file_size = $4, 
-             mime_type = $5, width = $6, height = $7, alt_text = $8, 
-             description = $9, is_active = $10, order_index = $11, updated_at = NOW()
-         WHERE id = $12
-         RETURNING id, product_id, filename, file_path, file_size, mime_type, 
-                   width, height, alt_text, description, is_active, order_index, 
-                   created_at, updated_at`,
-        [
-          image.productId,
-          image.filename,
-          image.filePath,
-          image.fileSize,
-          image.mimeType,
-          image.width,
-          image.height,
-          image.altText,
-          image.description,
-          image.isActive,
-          image.orderIndex,
-          image.id,
-        ]
-      );
+      setClause.push(`updated_at = NOW()`);
+      values.push(id);
 
+      const query = `
+        UPDATE product_images 
+        SET ${setClause.join(', ')}
+        WHERE id = $${++paramCount}
+        RETURNING id, product_id, filename, file_path, file_size, mime_type, width, height, 
+                  alt_text, description, is_active, order_index, created_at, updated_at
+      `;
+
+      const result = await this.pool.query(query, values);
+      
       if (result.rows.length === 0) {
-        throw new Error("Image not found");
+        return null;
       }
 
-      return ProductImage.fromDbRow(result.rows[0]);
+      return new ProductImage(result.rows[0] as ProductImageData);
     } catch (error) {
-      console.error("Error updating image:", error);
-      throw new Error("Failed to update image");
+      console.error('Error updating image:', error);
+      throw error;
     }
   }
 
   /**
    * Delete image
-   * @param {ProductImage} image Image entity to delete
-   * @returns {Promise<boolean>} True if deleted successfully
-   */
-  async delete(image: ProductImage): Promise<boolean> {
-    try {
-      const result = await this.pool.query(
-        "DELETE FROM product_images WHERE id = $1 RETURNING id",
-        [image.id]
-      );
-
-      return result.rows.length > 0;
-    } catch (error) {
-      console.error("Error deleting image:", error);
-      throw new Error("Failed to delete image");
-    }
-  }
-
-  /**
-   * Activate image
    * @param {number} id Image ID
-   * @returns {Promise<boolean>} True if activated successfully
+   * @returns {Promise<boolean>} True if deleted, false if not found
    */
-  async activate(id: number): Promise<boolean> {
+  async deleteImage(id: number): Promise<boolean> {
     try {
-      const result = await this.pool.query(
-        "UPDATE product_images SET is_active = true, updated_at = NOW() WHERE id = $1 RETURNING id",
-        [id]
-      );
-
-      return result.rows.length > 0;
+      const query = 'DELETE FROM product_images WHERE id = $1';
+      const result = await this.pool.query(query, [id]);
+      return result.rowCount! > 0;
     } catch (error) {
-      console.error("Error activating image:", error);
-      throw new Error("Failed to activate image");
+      console.error('Error deleting image:', error);
+      throw error;
     }
   }
 
   /**
-   * Deactivate image
-   * @param {number} id Image ID
-   * @returns {Promise<boolean>} True if deactivated successfully
-   */
-  async deactivate(id: number): Promise<boolean> {
-    try {
-      const result = await this.pool.query(
-        "UPDATE product_images SET is_active = false, updated_at = NOW() WHERE id = $1 RETURNING id",
-        [id]
-      );
-
-      return result.rows.length > 0;
-    } catch (error) {
-      console.error("Error deactivating image:", error);
-      throw new Error("Failed to deactivate image");
-    }
-  }
-
-  /**
-   * Update image order
-   * @param {number} id Image ID
-   * @param {number} orderIndex New order index
-   * @returns {Promise<boolean>} True if updated successfully
-   */
-  async updateOrder(id: number, orderIndex: number): Promise<boolean> {
-    try {
-      const result = await this.pool.query(
-        "UPDATE product_images SET order_index = $1, updated_at = NOW() WHERE id = $2 RETURNING id",
-        [orderIndex, id]
-      );
-
-      return result.rows.length > 0;
-    } catch (error) {
-      console.error("Error updating image order:", error);
-      throw new Error("Failed to update image order");
-    }
-  }
-
-  /**
-   * Count images for product
+   * List images for a product
    * @param {number} productId Product ID
-   * @returns {Promise<number>} Number of images
+   * @returns {Promise<ProductImage[]>} List of images
    */
-  async countByProduct(productId: number): Promise<number> {
+  async listImagesByProduct(productId: number): Promise<ProductImage[]> {
     try {
-      const result = await this.pool.query(
-        "SELECT COUNT(*) FROM product_images WHERE product_id = $1",
-        [productId]
-      );
+      const query = `
+        SELECT id, product_id, filename, file_path, file_size, mime_type, width, height, 
+               alt_text, description, is_active, order_index, created_at, updated_at
+        FROM product_images 
+        WHERE product_id = $1 AND is_active = true
+        ORDER BY order_index ASC, created_at ASC
+      `;
 
-      return parseInt(result.rows[0].count);
+      const result = await this.pool.query(query, [productId]);
+      return result.rows.map(row => new ProductImage(row as ProductImageData));
     } catch (error) {
-      console.error("Error counting images:", error);
-      throw new Error("Failed to count images");
+      console.error('Error listing images by product:', error);
+      throw error;
     }
   }
 
   /**
-   * Get next order index for product
+   * Delete image by product and image ID
    * @param {number} productId Product ID
-   * @returns {Promise<number>} Next order index
+   * @param {number} imageId Image ID
+   * @returns {Promise<boolean>} True if deleted, false if not found
    */
-  async getNextOrderIndex(productId: number): Promise<number> {
+  async deleteImageByProductAndId(productId: number, imageId: number): Promise<boolean> {
     try {
-      const result = await this.pool.query(
-        "SELECT MAX(order_index) FROM product_images WHERE product_id = $1",
-        [productId]
-      );
-
-      return (result.rows[0].max || 0) + 1;
+      const query = 'DELETE FROM product_images WHERE product_id = $1 AND id = $2';
+      const result = await this.pool.query(query, [productId, imageId]);
+      return result.rowCount! > 0;
     } catch (error) {
-      console.error("Error getting next order index:", error);
-      throw new Error("Failed to get next order index");
-    }
-  }
-
-  /**
-   * Create a new image
-   * @param {ProductImage} image Image entity to create
-   * @returns {Promise<ProductImage>} Created image
-   */
-  async create(image: ProductImage): Promise<ProductImage> {
-    try {
-      const validation = image.validate();
-      if (!validation.isValid) {
-        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
-      }
-
-      const result = await this.pool.query(
-        `INSERT INTO product_images (product_id, filename, file_path, file_size, 
-                                   mime_type, width, height, alt_text, description, 
-                                   is_active, order_index, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
-         RETURNING id, product_id, filename, file_path, file_size, mime_type, 
-                   width, height, alt_text, description, is_active, order_index, 
-                   created_at, updated_at`,
-        [
-          image.productId,
-          image.filename,
-          image.filePath,
-          image.fileSize,
-          image.mimeType,
-          image.width,
-          image.height,
-          image.altText,
-          image.description,
-          image.isActive,
-          image.orderIndex,
-        ]
-      );
-
-      return ProductImage.fromDbRow(result.rows[0]);
-    } catch (error) {
-      console.error("Error creating image:", error);
-      throw new Error("Failed to create image");
-    }
-  }
-
-  /**
-   * Delete an image
-   * @param {number} id Image ID
-   * @returns {Promise<boolean>} Success status
-   */
-  async delete(id: number): Promise<boolean> {
-    try {
-      const result = await this.pool.query(
-        "DELETE FROM product_images WHERE id = $1",
-        [id]
-      );
-      return result.rowCount > 0;
-    } catch (error) {
-      console.error("Error deleting image:", error);
+      console.error('Error deleting image by product and ID:', error);
       throw error;
     }
   }

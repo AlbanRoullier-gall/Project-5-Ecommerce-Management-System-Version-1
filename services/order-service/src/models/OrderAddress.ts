@@ -15,10 +15,7 @@ export interface OrderAddressData {
   id: number | null;
   order_id: number | null;
   address_type: string;
-  address: string;
-  postal_code: string;
-  city: string;
-  country_id: number | null;
+  address_snapshot: any;
   created_at: Date | null;
   updated_at: Date | null;
 }
@@ -35,10 +32,7 @@ class OrderAddress {
   public readonly id: number | null;
   public readonly orderId: number | null;
   public readonly addressType: string;
-  public readonly address: string;
-  public readonly postalCode: string;
-  public readonly city: string;
-  public readonly countryId: number | null;
+  public readonly addressSnapshot: any;
   public readonly createdAt: Date | null;
   public readonly updatedAt: Date | null;
 
@@ -46,10 +40,7 @@ class OrderAddress {
     this.id = data.id;
     this.orderId = data.order_id;
     this.addressType = data.address_type;
-    this.address = data.address;
-    this.postalCode = data.postal_code;
-    this.city = data.city;
-    this.countryId = data.country_id;
+    this.addressSnapshot = data.address_snapshot;
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
   }
@@ -61,9 +52,7 @@ class OrderAddress {
     return (
       this.orderId !== null &&
       this.addressType.length > 0 &&
-      this.address.length > 0 &&
-      this.postalCode.length > 0 &&
-      this.city.length > 0
+      this.addressSnapshot !== null
     );
   }
 
@@ -82,16 +71,8 @@ class OrderAddress {
       errors.push("Address type is required");
     }
 
-    if (!this.address || this.address.trim().length === 0) {
-      errors.push("Address is required");
-    }
-
-    if (!this.postalCode || this.postalCode.trim().length === 0) {
-      errors.push("Postal code is required");
-    }
-
-    if (!this.city || this.city.trim().length === 0) {
-      errors.push("City is required");
+    if (!this.addressSnapshot || typeof this.addressSnapshot !== "object") {
+      errors.push("Address snapshot is required and must be an object");
     }
 
     if (

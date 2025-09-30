@@ -14,10 +14,7 @@
 export interface OrderAddressCreateDTO {
   orderId: number;
   addressType: string;
-  address: string;
-  postalCode: string;
-  city: string;
-  countryId: number;
+  addressSnapshot: any;
 }
 
 /**
@@ -25,10 +22,7 @@ export interface OrderAddressCreateDTO {
  */
 export interface OrderAddressUpdateDTO {
   addressType?: string;
-  address?: string;
-  postalCode?: string;
-  city?: string;
-  countryId?: number;
+  addressSnapshot?: any;
 }
 
 /**
@@ -38,10 +32,7 @@ export interface OrderAddressPublicDTO {
   id: number | null;
   orderId: number | null;
   addressType: string;
-  address: string;
-  postalCode: string;
-  city: string;
-  countryId: number | null;
+  addressSnapshot: any;
   createdAt: Date | null;
   updatedAt: Date | null;
 }

@@ -25,22 +25,22 @@ export default class OrderItemRepository {
   async createOrderItem(orderItemData: OrderItemData): Promise<OrderItem> {
     try {
       const query = `
-        INSERT INTO order_items (order_id, product_id, product_snapshot, quantity, 
-                                unit_price_ht, unit_price_ttc, total_price_ht, total_price_ttc, 
+        INSERT INTO order_items (order_id, product_id, quantity, 
+                                unit_price_ht, unit_price_ttc, vat_rate, total_price_ht, total_price_ttc, 
                                 created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
-        RETURNING id, order_id, product_id, product_snapshot, quantity, 
-                  unit_price_ht, unit_price_ttc, total_price_ht, total_price_ttc, 
+        RETURNING id, order_id, product_id, quantity, 
+                  unit_price_ht, unit_price_ttc, vat_rate, total_price_ht, total_price_ttc, 
                   created_at, updated_at
       `;
 
       const values = [
         orderItemData.order_id,
         orderItemData.product_id,
-        orderItemData.product_snapshot,
         orderItemData.quantity,
         orderItemData.unit_price_ht,
         orderItemData.unit_price_ttc,
+        orderItemData.vat_rate,
         orderItemData.total_price_ht,
         orderItemData.total_price_ttc,
       ];
@@ -61,8 +61,8 @@ export default class OrderItemRepository {
   async getOrderItemById(id: number): Promise<OrderItem | null> {
     try {
       const query = `
-        SELECT id, order_id, product_id, product_snapshot, quantity, 
-               unit_price_ht, unit_price_ttc, total_price_ht, total_price_ttc, 
+        SELECT id, order_id, product_id, quantity, 
+               unit_price_ht, unit_price_ttc, vat_rate, total_price_ht, total_price_ttc, 
                created_at, updated_at
         FROM order_items 
         WHERE id = $1
@@ -89,8 +89,8 @@ export default class OrderItemRepository {
   async getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]> {
     try {
       const query = `
-        SELECT id, order_id, product_id, product_snapshot, quantity, 
-               unit_price_ht, unit_price_ttc, total_price_ht, total_price_ttc, 
+        SELECT id, order_id, product_id, quantity, 
+               unit_price_ht, unit_price_ttc, vat_rate, total_price_ht, total_price_ttc, 
                created_at, updated_at
         FROM order_items 
         WHERE order_id = $1
@@ -120,9 +120,9 @@ export default class OrderItemRepository {
       const values = [];
       let paramCount = 0;
 
-      if (orderItemData.product_snapshot !== undefined) {
-        setClause.push(`product_snapshot = $${++paramCount}`);
-        values.push(orderItemData.product_snapshot);
+      if (orderItemData.vat_rate !== undefined) {
+        setClause.push(`vat_rate = $${++paramCount}`);
+        values.push(orderItemData.vat_rate);
       }
 
       if (orderItemData.quantity !== undefined) {
@@ -161,7 +161,7 @@ export default class OrderItemRepository {
         UPDATE order_items 
         SET ${setClause.join(", ")}
         WHERE id = $${++paramCount}
-        RETURNING id, order_id, product_id, product_snapshot, quantity, 
+        RETURNING id, order_id, product_id, quantity, 
                   unit_price_ht, unit_price_ttc, total_price_ht, total_price_ttc, 
                   created_at, updated_at
       `;

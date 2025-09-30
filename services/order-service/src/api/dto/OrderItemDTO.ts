@@ -14,10 +14,10 @@
 export interface OrderItemCreateDTO {
   orderId: number;
   productId: number;
-  productSnapshot: any;
   quantity: number;
   unitPriceHT: number;
   unitPriceTTC: number;
+  vatRate: number;
   totalPriceHT: number;
   totalPriceTTC: number;
 }
@@ -26,10 +26,11 @@ export interface OrderItemCreateDTO {
  * OrderItem update DTO
  */
 export interface OrderItemUpdateDTO {
-  productSnapshot?: any;
+  productId?: number;
   quantity?: number;
   unitPriceHT?: number;
   unitPriceTTC?: number;
+  vatRate?: number;
   totalPriceHT?: number;
   totalPriceTTC?: number;
 }

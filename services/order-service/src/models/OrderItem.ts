@@ -15,10 +15,10 @@ export interface OrderItemData {
   id: number | null;
   order_id: number | null;
   product_id: number | null;
-  product_snapshot: any | null;
   quantity: number;
   unit_price_ht: number;
   unit_price_ttc: number;
+  vat_rate: number;
   total_price_ht: number;
   total_price_ttc: number;
   created_at: Date | null;
@@ -37,10 +37,10 @@ class OrderItem {
   public readonly id: number | null;
   public readonly orderId: number | null;
   public readonly productId: number | null;
-  public readonly productSnapshot: any | null;
   public readonly quantity: number;
   public readonly unitPriceHT: number;
   public readonly unitPriceTTC: number;
+  public readonly vatRate: number;
   public readonly totalPriceHT: number;
   public readonly totalPriceTTC: number;
   public readonly createdAt: Date | null;
@@ -50,10 +50,10 @@ class OrderItem {
     this.id = data.id;
     this.orderId = data.order_id;
     this.productId = data.product_id;
-    this.productSnapshot = data.product_snapshot;
     this.quantity = data.quantity;
     this.unitPriceHT = data.unit_price_ht;
     this.unitPriceTTC = data.unit_price_ttc;
+    this.vatRate = data.vat_rate;
     this.totalPriceHT = data.total_price_ht;
     this.totalPriceTTC = data.total_price_ttc;
     this.createdAt = data.created_at;

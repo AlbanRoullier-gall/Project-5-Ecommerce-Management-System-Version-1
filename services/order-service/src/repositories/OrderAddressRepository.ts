@@ -20,7 +20,11 @@ export default class OrderAddressRepository {
       RETURNING id, order_id, addressType, address_snapshot, created_at, updated_at
     `;
 
-    const values = [address.orderId, address.addressType, address.address];
+    const values = [
+      address.orderId,
+      address.addressType,
+      address.addressSnapshot,
+    ];
 
     const result = await this.pool.query(query, values);
     return new OrderAddress(result.rows[0]);
@@ -42,7 +46,7 @@ export default class OrderAddressRepository {
     const values = [
       address.orderId,
       address.addressType,
-      address.address,
+      address.addressSnapshot,
       address.id,
     ];
 
@@ -133,18 +137,15 @@ export default class OrderAddressRepository {
   ): Promise<OrderAddress> {
     const query = `
       INSERT INTO order_addresses (
-        order_id, addressType, address, postal_code, city, country_id
-      ) VALUES ($1, $2, $3, $4, $5, $6)
+        order_id, address_type, address_snapshot
+      ) VALUES ($1, $2, $3)
       RETURNING *
     `;
 
     const values = [
       orderAddressData.order_id,
       orderAddressData.address_type,
-      orderAddressData.address,
-      orderAddressData.postal_code,
-      orderAddressData.city,
-      orderAddressData.country_id,
+      orderAddressData.address_snapshot,
     ];
 
     const result = await this.pool.query(query, values);
@@ -184,21 +185,9 @@ export default class OrderAddressRepository {
       fields.push(`address_type = $${++paramCount}`);
       values.push(orderAddressData.address_type);
     }
-    if (orderAddressData.address !== undefined) {
-      fields.push(`address = $${++paramCount}`);
-      values.push(orderAddressData.address);
-    }
-    if (orderAddressData.postal_code !== undefined) {
-      fields.push(`postal_code = $${++paramCount}`);
-      values.push(orderAddressData.postal_code);
-    }
-    if (orderAddressData.city !== undefined) {
-      fields.push(`city = $${++paramCount}`);
-      values.push(orderAddressData.city);
-    }
-    if (orderAddressData.country_id !== undefined) {
-      fields.push(`country_id = $${++paramCount}`);
-      values.push(orderAddressData.country_id);
+    if (orderAddressData.address_snapshot !== undefined) {
+      fields.push(`address_snapshot = $${++paramCount}`);
+      values.push(orderAddressData.address_snapshot);
     }
 
     if (fields.length === 0) {

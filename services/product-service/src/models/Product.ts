@@ -2,157 +2,86 @@
  * Product ORM Entity
  * Represents a product with pricing and category information
  */
-import { ProductData, ProductDbRow } from "../types";
 
-export default class Product {
-  public id: number | null;
-  public name: string;
-  public description: string;
-  public price: number;
-  public vatRate: number;
-  public categoryId: number | null;
-  public isActive: boolean;
-  public createdAt: Date | null;
-  public updatedAt: Date | null;
-  public categoryName?: string | undefined;
-  public images?: any[];
+/**
+ * Interface correspondant exactement à la table products
+ */
+export interface ProductData {
+  id: number | null;
+  name: string;
+  description: string | null;
+  price: number;
+  vat_rate: number;
+  category_id: number;
+  is_active: boolean;
+  created_at: Date | null;
+  updated_at: Date | null;
+}
 
-  constructor(data: ProductData = {} as ProductData) {
-    this.id = data.id ?? null;
-    this.name = data.name ?? "";
-    this.description = data.description ?? "";
-    this.price = data.price ?? 0;
-    this.vatRate = data.vatRate ?? 0;
-    this.categoryId = data.categoryId ?? null;
-    this.isActive = data.isActive ?? true;
-    this.createdAt = data.createdAt ?? null;
-    this.updatedAt = data.updatedAt ?? null;
+/**
+ * Résultat de validation du produit
+ */
+export interface ProductValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+class Product {
+  public readonly id: number | null;
+  public readonly name: string;
+  public readonly description: string;
+  public readonly price: number;
+  public readonly vatRate: number;
+  public readonly categoryId: number | null;
+  public readonly isActive: boolean;
+  public readonly createdAt: Date | null;
+  public readonly updatedAt: Date | null;
+
+  constructor(data: ProductData) {
+    this.id = data.id;
+    this.name = data.name;
+    this.description = data.description || "";
+    this.price = data.price;
+    this.vatRate = data.vat_rate;
+    this.categoryId = data.category_id;
+    this.isActive = data.is_active;
+    this.createdAt = data.created_at;
+    this.updatedAt = data.updated_at;
   }
 
   /**
-   * Activate the product
+   * Vérifier si le produit est valide
    */
-  activate(): void {
-    this.isActive = true;
+  isValid(): boolean {
+    return (
+      this.name.length > 0 &&
+      this.price > 0 &&
+      this.vatRate >= 0 &&
+      this.categoryId !== null
+    );
   }
 
   /**
-   * Deactivate the product
+   * Valider les données du produit
+   * @returns {Object} Résultat de validation
    */
-  deactivate(): void {
-    this.isActive = false;
-  }
-
-  /**
-   * Get price with VAT included
-   * @returns {number} Price with VAT
-   */
-  getPriceWithVAT(): number {
-    return this.price * (1 + this.vatRate / 100);
-  }
-
-  /**
-   * Convert entity to database row format
-   * @returns {Object} Database row
-   */
-  toDbRow(): ProductDbRow {
-    return {
-      id: this.id!,
-      name: this.name,
-      description: this.description,
-      price: this.price,
-      vat_rate: this.vatRate,
-      category_id: this.categoryId!,
-      is_active: this.isActive,
-      created_at: this.createdAt!,
-      updated_at: this.updatedAt!,
-    };
-  }
-
-  /**
-   * Create entity from database row
-   * @param {Object} row Database row
-   * @returns {Product} Product instance
-   */
-  static fromDbRow(row: ProductDbRow): Product {
-    return new Product({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      price: row.price,
-      vatRate: row.vat_rate,
-      categoryId: row.category_id,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    });
-  }
-
-  /**
-   * Create entity from database row with joins
-   * @param {Object} row Database row with joins
-   * @returns {Product} Product instance with additional fields
-   */
-  static fromDbRowWithJoins(
-    row: ProductDbRow & { category_name?: string }
-  ): Product {
-    const product = Product.fromDbRow(row);
-    product.categoryName = row.category_name ?? undefined;
-    return product;
-  }
-
-  /**
-   * Convert to public DTO
-   * @returns {Object} Public product data
-   */
-  toPublicDTO(): any {
-    return {
-      id: this.id,
-      name: this.name,
-      description: this.description,
-      price: this.price,
-      vatRate: this.vatRate,
-      categoryId: this.categoryId,
-      isActive: this.isActive,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      priceWithVAT: this.getPriceWithVAT(),
-    };
-  }
-
-  /**
-   * Validate entity data
-   * @returns {Object} Validation result
-   */
-  validate(): { isValid: boolean; errors: string[] } {
+  validate(): ProductValidationResult {
     const errors: string[] = [];
 
     if (!this.name || this.name.trim().length === 0) {
       errors.push("Product name is required");
     }
 
-    if (this.name && this.name.length > 255) {
-      errors.push("Product name must be 255 characters or less");
+    if (this.price <= 0) {
+      errors.push("Product price must be greater than 0");
     }
 
-    if (this.description && this.description.length > 1000) {
-      errors.push("Description must be 1000 characters or less");
-    }
-
-    if (this.price === null || this.price === undefined) {
-      errors.push("Price is required");
-    } else if (this.price < 0) {
-      errors.push("Price must be positive");
-    }
-
-    if (this.vatRate === null || this.vatRate === undefined) {
-      errors.push("VAT rate is required");
-    } else if (this.vatRate < 0 || this.vatRate > 100) {
+    if (this.vatRate < 0 || this.vatRate > 100) {
       errors.push("VAT rate must be between 0 and 100");
     }
 
-    if (!this.categoryId) {
-      errors.push("Category ID is required");
+    if (!this.categoryId || this.categoryId <= 0) {
+      errors.push("Category ID is required and must be positive");
     }
 
     return {
@@ -160,4 +89,14 @@ export default class Product {
       errors,
     };
   }
+
+  /**
+   * Calculer le prix TTC
+   * @returns {number} Prix avec TVA
+   */
+  getPriceWithVAT(): number {
+    return this.price * (1 + this.vatRate / 100);
+  }
 }
+
+export default Product;

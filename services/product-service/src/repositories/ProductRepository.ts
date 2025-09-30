@@ -1,12 +1,17 @@
 /**
- * ProductRepository
- * Handles database operations for Product entities
+ * Product Repository
+ * Database operations for products
+ *
+ * Architecture : Repository pattern
+ * - Data access abstraction
+ * - Database operations
+ * - Type safety
  */
-import { Pool } from "pg";
-import Product from "../models/Product";
-import { ProductListOptions, ProductListResult } from "../types";
 
-export default class ProductRepository {
+import { Pool } from 'pg';
+import Product, { ProductData } from '../models/Product';
+
+export class ProductRepository {
   private pool: Pool;
 
   constructor(pool: Pool) {
@@ -14,453 +19,288 @@ export default class ProductRepository {
   }
 
   /**
+   * Create a new product
+   * @param {ProductData} productData Product data
+   * @returns {Promise<Product>} Created product
+   */
+  async createProduct(productData: ProductData): Promise<Product> {
+    try {
+      const query = `
+        INSERT INTO products (name, description, price, vat_rate, category_id, is_active, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        RETURNING id, name, description, price, vat_rate, category_id, is_active, created_at, updated_at
+      `;
+
+      const values = [
+        productData.name,
+        productData.description,
+        productData.price,
+        productData.vat_rate,
+        productData.category_id,
+        productData.is_active,
+      ];
+
+      const result = await this.pool.query(query, values);
+      return new Product(result.rows[0] as ProductData);
+    } catch (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get product by ID
    * @param {number} id Product ID
    * @returns {Promise<Product|null>} Product or null if not found
    */
-  async getById(id: number): Promise<Product | null> {
+  async getProductById(id: number): Promise<Product | null> {
     try {
-      const result = await this.pool.query(
-        `SELECT id, name, description, price, vat_rate, category_id, is_active, 
-                created_at, updated_at
-         FROM products 
-         WHERE id = $1`,
-        [id]
-      );
+      const query = `
+        SELECT id, name, description, price, vat_rate, category_id, is_active, created_at, updated_at
+        FROM products 
+        WHERE id = $1
+      `;
 
+      const result = await this.pool.query(query, [id]);
+      
       if (result.rows.length === 0) {
         return null;
       }
 
-      return Product.fromDbRow(result.rows[0]);
+      return new Product(result.rows[0] as ProductData);
     } catch (error) {
-      console.error("Error getting product by ID:", error);
-      throw new Error("Failed to retrieve product");
+      console.error('Error getting product by ID:', error);
+      throw error;
     }
   }
 
   /**
-   * Get product by ID with joins
+   * Get product by ID with category information
    * @param {number} id Product ID
-   * @returns {Promise<Product|null>} Product with joined data or null if not found
+   * @returns {Promise<Product|null>} Product with category or null if not found
    */
-  async getByIdWithJoins(id: number): Promise<Product | null> {
+  async getProductByIdWithCategory(id: number): Promise<Product | null> {
     try {
-      const result = await this.pool.query(
-        `SELECT p.id, p.name, p.description, p.price, p.vat_rate, p.category_id, 
-                p.is_active, p.created_at, p.updated_at,
-                c.name as category_name
-         FROM products p
-         LEFT JOIN categories c ON p.category_id = c.id
-         WHERE p.id = $1`,
-        [id]
-      );
+      const query = `
+        SELECT p.id, p.name, p.description, p.price, p.vat_rate, p.category_id, p.is_active, 
+               p.created_at, p.updated_at, c.name as category_name
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.id = $1
+      `;
 
+      const result = await this.pool.query(query, [id]);
+      
       if (result.rows.length === 0) {
         return null;
       }
 
-      return Product.fromDbRowWithJoins(result.rows[0]);
+      const product = new Product(result.rows[0] as ProductData);
+      (product as any).categoryName = result.rows[0].category_name;
+      return product;
     } catch (error) {
-      console.error("Error getting product by ID with joins:", error);
-      throw new Error("Failed to retrieve product");
+      console.error('Error getting product with category:', error);
+      throw error;
     }
   }
 
   /**
-   * List all active products
-   * @returns {Promise<Product[]>} Array of active products
+   * Update product
+   * @param {number} id Product ID
+   * @param {Partial<ProductData>} productData Product data to update
+   * @returns {Promise<Product|null>} Updated product or null if not found
    */
-  async listAllActive(): Promise<Product[]> {
+  async updateProduct(id: number, productData: Partial<ProductData>): Promise<Product | null> {
     try {
-      const result = await this.pool.query(
-        `SELECT p.id, p.name, p.description, p.price, p.vat_rate, p.category_id, 
-                p.is_active, p.created_at, p.updated_at,
-                c.name as category_name
-         FROM products p
-         LEFT JOIN categories c ON p.category_id = c.id
-         WHERE p.is_active = true
-         ORDER BY p.created_at DESC`
-      );
-
-      return result.rows.map((row) => Product.fromDbRowWithJoins(row));
-    } catch (error) {
-      console.error("Error listing active products:", error);
-      throw new Error("Failed to retrieve products");
-    }
-  }
-
-  /**
-   * List products by category
-   * @param {number} categoryId Category ID
-   * @returns {Promise<Product[]>} Array of products in category
-   */
-  async listByCategory(categoryId: number): Promise<Product[]> {
-    try {
-      const result = await this.pool.query(
-        `SELECT p.id, p.name, p.description, p.price, p.vat_rate, p.category_id, 
-                p.is_active, p.created_at, p.updated_at,
-                c.name as category_name
-         FROM products p
-         LEFT JOIN categories c ON p.category_id = c.id
-         WHERE p.category_id = $1 AND p.is_active = true
-         ORDER BY p.created_at DESC`,
-        [categoryId]
-      );
-
-      return result.rows.map((row) => Product.fromDbRowWithJoins(row));
-    } catch (error) {
-      console.error("Error listing products by category:", error);
-      throw new Error("Failed to retrieve products");
-    }
-  }
-
-  /**
-   * List products with pagination and search
-   * @param {Object} options Pagination and search options
-   * @returns {Promise<Object>} Products and pagination info
-   */
-  async listAll(options: ProductListOptions = {}): Promise<ProductListResult> {
-    try {
-      const {
-        page = 1,
-        limit = 10,
-        search = "",
-        categoryId,
-        activeOnly = true,
-      } = options;
-      const offset = (page - 1) * limit;
-
-      let query = `
-        SELECT p.id, p.name, p.description, p.price, p.vat_rate, p.category_id, 
-               p.is_active, p.created_at, p.updated_at,
-               c.name as category_name
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
-      `;
-
-      const params: any[] = [];
+      const setClause = [];
+      const values = [];
       let paramCount = 0;
-      const conditions: string[] = [];
 
-      if (activeOnly) {
-        conditions.push(`p.is_active = true`);
+      if (productData.name !== undefined) {
+        setClause.push(`name = $${++paramCount}`);
+        values.push(productData.name);
+      }
+      if (productData.description !== undefined) {
+        setClause.push(`description = $${++paramCount}`);
+        values.push(productData.description);
+      }
+      if (productData.price !== undefined) {
+        setClause.push(`price = $${++paramCount}`);
+        values.push(productData.price);
+      }
+      if (productData.vat_rate !== undefined) {
+        setClause.push(`vat_rate = $${++paramCount}`);
+        values.push(productData.vat_rate);
+      }
+      if (productData.category_id !== undefined) {
+        setClause.push(`category_id = $${++paramCount}`);
+        values.push(productData.category_id);
+      }
+      if (productData.is_active !== undefined) {
+        setClause.push(`is_active = $${++paramCount}`);
+        values.push(productData.is_active);
       }
 
-      if (categoryId) {
-        conditions.push(`p.category_id = $${++paramCount}`);
-        params.push(categoryId);
+      if (setClause.length === 0) {
+        throw new Error('No fields to update');
       }
 
-      if (search) {
-        conditions.push(
-          `(p.name ILIKE $${++paramCount} OR p.description ILIKE $${paramCount})`
-        );
-        params.push(`%${search}%`);
-      }
+      setClause.push(`updated_at = NOW()`);
+      values.push(id);
 
-      if (conditions.length > 0) {
-        query += ` WHERE ${conditions.join(" AND ")}`;
-      }
-
-      query += ` ORDER BY p.created_at DESC LIMIT $${++paramCount} OFFSET $${++paramCount}`;
-      params.push(limit, offset);
-
-      const result = await this.pool.query(query, params);
-
-      // Get total count
-      let countQuery = `
-        SELECT COUNT(*) 
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
+      const query = `
+        UPDATE products 
+        SET ${setClause.join(', ')}
+        WHERE id = $${++paramCount}
+        RETURNING id, name, description, price, vat_rate, category_id, is_active, created_at, updated_at
       `;
 
-      if (conditions.length > 0) {
-        countQuery += ` WHERE ${conditions.join(" AND ")}`;
-      }
-
-      const countResult = await this.pool.query(
-        countQuery,
-        params.slice(0, -2)
-      );
-
-      return {
-        products: result.rows.map((row) => Product.fromDbRowWithJoins(row)),
-        pagination: {
-          page: parseInt(page.toString()),
-          limit: parseInt(limit.toString()),
-          total: parseInt(countResult.rows[0].count),
-          pages: Math.ceil(parseInt(countResult.rows[0].count) / limit),
-        },
-      };
-    } catch (error) {
-      console.error("Error listing products:", error);
-      throw new Error("Failed to list products");
-    }
-  }
-
-  /**
-   * Save new product
-   * @param {Product} product Product entity to save
-   * @returns {Promise<Product>} Saved product with ID
-   */
-  async save(product: Product): Promise<Product> {
-    try {
-      const validation = product.validate();
-      if (!validation.isValid) {
-        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
-      }
-
-      const result = await this.pool.query(
-        `INSERT INTO products (name, description, price, vat_rate, category_id, 
-                              is_active, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-         RETURNING id, name, description, price, vat_rate, category_id, 
-                   is_active, created_at, updated_at`,
-        [
-          product.name,
-          product.description,
-          product.price,
-          product.vatRate,
-          product.categoryId,
-          product.isActive,
-        ]
-      );
-
-      return Product.fromDbRow(result.rows[0]);
-    } catch (error) {
-      console.error("Error saving product:", error);
-      throw new Error("Failed to save product");
-    }
-  }
-
-  /**
-   * Update existing product
-   * @param {Product} product Product entity to update
-   * @returns {Promise<Product>} Updated product
-   */
-  async update(product: Product): Promise<Product> {
-    try {
-      const validation = product.validate();
-      if (!validation.isValid) {
-        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
-      }
-
-      const result = await this.pool.query(
-        `UPDATE products 
-         SET name = $1, description = $2, price = $3, vat_rate = $4, 
-             category_id = $5, is_active = $6, updated_at = NOW()
-         WHERE id = $7
-         RETURNING id, name, description, price, vat_rate, category_id, 
-                   is_active, created_at, updated_at`,
-        [
-          product.name,
-          product.description,
-          product.price,
-          product.vatRate,
-          product.categoryId,
-          product.isActive,
-          product.id,
-        ]
-      );
-
+      const result = await this.pool.query(query, values);
+      
       if (result.rows.length === 0) {
-        throw new Error("Product not found");
+        return null;
       }
 
-      return Product.fromDbRow(result.rows[0]);
+      return new Product(result.rows[0] as ProductData);
     } catch (error) {
-      console.error("Error updating product:", error);
-      throw new Error("Failed to update product");
+      console.error('Error updating product:', error);
+      throw error;
     }
   }
 
   /**
    * Delete product
-   * @param {Product} product Product entity to delete
-   * @returns {Promise<boolean>} True if deleted successfully
-   */
-  async delete(product: Product): Promise<boolean> {
-    try {
-      const result = await this.pool.query(
-        "DELETE FROM products WHERE id = $1 RETURNING id",
-        [product.id]
-      );
-
-      return result.rows.length > 0;
-    } catch (error) {
-      console.error("Error deleting product:", error);
-      throw new Error("Failed to delete product");
-    }
-  }
-
-  /**
-   * Activate product
    * @param {number} id Product ID
-   * @returns {Promise<boolean>} True if activated successfully
+   * @returns {Promise<boolean>} True if deleted, false if not found
    */
-  async activate(id: number): Promise<boolean> {
+  async deleteProduct(id: number): Promise<boolean> {
     try {
-      const result = await this.pool.query(
-        "UPDATE products SET is_active = true, updated_at = NOW() WHERE id = $1 RETURNING id",
-        [id]
-      );
-
-      return result.rows.length > 0;
+      const query = 'DELETE FROM products WHERE id = $1';
+      const result = await this.pool.query(query, [id]);
+      return result.rowCount! > 0;
     } catch (error) {
-      console.error("Error activating product:", error);
-      throw new Error("Failed to activate product");
-    }
-  }
-
-  /**
-   * Deactivate product
-   * @param {number} id Product ID
-   * @returns {Promise<boolean>} True if deactivated successfully
-   */
-  async deactivate(id: number): Promise<boolean> {
-    try {
-      const result = await this.pool.query(
-        "UPDATE products SET is_active = false, updated_at = NOW() WHERE id = $1 RETURNING id",
-        [id]
-      );
-
-      return result.rows.length > 0;
-    } catch (error) {
-      console.error("Error deactivating product:", error);
-      throw new Error("Failed to deactivate product");
-    }
-  }
-
-  /**
-   * Check if product name exists
-   * @param {string} name Product name to check
-   * @param {number|null} excludeId Product ID to exclude from check (for updates)
-   * @returns {Promise<boolean>} True if name exists
-   */
-  async nameExists(
-    name: string,
-    excludeId: number | null = null
-  ): Promise<boolean> {
-    try {
-      let query = "SELECT id FROM products WHERE name = $1";
-      const params: any[] = [name];
-
-      if (excludeId) {
-        query += " AND id != $2";
-        params.push(excludeId);
-      }
-
-      const result = await this.pool.query(query, params);
-      return result.rows.length > 0;
-    } catch (error) {
-      console.error("Error checking product name existence:", error);
-      throw new Error("Failed to check product name existence");
-    }
-  }
-
-  /**
-   * Update a product
-   * @param {number} id Product ID
-   * @param {Object} data Product data
-   * @returns {Promise<Product>} Updated product
-   */
-  async update(id: number, data: any): Promise<Product> {
-    try {
-      const result = await this.pool.query(
-        `UPDATE products 
-         SET name = $1, description = $2, price = $3, vat_rate = $4, 
-             category_id = $5, is_active = $6, updated_at = NOW()
-         WHERE id = $7
-         RETURNING id, name, description, price, vat_rate, category_id, is_active, created_at, updated_at`,
-        [
-          data.name,
-          data.description,
-          data.price,
-          data.vatRate,
-          data.categoryId,
-          data.isActive,
-          id,
-        ]
-      );
-
-      if (result.rows.length === 0) {
-        throw new Error("Product not found");
-      }
-
-      return Product.fromDbRow(result.rows[0]);
-    } catch (error) {
-      console.error("Error updating product:", error);
+      console.error('Error deleting product:', error);
       throw error;
     }
   }
 
   /**
-   * Delete a product
-   * @param {number} id Product ID
-   * @returns {Promise<boolean>} Success status
+   * List products with pagination and filtering
+   * @param {Object} options List options
+   * @returns {Promise<Object>} Products with pagination info
    */
-  async delete(id: number): Promise<boolean> {
+  async listProducts(options: {
+    page: number;
+    limit: number;
+    categoryId?: number;
+    search?: string;
+    activeOnly?: boolean;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{
+    products: Product[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }> {
     try {
-      const result = await this.pool.query(
-        "DELETE FROM products WHERE id = $1",
-        [id]
-      );
-      return result.rowCount > 0;
+      const offset = (options.page - 1) * options.limit;
+      const whereConditions = [];
+      const values = [];
+      let paramCount = 0;
+
+      if (options.categoryId) {
+        whereConditions.push(`p.category_id = $${++paramCount}`);
+        values.push(options.categoryId);
+      }
+
+      if (options.search) {
+        whereConditions.push(`(p.name ILIKE $${++paramCount} OR p.description ILIKE $${++paramCount})`);
+        const searchTerm = `%${options.search}%`;
+        values.push(searchTerm, searchTerm);
+      }
+
+      if (options.activeOnly) {
+        whereConditions.push(`p.is_active = $${++paramCount}`);
+        values.push(true);
+      }
+
+      const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+      // Count total products
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM products p
+        ${whereClause}
+      `;
+      const countResult = await this.pool.query(countQuery, values);
+      const total = parseInt(countResult.rows[0].total);
+
+      // Get products
+      const sortBy = options.sortBy || 'created_at';
+      const sortOrder = options.sortOrder || 'desc';
+      const orderClause = `ORDER BY p.${sortBy} ${sortOrder.toUpperCase()}`;
+
+      const query = `
+        SELECT p.id, p.name, p.description, p.price, p.vat_rate, p.category_id, p.is_active, 
+               p.created_at, p.updated_at, c.name as category_name
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        ${whereClause}
+        ${orderClause}
+        LIMIT $${++paramCount} OFFSET $${++paramCount}
+      `;
+
+      values.push(options.limit, offset);
+      const result = await this.pool.query(query, values);
+
+      const products = result.rows.map(row => {
+        const product = new Product(row as ProductData);
+        (product as any).categoryName = row.category_name;
+        return product;
+      });
+
+      return {
+        products,
+        pagination: {
+          page: options.page,
+          limit: options.limit,
+          total,
+          pages: Math.ceil(total / options.limit),
+        },
+      };
     } catch (error) {
-      console.error("Error deleting product:", error);
+      console.error('Error listing products:', error);
       throw error;
     }
   }
 
   /**
-   * Activate a product
+   * Toggle product status
    * @param {number} id Product ID
-   * @returns {Promise<Product>} Activated product
+   * @returns {Promise<Product|null>} Updated product or null if not found
    */
-  async activate(id: number): Promise<Product> {
+  async toggleProductStatus(id: number): Promise<Product | null> {
     try {
-      const result = await this.pool.query(
-        `UPDATE products 
-         SET is_active = true, updated_at = NOW()
-         WHERE id = $1
-         RETURNING id, name, description, price, vat_rate, category_id, is_active, created_at, updated_at`,
-        [id]
-      );
+      const query = `
+        UPDATE products 
+        SET is_active = NOT is_active, updated_at = NOW()
+        WHERE id = $1
+        RETURNING id, name, description, price, vat_rate, category_id, is_active, created_at, updated_at
+      `;
 
+      const result = await this.pool.query(query, [id]);
+      
       if (result.rows.length === 0) {
-        throw new Error("Product not found");
+        return null;
       }
 
-      return Product.fromDbRow(result.rows[0]);
+      return new Product(result.rows[0] as ProductData);
     } catch (error) {
-      console.error("Error activating product:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Deactivate a product
-   * @param {number} id Product ID
-   * @returns {Promise<Product>} Deactivated product
-   */
-  async deactivate(id: number): Promise<Product> {
-    try {
-      const result = await this.pool.query(
-        `UPDATE products 
-         SET is_active = false, updated_at = NOW()
-         WHERE id = $1
-         RETURNING id, name, description, price, vat_rate, category_id, is_active, created_at, updated_at`,
-        [id]
-      );
-
-      if (result.rows.length === 0) {
-        throw new Error("Product not found");
-      }
-
-      return Product.fromDbRow(result.rows[0]);
-    } catch (error) {
-      console.error("Error deactivating product:", error);
+      console.error('Error toggling product status:', error);
       throw error;
     }
   }
