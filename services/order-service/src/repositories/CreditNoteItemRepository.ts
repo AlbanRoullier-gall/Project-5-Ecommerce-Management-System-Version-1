@@ -46,8 +46,7 @@ export default class CreditNoteItemRepository {
     const query = `
       UPDATE credit_note_items 
       SET credit_note_id = $1, product_id = $2, quantity = $3, unit_price_ht = $4, 
-          unit_price_ttc = $5, // vatRate removed - not in model = $6, total_price_ht = $7, total_price_ttc = $8, 
-          updated_at = NOW()
+          unit_price_ttc = $5, // vatRate removed - not in model = $6, total_price_ht = $7, total_price_ttc = $8
       WHERE id = $9
       RETURNING id, credit_note_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
                 // vatRate removed - not in model, total_price_ht, total_price_ttc, created_at, updated_at
@@ -236,7 +235,6 @@ export default class CreditNoteItemRepository {
       throw new Error("No fields to update");
     }
 
-    fields.push(`updated_at = NOW()`);
     values.push(id);
 
     const query = `

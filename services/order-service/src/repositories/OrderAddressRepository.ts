@@ -38,7 +38,7 @@ export default class OrderAddressRepository {
   async update(address: OrderAddress): Promise<OrderAddress> {
     const query = `
       UPDATE order_addresses 
-      SET order_id = $1, addressType = $2, address_snapshot = $3, updated_at = NOW()
+      SET order_id = $1, addressType = $2, address_snapshot = $3
       WHERE id = $4
       RETURNING id, order_id, addressType, address_snapshot, created_at, updated_at
     `;
@@ -194,7 +194,6 @@ export default class OrderAddressRepository {
       throw new Error("No fields to update");
     }
 
-    fields.push(`updated_at = NOW()`);
     values.push(id);
 
     const query = `

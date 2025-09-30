@@ -8,8 +8,8 @@
  * - Type safety
  */
 
-import { Pool } from 'pg';
-import Product, { ProductData } from '../models/Product';
+import { Pool } from "pg";
+import Product, { ProductData } from "../models/Product";
 
 export class ProductRepository {
   private pool: Pool;
@@ -43,7 +43,7 @@ export class ProductRepository {
       const result = await this.pool.query(query, values);
       return new Product(result.rows[0] as ProductData);
     } catch (error) {
-      console.error('Error creating product:', error);
+      console.error("Error creating product:", error);
       throw error;
     }
   }
@@ -62,14 +62,14 @@ export class ProductRepository {
       `;
 
       const result = await this.pool.query(query, [id]);
-      
+
       if (result.rows.length === 0) {
         return null;
       }
 
       return new Product(result.rows[0] as ProductData);
     } catch (error) {
-      console.error('Error getting product by ID:', error);
+      console.error("Error getting product by ID:", error);
       throw error;
     }
   }
@@ -90,7 +90,7 @@ export class ProductRepository {
       `;
 
       const result = await this.pool.query(query, [id]);
-      
+
       if (result.rows.length === 0) {
         return null;
       }
@@ -99,7 +99,7 @@ export class ProductRepository {
       (product as any).categoryName = result.rows[0].category_name;
       return product;
     } catch (error) {
-      console.error('Error getting product with category:', error);
+      console.error("Error getting product with category:", error);
       throw error;
     }
   }
@@ -110,7 +110,10 @@ export class ProductRepository {
    * @param {Partial<ProductData>} productData Product data to update
    * @returns {Promise<Product|null>} Updated product or null if not found
    */
-  async updateProduct(id: number, productData: Partial<ProductData>): Promise<Product | null> {
+  async updateProduct(
+    id: number,
+    productData: Partial<ProductData>
+  ): Promise<Product | null> {
     try {
       const setClause = [];
       const values = [];
@@ -142,28 +145,27 @@ export class ProductRepository {
       }
 
       if (setClause.length === 0) {
-        throw new Error('No fields to update');
+        throw new Error("No fields to update");
       }
 
-      setClause.push(`updated_at = NOW()`);
       values.push(id);
 
       const query = `
         UPDATE products 
-        SET ${setClause.join(', ')}
+        SET ${setClause.join(", ")}
         WHERE id = $${++paramCount}
         RETURNING id, name, description, price, vat_rate, category_id, is_active, created_at, updated_at
       `;
 
       const result = await this.pool.query(query, values);
-      
+
       if (result.rows.length === 0) {
         return null;
       }
 
       return new Product(result.rows[0] as ProductData);
     } catch (error) {
-      console.error('Error updating product:', error);
+      console.error("Error updating product:", error);
       throw error;
     }
   }
@@ -175,11 +177,11 @@ export class ProductRepository {
    */
   async deleteProduct(id: number): Promise<boolean> {
     try {
-      const query = 'DELETE FROM products WHERE id = $1';
+      const query = "DELETE FROM products WHERE id = $1";
       const result = await this.pool.query(query, [id]);
       return result.rowCount! > 0;
     } catch (error) {
-      console.error('Error deleting product:', error);
+      console.error("Error deleting product:", error);
       throw error;
     }
   }
@@ -196,7 +198,7 @@ export class ProductRepository {
     search?: string;
     activeOnly?: boolean;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   }): Promise<{
     products: Product[];
     pagination: {
@@ -218,7 +220,9 @@ export class ProductRepository {
       }
 
       if (options.search) {
-        whereConditions.push(`(p.name ILIKE $${++paramCount} OR p.description ILIKE $${++paramCount})`);
+        whereConditions.push(
+          `(p.name ILIKE $${++paramCount} OR p.description ILIKE $${++paramCount})`
+        );
         const searchTerm = `%${options.search}%`;
         values.push(searchTerm, searchTerm);
       }
@@ -228,7 +232,10 @@ export class ProductRepository {
         values.push(true);
       }
 
-      const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+      const whereClause =
+        whereConditions.length > 0
+          ? `WHERE ${whereConditions.join(" AND ")}`
+          : "";
 
       // Count total products
       const countQuery = `
@@ -240,8 +247,8 @@ export class ProductRepository {
       const total = parseInt(countResult.rows[0].total);
 
       // Get products
-      const sortBy = options.sortBy || 'created_at';
-      const sortOrder = options.sortOrder || 'desc';
+      const sortBy = options.sortBy || "created_at";
+      const sortOrder = options.sortOrder || "desc";
       const orderClause = `ORDER BY p.${sortBy} ${sortOrder.toUpperCase()}`;
 
       const query = `
@@ -257,7 +264,7 @@ export class ProductRepository {
       values.push(options.limit, offset);
       const result = await this.pool.query(query, values);
 
-      const products = result.rows.map(row => {
+      const products = result.rows.map((row) => {
         const product = new Product(row as ProductData);
         (product as any).categoryName = row.category_name;
         return product;
@@ -273,7 +280,7 @@ export class ProductRepository {
         },
       };
     } catch (error) {
-      console.error('Error listing products:', error);
+      console.error("Error listing products:", error);
       throw error;
     }
   }
@@ -287,20 +294,20 @@ export class ProductRepository {
     try {
       const query = `
         UPDATE products 
-        SET is_active = NOT is_active, updated_at = NOW()
+        SET is_active = NOT is_active
         WHERE id = $1
         RETURNING id, name, description, price, vat_rate, category_id, is_active, created_at, updated_at
       `;
 
       const result = await this.pool.query(query, [id]);
-      
+
       if (result.rows.length === 0) {
         return null;
       }
 
       return new Product(result.rows[0] as ProductData);
     } catch (error) {
-      console.error('Error toggling product status:', error);
+      console.error("Error toggling product status:", error);
       throw error;
     }
   }

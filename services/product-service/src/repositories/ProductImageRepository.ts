@@ -8,8 +8,8 @@
  * - Type safety
  */
 
-import { Pool } from 'pg';
-import ProductImage, { ProductImageData } from '../models/ProductImage';
+import { Pool } from "pg";
+import ProductImage, { ProductImageData } from "../models/ProductImage";
 
 export class ProductImageRepository {
   private pool: Pool;
@@ -51,7 +51,7 @@ export class ProductImageRepository {
       const result = await this.pool.query(query, values);
       return new ProductImage(result.rows[0] as ProductImageData);
     } catch (error) {
-      console.error('Error creating product image:', error);
+      console.error("Error creating product image:", error);
       throw error;
     }
   }
@@ -71,14 +71,14 @@ export class ProductImageRepository {
       `;
 
       const result = await this.pool.query(query, [id]);
-      
+
       if (result.rows.length === 0) {
         return null;
       }
 
       return new ProductImage(result.rows[0] as ProductImageData);
     } catch (error) {
-      console.error('Error getting image by ID:', error);
+      console.error("Error getting image by ID:", error);
       throw error;
     }
   }
@@ -89,7 +89,10 @@ export class ProductImageRepository {
    * @param {Partial<ProductImageData>} imageData Image data to update
    * @returns {Promise<ProductImage|null>} Updated image or null if not found
    */
-  async updateImage(id: number, imageData: Partial<ProductImageData>): Promise<ProductImage | null> {
+  async updateImage(
+    id: number,
+    imageData: Partial<ProductImageData>
+  ): Promise<ProductImage | null> {
     try {
       const setClause = [];
       const values = [];
@@ -137,29 +140,28 @@ export class ProductImageRepository {
       }
 
       if (setClause.length === 0) {
-        throw new Error('No fields to update');
+        throw new Error("No fields to update");
       }
 
-      setClause.push(`updated_at = NOW()`);
       values.push(id);
 
       const query = `
         UPDATE product_images 
-        SET ${setClause.join(', ')}
+        SET ${setClause.join(", ")}
         WHERE id = $${++paramCount}
         RETURNING id, product_id, filename, file_path, file_size, mime_type, width, height, 
                   alt_text, description, is_active, order_index, created_at, updated_at
       `;
 
       const result = await this.pool.query(query, values);
-      
+
       if (result.rows.length === 0) {
         return null;
       }
 
       return new ProductImage(result.rows[0] as ProductImageData);
     } catch (error) {
-      console.error('Error updating image:', error);
+      console.error("Error updating image:", error);
       throw error;
     }
   }
@@ -171,11 +173,11 @@ export class ProductImageRepository {
    */
   async deleteImage(id: number): Promise<boolean> {
     try {
-      const query = 'DELETE FROM product_images WHERE id = $1';
+      const query = "DELETE FROM product_images WHERE id = $1";
       const result = await this.pool.query(query, [id]);
       return result.rowCount! > 0;
     } catch (error) {
-      console.error('Error deleting image:', error);
+      console.error("Error deleting image:", error);
       throw error;
     }
   }
@@ -196,9 +198,11 @@ export class ProductImageRepository {
       `;
 
       const result = await this.pool.query(query, [productId]);
-      return result.rows.map(row => new ProductImage(row as ProductImageData));
+      return result.rows.map(
+        (row) => new ProductImage(row as ProductImageData)
+      );
     } catch (error) {
-      console.error('Error listing images by product:', error);
+      console.error("Error listing images by product:", error);
       throw error;
     }
   }
@@ -209,13 +213,17 @@ export class ProductImageRepository {
    * @param {number} imageId Image ID
    * @returns {Promise<boolean>} True if deleted, false if not found
    */
-  async deleteImageByProductAndId(productId: number, imageId: number): Promise<boolean> {
+  async deleteImageByProductAndId(
+    productId: number,
+    imageId: number
+  ): Promise<boolean> {
     try {
-      const query = 'DELETE FROM product_images WHERE product_id = $1 AND id = $2';
+      const query =
+        "DELETE FROM product_images WHERE product_id = $1 AND id = $2";
       const result = await this.pool.query(query, [productId, imageId]);
       return result.rowCount! > 0;
     } catch (error) {
-      console.error('Error deleting image by product and ID:', error);
+      console.error("Error deleting image by product and ID:", error);
       throw error;
     }
   }

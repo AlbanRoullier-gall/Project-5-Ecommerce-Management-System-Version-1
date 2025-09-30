@@ -167,7 +167,6 @@ export default class OrderRepository {
         return this.getOrderById(id);
       }
 
-      setClause.push(`updated_at = NOW()`);
       values.push(id);
 
       const query = `

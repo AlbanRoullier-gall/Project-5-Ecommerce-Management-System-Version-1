@@ -141,8 +141,6 @@ export class WebsitePageRepository {
         throw new Error("No fields to update");
       }
 
-      setClause.push(`last_update_timestamp = NOW()`);
-
       const query = `
         UPDATE website_pages 
         SET ${setClause.join(", ")}

@@ -112,8 +112,7 @@ class CustomerCompanyRepository {
 
       const result = await this.pool.query(
         `UPDATE customer_companies 
-         SET customer_id = $1, company_name = $2, siret_number = $3, vat_number = $4, 
-             updated_at = NOW()
+         SET customer_id = $1, company_name = $2, siret_number = $3, vat_number = $4
          WHERE company_id = $5
          RETURNING company_id, customer_id, company_name, siret_number, vat_number, 
                    created_at, updated_at`,

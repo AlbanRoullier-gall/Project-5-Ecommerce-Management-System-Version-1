@@ -144,7 +144,7 @@ class CustomerAddressRepository {
       const result = await this.pool.query(
         `UPDATE customer_addresses 
          SET customer_id = $1, address_type = $2, address = $3, postal_code = $4, 
-             city = $5, country_id = $6, is_default = $7, updated_at = NOW()
+             city = $5, country_id = $6, is_default = $7
          WHERE address_id = $8
          RETURNING address_id, customer_id, address_type, address, postal_code, city, 
                    country_id, is_default, created_at, updated_at`,

@@ -13,7 +13,7 @@ import express from "express";
 import { Pool } from "pg";
 import dotenv from "dotenv";
 import { ApiRouter } from "./api";
-import migrate from "./migrations/migrate";
+import { runMigrations } from "./migrations/migrate";
 
 // Load environment variables
 dotenv.config();
@@ -47,7 +47,7 @@ async function startService(): Promise<void> {
 
     // Exécution des migrations automatiques
     console.log("🔄 Running database migrations...");
-    await migrate();
+    await runMigrations();
     console.log("✅ Database migrations completed");
 
     // Configuration de l'application Express

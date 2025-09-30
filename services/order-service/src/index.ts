@@ -11,7 +11,7 @@
 import express from "express";
 import { Pool } from "pg";
 import { ApiRouter } from "./api";
-import migrate from "./migrations/migrate";
+import { runMigrations } from "./migrations/migrate";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -31,7 +31,7 @@ async function startService(): Promise<void> {
   try {
     console.log("🚀 Démarrage du service order-service...");
     console.log("📝 Exécution des migrations de base de données...");
-    await migrate();
+    await runMigrations();
     console.log("✅ Migrations terminées avec succès");
 
     const apiRouter = new ApiRouter(pool);

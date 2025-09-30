@@ -229,9 +229,8 @@ class CustomerRepository {
 
       const result = await this.pool.query(
         `INSERT INTO customers (civility_id, first_name, last_name, email, 
-                               socio_professional_category_id, phone_number, birthday, is_active, 
-                               created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+                               socio_professional_category_id, phone_number, birthday, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING customer_id, civility_id, first_name, last_name, email, 
                    socio_professional_category_id, phone_number, birthday, is_active, 
                    created_at, updated_at`,
@@ -270,7 +269,7 @@ class CustomerRepository {
         `UPDATE customers 
          SET civility_id = $1, first_name = $2, last_name = $3, email = $4, 
              socio_professional_category_id = $5, phone_number = $6, birthday = $7, 
-             is_active = $8, updated_at = NOW()
+             is_active = $8
          WHERE customer_id = $9
          RETURNING customer_id, civility_id, first_name, last_name, email, 
                    socio_professional_category_id, phone_number, birthday, is_active, 

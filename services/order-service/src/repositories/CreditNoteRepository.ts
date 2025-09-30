@@ -49,8 +49,7 @@ export default class CreditNoteRepository {
     const query = `
       UPDATE credit_notes 
       SET customer_id = $1, order_id = $2, total_amount_ht = $3, total_amount_ttc = $4, 
-          reason = $5, description = $6, issue_date = $7, payment_method = $8, notes = $9, 
-          updated_at = NOW()
+          reason = $5, description = $6, issue_date = $7, payment_method = $8, notes = $9
       WHERE id = $10
       RETURNING id, customer_id, order_id, total_amount_ht, total_amount_ttc, 
                 reason, description, issue_date, payment_method, notes, created_at, updated_at
@@ -344,7 +343,6 @@ export default class CreditNoteRepository {
       throw new Error("No fields to update");
     }
 
-    fields.push(`updated_at = NOW()`);
     values.push(id);
 
     const query = `

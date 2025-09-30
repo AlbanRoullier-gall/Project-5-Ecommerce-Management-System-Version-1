@@ -95,7 +95,6 @@ export class CategoryRepository {
         throw new Error("No fields to update");
       }
 
-      setClause.push(`updated_at = NOW()`);
       values.push(id);
 
       const query = `

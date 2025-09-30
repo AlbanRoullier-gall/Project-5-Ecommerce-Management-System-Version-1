@@ -102,7 +102,7 @@ export class UserRepository {
       const query = `
         UPDATE users 
         SET email = $1, password_hash = $2, first_name = $3, last_name = $4, 
-            role = $5, is_active = $6, updated_at = CURRENT_TIMESTAMP
+            role = $5, is_active = $6
         WHERE user_id = $7
         RETURNING user_id, email, password_hash, first_name, last_name, 
                   role, is_active, created_at, updated_at
