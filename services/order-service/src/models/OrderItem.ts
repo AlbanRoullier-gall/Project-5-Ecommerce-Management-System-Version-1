@@ -1,128 +1,113 @@
-import { OrderItemData, OrderItemDbRow } from "../types";
+/**
+ * OrderItem Model
+ * Représente un article de commande dans le système
+ *
+ * Architecture : Modèle centré sur la base de données
+ * - Correspond exactement à la table `order_items`
+ * - Contient la logique métier de l'article
+ * - Validation et transformation des données
+ */
 
 /**
- * OrderItem ORM Entity
- * Represents an item within an order
+ * Interface correspondant exactement à la table order_items
  */
-export default class OrderItem {
-  public id: number | null;
-  public orderId: number | null;
-  public productId: number | null;
-  public quantity: number;
-  public unitPriceHT: number;
-  public unitPriceTTC: number;
-  public vatRate: number;
-  public totalPriceHT: number;
-  public totalPriceTTC: number;
-  public createdAt: Date | null;
-  public updatedAt: Date | null;
+export interface OrderItemData {
+  id: number | null;
+  order_id: number | null;
+  product_id: number | null;
+  product_snapshot: any | null;
+  quantity: number;
+  unit_price_ht: number;
+  unit_price_ttc: number;
+  total_price_ht: number;
+  total_price_ttc: number;
+  created_at: Date | null;
+  updated_at: Date | null;
+}
 
-  constructor(data: OrderItemData = {} as OrderItemData) {
-    this.id = data.id ?? null;
-    this.orderId = data.orderId ?? null;
-    this.productId = data.productId ?? null;
-    this.quantity = data.quantity ?? 0;
-    this.unitPriceHT = data.unitPriceHT ?? 0;
-    this.unitPriceTTC = data.unitPriceTTC ?? 0;
-    this.vatRate = data.vatRate ?? 0;
-    this.totalPriceHT = data.totalPriceHT ?? 0;
-    this.totalPriceTTC = data.totalPriceTTC ?? 0;
-    this.createdAt = data.createdAt ?? null;
-    this.updatedAt = data.updatedAt ?? null;
+/**
+ * Résultat de validation de l'article
+ */
+export interface OrderItemValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+class OrderItem {
+  public readonly id: number | null;
+  public readonly orderId: number | null;
+  public readonly productId: number | null;
+  public readonly productSnapshot: any | null;
+  public readonly quantity: number;
+  public readonly unitPriceHT: number;
+  public readonly unitPriceTTC: number;
+  public readonly totalPriceHT: number;
+  public readonly totalPriceTTC: number;
+  public readonly createdAt: Date | null;
+  public readonly updatedAt: Date | null;
+
+  constructor(data: OrderItemData) {
+    this.id = data.id;
+    this.orderId = data.order_id;
+    this.productId = data.product_id;
+    this.productSnapshot = data.product_snapshot;
+    this.quantity = data.quantity;
+    this.unitPriceHT = data.unit_price_ht;
+    this.unitPriceTTC = data.unit_price_ttc;
+    this.totalPriceHT = data.total_price_ht;
+    this.totalPriceTTC = data.total_price_ttc;
+    this.createdAt = data.created_at;
+    this.updatedAt = data.updated_at;
   }
 
   /**
-   * Calculate item total
+   * Calculer le prix total HT
    */
-  calculateItemTotal(): {
-    totalHT: number;
-    totalTTC: number;
-    totalVAT: number;
-  } {
-    this.totalPriceHT = this.unitPriceHT * this.quantity;
-    this.totalPriceTTC = this.unitPriceTTC * this.quantity;
-    return {
-      totalHT: this.totalPriceHT,
-      totalTTC: this.totalPriceTTC,
-      totalVAT: this.totalPriceTTC - this.totalPriceHT,
-    };
+  calculateTotalHT(): number {
+    return this.unitPriceHT * this.quantity;
   }
 
   /**
-   * Convert entity to database row format
-   * @returns {Object} Database row
+   * Calculer le prix total TTC
    */
-  toDbRow(): OrderItemDbRow {
-    return {
-      id: this.id!,
-      order_id: this.orderId!,
-      product_id: this.productId!,
-      quantity: this.quantity,
-      unit_price_ht: this.unitPriceHT,
-      unit_price_ttc: this.unitPriceTTC,
-      vat_rate: this.vatRate,
-      total_price_ht: this.totalPriceHT,
-      total_price_ttc: this.totalPriceTTC,
-      created_at: this.createdAt!,
-      updated_at: this.updatedAt!,
-    };
+  calculateTotalTTC(): number {
+    return this.unitPriceTTC * this.quantity;
   }
 
   /**
-   * Create entity from database row
-   * @param {Object} row Database row
-   * @returns {OrderItem} OrderItem instance
+   * Calculer le taux de TVA
    */
-  static fromDbRow(row: OrderItemDbRow): OrderItem {
-    return new OrderItem({
-      id: row.id,
-      orderId: row.order_id,
-      productId: row.product_id,
-      quantity: row.quantity,
-      unitPriceHT: row.unit_price_ht,
-      unitPriceTTC: row.unit_price_ttc,
-      vatRate: row.vat_rate,
-      totalPriceHT: row.total_price_ht,
-      totalPriceTTC: row.total_price_ttc,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    });
+  calculateVATRate(): number {
+    if (this.unitPriceHT === 0) return 0;
+    return ((this.unitPriceTTC - this.unitPriceHT) / this.unitPriceHT) * 100;
   }
 
   /**
-   * Convert to public DTO
-   * @returns {Object} Public item data
+   * Vérifier si l'article est valide
    */
-  toPublicDTO(): any {
-    return {
-      id: this.id,
-      orderId: this.orderId,
-      productId: this.productId,
-      quantity: this.quantity,
-      unitPriceHT: this.unitPriceHT,
-      unitPriceTTC: this.unitPriceTTC,
-      vatRate: this.vatRate,
-      totalPriceHT: this.totalPriceHT,
-      totalPriceTTC: this.totalPriceTTC,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      totals: this.calculateItemTotal(),
-    };
+  isValid(): boolean {
+    return (
+      this.orderId !== null &&
+      this.productId !== null &&
+      this.quantity > 0 &&
+      this.unitPriceHT >= 0 &&
+      this.unitPriceTTC >= 0
+    );
   }
 
   /**
-   * Validate entity data
-   * @returns {Object} Validation result
+   * Valider les données de l'article
+   * @returns {Object} Résultat de validation
    */
-  validate(): { isValid: boolean; errors: string[] } {
+  validate(): OrderItemValidationResult {
     const errors: string[] = [];
 
-    if (!this.orderId) {
-      errors.push("Order ID is required");
+    if (!this.orderId || this.orderId <= 0) {
+      errors.push("Order ID is required and must be positive");
     }
 
-    if (!this.productId) {
-      errors.push("Product ID is required");
+    if (!this.productId || this.productId <= 0) {
+      errors.push("Product ID is required and must be positive");
     }
 
     if (this.quantity <= 0) {
@@ -130,23 +115,17 @@ export default class OrderItem {
     }
 
     if (this.unitPriceHT < 0) {
-      errors.push("Unit price HT must be positive");
+      errors.push("Unit price HT must be non-negative");
     }
 
     if (this.unitPriceTTC < 0) {
-      errors.push("Unit price TTC must be positive");
+      errors.push("Unit price TTC must be non-negative");
     }
 
-    if (this.vatRate < 0 || this.vatRate > 100) {
-      errors.push("VAT rate must be between 0 and 100");
-    }
-
-    if (this.totalPriceHT < 0) {
-      errors.push("Total price HT must be positive");
-    }
-
-    if (this.totalPriceTTC < 0) {
-      errors.push("Total price TTC must be positive");
+    if (this.unitPriceTTC < this.unitPriceHT) {
+      errors.push(
+        "Unit price TTC must be greater than or equal to unit price HT"
+      );
     }
 
     return {
@@ -155,3 +134,5 @@ export default class OrderItem {
     };
   }
 }
+
+export default OrderItem;

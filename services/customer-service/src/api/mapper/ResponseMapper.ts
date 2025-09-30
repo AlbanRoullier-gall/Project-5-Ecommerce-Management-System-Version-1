@@ -28,6 +28,18 @@ export class ResponseMapper {
   }
 
   /**
+   * Réponse de client récupéré
+   */
+  static customerRetrieved(customer: any) {
+    return {
+      message: "Client récupéré avec succès",
+      customer,
+      timestamp: new Date().toISOString(),
+      status: 200,
+    };
+  }
+
+  /**
    * Réponse de client mis à jour
    */
   static customerUpdated(customer: any) {
@@ -103,26 +115,6 @@ export class ResponseMapper {
   static companyDeleted() {
     return {
       message: "Entreprise supprimée avec succès",
-    };
-  }
-
-  /**
-   * Réponse de profil récupéré
-   */
-  static profileRetrieved(customer: any) {
-    return {
-      message: "Profil récupéré avec succès",
-      customer,
-    };
-  }
-
-  /**
-   * Réponse de profil mis à jour
-   */
-  static profileUpdated(customer: any) {
-    return {
-      message: "Profil mis à jour avec succès",
-      customer,
     };
   }
 

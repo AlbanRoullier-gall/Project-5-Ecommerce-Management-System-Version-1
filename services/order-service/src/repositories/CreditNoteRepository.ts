@@ -1,6 +1,6 @@
 import { Pool } from "pg";
-import CreditNote from "../models/CreditNote";
-import { OrderListOptions } from "../types";
+import CreditNote, { CreditNoteData } from "../models/CreditNote";
+import { OrderListOptions } from "./OrderRepository";
 
 export default class CreditNoteRepository {
   private pool: Pool;
@@ -37,7 +37,7 @@ export default class CreditNoteRepository {
     ];
 
     const result = await this.pool.query(query, values);
-    return CreditNote.fromDbRow(result.rows[0]);
+    return new CreditNote(result.rows[0]);
   }
 
   /**
@@ -70,7 +70,7 @@ export default class CreditNoteRepository {
     ];
 
     const result = await this.pool.query(query, values);
-    return CreditNote.fromDbRow(result.rows[0]);
+    return new CreditNote(result.rows[0]);
   }
 
   /**
@@ -98,7 +98,7 @@ export default class CreditNoteRepository {
     `;
 
     const result = await this.pool.query(query, [id]);
-    return result.rows.length > 0 ? CreditNote.fromDbRow(result.rows[0]) : null;
+    return result.rows.length > 0 ? new CreditNote(result.rows[0]) : null;
   }
 
   /**
@@ -161,7 +161,7 @@ export default class CreditNoteRepository {
     const countResult = await this.pool.query(countQuery, params.slice(0, -2));
 
     return {
-      creditNotes: result.rows.map((row) => CreditNote.fromDbRow(row)),
+      creditNotes: result.rows.map((row) => new CreditNote(row)),
       pagination: {
         page,
         limit,
@@ -186,7 +186,7 @@ export default class CreditNoteRepository {
     `;
 
     const result = await this.pool.query(query, [customerId]);
-    return result.rows.map((row) => CreditNote.fromDbRow(row));
+    return result.rows.map((row) => new CreditNote(row));
   }
 
   /**
@@ -204,7 +204,7 @@ export default class CreditNoteRepository {
     `;
 
     const result = await this.pool.query(query, [orderId]);
-    return result.rows.map((row) => CreditNote.fromDbRow(row));
+    return result.rows.map((row) => new CreditNote(row));
   }
 
   /**
@@ -253,5 +253,135 @@ export default class CreditNoteRepository {
       ),
       totalAmount: parseFloat(totalAmountResult.rows[0].total_amount),
     };
+  }
+
+  /**
+   * Create credit note
+   */
+  async createCreditNote(creditNoteData: CreditNoteData): Promise<CreditNote> {
+    const query = `
+      INSERT INTO credit_notes (
+        customer_id, order_id, reason, description, 
+        total_amount_ht, total_amount_ttc, payment_method, notes
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `;
+
+    const values = [
+      creditNoteData.customer_id,
+      creditNoteData.order_id,
+      creditNoteData.reason,
+      creditNoteData.description,
+      creditNoteData.total_amount_ht,
+      creditNoteData.total_amount_ttc,
+      creditNoteData.payment_method,
+      creditNoteData.notes,
+    ];
+
+    const result = await this.pool.query(query, values);
+    return new CreditNote(result.rows[0]);
+  }
+
+  /**
+   * Get credit note by ID
+   */
+  async getCreditNoteById(id: number): Promise<CreditNote | null> {
+    const query = `SELECT * FROM credit_notes WHERE id = $1`;
+    const result = await this.pool.query(query, [id]);
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return new CreditNote(result.rows[0]);
+  }
+
+  /**
+   * Update credit note
+   */
+  async updateCreditNote(
+    id: number,
+    creditNoteData: Partial<CreditNoteData>
+  ): Promise<CreditNote> {
+    const fields = [];
+    const values = [];
+    let paramCount = 0;
+
+    if (creditNoteData.customer_id !== undefined) {
+      fields.push(`customer_id = $${++paramCount}`);
+      values.push(creditNoteData.customer_id);
+    }
+    if (creditNoteData.order_id !== undefined) {
+      fields.push(`order_id = $${++paramCount}`);
+      values.push(creditNoteData.order_id);
+    }
+    if (creditNoteData.reason !== undefined) {
+      fields.push(`reason = $${++paramCount}`);
+      values.push(creditNoteData.reason);
+    }
+    if (creditNoteData.description !== undefined) {
+      fields.push(`description = $${++paramCount}`);
+      values.push(creditNoteData.description);
+    }
+    if (creditNoteData.total_amount_ht !== undefined) {
+      fields.push(`total_amount_ht = $${++paramCount}`);
+      values.push(creditNoteData.total_amount_ht);
+    }
+    if (creditNoteData.total_amount_ttc !== undefined) {
+      fields.push(`total_amount_ttc = $${++paramCount}`);
+      values.push(creditNoteData.total_amount_ttc);
+    }
+    if (creditNoteData.payment_method !== undefined) {
+      fields.push(`payment_method = $${++paramCount}`);
+      values.push(creditNoteData.payment_method);
+    }
+    if (creditNoteData.notes !== undefined) {
+      fields.push(`notes = $${++paramCount}`);
+      values.push(creditNoteData.notes);
+    }
+
+    if (fields.length === 0) {
+      throw new Error("No fields to update");
+    }
+
+    fields.push(`updated_at = NOW()`);
+    values.push(id);
+
+    const query = `
+      UPDATE credit_notes 
+      SET ${fields.join(", ")} 
+      WHERE id = $${++paramCount}
+      RETURNING *
+    `;
+
+    const result = await this.pool.query(query, values);
+    if (result.rows.length === 0) {
+      throw new Error("Credit note not found");
+    }
+
+    return new CreditNote(result.rows[0]);
+  }
+
+  /**
+   * Delete credit note
+   */
+  async deleteCreditNote(id: number): Promise<boolean> {
+    const query = `DELETE FROM credit_notes WHERE id = $1`;
+    const result = await this.pool.query(query, [id]);
+    return result.rowCount! > 0;
+  }
+
+  /**
+   * Get credit notes by customer ID
+   */
+  async getCreditNotesByCustomerId(customerId: number): Promise<CreditNote[]> {
+    const query = `
+      SELECT * FROM credit_notes 
+      WHERE customer_id = $1 
+      ORDER BY created_at DESC
+    `;
+
+    const result = await this.pool.query(query, [customerId]);
+    return result.rows.map((row) => new CreditNote(row));
   }
 }

@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import CreditNoteItem from "../models/CreditNoteItem";
+import CreditNoteItem, { CreditNoteItemData } from "../models/CreditNoteItem";
 
 export default class CreditNoteItemRepository {
   private pool: Pool;
@@ -16,11 +16,11 @@ export default class CreditNoteItemRepository {
   async save(item: CreditNoteItem): Promise<CreditNoteItem> {
     const query = `
       INSERT INTO credit_note_items (credit_note_id, product_id, quantity, unit_price_ht, 
-                                    unit_price_ttc, vat_rate, total_price_ht, total_price_ttc, 
+                                    unit_price_ttc, // vatRate removed - not in model, total_price_ht, total_price_ttc, 
                                     created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
       RETURNING id, credit_note_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
-                vat_rate, total_price_ht, total_price_ttc, created_at, updated_at
+                // vatRate removed - not in model, total_price_ht, total_price_ttc, created_at, updated_at
     `;
 
     const values = [
@@ -29,13 +29,12 @@ export default class CreditNoteItemRepository {
       item.quantity,
       item.unitPriceHT,
       item.unitPriceTTC,
-      item.vatRate,
       item.totalPriceHT,
       item.totalPriceTTC,
     ];
 
     const result = await this.pool.query(query, values);
-    return CreditNoteItem.fromDbRow(result.rows[0]);
+    return new CreditNoteItem(result.rows[0]);
   }
 
   /**
@@ -47,11 +46,11 @@ export default class CreditNoteItemRepository {
     const query = `
       UPDATE credit_note_items 
       SET credit_note_id = $1, product_id = $2, quantity = $3, unit_price_ht = $4, 
-          unit_price_ttc = $5, vat_rate = $6, total_price_ht = $7, total_price_ttc = $8, 
+          unit_price_ttc = $5, // vatRate removed - not in model = $6, total_price_ht = $7, total_price_ttc = $8, 
           updated_at = NOW()
       WHERE id = $9
       RETURNING id, credit_note_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
-                vat_rate, total_price_ht, total_price_ttc, created_at, updated_at
+                // vatRate removed - not in model, total_price_ht, total_price_ttc, created_at, updated_at
     `;
 
     const values = [
@@ -60,14 +59,13 @@ export default class CreditNoteItemRepository {
       item.quantity,
       item.unitPriceHT,
       item.unitPriceTTC,
-      item.vatRate,
       item.totalPriceHT,
       item.totalPriceTTC,
       item.id,
     ];
 
     const result = await this.pool.query(query, values);
-    return CreditNoteItem.fromDbRow(result.rows[0]);
+    return new CreditNoteItem(result.rows[0]);
   }
 
   /**
@@ -89,15 +87,13 @@ export default class CreditNoteItemRepository {
   async getById(id: number): Promise<CreditNoteItem | null> {
     const query = `
       SELECT id, credit_note_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
-             vat_rate, total_price_ht, total_price_ttc, created_at, updated_at
+             // vatRate removed - not in model, total_price_ht, total_price_ttc, created_at, updated_at
       FROM credit_note_items 
       WHERE id = $1
     `;
 
     const result = await this.pool.query(query, [id]);
-    return result.rows.length > 0
-      ? CreditNoteItem.fromDbRow(result.rows[0])
-      : null;
+    return result.rows.length > 0 ? new CreditNoteItem(result.rows[0]) : null;
   }
 
   /**
@@ -108,14 +104,14 @@ export default class CreditNoteItemRepository {
   async listByCreditNote(creditNoteId: number): Promise<CreditNoteItem[]> {
     const query = `
       SELECT id, credit_note_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
-             vat_rate, total_price_ht, total_price_ttc, created_at, updated_at
+             // vatRate removed - not in model, total_price_ht, total_price_ttc, created_at, updated_at
       FROM credit_note_items 
       WHERE credit_note_id = $1
       ORDER BY created_at
     `;
 
     const result = await this.pool.query(query, [creditNoteId]);
-    return result.rows.map((row) => CreditNoteItem.fromDbRow(row));
+    return result.rows.map((row) => new CreditNoteItem(row));
   }
 
   /**
@@ -152,5 +148,134 @@ export default class CreditNoteItemRepository {
       totalTTC: parseFloat(row.totalttc),
       totalVAT: parseFloat(row.totalvat),
     };
+  }
+
+  /**
+   * Create credit note item
+   */
+  async createCreditNoteItem(
+    creditNoteItemData: CreditNoteItemData
+  ): Promise<CreditNoteItem> {
+    const query = `
+      INSERT INTO credit_note_items (
+        credit_note_id, product_id, quantity, unit_price_ht, 
+        unit_price_ttc, total_price_ht, total_price_ttc
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `;
+
+    const values = [
+      creditNoteItemData.credit_note_id,
+      creditNoteItemData.product_id,
+      creditNoteItemData.quantity,
+      creditNoteItemData.unit_price_ht,
+      creditNoteItemData.unit_price_ttc,
+      creditNoteItemData.total_price_ht,
+      creditNoteItemData.total_price_ttc,
+    ];
+
+    const result = await this.pool.query(query, values);
+    return new CreditNoteItem(result.rows[0]);
+  }
+
+  /**
+   * Get credit note item by ID
+   */
+  async getCreditNoteItemById(id: number): Promise<CreditNoteItem | null> {
+    const query = `SELECT * FROM credit_note_items WHERE id = $1`;
+    const result = await this.pool.query(query, [id]);
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return new CreditNoteItem(result.rows[0]);
+  }
+
+  /**
+   * Update credit note item
+   */
+  async updateCreditNoteItem(
+    id: number,
+    creditNoteItemData: Partial<CreditNoteItemData>
+  ): Promise<CreditNoteItem> {
+    const fields = [];
+    const values = [];
+    let paramCount = 0;
+
+    if (creditNoteItemData.credit_note_id !== undefined) {
+      fields.push(`credit_note_id = $${++paramCount}`);
+      values.push(creditNoteItemData.credit_note_id);
+    }
+    if (creditNoteItemData.product_id !== undefined) {
+      fields.push(`product_id = $${++paramCount}`);
+      values.push(creditNoteItemData.product_id);
+    }
+    if (creditNoteItemData.quantity !== undefined) {
+      fields.push(`quantity = $${++paramCount}`);
+      values.push(creditNoteItemData.quantity);
+    }
+    if (creditNoteItemData.unit_price_ht !== undefined) {
+      fields.push(`unit_price_ht = $${++paramCount}`);
+      values.push(creditNoteItemData.unit_price_ht);
+    }
+    if (creditNoteItemData.unit_price_ttc !== undefined) {
+      fields.push(`unit_price_ttc = $${++paramCount}`);
+      values.push(creditNoteItemData.unit_price_ttc);
+    }
+    if (creditNoteItemData.total_price_ht !== undefined) {
+      fields.push(`total_price_ht = $${++paramCount}`);
+      values.push(creditNoteItemData.total_price_ht);
+    }
+    if (creditNoteItemData.total_price_ttc !== undefined) {
+      fields.push(`total_price_ttc = $${++paramCount}`);
+      values.push(creditNoteItemData.total_price_ttc);
+    }
+
+    if (fields.length === 0) {
+      throw new Error("No fields to update");
+    }
+
+    fields.push(`updated_at = NOW()`);
+    values.push(id);
+
+    const query = `
+      UPDATE credit_note_items 
+      SET ${fields.join(", ")} 
+      WHERE id = $${++paramCount}
+      RETURNING *
+    `;
+
+    const result = await this.pool.query(query, values);
+    if (result.rows.length === 0) {
+      throw new Error("Credit note item not found");
+    }
+
+    return new CreditNoteItem(result.rows[0]);
+  }
+
+  /**
+   * Delete credit note item
+   */
+  async deleteCreditNoteItem(id: number): Promise<boolean> {
+    const query = `DELETE FROM credit_note_items WHERE id = $1`;
+    const result = await this.pool.query(query, [id]);
+    return result.rowCount! > 0;
+  }
+
+  /**
+   * Get credit note items by credit note ID
+   */
+  async getCreditNoteItemsByCreditNoteId(
+    creditNoteId: number
+  ): Promise<CreditNoteItem[]> {
+    const query = `
+      SELECT * FROM credit_note_items 
+      WHERE credit_note_id = $1 
+      ORDER BY created_at
+    `;
+
+    const result = await this.pool.query(query, [creditNoteId]);
+    return result.rows.map((row) => new CreditNoteItem(row));
   }
 }

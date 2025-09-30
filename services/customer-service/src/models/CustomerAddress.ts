@@ -15,19 +15,6 @@ export interface CustomerAddressData {
   updatedAt?: Date | null;
 }
 
-export interface CustomerAddressDbRow {
-  address_id?: number | null;
-  customer_id?: number | null;
-  address_type?: string;
-  address?: string;
-  postal_code?: string;
-  city?: string;
-  country_id?: number | null;
-  is_default?: boolean;
-  created_at?: Date | null;
-  updated_at?: Date | null;
-}
-
 // CustomerAddressPublicDTO moved to /api/dto/AddressDTO.ts
 
 export interface ValidationResult {
@@ -74,58 +61,6 @@ class CustomerAddress {
    */
   setAsDefault(): void {
     this.isDefault = true;
-  }
-
-  /**
-   * Convert entity to database row format
-   * @returns {Object} Database row
-   */
-  toDbRow(): CustomerAddressDbRow {
-    return {
-      address_id: this.addressId,
-      customer_id: this.customerId,
-      address_type: this.addressType,
-      address: this.address,
-      postal_code: this.postalCode,
-      city: this.city,
-      country_id: this.countryId,
-      is_default: this.isDefault,
-      created_at: this.createdAt,
-      updated_at: this.updatedAt,
-    };
-  }
-
-  /**
-   * Create entity from database row
-   * @param {Object} row Database row
-   * @returns {CustomerAddress} CustomerAddress instance
-   */
-  static fromDbRow(row: CustomerAddressDbRow): CustomerAddress {
-    return new CustomerAddress({
-      addressId: row.address_id ?? null,
-      customerId: row.customer_id ?? null,
-      addressType: row.address_type ?? "",
-      address: row.address ?? "",
-      postalCode: row.postal_code ?? "",
-      city: row.city ?? "",
-      countryId: row.country_id ?? null,
-      isDefault: row.is_default ?? false,
-      createdAt: row.created_at ?? null,
-      updatedAt: row.updated_at ?? null,
-    });
-  }
-
-  /**
-   * Create entity from database row with joined data
-   * @param {Object} row Database row with joins
-   * @returns {CustomerAddress} CustomerAddress instance with additional fields
-   */
-  static fromDbRowWithJoins(
-    row: CustomerAddressDbRow & { country_name?: string }
-  ): CustomerAddress {
-    const address = CustomerAddress.fromDbRow(row);
-    address.countryName = row.country_name;
-    return address;
   }
 
   /**

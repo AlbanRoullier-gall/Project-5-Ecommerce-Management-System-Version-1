@@ -3,7 +3,7 @@
  * Handles database operations for Customer entities
  */
 import { Pool } from "pg";
-import Customer from "../models/Customer";
+import Customer, { CustomerData } from "../models/Customer";
 
 export interface CustomerListOptions {
   page?: number;
@@ -49,7 +49,7 @@ class CustomerRepository {
         return null;
       }
 
-      return Customer.fromDbRow(result.rows[0]);
+      return new Customer(result.rows[0] as CustomerData);
     } catch (error) {
       console.error("Error getting customer by ID:", error);
       throw new Error("Failed to retrieve customer");
@@ -80,7 +80,7 @@ class CustomerRepository {
         return null;
       }
 
-      return Customer.fromDbRowWithJoins(result.rows[0]);
+      return new Customer(result.rows[0] as CustomerData);
     } catch (error) {
       console.error("Error getting customer by ID with joins:", error);
       throw new Error("Failed to retrieve customer");
@@ -107,7 +107,7 @@ class CustomerRepository {
         return null;
       }
 
-      return Customer.fromDbRow(result.rows[0]);
+      return new Customer(result.rows[0] as CustomerData);
     } catch (error) {
       console.error("Error getting customer by email:", error);
       throw new Error("Failed to retrieve customer");
@@ -129,7 +129,7 @@ class CustomerRepository {
          ORDER BY created_at DESC`
       );
 
-      return result.rows.map((row) => Customer.fromDbRow(row));
+      return result.rows.map((row) => new Customer(row as CustomerData));
     } catch (error) {
       console.error("Error listing active customers:", error);
       throw new Error("Failed to retrieve customers");
@@ -201,7 +201,7 @@ class CustomerRepository {
       );
 
       return {
-        customers: result.rows.map((row) => Customer.fromDbRowWithJoins(row)),
+        customers: result.rows.map((row) => new Customer(row as CustomerData)),
         pagination: {
           page: parseInt(page.toString()),
           limit: parseInt(limit.toString()),
@@ -247,7 +247,7 @@ class CustomerRepository {
         ]
       );
 
-      return Customer.fromDbRow(result.rows[0]);
+      return new Customer(result.rows[0] as CustomerData);
     } catch (error) {
       console.error("Error saving customer:", error);
       throw new Error("Failed to save customer");
@@ -292,7 +292,7 @@ class CustomerRepository {
         throw new Error("Customer not found");
       }
 
-      return Customer.fromDbRow(result.rows[0]);
+      return new Customer(result.rows[0] as CustomerData);
     } catch (error) {
       console.error("Error updating customer:", error);
       throw new Error("Failed to update customer");

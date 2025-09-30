@@ -1,6 +1,25 @@
+/**
+ * OrderRepository
+ * Gestion des opérations de base de données pour les commandes
+ *
+ * Architecture : Repository pattern
+ * - Abstraction de la couche de données
+ * - Opérations CRUD pour les commandes
+ * - Gestion des transactions
+ */
 import { Pool } from "pg";
-import Order from "../models/Order";
-import { OrderListOptions } from "../types";
+import Order, { OrderData } from "../models/Order";
+
+export interface OrderListOptions {
+  page?: number;
+  limit?: number;
+  search?: string;
+  customerId?: number;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  sort?: string;
+}
 
 export default class OrderRepository {
   private pool: Pool;
@@ -10,251 +29,263 @@ export default class OrderRepository {
   }
 
   /**
-   * Save order to database
-   * @param {Order} order Order entity
-   * @returns {Promise<Order>} Saved order
+   * Créer une nouvelle commande
+   * @param {OrderData} orderData Données de la commande
+   * @returns {Promise<Order>} Commande créée
    */
-  async save(order: Order): Promise<Order> {
-    const query = `
-      INSERT INTO orders (customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
-                         payment_method, notes, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-      RETURNING id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
-                payment_method, notes, created_at, updated_at
-    `;
+  async createOrder(orderData: OrderData): Promise<Order> {
+    try {
+      const query = `
+        INSERT INTO orders (customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+                           payment_method, notes, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        RETURNING id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+                  payment_method, notes, created_at, updated_at
+      `;
 
-    const values = [
-      order.customerId,
-      order.customerSnapshot,
-      order.totalAmountHT,
-      order.totalAmountTTC,
-      order.paymentMethod,
-      order.notes,
-    ];
+      const values = [
+        orderData.customer_id,
+        orderData.customer_snapshot,
+        orderData.total_amount_ht,
+        orderData.total_amount_ttc,
+        orderData.payment_method,
+        orderData.notes,
+      ];
 
-    const result = await this.pool.query(query, values);
-    return Order.fromDbRow(result.rows[0]);
+      const result = await this.pool.query(query, values);
+      return new Order(result.rows[0] as OrderData);
+    } catch (error) {
+      console.error("Error creating order:", error);
+      throw new Error("Failed to create order");
+    }
   }
 
   /**
-   * Update order in database
-   * @param {Order} order Order entity
-   * @returns {Promise<Order>} Updated order
+   * Récupérer une commande par ID
+   * @param {number} id ID de la commande
+   * @returns {Promise<Order | null>} Commande trouvée ou null
    */
-  async update(order: Order): Promise<Order> {
-    const query = `
-      UPDATE orders 
-      SET customer_id = $1, customer_snapshot = $2, total_amount_ht = $3, 
-          total_amount_ttc = $4, payment_method = $5, notes = $6, updated_at = NOW()
-      WHERE id = $7
-      RETURNING id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
-                payment_method, notes, created_at, updated_at
-    `;
+  async getOrderById(id: number): Promise<Order | null> {
+    try {
+      const query = `
+        SELECT id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+               payment_method, notes, created_at, updated_at
+        FROM orders 
+        WHERE id = $1
+      `;
 
-    const values = [
-      order.customerId,
-      order.customerSnapshot,
-      order.totalAmountHT,
-      order.totalAmountTTC,
-      order.paymentMethod,
-      order.notes,
-      order.id,
-    ];
+      const result = await this.pool.query(query, [id]);
 
-    const result = await this.pool.query(query, values);
-    return Order.fromDbRow(result.rows[0]);
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return new Order(result.rows[0] as OrderData);
+    } catch (error) {
+      console.error("Error getting order by ID:", error);
+      throw new Error("Failed to retrieve order");
+    }
   }
 
   /**
-   * Delete order from database
-   * @param {Order} order Order entity
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Récupérer une commande par ID avec données jointes
+   * @param {number} id ID de la commande
+   * @returns {Promise<Order | null>} Commande avec données jointes ou null
    */
-  async delete(order: Order): Promise<boolean> {
-    const query = "DELETE FROM orders WHERE id = $1";
-    const result = await this.pool.query(query, [order.id]);
-    return result.rowCount! > 0;
+  async getOrderByIdWithJoins(id: number): Promise<Order | null> {
+    try {
+      const query = `
+        SELECT o.id, o.customer_id, o.customer_snapshot, o.total_amount_ht, o.total_amount_ttc, 
+               o.payment_method, o.notes, o.created_at, o.updated_at,
+               c.first_name, c.last_name, c.email
+        FROM orders o
+        LEFT JOIN LATERAL (
+          SELECT first_name, last_name, email 
+          FROM jsonb_to_record(o.customer_snapshot) AS t(first_name text, last_name text, email text)
+        ) c ON true
+        WHERE o.id = $1
+      `;
+
+      const result = await this.pool.query(query, [id]);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      const order = new Order(result.rows[0] as OrderData);
+      order.customerFirstName = result.rows[0].first_name;
+      order.customerLastName = result.rows[0].last_name;
+      order.customerEmail = result.rows[0].email;
+      return order;
+    } catch (error) {
+      console.error("Error getting order by ID with joins:", error);
+      throw new Error("Failed to retrieve order");
+    }
   }
 
   /**
-   * Get order by ID
-   * @param {number} id Order ID
-   * @returns {Promise<Order|null>} Order or null if not found
+   * Mettre à jour une commande
+   * @param {number} id ID de la commande
+   * @param {Partial<OrderData>} orderData Données à mettre à jour
+   * @returns {Promise<Order | null>} Commande mise à jour ou null
    */
-  async getById(id: number): Promise<Order | null> {
-    const query = `
-      SELECT id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
-             payment_method, notes, created_at, updated_at
-      FROM orders 
-      WHERE id = $1
-    `;
+  async updateOrder(
+    id: number,
+    orderData: Partial<OrderData>
+  ): Promise<Order | null> {
+    try {
+      const setClause = [];
+      const values = [];
+      let paramCount = 0;
 
-    const result = await this.pool.query(query, [id]);
-    return result.rows.length > 0 ? Order.fromDbRow(result.rows[0]) : null;
+      if (orderData.customer_snapshot !== undefined) {
+        setClause.push(`customer_snapshot = $${++paramCount}`);
+        values.push(orderData.customer_snapshot);
+      }
+
+      if (orderData.total_amount_ht !== undefined) {
+        setClause.push(`total_amount_ht = $${++paramCount}`);
+        values.push(orderData.total_amount_ht);
+      }
+
+      if (orderData.total_amount_ttc !== undefined) {
+        setClause.push(`total_amount_ttc = $${++paramCount}`);
+        values.push(orderData.total_amount_ttc);
+      }
+
+      if (orderData.payment_method !== undefined) {
+        setClause.push(`payment_method = $${++paramCount}`);
+        values.push(orderData.payment_method);
+      }
+
+      if (orderData.notes !== undefined) {
+        setClause.push(`notes = $${++paramCount}`);
+        values.push(orderData.notes);
+      }
+
+      if (setClause.length === 0) {
+        return this.getOrderById(id);
+      }
+
+      setClause.push(`updated_at = NOW()`);
+      values.push(id);
+
+      const query = `
+        UPDATE orders 
+        SET ${setClause.join(", ")}
+        WHERE id = $${++paramCount}
+        RETURNING id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+                  payment_method, notes, created_at, updated_at
+      `;
+
+      const result = await this.pool.query(query, values);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return new Order(result.rows[0] as OrderData);
+    } catch (error) {
+      console.error("Error updating order:", error);
+      throw new Error("Failed to update order");
+    }
   }
 
   /**
-   * Get order by ID with joins
-   * @param {number} id Order ID
-   * @returns {Promise<Order|null>} Order with customer info or null if not found
+   * Supprimer une commande
+   * @param {number} id ID de la commande
+   * @returns {Promise<boolean>} True si supprimée, false sinon
    */
-  async getByIdWithJoins(id: number): Promise<Order | null> {
-    const query = `
-      SELECT o.id, o.customer_id, o.customer_snapshot, o.total_amount_ht, o.total_amount_ttc, 
-             o.payment_method, o.notes, o.created_at, o.updated_at,
-             c.first_name, c.last_name, c.email
-      FROM orders o
-      LEFT JOIN LATERAL (
-        SELECT first_name, last_name, email 
-        FROM jsonb_to_record(o.customer_snapshot) AS t(first_name text, last_name text, email text)
-      ) c ON true
-      WHERE o.id = $1
-    `;
-
-    const result = await this.pool.query(query, [id]);
-    return result.rows.length > 0
-      ? Order.fromDbRowWithJoins(result.rows[0])
-      : null;
+  async deleteOrder(id: number): Promise<boolean> {
+    try {
+      const query = "DELETE FROM orders WHERE id = $1";
+      const result = await this.pool.query(query, [id]);
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      throw new Error("Failed to delete order");
+    }
   }
 
   /**
-   * List all orders with pagination and search
-   * @param {Object} options Pagination and search options
-   * @returns {Promise<Object>} Orders and pagination info
+   * Lister les commandes avec pagination
+   * @param {OrderListOptions} options Options de filtrage et pagination
+   * @returns {Promise<{orders: Order[], pagination: any}>} Liste des commandes et pagination
    */
-  async listAll(options: OrderListOptions = {}): Promise<any> {
-    const {
-      page = 1,
-      limit = 10,
-      customerId,
-      status,
-      startDate,
-      endDate,
-      sort = "created_at DESC",
-    } = options;
+  async listOrders(
+    options: OrderListOptions = {}
+  ): Promise<{ orders: Order[]; pagination: any }> {
+    try {
+      const { page = 1, limit = 10, search, customerId } = options;
 
-    const offset = (page - 1) * limit;
-    const params: any[] = [];
-    let paramCount = 0;
-    const conditions: string[] = [];
+      const offset = (page - 1) * limit;
+      const conditions = [];
+      const params = [];
+      let paramCount = 0;
 
-    if (customerId) {
-      conditions.push(`o.customer_id = $${++paramCount}`);
-      params.push(customerId);
+      if (customerId) {
+        conditions.push(`customer_id = $${++paramCount}`);
+        params.push(customerId);
+      }
+
+      if (search) {
+        conditions.push(
+          `(notes ILIKE $${++paramCount} OR payment_method ILIKE $${++paramCount})`
+        );
+        params.push(`%${search}%`, `%${search}%`);
+      }
+
+      const whereClause =
+        conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+      const query = `
+        SELECT id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+               payment_method, notes, created_at, updated_at
+        FROM orders 
+        ${whereClause}
+        ORDER BY created_at DESC
+        LIMIT $${++paramCount} OFFSET $${++paramCount}
+      `;
+
+      params.push(limit, offset);
+
+      const result = await this.pool.query(query, params);
+
+      // Compter le total
+      const countQuery = `SELECT COUNT(*) FROM orders ${whereClause}`;
+      const countResult = await this.pool.query(
+        countQuery,
+        params.slice(0, -2)
+      );
+
+      return {
+        orders: result.rows.map((row) => new Order(row as OrderData)),
+        pagination: {
+          page,
+          limit,
+          total: parseInt(countResult.rows[0].count),
+          pages: Math.ceil(parseInt(countResult.rows[0].count) / limit),
+        },
+      };
+    } catch (error) {
+      console.error("Error listing orders:", error);
+      throw new Error("Failed to retrieve orders");
     }
-
-    if (startDate) {
-      conditions.push(`o.created_at >= $${++paramCount}`);
-      params.push(startDate);
-    }
-
-    if (endDate) {
-      conditions.push(`o.created_at <= $${++paramCount}`);
-      params.push(endDate);
-    }
-
-    let query = `
-      SELECT o.id, o.customer_id, o.total_amount_ht, o.total_amount_ttc, o.payment_method, 
-             o.notes, o.created_at, o.updated_at,
-             c.first_name, c.last_name, c.email
-      FROM orders o
-      LEFT JOIN LATERAL (
-        SELECT first_name, last_name, email 
-        FROM jsonb_to_record(o.customer_snapshot) AS t(first_name text, last_name text, email text)
-      ) c ON true
-    `;
-
-    if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(" AND ")}`;
-    }
-
-    query += ` ORDER BY o.${sort} LIMIT $${++paramCount} OFFSET $${++paramCount}`;
-    params.push(limit, offset);
-
-    const result = await this.pool.query(query, params);
-
-    // Get total count
-    let countQuery = "SELECT COUNT(*) FROM orders o";
-    if (conditions.length > 0) {
-      countQuery += ` WHERE ${conditions.join(" AND ")}`;
-    }
-    const countResult = await this.pool.query(countQuery, params.slice(0, -2));
-
-    return {
-      orders: result.rows.map((row) => Order.fromDbRowWithJoins(row)),
-      pagination: {
-        page,
-        limit,
-        total: parseInt(countResult.rows[0].count),
-        pages: Math.ceil(parseInt(countResult.rows[0].count) / limit),
-      },
-    };
   }
 
   /**
-   * List orders by customer
-   * @param {number} customerId Customer ID
-   * @returns {Promise<Order[]>} Array of orders
+   * Vérifier si une commande existe
+   * @param {number} id ID de la commande
+   * @returns {Promise<boolean>} True si existe, false sinon
    */
-  async listByCustomer(customerId: number): Promise<Order[]> {
-    const query = `
-      SELECT id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
-             payment_method, notes, created_at, updated_at
-      FROM orders 
-      WHERE customer_id = $1
-      ORDER BY created_at DESC
-    `;
-
-    const result = await this.pool.query(query, [customerId]);
-    return result.rows.map((row) => Order.fromDbRow(row));
-  }
-
-  /**
-   * Get order statistics
-   * @param {Object} options Statistics options
-   * @returns {Promise<Object>} Order statistics
-   */
-  async getStatistics(options: OrderListOptions = {}): Promise<any> {
-    const { startDate, endDate, customerId } = options;
-    const params: any[] = [];
-    let paramCount = 0;
-    const conditions: string[] = [];
-
-    if (customerId) {
-      conditions.push(`customer_id = $${++paramCount}`);
-      params.push(customerId);
+  async orderExists(id: number): Promise<boolean> {
+    try {
+      const query = "SELECT 1 FROM orders WHERE id = $1";
+      const result = await this.pool.query(query, [id]);
+      return result.rows.length > 0;
+    } catch (error) {
+      console.error("Error checking if order exists:", error);
+      return false;
     }
-
-    if (startDate) {
-      conditions.push(`created_at >= $${++paramCount}`);
-      params.push(startDate);
-    }
-
-    if (endDate) {
-      conditions.push(`created_at <= $${++paramCount}`);
-      params.push(endDate);
-    }
-
-    let whereClause = "";
-    if (conditions.length > 0) {
-      whereClause = ` WHERE ${conditions.join(" AND ")}`;
-    }
-
-    const queries = [
-      `SELECT COUNT(*) as total_orders FROM orders${whereClause}`,
-      `SELECT COALESCE(SUM(total_amount_ttc), 0) as total_revenue FROM orders${whereClause}`,
-      `SELECT COALESCE(AVG(total_amount_ttc), 0) as average_order_value FROM orders${whereClause}`,
-    ];
-
-    const [totalOrdersResult, totalRevenueResult, averageOrderValueResult] =
-      await Promise.all(queries.map((query) => this.pool.query(query, params)));
-
-    return {
-      totalOrders: parseInt(totalOrdersResult.rows[0].total_orders),
-      totalRevenue: parseFloat(totalRevenueResult.rows[0].total_revenue),
-      averageOrderValue: parseFloat(
-        averageOrderValueResult.rows[0].average_order_value
-      ),
-    };
   }
 }

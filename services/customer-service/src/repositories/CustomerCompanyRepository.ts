@@ -3,7 +3,9 @@
  * Handles database operations for CustomerCompany entities
  */
 import { Pool } from "pg";
-import CustomerCompany from "../models/CustomerCompany";
+import CustomerCompany, {
+  CustomerCompanyData,
+} from "../models/CustomerCompany";
 
 class CustomerCompanyRepository {
   private pool: Pool;
@@ -31,7 +33,7 @@ class CustomerCompanyRepository {
         return null;
       }
 
-      return CustomerCompany.fromDbRow(result.rows[0]);
+      return new CustomerCompany(result.rows[0] as CustomerCompanyData);
     } catch (error) {
       console.error("Error getting company by ID:", error);
       throw new Error("Failed to retrieve company");
@@ -54,7 +56,9 @@ class CustomerCompanyRepository {
         [customerId]
       );
 
-      return result.rows.map((row) => CustomerCompany.fromDbRow(row));
+      return result.rows.map(
+        (row) => new CustomerCompany(row as CustomerCompanyData)
+      );
     } catch (error) {
       console.error("Error listing companies by customer:", error);
       throw new Error("Failed to retrieve companies");
@@ -87,7 +91,7 @@ class CustomerCompanyRepository {
         ]
       );
 
-      return CustomerCompany.fromDbRow(result.rows[0]);
+      return new CustomerCompany(result.rows[0] as CustomerCompanyData);
     } catch (error) {
       console.error("Error saving company:", error);
       throw new Error("Failed to save company");
@@ -126,7 +130,7 @@ class CustomerCompanyRepository {
         throw new Error("Company not found");
       }
 
-      return CustomerCompany.fromDbRow(result.rows[0]);
+      return new CustomerCompany(result.rows[0] as CustomerCompanyData);
     } catch (error) {
       console.error("Error updating company:", error);
       throw new Error("Failed to update company");

@@ -12,16 +12,6 @@ export interface CustomerCompanyData {
   updatedAt?: Date | null;
 }
 
-export interface CustomerCompanyDbRow {
-  company_id?: number | null;
-  customer_id?: number | null;
-  company_name?: string;
-  siret_number?: string;
-  vat_number?: string;
-  created_at?: Date | null;
-  updated_at?: Date | null;
-}
-
 // CustomerCompanyPublicDTO moved to /api/dto/CompanyDTO.ts
 
 export interface ValidationResult {
@@ -57,39 +47,6 @@ class CustomerCompany {
     if (this.siretNumber) parts.push(`SIRET: ${this.siretNumber}`);
     if (this.vatNumber) parts.push(`TVA: ${this.vatNumber}`);
     return parts.join(" - ");
-  }
-
-  /**
-   * Convert entity to database row format
-   * @returns {Object} Database row
-   */
-  toDbRow(): CustomerCompanyDbRow {
-    return {
-      company_id: this.companyId,
-      customer_id: this.customerId,
-      company_name: this.companyName,
-      siret_number: this.siretNumber,
-      vat_number: this.vatNumber,
-      created_at: this.createdAt,
-      updated_at: this.updatedAt,
-    };
-  }
-
-  /**
-   * Create entity from database row
-   * @param {Object} row Database row
-   * @returns {CustomerCompany} CustomerCompany instance
-   */
-  static fromDbRow(row: CustomerCompanyDbRow): CustomerCompany {
-    return new CustomerCompany({
-      companyId: row.company_id ?? null,
-      customerId: row.customer_id ?? null,
-      companyName: row.company_name ?? "",
-      siretNumber: row.siret_number ?? "",
-      vatNumber: row.vat_number ?? "",
-      createdAt: row.created_at ?? null,
-      updatedAt: row.updated_at ?? null,
-    });
   }
 
   /**

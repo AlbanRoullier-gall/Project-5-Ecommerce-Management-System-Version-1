@@ -8,18 +8,6 @@ export interface SocioProfessionalCategoryData {
   createdAt?: Date | null;
 }
 
-export interface SocioProfessionalCategoryDbRow {
-  category_id?: number | null;
-  category_name?: string;
-  created_at?: Date | null;
-}
-
-export interface SocioProfessionalCategoryPublicDTO {
-  categoryId: number | null;
-  categoryName: string;
-  createdAt: Date | null;
-}
-
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
@@ -34,33 +22,6 @@ class SocioProfessionalCategory {
     this.categoryId = data.categoryId || null;
     this.categoryName = data.categoryName || "";
     this.createdAt = data.createdAt || null;
-  }
-
-  /**
-   * Convert entity to database row format
-   * @returns {Object} Database row
-   */
-  toDbRow(): SocioProfessionalCategoryDbRow {
-    return {
-      category_id: this.categoryId,
-      category_name: this.categoryName,
-      created_at: this.createdAt,
-    };
-  }
-
-  /**
-   * Create entity from database row
-   * @param {Object} row Database row
-   * @returns {SocioProfessionalCategory} SocioProfessionalCategory instance
-   */
-  static fromDbRow(
-    row: SocioProfessionalCategoryDbRow
-  ): SocioProfessionalCategory {
-    return new SocioProfessionalCategory({
-      categoryId: row.category_id ?? null,
-      categoryName: row.category_name ?? "",
-      createdAt: row.created_at ?? null,
-    });
   }
 
   /**

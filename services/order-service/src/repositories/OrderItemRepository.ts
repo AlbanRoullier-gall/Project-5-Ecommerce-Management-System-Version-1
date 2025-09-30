@@ -1,5 +1,14 @@
+/**
+ * OrderItemRepository
+ * Gestion des opérations de base de données pour les articles de commande
+ *
+ * Architecture : Repository pattern
+ * - Abstraction de la couche de données
+ * - Opérations CRUD pour les articles de commande
+ * - Gestion des transactions
+ */
 import { Pool } from "pg";
-import OrderItem from "../models/OrderItem";
+import OrderItem, { OrderItemData } from "../models/OrderItem";
 
 export default class OrderItemRepository {
   private pool: Pool;
@@ -9,145 +18,196 @@ export default class OrderItemRepository {
   }
 
   /**
-   * Save order item to database
-   * @param {OrderItem} item Order item entity
-   * @returns {Promise<OrderItem>} Saved order item
+   * Créer un nouvel article de commande
+   * @param {OrderItemData} orderItemData Données de l'article
+   * @returns {Promise<OrderItem>} Article créé
    */
-  async save(item: OrderItem): Promise<OrderItem> {
-    const query = `
-      INSERT INTO order_items (order_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
-                              vat_rate, total_price_ht, total_price_ttc, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
-      RETURNING id, order_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
-                vat_rate, total_price_ht, total_price_ttc, created_at, updated_at
-    `;
+  async createOrderItem(orderItemData: OrderItemData): Promise<OrderItem> {
+    try {
+      const query = `
+        INSERT INTO order_items (order_id, product_id, product_snapshot, quantity, 
+                                unit_price_ht, unit_price_ttc, total_price_ht, total_price_ttc, 
+                                created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+        RETURNING id, order_id, product_id, product_snapshot, quantity, 
+                  unit_price_ht, unit_price_ttc, total_price_ht, total_price_ttc, 
+                  created_at, updated_at
+      `;
 
-    const values = [
-      item.orderId,
-      item.productId,
-      item.quantity,
-      item.unitPriceHT,
-      item.unitPriceTTC,
-      item.vatRate,
-      item.totalPriceHT,
-      item.totalPriceTTC,
-    ];
+      const values = [
+        orderItemData.order_id,
+        orderItemData.product_id,
+        orderItemData.product_snapshot,
+        orderItemData.quantity,
+        orderItemData.unit_price_ht,
+        orderItemData.unit_price_ttc,
+        orderItemData.total_price_ht,
+        orderItemData.total_price_ttc,
+      ];
 
-    const result = await this.pool.query(query, values);
-    return OrderItem.fromDbRow(result.rows[0]);
+      const result = await this.pool.query(query, values);
+      return new OrderItem(result.rows[0] as OrderItemData);
+    } catch (error) {
+      console.error("Error creating order item:", error);
+      throw new Error("Failed to create order item");
+    }
   }
 
   /**
-   * Update order item in database
-   * @param {OrderItem} item Order item entity
-   * @returns {Promise<OrderItem>} Updated order item
+   * Récupérer un article par ID
+   * @param {number} id ID de l'article
+   * @returns {Promise<OrderItem | null>} Article trouvé ou null
    */
-  async update(item: OrderItem): Promise<OrderItem> {
-    const query = `
-      UPDATE order_items 
-      SET order_id = $1, product_id = $2, quantity = $3, unit_price_ht = $4, 
-          unit_price_ttc = $5, vat_rate = $6, total_price_ht = $7, total_price_ttc = $8, 
-          updated_at = NOW()
-      WHERE id = $9
-      RETURNING id, order_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
-                vat_rate, total_price_ht, total_price_ttc, created_at, updated_at
-    `;
+  async getOrderItemById(id: number): Promise<OrderItem | null> {
+    try {
+      const query = `
+        SELECT id, order_id, product_id, product_snapshot, quantity, 
+               unit_price_ht, unit_price_ttc, total_price_ht, total_price_ttc, 
+               created_at, updated_at
+        FROM order_items 
+        WHERE id = $1
+      `;
 
-    const values = [
-      item.orderId,
-      item.productId,
-      item.quantity,
-      item.unitPriceHT,
-      item.unitPriceTTC,
-      item.vatRate,
-      item.totalPriceHT,
-      item.totalPriceTTC,
-      item.id,
-    ];
+      const result = await this.pool.query(query, [id]);
 
-    const result = await this.pool.query(query, values);
-    return OrderItem.fromDbRow(result.rows[0]);
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return new OrderItem(result.rows[0] as OrderItemData);
+    } catch (error) {
+      console.error("Error getting order item by ID:", error);
+      throw new Error("Failed to retrieve order item");
+    }
   }
 
   /**
-   * Delete order item from database
-   * @param {OrderItem} item Order item entity
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Récupérer les articles d'une commande
+   * @param {number} orderId ID de la commande
+   * @returns {Promise<OrderItem[]>} Liste des articles
    */
-  async delete(item: OrderItem): Promise<boolean> {
-    const query = "DELETE FROM order_items WHERE id = $1";
-    const result = await this.pool.query(query, [item.id]);
-    return result.rowCount! > 0;
+  async getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]> {
+    try {
+      const query = `
+        SELECT id, order_id, product_id, product_snapshot, quantity, 
+               unit_price_ht, unit_price_ttc, total_price_ht, total_price_ttc, 
+               created_at, updated_at
+        FROM order_items 
+        WHERE order_id = $1
+        ORDER BY created_at
+      `;
+
+      const result = await this.pool.query(query, [orderId]);
+      return result.rows.map((row) => new OrderItem(row as OrderItemData));
+    } catch (error) {
+      console.error("Error getting order items by order ID:", error);
+      throw new Error("Failed to retrieve order items");
+    }
   }
 
   /**
-   * Get order item by ID
-   * @param {number} id Order item ID
-   * @returns {Promise<OrderItem|null>} Order item or null if not found
+   * Mettre à jour un article
+   * @param {number} id ID de l'article
+   * @param {Partial<OrderItemData>} orderItemData Données à mettre à jour
+   * @returns {Promise<OrderItem | null>} Article mis à jour ou null
    */
-  async getById(id: number): Promise<OrderItem | null> {
-    const query = `
-      SELECT id, order_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
-             vat_rate, total_price_ht, total_price_ttc, created_at, updated_at
-      FROM order_items 
-      WHERE id = $1
-    `;
+  async updateOrderItem(
+    id: number,
+    orderItemData: Partial<OrderItemData>
+  ): Promise<OrderItem | null> {
+    try {
+      const setClause = [];
+      const values = [];
+      let paramCount = 0;
 
-    const result = await this.pool.query(query, [id]);
-    return result.rows.length > 0 ? OrderItem.fromDbRow(result.rows[0]) : null;
+      if (orderItemData.product_snapshot !== undefined) {
+        setClause.push(`product_snapshot = $${++paramCount}`);
+        values.push(orderItemData.product_snapshot);
+      }
+
+      if (orderItemData.quantity !== undefined) {
+        setClause.push(`quantity = $${++paramCount}`);
+        values.push(orderItemData.quantity);
+      }
+
+      if (orderItemData.unit_price_ht !== undefined) {
+        setClause.push(`unit_price_ht = $${++paramCount}`);
+        values.push(orderItemData.unit_price_ht);
+      }
+
+      if (orderItemData.unit_price_ttc !== undefined) {
+        setClause.push(`unit_price_ttc = $${++paramCount}`);
+        values.push(orderItemData.unit_price_ttc);
+      }
+
+      if (orderItemData.total_price_ht !== undefined) {
+        setClause.push(`total_price_ht = $${++paramCount}`);
+        values.push(orderItemData.total_price_ht);
+      }
+
+      if (orderItemData.total_price_ttc !== undefined) {
+        setClause.push(`total_price_ttc = $${++paramCount}`);
+        values.push(orderItemData.total_price_ttc);
+      }
+
+      if (setClause.length === 0) {
+        return this.getOrderItemById(id);
+      }
+
+      setClause.push(`updated_at = NOW()`);
+      values.push(id);
+
+      const query = `
+        UPDATE order_items 
+        SET ${setClause.join(", ")}
+        WHERE id = $${++paramCount}
+        RETURNING id, order_id, product_id, product_snapshot, quantity, 
+                  unit_price_ht, unit_price_ttc, total_price_ht, total_price_ttc, 
+                  created_at, updated_at
+      `;
+
+      const result = await this.pool.query(query, values);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return new OrderItem(result.rows[0] as OrderItemData);
+    } catch (error) {
+      console.error("Error updating order item:", error);
+      throw new Error("Failed to update order item");
+    }
   }
 
   /**
-   * List order items by order
-   * @param {number} orderId Order ID
-   * @returns {Promise<OrderItem[]>} Array of order items
+   * Supprimer un article
+   * @param {number} id ID de l'article
+   * @returns {Promise<boolean>} True si supprimé, false sinon
    */
-  async listByOrder(orderId: number): Promise<OrderItem[]> {
-    const query = `
-      SELECT id, order_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
-             vat_rate, total_price_ht, total_price_ttc, created_at, updated_at
-      FROM order_items 
-      WHERE order_id = $1
-      ORDER BY created_at
-    `;
-
-    const result = await this.pool.query(query, [orderId]);
-    return result.rows.map((row) => OrderItem.fromDbRow(row));
+  async deleteOrderItem(id: number): Promise<boolean> {
+    try {
+      const query = "DELETE FROM order_items WHERE id = $1";
+      const result = await this.pool.query(query, [id]);
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error("Error deleting order item:", error);
+      throw new Error("Failed to delete order item");
+    }
   }
 
   /**
-   * Delete all order items by order
-   * @param {number} orderId Order ID
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Supprimer tous les articles d'une commande
+   * @param {number} orderId ID de la commande
+   * @returns {Promise<boolean>} True si supprimés, false sinon
    */
-  async deleteAllByOrder(orderId: number): Promise<boolean> {
-    const query = "DELETE FROM order_items WHERE order_id = $1";
-    const result = await this.pool.query(query, [orderId]);
-    return result.rowCount! > 0;
-  }
-
-  /**
-   * Get order totals
-   * @param {number} orderId Order ID
-   * @returns {Promise<Object>} Order totals
-   */
-  async getOrderTotals(orderId: number): Promise<any> {
-    const query = `
-      SELECT 
-        COALESCE(SUM(total_price_ht), 0) as totalHT,
-        COALESCE(SUM(total_price_ttc), 0) as totalTTC,
-        COALESCE(SUM(total_price_ttc - total_price_ht), 0) as totalVAT
-      FROM order_items 
-      WHERE order_id = $1
-    `;
-
-    const result = await this.pool.query(query, [orderId]);
-    const row = result.rows[0];
-
-    return {
-      totalHT: parseFloat(row.totalht),
-      totalTTC: parseFloat(row.totalttc),
-      totalVAT: parseFloat(row.totalvat),
-    };
+  async deleteOrderItemsByOrderId(orderId: number): Promise<boolean> {
+    try {
+      const query = "DELETE FROM order_items WHERE order_id = $1";
+      const result = await this.pool.query(query, [orderId]);
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error("Error deleting order items by order ID:", error);
+      throw new Error("Failed to delete order items");
+    }
   }
 }

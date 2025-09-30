@@ -24,7 +24,9 @@ export class CustomerController {
   async getCustomerById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const customer = await this.customerService.getCustomerById(parseInt(id));
+      const customer = await this.customerService.getCustomerById(
+        parseInt(id!)
+      );
 
       if (!customer) {
         res.status(404).json(ResponseMapper.notFoundError("Client"));
@@ -32,7 +34,7 @@ export class CustomerController {
       }
 
       const customerDTO = CustomerMapper.customerToPublicDTO(customer);
-      res.json(ResponseMapper.profileRetrieved(customerDTO));
+      res.json(ResponseMapper.customerRetrieved(customerDTO));
     } catch (error: any) {
       console.error("Get customer error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
@@ -81,7 +83,7 @@ export class CustomerController {
         CustomerMapper.customerUpdateDTOToCustomerData(customerUpdateDTO);
 
       const customer = await this.customerService.updateCustomer(
-        parseInt(id),
+        parseInt(id!),
         customerData
       );
       const customerDTO = CustomerMapper.customerToPublicDTO(customer);
@@ -107,7 +109,7 @@ export class CustomerController {
   async deleteCustomer(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const success = await this.customerService.deleteCustomer(parseInt(id));
+      const success = await this.customerService.deleteCustomer(parseInt(id!));
 
       if (!success) {
         res.status(404).json(ResponseMapper.notFoundError("Customer"));
@@ -154,60 +156,6 @@ export class CustomerController {
       });
     } catch (error: any) {
       console.error("List customers error:", error);
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Get customer profile (for authenticated users)
-   */
-  async getProfile(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const customer = await this.customerService.getCustomerById(parseInt(id));
-
-      if (!customer) {
-        res.status(404).json(ResponseMapper.notFoundError("Customer"));
-        return;
-      }
-
-      const customerDTO = CustomerMapper.customerToPublicDTO(customer);
-      res.json(ResponseMapper.profileRetrieved(customerDTO));
-    } catch (error: any) {
-      console.error("Get profile error:", error);
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Update customer profile (for authenticated users)
-   */
-  async updateProfile(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const customerUpdateDTO: CustomerUpdateDTO = req.body;
-
-      // Convertir DTO en données Customer
-      const customerData =
-        CustomerMapper.customerUpdateDTOToCustomerData(customerUpdateDTO);
-
-      const customer = await this.customerService.updateCustomer(
-        parseInt(id),
-        customerData
-      );
-      const customerDTO = CustomerMapper.customerToPublicDTO(customer);
-
-      res.json(ResponseMapper.profileUpdated(customerDTO));
-    } catch (error: any) {
-      console.error("Update profile error:", error);
-      if (error.message === "Customer not found") {
-        res.status(404).json(ResponseMapper.notFoundError("Customer"));
-        return;
-      }
-      if (error.message.includes("already exists")) {
-        res.status(409).json(ResponseMapper.conflictError(error.message));
-        return;
-      }
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }

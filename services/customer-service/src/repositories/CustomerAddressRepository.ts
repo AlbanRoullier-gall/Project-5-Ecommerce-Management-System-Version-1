@@ -3,7 +3,9 @@
  * Handles database operations for CustomerAddress entities
  */
 import { Pool } from "pg";
-import CustomerAddress from "../models/CustomerAddress";
+import CustomerAddress, {
+  CustomerAddressData,
+} from "../models/CustomerAddress";
 
 class CustomerAddressRepository {
   private pool: Pool;
@@ -31,7 +33,7 @@ class CustomerAddressRepository {
         return null;
       }
 
-      return CustomerAddress.fromDbRow(result.rows[0]);
+      return new CustomerAddress(result.rows[0] as CustomerAddressData);
     } catch (error) {
       console.error("Error getting address by ID:", error);
       throw new Error("Failed to retrieve address");
@@ -59,7 +61,7 @@ class CustomerAddressRepository {
         return null;
       }
 
-      return CustomerAddress.fromDbRowWithJoins(result.rows[0]);
+      return new CustomerAddress(result.rows[0] as CustomerAddressData);
     } catch (error) {
       console.error("Error getting address by ID with joins:", error);
       throw new Error("Failed to retrieve address");
@@ -82,7 +84,9 @@ class CustomerAddressRepository {
         [customerId]
       );
 
-      return result.rows.map((row) => CustomerAddress.fromDbRow(row));
+      return result.rows.map(
+        (row) => new CustomerAddress(row as CustomerAddressData)
+      );
     } catch (error) {
       console.error("Error listing addresses by customer:", error);
       throw new Error("Failed to retrieve addresses");
@@ -118,7 +122,7 @@ class CustomerAddressRepository {
         ]
       );
 
-      return CustomerAddress.fromDbRow(result.rows[0]);
+      return new CustomerAddress(result.rows[0] as CustomerAddressData);
     } catch (error) {
       console.error("Error saving address:", error);
       throw new Error("Failed to save address");
@@ -160,7 +164,7 @@ class CustomerAddressRepository {
         throw new Error("Address not found");
       }
 
-      return CustomerAddress.fromDbRow(result.rows[0]);
+      return new CustomerAddress(result.rows[0] as CustomerAddressData);
     } catch (error) {
       console.error("Error updating address:", error);
       throw new Error("Failed to update address");

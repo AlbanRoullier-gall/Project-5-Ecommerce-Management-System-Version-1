@@ -8,18 +8,6 @@ export interface CivilityData {
   createdAt?: Date | null;
 }
 
-export interface CivilityDbRow {
-  civility_id?: number | null;
-  abbreviation?: string;
-  created_at?: Date | null;
-}
-
-export interface CivilityPublicDTO {
-  civilityId: number | null;
-  abbreviation: string;
-  createdAt: Date | null;
-}
-
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
@@ -34,31 +22,6 @@ class Civility {
     this.civilityId = data.civilityId || null;
     this.abbreviation = data.abbreviation || "";
     this.createdAt = data.createdAt || null;
-  }
-
-  /**
-   * Convert entity to database row format
-   * @returns {Object} Database row
-   */
-  toDbRow(): CivilityDbRow {
-    return {
-      civility_id: this.civilityId,
-      abbreviation: this.abbreviation,
-      created_at: this.createdAt,
-    };
-  }
-
-  /**
-   * Create entity from database row
-   * @param {Object} row Database row
-   * @returns {Civility} Civility instance
-   */
-  static fromDbRow(row: CivilityDbRow): Civility {
-    return new Civility({
-      civilityId: row.civility_id ?? null,
-      abbreviation: row.abbreviation ?? "",
-      createdAt: row.created_at ?? null,
-    });
   }
 
   /**

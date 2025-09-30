@@ -1,75 +1,111 @@
-import { OrderAddressData, OrderAddressDbRow } from "../types";
+/**
+ * OrderAddress Model
+ * Représente une adresse de commande dans le système
+ *
+ * Architecture : Modèle centré sur la base de données
+ * - Correspond exactement à la table `order_addresses`
+ * - Contient la logique métier de l'adresse de commande
+ * - Validation et transformation des données
+ */
 
-export default class OrderAddress {
-  public id: number | null;
-  public orderId: number | null;
-  public type: "shipping" | "billing";
-  public addressSnapshot: any;
-  public createdAt: Date | null;
-  public updatedAt: Date | null;
+/**
+ * Interface correspondant exactement à la table order_addresses
+ */
+export interface OrderAddressData {
+  id: number | null;
+  order_id: number | null;
+  address_type: string;
+  address: string;
+  postal_code: string;
+  city: string;
+  country_id: number | null;
+  created_at: Date | null;
+  updated_at: Date | null;
+}
 
-  constructor(data: OrderAddressData = {} as OrderAddressData) {
-    this.id = data.id ?? null;
-    this.orderId = data.orderId ?? null;
-    this.type = data.type ?? "shipping";
-    this.addressSnapshot = data.addressSnapshot ?? null;
-    this.createdAt = data.createdAt ?? null;
-    this.updatedAt = data.updatedAt ?? null;
-  }
+/**
+ * Résultat de validation de l'adresse de commande
+ */
+export interface OrderAddressValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
 
-  // Format address for display
-  formatAddress(): string {
-    if (!this.addressSnapshot) return "";
+class OrderAddress {
+  public readonly id: number | null;
+  public readonly orderId: number | null;
+  public readonly addressType: string;
+  public readonly address: string;
+  public readonly postalCode: string;
+  public readonly city: string;
+  public readonly countryId: number | null;
+  public readonly createdAt: Date | null;
+  public readonly updatedAt: Date | null;
 
-    const address = this.addressSnapshot;
-    const parts: string[] = [];
-
-    if (address.street) parts.push(address.street);
-    if (address.city) parts.push(address.city);
-    if (address.postalCode) parts.push(address.postalCode);
-    if (address.country) parts.push(address.country);
-
-    return parts.join(", ");
-  }
-
-  // Convert to JSON for API responses
-  toJSON(): any {
-    return {
-      id: this.id,
-      orderId: this.orderId,
-      type: this.type,
-      addressSnapshot: this.addressSnapshot,
-      formattedAddress: this.formatAddress(),
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-    };
-  }
-
-  // Convert to database format
-  toDbFormat(): OrderAddressDbRow {
-    return {
-      id: this.id!,
-      order_id: this.orderId!,
-      type: this.type,
-      address_snapshot: this.addressSnapshot,
-      created_at: this.createdAt!,
-      updated_at: this.updatedAt!,
-    };
+  constructor(data: OrderAddressData) {
+    this.id = data.id;
+    this.orderId = data.order_id;
+    this.addressType = data.address_type;
+    this.address = data.address;
+    this.postalCode = data.postal_code;
+    this.city = data.city;
+    this.countryId = data.country_id;
+    this.createdAt = data.created_at;
+    this.updatedAt = data.updated_at;
   }
 
   /**
-   * Create entity from database row
-   * @param {Object} row Database row
-   * @returns {OrderAddress} OrderAddress instance
+   * Vérifier si l'adresse est valide
    */
-  static fromDbRow(row: OrderAddressDbRow): OrderAddress {
-    return new OrderAddress({
-      id: row.id,
-      orderId: row.order_id,
-      type: row.type as "shipping" | "billing",
-      addressSnapshot: row.address_snapshot,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    });
+  isValid(): boolean {
+    return (
+      this.orderId !== null &&
+      this.addressType.length > 0 &&
+      this.address.length > 0 &&
+      this.postalCode.length > 0 &&
+      this.city.length > 0
+    );
+  }
+
+  /**
+   * Valider les données de l'adresse
+   * @returns {Object} Résultat de validation
+   */
+  validate(): OrderAddressValidationResult {
+    const errors: string[] = [];
+
+    if (!this.orderId || this.orderId <= 0) {
+      errors.push("Order ID is required and must be positive");
+    }
+
+    if (!this.addressType || this.addressType.trim().length === 0) {
+      errors.push("Address type is required");
+    }
+
+    if (!this.address || this.address.trim().length === 0) {
+      errors.push("Address is required");
+    }
+
+    if (!this.postalCode || this.postalCode.trim().length === 0) {
+      errors.push("Postal code is required");
+    }
+
+    if (!this.city || this.city.trim().length === 0) {
+      errors.push("City is required");
+    }
+
+    if (
+      this.addressType &&
+      !["billing", "shipping"].includes(this.addressType)
+    ) {
+      errors.push("Address type must be 'billing' or 'shipping'");
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
   }
 }
+
+export default OrderAddress;

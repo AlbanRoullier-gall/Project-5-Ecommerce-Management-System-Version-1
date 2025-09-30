@@ -1,40 +1,70 @@
-import { CreditNoteData, CreditNoteDbRow } from "../types";
+/**
+ * CreditNote Model
+ * Représente un avoir dans le système
+ *
+ * Architecture : Modèle centré sur la base de données
+ * - Correspond exactement à la table `credit_notes`
+ * - Contient la logique métier de l'avoir
+ * - Validation et transformation des données
+ */
 
 /**
- * CreditNote ORM Entity
- * Represents a credit note for an order
+ * Interface correspondant exactement à la table credit_notes
  */
-export default class CreditNote {
-  public id: number | null;
-  public customerId: number | null;
-  public orderId: number | null;
-  public totalAmountHT: number;
-  public totalAmountTTC: number;
-  public reason: string;
-  public description: string;
-  public issueDate: Date | null;
-  public paymentMethod: string;
-  public notes: string;
-  public createdAt: Date | null;
-  public updatedAt: Date | null;
+export interface CreditNoteData {
+  id: number | null;
+  customer_id: number | null;
+  order_id: number | null;
+  total_amount_ht: number;
+  total_amount_ttc: number;
+  reason: string;
+  description: string | null;
+  issue_date: Date | null;
+  payment_method: string;
+  notes: string | null;
+  created_at: Date | null;
+  updated_at: Date | null;
+}
 
-  constructor(data: CreditNoteData = {} as CreditNoteData) {
-    this.id = data.id ?? null;
-    this.customerId = data.customerId ?? null;
-    this.orderId = data.orderId ?? null;
-    this.totalAmountHT = data.totalAmountHT ?? 0;
-    this.totalAmountTTC = data.totalAmountTTC ?? 0;
-    this.reason = data.reason ?? "";
-    this.description = data.description ?? "";
-    this.issueDate = data.issueDate ?? null;
-    this.paymentMethod = data.paymentMethod ?? "";
-    this.notes = data.notes ?? "";
-    this.createdAt = data.createdAt ?? null;
-    this.updatedAt = data.updatedAt ?? null;
+/**
+ * Résultat de validation de l'avoir
+ */
+export interface CreditNoteValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+class CreditNote {
+  public readonly id: number | null;
+  public readonly customerId: number | null;
+  public readonly orderId: number | null;
+  public readonly totalAmountHT: number;
+  public readonly totalAmountTTC: number;
+  public readonly reason: string;
+  public readonly description: string | null;
+  public readonly issueDate: Date | null;
+  public readonly paymentMethod: string;
+  public readonly notes: string | null;
+  public readonly createdAt: Date | null;
+  public readonly updatedAt: Date | null;
+
+  constructor(data: CreditNoteData) {
+    this.id = data.id;
+    this.customerId = data.customer_id;
+    this.orderId = data.order_id;
+    this.totalAmountHT = data.total_amount_ht;
+    this.totalAmountTTC = data.total_amount_ttc;
+    this.reason = data.reason;
+    this.description = data.description;
+    this.issueDate = data.issue_date;
+    this.paymentMethod = data.payment_method;
+    this.notes = data.notes;
+    this.createdAt = data.created_at;
+    this.updatedAt = data.updated_at;
   }
 
   /**
-   * Calculate totals for the credit note
+   * Calculer les totaux de l'avoir
    */
   calculateTotals(): { totalHT: number; totalTTC: number; totalVAT: number } {
     return {
@@ -45,103 +75,38 @@ export default class CreditNote {
   }
 
   /**
-   * Convert entity to database row format
-   * @returns {Object} Database row
+   * Vérifier si l'avoir est valide
    */
-  toDbRow(): CreditNoteDbRow {
-    return {
-      id: this.id!,
-      customer_id: this.customerId!,
-      order_id: this.orderId!,
-      total_amount_ht: this.totalAmountHT,
-      total_amount_ttc: this.totalAmountTTC,
-      reason: this.reason,
-      description: this.description,
-      issue_date: this.issueDate!,
-      payment_method: this.paymentMethod,
-      notes: this.notes,
-      created_at: this.createdAt!,
-      updated_at: this.updatedAt!,
-    };
+  isValid(): boolean {
+    return (
+      this.customerId !== null &&
+      this.totalAmountHT >= 0 &&
+      this.totalAmountTTC >= 0 &&
+      this.reason.length > 0
+    );
   }
 
   /**
-   * Create entity from database row
-   * @param {Object} row Database row
-   * @returns {CreditNote} CreditNote instance
+   * Valider les données de l'avoir
+   * @returns {Object} Résultat de validation
    */
-  static fromDbRow(row: CreditNoteDbRow): CreditNote {
-    return new CreditNote({
-      id: row.id,
-      customerId: row.customer_id,
-      orderId: row.order_id,
-      totalAmountHT: row.total_amount_ht,
-      totalAmountTTC: row.total_amount_ttc,
-      reason: row.reason,
-      description: row.description ?? "",
-      issueDate: row.issue_date,
-      paymentMethod: row.payment_method,
-      notes: row.notes ?? "",
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    });
-  }
-
-  /**
-   * Convert to public DTO
-   * @returns {Object} Public credit note data
-   */
-  toPublicDTO(): any {
-    return {
-      id: this.id,
-      customerId: this.customerId,
-      orderId: this.orderId,
-      totalAmountHT: this.totalAmountHT,
-      totalAmountTTC: this.totalAmountTTC,
-      reason: this.reason,
-      description: this.description,
-      issueDate: this.issueDate,
-      paymentMethod: this.paymentMethod,
-      notes: this.notes,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      totals: this.calculateTotals(),
-    };
-  }
-
-  /**
-   * Validate entity data
-   * @returns {Object} Validation result
-   */
-  validate(): { isValid: boolean; errors: string[] } {
+  validate(): CreditNoteValidationResult {
     const errors: string[] = [];
 
-    if (!this.customerId) {
-      errors.push("Customer ID is required");
+    if (!this.customerId || this.customerId <= 0) {
+      errors.push("Customer ID is required and must be positive");
     }
 
-    if (!this.orderId) {
-      errors.push("Order ID is required");
+    if (this.totalAmountHT < 0) {
+      errors.push("Total amount HT must be non-negative");
+    }
+
+    if (this.totalAmountTTC < 0) {
+      errors.push("Total amount TTC must be non-negative");
     }
 
     if (!this.reason || this.reason.trim().length === 0) {
       errors.push("Reason is required");
-    }
-
-    if (this.totalAmountHT < 0) {
-      errors.push("Total amount HT must be positive");
-    }
-
-    if (this.totalAmountTTC < 0) {
-      errors.push("Total amount TTC must be positive");
-    }
-
-    if (this.totalAmountTTC < this.totalAmountHT) {
-      errors.push("Total amount TTC must be greater than or equal to HT");
-    }
-
-    if (this.issueDate && new Date(this.issueDate) > new Date()) {
-      errors.push("Issue date cannot be in the future");
     }
 
     return {
@@ -150,3 +115,5 @@ export default class CreditNote {
     };
   }
 }
+
+export default CreditNote;

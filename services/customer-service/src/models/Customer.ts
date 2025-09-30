@@ -16,20 +16,6 @@ export interface CustomerData {
   updatedAt?: Date | null;
 }
 
-export interface CustomerDbRow {
-  customer_id?: number | null;
-  civility_id?: number | null;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  socio_professional_category_id?: number | null;
-  phone_number?: string | null;
-  birthday?: Date | null;
-  is_active?: boolean;
-  created_at?: Date | null;
-  updated_at?: Date | null;
-}
-
 // CustomerPublicDTO moved to /api/dto/CustomerDTO.ts
 
 export interface ValidationResult {
@@ -86,61 +72,6 @@ class Customer {
    */
   deactivate(): void {
     this.isActive = false;
-  }
-
-  /**
-   * Convert entity to database row format
-   * @returns {Object} Database row
-   */
-  toDbRow(): CustomerDbRow {
-    return {
-      customer_id: this.customerId,
-      civility_id: this.civilityId,
-      first_name: this.firstName,
-      last_name: this.lastName,
-      email: this.email,
-      socio_professional_category_id: this.socioProfessionalCategoryId,
-      phone_number: this.phoneNumber,
-      birthday: this.birthday,
-      is_active: this.isActive,
-      created_at: this.createdAt,
-      updated_at: this.updatedAt,
-    };
-  }
-
-  /**
-   * Create entity from database row
-   * @param {Object} row Database row
-   * @returns {Customer} Customer instance
-   */
-  static fromDbRow(row: CustomerDbRow): Customer {
-    return new Customer({
-      customerId: row.customer_id ?? null,
-      civilityId: row.civility_id ?? null,
-      firstName: row.first_name ?? "",
-      lastName: row.last_name ?? "",
-      email: row.email ?? "",
-      socioProfessionalCategoryId: row.socio_professional_category_id ?? null,
-      phoneNumber: row.phone_number ?? null,
-      birthday: row.birthday ?? null,
-      isActive: row.is_active ?? true,
-      createdAt: row.created_at ?? null,
-      updatedAt: row.updated_at ?? null,
-    });
-  }
-
-  /**
-   * Create entity from database row with joined data
-   * @param {Object} row Database row with joins
-   * @returns {Customer} Customer instance with additional fields
-   */
-  static fromDbRowWithJoins(
-    row: CustomerDbRow & { civility?: any; socio_professional_category?: any }
-  ): Customer {
-    const customer = Customer.fromDbRow(row);
-    customer.civility = row.civility;
-    customer.socioProfessionalCategory = row.socio_professional_category;
-    return customer;
   }
 
   /**

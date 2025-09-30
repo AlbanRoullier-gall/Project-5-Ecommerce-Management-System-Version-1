@@ -182,18 +182,6 @@ export class ApiRouter {
       this.customerController.listCustomers(req, res);
     });
 
-    app.get("/api/customers/profile", (req: Request, res: Response) => {
-      this.customerController.getProfile(req, res);
-    });
-
-    app.put(
-      "/api/customers/profile",
-      this.validateRequest(schemas.customerUpdateSchema),
-      (req: Request, res: Response) => {
-        this.customerController.updateProfile(req, res);
-      }
-    );
-
     // ===== ROUTES D'ADRESSES =====
     app.get(
       "/api/customers/:customerId/addresses",

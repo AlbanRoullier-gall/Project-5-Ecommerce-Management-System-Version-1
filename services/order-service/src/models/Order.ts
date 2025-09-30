@@ -1,43 +1,68 @@
-import { OrderData, OrderDbRow } from "../types";
+/**
+ * Order Model
+ * Représente une commande dans le système
+ *
+ * Architecture : Modèle centré sur la base de données
+ * - Correspond exactement à la table `orders`
+ * - Contient la logique métier de la commande
+ * - Validation et transformation des données
+ */
 
 /**
- * Order ORM Entity
- * Represents an order with customer information and totals
+ * Interface correspondant exactement à la table orders
  */
-export default class Order {
-  public id: number | null;
-  public customerId: number | null;
-  public customerSnapshot: any | null;
-  public totalAmountHT: number;
-  public totalAmountTTC: number;
-  public paymentMethod: string;
-  public notes: string;
-  public createdAt: Date | null;
-  public updatedAt: Date | null;
+export interface OrderData {
+  id: number | null;
+  customer_id: number | null;
+  customer_snapshot: any | null;
+  total_amount_ht: number;
+  total_amount_ttc: number;
+  payment_method: string;
+  notes: string;
+  created_at: Date | null;
+  updated_at: Date | null;
+}
+
+/**
+ * Résultat de validation de la commande
+ */
+export interface OrderValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+class Order {
+  public readonly id: number | null;
+  public readonly customerId: number | null;
+  public readonly customerSnapshot: any | null;
+  public readonly totalAmountHT: number;
+  public readonly totalAmountTTC: number;
+  public readonly paymentMethod: string;
+  public readonly notes: string;
+  public readonly createdAt: Date | null;
+  public readonly updatedAt: Date | null;
 
   // Additional fields for joins
-  public customerFirstName?: string | undefined;
-  public customerLastName?: string | undefined;
-  public customerEmail?: string | undefined;
+  public customerFirstName?: string;
+  public customerLastName?: string;
+  public customerEmail?: string;
 
-  constructor(data: OrderData = {} as OrderData) {
-    this.id = data.id ?? null;
-    this.customerId = data.customerId ?? null;
-    this.customerSnapshot = data.customerSnapshot ?? null;
-    this.totalAmountHT = data.totalAmountHT ?? 0;
-    this.totalAmountTTC = data.totalAmountTTC ?? 0;
-    this.paymentMethod = data.paymentMethod ?? "";
-    this.notes = data.notes ?? "";
-    this.createdAt = data.createdAt ?? null;
-    this.updatedAt = data.updatedAt ?? null;
+  constructor(data: OrderData) {
+    this.id = data.id;
+    this.customerId = data.customer_id;
+    this.customerSnapshot = data.customer_snapshot;
+    this.totalAmountHT = data.total_amount_ht;
+    this.totalAmountTTC = data.total_amount_ttc;
+    this.paymentMethod = data.payment_method;
+    this.notes = data.notes;
+    this.createdAt = data.created_at;
+    this.updatedAt = data.updated_at;
   }
 
   /**
-   * Calculate totals for the order
+   * Calculer les totaux de la commande
    */
   calculateTotals(): { totalHT: number; totalTTC: number; totalVAT: number } {
-    // This would typically calculate from order items
-    // For now, we'll assume totals are provided
     return {
       totalHT: this.totalAmountHT,
       totalTTC: this.totalAmountTTC,
@@ -46,127 +71,45 @@ export default class Order {
   }
 
   /**
-   * Add item to order
-   * @param {Object} item Order item data
+   * Vérifier si la commande est valide
    */
-  addItem(item: any): void {
-    // This would typically add to a collection of items
-    // Implementation depends on how items are managed
-    console.log("Adding item to order:", item);
+  isValid(): boolean {
+    return (
+      this.customerId !== null &&
+      this.totalAmountHT >= 0 &&
+      this.totalAmountTTC >= 0 &&
+      this.paymentMethod.length > 0
+    );
   }
 
   /**
-   * Remove item from order
-   * @param {number} itemId Item ID to remove
+   * Valider les données de la commande
+   * @returns {Object} Résultat de validation
    */
-  removeItem(itemId: number): void {
-    // This would typically remove from a collection of items
-    console.log("Removing item from order:", itemId);
-  }
-
-  /**
-   * Convert entity to database row format
-   * @returns {Object} Database row
-   */
-  toDbRow(): OrderDbRow {
-    return {
-      id: this.id!,
-      customer_id: this.customerId!,
-      customer_snapshot: this.customerSnapshot,
-      total_amount_ht: this.totalAmountHT,
-      total_amount_ttc: this.totalAmountTTC,
-      payment_method: this.paymentMethod,
-      notes: this.notes,
-      created_at: this.createdAt!,
-      updated_at: this.updatedAt!,
-    };
-  }
-
-  /**
-   * Create entity from database row
-   * @param {Object} row Database row
-   * @returns {Order} Order instance
-   */
-  static fromDbRow(row: OrderDbRow): Order {
-    return new Order({
-      id: row.id,
-      customerId: row.customer_id,
-      customerSnapshot: row.customer_snapshot,
-      totalAmountHT: row.total_amount_ht,
-      totalAmountTTC: row.total_amount_ttc,
-      paymentMethod: row.payment_method,
-      notes: row.notes ?? "",
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    });
-  }
-
-  /**
-   * Create entity from database row with joins
-   * @param {Object} row Database row with joins
-   * @returns {Order} Order instance with additional fields
-   */
-  static fromDbRowWithJoins(
-    row: OrderDbRow & {
-      first_name?: string;
-      last_name?: string;
-      email?: string;
-    }
-  ): Order {
-    const order = Order.fromDbRow(row);
-    order.customerFirstName = row.first_name ?? undefined;
-    order.customerLastName = row.last_name ?? undefined;
-    order.customerEmail = row.email ?? undefined;
-    return order;
-  }
-
-  /**
-   * Convert to public DTO
-   * @returns {Object} Public order data
-   */
-  toPublicDTO(): any {
-    return {
-      id: this.id,
-      customerId: this.customerId,
-      customerSnapshot: this.customerSnapshot,
-      totalAmountHT: this.totalAmountHT,
-      totalAmountTTC: this.totalAmountTTC,
-      paymentMethod: this.paymentMethod,
-      notes: this.notes,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      totals: this.calculateTotals(),
-    };
-  }
-
-  /**
-   * Validate entity data
-   * @returns {Object} Validation result
-   */
-  validate(): { isValid: boolean; errors: string[] } {
+  validate(): OrderValidationResult {
     const errors: string[] = [];
 
-    if (!this.customerId) {
-      errors.push("Customer ID is required");
+    if (!this.customerId || this.customerId <= 0) {
+      errors.push("Customer ID is required and must be positive");
     }
 
     if (this.totalAmountHT < 0) {
-      errors.push("Total amount HT must be positive");
+      errors.push("Total amount HT must be non-negative");
     }
 
     if (this.totalAmountTTC < 0) {
-      errors.push("Total amount TTC must be positive");
+      errors.push("Total amount TTC must be non-negative");
     }
 
-    if (this.totalAmountTTC < this.totalAmountHT) {
-      errors.push("Total amount TTC must be greater than or equal to HT");
+    if (!this.paymentMethod || this.paymentMethod.trim().length === 0) {
+      errors.push("Payment method is required");
     }
 
     if (
       this.paymentMethod &&
       !["card", "paypal", "bank_transfer"].includes(this.paymentMethod)
     ) {
-      errors.push("Payment method must be card, paypal, or bank_transfer");
+      errors.push("Payment method must be one of: card, paypal, bank_transfer");
     }
 
     return {
@@ -175,3 +118,5 @@ export default class Order {
     };
   }
 }
+
+export default Order;
