@@ -9,21 +9,21 @@
  */
 
 export interface WebsitePageVersionData {
-  version_id: number | null;
+  version_id: number;
   parent_page_id: number;
   markdown_content: string;
   html_content: string | null;
   version: number;
-  creation_timestamp: Date | null;
+  creation_timestamp: Date;
 }
 
 export default class WebsitePageVersion {
-  public readonly id: number | null;
+  public readonly id: number;
   public readonly pageId: number;
   public readonly markdownContent: string;
   public readonly htmlContent: string | null;
   public readonly versionNumber: number;
-  public readonly createdAt: Date | null;
+  public readonly createdAt: Date;
 
   constructor(data: WebsitePageVersionData) {
     this.id = data.version_id;
@@ -69,6 +69,10 @@ export default class WebsitePageVersion {
 
     if (!this.versionNumber || this.versionNumber <= 0) {
       errors.push("Version number must be greater than 0");
+    }
+
+    if (this.markdownContent && this.markdownContent.length > 10000) {
+      errors.push("Markdown content must be less than 10000 characters");
     }
 
     return {

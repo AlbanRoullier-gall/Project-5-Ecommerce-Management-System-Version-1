@@ -12,18 +12,18 @@
  * Interface correspondant exactement à la table credit_notes
  */
 export interface CreditNoteData {
-  id: number | null;
-  customer_id: number | null;
-  order_id: number | null;
+  id: number;
+  customer_id: number;
+  order_id: number;
   total_amount_ht: number;
   total_amount_ttc: number;
   reason: string;
   description: string | null;
-  issue_date: Date | null;
+  issue_date: Date;
   payment_method: string;
   notes: string | null;
-  created_at: Date | null;
-  updated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 }
 
 /**
@@ -35,18 +35,18 @@ export interface CreditNoteValidationResult {
 }
 
 class CreditNote {
-  public readonly id: number | null;
-  public readonly customerId: number | null;
-  public readonly orderId: number | null;
+  public readonly id: number;
+  public readonly customerId: number;
+  public readonly orderId: number;
   public readonly totalAmountHT: number;
   public readonly totalAmountTTC: number;
   public readonly reason: string;
   public readonly description: string | null;
-  public readonly issueDate: Date | null;
+  public readonly issueDate: Date;
   public readonly paymentMethod: string;
   public readonly notes: string | null;
-  public readonly createdAt: Date | null;
-  public readonly updatedAt: Date | null;
+  public readonly createdAt: Date;
+  public readonly updatedAt: Date;
 
   constructor(data: CreditNoteData) {
     this.id = data.id;
@@ -79,7 +79,8 @@ class CreditNote {
    */
   isValid(): boolean {
     return (
-      this.customerId !== null &&
+      this.customerId > 0 &&
+      this.orderId > 0 &&
       this.totalAmountHT >= 0 &&
       this.totalAmountTTC >= 0 &&
       this.reason.length > 0
@@ -97,6 +98,10 @@ class CreditNote {
       errors.push("Customer ID is required and must be positive");
     }
 
+    if (!this.orderId || this.orderId <= 0) {
+      errors.push("Order ID is required and must be positive");
+    }
+
     if (this.totalAmountHT < 0) {
       errors.push("Total amount HT must be non-negative");
     }
@@ -105,8 +110,18 @@ class CreditNote {
       errors.push("Total amount TTC must be non-negative");
     }
 
+    if (this.totalAmountTTC < this.totalAmountHT) {
+      errors.push(
+        "Total amount TTC must be greater than or equal to total amount HT"
+      );
+    }
+
     if (!this.reason || this.reason.trim().length === 0) {
       errors.push("Reason is required");
+    }
+
+    if (!this.paymentMethod || this.paymentMethod.trim().length === 0) {
+      errors.push("Payment method is required");
     }
 
     return {

@@ -9,25 +9,25 @@
  */
 
 export interface WebsitePageData {
-  page_id: number | null;
+  page_id: number;
   page_slug: string;
   page_title: string;
   markdown_content: string;
   html_content: string | null;
   version: number;
-  creation_timestamp: Date | null;
-  last_update_timestamp: Date | null;
+  creation_timestamp: Date;
+  last_update_timestamp: Date;
 }
 
 export default class WebsitePage {
-  public readonly id: number | null;
+  public readonly id: number;
   public readonly pageSlug: string;
   public readonly pageTitle: string;
   public readonly markdownContent: string;
   public readonly htmlContent: string | null;
   public readonly version: number;
-  public readonly createdAt: Date | null;
-  public readonly updatedAt: Date | null;
+  public readonly createdAt: Date;
+  public readonly updatedAt: Date;
 
   constructor(data: WebsitePageData) {
     this.id = data.page_id;
@@ -81,6 +81,18 @@ export default class WebsitePage {
       errors.push(
         "Page slug must contain only lowercase letters, numbers, and hyphens"
       );
+    }
+
+    if (this.pageSlug && this.pageSlug.length > 100) {
+      errors.push("Page slug must be less than 100 characters");
+    }
+
+    if (this.pageTitle && this.pageTitle.length > 255) {
+      errors.push("Page title must be less than 255 characters");
+    }
+
+    if (this.version && this.version < 1) {
+      errors.push("Version must be at least 1");
     }
 
     return {

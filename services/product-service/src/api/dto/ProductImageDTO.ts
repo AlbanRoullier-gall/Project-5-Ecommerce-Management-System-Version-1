@@ -8,6 +8,8 @@
  * - Type safety
  */
 
+import { ImageMimeType } from "../../types/Enums";
+
 /**
  * ProductImage creation DTO
  */
@@ -16,11 +18,12 @@ export interface ProductImageCreateDTO {
   filename: string;
   filePath: string;
   fileSize: number;
-  mimeType: string;
+  mimeType: ImageMimeType;
   width?: number;
   height?: number;
   altText?: string;
   description?: string;
+  isActive?: boolean;
   orderIndex?: number;
 }
 
@@ -31,11 +34,12 @@ export interface ProductImageUpdateDTO {
   filename?: string;
   filePath?: string;
   fileSize?: number;
-  mimeType?: string;
+  mimeType?: ImageMimeType;
   width?: number;
   height?: number;
   altText?: string;
   description?: string;
+  isActive?: boolean;
   orderIndex?: number;
 }
 
@@ -43,17 +47,18 @@ export interface ProductImageUpdateDTO {
  * ProductImage public DTO (for API responses)
  */
 export interface ProductImagePublicDTO {
-  id: number | null;
-  productId: number | null;
+  id: number;
+  productId: number;
   filename: string;
   filePath: string;
   fileSize: number;
-  mimeType: string;
+  mimeType: ImageMimeType;
   width: number;
   height: number;
   altText: string;
   description: string;
+  isActive: boolean;
   orderIndex: number;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 }

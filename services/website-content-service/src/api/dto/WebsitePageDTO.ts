@@ -8,6 +8,8 @@
  * - Type safety
  */
 
+import { SortBy, SortOrder } from "../../types/Enums";
+
 /**
  * Website page creation DTO
  */
@@ -15,6 +17,7 @@ export interface WebsitePageCreateDTO {
   pageSlug: string;
   pageTitle: string;
   markdownContent: string;
+  htmlContent?: string;
 }
 
 /**
@@ -24,20 +27,21 @@ export interface WebsitePageUpdateDTO {
   pageSlug?: string;
   pageTitle?: string;
   markdownContent?: string;
+  htmlContent?: string;
 }
 
 /**
  * Website page public DTO (for API responses)
  */
 export interface WebsitePagePublicDTO {
-  id: number | null;
+  id: number;
   pageSlug: string;
   pageTitle: string;
   markdownContent: string;
-  htmlContent: string;
+  htmlContent: string | null;
   version: number;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /**
@@ -47,6 +51,6 @@ export interface WebsitePageListOptions {
   page: number;
   limit: number;
   search?: string;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
+  sortBy?: SortBy;
+  sortOrder?: SortOrder;
 }

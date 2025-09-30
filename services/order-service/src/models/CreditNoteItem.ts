@@ -12,17 +12,17 @@
  * Interface correspondant exactement à la table credit_note_items
  */
 export interface CreditNoteItemData {
-  id: number | null;
-  credit_note_id: number | null;
-  product_id: number | null;
+  id: number;
+  credit_note_id: number;
+  product_id: number;
   quantity: number;
   unit_price_ht: number;
   unit_price_ttc: number;
   vat_rate: number;
   total_price_ht: number;
   total_price_ttc: number;
-  created_at: Date | null;
-  updated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 }
 
 /**
@@ -34,17 +34,17 @@ export interface CreditNoteItemValidationResult {
 }
 
 class CreditNoteItem {
-  public readonly id: number | null;
-  public readonly creditNoteId: number | null;
-  public readonly productId: number | null;
+  public readonly id: number;
+  public readonly creditNoteId: number;
+  public readonly productId: number;
   public readonly quantity: number;
   public readonly unitPriceHT: number;
   public readonly unitPriceTTC: number;
   public readonly vatRate: number;
   public readonly totalPriceHT: number;
   public readonly totalPriceTTC: number;
-  public readonly createdAt: Date | null;
-  public readonly updatedAt: Date | null;
+  public readonly createdAt: Date;
+  public readonly updatedAt: Date;
 
   constructor(data: CreditNoteItemData) {
     this.id = data.id;
@@ -79,11 +79,12 @@ class CreditNoteItem {
    */
   isValid(): boolean {
     return (
-      this.creditNoteId !== null &&
-      this.productId !== null &&
+      this.creditNoteId > 0 &&
+      this.productId > 0 &&
       this.quantity > 0 &&
       this.unitPriceHT >= 0 &&
-      this.unitPriceTTC >= 0
+      this.unitPriceTTC >= 0 &&
+      this.unitPriceTTC >= this.unitPriceHT
     );
   }
 
@@ -112,6 +113,16 @@ class CreditNoteItem {
 
     if (this.unitPriceTTC < 0) {
       errors.push("Unit price TTC must be non-negative");
+    }
+
+    if (this.unitPriceTTC < this.unitPriceHT) {
+      errors.push(
+        "Unit price TTC must be greater than or equal to unit price HT"
+      );
+    }
+
+    if (this.vatRate < 0 || this.vatRate > 100) {
+      errors.push("VAT rate must be between 0 and 100");
     }
 
     return {

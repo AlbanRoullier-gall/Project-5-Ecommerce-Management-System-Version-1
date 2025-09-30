@@ -24,7 +24,6 @@ export interface UserData {
   updated_at: Date;
 }
 
-
 /**
  * Résultat de validation du mot de passe
  */

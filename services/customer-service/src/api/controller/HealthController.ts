@@ -47,7 +47,7 @@ export class HealthController {
 
       res.json({
         message: "Detailed health check completed",
-        ...healthData
+        ...healthData,
       });
     } catch (error) {
       console.error("Detailed health check error:", error);

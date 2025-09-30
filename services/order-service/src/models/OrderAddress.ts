@@ -8,16 +8,18 @@
  * - Validation et transformation des données
  */
 
+import { AddressType } from "../types/Enums";
+
 /**
  * Interface correspondant exactement à la table order_addresses
  */
 export interface OrderAddressData {
-  id: number | null;
-  order_id: number | null;
-  address_type: string;
+  id: number;
+  order_id: number;
+  address_type: AddressType;
   address_snapshot: any;
-  created_at: Date | null;
-  updated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 }
 
 /**
@@ -29,12 +31,12 @@ export interface OrderAddressValidationResult {
 }
 
 class OrderAddress {
-  public readonly id: number | null;
-  public readonly orderId: number | null;
-  public readonly addressType: string;
+  public readonly id: number;
+  public readonly orderId: number;
+  public readonly addressType: AddressType;
   public readonly addressSnapshot: any;
-  public readonly createdAt: Date | null;
-  public readonly updatedAt: Date | null;
+  public readonly createdAt: Date;
+  public readonly updatedAt: Date;
 
   constructor(data: OrderAddressData) {
     this.id = data.id;
@@ -50,9 +52,11 @@ class OrderAddress {
    */
   isValid(): boolean {
     return (
-      this.orderId !== null &&
-      this.addressType.length > 0 &&
-      this.addressSnapshot !== null
+      this.orderId > 0 &&
+      this.addressType !== null &&
+      this.addressSnapshot !== null &&
+      (this.addressType === AddressType.BILLING ||
+        this.addressType === AddressType.SHIPPING)
     );
   }
 
@@ -77,9 +81,11 @@ class OrderAddress {
 
     if (
       this.addressType &&
-      !["billing", "shipping"].includes(this.addressType)
+      !Object.values(AddressType).includes(this.addressType)
     ) {
-      errors.push("Address type must be 'billing' or 'shipping'");
+      errors.push(
+        `Address type must be one of: ${Object.values(AddressType).join(", ")}`
+      );
     }
 
     return {

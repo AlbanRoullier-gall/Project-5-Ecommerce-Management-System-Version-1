@@ -8,6 +8,8 @@
  * - Validation et transformation des données
  */
 
+import { PaymentMethod } from "../types/Enums";
+
 /**
  * Interface correspondant exactement à la table orders
  */
@@ -17,7 +19,7 @@ export interface OrderData {
   customer_snapshot: any | null;
   total_amount_ht: number;
   total_amount_ttc: number;
-  payment_method: string | null;
+  payment_method: PaymentMethod | null;
   notes: string | null;
   created_at: Date;
   updated_at: Date;
@@ -37,7 +39,7 @@ class Order {
   public readonly customerSnapshot: any | null;
   public readonly totalAmountHT: number;
   public readonly totalAmountTTC: number;
-  public readonly paymentMethod: string | null;
+  public readonly paymentMethod: PaymentMethod | null;
   public readonly notes: string | null;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
@@ -75,9 +77,10 @@ class Order {
    */
   isValid(): boolean {
     return (
-      this.customerId !== null &&
+      this.customerId > 0 &&
       this.totalAmountHT >= 0 &&
       this.totalAmountTTC >= 0 &&
+      this.totalAmountTTC >= this.totalAmountHT &&
       this.paymentMethod !== null &&
       this.paymentMethod.length > 0
     );
@@ -102,15 +105,25 @@ class Order {
       errors.push("Total amount TTC must be non-negative");
     }
 
-    if (!this.paymentMethod || this.paymentMethod.trim().length === 0) {
+    if (this.totalAmountTTC < this.totalAmountHT) {
+      errors.push(
+        "Total amount TTC must be greater than or equal to total amount HT"
+      );
+    }
+
+    if (!this.paymentMethod) {
       errors.push("Payment method is required");
     }
 
     if (
       this.paymentMethod &&
-      !["card", "paypal", "bank_transfer"].includes(this.paymentMethod)
+      !Object.values(PaymentMethod).includes(this.paymentMethod)
     ) {
-      errors.push("Payment method must be one of: card, paypal, bank_transfer");
+      errors.push(
+        `Payment method must be one of: ${Object.values(PaymentMethod).join(
+          ", "
+        )}`
+      );
     }
 
     return {

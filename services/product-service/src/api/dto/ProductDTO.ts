@@ -8,6 +8,8 @@
  * - Type safety
  */
 
+import { ProductSortBy, SortOrder } from "../../types/Enums";
+
 /**
  * Product creation DTO
  */
@@ -17,7 +19,7 @@ export interface ProductCreateDTO {
   price: number;
   vatRate: number;
   categoryId: number;
-  isActive?: boolean;
+  isActive: boolean;
 }
 
 /**
@@ -36,15 +38,15 @@ export interface ProductUpdateDTO {
  * Product public DTO (for API responses)
  */
 export interface ProductPublicDTO {
-  id: number | null;
+  id: number;
   name: string;
   description: string;
   price: number;
   vatRate: number;
-  categoryId: number | null;
+  categoryId: number;
   isActive: boolean;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
   categoryName?: string;
   images?: any[];
 }
@@ -58,6 +60,6 @@ export interface ProductListOptions {
   categoryId?: number;
   search?: string;
   activeOnly?: boolean;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
+  sortBy?: ProductSortBy;
+  sortOrder?: SortOrder;
 }

@@ -7,15 +7,15 @@
  * Interface correspondant exactement à la table products
  */
 export interface ProductData {
-  id: number | null;
+  id: number;
   name: string;
   description: string | null;
   price: number;
   vat_rate: number;
   category_id: number;
   is_active: boolean;
-  created_at: Date | null;
-  updated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 }
 
 /**
@@ -27,15 +27,15 @@ export interface ProductValidationResult {
 }
 
 class Product {
-  public readonly id: number | null;
+  public readonly id: number;
   public readonly name: string;
   public readonly description: string;
   public readonly price: number;
   public readonly vatRate: number;
-  public readonly categoryId: number | null;
+  public readonly categoryId: number;
   public readonly isActive: boolean;
-  public readonly createdAt: Date | null;
-  public readonly updatedAt: Date | null;
+  public readonly createdAt: Date;
+  public readonly updatedAt: Date;
 
   constructor(data: ProductData) {
     this.id = data.id;
@@ -57,7 +57,8 @@ class Product {
       this.name.length > 0 &&
       this.price > 0 &&
       this.vatRate >= 0 &&
-      this.categoryId !== null
+      this.vatRate <= 100 &&
+      this.categoryId > 0
     );
   }
 
@@ -82,6 +83,10 @@ class Product {
 
     if (!this.categoryId || this.categoryId <= 0) {
       errors.push("Category ID is required and must be positive");
+    }
+
+    if (this.name && this.name.length > 255) {
+      errors.push("Product name must be less than 255 characters");
     }
 
     return {

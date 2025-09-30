@@ -8,12 +8,14 @@
  * - Type safety
  */
 
+import { AddressType } from "../../types/Enums";
+
 /**
  * OrderAddress creation DTO
  */
 export interface OrderAddressCreateDTO {
   orderId: number;
-  addressType: string;
+  addressType: AddressType;
   addressSnapshot: any;
 }
 
@@ -21,7 +23,7 @@ export interface OrderAddressCreateDTO {
  * OrderAddress update DTO
  */
 export interface OrderAddressUpdateDTO {
-  addressType?: string;
+  addressType?: AddressType;
   addressSnapshot?: any;
 }
 
@@ -29,10 +31,10 @@ export interface OrderAddressUpdateDTO {
  * OrderAddress public DTO (for API responses)
  */
 export interface OrderAddressPublicDTO {
-  id: number | null;
-  orderId: number | null;
-  addressType: string;
+  id: number;
+  orderId: number;
+  addressType: AddressType;
   addressSnapshot: any;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 }

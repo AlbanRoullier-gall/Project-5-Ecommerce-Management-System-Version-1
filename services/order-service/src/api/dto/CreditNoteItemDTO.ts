@@ -17,6 +17,7 @@ export interface CreditNoteItemCreateDTO {
   quantity: number;
   unitPriceHT: number;
   unitPriceTTC: number;
+  vatRate: number;
   totalPriceHT: number;
   totalPriceTTC: number;
 }
@@ -28,6 +29,7 @@ export interface CreditNoteItemUpdateDTO {
   quantity?: number;
   unitPriceHT?: number;
   unitPriceTTC?: number;
+  vatRate?: number;
   totalPriceHT?: number;
   totalPriceTTC?: number;
 }
@@ -36,14 +38,15 @@ export interface CreditNoteItemUpdateDTO {
  * CreditNoteItem public DTO (for API responses)
  */
 export interface CreditNoteItemPublicDTO {
-  id: number | null;
-  creditNoteId: number | null;
-  productId: number | null;
+  id: number;
+  creditNoteId: number;
+  productId: number;
   quantity: number;
   unitPriceHT: number;
   unitPriceTTC: number;
+  vatRate: number;
   totalPriceHT: number;
   totalPriceTTC: number;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 }

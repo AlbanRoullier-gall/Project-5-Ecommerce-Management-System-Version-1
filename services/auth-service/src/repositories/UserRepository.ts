@@ -143,10 +143,7 @@ export class UserRepository {
   /**
    * Créer un utilisateur avec fusion de données
    */
-  createUserWithMerge(
-    existingUser: User,
-    updateData: Partial<UserData>
-  ): User {
+  createUserWithMerge(existingUser: User, updateData: Partial<UserData>): User {
     return new User({
       user_id: existingUser.userId,
       email: updateData.email ?? existingUser.email,

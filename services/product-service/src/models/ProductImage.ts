@@ -7,7 +7,7 @@
  * Interface correspondant exactement à la table product_images
  */
 export interface ProductImageData {
-  id: number | null;
+  id: number;
   product_id: number;
   filename: string;
   file_path: string;
@@ -19,8 +19,8 @@ export interface ProductImageData {
   description: string | null;
   is_active: boolean;
   order_index: number;
-  created_at: Date | null;
-  updated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 }
 
 /**
@@ -32,8 +32,8 @@ export interface ProductImageValidationResult {
 }
 
 class ProductImage {
-  public readonly id: number | null;
-  public readonly productId: number | null;
+  public readonly id: number;
+  public readonly productId: number;
   public readonly filename: string;
   public readonly filePath: string;
   public readonly fileSize: number;
@@ -44,8 +44,8 @@ class ProductImage {
   public readonly description: string;
   public readonly isActive: boolean;
   public readonly orderIndex: number;
-  public readonly createdAt: Date | null;
-  public readonly updatedAt: Date | null;
+  public readonly createdAt: Date;
+  public readonly updatedAt: Date;
 
   constructor(data: ProductImageData) {
     this.id = data.id;
@@ -73,7 +73,9 @@ class ProductImage {
       this.filePath.length > 0 &&
       this.fileSize > 0 &&
       this.mimeType.length > 0 &&
-      this.productId !== null
+      this.productId > 0 &&
+      this.width >= 0 &&
+      this.height >= 0
     );
   }
 
@@ -110,6 +112,18 @@ class ProductImage {
 
     if (this.height < 0) {
       errors.push("Height must be non-negative");
+    }
+
+    if (this.filename && this.filename.length > 255) {
+      errors.push("Filename must be less than 255 characters");
+    }
+
+    if (this.filePath && this.filePath.length > 500) {
+      errors.push("File path must be less than 500 characters");
+    }
+
+    if (this.mimeType && this.mimeType.length > 100) {
+      errors.push("MIME type must be less than 100 characters");
     }
 
     return {

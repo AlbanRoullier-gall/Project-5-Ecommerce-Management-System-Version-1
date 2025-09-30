@@ -7,11 +7,11 @@
  * Interface correspondant exactement à la table categories
  */
 export interface CategoryData {
-  id: number | null;
+  id: number;
   name: string;
   description: string | null;
-  created_at: Date | null;
-  updated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 }
 
 /**
@@ -23,11 +23,11 @@ export interface CategoryValidationResult {
 }
 
 class Category {
-  public readonly id: number | null;
+  public readonly id: number;
   public readonly name: string;
   public readonly description: string;
-  public readonly createdAt: Date | null;
-  public readonly updatedAt: Date | null;
+  public readonly createdAt: Date;
+  public readonly updatedAt: Date;
 
   constructor(data: CategoryData) {
     this.id = data.id;

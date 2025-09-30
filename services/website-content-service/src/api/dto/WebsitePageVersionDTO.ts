@@ -12,8 +12,9 @@
  * Website page version creation DTO
  */
 export interface WebsitePageVersionCreateDTO {
-  pageSlug: string;
+  pageId: number;
   markdownContent: string;
+  version: number;
 }
 
 /**
@@ -21,18 +22,20 @@ export interface WebsitePageVersionCreateDTO {
  */
 export interface WebsitePageVersionUpdateDTO {
   markdownContent?: string;
+  htmlContent?: string;
+  version?: number;
 }
 
 /**
  * Website page version public DTO (for API responses)
  */
 export interface WebsitePageVersionPublicDTO {
-  id: number | null;
-  pageId: number | null;
+  id: number;
+  pageId: number;
   versionNumber: number;
   markdownContent: string;
-  htmlContent: string;
-  createdAt: Date | null;
+  htmlContent: string | null;
+  createdAt: Date;
 }
 
 /**

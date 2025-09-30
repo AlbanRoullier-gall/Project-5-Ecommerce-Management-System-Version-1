@@ -22,12 +22,12 @@ export class CompanyController {
   async getCustomerCompanies(req: Request, res: Response): Promise<void> {
     try {
       const { customerId } = req.params;
-      
+
       if (!customerId) {
         res.status(400).json({ error: "Customer ID is required" });
         return;
       }
-      
+
       const companies = await this.customerService.listCustomerCompanies(
         parseInt(customerId)
       );
@@ -49,12 +49,12 @@ export class CompanyController {
   async createCompany(req: Request, res: Response): Promise<void> {
     try {
       const { customerId } = req.params;
-      
+
       if (!customerId) {
         res.status(400).json({ error: "Customer ID is required" });
         return;
       }
-      
+
       const companyCreateDTO: CompanyCreateDTO = req.body;
       const companyData =
         CustomerMapper.companyCreateDTOToCompanyData(companyCreateDTO);
@@ -90,12 +90,12 @@ export class CompanyController {
   async updateCompany(req: Request, res: Response): Promise<void> {
     try {
       const { companyId } = req.params;
-      
+
       if (!companyId) {
         res.status(400).json({ error: "Company ID is required" });
         return;
       }
-      
+
       const companyUpdateDTO: CompanyUpdateDTO = req.body;
       const updateData =
         CustomerMapper.companyUpdateDTOToCompanyData(companyUpdateDTO);
@@ -127,12 +127,12 @@ export class CompanyController {
   async deleteCompany(req: Request, res: Response): Promise<void> {
     try {
       const { companyId } = req.params;
-      
+
       if (!companyId) {
         res.status(400).json({ error: "Company ID is required" });
         return;
       }
-      
+
       const success = await this.customerService.deleteCompany(
         parseInt(companyId)
       );

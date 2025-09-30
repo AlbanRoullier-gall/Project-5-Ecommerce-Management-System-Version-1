@@ -28,10 +28,10 @@ export interface CategoryUpdateDTO {
  * Category public DTO (for API responses)
  */
 export interface CategoryPublicDTO {
-  id: number | null;
+  id: number;
   name: string;
   description: string;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
   productCount?: number;
 }
