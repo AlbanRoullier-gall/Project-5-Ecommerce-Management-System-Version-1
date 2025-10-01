@@ -16,7 +16,7 @@ import { ApiRouter } from "./api";
 dotenv.config();
 
 // Configuration
-const PORT = process.env.PORT || 3005;
+const PORT = process.env.PORT || 3004;
 
 /**
  * Fonction principale pour démarrer le service

@@ -1,53 +1,58 @@
-# API Gateway - Multi-stage build avec contexte partagé
-# Étape 1 : Build
-FROM node:18 AS builder
+# ===== IMAGE DE BASE =====
+FROM node:18-alpine
+
+# ===== MÉTADONNÉES =====
+LABEL maintainer="api-gateway"
+LABEL description="API Gateway - Ultra Simple Microservice"
+LABEL version="1.0.0"
+
+# ===== CONFIGURATION DE L'ENVIRONNEMENT =====
 WORKDIR /app
 
-# Copier shared-types depuis la racine du projet
+# ===== INSTALLATION DES DÉPENDANCES SYSTÈME =====
+# Installation de curl pour les healthchecks
+RUN apk add --no-cache curl
+
+# ===== COPIE DES TYPES PARTAGÉS =====
+# Copier les types partagés depuis la racine du projet
 COPY shared-types/ ./shared-types/
 
-# Copier la configuration de l'api-gateway
+# ===== GESTION DES DÉPENDANCES NODE.JS =====
+# Copier les fichiers de configuration
 COPY api-gateway/package*.json ./
 COPY api-gateway/tsconfig.json ./
 
-# Installer les dépendances
-RUN npm ci
+# Installer toutes les dépendances (dev + prod pour la compilation TypeScript)
+RUN npm ci --only=production=false
 
-# Copier le code source
+# ===== COPIE DU CODE SOURCE =====
+# Copier le code source TypeScript
 COPY api-gateway/src/ ./src/
 
-# Compiler TypeScript
+# ===== COMPILATION TYPESCRIPT =====
+# Compiler le TypeScript vers JavaScript
 RUN npm run build
 
-# Étape 2 : Runtime
-FROM node:18-alpine AS runtime
+# ===== OPTIMISATION DE L'IMAGE =====
+# Supprimer les dépendances de développement pour réduire la taille
+RUN npm prune --production
 
-# Installer curl pour les health checks
-RUN apk add --no-cache curl
+# ===== SÉCURITÉ =====
+# Créer un utilisateur non-root pour la sécurité
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
 
-# Définir le répertoire de travail
-WORKDIR /app
+# Changer la propriété du répertoire de l'application
+RUN chown -R nodejs:nodejs /app
+USER nodejs
 
-# Copier les fichiers compilés depuis l'étape builder
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/shared-types ./shared-types
-
-# Copier package.json pour les dépendances de production
-COPY api-gateway/package*.json ./
-
-# Installer seulement les dépendances de production
-RUN npm ci --only=production
-
-# Exposer le port
+# ===== CONFIGURATION DU RÉSEAU =====
 EXPOSE 3000
 
-# Variables d'environnement par défaut
-ENV NODE_ENV=production
-ENV PORT=3000
+# ===== HEALTHCHECK =====
+# Vérification de santé du service
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000/api/health || exit 1
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/health || exit 1
-
-# Commande de démarrage
-CMD ["node", "dist/src/index.js"]
+# ===== COMMANDE DE DÉMARRAGE =====
+CMD ["npm", "start"]

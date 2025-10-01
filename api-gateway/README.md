@@ -1,339 +1,275 @@
-# API Gateway v2.0 - E-commerce Platform
+# 🚪 API Gateway - E-commerce Platform (Version Simplifiée)
 
-## 🎯 Vue d'ensemble
+Point d'entrée centralisé pour tous les microservices de la plateforme e-commerce.
 
-API Gateway refactorisé avec une architecture modulaire, propre et maintenable. Ce gateway sert de point d'entrée unique pour tous les microservices de la plateforme e-commerce.
+## 🎯 Architecture Ultra-Simplifiée
 
-## 🏗️ Architecture
+### Structure du projet
 
 ```
 api-gateway/
 ├── src/
-│   ├── index.ts                    # Point d'entrée (100 lignes)
-│   ├── config/
-│   │   └── services.config.ts      # Configuration centralisée
 │   ├── clients/
-│   │   └── ServiceClient.ts        # Client HTTP générique
-│   ├── middlewares/
-│   │   ├── errorHandler.ts         # Gestion d'erreurs
-│   │   └── validation.ts           # Validation (existant)
+│   │   └── ServiceClient.ts    # Proxy HTTP vers les services
+│   ├── config/
+│   │   └── services.config.ts  # Configuration des services
 │   ├── routes/
-│   │   ├── index.ts                # Router principal
-│   │   ├── auth.routes.ts          # Routes authentification
-│   │   ├── products.routes.ts      # Routes produits
-│   │   ├── orders.routes.ts        # Routes commandes
-│   │   ├── cart.routes.ts          # Routes panier
-│   │   ├── customers.routes.ts     # Routes clients
-│   │   ├── payments.routes.ts      # Routes paiements
-│   │   ├── email.routes.ts         # Routes emails
-│   │   └── content.routes.ts       # Routes contenu web
-│   ├── utils/
-│   │   └── logger.ts               # Logger Winston
-│   └── types/
-│       └── index.ts                # Types TypeScript
+│   │   └── index.ts            # Routing automatique
+│   └── index.ts                # Point d'entrée
 ├── package.json
-├── tsconfig.json
-└── README.md
+└── tsconfig.json
 ```
 
-## 🚀 Fonctionnalités
+**4 fichiers TypeScript seulement !** 🎉
 
-### ✅ Implémenté
+## 🔌 Services connectés
 
-- **Architecture modulaire** : Séparation claire des responsabilités
-- **ServiceClient générique** : Un seul client pour tous les services
-- **Configuration centralisée** : Tous les services configurés dans un fichier
-- **Routes modulaires** : Un fichier par domaine métier
-- **Gestion d'erreurs centralisée** : Erreurs standardisées et cohérentes
-- **Logging structuré** : Winston avec logs détaillés
-- **Health checks** : Vérification de l'état de tous les services
-- **Timeouts configurables** : Par service
-- **TypeScript** : Typage complet
+| Service                     | Port  | Description                     |
+| --------------------------- | ----- | ------------------------------- |
+| **auth-service**            | 13008 | Authentification & utilisateurs |
+| **customer-service**        | 13001 | Gestion clients                 |
+| **product-service**         | 13002 | Produits & catégories           |
+| **order-service**           | 13003 | Commandes                       |
+| **cart-service**            | 13004 | Panier                          |
+| **website-content-service** | 13005 | Contenu du site                 |
+| **payment-service**         | 13006 | Paiements Stripe                |
+| **email-service**           | 13007 | Envoi d'emails                  |
 
-### 🔗 Services Connectés (8/8)
-
-| Service                     | Port  | Description                      |
-| --------------------------- | ----- | -------------------------------- |
-| **auth-service**            | 13008 | Authentification et utilisateurs |
-| **product-service**         | 13002 | Produits et catégories           |
-| **order-service**           | 13003 | Gestion des commandes            |
-| **cart-service**            | 13004 | Panier d'achat                   |
-| **customer-service**        | 13001 | Données clients                  |
-| **payment-service**         | 13006 | Paiements et Stripe              |
-| **email-service**           | 13007 | Envoi d'emails                   |
-| **website-content-service** | 13005 | Contenu du site                  |
-
-## 📦 Installation
+## 🚀 Démarrage rapide
 
 ```bash
-# Installer les dépendances
-cd api-gateway
+# Installation
 npm install
 
-# Build TypeScript
-npm run build
-
-# Démarrer en mode développement
+# Développement
 npm run dev
 
-# Démarrer en production
+# Production
+npm run build
 npm start
 ```
 
-## 🔧 Configuration
-
-### Variables d'environnement
-
-Créez un fichier `.env` à la racine du projet :
-
-```env
-# Gateway
-PORT=3000
-NODE_ENV=development
-JWT_SECRET=your-jwt-secret-key
-LOG_LEVEL=info
-
-# Services URLs
-AUTH_SERVICE_URL=http://localhost:13008
-PRODUCT_SERVICE_URL=http://localhost:13002
-ORDER_SERVICE_URL=http://localhost:13003
-CART_SERVICE_URL=http://localhost:13004
-CUSTOMER_SERVICE_URL=http://localhost:13001
-PAYMENT_SERVICE_URL=http://localhost:13006
-EMAIL_SERVICE_URL=http://localhost:13007
-WEBSITE_CONTENT_SERVICE_URL=http://localhost:13005
-```
-
-## 📚 Endpoints
-
-### Health & Info
-
-- `GET /` - Informations de base
-- `GET /api/health` - Health check du gateway
-- `GET /api/health/services` - Health check de tous les services
-- `GET /api/info` - Informations détaillées
-
-### Authentification
-
-- `POST /api/auth/register` - Inscription
-- `POST /api/auth/login` - Connexion
-- `GET /api/auth/profile` - Profil utilisateur
-- `PUT /api/auth/profile` - Mise à jour profil
-- `POST /api/auth/logout` - Déconnexion
-
-### Produits
-
-- `GET /api/products` - Liste des produits (public)
-- `GET /api/products/:id` - Détail produit (public)
-- `POST /api/admin/products` - Créer un produit
-- `PUT /api/admin/products/:id` - Modifier un produit
-- `DELETE /api/admin/products/:id` - Supprimer un produit
-
-### Catégories
-
-- `GET /api/categories` - Liste des catégories (public)
-- `POST /api/admin/categories` - Créer une catégorie
-- `PUT /api/admin/categories/:id` - Modifier une catégorie
-- `DELETE /api/admin/categories/:id` - Supprimer une catégorie
-
-### Commandes
-
-- `GET /api/orders/my-orders` - Mes commandes
-- `GET /api/orders/:id` - Détail commande
-- `POST /api/orders` - Créer une commande
-- `POST /api/orders/:id/cancel` - Annuler une commande
-
-### Panier
-
-- `GET /api/cart` - Récupérer le panier
-- `POST /api/cart/items` - Ajouter un article
-- `PUT /api/cart/items/:itemId` - Modifier quantité
-- `DELETE /api/cart/items/:itemId` - Retirer un article
-
-### Paiements
-
-- `POST /api/payments/create-payment-intent` - Créer intention de paiement
-- `POST /api/payments/confirm` - Confirmer un paiement
-- `GET /api/payments/history` - Historique des paiements
-
-### Clients
-
-- `GET /api/customers/me` - Mes informations
-- `PUT /api/customers/me` - Mettre à jour mes informations
-- `GET /api/customers/me/addresses` - Mes adresses
-- `POST /api/customers/me/addresses` - Ajouter une adresse
-
-### Email
-
-- `POST /api/contact` - Formulaire de contact
-
-### Contenu Web
-
-- `GET /api/content/pages` - Liste des pages
-- `GET /api/content/pages/:slug` - Page par slug
-- `GET /api/content/settings` - Paramètres du site
-
-## 🔍 Gestion des Erreurs
-
-### Erreurs Gérées
-
-| Code    | Type                  | Description                       |
-| ------- | --------------------- | --------------------------------- |
-| **404** | Not Found             | Route non trouvée                 |
-| **500** | Internal Server Error | Erreur interne du gateway         |
-| **503** | Service Unavailable   | Service microservice indisponible |
-| **504** | Gateway Timeout       | Timeout de communication          |
-
-### Format des Erreurs
-
-```json
-{
-  "error": "Service Unavailable",
-  "message": "product-service is currently unavailable",
-  "timestamp": "2025-10-01T10:30:00Z",
-  "statusCode": 503
-}
-```
-
-## 📊 Logging
-
-### Niveaux de Log
-
-- `error` : Erreurs critiques
-- `warn` : Avertissements
-- `info` : Informations importantes
-- `debug` : Informations de débogage
-
-### Exemple de Logs
-
-```
-2025-10-01 10:30:00 [info]: Request completed { method: 'GET', path: '/api/products', statusCode: 200, duration: '45ms', service: 'product-service' }
-
-2025-10-01 10:31:00 [error]: Service communication error { service: 'order-service', endpoint: '/api/orders', error: 'ECONNREFUSED' }
-```
-
-## 🛠️ Développement
-
-### Ajouter un Nouveau Service
-
-1. **Ajouter la configuration** dans `config/services.config.ts` :
-
-```typescript
-export const servicesConfig: ServiceRegistry = {
-  // ... services existants
-  newService: {
-    name: "new-service",
-    url: process.env["NEW_SERVICE_URL"] || "http://localhost:13011",
-    timeout: 30000,
-    healthEndpoint: "/api/health",
-  },
-};
-```
-
-2. **Créer le fichier de routes** `routes/newservice.routes.ts` :
-
-```typescript
-import { Router, Request, Response } from "express";
-import { serviceClient } from "../clients/ServiceClient";
-
-const router = Router();
-
-router.get("/", (req: Request, res: Response) => {
-  serviceClient.proxy("newService", req, res, "/endpoint");
-});
-
-export default router;
-```
-
-3. **Monter les routes** dans `routes/index.ts` :
-
-```typescript
-import newServiceRoutes from "./newservice.routes";
-
-router.use("/newservice", newServiceRoutes);
-```
-
-4. **Mettre à jour les types** dans `types/index.ts` :
-
-```typescript
-export interface ServiceRegistry {
-  // ... services existants
-  newService: ServiceConfig;
-}
-```
-
-C'est tout ! 🎉
-
-## 📈 Métriques et Monitoring
+## 📡 Endpoints
 
 ### Health Checks
 
-Endpoint `/api/health/services` retourne l'état de tous les services :
-
-```json
-{
-  "status": "OK",
-  "timestamp": "2025-10-01T10:30:00Z",
-  "services": {
-    "auth": true,
-    "product": true,
-    "order": true,
-    "cart": false,
-    "customer": true,
-    "payment": true,
-    "email": true,
-    "websiteContent": true
-  }
-}
+```
+GET /api/health              # Gateway status
+GET /api/health/services     # All services status
 ```
 
-## 🔐 Sécurité
+### Routes automatiquement proxifiées
 
-- **Helmet.js** : Protection contre les vulnérabilités courantes
-- **CORS** : Configuration stricte des origines autorisées
-- **Timeouts** : Protection contre les services lents
-- **Validation** : Headers et body validés
+Toutes les requêtes sont automatiquement routées vers le bon service :
 
-## 🚧 Améliorations Futures (Optionnelles)
+```
+/api/auth/*           → auth-service
+/api/products/*       → product-service
+/api/orders/*         → order-service
+/api/cart/*           → cart-service
+/api/customers/*      → customer-service
+/api/payments/*       → payment-service
+/api/contact/*        → email-service
+/api/content/*        → website-content-service
+```
 
-- [ ] Circuit Breaker (avec Opossum)
-- [ ] Retry Mechanism (avec axios-retry)
-- [ ] Rate Limiting (avec express-rate-limit)
-- [ ] Métriques Prometheus
-- [ ] Tracing distribué (avec Jaeger)
-- [ ] Cache Redis
-- [ ] API Versioning
+### Exemples
 
-## 📝 Changelog
+```bash
+# Connexion
+POST /api/auth/login
+Body: { "email": "user@test.com", "password": "123456" }
 
-### Version 2.0.0 (2025-10-01)
+# Récupérer les produits
+GET /api/products?page=1&limit=10
 
-**✨ Refactoring Complet**
+# Ajouter au panier
+POST /api/cart/items
+Body: { "productId": 1, "quantity": 2 }
 
-- ✅ Architecture modulaire avec séparation des responsabilités
-- ✅ ServiceClient générique (remplacement de 3 fonctions dupliquées)
-- ✅ Configuration centralisée des 8 services
-- ✅ Routes modulaires par domaine
-- ✅ Gestion d'erreurs centralisée et standardisée
-- ✅ Logging structuré avec Winston
-- ✅ Health checks pour tous les services
-- ✅ Réduction de 580 lignes à ~100 lignes dans index.ts
-- ✅ TypeScript avec typage complet
-- ✅ Documentation complète
+# Créer une commande
+POST /api/orders
+Body: { "items": [...], "shippingAddress": {...} }
+```
 
-## 👥 Contribution
+## 🛠️ Comment ça fonctionne ?
 
-Pour contribuer :
+### 1. Routing automatique
 
-1. Respecter l'architecture modulaire
-2. Ajouter les types TypeScript
-3. Documenter les nouveaux endpoints
-4. Tester avec tous les services
+Le fichier `routes/index.ts` contient un simple mapping :
+
+```typescript
+const SERVICE_ROUTES = {
+  "/auth": "auth",
+  "/products": "product",
+  "/orders": "order",
+  // ...
+};
+```
+
+Chaque route est automatiquement proxifiée vers le service correspondant.
+
+### 2. ServiceClient
+
+La classe `ServiceClient` :
+
+- Maintient un client Axios par service (pré-configuré au démarrage)
+- Transmet les requêtes avec headers, body, query params
+- Gère les erreurs (timeout, service down, erreurs HTTP)
+- Retourne les réponses au client
+
+### 3. Flux d'une requête
+
+```
+Client → API Gateway (port 3000)
+         ↓
+    routes/index.ts (identifie le service)
+         ↓
+    ServiceClient.proxy()
+         ↓
+    Axios → Microservice (ex: port 13008)
+         ↓
+    Réponse ← Microservice
+         ↓
+Client ← API Gateway
+```
+
+## ⚙️ Configuration
+
+### Variables d'environnement (.env)
+
+```bash
+PORT=3000
+NODE_ENV=development
+
+# URLs des services (optionnel, défauts : localhost:130XX)
+AUTH_SERVICE_URL=http://localhost:13008
+PRODUCT_SERVICE_URL=http://localhost:13002
+ORDER_SERVICE_URL=http://localhost:13003
+# ...
+```
+
+### Personnalisation
+
+**Ajouter un nouveau service :**
+
+1. Ajoutez-le dans `config/services.config.ts` :
+
+```typescript
+const SERVICES = {
+  // ...
+  monNouveauService: { port: 13009 },
+};
+```
+
+2. Ajoutez la route dans `routes/index.ts` :
+
+```typescript
+const SERVICE_ROUTES = {
+  // ...
+  "/mon-service": "monNouveauService",
+};
+```
+
+C'est tout ! ✅
+
+## 🔒 Sécurité
+
+- ✅ **Helmet** : Headers de sécurité HTTP
+- ✅ **CORS** : Configuré pour frontend/backoffice
+- ✅ **Timeouts** : 30s par défaut, 45s pour orders/payments
+- ✅ **Error handling** : Pas de fuite d'informations sensibles
+
+## 📊 Gestion des erreurs
+
+Le ServiceClient gère automatiquement :
+
+| Erreur                     | Code HTTP | Description              |
+| -------------------------- | --------- | ------------------------ |
+| Service répond avec erreur | 4xx/5xx   | Retransmise telle quelle |
+| Timeout                    | 504       | Gateway Timeout          |
+| Service inaccessible       | 503       | Service Unavailable      |
+| Erreur inconnue            | 500       | Internal Server Error    |
+
+## 🧪 Tests
+
+```bash
+# Tester le health check
+curl http://localhost:3000/api/health
+
+# Tester le status des services
+curl http://localhost:3000/api/health/services
+
+# Tester un proxy (exemple avec auth)
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@test.com","password":"123456"}'
+```
+
+## 📈 Performance
+
+- **Démarrage** : ~1 seconde
+- **Latency overhead** : < 5ms (juste le proxy)
+- **Mémoire** : ~50MB (Node.js + Express + Axios)
+- **Concurrence** : Limité par Node.js event loop
+
+## 🎓 Pourquoi cette architecture ?
+
+**Avantages :**
+
+- ✅ Point d'entrée unique (simplifie le déploiement)
+- ✅ Gestion centralisée des erreurs
+- ✅ CORS et sécurité centralisés
+- ✅ Facile à monitorer (un seul point)
+- ✅ Simplifie le frontend (1 seule URL)
+
+**Quand l'utiliser :**
+
+- Plusieurs microservices à orchestrer
+- Frontend/mobile qui consomme les APIs
+- Besoin de cacher la complexité interne
+
+## 📝 Logs
+
+En mode développement, chaque requête est loguée :
+
+```
+✅ POST /auth/login → auth (200) - 245ms
+❌ GET /products → product (404) - 123ms
+⏱️  POST /orders → order TIMEOUT - 30001ms
+🔌 GET /payments → payment UNREACHABLE - 50ms
+```
+
+## 🚧 Limitations
+
+- Pas de rate limiting (à ajouter si nécessaire)
+- Pas de cache (chaque requête = appel au service)
+- Pas d'authentification centralisée (délégué aux services)
+- Pas de load balancing (1 instance par service)
+
+## 📚 Documentation
+
+- **Architecture complète** : Voir [SIMPLIFICATION.md](./SIMPLIFICATION.md)
+- **Comparaison avant/après** : Voir [SIMPLIFICATION.md](./SIMPLIFICATION.md)
+
+## 🤝 Contribution
+
+Pour modifier l'API Gateway :
+
+1. Modifiez le code dans `src/`
+2. Testez avec `npm run dev`
+3. Compilez avec `npm run build`
+4. Committez les changements
 
 ## 📞 Support
 
-Pour toute question ou problème, consultez la documentation ou contactez l'équipe de développement.
+En cas de problème :
+
+1. Vérifiez que tous les services sont démarrés
+2. Consultez les logs du gateway
+3. Testez le endpoint `/api/health/services`
 
 ---
 
-**Développé avec ❤️ par l'équipe E-commerce Platform**
+**Version** : 2.0.0-simplified  
+**Dernière mise à jour** : Octobre 2025

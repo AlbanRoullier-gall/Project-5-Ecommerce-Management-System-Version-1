@@ -40,7 +40,7 @@ const pool = new Pool({
  * 5. Exécute uniquement les nouvelles migrations
  * 6. Enregistre chaque migration exécutée
  */
-export async function runMigrations(): Promise<void> {
+async function runMigrations(): Promise<void> {
   // Connexion à la base de données
   const client = await pool.connect();
 
@@ -126,3 +126,5 @@ if (require.main === module) {
       process.exit(1); // Sortir avec erreur
     });
 }
+
+export default runMigrations;

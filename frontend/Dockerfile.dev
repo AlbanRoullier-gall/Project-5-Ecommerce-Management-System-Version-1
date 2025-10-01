@@ -9,8 +9,16 @@ RUN npm install
 # Copy shared-types first
 COPY shared-types/ ./shared-types/
 
-# Copy frontend source files
-COPY frontend/ .
+# Copy only source files, not node_modules
+COPY frontend/pages/ ./pages/
+COPY frontend/components/ ./components/
+COPY frontend/lib/ ./lib/
+COPY frontend/styles/ ./styles/
+COPY frontend/public/ ./public/
+COPY frontend/next.config.js ./
+COPY frontend/postcss.config.js ./
+COPY frontend/tailwind.config.js ./
+COPY frontend/tsconfig.json ./
 
 # Expose port for Next.js dev server
 EXPOSE 3000

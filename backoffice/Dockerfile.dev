@@ -9,8 +9,17 @@ RUN npm install
 # Copy shared-types first
 COPY shared-types/ ./shared-types/
 
-# Copy backoffice source files
-COPY backoffice/ .
+# Copy only source files, not node_modules
+COPY backoffice/pages/ ./pages/
+COPY backoffice/components/ ./components/
+COPY backoffice/contexts/ ./contexts/
+COPY backoffice/lib/ ./lib/
+COPY backoffice/styles/ ./styles/
+COPY backoffice/public/ ./public/
+COPY backoffice/next.config.js ./
+COPY backoffice/postcss.config.js ./
+COPY backoffice/tailwind.config.js ./
+COPY backoffice/tsconfig.json ./
 
 # Expose port for Next.js dev server
 EXPOSE 3000

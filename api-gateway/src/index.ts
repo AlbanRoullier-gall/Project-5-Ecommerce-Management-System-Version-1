@@ -1,199 +1,208 @@
 /**
- * ===========================================
- * API GATEWAY - E-COMMERCE PLATFORM v2.0
- * ===========================================
- *
- * Point d'entrée central pour toutes les requêtes de l'application e-commerce.
- * Architecture refactorisée avec séparation des responsabilités.
- *
- * Architecture :
- * - Proxy centralisé vers 8 microservices
- * - Gestion d'erreurs standardisée
- * - Logging structuré avec Winston
- * - Configuration externalisée
- * - Routes modulaires par domaine
- *
- * Services connectés :
- * 1. auth-service (port 13008) : Authentification et utilisateurs
- * 2. product-service (port 13002) : Produits et catégories
- * 3. order-service (port 13003) : Gestion des commandes
- * 4. cart-service (port 13004) : Panier d'achat
- * 5. customer-service (port 13001) : Données clients
- * 6. payment-service (port 13006) : Paiements et Stripe
- * 7. email-service (port 13007) : Envoi d'emails
- * 8. website-content-service (port 13005) : Contenu du site
- *
- * @author E-commerce Platform Team
- * @version 2.0.0
+ * API GATEWAY - VERSION ULTRA-SIMPLE
+ * 1 seul fichier, routing automatique vers les microservices
  */
 
-import express, { Application } from "express";
+import express, { Request, Response, NextFunction } from "express";
+import axios, { AxiosError } from "axios";
 import cors from "cors";
 import helmet from "helmet";
-import morgan from "morgan";
-import dotenv from "dotenv";
 
-// Configuration
-import { gatewayConfig } from "./config/services.config";
+const app = express();
+const PORT = parseInt(process.env["PORT"] || "3000", 10);
 
-// Routes
-import apiRouter from "./routes";
+// ===== TYPES =====
+type ServiceName = keyof typeof SERVICES;
 
-// Middlewares
-import { errorHandler, notFoundHandler } from "./middlewares/errorHandler";
+// ===== CONFIGURATION DES SERVICES =====
+const SERVICES = {
+  auth: "http://localhost:3008",
+  product: "http://localhost:3002",
+  order: "http://localhost:3003",
+  cart: "http://localhost:3004",
+  customer: "http://localhost:3001",
+  payment: "http://localhost:3007",
+  email: "http://localhost:3006",
+  websiteContent: "http://localhost:3005",
+} as const;
 
-// Logger
-import logger, { logSystemEvent } from "./utils/logger";
+// ===== MAPPING ROUTES =====
+const ROUTES: Record<string, ServiceName> = {
+  // === AUTH SERVICE ===
+  "/auth": "auth",
+  "/auth/register": "auth",
+  "/auth/login": "auth",
+  "/auth/profile": "auth",
+  "/auth/change-password": "auth",
+  "/auth/logout": "auth",
 
-// Chargement des variables d'environnement
-dotenv.config();
+  // === PRODUCT SERVICE ===
+  "/products": "product",
+  "/categories": "product",
+  "/admin/products": "product",
+  "/admin/categories": "product",
 
-// ===========================================
-// INITIALISATION DE L'APPLICATION
-// ===========================================
+  // === ORDER SERVICE ===
+  "/orders": "order",
+  "/order-items": "order",
+  "/credit-notes": "order",
+  "/credit-note-items": "order",
+  "/order-addresses": "order",
+  "/statistics/orders": "order",
+  "/customers/:customerId/credit-notes": "order",
+  "/customers/:customerId/statistics/orders": "order",
 
-const app: Application = express();
-const PORT = gatewayConfig.port;
+  // === CART SERVICE ===
+  "/cart": "cart",
+  "/cart/checkout": "cart",
+  "/cart/items": "cart",
+  "/cart/validate": "cart",
+  "/cart/stats": "cart",
 
-// ===========================================
-// MIDDLEWARES GLOBAUX
-// ===========================================
+  // === CUSTOMER SERVICE ===
+  "/customers": "customer",
+  "/civilities": "customer",
+  "/countries": "customer",
+  "/socio-professional-categories": "customer",
+  "/customer-addresses": "customer",
+  "/customer-companies": "customer",
 
-/**
- * Sécurité avec Helmet
- */
+  // === PAYMENT SERVICE ===
+  "/payment": "payment",
+  "/payment/create": "payment",
+  "/payment/confirm": "payment",
+  "/payment/refund": "payment",
+  "/payment/stats": "payment",
+
+  // === EMAIL SERVICE ===
+  "/email": "email",
+  "/email/send": "email",
+  "/email/confirmation": "email",
+  "/contact": "email",
+
+  // === WEBSITE CONTENT SERVICE ===
+  "/website-content": "websiteContent",
+  "/website-content/pages": "websiteContent",
+  "/admin/website-content": "websiteContent",
+  "/admin/website-content/pages": "websiteContent",
+};
+
+// ===== MIDDLEWARES =====
 app.use(helmet());
-
-/**
- * Configuration CORS
- */
 app.use(
   cors({
-    origin: gatewayConfig.corsOrigins,
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3009",
+      "http://localhost:3010",
+    ],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   })
 );
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-/**
- * Parsing des requêtes
- */
-app.use(express.json({ limit: gatewayConfig.maxRequestSize }));
-app.use(
-  express.urlencoded({ extended: true, limit: gatewayConfig.maxRequestSize })
-);
-
-/**
- * Logging des requêtes HTTP (Morgan)
- */
-app.use(morgan("combined"));
-
-// ===========================================
-// MONTAGE DES ROUTES
-// ===========================================
-
-/**
- * Toutes les routes de l'API sont préfixées par /api
- */
-app.use("/api", apiRouter);
-
-/**
- * Route racine pour vérifier que le serveur fonctionne
- */
-app.get("/", (_req, res) => {
+// ===== ROUTES DE SANTÉ =====
+app.get("/api/health", (_req: Request, res: Response) => {
   res.json({
-    name: "API Gateway - E-commerce Platform",
-    version: "2.0.0",
+    status: "OK",
+    service: "api-gateway",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get("/api/health/services", async (_req: Request, res: Response) => {
+  const results: Record<string, boolean> = {};
+  await Promise.all(
+    Object.entries(SERVICES).map(async ([name, url]) => {
+      try {
+        const response = await axios.get(`${url}/api/health`, {
+          timeout: 5000,
+        });
+        results[name] = response.status === 200;
+      } catch {
+        results[name] = false;
+      }
+    })
+  );
+
+  const allHealthy = Object.values(results).every((h) => h);
+  res
+    .status(allHealthy ? 200 : 503)
+    .json({ status: allHealthy ? "OK" : "DEGRADED", services: results });
+});
+
+// ===== ROUTING AUTOMATIQUE =====
+Object.entries(ROUTES).forEach(([route, service]) => {
+  app.use(`/api${route}`, async (req: Request, res: Response) => {
+    try {
+      const serviceUrl = SERVICES[service];
+      const targetUrl = `${serviceUrl}${req.originalUrl}`;
+
+      const response = await axios({
+        method: req.method,
+        url: targetUrl,
+        data: req.body,
+        params: req.query,
+        headers: { ...req.headers, host: undefined },
+        timeout: 30000,
+      });
+
+      console.log(
+        `✅ ${req.method} ${req.originalUrl} → ${service} (${response.status})`
+      );
+      res.status(response.status).json(response.data);
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const status = axiosError.response?.status || 500;
+      const message = axiosError.response?.data || { error: "Service Error" };
+
+      console.error(
+        `❌ ${req.method} ${req.originalUrl} → ${service} (${status})`
+      );
+      res.status(status).json(message);
+    }
+  });
+});
+
+// ===== ROUTE RACINE =====
+app.get("/", (_req: Request, res: Response) => {
+  res.json({
+    name: "API Gateway - Ultra Simple",
+    version: "1.0.0",
     status: "Running",
-    documentation: "/api/info",
     health: "/api/health",
   });
 });
 
-// ===========================================
-// GESTION DES ERREURS
-// ===========================================
+// ===== 404 HANDLER =====
+app.use((req: Request, res: Response) => {
+  res.status(404).json({
+    error: "Route Not Found",
+    message: `${req.method} ${req.originalUrl} does not exist`,
+  });
+});
 
-/**
- * Middleware pour les routes non trouvées (404)
- */
-app.use(notFoundHandler);
+// ===== ERROR HANDLER =====
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({
+    error: "Internal Server Error",
+    message:
+      process.env["NODE_ENV"] === "production"
+        ? "An error occurred"
+        : err.message,
+  });
+});
 
-/**
- * Middleware global de gestion des erreurs
- */
-app.use(errorHandler);
+// ===== DÉMARRAGE =====
+app.listen(PORT, () => {
+  console.log("\n╔════════════════════════════════════════╗");
+  console.log("║   🚀 API GATEWAY - ULTRA SIMPLE v1.0   ║");
+  console.log("╚════════════════════════════════════════╝\n");
+  console.log(`📍 Port: ${PORT}`);
+  console.log(`🌐 URL: http://localhost:${PORT}`);
+  console.log(`📊 Health: http://localhost:${PORT}/api/health\n`);
+});
 
-// ===========================================
-// DÉMARRAGE DU SERVEUR
-// ===========================================
-
-/**
- * Fonction de démarrage gracieux
- */
-const startServer = async (): Promise<void> => {
-  try {
-    // Démarrage du serveur HTTP
-    const server = app.listen(PORT, () => {
-      console.log("\n╔════════════════════════════════════════════════╗");
-      console.log("║   🚀 API GATEWAY v2.0 - DÉMARRÉ AVEC SUCCÈS   ║");
-      console.log("╚════════════════════════════════════════════════╝\n");
-      console.log(`📍 Port              : ${PORT}`);
-      console.log(`🌐 URL               : http://localhost:${PORT}`);
-      console.log(`🌍 Environnement     : ${gatewayConfig.nodeEnv}`);
-      console.log(`📊 Log Level         : ${gatewayConfig.logLevel}`);
-      console.log("\n🔗 Services Connectés:");
-      console.log("   ✓ auth-service           (13008)");
-      console.log("   ✓ product-service        (13002)");
-      console.log("   ✓ order-service          (13003)");
-      console.log("   ✓ cart-service           (13004)");
-      console.log("   ✓ customer-service       (13001)");
-      console.log("   ✓ payment-service        (13006)");
-      console.log("   ✓ email-service          (13007)");
-      console.log("   ✓ website-content-service (13005)");
-      console.log("\n📚 Endpoints Disponibles:");
-      console.log("   • GET  /api/health         - Health check");
-      console.log("   • GET  /api/health/services - Services health");
-      console.log("   • GET  /api/info           - Informations API");
-      console.log("\n✅ Gateway prêt à recevoir des requêtes !\n");
-
-      logSystemEvent("API Gateway started successfully", {
-        port: PORT,
-        environment: gatewayConfig.nodeEnv,
-      });
-    });
-
-    // Gestion de l'arrêt gracieux
-    const gracefulShutdown = (signal: string) => {
-      console.log(`\n🛑 Signal ${signal} reçu. Arrêt gracieux en cours...`);
-      logSystemEvent(`Shutting down due to ${signal}`);
-
-      server.close(() => {
-        console.log("✅ Serveur HTTP fermé");
-        logSystemEvent("Server closed successfully");
-        process.exit(0);
-      });
-
-      // Force l'arrêt après 10 secondes
-      setTimeout(() => {
-        console.error("⚠️  Arrêt forcé après timeout");
-        process.exit(1);
-      }, 10000);
-    };
-
-    // Écoute des signaux d'arrêt
-    process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-    process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-  } catch (error) {
-    console.error("❌ Erreur au démarrage du serveur:", error);
-    logger.error("Failed to start server", { error });
-    process.exit(1);
-  }
-};
-
-// Démarrer le serveur
-startServer();
-
-// Export pour les tests
 export default app;

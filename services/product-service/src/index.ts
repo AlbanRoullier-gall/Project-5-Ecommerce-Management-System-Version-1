@@ -13,7 +13,7 @@ import express from "express";
 import { Pool } from "pg";
 import dotenv from "dotenv";
 import { ApiRouter } from "./api";
-import { runMigrations } from "./migrations/migrate";
+import runMigrations from "./migrations/migrate";
 
 // Load environment variables
 dotenv.config();

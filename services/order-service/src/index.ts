@@ -11,7 +11,7 @@
 import express from "express";
 import { Pool } from "pg";
 import { ApiRouter } from "./api";
-import { runMigrations } from "./migrations/migrate";
+import runMigrations from "./migrations/migrate";
 import dotenv from "dotenv";
 
 dotenv.config();

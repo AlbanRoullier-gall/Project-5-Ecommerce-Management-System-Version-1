@@ -8,7 +8,7 @@ BEGIN
     NEW.last_update_timestamp = CURRENT_TIMESTAMP;
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql;
 
 -- Create trigger for website_pages table
 CREATE TRIGGER update_website_pages_last_update_timestamp 
