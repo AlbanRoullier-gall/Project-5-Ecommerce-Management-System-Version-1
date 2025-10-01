@@ -61,7 +61,7 @@ export class AuthService {
   ): Promise<{ user: User; token: string }> {
     try {
       // Validation des données
-      const { email, first_name, last_name, role = "customer" } = userData;
+      const { email, first_name, last_name } = userData;
 
       if (!email || !User.validateEmail(email)) {
         throw new Error("Format d'email invalide");
@@ -92,7 +92,6 @@ export class AuthService {
         password_hash: passwordHash,
         first_name: first_name,
         last_name: last_name,
-        role: role as "admin" | "customer",
         is_active: true,
         created_at: new Date(),
         updated_at: new Date(),
@@ -230,7 +229,6 @@ export class AuthService {
     const payload: JWTPayload = {
       userId: user.userId,
       email: user.email,
-      role: user.role,
       firstName: user.firstName,
       lastName: user.lastName,
     };

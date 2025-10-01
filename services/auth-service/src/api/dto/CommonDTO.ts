@@ -1,6 +1,7 @@
 /**
  * DTOs Communs
  * Types partagés pour les réponses API
+ * Admin-only system: all users are admins
  */
 
 /**
@@ -13,6 +14,5 @@ export interface UserPublicDTO {
   firstName: string;
   lastName: string;
   fullName: string;
-  role: "admin" | "customer";
   isActive: boolean;
 }

@@ -18,7 +18,6 @@ export interface UserData {
   password_hash: string;
   first_name: string;
   last_name: string;
-  role: "admin" | "customer";
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
@@ -42,7 +41,6 @@ export class User {
   public readonly passwordHash: string;
   public readonly firstName: string;
   public readonly lastName: string;
-  public readonly role: "admin" | "customer";
   public readonly isActive: boolean;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
@@ -53,24 +51,9 @@ export class User {
     this.passwordHash = data.password_hash;
     this.firstName = data.first_name;
     this.lastName = data.last_name;
-    this.role = data.role;
     this.isActive = data.is_active;
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
-  }
-
-  /**
-   * Vérifier si l'utilisateur est un administrateur
-   */
-  isAdmin(): boolean {
-    return this.role === "admin";
-  }
-
-  /**
-   * Vérifier si l'utilisateur est un client
-   */
-  isCustomer(): boolean {
-    return this.role === "customer";
   }
 
   /**

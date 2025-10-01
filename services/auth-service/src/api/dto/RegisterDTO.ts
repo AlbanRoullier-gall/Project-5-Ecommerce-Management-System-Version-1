@@ -1,6 +1,7 @@
 /**
  * DTOs pour l'inscription d'utilisateur
  * Correspond à AuthService.registerUser()
+ * Admin-only system: all registered users are admins
  */
 
 /**
@@ -12,5 +13,4 @@ export interface UserRegistrationDTO {
   confirmPassword?: string;
   firstName: string;
   lastName: string;
-  role?: "admin" | "customer";
 }

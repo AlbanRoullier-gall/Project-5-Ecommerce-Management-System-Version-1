@@ -25,7 +25,6 @@ export class UserMapper {
       email: userRegistrationDTO.email,
       first_name: userRegistrationDTO.firstName,
       last_name: userRegistrationDTO.lastName,
-      role: userRegistrationDTO.role || "customer",
     };
   }
 
@@ -46,9 +45,6 @@ export class UserMapper {
     if (userUpdateDTO.email !== undefined) {
       updateData.email = userUpdateDTO.email;
     }
-    if (userUpdateDTO.role !== undefined) {
-      updateData.role = userUpdateDTO.role;
-    }
     if (userUpdateDTO.isActive !== undefined) {
       updateData.is_active = userUpdateDTO.isActive;
     }
@@ -66,7 +62,6 @@ export class UserMapper {
       firstName: user.firstName,
       lastName: user.lastName,
       fullName: user.fullName(),
-      role: user.role,
       isActive: user.isActive,
     };
   }
@@ -81,7 +76,6 @@ export class UserMapper {
     return {
       userId: jwtPayload.userId,
       email: jwtPayload.email,
-      role: jwtPayload.role,
       firstName: jwtPayload.firstName,
       lastName: jwtPayload.lastName,
     };

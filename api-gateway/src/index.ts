@@ -1,582 +1,199 @@
 /**
  * ===========================================
- * API GATEWAY - E-COMMERCE PLATFORM
+ * API GATEWAY - E-COMMERCE PLATFORM v2.0
  * ===========================================
  *
  * Point d'entrée central pour toutes les requêtes de l'application e-commerce.
- * Ce service fait office de proxy entre les clients (frontend/backoffice) et les microservices.
+ * Architecture refactorisée avec séparation des responsabilités.
  *
- * Services proxifiés :
- * - Auth Service (port 3008) : Authentification et gestion des utilisateurs
- * - Product Service (port 13002) : Gestion des produits et catégories
- * - Email Service (port 13007) : Envoi d'emails (contact)
+ * Architecture :
+ * - Proxy centralisé vers 8 microservices
+ * - Gestion d'erreurs standardisée
+ * - Logging structuré avec Winston
+ * - Configuration externalisée
+ * - Routes modulaires par domaine
+ *
+ * Services connectés :
+ * 1. auth-service (port 13008) : Authentification et utilisateurs
+ * 2. product-service (port 13002) : Produits et catégories
+ * 3. order-service (port 13003) : Gestion des commandes
+ * 4. cart-service (port 13004) : Panier d'achat
+ * 5. customer-service (port 13001) : Données clients
+ * 6. payment-service (port 13006) : Paiements et Stripe
+ * 7. email-service (port 13007) : Envoi d'emails
+ * 8. website-content-service (port 13005) : Contenu du site
  *
  * @author E-commerce Platform Team
- * @version 1.0.0
+ * @version 2.0.0
  */
 
-// ===========================================
-// IMPORTS ET CONFIGURATION
-// ===========================================
-
-import express, { Request, Response, NextFunction } from "express";
+import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import axios, { AxiosResponse, AxiosRequestConfig } from "axios";
 import dotenv from "dotenv";
 
-// Types partagés
-import {
-  // Auth types
-  LoginData,
-  RegisterData,
+// Configuration
+import { gatewayConfig } from "./config/services.config";
 
-  // Product types
-  ProductData,
-  CategoryData,
-  ProductUpdateData,
-  CategoryUpdateData,
+// Routes
+import apiRouter from "./routes";
 
-  // Contact types
-  ContactEmailRequest,
-  ContactEmailResponse,
-} from "../shared-types";
+// Middlewares
+import { errorHandler, notFoundHandler } from "./middlewares/errorHandler";
 
-// Middlewares de validation supprimés
+// Logger
+import logger, { logSystemEvent } from "./utils/logger";
 
+// Chargement des variables d'environnement
 dotenv.config();
 
 // ===========================================
 // INITIALISATION DE L'APPLICATION
 // ===========================================
 
-const app = express();
-const PORT: number = parseInt(process.env["PORT"] || "3000", 10);
+const app: Application = express();
+const PORT = gatewayConfig.port;
 
 // ===========================================
-// CONFIGURATION DES SERVICES
-// ===========================================
-
-/**
- * URLs des microservices
- * Ces URLs pointent vers les services backend correspondants
- */
-interface ServiceUrls {
-  EMAIL: string;
-  PRODUCT: string;
-  AUTH: string;
-}
-
-const SERVICE_URLS: ServiceUrls = {
-  EMAIL: process.env["EMAIL_SERVICE_URL"] || "http://localhost:13007",
-  PRODUCT: process.env["PRODUCT_SERVICE_URL"] || "http://localhost:13002",
-  AUTH: process.env["AUTH_SERVICE_URL"] || "http://localhost:13008",
-};
-
-// ===========================================
-// MIDDLEWARE GLOBAL
+// MIDDLEWARES GLOBAUX
 // ===========================================
 
 /**
- * Configuration de sécurité avec Helmet
- * Protège contre les vulnérabilités courantes (XSS, clickjacking, etc.)
+ * Sécurité avec Helmet
  */
 app.use(helmet());
 
 /**
  * Configuration CORS
- * Autorise les requêtes cross-origin depuis les applications frontend
  */
 app.use(
   cors({
-    origin: [
-      "http://localhost:13008", // Backoffice
-      "http://localhost:13009", // Frontend
-      "http://localhost:13010", // Frontend (correct port)
-      "http://localhost:3000", // API Gateway (dev)
-      "http://localhost:3001", // Autres services (dev)
-    ],
+    origin: gatewayConfig.corsOrigins,
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   })
 );
 
 /**
- * Middleware de parsing des requêtes
- * Limite la taille des requêtes à 10MB pour supporter les uploads d'images
+ * Parsing des requêtes
  */
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.json({ limit: gatewayConfig.maxRequestSize }));
+app.use(
+  express.urlencoded({ extended: true, limit: gatewayConfig.maxRequestSize })
+);
 
 /**
- * Middleware de logging
- * Enregistre toutes les requêtes HTTP pour le debugging
+ * Logging des requêtes HTTP (Morgan)
  */
 app.use(morgan("combined"));
 
 // ===========================================
-// TYPES POUR LES FONCTIONS DE PROXY
-// ===========================================
-
-interface ProxyConfig extends AxiosRequestConfig {
-  method: string;
-  url: string;
-  headers: Record<string, string>;
-  timeout: number;
-  data?: any;
-  params?: Record<string, any>;
-}
-
-// Interface supprimée car non utilisée
-
-// ===========================================
-// ROUTES UTILITAIRES
+// MONTAGE DES ROUTES
 // ===========================================
 
 /**
- * Health Check Endpoint
- * Utilisé par les scripts de monitoring et Docker
- * @route GET /health
+ * Toutes les routes de l'API sont préfixées par /api
  */
-app.get("/health", (_req: Request, res: Response) => {
-  res.json({
-    status: "OK",
-    service: "api-gateway",
-    timestamp: new Date().toISOString(),
-  });
-});
+app.use("/api", apiRouter);
 
 /**
- * Information sur l'API Gateway
- * @route GET /api/info
+ * Route racine pour vérifier que le serveur fonctionne
  */
-app.get("/api/info", (_req: Request, res: Response) => {
+app.get("/", (_req, res) => {
   res.json({
-    message: "API Gateway - E-commerce Platform",
-    version: "1.0.0",
-    status: "Ready for development",
+    name: "API Gateway - E-commerce Platform",
+    version: "2.0.0",
+    status: "Running",
+    documentation: "/api/info",
+    health: "/api/health",
   });
 });
 
 // ===========================================
-// FONCTIONS UTILITAIRES DE PROXY
+// GESTION DES ERREURS
 // ===========================================
 
 /**
- * Fonction générique de proxy vers le service d'email
- * @param req - Requête Express
- * @param res - Réponse Express
- * @param path - Chemin de l'endpoint dans le service email
+ * Middleware pour les routes non trouvées (404)
  */
-const proxyToEmailService = async (
-  req: Request,
-  res: Response,
-  path: string = ""
-): Promise<void> => {
-  try {
-    const method: string = req.method;
-    const url: string = `${SERVICE_URLS.EMAIL}/api${path}`;
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...(req.headers as Record<string, string>),
-    };
-    delete headers["host"]; // Supprimer le header host pour éviter les conflits
-
-    const config: ProxyConfig = {
-      method,
-      url,
-      headers,
-      timeout: 30000, // Timeout de 30 secondes
-    };
-
-    // Ajouter le body pour les requêtes POST, PUT, PATCH
-    if (["POST", "PUT", "PATCH"].includes(method)) {
-      config.data = req.body;
-    }
-
-    // Ajouter les paramètres de requête
-    if (Object.keys(req.query).length > 0) {
-      config.params = req.query as Record<string, any>;
-    }
-
-    const response: AxiosResponse<ContactEmailResponse> = await axios(config);
-    res.status(response.status).json(response.data);
-  } catch (error: any) {
-    console.error("Error proxying to email service:", error.message);
-
-    // Transmettre l'erreur originale du service si disponible
-    if (error.response && error.response.data) {
-      res.status(error.response.status).json(error.response.data);
-      return;
-    }
-
-    // Sinon, message générique
-    res.status(error.response?.status || 500).json({
-      error: "Email service temporarily unavailable",
-      message: error.message,
-    });
-  }
-};
-
-/**
- * Fonction générique de proxy vers le service d'authentification
- * @param req - Requête Express
- * @param res - Réponse Express
- * @param path - Chemin de l'endpoint dans le service auth
- */
-const proxyToAuthService = async (
-  req: Request,
-  res: Response,
-  path: string = ""
-): Promise<void> => {
-  try {
-    const method: string = req.method;
-    const url: string = `${SERVICE_URLS.AUTH}/api${path}`;
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...(req.headers as Record<string, string>),
-    };
-    delete headers["host"]; // Supprimer le header host pour éviter les conflits
-
-    const config: ProxyConfig = {
-      method,
-      url,
-      headers,
-      timeout: 30000, // Timeout de 30 secondes
-    };
-
-    // Ajouter le body pour les requêtes POST, PUT, PATCH
-    if (["POST", "PUT", "PATCH"].includes(method)) {
-      config.data = req.body;
-    }
-
-    // Ajouter les paramètres de requête
-    if (Object.keys(req.query).length > 0) {
-      config.params = req.query as Record<string, any>;
-    }
-
-    const response: AxiosResponse<any> = await axios(config);
-    res.status(response.status).json(response.data);
-  } catch (error: any) {
-    console.error("Error proxying to auth service:", error.message);
-
-    // Transmettre l'erreur originale du service si disponible
-    if (error.response && error.response.data) {
-      res.status(error.response.status).json(error.response.data);
-      return;
-    }
-
-    // Sinon, message générique
-    res.status(error.response?.status || 500).json({
-      error: "Auth service temporarily unavailable",
-      message: error.message,
-    });
-  }
-};
-
-/**
- * Fonction générique de proxy vers le service de produits
- * @param req - Requête Express
- * @param res - Réponse Express
- * @param path - Chemin de l'endpoint dans le service product
- */
-const proxyToProductService = async (
-  req: Request,
-  res: Response,
-  path: string = ""
-): Promise<void> => {
-  try {
-    const method: string = req.method;
-    const url: string = `${SERVICE_URLS.PRODUCT}/api${path}`;
-
-    // Headers essentiels uniquement
-    const headers: Record<string, string> = {
-      Authorization: req.headers.authorization as string,
-      Accept: (req.headers.accept as string) || "application/json",
-    };
-
-    // Supprimer les headers undefined
-    Object.keys(headers).forEach((key) => {
-      if (headers[key] === undefined) {
-        delete headers[key];
-      }
-    });
-
-    const config: ProxyConfig = {
-      method,
-      url,
-      headers,
-      timeout: 30000,
-    };
-
-    // Ajouter le body pour les requêtes POST, PUT, PATCH
-    if (["POST", "PUT", "PATCH"].includes(method)) {
-      config.data = req.body || {};
-      config.headers!["Content-Type"] = "application/json";
-    }
-
-    // Ajouter les paramètres de requête
-    if (Object.keys(req.query).length > 0) {
-      config.params = req.query as Record<string, any>;
-    }
-
-    console.log(`Proxying ${method} ${path} to product service`);
-    const response: AxiosResponse<any> = await axios(config);
-    res.status(response.status).json(response.data);
-  } catch (error: any) {
-    console.error("Error proxying to product service:", error.message);
-    console.error("Error details:", error.response?.data);
-
-    // Transmettre l'erreur originale du service si disponible
-    if (error.response && error.response.data) {
-      res.status(error.response.status).json(error.response.data);
-      return;
-    }
-
-    // Sinon, message générique
-    res.status(error.response?.status || 500).json({
-      error: "Product service temporarily unavailable",
-      message: error.message,
-    });
-  }
-};
-
-// ===========================================
-// ROUTES D'AUTHENTIFICATION
-// ===========================================
-
-/**
- * Routes publiques d'authentification (sans token requis)
- */
-
-// Inscription d'un nouvel utilisateur
-app.post(
-  "/api/auth/register",
-  (req: Request<{}, any, RegisterData>, res: Response) =>
-    proxyToAuthService(req, res, "/auth/register")
-);
-
-// Connexion d'un utilisateur
-app.post("/api/auth/login", (req: Request<{}, any, LoginData>, res: Response) =>
-  proxyToAuthService(req, res, "/auth/login")
-);
-
-// Demande de réinitialisation de mot de passe
-app.post("/api/auth/forgot-password", (req: Request, res: Response) =>
-  proxyToAuthService(req, res, "/auth/forgot-password")
-);
-
-// Réinitialisation de mot de passe avec token
-app.post("/api/auth/reset-password", (req: Request, res: Response) =>
-  proxyToAuthService(req, res, "/auth/reset-password")
-);
-
-/**
- * Routes protégées d'authentification (token requis)
- */
-
-// Récupération du profil utilisateur
-app.get("/api/auth/profile", (req: Request, res: Response) =>
-  proxyToAuthService(req, res, "/auth/profile")
-);
-
-// Mise à jour du profil utilisateur
-app.put("/api/auth/profile", (req: Request, res: Response) =>
-  proxyToAuthService(req, res, "/auth/profile")
-);
-
-// Changement de mot de passe
-app.post("/api/auth/change-password", (req: Request, res: Response) =>
-  proxyToAuthService(req, res, "/auth/change-password")
-);
-
-// Récupération des sessions actives
-app.get("/api/auth/sessions", (req: Request, res: Response) =>
-  proxyToAuthService(req, res, "/auth/sessions")
-);
-
-// Suppression d'une session spécifique
-app.delete(
-  "/api/auth/sessions/:sessionId",
-  (req: Request<{ sessionId: string }>, res: Response) =>
-    proxyToAuthService(req, res, `/auth/sessions/${req.params.sessionId}`)
-);
-
-// Déconnexion de l'utilisateur
-app.post("/api/auth/logout", (req: Request, res: Response) =>
-  proxyToAuthService(req, res, "/auth/logout")
-);
-
-// ===========================================
-// ROUTES DE GESTION DES EMAILS
-// ===========================================
-
-/**
- * Endpoint de contact
- * Proxy vers le service d'email pour l'envoi de messages
- * @route POST /api/contact
- */
-app.post(
-  "/api/contact",
-  (req: Request<{}, any, ContactEmailRequest>, res: Response) =>
-    proxyToEmailService(req, res, "/contact")
-);
-
-// ===========================================
-// ROUTES DE GESTION DES PRODUITS
-// ===========================================
-
-/**
- * Service d'images de produits
- * Proxy vers le service de produits pour servir les images
- * @route GET /api/products/images/:filename
- */
-app.get(
-  "/api/products/images/:filename",
-  (req: Request<{ filename: string }>, res: Response) => {
-    // Rediriger directement vers le service product pour les images
-    const imageUrl: string = `${SERVICE_URLS.PRODUCT}/uploads/products/${req.params.filename}`;
-    res.redirect(imageUrl);
-  }
-);
-
-/**
- * Récupération des produits avec leurs images
- * Proxy vers le service de produits qui gère la logique des images
- * @route GET /api/admin/products
- */
-app.get("/api/admin/products", (req: Request, res: Response) =>
-  proxyToProductService(req, res, "/admin/products")
-);
-
-/**
- * Routes CRUD pour les produits (avec authentification)
- */
-
-// Récupération d'un produit spécifique
-app.get(
-  "/api/admin/products/:id",
-  (req: Request<{ id: string }>, res: Response) =>
-    proxyToProductService(req, res, `/admin/products/${req.params.id}`)
-);
-
-// Création d'un nouveau produit
-app.post(
-  "/api/admin/products",
-  (req: Request<{}, any, ProductData>, res: Response) =>
-    proxyToProductService(req, res, "/admin/products")
-);
-
-// Mise à jour d'un produit existant
-app.put(
-  "/api/admin/products/:id",
-  (req: Request<{ id: string }, any, ProductUpdateData>, res: Response) =>
-    proxyToProductService(req, res, `/admin/products/${req.params.id}`)
-);
-
-// Suppression d'un produit
-app.delete(
-  "/api/admin/products/:id",
-  (req: Request<{ id: string }>, res: Response) =>
-    proxyToProductService(req, res, `/admin/products/${req.params.id}`)
-);
-
-// Activation d'un produit
-app.post(
-  "/api/admin/products/:id/activate",
-  (req: Request<{ id: string }>, res: Response) =>
-    proxyToProductService(req, res, `/admin/products/${req.params.id}/activate`)
-);
-
-// Désactivation d'un produit
-app.post(
-  "/api/admin/products/:id/deactivate",
-  (req: Request<{ id: string }>, res: Response) =>
-    proxyToProductService(
-      req,
-      res,
-      `/admin/products/${req.params.id}/deactivate`
-    )
-);
-
-// ===========================================
-// ROUTES DE GESTION DES CATÉGORIES
-// ===========================================
-
-/**
- * Routes CRUD pour les catégories (avec authentification)
- */
-
-// Récupération de toutes les catégories
-app.get("/api/admin/categories", (req: Request, res: Response) =>
-  proxyToProductService(req, res, "/admin/categories")
-);
-
-// Création d'une nouvelle catégorie
-app.post(
-  "/api/admin/categories",
-  (req: Request<{}, any, CategoryData>, res: Response) =>
-    proxyToProductService(req, res, "/admin/categories")
-);
-
-// Mise à jour d'une catégorie existante
-app.put(
-  "/api/admin/categories/:id",
-  (req: Request<{ id: string }, any, CategoryUpdateData>, res: Response) =>
-    proxyToProductService(req, res, `/admin/categories/${req.params.id}`)
-);
-
-// Suppression d'une catégorie
-app.delete(
-  "/api/admin/categories/:id",
-  (req: Request<{ id: string }>, res: Response) =>
-    proxyToProductService(req, res, `/admin/categories/${req.params.id}`)
-);
-
-// ===========================================
-// MIDDLEWARE DE GESTION D'ERREURS
-// ===========================================
+app.use(notFoundHandler);
 
 /**
  * Middleware global de gestion des erreurs
- * Capture toutes les erreurs non gérées
  */
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  console.error("Unhandled error:", err.stack);
-  res.status(500).json({
-    error: "Internal server error",
-    message: "An unexpected error occurred",
-  });
-});
-
-/**
- * Middleware de gestion des routes non trouvées
- * Retourne une erreur 404 pour toutes les routes non définies
- */
-app.use("*", (req: Request, res: Response) => {
-  res.status(404).json({
-    error: "Route not found",
-    message: `The requested route ${req.method} ${req.originalUrl} does not exist`,
-  });
-});
+app.use(errorHandler);
 
 // ===========================================
 // DÉMARRAGE DU SERVEUR
 // ===========================================
 
 /**
- * Démarrage du serveur API Gateway
- * Écoute sur le port configuré et affiche les informations de démarrage
+ * Fonction de démarrage gracieux
  */
-app.listen(PORT, () => {
-  console.log("🚀 API Gateway démarré avec succès !");
-  console.log(`📍 Port: ${PORT}`);
-  console.log(`🌐 URL: http://localhost:${PORT}`);
-  console.log("🔗 Services connectés:");
-  console.log(`   • Auth Service: ${SERVICE_URLS.AUTH}`);
-  console.log(`   • Product Service: ${SERVICE_URLS.PRODUCT}`);
-  console.log(`   • Email Service: ${SERVICE_URLS.EMAIL}`);
-  console.log("✅ Gateway prêt pour les intégrations futures");
-});
+const startServer = async (): Promise<void> => {
+  try {
+    // Démarrage du serveur HTTP
+    const server = app.listen(PORT, () => {
+      console.log("\n╔════════════════════════════════════════════════╗");
+      console.log("║   🚀 API GATEWAY v2.0 - DÉMARRÉ AVEC SUCCÈS   ║");
+      console.log("╚════════════════════════════════════════════════╝\n");
+      console.log(`📍 Port              : ${PORT}`);
+      console.log(`🌐 URL               : http://localhost:${PORT}`);
+      console.log(`🌍 Environnement     : ${gatewayConfig.nodeEnv}`);
+      console.log(`📊 Log Level         : ${gatewayConfig.logLevel}`);
+      console.log("\n🔗 Services Connectés:");
+      console.log("   ✓ auth-service           (13008)");
+      console.log("   ✓ product-service        (13002)");
+      console.log("   ✓ order-service          (13003)");
+      console.log("   ✓ cart-service           (13004)");
+      console.log("   ✓ customer-service       (13001)");
+      console.log("   ✓ payment-service        (13006)");
+      console.log("   ✓ email-service          (13007)");
+      console.log("   ✓ website-content-service (13005)");
+      console.log("\n📚 Endpoints Disponibles:");
+      console.log("   • GET  /api/health         - Health check");
+      console.log("   • GET  /api/health/services - Services health");
+      console.log("   • GET  /api/info           - Informations API");
+      console.log("\n✅ Gateway prêt à recevoir des requêtes !\n");
+
+      logSystemEvent("API Gateway started successfully", {
+        port: PORT,
+        environment: gatewayConfig.nodeEnv,
+      });
+    });
+
+    // Gestion de l'arrêt gracieux
+    const gracefulShutdown = (signal: string) => {
+      console.log(`\n🛑 Signal ${signal} reçu. Arrêt gracieux en cours...`);
+      logSystemEvent(`Shutting down due to ${signal}`);
+
+      server.close(() => {
+        console.log("✅ Serveur HTTP fermé");
+        logSystemEvent("Server closed successfully");
+        process.exit(0);
+      });
+
+      // Force l'arrêt après 10 secondes
+      setTimeout(() => {
+        console.error("⚠️  Arrêt forcé après timeout");
+        process.exit(1);
+      }, 10000);
+    };
+
+    // Écoute des signaux d'arrêt
+    process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+    process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+  } catch (error) {
+    console.error("❌ Erreur au démarrage du serveur:", error);
+    logger.error("Failed to start server", { error });
+    process.exit(1);
+  }
+};
+
+// Démarrer le serveur
+startServer();
+
+// Export pour les tests
+export default app;

@@ -1,6 +1,7 @@
 /**
  * DTOs pour l'authentification
  * DTOs pour les données d'authentification (JWT payload)
+ * Admin-only system: all authenticated users are admins
  */
 
 /**
@@ -10,7 +11,6 @@
 export interface AuthenticatedUserDTO {
   userId: number;
   email: string;
-  role: "admin" | "customer";
   firstName: string;
   lastName: string;
 }

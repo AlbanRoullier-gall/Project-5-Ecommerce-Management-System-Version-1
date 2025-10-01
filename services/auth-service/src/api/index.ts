@@ -81,7 +81,6 @@ export class ApiRouter {
         confirmPassword: Joi.string().optional(),
         firstName: Joi.string().max(100).required(),
         lastName: Joi.string().max(100).required(),
-        role: Joi.string().valid("customer").optional(),
       }),
 
       loginSchema: Joi.object({
