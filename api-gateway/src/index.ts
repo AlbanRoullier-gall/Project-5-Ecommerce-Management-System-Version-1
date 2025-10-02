@@ -15,15 +15,27 @@ const PORT = parseInt(process.env["PORT"] || "3020", 10);
 const JWT_SECRET = process.env["JWT_SECRET"] || "your-jwt-secret-key";
 
 // ===== CONFIGURATION DES SERVICES =====
+// Configuration automatique selon l'environnement
+const isDevelopment =
+  process.env["NODE_ENV"] === "development" || !process.env["DOCKER_ENV"];
+
 const SERVICES = {
-  auth: "http://auth-service:3008",
-  product: "http://product-service:3002",
-  order: "http://order-service:3003",
-  cart: "http://cart-service:3004",
-  customer: "http://customer-service:3001",
-  payment: "http://payment-service:3007",
-  email: "http://email-service:3006",
-  websiteContent: "http://website-content-service:3005",
+  auth: isDevelopment ? "http://localhost:3008" : "http://auth-service:3008",
+  product: isDevelopment
+    ? "http://localhost:3002"
+    : "http://product-service:3002",
+  order: isDevelopment ? "http://localhost:3003" : "http://order-service:3003",
+  cart: isDevelopment ? "http://localhost:3004" : "http://cart-service:3004",
+  customer: isDevelopment
+    ? "http://localhost:3001"
+    : "http://customer-service:3001",
+  payment: isDevelopment
+    ? "http://localhost:3007"
+    : "http://payment-service:3007",
+  email: isDevelopment ? "http://localhost:3006" : "http://email-service:3006",
+  websiteContent: isDevelopment
+    ? "http://localhost:3005"
+    : "http://website-content-service:3005",
 } as const;
 
 // ===== MAPPING ROUTES =====
@@ -32,6 +44,7 @@ const ROUTES: Record<string, keyof typeof SERVICES> = {
   // Routes publiques (sans authentification)
   "/auth/register": "auth",
   "/auth/login": "auth",
+  "/auth/validate-password": "auth",
 
   // Routes admin (avec authentification)
   "/admin/auth/profile": "auth",
@@ -64,9 +77,16 @@ const ROUTES: Record<string, keyof typeof SERVICES> = {
   // === CUSTOMER SERVICE ===
   // Routes publiques
   "/customers": "customer",
+  "/customers/:customerId/addresses": "customer",
+  "/customers/:customerId/companies": "customer",
 
   // Routes admin
   "/admin/customers": "customer",
+  "/admin/customers/:id": "customer",
+  "/admin/customers/:customerId/addresses": "customer",
+  "/admin/customers/:customerId/addresses/:id": "customer",
+  "/admin/customers/:customerId/companies": "customer",
+  "/admin/customers/:customerId/companies/:id": "customer",
 
   // === PAYMENT SERVICE (PUBLIQUES) ===
   "/payments": "payment",
@@ -125,7 +145,7 @@ app.get("/", (_req: Request, res: Response) => {
 Object.entries(ROUTES).forEach(([route, service]) => {
   const fullRoute = `/api${route}`;
   console.log(`📝 Route enregistrée: ${fullRoute} -> ${service}`);
-  app.use(fullRoute, async (req: Request, res: Response) => {
+  app.all(fullRoute, async (req: Request, res: Response) => {
     console.log(`🚀 Route appelée: ${req.path} -> Service: ${service}`);
 
     try {
@@ -181,8 +201,8 @@ Object.entries(ROUTES).forEach(([route, service]) => {
 
       // Ajouter l'utilisateur authentifié dans les headers si disponible
       if ((req as any).user) {
-        headers["X-User-ID"] = String((req as any).user.userId);
-        headers["X-User-Email"] = (req as any).user.email;
+        headers["x-user-id"] = String((req as any).user.userId);
+        headers["x-user-email"] = (req as any).user.email;
       }
 
       // Supprimer le header host pour éviter les conflits
@@ -244,5 +264,11 @@ app.listen(PORT, () => {
   console.log(`📍 Port: ${PORT}`);
   console.log(`🌐 URL: http://localhost:${PORT}`);
   console.log(`📊 Health: http://localhost:${PORT}/api/health`);
+  console.log(
+    `🔧 Mode: ${
+      isDevelopment ? "DEVELOPMENT (localhost)" : "DOCKER (containers)"
+    }`
+  );
+  console.log(`🔗 Auth Service: ${SERVICES.auth}`);
   console.log("");
 });

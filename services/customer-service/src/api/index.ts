@@ -153,11 +153,8 @@ export class ApiRouter {
       this.healthController.detailedHealthCheck(req, res);
     });
 
-    // ===== ROUTES DE CLIENTS =====
-    app.get("/api/customers/:id", (req: Request, res: Response) => {
-      this.customerController.getCustomerById(req, res);
-    });
-
+    // ===== ROUTES PUBLIQUES DE CLIENTS =====
+    // Création de client (publique pour l'inscription)
     app.post(
       "/api/customers",
       this.validateRequest(schemas.customerCreateSchema),
@@ -166,30 +163,29 @@ export class ApiRouter {
       }
     );
 
+    // ===== ROUTES ADMIN DE CLIENTS =====
+    app.get("/api/admin/customers/:id", (req: Request, res: Response) => {
+      this.customerController.getCustomerById(req, res);
+    });
+
     app.put(
-      "/api/customers/:id",
+      "/api/admin/customers/:id",
       this.validateRequest(schemas.customerUpdateSchema),
       (req: Request, res: Response) => {
         this.customerController.updateCustomer(req, res);
       }
     );
 
-    app.delete("/api/customers/:id", (req: Request, res: Response) => {
+    app.delete("/api/admin/customers/:id", (req: Request, res: Response) => {
       this.customerController.deleteCustomer(req, res);
     });
 
-    app.get("/api/customers", (req: Request, res: Response) => {
+    app.get("/api/admin/customers", (req: Request, res: Response) => {
       this.customerController.listCustomers(req, res);
     });
 
-    // ===== ROUTES D'ADRESSES =====
-    app.get(
-      "/api/customers/:customerId/addresses",
-      (req: Request, res: Response) => {
-        this.addressController.getCustomerAddresses(req, res);
-      }
-    );
-
+    // ===== ROUTES PUBLIQUES D'ADRESSES =====
+    // Ajout d'adresse (publique pour les clients)
     app.post(
       "/api/customers/:customerId/addresses",
       this.validateRequest(schemas.addressCreateSchema),
@@ -198,8 +194,16 @@ export class ApiRouter {
       }
     );
 
+    // ===== ROUTES ADMIN D'ADRESSES =====
+    app.get(
+      "/api/admin/customers/:customerId/addresses",
+      (req: Request, res: Response) => {
+        this.addressController.getCustomerAddresses(req, res);
+      }
+    );
+
     app.put(
-      "/api/customers/:customerId/addresses/:id",
+      "/api/admin/customers/:customerId/addresses/:id",
       this.validateRequest(schemas.addressUpdateSchema),
       (req: Request, res: Response) => {
         this.addressController.updateAddress(req, res);
@@ -207,20 +211,14 @@ export class ApiRouter {
     );
 
     app.delete(
-      "/api/customers/:customerId/addresses/:id",
+      "/api/admin/customers/:customerId/addresses/:id",
       (req: Request, res: Response) => {
         this.addressController.deleteAddress(req, res);
       }
     );
 
-    // ===== ROUTES D'ENTREPRISES =====
-    app.get(
-      "/api/customers/:customerId/companies",
-      (req: Request, res: Response) => {
-        this.companyController.getCustomerCompanies(req, res);
-      }
-    );
-
+    // ===== ROUTES PUBLIQUES D'ENTREPRISES =====
+    // Ajout d'entreprise (publique pour les clients)
     app.post(
       "/api/customers/:customerId/companies",
       this.validateRequest(schemas.companyCreateSchema),
@@ -229,8 +227,16 @@ export class ApiRouter {
       }
     );
 
+    // ===== ROUTES ADMIN D'ENTREPRISES =====
+    app.get(
+      "/api/admin/customers/:customerId/companies",
+      (req: Request, res: Response) => {
+        this.companyController.getCustomerCompanies(req, res);
+      }
+    );
+
     app.put(
-      "/api/customers/:customerId/companies/:id",
+      "/api/admin/customers/:customerId/companies/:id",
       this.validateRequest(schemas.companyUpdateSchema),
       (req: Request, res: Response) => {
         this.companyController.updateCompany(req, res);
@@ -238,7 +244,7 @@ export class ApiRouter {
     );
 
     app.delete(
-      "/api/customers/:customerId/companies/:id",
+      "/api/admin/customers/:customerId/companies/:id",
       (req: Request, res: Response) => {
         this.companyController.deleteCompany(req, res);
       }

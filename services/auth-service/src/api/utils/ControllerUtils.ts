@@ -2,8 +2,7 @@
  * ControllerUtils
  * Utilitaires communs pour les contrôleurs
  */
-import { Request, Response } from "express";
-import { AuthenticatedUserDTO } from "../dto";
+import { Response } from "express";
 
 export class ControllerUtils {
   /**
@@ -36,19 +35,6 @@ export class ControllerUtils {
     }
 
     res.status(500).json({ error: "Erreur interne du serveur" });
-  }
-  /**
-   * Extraire les informations utilisateur du JWT
-   */
-  static extractUserFromJWT(req: Request): AuthenticatedUserDTO {
-    const jwtPayload = (req as any).user;
-    return {
-      userId: jwtPayload.userId,
-      email: jwtPayload.email,
-      role: jwtPayload.role,
-      firstName: jwtPayload.firstName,
-      lastName: jwtPayload.lastName,
-    };
   }
 
   /**

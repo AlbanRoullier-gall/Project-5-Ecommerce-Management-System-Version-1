@@ -11,7 +11,6 @@
 import { Pool } from "pg";
 import jwt, { SignOptions } from "jsonwebtoken";
 import { User, UserData } from "../models/User";
-import { JWTPayload } from "../models/JWTPayload";
 import { UserRepository } from "../repositories/UserRepository";
 
 export class AuthService {
@@ -226,7 +225,7 @@ export class AuthService {
    * Générer un token JWT
    */
   generateJWT(user: User, expiresIn: string = "24h"): string {
-    const payload: JWTPayload = {
+    const payload = {
       userId: user.userId,
       email: user.email,
       firstName: user.firstName,
@@ -234,12 +233,5 @@ export class AuthService {
     };
 
     return jwt.sign(payload, this.jwtSecret, { expiresIn } as SignOptions);
-  }
-
-  /**
-   * Vérifier un token JWT
-   */
-  verifyJWT(token: string): JWTPayload {
-    return jwt.verify(token, this.jwtSecret) as JWTPayload;
   }
 }

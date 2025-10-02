@@ -7,7 +7,6 @@
 export * from "./CommonDTO";
 
 // DTOs d'authentification
-export * from "./AuthDTO";
 export * from "./RegisterDTO"; // UserRegistrationDTO
 export * from "./LoginDTO"; // UserLoginDTO
 export * from "./ProfileDTO"; // UserUpdateDTO

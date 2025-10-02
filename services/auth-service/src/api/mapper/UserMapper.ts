@@ -7,12 +7,7 @@
  * - Séparation claire des responsabilités
  */
 import { User, UserData } from "../../models/User";
-import {
-  UserPublicDTO,
-  UserRegistrationDTO,
-  UserUpdateDTO,
-  AuthenticatedUserDTO,
-} from "../dto";
+import { UserPublicDTO, UserRegistrationDTO, UserUpdateDTO } from "../dto";
 
 export class UserMapper {
   /**
@@ -63,21 +58,6 @@ export class UserMapper {
       lastName: user.lastName,
       fullName: user.fullName(),
       isActive: user.isActive,
-    };
-  }
-
-  /**
-   * Convertir un JWTPayload en AuthenticatedUserDTO
-   * Séparation entre Model et DTO
-   */
-  static jwtPayloadToAuthenticatedUserDTO(
-    jwtPayload: any
-  ): AuthenticatedUserDTO {
-    return {
-      userId: jwtPayload.userId,
-      email: jwtPayload.email,
-      firstName: jwtPayload.firstName,
-      lastName: jwtPayload.lastName,
     };
   }
 }

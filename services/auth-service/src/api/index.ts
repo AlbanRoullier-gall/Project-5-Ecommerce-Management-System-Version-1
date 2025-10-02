@@ -88,6 +88,10 @@ export class ApiRouter {
         password: Joi.string().required(),
       }),
 
+      passwordValidationSchema: Joi.object({
+        password: Joi.string().min(8).required(),
+      }),
+
       updateProfileSchema: Joi.object({
         firstName: Joi.string().max(100).optional(),
         lastName: Joi.string().max(100).optional(),
@@ -154,18 +158,21 @@ export class ApiRouter {
       }
     );
 
-    // ===== ROUTES ADMIN (AVEC AUTHENTIFICATION) =====
-    app.get(
-      "/api/admin/auth/profile",
-      this.authenticateToken,
+    app.post(
+      "/api/auth/validate-password",
+      this.validateRequest(schemas.passwordValidationSchema),
       (req: Request, res: Response) => {
-        this.authController.getProfile(req, res);
+        this.authController.validatePassword(req, res);
       }
     );
 
+    // ===== ROUTES ADMIN (AUTHENTIFICATION GÉRÉE PAR API GATEWAY) =====
+    app.get("/api/admin/auth/profile", (req: Request, res: Response) => {
+      this.authController.getProfile(req, res);
+    });
+
     app.put(
       "/api/admin/auth/profile",
-      this.authenticateToken,
       this.validateRequest(schemas.updateProfileSchema),
       (req: Request, res: Response) => {
         this.authController.updateProfile(req, res);
@@ -174,20 +181,15 @@ export class ApiRouter {
 
     app.put(
       "/api/admin/auth/change-password",
-      this.authenticateToken,
       this.validateRequest(schemas.changePasswordSchema),
       (req: Request, res: Response) => {
         this.authController.changePassword(req, res);
       }
     );
 
-    app.post(
-      "/api/admin/auth/logout",
-      this.authenticateToken,
-      (req: Request, res: Response) => {
-        this.authController.logout(req, res);
-      }
-    );
+    app.post("/api/admin/auth/logout", (req: Request, res: Response) => {
+      this.authController.logout(req, res);
+    });
 
     // ===== GESTION DES ERREURS GLOBALES =====
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
