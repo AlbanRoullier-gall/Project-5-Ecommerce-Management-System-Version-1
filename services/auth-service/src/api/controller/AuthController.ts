@@ -14,7 +14,6 @@ import {
   UserLoginDTO,
   UserUpdateDTO,
   PasswordChangeDTO,
-  AuthenticatedUserDTO,
 } from "../dto";
 import { UserMapper, ResponseMapper } from "../mapper";
 
@@ -94,10 +93,19 @@ export class AuthController {
    */
   async getProfile(req: Request, res: Response): Promise<void> {
     try {
-      const jwtPayload = (req as any).user;
-      const user: AuthenticatedUserDTO =
-        UserMapper.jwtPayloadToAuthenticatedUserDTO(jwtPayload);
-      const userProfile = await this.authService.getUserProfile(user.userId);
+      // Récupérer l'ID utilisateur depuis les headers envoyés par l'API Gateway
+      const userId = req.headers["x-user-id"];
+      if (!userId) {
+        res.status(401).json({
+          error: "Erreur d'authentification",
+          message: "Informations utilisateur manquantes",
+          timestamp: new Date().toISOString(),
+          status: 401,
+        });
+        return;
+      }
+
+      const userProfile = await this.authService.getUserProfile(Number(userId));
 
       // Convertir en DTO de réponse
       const userPublicDTO = UserMapper.userToPublicDTO(userProfile);
@@ -116,16 +124,25 @@ export class AuthController {
   async updateProfile(req: Request, res: Response): Promise<void> {
     try {
       const userUpdateDTO: UserUpdateDTO = req.body;
-      const jwtPayload = (req as any).user;
-      const user: AuthenticatedUserDTO =
-        UserMapper.jwtPayloadToAuthenticatedUserDTO(jwtPayload);
+
+      // Récupérer l'ID utilisateur depuis les headers envoyés par l'API Gateway
+      const userId = req.headers["x-user-id"];
+      if (!userId) {
+        res.status(401).json({
+          error: "Erreur d'authentification",
+          message: "Informations utilisateur manquantes",
+          timestamp: new Date().toISOString(),
+          status: 401,
+        });
+        return;
+      }
 
       // Convertir DTO en données de mise à jour
       const updateData = UserMapper.userUpdateDTOToUserData(userUpdateDTO);
 
       // Mettre à jour l'utilisateur
       const updatedUser = await this.authService.updateUser(
-        user.userId,
+        Number(userId),
         updateData
       );
 
@@ -146,13 +163,22 @@ export class AuthController {
   async changePassword(req: Request, res: Response): Promise<void> {
     try {
       const passwordChangeDTO: PasswordChangeDTO = req.body;
-      const jwtPayload = (req as any).user;
-      const user: AuthenticatedUserDTO =
-        UserMapper.jwtPayloadToAuthenticatedUserDTO(jwtPayload);
+
+      // Récupérer l'ID utilisateur depuis les headers envoyés par l'API Gateway
+      const userId = req.headers["x-user-id"];
+      if (!userId) {
+        res.status(401).json({
+          error: "Erreur d'authentification",
+          message: "Informations utilisateur manquantes",
+          timestamp: new Date().toISOString(),
+          status: 401,
+        });
+        return;
+      }
 
       // Changer le mot de passe
       await this.authService.changePassword(
-        user.userId,
+        Number(userId),
         passwordChangeDTO.currentPassword,
         passwordChangeDTO.newPassword
       );
@@ -170,6 +196,30 @@ export class AuthController {
         res.status(400).json(ResponseMapper.validationError(error.message));
         return;
       }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Validation d'un mot de passe
+   */
+  async validatePassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { password } = req.body;
+
+      // Validation simple du mot de passe
+      const isValid = password && password.length >= 6;
+      const response = {
+        success: true,
+        valid: isValid,
+        message: isValid
+          ? "Mot de passe valide"
+          : "Mot de passe invalide (minimum 6 caractères)",
+      };
+
+      res.json(response);
+    } catch (error: any) {
+      console.error("Password validation error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }

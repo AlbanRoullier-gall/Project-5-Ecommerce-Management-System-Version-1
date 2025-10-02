@@ -1,38 +1,27 @@
 {
-  "name": "ecommerce-frontend",
+  "name": "frontend",
   "version": "1.0.0",
-  "description": "E-commerce Frontend - Client Interface",
-  "private": true,
+  "description": "Frontend Next.js",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "13.5.4",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "@stripe/stripe-js": "^2.1.4",
-    "@stripe/react-stripe-js": "^2.1.1",
-    "axios": "^1.5.0",
-    "js-cookie": "^3.0.5",
-    "react-hook-form": "^7.46.1",
-    "react-query": "^3.39.3",
-    "tailwindcss": "^3.3.3",
-    "autoprefixer": "^10.4.15",
-    "postcss": "^8.4.29",
-    "@headlessui/react": "^1.7.17",
-    "@heroicons/react": "^2.0.18",
-    "clsx": "^2.0.0"
+    "@heroicons/react": "^2.2.0",
+    "@tailwindcss/postcss": "^4.1.14",
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "devDependencies": {
-    "@types/node": "20.6.0",
-    "@types/react": "18.2.21",
-    "@types/react-dom": "18.2.7",
-    "@types/js-cookie": "^3.0.3",
-    "typescript": "5.2.2",
-    "eslint": "8.49.0",
-    "eslint-config-next": "13.5.4"
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.14",
+    "typescript": "^5.0.0"
   }
 }

@@ -13,15 +13,13 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import { AuthService } from "../../services/AuthService";
-import { AuthController } from "../controller/auth/AuthController";
+import { AuthController } from "../controller/AuthController";
 import { HealthController } from "../controller/HealthController";
-import { AuthMiddleware } from "../middleware/AuthMiddleware";
 import { ValidationMiddleware } from "../middleware/ValidationMiddleware";
 
 export class ApiRouter {
   private authController: AuthController;
   private healthController: HealthController;
-  private authMiddleware: AuthMiddleware;
   private validationSchemas: any;
 
   constructor(pool: Pool) {
@@ -29,8 +27,6 @@ export class ApiRouter {
     this.authController = new AuthController(authService);
     this.healthController = new HealthController();
 
-    const jwtSecret = process.env["JWT_SECRET"] || "your-jwt-secret-key";
-    this.authMiddleware = new AuthMiddleware(jwtSecret);
     this.validationSchemas = ValidationMiddleware.getValidationSchemas();
   }
 
@@ -74,17 +70,13 @@ export class ApiRouter {
       }
     );
 
-    app.get(
-      "/api/auth/profile",
-      this.authMiddleware.authenticateToken,
-      (req: Request, res: Response) => {
-        this.authController.getProfile(req, res);
-      }
-    );
+    // Routes admin (authentification gérée par l'API Gateway)
+    app.get("/api/admin/auth/profile", (req: Request, res: Response) => {
+      this.authController.getProfile(req, res);
+    });
 
     app.put(
-      "/api/auth/profile",
-      this.authMiddleware.authenticateToken,
+      "/api/admin/auth/profile",
       ValidationMiddleware.validateRequest(
         this.validationSchemas.updateProfileSchema
       ),
@@ -94,8 +86,7 @@ export class ApiRouter {
     );
 
     app.put(
-      "/api/auth/change-password",
-      this.authMiddleware.authenticateToken,
+      "/api/admin/auth/change-password",
       ValidationMiddleware.validateRequest(
         this.validationSchemas.changePasswordSchema
       ),
@@ -104,6 +95,11 @@ export class ApiRouter {
       }
     );
 
+    app.post("/api/admin/auth/logout", (req: Request, res: Response) => {
+      this.authController.logout(req, res);
+    });
+
+    // Route publique pour validation de mot de passe
     app.post(
       "/api/auth/validate-password",
       ValidationMiddleware.validateRequest(
@@ -111,14 +107,6 @@ export class ApiRouter {
       ),
       (req: Request, res: Response) => {
         this.authController.validatePassword(req, res);
-      }
-    );
-
-    app.post(
-      "/api/auth/logout",
-      this.authMiddleware.authenticateToken,
-      (req: Request, res: Response) => {
-        this.authController.logout(req, res);
       }
     );
 
