@@ -13,7 +13,7 @@ import cors from "cors";
 import helmet from "helmet";
 import jwt from "jsonwebtoken";
 import Joi from "joi";
-import AuthService from "../services/AuthService";
+import { AuthService } from "../services/AuthService";
 import morgan from "morgan";
 import { AuthController, HealthController } from "./controller";
 import { JWTPayload } from "../models/JWTPayload";
@@ -154,8 +154,9 @@ export class ApiRouter {
       }
     );
 
+    // ===== ROUTES ADMIN (AVEC AUTHENTIFICATION) =====
     app.get(
-      "/api/auth/profile",
+      "/api/admin/auth/profile",
       this.authenticateToken,
       (req: Request, res: Response) => {
         this.authController.getProfile(req, res);
@@ -163,7 +164,7 @@ export class ApiRouter {
     );
 
     app.put(
-      "/api/auth/profile",
+      "/api/admin/auth/profile",
       this.authenticateToken,
       this.validateRequest(schemas.updateProfileSchema),
       (req: Request, res: Response) => {
@@ -172,7 +173,7 @@ export class ApiRouter {
     );
 
     app.put(
-      "/api/auth/change-password",
+      "/api/admin/auth/change-password",
       this.authenticateToken,
       this.validateRequest(schemas.changePasswordSchema),
       (req: Request, res: Response) => {
@@ -181,7 +182,7 @@ export class ApiRouter {
     );
 
     app.post(
-      "/api/auth/logout",
+      "/api/admin/auth/logout",
       this.authenticateToken,
       (req: Request, res: Response) => {
         this.authController.logout(req, res);
