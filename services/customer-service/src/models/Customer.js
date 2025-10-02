@@ -9,7 +9,6 @@ class Customer {
     this.firstName = data.firstName || "";
     this.lastName = data.lastName || "";
     this.email = data.email || "";
-    this.passwordHash = data.passwordHash || "";
     this.socioProfessionalCategoryId = data.socioProfessionalCategoryId || null;
     this.phoneNumber = data.phoneNumber || null;
     this.birthday = data.birthday || null;
@@ -51,7 +50,6 @@ class Customer {
       first_name: this.firstName,
       last_name: this.lastName,
       email: this.email,
-      password_hash: this.passwordHash,
       socio_professional_category_id: this.socioProfessionalCategoryId,
       phone_number: this.phoneNumber,
       birthday: this.birthday,
@@ -73,7 +71,6 @@ class Customer {
       firstName: row.first_name,
       lastName: row.last_name,
       email: row.email,
-      passwordHash: row.password_hash,
       socioProfessionalCategoryId: row.socio_professional_category_id,
       phoneNumber: row.phone_number,
       birthday: row.birthday,
@@ -151,36 +148,6 @@ class Customer {
 
     if (this.birthday && new Date(this.birthday) > new Date()) {
       errors.push("Birthday cannot be in the future");
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-    };
-  }
-
-  /**
-   * Validate password requirements
-   * @param {string} password Plain text password
-   * @returns {Object} Validation result
-   */
-  static validatePassword(password) {
-    const errors = [];
-
-    if (!password || password.length < 6) {
-      errors.push("Password must be at least 6 characters long");
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      errors.push("Password must contain at least one uppercase letter");
-    }
-
-    if (!/[a-z]/.test(password)) {
-      errors.push("Password must contain at least one lowercase letter");
-    }
-
-    if (!/\d/.test(password)) {
-      errors.push("Password must contain at least one number");
     }
 
     return {

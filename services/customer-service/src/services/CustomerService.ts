@@ -75,7 +75,7 @@ class CustomerService {
       // Save customer
       const savedCustomer = await this.customerRepository.save(customer);
 
-      // Return customer without password hash
+      // Return customer
       return savedCustomer;
     } catch (error) {
       console.error("Error creating customer:", error);

@@ -29,7 +29,6 @@ const SERVICES = {
 // ===== MAPPING ROUTES =====
 const ROUTES: Record<string, ServiceName> = {
   // === AUTH SERVICE ===
-  "/auth": "auth",
   "/auth/register": "auth",
   "/auth/login": "auth",
   "/auth/profile": "auth",
@@ -37,15 +36,32 @@ const ROUTES: Record<string, ServiceName> = {
   "/auth/logout": "auth",
 
   // === PRODUCT SERVICE ===
+  // Public routes
   "/products": "product",
+  "/products/:id": "product",
   "/categories": "product",
+
+  // Admin routes
   "/admin/products": "product",
+  "/admin/products/:id": "product",
+  "/admin/products/:id/toggle": "product",
+  "/admin/products/:id/activate": "product",
+  "/admin/products/:id/deactivate": "product",
+  "/admin/products/with-images": "product",
+  "/admin/products/:id/images": "product",
+  "/admin/products/:id/images/:imageId": "product",
   "/admin/categories": "product",
+  "/admin/categories/:id": "product",
+  "/admin/images/:imageId": "product",
 
   // === ORDER SERVICE ===
   "/orders": "order",
+  "/orders/:id": "order",
   "/order-items": "order",
+  "/order-items/:id": "order",
+  "/orders/:orderId/items": "order",
   "/credit-notes": "order",
+  "/credit-notes/:id": "order",
   "/credit-note-items": "order",
   "/order-addresses": "order",
   "/statistics/orders": "order",
@@ -54,13 +70,16 @@ const ROUTES: Record<string, ServiceName> = {
 
   // === CART SERVICE ===
   "/cart": "cart",
-  "/cart/checkout": "cart",
   "/cart/items": "cart",
+  "/cart/items/:productId": "cart",
   "/cart/validate": "cart",
   "/cart/stats": "cart",
 
   // === CUSTOMER SERVICE ===
   "/customers": "customer",
+  "/customers/:id": "customer",
+  "/customers/:customerId/addresses": "customer",
+  "/customers/:customerId/companies": "customer",
   "/civilities": "customer",
   "/countries": "customer",
   "/socio-professional-categories": "customer",
@@ -68,23 +87,27 @@ const ROUTES: Record<string, ServiceName> = {
   "/customer-companies": "customer",
 
   // === PAYMENT SERVICE ===
-  "/payment": "payment",
   "/payment/create": "payment",
   "/payment/confirm": "payment",
   "/payment/refund": "payment",
+  "/payment/:paymentId": "payment",
   "/payment/stats": "payment",
 
   // === EMAIL SERVICE ===
-  "/email": "email",
   "/email/send": "email",
   "/email/confirmation": "email",
   "/contact": "email",
 
   // === WEBSITE CONTENT SERVICE ===
-  "/website-content": "websiteContent",
   "/website-content/pages": "websiteContent",
-  "/admin/website-content": "websiteContent",
+  "/website-content/pages/:slug": "websiteContent",
+  "/website-content/slugs": "websiteContent",
   "/admin/website-content/pages": "websiteContent",
+  "/admin/website-content/pages/:slug": "websiteContent",
+  "/admin/website-content/pages/:slug/versions": "websiteContent",
+  "/admin/website-content/pages/:slug/rollback": "websiteContent",
+  "/admin/website-content/pages/:slug/versions/:versionNumber":
+    "websiteContent",
 };
 
 // ===== MIDDLEWARES =====

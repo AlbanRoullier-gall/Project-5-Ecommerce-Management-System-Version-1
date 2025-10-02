@@ -14,7 +14,6 @@ import cors from "cors";
 import helmet from "helmet";
 import Joi from "joi";
 import morgan from "morgan";
-import jwt from "jsonwebtoken";
 import WebsiteContentService from "../services/WebsiteContentService";
 import {
   HealthController,
@@ -27,7 +26,6 @@ export class ApiRouter {
   private healthController: HealthController;
   private websitePageController: WebsitePageController;
   private websitePageVersionController: WebsitePageVersionController;
-  private jwtSecret: string;
 
   constructor(pool: Pool) {
     const websiteContentService = new WebsiteContentService(pool);
@@ -38,7 +36,6 @@ export class ApiRouter {
     this.websitePageVersionController = new WebsitePageVersionController(
       websiteContentService
     );
-    this.jwtSecret = process.env.JWT_SECRET || "your-jwt-secret-key";
   }
 
   /**
@@ -70,52 +67,6 @@ export class ApiRouter {
       }),
     };
   }
-
-  /**
-   * JWT Authentication middleware
-   */
-  private authenticateToken = (
-    req: any,
-    res: Response,
-    next: NextFunction
-  ): void => {
-    const authHeader = req.headers["authorization"];
-    const token =
-      authHeader && typeof authHeader === "string"
-        ? authHeader.split(" ")[1]
-        : undefined;
-
-    if (!token) {
-      res.status(401).json(ResponseMapper.error("Access token required", 401));
-      return;
-    }
-
-    jwt.verify(token, this.jwtSecret, (err: any, user: any) => {
-      if (err) {
-        res
-          .status(403)
-          .json(ResponseMapper.error("Invalid or expired token", 403));
-        return;
-      }
-      req.user = user;
-      next();
-    });
-  };
-
-  /**
-   * Admin authentication middleware
-   */
-  private authenticateAdmin = (
-    req: any,
-    res: Response,
-    next: NextFunction
-  ): void => {
-    if (!req.user || req.user.role !== "admin") {
-      res.status(403).json(ResponseMapper.error("Admin access required", 403));
-      return;
-    }
-    next();
-  };
 
   /**
    * Middleware de validation
@@ -176,8 +127,6 @@ export class ApiRouter {
     // Page management
     app.post(
       "/api/admin/website-content/pages",
-      this.authenticateToken,
-      this.authenticateAdmin,
       this.validateRequest(schemas.pageCreateSchema),
       (req: Request, res: Response) => {
         this.websitePageController.createPage(req, res);
@@ -200,8 +149,6 @@ export class ApiRouter {
 
     app.put(
       "/api/admin/website-content/pages/:slug",
-      this.authenticateToken,
-      this.authenticateAdmin,
       this.validateRequest(schemas.pageUpdateSchema),
       (req: Request, res: Response) => {
         this.websitePageController.updatePage(req, res);
@@ -210,8 +157,6 @@ export class ApiRouter {
 
     app.delete(
       "/api/admin/website-content/pages/:slug",
-      this.authenticateToken,
-      this.authenticateAdmin,
       (req: Request, res: Response) => {
         this.websitePageController.deletePage(req, res);
       }
@@ -220,8 +165,6 @@ export class ApiRouter {
     // Version management
     app.get(
       "/api/admin/website-content/pages/:slug/versions",
-      this.authenticateToken,
-      this.authenticateAdmin,
       (req: Request, res: Response) => {
         this.websitePageVersionController.listVersions(req, res);
       }
@@ -229,8 +172,6 @@ export class ApiRouter {
 
     app.post(
       "/api/admin/website-content/pages/:slug/rollback",
-      this.authenticateToken,
-      this.authenticateAdmin,
       (req: Request, res: Response) => {
         this.websitePageVersionController.rollbackPage(req, res);
       }
@@ -238,8 +179,6 @@ export class ApiRouter {
 
     app.delete(
       "/api/admin/website-content/pages/:slug/versions/:versionNumber",
-      this.authenticateToken,
-      this.authenticateAdmin,
       (req: Request, res: Response) => {
         this.websitePageVersionController.deleteVersion(req, res);
       }
