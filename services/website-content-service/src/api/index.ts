@@ -89,6 +89,36 @@ export class ApiRouter {
   };
 
   /**
+   * Middleware pour vérifier l'authentification admin
+   */
+  private requireAuth = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): void => {
+    const userId = req.headers["x-user-id"];
+    const userEmail = req.headers["x-user-email"];
+
+    if (!userId || !userEmail) {
+      res.status(401).json({
+        error: "Erreur d'authentification",
+        message: "Informations utilisateur manquantes",
+        timestamp: new Date().toISOString(),
+        status: 401,
+      });
+      return;
+    }
+
+    // Ajouter les informations utilisateur à la requête
+    (req as any).user = {
+      userId: Number(userId),
+      email: userEmail,
+    };
+
+    next();
+  };
+
+  /**
    * Configuration des routes
    */
   setupRoutes(app: express.Application): void {
@@ -105,12 +135,15 @@ export class ApiRouter {
     });
 
     // ===== ROUTES PUBLIQUES =====
-    // List pages (public)
+    // Ces routes sont accessibles sans authentification
+    // Elles permettent l'affichage du contenu pour le frontend public
+
+    // Lister toutes les pages (public)
     app.get("/api/website-content/pages", (req: Request, res: Response) => {
       this.websitePageController.listPages(req, res);
     });
 
-    // Get page by slug (public)
+    // Récupérer une page par slug (public)
     app.get(
       "/api/website-content/pages/:slug",
       (req: Request, res: Response) => {
@@ -118,67 +151,86 @@ export class ApiRouter {
       }
     );
 
-    // Get all page slugs (public)
+    // Récupérer tous les slugs (public)
     app.get("/api/website-content/slugs", (req: Request, res: Response) => {
       this.websitePageController.getAllSlugs(req, res);
     });
 
     // ===== ROUTES D'ADMINISTRATION =====
-    // Page management
+    // Ces routes nécessitent une authentification admin
+    // Elles permettent la gestion complète du contenu du site web
+
+    // === GESTION DES PAGES (ADMIN) ===
+    // Créer une nouvelle page (admin)
     app.post(
       "/api/admin/website-content/pages",
+      this.requireAuth,
       this.validateRequest(schemas.pageCreateSchema),
       (req: Request, res: Response) => {
         this.websitePageController.createPage(req, res);
       }
     );
 
+    // Lister toutes les pages (admin)
     app.get(
       "/api/admin/website-content/pages",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.websitePageController.listPages(req, res);
       }
     );
 
+    // Récupérer une page par slug (admin)
     app.get(
       "/api/admin/website-content/pages/:slug",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.websitePageController.getPageBySlug(req, res);
       }
     );
 
+    // Modifier une page (admin)
     app.put(
       "/api/admin/website-content/pages/:slug",
+      this.requireAuth,
       this.validateRequest(schemas.pageUpdateSchema),
       (req: Request, res: Response) => {
         this.websitePageController.updatePage(req, res);
       }
     );
 
+    // Supprimer une page (admin)
     app.delete(
       "/api/admin/website-content/pages/:slug",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.websitePageController.deletePage(req, res);
       }
     );
 
-    // Version management
+    // === GESTION DES VERSIONS (ADMIN) ===
+    // Lister les versions d'une page (admin)
     app.get(
       "/api/admin/website-content/pages/:slug/versions",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.websitePageVersionController.listVersions(req, res);
       }
     );
 
+    // Restaurer une version précédente (admin)
     app.post(
       "/api/admin/website-content/pages/:slug/rollback",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.websitePageVersionController.rollbackPage(req, res);
       }
     );
 
+    // Supprimer une version (admin)
     app.delete(
       "/api/admin/website-content/pages/:slug/versions/:versionNumber",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.websitePageVersionController.deleteVersion(req, res);
       }

@@ -33,7 +33,7 @@ const SERVICES = {
     ? "http://localhost:3007"
     : "http://payment-service:3007",
   email: isDevelopment ? "http://localhost:3006" : "http://email-service:3006",
-  websiteContent: isDevelopment
+  "website-content": isDevelopment
     ? "http://localhost:3005"
     : "http://website-content-service:3005",
 } as const;
@@ -51,15 +51,39 @@ const ROUTES: Record<string, keyof typeof SERVICES> = {
   "/admin/auth/change-password": "auth", // PUT: Changer mot de passe
   "/admin/auth/logout": "auth", // POST: Déconnexion
 
-  // === PRODUCT SERVICE ===
-  // Routes publiques
-  "/products": "product", // GET: Liste des produits, POST: Créer produit
-  "/categories": "product", // GET: Liste des catégories, POST: Créer catégorie
-  "/products/search": "product", // GET: Rechercher des produits
+  // === PRODUCT SERVICE (PUBLIQUES) ===
+  "/products": "product", // GET: Liste des produits
+  "/products/:id": "product", // GET: Récupérer un produit spécifique
+  "/categories": "product", // GET: Liste des catégories
+  "/categories/:id": "product", // GET: Récupérer une catégorie spécifique
+  "/products/:id/images": "product", // GET: Lister les images d'un produit
+  "/images/:imageId": "product", // GET: Récupérer une image spécifique
 
-  // Routes admin
-  "/admin/products": "product", // GET: Liste produits, PUT: Modifier produit, DELETE: Supprimer produit
-  "/admin/categories": "product", // GET: Liste catégories, PUT: Modifier catégorie, DELETE: Supprimer catégorie
+  // === PRODUCT SERVICE (ADMIN) ===
+  "/admin/products": "product", // GET: Liste produits, POST: Créer produit
+  "/admin/products/:id": "product", // GET: Récupérer produit, PUT: Modifier produit, DELETE: Supprimer produit
+  "/admin/products/:id/toggle": "product", // PATCH: Activer/désactiver produit
+  "/admin/products/:id/activate": "product", // POST: Activer produit
+  "/admin/products/:id/deactivate": "product", // POST: Désactiver produit
+  "/admin/products/with-images": "product", // POST: Créer produit avec images
+  "/admin/categories": "product", // GET: Liste catégories, POST: Créer catégorie
+  "/admin/categories/:id": "product", // GET: Récupérer catégorie, PUT: Modifier catégorie, DELETE: Supprimer catégorie
+  "/admin/products/:id/images": "product", // POST: Ajouter image, GET: Lister images d'un produit
+  "/admin/images/:imageId": "product", // GET: Récupérer image, PUT: Modifier image
+  "/admin/products/:id/images/:imageId": "product", // DELETE: Supprimer image d'un produit
+
+  // === WEBSITE CONTENT SERVICE (PUBLIQUES) ===
+  "/website-content/pages": "website-content", // GET: Lister toutes les pages
+  "/website-content/pages/:slug": "website-content", // GET: Récupérer une page par slug
+  "/website-content/slugs": "website-content", // GET: Récupérer tous les slugs
+
+  // === WEBSITE CONTENT SERVICE (ADMIN) ===
+  "/admin/website-content/pages": "website-content", // GET: Liste pages, POST: Créer page
+  "/admin/website-content/pages/:slug": "website-content", // GET: Récupérer page, PUT: Modifier page, DELETE: Supprimer page
+  "/admin/website-content/pages/:slug/versions": "website-content", // GET: Lister les versions d'une page
+  "/admin/website-content/pages/:slug/rollback": "website-content", // POST: Restaurer une version
+  "/admin/website-content/pages/:slug/versions/:versionNumber":
+    "website-content", // DELETE: Supprimer une version
 
   // === ORDER SERVICE ===
   // Routes publiques
@@ -127,10 +151,10 @@ const ROUTES: Record<string, keyof typeof SERVICES> = {
 
   // === WEBSITE CONTENT SERVICE ===
   // Routes publiques
-  "/content": "websiteContent", // GET: Récupérer contenu du site
+  "/content": "website-content", // GET: Récupérer contenu du site
 
   // Routes admin
-  "/admin/content": "websiteContent", // GET: Liste contenu, POST: Créer contenu, PUT: Modifier contenu, DELETE: Supprimer contenu
+  "/admin/content": "website-content", // GET: Liste contenu, POST: Créer contenu, PUT: Modifier contenu, DELETE: Supprimer contenu
 } as const;
 
 // ===== MIDDLEWARES GLOBAUX =====

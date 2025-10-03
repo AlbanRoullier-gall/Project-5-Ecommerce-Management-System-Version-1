@@ -172,6 +172,36 @@ export class ApiRouter {
   };
 
   /**
+   * Middleware pour vérifier l'authentification admin
+   */
+  private requireAuth = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): void => {
+    const userId = req.headers["x-user-id"];
+    const userEmail = req.headers["x-user-email"];
+
+    if (!userId || !userEmail) {
+      res.status(401).json({
+        error: "Erreur d'authentification",
+        message: "Informations utilisateur manquantes",
+        timestamp: new Date().toISOString(),
+        status: 401,
+      });
+      return;
+    }
+
+    // Ajouter les informations utilisateur à la requête
+    (req as any).user = {
+      userId: Number(userId),
+      email: userEmail,
+    };
+
+    next();
+  };
+
+  /**
    * Configuration des routes
    */
   setupRoutes(app: express.Application): void {
@@ -189,75 +219,106 @@ export class ApiRouter {
     });
 
     // ===== ROUTES PUBLIQUES =====
-    // List products (public)
+    // Ces routes sont accessibles sans authentification
+    // Elles permettent la consultation des données pour le frontend public
+
+    // Lister tous les produits (public)
     app.get("/api/products", (req: Request, res: Response) => {
       this.productController.listProducts(req, res);
     });
 
-    // Get product by ID (public)
+    // Récupérer un produit spécifique (public)
     app.get("/api/products/:id", (req: Request, res: Response) => {
       this.productController.getProductById(req, res);
     });
 
-    // List categories (public)
+    // Lister toutes les catégories (public)
     app.get("/api/categories", (req: Request, res: Response) => {
       this.categoryController.listCategories(req, res);
     });
 
     // ===== ROUTES D'ADMINISTRATION =====
-    // Product management
+    // Ces routes nécessitent une authentification admin
+    // Elles permettent la gestion complète des produits, catégories et images
+    // === GESTION DES PRODUITS (ADMIN) ===
+    // Créer un nouveau produit (admin)
     app.post(
       "/api/admin/products",
+      this.requireAuth,
       this.validateRequest(schemas.productCreateSchema),
       (req: Request, res: Response) => {
         this.productController.createProduct(req, res);
       }
     );
 
-    app.get("/api/admin/products", (req: Request, res: Response) => {
-      this.productController.listProducts(req, res);
-    });
+    // Lister tous les produits (admin)
+    app.get(
+      "/api/admin/products",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.productController.listProducts(req, res);
+      }
+    );
 
-    app.get("/api/admin/products/:id", (req: Request, res: Response) => {
-      this.productController.getProductById(req, res);
-    });
+    // Récupérer un produit spécifique (admin)
+    app.get(
+      "/api/admin/products/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.productController.getProductById(req, res);
+      }
+    );
 
+    // Modifier un produit (admin)
     app.put(
       "/api/admin/products/:id",
+      this.requireAuth,
       this.validateRequest(schemas.productUpdateSchema),
       (req: Request, res: Response) => {
         this.productController.updateProduct(req, res);
       }
     );
 
-    app.delete("/api/admin/products/:id", (req: Request, res: Response) => {
-      this.productController.deleteProduct(req, res);
-    });
+    // Supprimer un produit (admin)
+    app.delete(
+      "/api/admin/products/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.productController.deleteProduct(req, res);
+      }
+    );
 
+    // Activer/désactiver un produit (admin)
     app.patch(
       "/api/admin/products/:id/toggle",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.productController.toggleProductStatus(req, res);
       }
     );
 
+    // Activer un produit (admin)
     app.post(
       "/api/admin/products/:id/activate",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.productController.activateProduct(req, res);
       }
     );
 
+    // Désactiver un produit (admin)
     app.post(
       "/api/admin/products/:id/deactivate",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.productController.deactivateProduct(req, res);
       }
     );
 
-    // Product with images
+    // Créer un produit avec images (admin)
     app.post(
       "/api/admin/products/with-images",
+      this.requireAuth,
       upload.array("images", 10),
       (req: Request, res: Response) => {
         // This would need special handling for file uploads
@@ -265,38 +326,59 @@ export class ApiRouter {
       }
     );
 
-    // Category management
+    // === GESTION DES CATÉGORIES (ADMIN) ===
+    // Créer une nouvelle catégorie (admin)
     app.post(
       "/api/admin/categories",
+      this.requireAuth,
       this.validateRequest(schemas.categoryCreateSchema),
       (req: Request, res: Response) => {
         this.categoryController.createCategory(req, res);
       }
     );
 
-    app.get("/api/admin/categories", (req: Request, res: Response) => {
-      this.categoryController.listCategories(req, res);
-    });
+    // Lister toutes les catégories (admin)
+    app.get(
+      "/api/admin/categories",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.categoryController.listCategories(req, res);
+      }
+    );
 
-    app.get("/api/admin/categories/:id", (req: Request, res: Response) => {
-      this.categoryController.getCategoryById(req, res);
-    });
+    // Récupérer une catégorie spécifique (admin)
+    app.get(
+      "/api/admin/categories/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.categoryController.getCategoryById(req, res);
+      }
+    );
 
+    // Modifier une catégorie (admin)
     app.put(
       "/api/admin/categories/:id",
+      this.requireAuth,
       this.validateRequest(schemas.categoryUpdateSchema),
       (req: Request, res: Response) => {
         this.categoryController.updateCategory(req, res);
       }
     );
 
-    app.delete("/api/admin/categories/:id", (req: Request, res: Response) => {
-      this.categoryController.deleteCategory(req, res);
-    });
+    // Supprimer une catégorie (admin)
+    app.delete(
+      "/api/admin/categories/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.categoryController.deleteCategory(req, res);
+      }
+    );
 
-    // Product image management
+    // === GESTION DES IMAGES DE PRODUITS (ADMIN) ===
+    // Ajouter une image à un produit (admin)
     app.post(
       "/api/admin/products/:id/images",
+      this.requireAuth,
       upload.single("image"),
       (req: Request, res: Response) => {
         // This would need special handling for file uploads
@@ -304,24 +386,38 @@ export class ApiRouter {
       }
     );
 
-    app.get("/api/admin/products/:id/images", (req: Request, res: Response) => {
-      this.productImageController.listProductImages(req, res);
-    });
+    // Lister les images d'un produit (admin)
+    app.get(
+      "/api/admin/products/:id/images",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.productImageController.listProductImages(req, res);
+      }
+    );
 
-    app.get("/api/admin/images/:imageId", (req: Request, res: Response) => {
-      this.productImageController.getProductImageById(req, res);
-    });
+    // Récupérer une image spécifique (admin)
+    app.get(
+      "/api/admin/images/:imageId",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.productImageController.getProductImageById(req, res);
+      }
+    );
 
+    // Modifier une image (admin)
     app.put(
       "/api/admin/images/:imageId",
+      this.requireAuth,
       this.validateRequest(schemas.productImageUpdateSchema),
       (req: Request, res: Response) => {
         this.productImageController.updateProductImage(req, res);
       }
     );
 
+    // Supprimer une image d'un produit (admin)
     app.delete(
       "/api/admin/products/:id/images/:imageId",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.productImageController.deleteProductImage(req, res);
       }
