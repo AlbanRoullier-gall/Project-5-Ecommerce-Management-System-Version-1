@@ -34,3 +34,11 @@ export interface CompanyPublicDTO {
   createdAt: Date | null;
   updatedAt: Date | null;
 }
+
+/**
+ * DTO de réponse pour la liste des entreprises
+ */
+export interface CompanyListResponse {
+  message: string;
+  companies: CompanyPublicDTO[];
+}

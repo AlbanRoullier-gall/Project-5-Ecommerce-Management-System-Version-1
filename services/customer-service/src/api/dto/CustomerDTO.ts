@@ -57,3 +57,17 @@ export interface CustomerListDTO {
   search?: string;
   activeOnly?: boolean;
 }
+
+/**
+ * DTO de réponse pour la liste des clients
+ */
+export interface CustomerListResponse {
+  message: string;
+  customers: CustomerPublicDTO[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}

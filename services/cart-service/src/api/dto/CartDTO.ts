@@ -64,3 +64,89 @@ export interface CartStatsDTO {
   totalItems: number;
   period: string;
 }
+
+// ===== DTOs DE RÉPONSE API =====
+
+/**
+ * Réponse de création de panier
+ */
+export interface CartCreateResponse {
+  message: string;
+  cart: CartPublicDTO;
+  timestamp: string;
+  status: number;
+}
+
+/**
+ * Réponse de récupération de panier
+ */
+export interface CartRetrieveResponse {
+  message: string;
+  cart: CartPublicDTO;
+  timestamp: string;
+  status: number;
+}
+
+/**
+ * Réponse d'ajout d'article
+ */
+export interface CartItemAddResponse {
+  message: string;
+  cart: CartPublicDTO;
+  timestamp: string;
+  status: number;
+}
+
+/**
+ * Réponse de mise à jour d'article
+ */
+export interface CartItemUpdateResponse {
+  message: string;
+  cart: CartPublicDTO;
+  timestamp: string;
+  status: number;
+}
+
+/**
+ * Réponse de suppression d'article
+ */
+export interface CartItemRemoveResponse {
+  message: string;
+  cart: CartPublicDTO;
+  timestamp: string;
+  status: number;
+}
+
+/**
+ * Réponse de vidage de panier
+ */
+export interface CartClearResponse {
+  message: string;
+  cart: CartPublicDTO;
+  timestamp: string;
+  status: number;
+}
+
+/**
+ * Réponse de validation de panier
+ */
+export interface CartValidationResponse {
+  message: string;
+  validation: {
+    isValid: boolean;
+    errors: string[];
+    cart: CartPublicDTO;
+  };
+  timestamp: string;
+  status: number;
+}
+
+/**
+ * Réponse de statistiques
+ */
+export interface CartStatsResponse {
+  message: string;
+  stats: CartStatsDTO;
+  timestamp: string;
+  status: number;
+}

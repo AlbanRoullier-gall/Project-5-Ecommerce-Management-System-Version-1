@@ -24,9 +24,7 @@ export class CartController {
         req.body as CartCreateDTO
       );
       const cart = await this.cartService.createCart(cartData);
-      res
-        .status(201)
-        .json(ResponseMapper.cartCreated(CartMapper.cartToPublicDTO(cart)));
+      res.status(201).json(ResponseMapper.cartCreated(cart));
     } catch (error: any) {
       console.error("Create cart error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
@@ -53,9 +51,7 @@ export class CartController {
         return;
       }
 
-      res
-        .status(200)
-        .json(ResponseMapper.cartRetrieved(CartMapper.cartToPublicDTO(cart)));
+      res.status(200).json(ResponseMapper.cartRetrieved(cart));
     } catch (error: any) {
       console.error("Get cart error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
@@ -84,9 +80,7 @@ export class CartController {
         itemData
       );
 
-      res
-        .status(200)
-        .json(ResponseMapper.itemAdded(CartMapper.cartToPublicDTO(cart)));
+      res.status(200).json(ResponseMapper.itemAdded(cart));
     } catch (error: any) {
       console.error("Add item error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
@@ -98,7 +92,8 @@ export class CartController {
    */
   async updateItemQuantity(req: Request, res: Response): Promise<void> {
     try {
-      const { sessionId, productId } = req.query;
+      const { sessionId } = req.query;
+      const { productId } = req.params; // Correction: productId vient de req.params, pas req.query
       const { quantity } = req.body as CartItemUpdateDTO;
 
       if (!sessionId) {
@@ -110,13 +105,11 @@ export class CartController {
 
       const cart = await this.cartService.updateItemQuantity(
         sessionId as string,
-        parseInt(productId as string),
+        parseInt(productId),
         quantity
       );
 
-      res
-        .status(200)
-        .json(ResponseMapper.itemUpdated(CartMapper.cartToPublicDTO(cart)));
+      res.status(200).json(ResponseMapper.itemUpdated(cart));
     } catch (error: any) {
       console.error("Update item quantity error:", error);
       if (error.message.includes("non trouvé")) {
@@ -132,7 +125,8 @@ export class CartController {
    */
   async removeItem(req: Request, res: Response): Promise<void> {
     try {
-      const { sessionId, productId } = req.query;
+      const { sessionId } = req.query;
+      const { productId } = req.params; // Correction: productId vient de req.params, pas req.query
 
       if (!sessionId) {
         res
@@ -143,12 +137,10 @@ export class CartController {
 
       const cart = await this.cartService.removeItem(
         sessionId as string,
-        parseInt(productId as string)
+        parseInt(productId)
       );
 
-      res
-        .status(200)
-        .json(ResponseMapper.itemRemoved(CartMapper.cartToPublicDTO(cart)));
+      res.status(200).json(ResponseMapper.itemRemoved(cart));
     } catch (error: any) {
       console.error("Remove item error:", error);
       if (error.message.includes("non trouvé")) {
@@ -175,9 +167,7 @@ export class CartController {
 
       const cart = await this.cartService.clearCart(sessionId as string);
 
-      res
-        .status(200)
-        .json(ResponseMapper.cartCleared(CartMapper.cartToPublicDTO(cart)));
+      res.status(200).json(ResponseMapper.cartCleared(cart));
     } catch (error: any) {
       console.error("Clear cart error:", error);
       if (error.message.includes("non trouvé")) {

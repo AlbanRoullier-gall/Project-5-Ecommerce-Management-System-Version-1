@@ -125,9 +125,15 @@ export class CreditNoteController {
    */
   async getCreditNotesByCustomerId(req: Request, res: Response): Promise<void> {
     try {
-      const { customerId } = req.params;
+      const customerId = req.params.customerId || req.query.customerId;
+      if (!customerId) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("Customer ID is required"));
+        return;
+      }
       const creditNotes = await this.orderService.getCreditNotesByCustomerId(
-        parseInt(customerId!)
+        parseInt(customerId as string)
       );
 
       const creditNoteDTOs = creditNotes.map((creditNote) =>

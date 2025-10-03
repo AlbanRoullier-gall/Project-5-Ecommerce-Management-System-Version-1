@@ -41,3 +41,11 @@ export interface AddressPublicDTO {
   countryId: number;
   isDefault: boolean;
 }
+
+/**
+ * DTO de réponse pour la liste des adresses
+ */
+export interface AddressListResponse {
+  message: string;
+  addresses: AddressPublicDTO[];
+}

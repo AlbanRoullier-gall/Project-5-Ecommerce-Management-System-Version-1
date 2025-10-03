@@ -42,65 +42,95 @@ const SERVICES = {
 const ROUTES: Record<string, keyof typeof SERVICES> = {
   // === AUTH SERVICE ===
   // Routes publiques (sans authentification)
-  "/auth/register": "auth",
-  "/auth/login": "auth",
-  "/auth/validate-password": "auth",
+  "/auth/register": "auth", // POST: Inscription utilisateur
+  "/auth/login": "auth", // POST: Connexion utilisateur
+  "/auth/validate-password": "auth", // POST: Valider mot de passe
 
   // Routes admin (avec authentification)
-  "/admin/auth/profile": "auth",
-  "/admin/auth/change-password": "auth",
-  "/admin/auth/logout": "auth",
+  "/admin/auth/profile": "auth", // GET: Profil utilisateur, PUT: Modifier profil
+  "/admin/auth/change-password": "auth", // PUT: Changer mot de passe
+  "/admin/auth/logout": "auth", // POST: Déconnexion
 
   // === PRODUCT SERVICE ===
   // Routes publiques
-  "/products": "product",
-  "/categories": "product",
-  "/products/search": "product",
+  "/products": "product", // GET: Liste des produits, POST: Créer produit
+  "/categories": "product", // GET: Liste des catégories, POST: Créer catégorie
+  "/products/search": "product", // GET: Rechercher des produits
 
   // Routes admin
-  "/admin/products": "product",
-  "/admin/categories": "product",
+  "/admin/products": "product", // GET: Liste produits, PUT: Modifier produit, DELETE: Supprimer produit
+  "/admin/categories": "product", // GET: Liste catégories, PUT: Modifier catégorie, DELETE: Supprimer catégorie
 
   // === ORDER SERVICE ===
   // Routes publiques
-  "/orders": "order",
+  "/orders": "order", // POST: Créer commande, GET: Récupérer commandes client
+  "/orders/:id": "order", // GET: Récupérer une commande spécifique
+  "/orders/:orderId/items": "order", // GET: Récupérer articles d'une commande
+  "/orders/:orderId/addresses": "order", // GET: Récupérer adresses d'une commande
+  "/customers/:customerId/credit-notes": "order", // GET: Récupérer avoirs d'un client
+  "/customers/:customerId/statistics/orders": "order", // GET: Statistiques d'un client
+  "/statistics/orders": "order", // GET: Statistiques générales des commandes
+  "/statistics/orders/date-range/:startDate/:endDate": "order", // GET: Statistiques par période
 
   // Routes admin
-  "/admin/orders": "order",
+  "/admin/orders": "order", // GET: Liste toutes les commandes, PUT: Modifier commande, DELETE: Supprimer commande
+  "/admin/orders/:id": "order", // GET: Voir commande admin, PUT: Modifier commande admin, DELETE: Supprimer commande admin
+  "/admin/order-items": "order", // POST: Créer article de commande
+  "/admin/order-items/:id": "order", // GET: Voir article, PUT: Modifier article, DELETE: Supprimer article
+  "/admin/credit-notes": "order", // POST: Créer avoir, GET: Liste avoirs
+  "/admin/credit-notes/:id": "order", // GET: Voir avoir, PUT: Modifier avoir, DELETE: Supprimer avoir
+  "/admin/credit-note-items": "order", // POST: Créer article d'avoir
+  "/admin/credit-note-items/:id": "order", // GET: Voir article avoir, PUT: Modifier article avoir, DELETE: Supprimer article avoir
+  "/admin/credit-notes/:creditNoteId/items": "order", // GET: Articles d'un avoir
+  "/admin/order-addresses": "order", // POST: Créer adresse de commande
+  "/admin/order-addresses/:id": "order", // GET: Voir adresse, PUT: Modifier adresse, DELETE: Supprimer adresse
+  "/admin/statistics/orders": "order", // GET: Statistiques admin des commandes
+  "/admin/customers/:customerId/statistics/orders": "order", // GET: Statistiques commandes d'un client
 
-  // === CART SERVICE (PUBLIQUES) ===
-  "/cart": "cart",
-  "/cart/add": "cart",
-  "/cart/remove": "cart",
-  "/cart/clear": "cart",
+  // === CART SERVICE ===
+  // Routes publiques
+  "/cart": "cart", // GET: Récupérer panier, POST: Créer panier, DELETE: Vider panier
+  "/cart/items": "cart", // POST: Ajouter article au panier
+  "/cart/items/:productId": "cart", // PUT: Modifier quantité, DELETE: Supprimer article
+  "/cart/validate": "cart", // GET: Valider le panier
+  "/cart/stats": "cart", // GET: Statistiques des paniers
 
   // === CUSTOMER SERVICE ===
   // Routes publiques
-  "/customers": "customer",
-  "/customers/:customerId/addresses": "customer",
-  "/customers/:customerId/companies": "customer",
+  "/customers": "customer", // POST: Créer un client
+  "/customers/:id": "customer", // GET: Récupérer un client spécifique
+  "/customers/:customerId/addresses": "customer", // POST: Ajouter une adresse
+  "/customers/:customerId/addresses/:id": "customer", // GET: Récupérer une adresse spécifique
+  "/customers/:customerId/companies": "customer", // POST: Ajouter une entreprise
+  "/customers/:customerId/companies/:id": "customer", // GET: Récupérer une entreprise spécifique
 
   // Routes admin
-  "/admin/customers": "customer",
-  "/admin/customers/:id": "customer",
-  "/admin/customers/:customerId/addresses": "customer",
-  "/admin/customers/:customerId/addresses/:id": "customer",
-  "/admin/customers/:customerId/companies": "customer",
-  "/admin/customers/:customerId/companies/:id": "customer",
+  "/admin/customers": "customer", // GET: Liste des clients, PUT: Mettre à jour client, DELETE: Supprimer client
+  "/admin/customers/:id": "customer", // GET: Récupérer client, PUT: Modifier client, DELETE: Supprimer client
+  "/admin/customers/:customerId/addresses": "customer", // GET: Liste des adresses d'un client
+  "/admin/customers/:customerId/addresses/:id": "customer", // PUT: Modifier adresse, DELETE: Supprimer adresse
+  "/admin/customers/:customerId/companies": "customer", // GET: Liste des entreprises d'un client
+  "/admin/customers/:customerId/companies/:id": "customer", // PUT: Modifier entreprise, DELETE: Supprimer entreprise
 
   // === PAYMENT SERVICE (PUBLIQUES) ===
-  "/payments": "payment",
-  "/payments/process": "payment",
+  "/payment/create": "payment", // POST: Créer un paiement Stripe
+  "/payment/confirm": "payment", // POST: Confirmer un paiement
+  "/payment/:paymentId": "payment", // GET: Récupérer un paiement par ID
+
+  // === PAYMENT SERVICE (ADMIN) ===
+  "/admin/payment/refund": "payment", // POST: Rembourser un paiement (admin)
+  "/admin/payment/stats": "payment", // GET: Statistiques de paiement (admin)
 
   // === EMAIL SERVICE (PUBLIQUES) ===
-  "/email/send": "email",
+  "/email/send": "email", // POST: Envoyer un email au client
+  "/email/confirmation": "email", // POST: Envoyer confirmation à l'admin
 
   // === WEBSITE CONTENT SERVICE ===
   // Routes publiques
-  "/content": "websiteContent",
+  "/content": "websiteContent", // GET: Récupérer contenu du site
 
   // Routes admin
-  "/admin/content": "websiteContent",
+  "/admin/content": "websiteContent", // GET: Liste contenu, POST: Créer contenu, PUT: Modifier contenu, DELETE: Supprimer contenu
 } as const;
 
 // ===== MIDDLEWARES GLOBAUX =====

@@ -49,7 +49,21 @@ class CustomerRepository {
         return null;
       }
 
-      return new Customer(result.rows[0] as CustomerData);
+      const row = result.rows[0];
+      const customerData: CustomerData = {
+        customerId: row.customer_id,
+        civilityId: row.civility_id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        email: row.email,
+        socioProfessionalCategoryId: row.socio_professional_category_id,
+        phoneNumber: row.phone_number,
+        birthday: row.birthday,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+      return new Customer(customerData);
     } catch (error) {
       console.error("Error getting customer by ID:", error);
       throw new Error("Failed to retrieve customer");
@@ -80,7 +94,21 @@ class CustomerRepository {
         return null;
       }
 
-      return new Customer(result.rows[0] as CustomerData);
+      const row = result.rows[0];
+      const customerData: CustomerData = {
+        customerId: row.customer_id,
+        civilityId: row.civility_id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        email: row.email,
+        socioProfessionalCategoryId: row.socio_professional_category_id,
+        phoneNumber: row.phone_number,
+        birthday: row.birthday,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+      return new Customer(customerData);
     } catch (error) {
       console.error("Error getting customer by ID with joins:", error);
       throw new Error("Failed to retrieve customer");
@@ -107,7 +135,21 @@ class CustomerRepository {
         return null;
       }
 
-      return new Customer(result.rows[0] as CustomerData);
+      const row = result.rows[0];
+      const customerData: CustomerData = {
+        customerId: row.customer_id,
+        civilityId: row.civility_id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        email: row.email,
+        socioProfessionalCategoryId: row.socio_professional_category_id,
+        phoneNumber: row.phone_number,
+        birthday: row.birthday,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+      return new Customer(customerData);
     } catch (error) {
       console.error("Error getting customer by email:", error);
       throw new Error("Failed to retrieve customer");
@@ -201,7 +243,22 @@ class CustomerRepository {
       );
 
       return {
-        customers: result.rows.map((row) => new Customer(row as CustomerData)),
+        customers: result.rows.map((row) => {
+          const customerData: CustomerData = {
+            customerId: row.customer_id,
+            civilityId: row.civility_id,
+            firstName: row.first_name,
+            lastName: row.last_name,
+            email: row.email,
+            socioProfessionalCategoryId: row.socio_professional_category_id,
+            phoneNumber: row.phone_number,
+            birthday: row.birthday,
+            isActive: row.is_active,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+          };
+          return new Customer(customerData);
+        }),
         pagination: {
           page: parseInt(page.toString()),
           limit: parseInt(limit.toString()),
@@ -246,7 +303,21 @@ class CustomerRepository {
         ]
       );
 
-      return new Customer(result.rows[0] as CustomerData);
+      const row = result.rows[0];
+      const customerData: CustomerData = {
+        customerId: row.customer_id,
+        civilityId: row.civility_id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        email: row.email,
+        socioProfessionalCategoryId: row.socio_professional_category_id,
+        phoneNumber: row.phone_number,
+        birthday: row.birthday,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+      return new Customer(customerData);
     } catch (error) {
       console.error("Error saving customer:", error);
       throw new Error("Failed to save customer");
@@ -291,7 +362,21 @@ class CustomerRepository {
         throw new Error("Customer not found");
       }
 
-      return new Customer(result.rows[0] as CustomerData);
+      const row = result.rows[0];
+      const customerData: CustomerData = {
+        customerId: row.customer_id,
+        civilityId: row.civility_id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        email: row.email,
+        socioProfessionalCategoryId: row.socio_professional_category_id,
+        phoneNumber: row.phone_number,
+        birthday: row.birthday,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+      return new Customer(customerData);
     } catch (error) {
       console.error("Error updating customer:", error);
       throw new Error("Failed to update customer");

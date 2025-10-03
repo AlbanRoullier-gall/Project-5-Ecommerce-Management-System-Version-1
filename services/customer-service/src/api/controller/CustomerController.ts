@@ -145,15 +145,12 @@ export class CustomerController {
         search: (search as string) || "",
         activeOnly: activeOnly === "true",
       });
-      const customersDTO = CustomerMapper.customersToPublicDTOs(
-        result.customers
+      const response = CustomerMapper.createCustomerListResponse(
+        result.customers,
+        result.pagination
       );
 
-      res.json({
-        message: "Clients récupérés avec succès",
-        customers: customersDTO,
-        pagination: result.pagination,
-      });
+      res.json(response);
     } catch (error: any) {
       console.error("List customers error:", error);
       res.status(500).json(ResponseMapper.internalServerError());

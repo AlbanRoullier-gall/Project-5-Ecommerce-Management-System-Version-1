@@ -138,6 +138,71 @@ export class ApiRouter {
   };
 
   /**
+   * Authentication middleware pour les routes protégées
+   */
+  private requireAuth = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): void => {
+    const userId = req.headers["x-user-id"];
+    const userEmail = req.headers["x-user-email"];
+
+    if (!userId || !userEmail) {
+      res.status(401).json({
+        error: "Erreur d'authentification",
+        message: "Informations utilisateur manquantes",
+        timestamp: new Date().toISOString(),
+        status: 401,
+      });
+      return;
+    }
+
+    // Ajouter les informations utilisateur à la requête
+    (req as any).user = {
+      userId: Number(userId),
+      email: userEmail,
+    };
+
+    next();
+  };
+
+  /**
+   * Middleware pour vérifier que l'utilisateur accède à ses propres données
+   */
+  private requireOwnership = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): void => {
+    const userId = req.headers["x-user-id"];
+    const customerId = req.params.id || req.params.customerId;
+
+    if (!userId) {
+      res.status(401).json({
+        error: "Erreur d'authentification",
+        message: "Informations utilisateur manquantes",
+        timestamp: new Date().toISOString(),
+        status: 401,
+      });
+      return;
+    }
+
+    // Vérifier que l'utilisateur accède à ses propres données
+    if (Number(userId) !== Number(customerId)) {
+      res.status(403).json({
+        error: "Accès interdit",
+        message: "Vous ne pouvez accéder qu'à vos propres données",
+        timestamp: new Date().toISOString(),
+        status: 403,
+      });
+      return;
+    }
+
+    next();
+  };
+
+  /**
    * Configuration des routes
    */
   setupRoutes(app: express.Application): void {
@@ -163,26 +228,44 @@ export class ApiRouter {
       }
     );
 
-    // ===== ROUTES ADMIN DE CLIENTS =====
-    app.get("/api/admin/customers/:id", (req: Request, res: Response) => {
+    // Voir un client spécifique (publique)
+    app.get("/api/customers/:id", (req: Request, res: Response) => {
       this.customerController.getCustomerById(req, res);
     });
 
+    // ===== ROUTES ADMIN DE CLIENTS =====
+    app.get(
+      "/api/admin/customers/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.getCustomerById(req, res);
+      }
+    );
+
     app.put(
       "/api/admin/customers/:id",
+      this.requireAuth,
       this.validateRequest(schemas.customerUpdateSchema),
       (req: Request, res: Response) => {
         this.customerController.updateCustomer(req, res);
       }
     );
 
-    app.delete("/api/admin/customers/:id", (req: Request, res: Response) => {
-      this.customerController.deleteCustomer(req, res);
-    });
+    app.delete(
+      "/api/admin/customers/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.deleteCustomer(req, res);
+      }
+    );
 
-    app.get("/api/admin/customers", (req: Request, res: Response) => {
-      this.customerController.listCustomers(req, res);
-    });
+    app.get(
+      "/api/admin/customers",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.listCustomers(req, res);
+      }
+    );
 
     // ===== ROUTES PUBLIQUES D'ADRESSES =====
     // Ajout d'adresse (publique pour les clients)
@@ -194,9 +277,18 @@ export class ApiRouter {
       }
     );
 
+    // Récupérer une adresse spécifique (publique)
+    app.get(
+      "/api/customers/:customerId/addresses/:id",
+      (req: Request, res: Response) => {
+        this.addressController.getAddressById(req, res);
+      }
+    );
+
     // ===== ROUTES ADMIN D'ADRESSES =====
     app.get(
       "/api/admin/customers/:customerId/addresses",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.addressController.getCustomerAddresses(req, res);
       }
@@ -204,6 +296,7 @@ export class ApiRouter {
 
     app.put(
       "/api/admin/customers/:customerId/addresses/:id",
+      this.requireAuth,
       this.validateRequest(schemas.addressUpdateSchema),
       (req: Request, res: Response) => {
         this.addressController.updateAddress(req, res);
@@ -212,6 +305,7 @@ export class ApiRouter {
 
     app.delete(
       "/api/admin/customers/:customerId/addresses/:id",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.addressController.deleteAddress(req, res);
       }
@@ -227,9 +321,18 @@ export class ApiRouter {
       }
     );
 
+    // Récupérer une entreprise spécifique (publique)
+    app.get(
+      "/api/customers/:customerId/companies/:id",
+      (req: Request, res: Response) => {
+        this.companyController.getCompanyById(req, res);
+      }
+    );
+
     // ===== ROUTES ADMIN D'ENTREPRISES =====
     app.get(
       "/api/admin/customers/:customerId/companies",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.companyController.getCustomerCompanies(req, res);
       }
@@ -237,6 +340,7 @@ export class ApiRouter {
 
     app.put(
       "/api/admin/customers/:customerId/companies/:id",
+      this.requireAuth,
       this.validateRequest(schemas.companyUpdateSchema),
       (req: Request, res: Response) => {
         this.companyController.updateCompany(req, res);
@@ -245,6 +349,7 @@ export class ApiRouter {
 
     app.delete(
       "/api/admin/customers/:customerId/companies/:id",
+      this.requireAuth,
       (req: Request, res: Response) => {
         this.companyController.deleteCompany(req, res);
       }

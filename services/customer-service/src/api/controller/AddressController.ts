@@ -31,14 +31,38 @@ export class AddressController {
       const addresses = await this.customerService.listCustomerAddresses(
         parseInt(customerId)
       );
-      const addressesDTO = CustomerMapper.addressesToPublicDTOs(addresses);
+      const response = CustomerMapper.createAddressListResponse(addresses);
 
-      res.json({
-        message: "Adresses récupérées avec succès",
-        addresses: addressesDTO,
-      });
+      res.json(response);
     } catch (error: any) {
       console.error("Get addresses error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Get address by ID
+   */
+  async getAddressById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({ error: "Address ID is required" });
+        return;
+      }
+
+      const address = await this.customerService.getAddressById(parseInt(id));
+
+      if (!address) {
+        res.status(404).json(ResponseMapper.notFoundError("Address"));
+        return;
+      }
+
+      const addressDTO = CustomerMapper.addressToPublicDTO(address);
+      res.json(ResponseMapper.addressRetrieved(addressDTO));
+    } catch (error: any) {
+      console.error("Get address by ID error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
@@ -85,7 +109,7 @@ export class AddressController {
    */
   async updateAddress(req: Request, res: Response): Promise<void> {
     try {
-      const { addressId } = req.params;
+      const { id: addressId } = req.params;
 
       if (!addressId) {
         res.status(400).json({ error: "Address ID is required" });
@@ -118,7 +142,7 @@ export class AddressController {
    */
   async deleteAddress(req: Request, res: Response): Promise<void> {
     try {
-      const { addressId } = req.params;
+      const { id: addressId } = req.params;
 
       if (!addressId) {
         res.status(400).json({ error: "Address ID is required" });

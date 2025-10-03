@@ -90,6 +90,18 @@ export class ResponseMapper {
   }
 
   /**
+   * Réponse d'adresse récupérée
+   */
+  static addressRetrieved(address: any) {
+    return {
+      message: "Adresse récupérée avec succès",
+      address,
+      timestamp: new Date().toISOString(),
+      status: 200,
+    };
+  }
+
+  /**
    * Réponse d'entreprise créée
    */
   static companyCreated(company: any) {
@@ -115,6 +127,18 @@ export class ResponseMapper {
   static companyDeleted() {
     return {
       message: "Entreprise supprimée avec succès",
+    };
+  }
+
+  /**
+   * Réponse d'entreprise récupérée
+   */
+  static companyRetrieved(company: any) {
+    return {
+      message: "Entreprise récupérée avec succès",
+      company,
+      timestamp: new Date().toISOString(),
+      status: 200,
     };
   }
 

@@ -97,6 +97,35 @@ export class ApiRouter {
   };
 
   /**
+   * Middleware d'authentification pour les routes admin
+   */
+  private requireAuth = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): void => {
+    const userId = req.headers["x-user-id"];
+    const userEmail = req.headers["x-user-email"];
+
+    if (!userId || !userEmail) {
+      res.status(401).json({
+        error: "Erreur d'authentification",
+        message: "Informations utilisateur manquantes",
+        timestamp: new Date().toISOString(),
+        status: 401,
+      });
+      return;
+    }
+
+    (req as any).user = {
+      userId: Number(userId),
+      email: userEmail,
+    };
+
+    next();
+  };
+
+  /**
    * Configuration des routes
    */
   setupRoutes(app: express.Application): void {
@@ -131,9 +160,10 @@ export class ApiRouter {
       }
     );
 
-    // Rembourser un paiement
+    // Rembourser un paiement (ROUTE ADMIN)
     app.post(
-      "/api/payment/refund",
+      "/api/admin/payment/refund",
+      this.requireAuth,
       this.validateRequest(schemas.paymentRefundSchema),
       (req: Request, res: Response) => {
         this.paymentController.refundPayment(req, res);
@@ -145,10 +175,14 @@ export class ApiRouter {
       this.paymentController.getPayment(req, res);
     });
 
-    // Récupérer les statistiques de paiement
-    app.get("/api/payment/stats", (req: Request, res: Response) => {
-      this.paymentController.getPaymentStats(req, res);
-    });
+    // Récupérer les statistiques de paiement (ROUTE ADMIN)
+    app.get(
+      "/api/admin/payment/stats",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.paymentController.getPaymentStats(req, res);
+      }
+    );
 
     // ===== GESTION DES ERREURS =====
     app.use((req: Request, res: Response) => {

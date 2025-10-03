@@ -76,6 +76,13 @@ export class Cart {
    * Supprimer un article du panier
    */
   removeItem(productId: number): Cart {
+    const itemIndex = this.items.findIndex(
+      (item) => item.productId === productId
+    );
+    if (itemIndex === -1) {
+      throw new Error(`Article avec productId ${productId} non trouvé`);
+    }
+
     const newItems = this.items.filter((item) => item.productId !== productId);
     return this.createCartWithItems(newItems);
   }
@@ -86,6 +93,13 @@ export class Cart {
   updateItemQuantity(productId: number, quantity: number): Cart {
     if (quantity <= 0) {
       return this.removeItem(productId);
+    }
+
+    const itemIndex = this.items.findIndex(
+      (item) => item.productId === productId
+    );
+    if (itemIndex === -1) {
+      throw new Error(`Article avec productId ${productId} non trouvé`);
     }
 
     const newItems = this.items.map((item) =>

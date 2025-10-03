@@ -31,14 +31,38 @@ export class CompanyController {
       const companies = await this.customerService.listCustomerCompanies(
         parseInt(customerId)
       );
-      const companiesDTO = CustomerMapper.companiesToPublicDTOs(companies);
+      const response = CustomerMapper.createCompanyListResponse(companies);
 
-      res.json({
-        message: "Entreprises récupérées avec succès",
-        companies: companiesDTO,
-      });
+      res.json(response);
     } catch (error: any) {
       console.error("Get companies error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Get company by ID
+   */
+  async getCompanyById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({ error: "Company ID is required" });
+        return;
+      }
+
+      const company = await this.customerService.getCompanyById(parseInt(id));
+
+      if (!company) {
+        res.status(404).json(ResponseMapper.notFoundError("Company"));
+        return;
+      }
+
+      const companyDTO = CustomerMapper.companyToPublicDTO(company);
+      res.json(ResponseMapper.companyRetrieved(companyDTO));
+    } catch (error: any) {
+      console.error("Get company by ID error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
@@ -89,7 +113,7 @@ export class CompanyController {
    */
   async updateCompany(req: Request, res: Response): Promise<void> {
     try {
-      const { companyId } = req.params;
+      const { id: companyId } = req.params;
 
       if (!companyId) {
         res.status(400).json({ error: "Company ID is required" });
@@ -126,7 +150,7 @@ export class CompanyController {
    */
   async deleteCompany(req: Request, res: Response): Promise<void> {
     try {
-      const { companyId } = req.params;
+      const { id: companyId } = req.params;
 
       if (!companyId) {
         res.status(400).json({ error: "Company ID is required" });

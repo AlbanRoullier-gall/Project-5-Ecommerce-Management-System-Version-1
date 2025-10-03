@@ -60,6 +60,37 @@ export class ApiRouter {
   }
 
   /**
+   * Middleware d'authentification pour les routes admin
+   * Vérifie les headers transmis par l'API-Gateway
+   */
+  private requireAuth = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): void => {
+    const userId = req.headers["x-user-id"];
+    const userEmail = req.headers["x-user-email"];
+
+    if (!userId || !userEmail) {
+      res.status(401).json({
+        error: "Erreur d'authentification",
+        message: "Informations utilisateur manquantes",
+        timestamp: new Date().toISOString(),
+        status: 401,
+      });
+      return;
+    }
+
+    // Ajouter les informations utilisateur à la requête
+    (req as any).user = {
+      userId: Number(userId),
+      email: userEmail,
+    };
+
+    next();
+  };
+
+  /**
    * Setup validation schemas
    */
   private setupValidationSchemas() {
@@ -192,7 +223,9 @@ export class ApiRouter {
       this.healthController.detailedHealthCheck(req, res);
     });
 
-    // ===== ROUTES DE COMMANDES =====
+    // ===== ROUTES PUBLIQUES (SANS AUTHENTIFICATION) =====
+
+    // Routes publiques pour les commandes
     app.post(
       "/api/orders",
       this.validateRequest(schemas.orderCreateSchema),
@@ -205,76 +238,21 @@ export class ApiRouter {
       this.orderController.getOrderById(req, res);
     });
 
-    app.put(
-      "/api/orders/:id",
-      this.validateRequest(schemas.orderUpdateSchema),
-      (req: Request, res: Response) => {
-        this.orderController.updateOrder(req, res);
-      }
-    );
-
-    app.delete("/api/orders/:id", (req: Request, res: Response) => {
-      this.orderController.deleteOrder(req, res);
-    });
-
     app.get("/api/orders", (req: Request, res: Response) => {
       this.orderController.listOrders(req, res);
     });
 
-    // ===== ROUTES DES ARTICLES DE COMMANDE =====
-    app.post(
-      "/api/order-items",
-      this.validateRequest(schemas.orderItemCreateSchema),
-      (req: Request, res: Response) => {
-        this.orderItemController.createOrderItem(req, res);
-      }
-    );
-
-    app.get("/api/order-items/:id", (req: Request, res: Response) => {
-      this.orderItemController.getOrderItemById(req, res);
-    });
-
-    app.put(
-      "/api/order-items/:id",
-      this.validateRequest(schemas.orderItemUpdateSchema),
-      (req: Request, res: Response) => {
-        this.orderItemController.updateOrderItem(req, res);
-      }
-    );
-
-    app.delete("/api/order-items/:id", (req: Request, res: Response) => {
-      this.orderItemController.deleteOrderItem(req, res);
-    });
-
+    // Routes publiques pour les articles de commande
     app.get("/api/orders/:orderId/items", (req: Request, res: Response) => {
       this.orderItemController.getOrderItemsByOrderId(req, res);
     });
 
-    // ===== ROUTES DES AVOIRS =====
-    app.post(
-      "/api/credit-notes",
-      this.validateRequest(schemas.creditNoteCreateSchema),
-      (req: Request, res: Response) => {
-        this.creditNoteController.createCreditNote(req, res);
-      }
-    );
-
-    app.get("/api/credit-notes/:id", (req: Request, res: Response) => {
-      this.creditNoteController.getCreditNoteById(req, res);
+    // Routes publiques pour les adresses de commande
+    app.get("/api/orders/:orderId/addresses", (req: Request, res: Response) => {
+      this.orderAddressController.getOrderAddressesByOrderId(req, res);
     });
 
-    app.put(
-      "/api/credit-notes/:id",
-      this.validateRequest(schemas.creditNoteUpdateSchema),
-      (req: Request, res: Response) => {
-        this.creditNoteController.updateCreditNote(req, res);
-      }
-    );
-
-    app.delete("/api/credit-notes/:id", (req: Request, res: Response) => {
-      this.creditNoteController.deleteCreditNote(req, res);
-    });
-
+    // Routes publiques pour les avoirs
     app.get(
       "/api/customers/:customerId/credit-notes",
       (req: Request, res: Response) => {
@@ -282,71 +260,7 @@ export class ApiRouter {
       }
     );
 
-    // ===== ROUTES DES ARTICLES D'AVOIRS =====
-    app.post(
-      "/api/credit-note-items",
-      this.validateRequest(schemas.creditNoteItemCreateSchema),
-      (req: Request, res: Response) => {
-        this.creditNoteItemController.createCreditNoteItem(req, res);
-      }
-    );
-
-    app.get("/api/credit-note-items/:id", (req: Request, res: Response) => {
-      this.creditNoteItemController.getCreditNoteItemById(req, res);
-    });
-
-    app.put(
-      "/api/credit-note-items/:id",
-      this.validateRequest(schemas.creditNoteItemUpdateSchema),
-      (req: Request, res: Response) => {
-        this.creditNoteItemController.updateCreditNoteItem(req, res);
-      }
-    );
-
-    app.delete("/api/credit-note-items/:id", (req: Request, res: Response) => {
-      this.creditNoteItemController.deleteCreditNoteItem(req, res);
-    });
-
-    app.get(
-      "/api/credit-notes/:creditNoteId/items",
-      (req: Request, res: Response) => {
-        this.creditNoteItemController.getCreditNoteItemsByCreditNoteId(
-          req,
-          res
-        );
-      }
-    );
-
-    // ===== ROUTES DES ADRESSES DE COMMANDE =====
-    app.post(
-      "/api/order-addresses",
-      this.validateRequest(schemas.orderAddressCreateSchema),
-      (req: Request, res: Response) => {
-        this.orderAddressController.createOrderAddress(req, res);
-      }
-    );
-
-    app.get("/api/order-addresses/:id", (req: Request, res: Response) => {
-      this.orderAddressController.getOrderAddressById(req, res);
-    });
-
-    app.put(
-      "/api/order-addresses/:id",
-      this.validateRequest(schemas.orderAddressUpdateSchema),
-      (req: Request, res: Response) => {
-        this.orderAddressController.updateOrderAddress(req, res);
-      }
-    );
-
-    app.delete("/api/order-addresses/:id", (req: Request, res: Response) => {
-      this.orderAddressController.deleteOrderAddress(req, res);
-    });
-
-    app.get("/api/orders/:orderId/addresses", (req: Request, res: Response) => {
-      this.orderAddressController.getOrderAddressesByOrderId(req, res);
-    });
-
-    // ===== ROUTES DES STATISTIQUES =====
+    // Routes publiques pour les statistiques
     app.get("/api/statistics/orders", (req: Request, res: Response) => {
       this.orderStatisticsController.getOrderStatistics(req, res);
     });
@@ -362,6 +276,218 @@ export class ApiRouter {
       "/api/statistics/orders/date-range/:startDate/:endDate",
       (req: Request, res: Response) => {
         this.orderStatisticsController.getOrderStatisticsByDateRange(req, res);
+      }
+    );
+
+    // ===== ROUTES ADMIN (AVEC AUTHENTIFICATION) =====
+
+    // Routes admin pour les commandes
+    app.put(
+      "/api/admin/orders/:id",
+      this.requireAuth,
+      this.validateRequest(schemas.orderUpdateSchema),
+      (req: Request, res: Response) => {
+        this.orderController.updateOrder(req, res);
+      }
+    );
+
+    app.delete(
+      "/api/admin/orders/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderController.deleteOrder(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/orders",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderController.listOrders(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/orders/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderController.getOrderById(req, res);
+      }
+    );
+
+    // Routes admin pour les articles de commande
+    app.post(
+      "/api/admin/order-items",
+      this.requireAuth,
+      this.validateRequest(schemas.orderItemCreateSchema),
+      (req: Request, res: Response) => {
+        this.orderItemController.createOrderItem(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/order-items/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderItemController.getOrderItemById(req, res);
+      }
+    );
+
+    app.put(
+      "/api/admin/order-items/:id",
+      this.requireAuth,
+      this.validateRequest(schemas.orderItemUpdateSchema),
+      (req: Request, res: Response) => {
+        this.orderItemController.updateOrderItem(req, res);
+      }
+    );
+
+    app.delete(
+      "/api/admin/order-items/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderItemController.deleteOrderItem(req, res);
+      }
+    );
+
+    // Routes admin pour les avoirs
+    app.post(
+      "/api/admin/credit-notes",
+      this.requireAuth,
+      this.validateRequest(schemas.creditNoteCreateSchema),
+      (req: Request, res: Response) => {
+        this.creditNoteController.createCreditNote(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/credit-notes",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.creditNoteController.getCreditNotesByCustomerId(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/credit-notes/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.creditNoteController.getCreditNoteById(req, res);
+      }
+    );
+
+    app.put(
+      "/api/admin/credit-notes/:id",
+      this.requireAuth,
+      this.validateRequest(schemas.creditNoteUpdateSchema),
+      (req: Request, res: Response) => {
+        this.creditNoteController.updateCreditNote(req, res);
+      }
+    );
+
+    app.delete(
+      "/api/admin/credit-notes/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.creditNoteController.deleteCreditNote(req, res);
+      }
+    );
+
+    // Routes admin pour les articles d'avoirs
+    app.post(
+      "/api/admin/credit-note-items",
+      this.requireAuth,
+      this.validateRequest(schemas.creditNoteItemCreateSchema),
+      (req: Request, res: Response) => {
+        this.creditNoteItemController.createCreditNoteItem(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/credit-note-items/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.creditNoteItemController.getCreditNoteItemById(req, res);
+      }
+    );
+
+    app.put(
+      "/api/admin/credit-note-items/:id",
+      this.requireAuth,
+      this.validateRequest(schemas.creditNoteItemUpdateSchema),
+      (req: Request, res: Response) => {
+        this.creditNoteItemController.updateCreditNoteItem(req, res);
+      }
+    );
+
+    app.delete(
+      "/api/admin/credit-note-items/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.creditNoteItemController.deleteCreditNoteItem(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/credit-notes/:creditNoteId/items",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.creditNoteItemController.getCreditNoteItemsByCreditNoteId(
+          req,
+          res
+        );
+      }
+    );
+
+    // Routes admin pour les adresses de commande
+    app.post(
+      "/api/admin/order-addresses",
+      this.requireAuth,
+      this.validateRequest(schemas.orderAddressCreateSchema),
+      (req: Request, res: Response) => {
+        this.orderAddressController.createOrderAddress(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/order-addresses/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderAddressController.getOrderAddressById(req, res);
+      }
+    );
+
+    app.put(
+      "/api/admin/order-addresses/:id",
+      this.requireAuth,
+      this.validateRequest(schemas.orderAddressUpdateSchema),
+      (req: Request, res: Response) => {
+        this.orderAddressController.updateOrderAddress(req, res);
+      }
+    );
+
+    app.delete(
+      "/api/admin/order-addresses/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderAddressController.deleteOrderAddress(req, res);
+      }
+    );
+
+    // Routes admin pour les statistiques
+    app.get(
+      "/api/admin/statistics/orders",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderStatisticsController.getOrderStatistics(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/customers/:customerId/statistics/orders",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderStatisticsController.getOrderStatisticsByCustomer(req, res);
       }
     );
 

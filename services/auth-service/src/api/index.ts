@@ -11,24 +11,20 @@ import express, { Request, Response, NextFunction } from "express";
 import { Pool } from "pg";
 import cors from "cors";
 import helmet from "helmet";
-import jwt from "jsonwebtoken";
 import Joi from "joi";
 import { AuthService } from "../services/AuthService";
 import morgan from "morgan";
 import { AuthController, HealthController } from "./controller";
-import { JWTPayload } from "../models/JWTPayload";
 import { ResponseMapper } from "./mapper/ResponseMapper";
 
 export class ApiRouter {
   private authController: AuthController;
   private healthController: HealthController;
-  private jwtSecret: string;
 
   constructor(pool: Pool) {
     const authService = new AuthService(pool);
     this.authController = new AuthController(authService);
     this.healthController = new HealthController();
-    this.jwtSecret = process.env["JWT_SECRET"] || "your-jwt-secret-key";
   }
 
   /**
@@ -42,32 +38,34 @@ export class ApiRouter {
   }
 
   /**
-   * Middleware d'authentification JWT
+   * Middleware d'authentification pour les routes admin
+   * Vérifie les headers transmis par l'API-Gateway
    */
-  private authenticateToken = (
+  private requireAuth = (
     req: Request,
     res: Response,
     next: NextFunction
   ): void => {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+    const userId = req.headers["x-user-id"];
+    const userEmail = req.headers["x-user-email"];
 
-    if (!token) {
-      res
-        .status(401)
-        .json(ResponseMapper.authenticationError("Token d'accès requis"));
+    if (!userId || !userEmail) {
+      res.status(401).json({
+        error: "Erreur d'authentification",
+        message: "Informations utilisateur manquantes",
+        timestamp: new Date().toISOString(),
+        status: 401,
+      });
       return;
     }
 
-    try {
-      const decoded = jwt.verify(token, this.jwtSecret) as JWTPayload;
-      (req as any).user = decoded;
-      next();
-    } catch (error) {
-      res
-        .status(403)
-        .json(ResponseMapper.authenticationError("Token invalide"));
-    }
+    // Ajouter les informations utilisateur à la requête
+    (req as any).user = {
+      userId: Number(userId),
+      email: userEmail,
+    };
+
+    next();
   };
 
   /**
@@ -166,13 +164,18 @@ export class ApiRouter {
       }
     );
 
-    // ===== ROUTES ADMIN (AUTHENTIFICATION GÉRÉE PAR API GATEWAY) =====
-    app.get("/api/admin/auth/profile", (req: Request, res: Response) => {
-      this.authController.getProfile(req, res);
-    });
+    // ===== ROUTES ADMIN (AVEC AUTHENTIFICATION) =====
+    app.get(
+      "/api/admin/auth/profile",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.authController.getProfile(req, res);
+      }
+    );
 
     app.put(
       "/api/admin/auth/profile",
+      this.requireAuth,
       this.validateRequest(schemas.updateProfileSchema),
       (req: Request, res: Response) => {
         this.authController.updateProfile(req, res);
@@ -181,15 +184,20 @@ export class ApiRouter {
 
     app.put(
       "/api/admin/auth/change-password",
+      this.requireAuth,
       this.validateRequest(schemas.changePasswordSchema),
       (req: Request, res: Response) => {
         this.authController.changePassword(req, res);
       }
     );
 
-    app.post("/api/admin/auth/logout", (req: Request, res: Response) => {
-      this.authController.logout(req, res);
-    });
+    app.post(
+      "/api/admin/auth/logout",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.authController.logout(req, res);
+      }
+    );
 
     // ===== GESTION DES ERREURS GLOBALES =====
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

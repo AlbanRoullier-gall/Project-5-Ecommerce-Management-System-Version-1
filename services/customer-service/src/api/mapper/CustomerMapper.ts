@@ -17,12 +17,15 @@ import {
   CustomerCreateDTO,
   CustomerUpdateDTO,
   CustomerPublicDTO,
+  CustomerListResponse,
   AddressCreateDTO,
   AddressUpdateDTO,
   AddressPublicDTO,
+  AddressListResponse,
   CompanyCreateDTO,
   CompanyUpdateDTO,
   CompanyPublicDTO,
+  CompanyListResponse,
 } from "../dto";
 
 export class CustomerMapper {
@@ -91,6 +94,28 @@ export class CustomerMapper {
     return customers.map((customer) => this.customerToPublicDTO(customer));
   }
 
+  /**
+   * Créer une réponse de liste de clients
+   */
+  static createCustomerListResponse(
+    customers: Customer[],
+    pagination: any,
+    message: string = "Clients récupérés avec succès"
+  ): CustomerListResponse {
+    return {
+      message,
+      customers: this.customersToPublicDTOs(customers),
+      pagination: {
+        page: pagination.page || 1,
+        limit: pagination.limit || 10,
+        total: pagination.total || 0,
+        totalPages: Math.ceil(
+          (pagination.total || 0) / (pagination.limit || 10)
+        ),
+      },
+    };
+  }
+
   // ===== ADDRESS MAPPING =====
 
   /**
@@ -152,6 +177,19 @@ export class CustomerMapper {
     return addresses.map((address) => this.addressToPublicDTO(address));
   }
 
+  /**
+   * Créer une réponse de liste d'adresses
+   */
+  static createAddressListResponse(
+    addresses: CustomerAddress[],
+    message: string = "Adresses récupérées avec succès"
+  ): AddressListResponse {
+    return {
+      message,
+      addresses: this.addressesToPublicDTOs(addresses),
+    };
+  }
+
   // ===== COMPANY MAPPING =====
 
   /**
@@ -205,5 +243,18 @@ export class CustomerMapper {
     companies: CustomerCompany[]
   ): CompanyPublicDTO[] {
     return companies.map((company) => this.companyToPublicDTO(company));
+  }
+
+  /**
+   * Créer une réponse de liste d'entreprises
+   */
+  static createCompanyListResponse(
+    companies: CustomerCompany[],
+    message: string = "Entreprises récupérées avec succès"
+  ): CompanyListResponse {
+    return {
+      message,
+      companies: this.companiesToPublicDTOs(companies),
+    };
   }
 }

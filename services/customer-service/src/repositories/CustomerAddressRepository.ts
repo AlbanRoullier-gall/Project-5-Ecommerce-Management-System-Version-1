@@ -33,7 +33,20 @@ class CustomerAddressRepository {
         return null;
       }
 
-      return new CustomerAddress(result.rows[0] as CustomerAddressData);
+      const row = result.rows[0];
+      const addressData: CustomerAddressData = {
+        addressId: row.address_id,
+        customerId: row.customer_id,
+        addressType: row.address_type,
+        address: row.address,
+        postalCode: row.postal_code,
+        city: row.city,
+        countryId: row.country_id,
+        isDefault: row.is_default,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+      return new CustomerAddress(addressData);
     } catch (error) {
       console.error("Error getting address by ID:", error);
       throw new Error("Failed to retrieve address");
@@ -61,7 +74,20 @@ class CustomerAddressRepository {
         return null;
       }
 
-      return new CustomerAddress(result.rows[0] as CustomerAddressData);
+      const row = result.rows[0];
+      const addressData: CustomerAddressData = {
+        addressId: row.address_id,
+        customerId: row.customer_id,
+        addressType: row.address_type,
+        address: row.address,
+        postalCode: row.postal_code,
+        city: row.city,
+        countryId: row.country_id,
+        isDefault: row.is_default,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+      return new CustomerAddress(addressData);
     } catch (error) {
       console.error("Error getting address by ID with joins:", error);
       throw new Error("Failed to retrieve address");
@@ -122,7 +148,20 @@ class CustomerAddressRepository {
         ]
       );
 
-      return new CustomerAddress(result.rows[0] as CustomerAddressData);
+      const row = result.rows[0];
+      const addressData: CustomerAddressData = {
+        addressId: row.address_id,
+        customerId: row.customer_id,
+        addressType: row.address_type,
+        address: row.address,
+        postalCode: row.postal_code,
+        city: row.city,
+        countryId: row.country_id,
+        isDefault: row.is_default,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+      return new CustomerAddress(addressData);
     } catch (error) {
       console.error("Error saving address:", error);
       throw new Error("Failed to save address");
@@ -164,7 +203,20 @@ class CustomerAddressRepository {
         throw new Error("Address not found");
       }
 
-      return new CustomerAddress(result.rows[0] as CustomerAddressData);
+      const row = result.rows[0];
+      const addressData: CustomerAddressData = {
+        addressId: row.address_id,
+        customerId: row.customer_id,
+        addressType: row.address_type,
+        address: row.address,
+        postalCode: row.postal_code,
+        city: row.city,
+        countryId: row.country_id,
+        isDefault: row.is_default,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+      return new CustomerAddress(addressData);
     } catch (error) {
       console.error("Error updating address:", error);
       throw new Error("Failed to update address");

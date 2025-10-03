@@ -391,6 +391,20 @@ class CustomerService {
     }
   }
 
+  /**
+   * Get address by ID
+   * @param {number} addressId Address ID
+   * @returns {Promise<CustomerAddress|null>} Address or null if not found
+   */
+  async getAddressById(addressId: number): Promise<CustomerAddress | null> {
+    try {
+      return await this.addressRepository.getById(addressId);
+    } catch (error) {
+      console.error("Error getting address by ID:", error);
+      throw error;
+    }
+  }
+
   // Company management methods
 
   /**
@@ -527,6 +541,20 @@ class CustomerService {
       return await this.companyRepository.listByCustomer(customerId);
     } catch (error) {
       console.error("Error listing customer companies:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get company by ID
+   * @param {number} companyId Company ID
+   * @returns {Promise<CustomerCompany|null>} Company or null if not found
+   */
+  async getCompanyById(companyId: number): Promise<CustomerCompany | null> {
+    try {
+      return await this.companyRepository.getById(companyId);
+    } catch (error) {
+      console.error("Error getting company by ID:", error);
       throw error;
     }
   }
