@@ -10,12 +10,16 @@ src/
 ├── proxy.ts              # Module de proxy vers les services
 ├── middleware.ts         # Middlewares globaux
 ├── routes-handler.ts     # Gestionnaire de routes
-└── routes/               # Routes organisées par service
-    ├── index.ts          # Index des routes
-    ├── auth-routes.ts    # Routes d'authentification
-    ├── product-routes.ts # Routes des produits
-    ├── order-routes.ts   # Routes des commandes
-    └── other-routes.ts   # Routes des autres services
+└── routes/                    # Routes organisées par service
+    ├── index.ts               # Index des routes
+    ├── auth-routes.ts         # Routes d'authentification
+    ├── product-routes.ts      # Routes des produits
+    ├── order-routes.ts        # Routes des commandes
+    ├── cart-routes.ts         # Routes du panier
+    ├── customer-routes.ts      # Routes des clients
+    ├── payment-routes.ts      # Routes des paiements
+    ├── email-routes.ts         # Routes des emails
+    └── website-content-routes.ts # Routes du contenu du site
 ```
 
 ## 🚀 Fonctionnalités
@@ -40,17 +44,20 @@ src/
 ## 📝 Utilisation
 
 ### Développement
+
 ```bash
 npm run dev
 ```
 
 ### Production
+
 ```bash
 npm run build
 npm start
 ```
 
 ### Docker
+
 ```bash
 docker build -t api-gateway .
 docker run -p 3020:3020 api-gateway
@@ -68,6 +75,7 @@ Les routes `/admin/*` nécessitent un token JWT valide dans le header `Authoriza
 ## 🛠️ Configuration
 
 Variables d'environnement :
+
 - `PORT` : Port du serveur (défaut: 3020)
 - `JWT_SECRET` : Secret pour les tokens JWT
 - `NODE_ENV` : Environnement (development/production)
