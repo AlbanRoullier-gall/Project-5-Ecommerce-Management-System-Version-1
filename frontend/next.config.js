@@ -2,6 +2,16 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-}
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020"
+        }/api/:path*`,
+      },
+    ];
+  },
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

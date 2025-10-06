@@ -4,11 +4,9 @@ import React, { useState } from "react";
 import Head from "next/head";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { ContactEmailRequest } from "../../shared-types";
-import { ContactService } from "../lib/services/contactService";
 
 export default function Contact() {
-  const [formData, setFormData] = useState<ContactEmailRequest>({
+  const [formData, setFormData] = useState({
     email: "",
     name: "",
     subject: "",
@@ -26,8 +24,8 @@ export default function Contact() {
     setIsSubmitting(true);
     setSubmitStatus({ type: null, message: "" });
 
-    try {
-      const response = await ContactService.sendContactEmail(formData);
+    // Simulation d'envoi (remplacer par votre logique d'envoi)
+    setTimeout(() => {
       setSubmitStatus({
         type: "success",
         message:
@@ -41,17 +39,8 @@ export default function Contact() {
         subject: "",
         message: "",
       });
-    } catch (error) {
-      setSubmitStatus({
-        type: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Une erreur est survenue lors de l'envoi de votre message.",
-      });
-    } finally {
       setIsSubmitting(false);
-    }
+    }, 1000);
   };
 
   const handleChange = (

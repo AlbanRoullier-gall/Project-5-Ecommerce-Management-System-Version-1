@@ -6,13 +6,9 @@ WORKDIR /app
 COPY frontend/package*.json ./
 RUN npm install
 
-# Copy shared-types first
-COPY shared-types/ ./shared-types/
-
 # Copy only source files, not node_modules
 COPY frontend/pages/ ./pages/
 COPY frontend/components/ ./components/
-COPY frontend/lib/ ./lib/
 COPY frontend/styles/ ./styles/
 COPY frontend/public/ ./public/
 COPY frontend/next.config.js ./

@@ -2,9 +2,6 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy shared-types depuis la racine du projet
-COPY shared-types/ ./shared-types/
-
 # Copy package files from frontend directory
 COPY frontend/package*.json ./
 RUN npm install

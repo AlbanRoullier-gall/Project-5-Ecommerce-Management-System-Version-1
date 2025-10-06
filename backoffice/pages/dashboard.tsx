@@ -1,16 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import Head from "next/head";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import ProtectedRoute from "../components/ProtectedRoute";
 
 const DashboardPage: React.FC = () => {
-  const [loading, setLoading] = useState(false);
-
   return (
-    <ProtectedRoute>
+    <>
       <Head>
         <title>Tableau de Bord - Nature de Pierre</title>
         <meta
@@ -87,7 +83,7 @@ const DashboardPage: React.FC = () => {
         {/* FOOTER */}
         <Footer />
       </div>
-    </ProtectedRoute>
+    </>
   );
 };
 

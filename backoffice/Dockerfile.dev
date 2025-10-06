@@ -6,9 +6,6 @@ WORKDIR /app
 COPY backoffice/package*.json ./
 RUN npm install
 
-# Copy shared-types first
-COPY shared-types/ ./shared-types/
-
 # Copy only source files, not node_modules
 COPY backoffice/pages/ ./pages/
 COPY backoffice/components/ ./components/

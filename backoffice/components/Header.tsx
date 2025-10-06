@@ -4,81 +4,95 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useAuth } from "../contexts/AuthContext";
 
 const Header: React.FC = () => {
-  const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
-  const [showUserMenu, setShowUserMenu] = useState(false);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.push("/auth/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header>
-      <div className="container-menu">
-        <div className="container-brand">
-          <h1 className="title">
-            <Link href={isAuthenticated ? "/dashboard" : "/"}>
-              NATURE DE PIERRE
-            </Link>
-          </h1>
-          <Image
-            className="logo logo-responsive"
-            src="/images/logoNatureDePierreIcon.svg"
-            alt="Logo Nature de Pierre"
-            width={50}
-            height={50}
-          />
+    <header className="modern-header">
+      <div className="header-container">
+        <div className="brand-section">
+          <Link href="/" className="brand-link">
+            <Image
+              className="logo"
+              src="/images/logoNatureDePierreIcon.svg"
+              alt="Logo Nature de Pierre"
+              width={50}
+              height={50}
+            />
+            <span className="brand-text">NATURE DE PIERRE</span>
+          </Link>
         </div>
 
-        {/* Navigation and User Menu */}
-        {isAuthenticated && user && (
-          <nav className="header-nav">
-            <div className="nav-links">
-              <Link href="/dashboard" className="nav-link">
-                <i className="fas fa-tachometer-alt"></i>
-                <span>Dashboard</span>
-              </Link>
-              <Link href="/products" className="nav-link">
-                <i className="fas fa-box"></i>
-                <span>Produits</span>
-              </Link>
-            </div>
-
-            <div className="user-menu">
-              <button
-                className="user-menu-button"
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                onBlur={() => setTimeout(() => setShowUserMenu(false), 200)}
-              >
-                <span className="user-name">
-                  {user.firstName} {user.lastName}
-                </span>
-                <span className="user-role">({user.role})</span>
-                <span className="dropdown-arrow">▼</span>
-              </button>
-
-              {showUserMenu && (
-                <div className="user-menu-dropdown">
-                  <button
-                    onClick={handleLogout}
-                    className="dropdown-item logout"
-                  >
-                    Déconnexion
-                  </button>
-                </div>
-              )}
-            </div>
-          </nav>
-        )}
+        {/* Mobile Menu Button */}
+        <button
+          className="mobile-menu-btn"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          <i className={`fas ${isMenuOpen ? "fa-times" : "fa-bars"}`}></i>
+        </button>
       </div>
+
+      {/* Desktop Navigation - Below Title */}
+      <nav className="desktop-nav">
+        <div className="nav-container">
+          <Link href="/dashboard" className="nav-item">
+            <i className="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+          </Link>
+          <Link href="/products" className="nav-item">
+            <i className="fas fa-box"></i>
+            <span>Produits</span>
+          </Link>
+          <Link href="/customers" className="nav-item">
+            <i className="fas fa-users"></i>
+            <span>Clients</span>
+          </Link>
+          <Link href="/orders" className="nav-item">
+            <i className="fas fa-shopping-bag"></i>
+            <span>Commandes</span>
+          </Link>
+        </div>
+      </nav>
+
+      {/* Mobile Navigation */}
+      {isMenuOpen && (
+        <nav className="mobile-nav">
+          <Link
+            href="/dashboard"
+            className="mobile-nav-item"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <i className="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+          </Link>
+          <Link
+            href="/products"
+            className="mobile-nav-item"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <i className="fas fa-box"></i>
+            <span>Produits</span>
+          </Link>
+          <Link
+            href="/customers"
+            className="mobile-nav-item"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <i className="fas fa-users"></i>
+            <span>Clients</span>
+          </Link>
+          <Link
+            href="/orders"
+            className="mobile-nav-item"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <i className="fas fa-shopping-bag"></i>
+            <span>Commandes</span>
+          </Link>
+        </nav>
+      )}
     </header>
   );
 };
