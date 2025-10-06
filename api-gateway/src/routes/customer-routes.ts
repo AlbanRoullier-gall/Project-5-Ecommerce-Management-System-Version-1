@@ -6,7 +6,7 @@ import { ServiceName } from "../config";
 
 export const CUSTOMER_ROUTES: Record<string, ServiceName> = {
   // Routes publiques
-  "/customers": "customer", // POST: Créer un client
+  "/customers": "customer", // POST: Créer un client, GET: Liste des clients (redirige vers admin)
   "/customers/:id": "customer", // GET: Récupérer un client spécifique
   "/customers/:customerId/addresses": "customer", // POST: Ajouter une adresse
   "/customers/:customerId/addresses/:id": "customer", // GET: Récupérer une adresse spécifique

@@ -56,7 +56,14 @@ export const handleProxyRequest = async (
 
     // Préparation de la requête vers le service
     const serviceUrl = SERVICES[service];
-    const targetUrl = `${serviceUrl}${req.path}`;
+
+    // Redirection spéciale pour /customers GET vers /admin/customers
+    let targetPath = req.path;
+    if (req.path === "/api/customers" && req.method === "GET") {
+      targetPath = "/api/admin/customers";
+    }
+
+    const targetUrl = `${serviceUrl}${targetPath}`;
 
     console.log(`📤 Envoi vers: ${targetUrl}`);
 

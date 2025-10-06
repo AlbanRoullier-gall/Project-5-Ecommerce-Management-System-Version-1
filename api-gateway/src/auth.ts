@@ -15,7 +15,7 @@ export interface AuthenticatedUser {
  * Vérifie si une route nécessite une authentification
  */
 export const isProtectedRoute = (path: string): boolean => {
-  return path.includes("/admin/");
+  return path.includes("/admin/") || path === "/api/customers";
 };
 
 /**
