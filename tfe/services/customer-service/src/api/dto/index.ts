@@ -1,0 +1,7 @@
+/**
+ * Index des DTOs
+ * Exporte tous les DTOs depuis shared-types
+ */
+
+// Re-export des DTOs depuis shared-types
+export * from "../../../../shared-types/customer-service";

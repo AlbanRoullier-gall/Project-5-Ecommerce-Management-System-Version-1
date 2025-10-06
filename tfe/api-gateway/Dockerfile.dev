@@ -1,0 +1,58 @@
+# ===== IMAGE DE BASE =====
+FROM node:18-alpine
+
+# ===== MÉTADONNÉES =====
+LABEL maintainer="api-gateway-dev"
+LABEL description="API Gateway - Development Mode"
+LABEL version="1.0.0-dev"
+
+# ===== CONFIGURATION DE L'ENVIRONNEMENT =====
+WORKDIR /app
+
+# ===== INSTALLATION DES DÉPENDANCES SYSTÈME =====
+# Installation des outils de développement
+RUN apk add --no-cache \
+    curl \
+    bash \
+    git
+
+# ===== INSTALLATION DES OUTILS DE DÉVELOPPEMENT =====
+# Installation globale de ts-node-dev pour le hot reloading
+RUN npm install -g ts-node-dev
+
+# ===== COPIE DES TYPES PARTAGÉS =====
+# Copier les types partagés depuis la racine du projet
+COPY shared-types/ ./shared-types/
+
+# ===== GESTION DES DÉPENDANCES NODE.JS =====
+# Copier les fichiers de configuration
+COPY api-gateway/package*.json ./
+COPY api-gateway/tsconfig.json ./
+
+# Installer toutes les dépendances (dev + prod)
+RUN npm ci
+
+# ===== COPIE DU CODE SOURCE =====
+# Copier le code source TypeScript
+COPY api-gateway/src/ ./src/
+
+# ===== SÉCURITÉ =====
+# Créer un utilisateur non-root pour la sécurité
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+
+# Changer la propriété du répertoire de l'application
+RUN chown -R nodejs:nodejs /app
+USER nodejs
+
+# ===== CONFIGURATION DU RÉSEAU =====
+EXPOSE 3000
+
+# ===== HEALTHCHECK POUR LE DÉVELOPPEMENT =====
+# Vérification de santé du service en mode développement
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:3000/api/health || exit 1
+
+# ===== COMMANDE DE DÉMARRAGE EN DÉVELOPPEMENT =====
+# Utilise ts-node-dev pour le hot reloading
+CMD ["npm", "run", "dev"]
