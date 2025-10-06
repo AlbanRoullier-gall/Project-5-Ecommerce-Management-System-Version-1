@@ -10,10 +10,7 @@
 
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
-import {
-  OrderAddressCreateDTO,
-  OrderAddressUpdateDTO,
-} from "../dto/OrderAddressDTO";
+import { OrderAddressCreateDTO, OrderAddressUpdateDTO } from "../dto";
 import { OrderAddressData } from "../../models/OrderAddress";
 import { OrderMapper, ResponseMapper } from "../mapper";
 

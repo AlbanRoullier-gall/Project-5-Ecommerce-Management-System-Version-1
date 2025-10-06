@@ -267,6 +267,19 @@ export class ApiRouter {
       }
     );
 
+    // Route de recherche de clients
+    app.get(
+      "/api/admin/customers/search",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        // Mapper le paramètre 'q' vers 'search' pour la compatibilité
+        if (req.query.q && !req.query.search) {
+          req.query.search = req.query.q;
+        }
+        this.customerController.listCustomers(req, res);
+      }
+    );
+
     // ===== ROUTES PUBLIQUES D'ADRESSES =====
     // Ajout d'adresse (publique pour les clients)
     app.post(

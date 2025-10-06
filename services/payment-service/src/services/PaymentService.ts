@@ -84,12 +84,19 @@ export default class PaymentService {
         };
       }
 
-      // Si le paiement n'est pas encore confirmé, on le confirme
-      // Pour les tests, on simule une confirmation réussie
+      // Si le paiement nécessite une méthode de paiement, on retourne les informations nécessaires
       if (paymentIntent.status === "requires_payment_method") {
-        throw new Error(
-          "Le paiement nécessite une méthode de paiement. Utilisez le client_secret pour compléter le paiement côté frontend."
-        );
+        return {
+          id: paymentIntent.id,
+          status: paymentIntent.status,
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+          customerEmail: paymentIntent.receipt_email || "",
+          createdAt: new Date(paymentIntent.created * 1000),
+          clientSecret: paymentIntent.client_secret,
+          message:
+            "Paiement créé avec succès. Utilisez le client_secret pour compléter le paiement côté frontend.",
+        };
       }
 
       const confirmedPayment = await this.stripe.paymentIntents.confirm(
@@ -287,3 +294,4 @@ export default class PaymentService {
     };
   }
 }
+console.log("STRIPE_SECRET_KEY:", process.env.STRIPE_SECRET_KEY);

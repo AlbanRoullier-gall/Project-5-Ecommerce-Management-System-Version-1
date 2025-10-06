@@ -10,10 +10,7 @@
 
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
-import {
-  CreditNoteItemCreateDTO,
-  CreditNoteItemUpdateDTO,
-} from "../dto/CreditNoteItemDTO";
+import { CreditNoteItemCreateDTO, CreditNoteItemUpdateDTO } from "../dto";
 import { CreditNoteItemData } from "../../models/CreditNoteItem";
 import { OrderMapper, ResponseMapper } from "../mapper";
 

@@ -103,6 +103,20 @@ export class CartController {
         return;
       }
 
+      if (!productId) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("productId is required"));
+        return;
+      }
+
+      if (quantity === undefined) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("quantity is required"));
+        return;
+      }
+
       const cart = await this.cartService.updateItemQuantity(
         sessionId as string,
         parseInt(productId),
@@ -132,6 +146,13 @@ export class CartController {
         res
           .status(400)
           .json(ResponseMapper.validationError("sessionId is required"));
+        return;
+      }
+
+      if (!productId) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("productId is required"));
         return;
       }
 

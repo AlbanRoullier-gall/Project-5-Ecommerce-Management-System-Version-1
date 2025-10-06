@@ -7,19 +7,19 @@
  * - Séparation claire des responsabilités
  */
 import { User, UserData } from "../../models/User";
-import { UserPublicDTO, UserRegistrationDTO, UserUpdateDTO } from "../dto";
+import { UserPublicDTO, UserCreateDTO, UserUpdateDTO } from "../dto";
 
 export class UserMapper {
   /**
-   * Convertir un UserRegistrationDTO en UserData
+   * Convertir un UserCreateDTO en UserData
    */
-  static userRegistrationDTOToUserData(
-    userRegistrationDTO: UserRegistrationDTO
+  static userCreateDTOToUserData(
+    userCreateDTO: UserCreateDTO
   ): Partial<UserData> {
     return {
-      email: userRegistrationDTO.email,
-      first_name: userRegistrationDTO.firstName,
-      last_name: userRegistrationDTO.lastName,
+      email: userCreateDTO.email,
+      first_name: userCreateDTO.firstName,
+      last_name: userCreateDTO.lastName,
     };
   }
 

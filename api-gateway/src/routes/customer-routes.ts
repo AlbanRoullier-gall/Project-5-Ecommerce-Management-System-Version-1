@@ -16,8 +16,9 @@ export const CUSTOMER_ROUTES: Record<string, ServiceName> = {
   // Routes admin
   "/admin/customers": "customer", // GET: Liste des clients, PUT: Mettre à jour client, DELETE: Supprimer client
   "/admin/customers/:id": "customer", // GET: Récupérer client, PUT: Modifier client, DELETE: Supprimer client
-  "/admin/customers/:customerId/addresses": "customer", // GET: Liste des adresses d'un client
+  "/admin/customers/search": "customer", // GET: Rechercher des clients
+  "/admin/customers/:customerId/addresses": "customer", // GET: Liste des adresses d'un client, POST: Ajouter une adresse
   "/admin/customers/:customerId/addresses/:id": "customer", // PUT: Modifier adresse, DELETE: Supprimer adresse
-  "/admin/customers/:customerId/companies": "customer", // GET: Liste des entreprises d'un client
+  "/admin/customers/:customerId/companies": "customer", // GET: Liste des entreprises d'un client, POST: Ajouter une entreprise
   "/admin/customers/:customerId/companies/:id": "customer", // PUT: Modifier entreprise, DELETE: Supprimer entreprise
 };

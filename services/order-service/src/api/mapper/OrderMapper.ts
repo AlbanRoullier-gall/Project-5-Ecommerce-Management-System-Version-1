@@ -12,27 +12,21 @@ import {
   OrderCreateDTO,
   OrderUpdateDTO,
   OrderPublicDTO,
-} from "../dto/OrderDTO";
-import {
   OrderItemCreateDTO,
   OrderItemUpdateDTO,
   OrderItemPublicDTO,
-} from "../dto/OrderItemDTO";
-import {
   CreditNoteCreateDTO,
   CreditNoteUpdateDTO,
   CreditNotePublicDTO,
-} from "../dto/CreditNoteDTO";
-import {
   CreditNoteItemCreateDTO,
   CreditNoteItemUpdateDTO,
   CreditNoteItemPublicDTO,
-} from "../dto/CreditNoteItemDTO";
+} from "../dto";
 import {
   OrderAddressCreateDTO,
   OrderAddressUpdateDTO,
   OrderAddressPublicDTO,
-} from "../dto/OrderAddressDTO";
+} from "../dto";
 import { OrderData } from "../../models/Order";
 import { OrderItemData } from "../../models/OrderItem";
 import { CreditNoteData } from "../../models/CreditNote";

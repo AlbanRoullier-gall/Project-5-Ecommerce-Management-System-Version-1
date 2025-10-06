@@ -1,7 +1,7 @@
 /**
  * DTOs Index
- * Central export for all DTOs
+ * Exporte tous les DTOs depuis shared-types
  */
 
-export * from "./WebsitePageDTO";
-export * from "./WebsitePageVersionDTO";
+// Re-export des DTOs depuis shared-types
+export * from "../../../../shared-types/website-content-service";

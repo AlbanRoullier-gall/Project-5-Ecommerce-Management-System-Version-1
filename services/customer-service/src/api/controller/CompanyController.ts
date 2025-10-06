@@ -31,7 +31,12 @@ export class CompanyController {
       const companies = await this.customerService.listCustomerCompanies(
         parseInt(customerId)
       );
-      const response = CustomerMapper.createCompanyListResponse(companies);
+      const response = {
+        message: "Entreprises récupérées avec succès",
+        companies: CustomerMapper.companiesToPublicDTOs(companies),
+        timestamp: new Date().toISOString(),
+        status: 200,
+      };
 
       res.json(response);
     } catch (error: any) {

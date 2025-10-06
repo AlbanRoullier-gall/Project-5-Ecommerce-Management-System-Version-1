@@ -19,14 +19,18 @@ export default class EmailService {
    */
   private initializeGmailTransporter(): void {
     if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+      // Essayer d'abord avec le mot de passe nettoyé
+      const cleanPassword = process.env.GMAIL_APP_PASSWORD.replace(/\s/g, '');
+      console.log("🔧 Testing with cleaned password:", cleanPassword.substring(0, 10) + "...");
+      
       this.transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
           user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_APP_PASSWORD, // App Password, pas le mot de passe normal
+          pass: cleanPassword, // Mot de passe nettoyé
         },
       });
-      console.log("✅ Gmail transporter initialized");
+      console.log("✅ Gmail transporter initialized with cleaned password");
     } else {
       console.warn("⚠️ Gmail credentials not configured");
     }
@@ -39,7 +43,15 @@ export default class EmailService {
    */
   async sendClientEmail(emailData: any): Promise<any> {
     if (!this.transporter) {
-      throw new Error("Gmail transporter not configured");
+      console.error("Gmail transporter not configured");
+      return {
+        messageId: "mock-id",
+        status: "failed",
+        recipient: emailData.to.email,
+        subject: emailData.subject,
+        sentAt: null,
+        error: "Gmail transporter not configured",
+      };
     }
 
     try {
@@ -69,14 +81,19 @@ export default class EmailService {
 
       const result = await this.transporter.sendMail(mailOptions);
 
-      // Envoyer automatiquement la confirmation à l'admin
-      await this.sendConfirmationEmail({
-        clientName: emailData.clientName,
-        clientEmail: emailData.clientEmail,
-        subject: emailData.subject,
-        message: emailData.message,
-        sentAt: new Date(),
-      });
+      // Envoyer automatiquement la confirmation à l'admin (sans faire échouer l'envoi principal)
+      try {
+        await this.sendConfirmationEmail({
+          clientName: emailData.clientName,
+          clientEmail: emailData.clientEmail,
+          subject: emailData.subject,
+          message: emailData.message,
+          sentAt: new Date(),
+        });
+      } catch (confirmationError) {
+        console.warn("Failed to send confirmation email:", confirmationError);
+        // Ne pas faire échouer l'envoi principal si la confirmation échoue
+      }
 
       return {
         messageId: result.messageId,
@@ -98,7 +115,15 @@ export default class EmailService {
    */
   async sendConfirmationEmail(confirmationData: any): Promise<any> {
     if (!this.transporter) {
-      throw new Error("Gmail transporter not configured");
+      console.error("Gmail transporter not configured for confirmation");
+      return {
+        messageId: "mock-confirmation-id",
+        status: "failed",
+        recipient: this.adminEmail,
+        subject: "Confirmation failed",
+        sentAt: null,
+        error: "Gmail transporter not configured",
+      };
     }
 
     try {

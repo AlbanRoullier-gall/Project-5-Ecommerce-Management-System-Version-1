@@ -1,6 +1,7 @@
 /**
  * DTOs Index
- * Central export for all DTOs
+ * Exporte tous les DTOs depuis shared-types
  */
 
-export * from "./EmailDTO";
+// Re-export des DTOs depuis shared-types
+export * from "../../../../../shared-types/email-service";

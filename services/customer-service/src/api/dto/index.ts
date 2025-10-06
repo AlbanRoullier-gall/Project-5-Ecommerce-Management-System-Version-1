@@ -1,12 +1,7 @@
 /**
  * Index des DTOs
- * Exporte tous les DTOs pour faciliter les imports
+ * Exporte tous les DTOs depuis shared-types
  */
 
-// DTOs communs
-export * from "./CommonDTO";
-
-// DTOs de gestion des clients
-export * from "./CustomerDTO";
-export * from "./AddressDTO";
-export * from "./CompanyDTO";
+// Re-export des DTOs depuis shared-types
+export * from "../../../../shared-types/customer-service";

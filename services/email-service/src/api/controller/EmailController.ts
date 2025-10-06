@@ -20,19 +20,27 @@ export class EmailController {
    */
   async sendClientEmail(req: Request, res: Response): Promise<void> {
     try {
+      console.log("📧 EmailController: Starting sendClientEmail");
+      console.log("📧 Request body:", req.body);
+
       const emailData = EmailMapper.emailSendDTOToServiceData(
         req.body as EmailSendDTO
       );
+      console.log("📧 Mapped email data:", emailData);
+
       const result = await this.emailService.sendClientEmail(emailData);
-      res
-        .status(201)
-        .json(
-          ResponseMapper.emailSent(
-            EmailMapper.emailServiceResultToPublicDTO(result)
-          )
-        );
+      console.log("📧 Service result:", result);
+
+      const publicDTO = EmailMapper.emailServiceResultToPublicDTO(result);
+      console.log("📧 Public DTO:", publicDTO);
+
+      const response = ResponseMapper.emailSent(publicDTO);
+      console.log("📧 Final response:", response);
+
+      res.status(201).json(response);
     } catch (error: any) {
       console.error("Send client email error:", error);
+      console.error("Error stack:", error.stack);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }

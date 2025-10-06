@@ -31,7 +31,12 @@ export class AddressController {
       const addresses = await this.customerService.listCustomerAddresses(
         parseInt(customerId)
       );
-      const response = CustomerMapper.createAddressListResponse(addresses);
+      const response = {
+        message: "Adresses récupérées avec succès",
+        addresses: CustomerMapper.addressesToPublicDTOs(addresses),
+        timestamp: new Date().toISOString(),
+        status: 200,
+      };
 
       res.json(response);
     } catch (error: any) {

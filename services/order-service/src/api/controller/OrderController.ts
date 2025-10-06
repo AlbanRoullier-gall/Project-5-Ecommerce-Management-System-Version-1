@@ -10,7 +10,7 @@
 
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
-import { OrderCreateDTO, OrderUpdateDTO } from "../dto/OrderDTO";
+import { OrderCreateDTO, OrderUpdateDTO } from "../dto";
 import { OrderMapper, ResponseMapper } from "../mapper";
 
 export class OrderController {

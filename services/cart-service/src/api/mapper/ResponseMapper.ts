@@ -11,42 +11,72 @@ export class ResponseMapper {
    * Réponse de panier créé
    */
   static cartCreated(cart: Cart) {
-    return CartMapper.createCartResponse(cart);
+    return {
+      message: "Panier créé avec succès",
+      cart: CartMapper.cartToPublicDTO(cart),
+      timestamp: new Date().toISOString(),
+      status: 201,
+    };
   }
 
   /**
    * Réponse de panier récupéré
    */
   static cartRetrieved(cart: Cart) {
-    return CartMapper.createRetrieveResponse(cart);
+    return {
+      message: "Panier récupéré avec succès",
+      cart: CartMapper.cartToPublicDTO(cart),
+      timestamp: new Date().toISOString(),
+      status: 200,
+    };
   }
 
   /**
    * Réponse d'article ajouté
    */
   static itemAdded(cart: Cart) {
-    return CartMapper.createItemAddResponse(cart);
+    return {
+      message: "Article ajouté au panier avec succès",
+      cart: CartMapper.cartToPublicDTO(cart),
+      timestamp: new Date().toISOString(),
+      status: 200,
+    };
   }
 
   /**
    * Réponse d'article mis à jour
    */
   static itemUpdated(cart: Cart) {
-    return CartMapper.createItemUpdateResponse(cart);
+    return {
+      message: "Article mis à jour avec succès",
+      cart: CartMapper.cartToPublicDTO(cart),
+      timestamp: new Date().toISOString(),
+      status: 200,
+    };
   }
 
   /**
    * Réponse d'article supprimé
    */
   static itemRemoved(cart: Cart) {
-    return CartMapper.createItemRemoveResponse(cart);
+    return {
+      message: "Article supprimé du panier avec succès",
+      cart: CartMapper.cartToPublicDTO(cart),
+      timestamp: new Date().toISOString(),
+      status: 200,
+    };
   }
 
   /**
    * Réponse de panier vidé
    */
   static cartCleared(cart: Cart) {
-    return CartMapper.createClearResponse(cart);
+    return {
+      message: "Panier vidé avec succès",
+      cart: CartMapper.cartToPublicDTO(cart),
+      timestamp: new Date().toISOString(),
+      status: 200,
+    };
   }
 
   /**
@@ -65,14 +95,24 @@ export class ResponseMapper {
    * Réponse de panier validé
    */
   static cartValidated(result: any) {
-    return CartMapper.createValidationResponse(result, result.cart);
+    return {
+      message: result.isValid ? "Panier valide" : "Panier invalide",
+      validation: result,
+      timestamp: new Date().toISOString(),
+      status: 200,
+    };
   }
 
   /**
    * Réponse de statistiques
    */
   static cartStats(stats: any) {
-    return CartMapper.createStatsResponse(stats);
+    return {
+      message: "Statistiques récupérées avec succès",
+      stats,
+      timestamp: new Date().toISOString(),
+      status: 200,
+    };
   }
 
   /**

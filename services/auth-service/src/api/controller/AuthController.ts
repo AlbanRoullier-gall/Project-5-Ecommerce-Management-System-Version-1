@@ -10,7 +10,7 @@
 import { Request, Response } from "express";
 import { AuthService } from "../../services/AuthService";
 import {
-  UserRegistrationDTO,
+  UserCreateDTO,
   UserLoginDTO,
   UserUpdateDTO,
   PasswordChangeDTO,
@@ -25,11 +25,10 @@ export class AuthController {
    */
   async register(req: Request, res: Response): Promise<void> {
     try {
-      const userRegistrationDTO: UserRegistrationDTO = req.body;
+      const userRegistrationDTO: UserCreateDTO = req.body;
 
       // Convertir DTO en données utilisateur
-      const userData =
-        UserMapper.userRegistrationDTOToUserData(userRegistrationDTO);
+      const userData = UserMapper.userCreateDTOToUserData(userRegistrationDTO);
 
       // Inscrire l'utilisateur
       const { user, token } = await this.authService.registerUser(
