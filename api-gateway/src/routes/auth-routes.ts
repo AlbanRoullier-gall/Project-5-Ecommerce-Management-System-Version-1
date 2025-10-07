@@ -9,6 +9,8 @@ export const AUTH_ROUTES: Record<string, ServiceName> = {
   "/auth/register": "auth", // POST: Inscription utilisateur
   "/auth/login": "auth", // POST: Connexion utilisateur
   "/auth/validate-password": "auth", // POST: Valider mot de passe
+  "/auth/reset-password": "auth", // POST: Demander réinitialisation mot de passe
+  "/auth/reset-password/confirm": "auth", // POST: Confirmer réinitialisation mot de passe
 
   // Routes admin (avec authentification)
   "/admin/auth/profile": "auth", // GET: Profil utilisateur, PUT: Modifier profil

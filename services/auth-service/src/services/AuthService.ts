@@ -219,6 +219,87 @@ export class AuthService {
     }
   }
 
+  // ===== RÉINITIALISATION DE MOT DE PASSE =====
+
+  /**
+   * Générer un token de réinitialisation de mot de passe
+   */
+  async generateResetToken(
+    email: string
+  ): Promise<{ token: string; userName: string }> {
+    try {
+      // Vérifier que l'utilisateur existe
+      const user = await this.userRepository.getByEmail(email);
+      if (!user) {
+        throw new Error("Utilisateur non trouvé");
+      }
+
+      // Générer un token unique
+      const resetToken = jwt.sign(
+        {
+          userId: user.userId,
+          email: user.email,
+          type: "password_reset",
+        },
+        this.jwtSecret,
+        { expiresIn: "15m" } // Token valide 15 minutes
+      );
+
+      return {
+        token: resetToken,
+        userName: `${user.firstName} ${user.lastName}`,
+      };
+    } catch (error) {
+      console.error("Error generating reset token:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Confirmer la réinitialisation de mot de passe
+   */
+  async confirmResetPassword(
+    token: string,
+    newPassword: string
+  ): Promise<void> {
+    try {
+      // Vérifier le token
+      const decoded = jwt.verify(token, this.jwtSecret) as any;
+
+      if (decoded.type !== "password_reset") {
+        throw new Error("Token de réinitialisation invalide");
+      }
+
+      // Récupérer l'utilisateur
+      const user = await this.userRepository.getById(decoded.userId);
+      if (!user) {
+        throw new Error("Utilisateur non trouvé");
+      }
+
+      // Valider le nouveau mot de passe
+      this.validatePasswordWithError(newPassword, "Nouveau mot de passe");
+
+      // Hasher le nouveau mot de passe
+      const newPasswordHash = await User.hashPassword(newPassword);
+
+      // Mettre à jour le mot de passe
+      const updatedUser = this.userRepository.createUserWithMerge(user, {
+        password_hash: newPasswordHash,
+      });
+
+      await this.userRepository.update(updatedUser);
+    } catch (error) {
+      console.error("Error confirming reset password:", error);
+      if (error.name === "TokenExpiredError") {
+        throw new Error("Token de réinitialisation expiré");
+      }
+      if (error.name === "JsonWebTokenError") {
+        throw new Error("Token de réinitialisation invalide");
+      }
+      throw error;
+    }
+  }
+
   // ===== GESTION DES TOKENS JWT =====
 
   /**

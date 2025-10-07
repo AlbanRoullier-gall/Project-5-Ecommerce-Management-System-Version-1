@@ -55,6 +55,14 @@ export interface PasswordChangeDTO {
 }
 
 /**
+ * DTO pour la réinitialisation de mot de passe
+ */
+export interface PasswordResetDTO {
+  token: string;
+  newPassword: string;
+}
+
+/**
  * DTO public pour les informations utilisateur
  * (sans données sensibles comme le mot de passe)
  */

@@ -3,10 +3,11 @@
 import Head from "next/head";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import AuthGuard from "../components/auth/AuthGuard";
 
 const DashboardPage: React.FC = () => {
   return (
-    <>
+    <AuthGuard>
       <Head>
         <title>Tableau de Bord - Nature de Pierre</title>
         <meta
@@ -83,7 +84,7 @@ const DashboardPage: React.FC = () => {
         {/* FOOTER */}
         <Footer />
       </div>
-    </>
+    </AuthGuard>
   );
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -8,6 +8,18 @@ import { useRouter } from "next/router";
 const Header: React.FC = () => {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    setIsAuthenticated(!!token);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    router.push('/login');
+  };
 
   return (
     <header className="modern-header">
@@ -24,6 +36,16 @@ const Header: React.FC = () => {
             <span className="brand-text">NATURE DE PIERRE</span>
           </Link>
         </div>
+
+        {/* User Actions */}
+        {isAuthenticated && (
+          <div className="user-actions">
+            <button onClick={handleLogout} className="logout-btn">
+              <i className="fas fa-sign-out-alt"></i>
+              <span>Déconnexion</span>
+            </button>
+          </div>
+        )}
 
         {/* Mobile Menu Button */}
         <button

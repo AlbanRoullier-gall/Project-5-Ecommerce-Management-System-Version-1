@@ -192,7 +192,7 @@ start_backend_service() {
             additional_env="export STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key; export STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key;"
             ;;
         "email-service")
-            additional_env="export GMAIL_USER=your-email@gmail.com; export GMAIL_APP_PASSWORD=your-gmail-app-password;"
+            additional_env="export GMAIL_USER=u4999410740@gmail.com; export GMAIL_APP_PASSWORD='vyli fdmp hrww jvlz'; export ADMIN_EMAIL=u4999410740@gmail.com;"
             ;;
     esac
     

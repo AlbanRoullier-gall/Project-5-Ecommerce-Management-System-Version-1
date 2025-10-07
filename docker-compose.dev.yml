@@ -205,8 +205,9 @@ services:
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://email_user:email_password@email-db:5432/email_db
-      - GMAIL_USER=your-email@gmail.com
-      - GMAIL_APP_PASSWORD=your-gmail-app-password
+      - GMAIL_USER=u4999410740@gmail.com
+      - GMAIL_APP_PASSWORD=vyli fdmp hrww jvlz
+      - ADMIN_EMAIL=u4999410740@gmail.com
       - JWT_SECRET=your-jwt-secret-key
     volumes:
       - ./services/email-service/src:/app/src

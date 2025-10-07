@@ -100,6 +100,15 @@ export class ApiRouter {
         currentPassword: Joi.string().required(),
         newPassword: Joi.string().min(8).required(),
       }),
+
+      resetPasswordSchema: Joi.object({
+        email: Joi.string().email().required(),
+      }),
+
+      confirmResetPasswordSchema: Joi.object({
+        token: Joi.string().required(),
+        password: Joi.string().min(8).required(),
+      }),
     };
   }
 
@@ -161,6 +170,22 @@ export class ApiRouter {
       this.validateRequest(schemas.passwordValidationSchema),
       (req: Request, res: Response) => {
         this.authController.validatePassword(req, res);
+      }
+    );
+
+    app.post(
+      "/api/auth/reset-password",
+      this.validateRequest(schemas.resetPasswordSchema),
+      (req: Request, res: Response) => {
+        this.authController.resetPassword(req, res);
+      }
+    );
+
+    app.post(
+      "/api/auth/reset-password/confirm",
+      this.validateRequest(schemas.confirmResetPasswordSchema),
+      (req: Request, res: Response) => {
+        this.authController.confirmResetPassword(req, res);
       }
     );
 

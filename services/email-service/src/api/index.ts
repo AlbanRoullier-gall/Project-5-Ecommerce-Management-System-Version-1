@@ -58,6 +58,14 @@ export class ApiRouter {
         message: Joi.string().max(5000).required(),
         sentAt: Joi.date().required(),
       }),
+
+      // Email reset password schema
+      emailResetPasswordSchema: Joi.object({
+        email: Joi.string().email().required(),
+        token: Joi.string().required(),
+        userName: Joi.string().max(100).required(),
+        resetUrl: Joi.string().uri().required(),
+      }),
     };
   }
 
@@ -113,6 +121,15 @@ export class ApiRouter {
       this.validateRequest(schemas.emailConfirmationSchema),
       (req: Request, res: Response) => {
         this.emailController.sendConfirmationEmail(req, res);
+      }
+    );
+
+    // Envoyer un email de réinitialisation de mot de passe
+    app.post(
+      "/api/email/send-reset-email",
+      this.validateRequest(schemas.emailResetPasswordSchema),
+      (req: Request, res: Response) => {
+        this.emailController.sendResetPasswordEmail(req, res);
       }
     );
 

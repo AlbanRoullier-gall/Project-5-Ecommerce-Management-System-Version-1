@@ -557,7 +557,7 @@ footer {
   color: white;
   text-align: center;
   padding: 2rem;
-  border-top: 0.3rem solid black;
+  border-top: 3px solid #d9b970;
 }
 
 .social-network-logos {

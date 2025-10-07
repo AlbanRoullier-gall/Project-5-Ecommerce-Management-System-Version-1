@@ -5,6 +5,10 @@
 import { Request, Response } from "express";
 import { ROUTES } from "./routes";
 import { handleProxyRequest } from "./proxy";
+import {
+  handlePasswordReset,
+  handlePasswordResetConfirm,
+} from "./handlers/auth-handler";
 
 /**
  * Configure toutes les routes de l'API Gateway
@@ -28,6 +32,10 @@ export const setupRoutes = (app: any): void => {
       health: "/api/health",
     });
   });
+
+  // Routes spécialisées avec handlers personnalisés
+  app.post("/api/auth/reset-password", handlePasswordReset);
+  app.post("/api/auth/reset-password/confirm", handlePasswordResetConfirm);
 
   // Configuration automatique des routes
   Object.entries(ROUTES).forEach(([route, service]) => {

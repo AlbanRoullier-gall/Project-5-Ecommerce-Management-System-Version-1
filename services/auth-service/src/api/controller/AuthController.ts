@@ -224,6 +224,69 @@ export class AuthController {
   }
 
   /**
+   * Demande de réinitialisation de mot de passe
+   */
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+
+      // Générer un token de réinitialisation
+      const resetToken = await this.authService.generateResetToken(email);
+
+      // Retourner le token et les informations utilisateur
+      const response = {
+        success: true,
+        token: resetToken.token,
+        userName: resetToken.userName,
+        message: "Token de réinitialisation généré avec succès",
+        timestamp: new Date().toISOString(),
+      };
+
+      res.json(response);
+    } catch (error: any) {
+      console.error("Reset password error:", error);
+      if (error.message.includes("non trouvé")) {
+        res
+          .status(404)
+          .json(ResponseMapper.error("Utilisateur non trouvé", 404));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Confirmation de réinitialisation de mot de passe
+   */
+  async confirmResetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { token, password } = req.body;
+
+      // Confirmer la réinitialisation
+      await this.authService.confirmResetPassword(token, password);
+
+      // Réponse de succès
+      const response = {
+        success: true,
+        message: "Mot de passe réinitialisé avec succès",
+        timestamp: new Date().toISOString(),
+      };
+
+      res.json(response);
+    } catch (error: any) {
+      console.error("Confirm reset password error:", error);
+      if (
+        error.message.includes("invalide") ||
+        error.message.includes("expiré")
+      ) {
+        res.status(400).json(ResponseMapper.validationError(error.message));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
    * Déconnexion de l'utilisateur
    */
   async logout(_req: Request, res: Response): Promise<void> {

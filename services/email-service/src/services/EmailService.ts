@@ -20,9 +20,12 @@ export default class EmailService {
   private initializeGmailTransporter(): void {
     if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
       // Essayer d'abord avec le mot de passe nettoyé
-      const cleanPassword = process.env.GMAIL_APP_PASSWORD.replace(/\s/g, '');
-      console.log("🔧 Testing with cleaned password:", cleanPassword.substring(0, 10) + "...");
-      
+      const cleanPassword = process.env.GMAIL_APP_PASSWORD.replace(/\s/g, "");
+      console.log(
+        "🔧 Testing with cleaned password:",
+        cleanPassword.substring(0, 10) + "..."
+      );
+
       this.transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
