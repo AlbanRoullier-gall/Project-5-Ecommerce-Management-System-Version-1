@@ -1,9 +1,10 @@
 "use client";
 
 import Head from "next/head";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 import AuthForm from "../components/auth/AuthForm";
+import AuthRedirectGuard from "../components/auth/AuthRedirectGuard";
 import { UserCreateDTO } from "../dto";
 
 const RegisterPage: React.FC = () => {
@@ -11,14 +12,6 @@ const RegisterPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  // Vérifier si l'utilisateur est déjà connecté
-  useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      router.push("/dashboard");
-    }
-  }, [router]);
 
   const handleRegister = async (formData: any) => {
     setIsLoading(true);
@@ -125,7 +118,7 @@ const RegisterPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <AuthRedirectGuard>
       <Head>
         <title>Inscription - Nature de Pierre</title>
         <meta
@@ -162,7 +155,7 @@ const RegisterPage: React.FC = () => {
           />
         </div>
       </div>
-    </>
+    </AuthRedirectGuard>
   );
 };
 

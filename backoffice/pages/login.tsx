@@ -1,23 +1,16 @@
 "use client";
 
 import Head from "next/head";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 import AuthForm from "../components/auth/AuthForm";
+import AuthRedirectGuard from "../components/auth/AuthRedirectGuard";
 import { UserLoginDTO } from "../dto";
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // Vérifier si l'utilisateur est déjà connecté
-  useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      router.push("/dashboard");
-    }
-  }, [router]);
 
   const handleLogin = async (formData: any) => {
     setIsLoading(true);
@@ -92,7 +85,7 @@ const LoginPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <AuthRedirectGuard>
       <Head>
         <title>Connexion - Nature de Pierre</title>
         <meta
@@ -128,7 +121,7 @@ const LoginPage: React.FC = () => {
           />
         </div>
       </div>
-    </>
+    </AuthRedirectGuard>
   );
 };
 

@@ -4,6 +4,7 @@ import Head from "next/head";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import AuthForm from "../components/auth/AuthForm";
+import AuthRedirectGuard from "../components/auth/AuthRedirectGuard";
 import { PasswordResetDTO } from "../dto";
 
 const ResetPasswordPage: React.FC = () => {
@@ -14,14 +15,8 @@ const ResetPasswordPage: React.FC = () => {
   const [step, setStep] = useState<"email" | "reset">("email");
   const [formData, setFormData] = useState<any>({});
 
-  // Vérifier si l'utilisateur est déjà connecté et détecter le token dans l'URL
+  // Détecter le token dans l'URL
   useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      router.push("/dashboard");
-    }
-
-    // Vérifier si un token est présent dans l'URL
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get("token");
 
@@ -31,7 +26,7 @@ const ResetPasswordPage: React.FC = () => {
       // Pré-remplir le token dans le formulaire
       setFormData({ token: tokenFromUrl });
     }
-  }, [router]);
+  }, []);
 
   const handleEmailSubmit = async (formData: any) => {
     setIsLoading(true);
@@ -186,7 +181,7 @@ const ResetPasswordPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <AuthRedirectGuard>
       <Head>
         <title>Réinitialisation - Nature de Pierre</title>
         <meta
@@ -237,7 +232,7 @@ const ResetPasswordPage: React.FC = () => {
           )}
         </div>
       </div>
-    </>
+    </AuthRedirectGuard>
   );
 };
 
