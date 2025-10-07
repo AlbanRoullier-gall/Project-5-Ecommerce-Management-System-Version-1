@@ -56,11 +56,12 @@ const RegisterPage: React.FC = () => {
 
       if (response.ok) {
         setSuccess(
-          "Compte créé avec succès ! Vous pouvez maintenant vous connecter."
+          data.message ||
+            "Compte créé avec succès ! Un email de demande d'approbation a été envoyé à l'administrateur. Vous recevrez une notification une fois votre accès approuvé."
         );
         setTimeout(() => {
           router.push("/login");
-        }, 2000);
+        }, 3000);
       } else {
         setError(data.message || "Erreur lors de la création du compte");
       }

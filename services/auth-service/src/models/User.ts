@@ -19,6 +19,8 @@ export interface UserData {
   first_name: string;
   last_name: string;
   is_active: boolean;
+  is_backoffice_approved: boolean;
+  is_backoffice_rejected: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -42,6 +44,8 @@ export class User {
   public readonly firstName: string;
   public readonly lastName: string;
   public readonly isActive: boolean;
+  public readonly isBackofficeApproved: boolean;
+  public readonly isBackofficeRejected: boolean;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -52,6 +56,8 @@ export class User {
     this.firstName = data.first_name;
     this.lastName = data.last_name;
     this.isActive = data.is_active;
+    this.isBackofficeApproved = data.is_backoffice_approved;
+    this.isBackofficeRejected = data.is_backoffice_rejected;
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
   }

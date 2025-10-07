@@ -83,6 +83,13 @@ export class AuthController {
         res.status(401).json(ResponseMapper.authenticationError(error.message));
         return;
       }
+      if (
+        error.message.includes("approuvé") ||
+        error.message.includes("refusé")
+      ) {
+        res.status(403).json(ResponseMapper.authenticationError(error.message));
+        return;
+      }
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
@@ -299,6 +306,169 @@ export class AuthController {
     } catch (error: any) {
       console.error("Logout error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Approbation d'accès au backoffice via email
+   */
+  async approveBackofficeAccess(req: Request, res: Response): Promise<void> {
+    try {
+      const { token } = req.query;
+
+      if (!token || typeof token !== "string") {
+        res.status(400).json(ResponseMapper.validationError("Token manquant"));
+        return;
+      }
+
+      // Vérifier le token d'approbation
+      const decoded = this.authService.verifyApprovalToken(token);
+
+      if (!decoded || decoded.action !== "approve") {
+        res.status(400).json(ResponseMapper.validationError("Token invalide"));
+        return;
+      }
+
+      // Approuver l'accès
+      await this.authService.approveBackofficeAccess(decoded.userId);
+
+      // Récupérer les informations utilisateur pour l'email de confirmation
+      const user = await this.authService.getUserById(decoded.userId);
+
+      // Envoyer l'email de confirmation
+      await this.sendBackofficeApprovalConfirmation(user);
+
+      res.json({
+        success: true,
+        message: "Accès au backoffice approuvé avec succès",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Approve backoffice access error:", error);
+      if (
+        error.message.includes("invalide") ||
+        error.message.includes("expiré")
+      ) {
+        res.status(400).json(ResponseMapper.validationError(error.message));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Rejet d'accès au backoffice via email
+   */
+  async rejectBackofficeAccess(req: Request, res: Response): Promise<void> {
+    try {
+      const { token } = req.query;
+
+      if (!token || typeof token !== "string") {
+        res.status(400).json(ResponseMapper.validationError("Token manquant"));
+        return;
+      }
+
+      // Vérifier le token d'approbation
+      const decoded = this.authService.verifyApprovalToken(token);
+
+      if (!decoded || decoded.action !== "reject") {
+        res.status(400).json(ResponseMapper.validationError("Token invalide"));
+        return;
+      }
+
+      // Rejeter l'accès
+      await this.authService.rejectBackofficeAccess(decoded.userId);
+
+      // Récupérer les informations utilisateur pour l'email de notification
+      const user = await this.authService.getUserById(decoded.userId);
+
+      // Envoyer l'email de notification de rejet
+      await this.sendBackofficeRejectionNotification(user);
+
+      res.json({
+        success: true,
+        message: "Accès au backoffice rejeté",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Reject backoffice access error:", error);
+      if (
+        error.message.includes("invalide") ||
+        error.message.includes("expiré")
+      ) {
+        res.status(400).json(ResponseMapper.validationError(error.message));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Envoi d'email de confirmation d'approbation
+   */
+  private async sendBackofficeApprovalConfirmation(user: any): Promise<void> {
+    try {
+      const emailData = {
+        to: user.email,
+        subject: "Accès au backoffice approuvé",
+        html: `
+          <h2>Félicitations !</h2>
+          <p>Votre demande d'accès au backoffice a été approuvée.</p>
+          <p>Vous pouvez maintenant vous connecter à l'adresse : <a href="${process.env["BACKOFFICE_URL"]}">${process.env["BACKOFFICE_URL"]}</a></p>
+          <p>Cordialement,<br>L'équipe d'administration</p>
+        `,
+      };
+
+      const response = await fetch(
+        `${process.env["EMAIL_SERVICE_URL"]}/api/email/send`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(emailData),
+        }
+      );
+
+      if (!response.ok) {
+        console.error(
+          "Erreur envoi email confirmation:",
+          await response.text()
+        );
+      }
+    } catch (error) {
+      console.error("Erreur envoi email confirmation:", error);
+    }
+  }
+
+  /**
+   * Envoi d'email de notification de rejet
+   */
+  private async sendBackofficeRejectionNotification(user: any): Promise<void> {
+    try {
+      const emailData = {
+        to: user.email,
+        subject: "Demande d'accès au backoffice rejetée",
+        html: `
+          <h2>Notification</h2>
+          <p>Votre demande d'accès au backoffice a été rejetée.</p>
+          <p>Si vous pensez qu'il s'agit d'une erreur, veuillez contacter l'administrateur.</p>
+          <p>Cordialement,<br>L'équipe d'administration</p>
+        `,
+      };
+
+      const response = await fetch(
+        `${process.env["EMAIL_SERVICE_URL"]}/api/email/send`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(emailData),
+        }
+      );
+
+      if (!response.ok) {
+        console.error("Erreur envoi email rejet:", await response.text());
+      }
+    } catch (error) {
+      console.error("Erreur envoi email rejet:", error);
     }
   }
 }

@@ -24,7 +24,7 @@ export class UserRepository {
     try {
       const query = `
         SELECT user_id, email, password_hash, first_name, last_name, 
-               is_active, created_at, updated_at
+               is_active, is_backoffice_approved, is_backoffice_rejected, created_at, updated_at
         FROM users 
         WHERE user_id = $1
       `;
@@ -48,7 +48,7 @@ export class UserRepository {
     try {
       const query = `
         SELECT user_id, email, password_hash, first_name, last_name, 
-               is_active, created_at, updated_at
+               is_active, is_backoffice_approved, is_backoffice_rejected, created_at, updated_at
         FROM users 
         WHERE email = $1
       `;
@@ -71,10 +71,10 @@ export class UserRepository {
   async save(user: User): Promise<User> {
     try {
       const query = `
-        INSERT INTO users (email, password_hash, first_name, last_name, is_active)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO users (email, password_hash, first_name, last_name, is_active, is_backoffice_approved, is_backoffice_rejected)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING user_id, email, password_hash, first_name, last_name, 
-                  is_active, created_at, updated_at
+                  is_active, is_backoffice_approved, is_backoffice_rejected, created_at, updated_at
       `;
 
       const values = [
@@ -83,6 +83,8 @@ export class UserRepository {
         user.firstName,
         user.lastName,
         user.isActive,
+        user.isBackofficeApproved,
+        user.isBackofficeRejected,
       ];
 
       const result = await this.pool.query(query, values);
@@ -101,10 +103,10 @@ export class UserRepository {
       const query = `
         UPDATE users 
         SET email = $1, password_hash = $2, first_name = $3, last_name = $4, 
-            is_active = $5
-        WHERE user_id = $6
+            is_active = $5, is_backoffice_approved = $6, is_backoffice_rejected = $7
+        WHERE user_id = $8
         RETURNING user_id, email, password_hash, first_name, last_name, 
-                  is_active, created_at, updated_at
+                  is_active, is_backoffice_approved, is_backoffice_rejected, created_at, updated_at
       `;
 
       const values = [
@@ -113,6 +115,8 @@ export class UserRepository {
         user.firstName,
         user.lastName,
         user.isActive,
+        user.isBackofficeApproved,
+        user.isBackofficeRejected,
         user.userId,
       ];
 
@@ -149,6 +153,10 @@ export class UserRepository {
       first_name: updateData.first_name ?? existingUser.firstName,
       last_name: updateData.last_name ?? existingUser.lastName,
       is_active: updateData.is_active ?? existingUser.isActive,
+      is_backoffice_approved:
+        updateData.is_backoffice_approved ?? existingUser.isBackofficeApproved,
+      is_backoffice_rejected:
+        updateData.is_backoffice_rejected ?? existingUser.isBackofficeRejected,
       created_at: existingUser.createdAt,
       updated_at: new Date(),
     });

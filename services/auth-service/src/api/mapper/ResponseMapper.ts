@@ -19,9 +19,13 @@ export class ResponseMapper {
   /**
    * Réponse d'inscription réussie
    */
-  static registerSuccess(user: UserPublicDTO, token: string) {
+  static registerSuccess(
+    user: UserPublicDTO,
+    token: string,
+    customMessage?: string
+  ) {
     return {
-      message: "Inscription réussie",
+      message: customMessage || "Inscription réussie",
       user,
       token,
     };

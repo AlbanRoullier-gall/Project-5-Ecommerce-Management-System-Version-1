@@ -12,6 +12,10 @@ export const AUTH_ROUTES: Record<string, ServiceName> = {
   "/auth/reset-password": "auth", // POST: Demander réinitialisation mot de passe
   "/auth/reset-password/confirm": "auth", // POST: Confirmer réinitialisation mot de passe
 
+  // Routes d'approbation backoffice (via email)
+  "/auth/approve-backoffice": "auth", // GET: Approuver accès backoffice
+  "/auth/reject-backoffice": "auth", // GET: Rejeter accès backoffice
+
   // Routes admin (avec authentification)
   "/admin/auth/profile": "auth", // GET: Profil utilisateur, PUT: Modifier profil
   "/admin/auth/change-password": "auth", // PUT: Changer mot de passe
