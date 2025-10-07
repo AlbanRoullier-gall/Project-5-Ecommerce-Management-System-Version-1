@@ -288,7 +288,7 @@ export class AuthService {
       });
 
       await this.userRepository.update(updatedUser);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error confirming reset password:", error);
       if (error.name === "TokenExpiredError") {
         throw new Error("Token de réinitialisation expiré");
