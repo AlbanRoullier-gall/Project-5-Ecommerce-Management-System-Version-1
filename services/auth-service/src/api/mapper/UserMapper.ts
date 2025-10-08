@@ -49,6 +49,7 @@ export class UserMapper {
 
   /**
    * Convertir un User en UserPublicDTO
+   * Inclut tous les champs nécessaires pour le frontend
    */
   static userToPublicDTO(user: User): UserPublicDTO {
     return {
@@ -58,6 +59,9 @@ export class UserMapper {
       lastName: user.lastName,
       fullName: user.fullName(),
       isActive: user.isActive,
+      isBackofficeApproved: user.isBackofficeApproved,
+      isBackofficeRejected: user.isBackofficeRejected,
+      createdAt: user.createdAt.toISOString(),
     };
   }
 }

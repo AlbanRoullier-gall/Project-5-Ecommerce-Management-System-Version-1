@@ -37,9 +37,24 @@ export class AuthController {
         userRegistrationDTO.confirmPassword
       );
 
+      // Générer les tokens d'approbation/rejet pour l'API Gateway
+      const approvalToken = this.authService.generateApprovalToken(
+        user.userId,
+        "approve"
+      );
+      const rejectionToken = this.authService.generateApprovalToken(
+        user.userId,
+        "reject"
+      );
+
       // Convertir en DTO de réponse
       const userPublicDTO = UserMapper.userToPublicDTO(user);
-      const response = ResponseMapper.registerSuccess(userPublicDTO, token);
+      const response = {
+        ...ResponseMapper.registerSuccess(userPublicDTO, token),
+        // Ajouter les tokens pour l'API Gateway
+        approvalToken,
+        rejectionToken,
+      };
 
       res.status(201).json(response);
     } catch (error: any) {
@@ -332,15 +347,17 @@ export class AuthController {
       // Approuver l'accès
       await this.authService.approveBackofficeAccess(decoded.userId);
 
-      // Récupérer les informations utilisateur pour l'email de confirmation
+      // Récupérer les informations utilisateur
       const user = await this.authService.getUserById(decoded.userId);
 
-      // Envoyer l'email de confirmation
-      await this.sendBackofficeApprovalConfirmation(user);
+      // Convertir en DTO public
+      const userPublicDTO = UserMapper.userToPublicDTO(user);
 
+      // Retourner les informations - L'API Gateway se chargera d'envoyer l'email
       res.json({
         success: true,
         message: "Accès au backoffice approuvé avec succès",
+        user: userPublicDTO,
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
@@ -379,15 +396,17 @@ export class AuthController {
       // Rejeter l'accès
       await this.authService.rejectBackofficeAccess(decoded.userId);
 
-      // Récupérer les informations utilisateur pour l'email de notification
+      // Récupérer les informations utilisateur
       const user = await this.authService.getUserById(decoded.userId);
 
-      // Envoyer l'email de notification de rejet
-      await this.sendBackofficeRejectionNotification(user);
+      // Convertir en DTO public
+      const userPublicDTO = UserMapper.userToPublicDTO(user);
 
+      // Retourner les informations - L'API Gateway se chargera d'envoyer l'email
       res.json({
         success: true,
         message: "Accès au backoffice rejeté",
+        user: userPublicDTO,
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
@@ -400,75 +419,6 @@ export class AuthController {
         return;
       }
       res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Envoi d'email de confirmation d'approbation
-   */
-  private async sendBackofficeApprovalConfirmation(user: any): Promise<void> {
-    try {
-      const emailData = {
-        to: user.email,
-        subject: "Accès au backoffice approuvé",
-        html: `
-          <h2>Félicitations !</h2>
-          <p>Votre demande d'accès au backoffice a été approuvée.</p>
-          <p>Vous pouvez maintenant vous connecter à l'adresse : <a href="${process.env["BACKOFFICE_URL"]}">${process.env["BACKOFFICE_URL"]}</a></p>
-          <p>Cordialement,<br>L'équipe d'administration</p>
-        `,
-      };
-
-      const response = await fetch(
-        `${process.env["EMAIL_SERVICE_URL"]}/api/email/send`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(emailData),
-        }
-      );
-
-      if (!response.ok) {
-        console.error(
-          "Erreur envoi email confirmation:",
-          await response.text()
-        );
-      }
-    } catch (error) {
-      console.error("Erreur envoi email confirmation:", error);
-    }
-  }
-
-  /**
-   * Envoi d'email de notification de rejet
-   */
-  private async sendBackofficeRejectionNotification(user: any): Promise<void> {
-    try {
-      const emailData = {
-        to: user.email,
-        subject: "Demande d'accès au backoffice rejetée",
-        html: `
-          <h2>Notification</h2>
-          <p>Votre demande d'accès au backoffice a été rejetée.</p>
-          <p>Si vous pensez qu'il s'agit d'une erreur, veuillez contacter l'administrateur.</p>
-          <p>Cordialement,<br>L'équipe d'administration</p>
-        `,
-      };
-
-      const response = await fetch(
-        `${process.env["EMAIL_SERVICE_URL"]}/api/email/send`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(emailData),
-        }
-      );
-
-      if (!response.ok) {
-        console.error("Erreur envoi email rejet:", await response.text());
-      }
-    } catch (error) {
-      console.error("Erreur envoi email rejet:", error);
     }
   }
 }

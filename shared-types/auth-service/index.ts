@@ -29,6 +29,11 @@ export interface UserLoginDTO {
 /**
  * DTO pour la mise à jour du profil utilisateur
  * Utilise les noms camelCase pour l'API REST
+ *
+ * Note: isBackofficeApproved et isBackofficeRejected ne sont PAS
+ * modifiables via ce DTO. Utiliser les routes dédiées :
+ * - GET /api/auth/approve-backoffice?token=xxx
+ * - GET /api/auth/reject-backoffice?token=xxx
  */
 export interface UserUpdateDTO {
   firstName?: string;
@@ -65,6 +70,7 @@ export interface PasswordResetDTO {
 /**
  * DTO public pour les informations utilisateur
  * (sans données sensibles comme le mot de passe)
+ * Inclut tous les champs nécessaires pour le frontend
  */
 export interface UserPublicDTO {
   userId: number;
@@ -73,4 +79,7 @@ export interface UserPublicDTO {
   lastName: string;
   fullName: string;
   isActive: boolean;
+  isBackofficeApproved: boolean;
+  isBackofficeRejected: boolean;
+  createdAt?: string; // Format ISO 8601
 }

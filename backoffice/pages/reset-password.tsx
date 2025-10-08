@@ -13,7 +13,6 @@ const ResetPasswordPage: React.FC = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [step, setStep] = useState<"email" | "reset">("email");
-  const [formData, setFormData] = useState<any>({});
 
   // Détecter le token dans l'URL
   useEffect(() => {
@@ -23,8 +22,6 @@ const ResetPasswordPage: React.FC = () => {
     if (tokenFromUrl) {
       console.log("Token détecté dans l'URL:", tokenFromUrl);
       setStep("reset");
-      // Pré-remplir le token dans le formulaire
-      setFormData({ token: tokenFromUrl });
     }
   }, []);
 
@@ -119,6 +116,11 @@ const ResetPasswordPage: React.FC = () => {
         }
       );
 
+      const data = (await response.json()) as {
+        success: boolean;
+        message?: string;
+      };
+
       if (response.ok) {
         setSuccess(
           "Mot de passe réinitialisé avec succès ! Vous pouvez maintenant vous connecter."
@@ -127,7 +129,6 @@ const ResetPasswordPage: React.FC = () => {
           router.push("/login");
         }, 2000);
       } else {
-        const data = await response.json();
         setError(data.message || "Erreur lors de la réinitialisation");
       }
     } catch (error) {

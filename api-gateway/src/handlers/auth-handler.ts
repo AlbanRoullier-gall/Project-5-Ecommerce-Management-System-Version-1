@@ -185,3 +185,288 @@ export const handlePasswordResetConfirm = async (
     });
   }
 };
+
+/**
+ * Handler pour l'inscription avec envoi d'email d'approbation
+ * Orchestre l'appel entre Auth Service et Email Service
+ */
+export const handleRegister = async (req: Request, res: Response) => {
+  try {
+    console.log("🔄 Inscription d'un nouvel utilisateur...");
+
+    // 1. Appel au Auth Service pour créer l'utilisateur
+    console.log("📞 Appel au Auth Service...");
+    let authData: any;
+
+    try {
+      const authResponse = await fetch(`${SERVICES.auth}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Service-Request": "api-gateway",
+        },
+        body: JSON.stringify(req.body),
+      });
+
+      authData = (await authResponse.json()) as any;
+
+      if (!authResponse.ok) {
+        console.log(`❌ Auth Service error: ${authData.message}`);
+        return res.status(authResponse.status).json(authData);
+      }
+    } catch (error) {
+      console.error(`❌ Erreur lors de l'appel à l'Auth Service:`, error);
+      return res.status(500).json({
+        error: "Service d'authentification indisponible",
+        message: "Veuillez réessayer plus tard",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log(`✅ Utilisateur créé: ${authData.user?.email || "N/A"}`);
+
+    // 2. Construire les URLs d'approbation/rejet
+    // Les tokens ont été générés par l'auth-service
+    const baseUrl = process.env["API_GATEWAY_URL"] || "http://localhost:3020";
+    const approvalUrl = `${baseUrl}/api/auth/approve-backoffice?token=${authData.approvalToken}`;
+    const rejectionUrl = `${baseUrl}/api/auth/reject-backoffice?token=${authData.rejectionToken}`;
+
+    // 3. Appel au Email Service pour envoyer l'email d'approbation
+    console.log("📧 Appel au Email Service...");
+
+    try {
+      const emailResponse = await fetch(
+        `${SERVICES.email}/api/email/backoffice-approval-request`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Service-Request": "api-gateway",
+          },
+          body: JSON.stringify({
+            userFullName: `${authData.user.firstName} ${authData.user.lastName}`,
+            userEmail: authData.user.email,
+            approvalUrl,
+            rejectionUrl,
+          }),
+        }
+      );
+
+      if (!emailResponse.ok) {
+        console.error("⚠️ Email Service error - email non envoyé");
+        // Ne pas faire échouer l'inscription si l'email échoue
+      } else {
+        console.log("✅ Email d'approbation envoyé");
+      }
+    } catch (error) {
+      console.error("⚠️ Erreur lors de l'envoi de l'email:", error);
+      // Ne pas faire échouer l'inscription si l'email échoue
+    }
+
+    // 4. Retourner la réponse au client
+    return res.status(201).json(authData);
+  } catch (error) {
+    console.error("❌ Registration error:", error);
+    return res.status(500).json({
+      error: "Erreur interne du serveur",
+      message: "Veuillez réessayer plus tard",
+      timestamp: new Date().toISOString(),
+    });
+  }
+};
+
+/**
+ * Handler pour l'approbation backoffice avec envoi d'email
+ * Orchestre l'appel entre Auth Service et Email Service
+ */
+export const handleApproveBackofficeAccess = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { token } = req.query;
+
+    if (!token || typeof token !== "string") {
+      return res.status(400).json({
+        error: "Token manquant",
+        message: "Le token d'approbation est obligatoire",
+      });
+    }
+
+    console.log("🔄 Approbation d'accès backoffice...");
+
+    // 1. Appel au Auth Service pour approuver
+    console.log("📞 Appel au Auth Service...");
+    let authData: any;
+
+    try {
+      const authResponse = await fetch(
+        `${SERVICES.auth}/api/auth/approve-backoffice?token=${token}`,
+        {
+          method: "GET",
+          headers: {
+            "X-Service-Request": "api-gateway",
+          },
+        }
+      );
+
+      authData = (await authResponse.json()) as any;
+
+      if (!authResponse.ok) {
+        console.log(`❌ Auth Service error: ${authData.message}`);
+        return res.status(authResponse.status).json(authData);
+      }
+    } catch (error) {
+      console.error(`❌ Erreur lors de l'appel à l'Auth Service:`, error);
+      return res.status(500).json({
+        error: "Service d'authentification indisponible",
+        message: "Veuillez réessayer plus tard",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log(`✅ Accès approuvé pour: ${authData.user?.email || "N/A"}`);
+
+    // 2. Appel au Email Service pour envoyer la confirmation
+    console.log("📧 Appel au Email Service...");
+
+    try {
+      const backofficeUrl =
+        process.env["BACKOFFICE_URL"] || "http://localhost:3011";
+
+      const emailResponse = await fetch(
+        `${SERVICES.email}/api/email/backoffice-approval-confirmation`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Service-Request": "api-gateway",
+          },
+          body: JSON.stringify({
+            userEmail: authData.user.email,
+            userFullName: `${authData.user.firstName} ${authData.user.lastName}`,
+            backofficeUrl,
+          }),
+        }
+      );
+
+      if (!emailResponse.ok) {
+        console.error("⚠️ Email Service error - email non envoyé");
+      } else {
+        console.log("✅ Email de confirmation envoyé");
+      }
+    } catch (error) {
+      console.error("⚠️ Erreur lors de l'envoi de l'email:", error);
+    }
+
+    // 3. Retourner la réponse
+    return res.json({
+      success: true,
+      message: "Accès au backoffice approuvé avec succès",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("❌ Approve backoffice error:", error);
+    return res.status(500).json({
+      error: "Erreur interne du serveur",
+      message: "Veuillez réessayer plus tard",
+      timestamp: new Date().toISOString(),
+    });
+  }
+};
+
+/**
+ * Handler pour le rejet backoffice avec envoi d'email
+ * Orchestre l'appel entre Auth Service et Email Service
+ */
+export const handleRejectBackofficeAccess = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { token } = req.query;
+
+    if (!token || typeof token !== "string") {
+      return res.status(400).json({
+        error: "Token manquant",
+        message: "Le token de rejet est obligatoire",
+      });
+    }
+
+    console.log("🔄 Rejet d'accès backoffice...");
+
+    // 1. Appel au Auth Service pour rejeter
+    console.log("📞 Appel au Auth Service...");
+    let authData: any;
+
+    try {
+      const authResponse = await fetch(
+        `${SERVICES.auth}/api/auth/reject-backoffice?token=${token}`,
+        {
+          method: "GET",
+          headers: {
+            "X-Service-Request": "api-gateway",
+          },
+        }
+      );
+
+      authData = (await authResponse.json()) as any;
+
+      if (!authResponse.ok) {
+        console.log(`❌ Auth Service error: ${authData.message}`);
+        return res.status(authResponse.status).json(authData);
+      }
+    } catch (error) {
+      console.error(`❌ Erreur lors de l'appel à l'Auth Service:`, error);
+      return res.status(500).json({
+        error: "Service d'authentification indisponible",
+        message: "Veuillez réessayer plus tard",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log(`✅ Accès rejeté pour: ${authData.user?.email || "N/A"}`);
+
+    // 2. Appel au Email Service pour envoyer la notification
+    console.log("📧 Appel au Email Service...");
+
+    try {
+      const emailResponse = await fetch(
+        `${SERVICES.email}/api/email/backoffice-rejection-notification`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Service-Request": "api-gateway",
+          },
+          body: JSON.stringify({
+            userEmail: authData.user.email,
+            userFullName: `${authData.user.firstName} ${authData.user.lastName}`,
+          }),
+        }
+      );
+
+      if (!emailResponse.ok) {
+        console.error("⚠️ Email Service error - email non envoyé");
+      } else {
+        console.log("✅ Email de rejet envoyé");
+      }
+    } catch (error) {
+      console.error("⚠️ Erreur lors de l'envoi de l'email:", error);
+    }
+
+    // 3. Retourner la réponse
+    return res.json({
+      success: true,
+      message: "Accès au backoffice rejeté",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("❌ Reject backoffice error:", error);
+    return res.status(500).json({
+      error: "Erreur interne du serveur",
+      message: "Veuillez réessayer plus tard",
+      timestamp: new Date().toISOString(),
+    });
+  }
+};

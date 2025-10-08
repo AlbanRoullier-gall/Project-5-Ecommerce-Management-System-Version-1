@@ -6,15 +6,12 @@ import { ServiceName } from "../config";
 
 export const AUTH_ROUTES: Record<string, ServiceName> = {
   // Routes publiques (sans authentification)
-  "/auth/register": "auth", // POST: Inscription utilisateur
+  // Note: /auth/register, /auth/reset-password, /auth/reset-password/confirm,
+  // /auth/approve-backoffice et /auth/reject-backoffice sont gérées par des handlers
+  // personnalisés dans routes-handler.ts car elles nécessitent une orchestration
+  // entre auth-service et email-service
   "/auth/login": "auth", // POST: Connexion utilisateur
   "/auth/validate-password": "auth", // POST: Valider mot de passe
-  "/auth/reset-password": "auth", // POST: Demander réinitialisation mot de passe
-  "/auth/reset-password/confirm": "auth", // POST: Confirmer réinitialisation mot de passe
-
-  // Routes d'approbation backoffice (via email)
-  "/auth/approve-backoffice": "auth", // GET: Approuver accès backoffice
-  "/auth/reject-backoffice": "auth", // GET: Rejeter accès backoffice
 
   // Routes admin (avec authentification)
   "/admin/auth/profile": "auth", // GET: Profil utilisateur, PUT: Modifier profil

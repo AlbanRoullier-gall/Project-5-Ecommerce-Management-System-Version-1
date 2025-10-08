@@ -8,6 +8,9 @@ import { handleProxyRequest } from "./proxy";
 import {
   handlePasswordReset,
   handlePasswordResetConfirm,
+  handleRegister,
+  handleApproveBackofficeAccess,
+  handleRejectBackofficeAccess,
 } from "./handlers/auth-handler";
 
 /**
@@ -34,8 +37,12 @@ export const setupRoutes = (app: any): void => {
   });
 
   // Routes spécialisées avec handlers personnalisés
+  // Ces routes nécessitent une orchestration entre plusieurs services
+  app.post("/api/auth/register", handleRegister);
   app.post("/api/auth/reset-password", handlePasswordReset);
   app.post("/api/auth/reset-password/confirm", handlePasswordResetConfirm);
+  app.get("/api/auth/approve-backoffice", handleApproveBackofficeAccess);
+  app.get("/api/auth/reject-backoffice", handleRejectBackofficeAccess);
 
   // Configuration automatique des routes
   Object.entries(ROUTES).forEach(([route, service]) => {

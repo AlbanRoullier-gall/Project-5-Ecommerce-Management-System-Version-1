@@ -66,6 +66,27 @@ export class ApiRouter {
         userName: Joi.string().max(100).required(),
         resetUrl: Joi.string().uri().required(),
       }),
+
+      // Backoffice approval request schema
+      backofficeApprovalRequestSchema: Joi.object({
+        userFullName: Joi.string().max(200).required(),
+        userEmail: Joi.string().email().required(),
+        approvalUrl: Joi.string().uri().required(),
+        rejectionUrl: Joi.string().uri().required(),
+      }),
+
+      // Backoffice approval confirmation schema
+      backofficeApprovalConfirmationSchema: Joi.object({
+        userEmail: Joi.string().email().required(),
+        userFullName: Joi.string().max(200).required(),
+        backofficeUrl: Joi.string().uri().required(),
+      }),
+
+      // Backoffice rejection notification schema
+      backofficeRejectionNotificationSchema: Joi.object({
+        userEmail: Joi.string().email().required(),
+        userFullName: Joi.string().max(200).required(),
+      }),
     };
   }
 
@@ -130,6 +151,34 @@ export class ApiRouter {
       this.validateRequest(schemas.emailResetPasswordSchema),
       (req: Request, res: Response) => {
         this.emailController.sendResetPasswordEmail(req, res);
+      }
+    );
+
+    // ===== ROUTES BACKOFFICE =====
+    // Envoyer une demande d'approbation backoffice
+    app.post(
+      "/api/email/backoffice-approval-request",
+      this.validateRequest(schemas.backofficeApprovalRequestSchema),
+      (req: Request, res: Response) => {
+        this.emailController.sendBackofficeApprovalRequest(req, res);
+      }
+    );
+
+    // Envoyer une confirmation d'approbation backoffice
+    app.post(
+      "/api/email/backoffice-approval-confirmation",
+      this.validateRequest(schemas.backofficeApprovalConfirmationSchema),
+      (req: Request, res: Response) => {
+        this.emailController.sendBackofficeApprovalConfirmation(req, res);
+      }
+    );
+
+    // Envoyer une notification de rejet backoffice
+    app.post(
+      "/api/email/backoffice-rejection-notification",
+      this.validateRequest(schemas.backofficeRejectionNotificationSchema),
+      (req: Request, res: Response) => {
+        this.emailController.sendBackofficeRejectionNotification(req, res);
       }
     );
 

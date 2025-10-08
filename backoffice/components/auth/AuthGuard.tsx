@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { UserPublicDTO } from "../../dto";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem("auth_token");
+      const userStr = localStorage.getItem("user");
 
       if (!token) {
         // Pas de token, rediriger vers la page de connexion
@@ -22,8 +24,34 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
         return;
       }
 
-      // Token présent, vérifier s'il est valide (optionnel)
-      // Pour l'instant, on considère que la présence du token suffit
+      // Vérifier le statut d'approbation backoffice
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr) as UserPublicDTO;
+
+          // Rediriger si l'accès a été rejeté
+          if (user.isBackofficeRejected) {
+            router.push("/access-rejected");
+            return;
+          }
+
+          // Rediriger si l'accès n'est pas encore approuvé
+          if (!user.isBackofficeApproved) {
+            router.push("/pending-approval");
+            return;
+          }
+        } catch (error) {
+          console.error(
+            "Erreur lors de la lecture des données utilisateur:",
+            error
+          );
+          // En cas d'erreur, rediriger vers login
+          router.push("/login");
+          return;
+        }
+      }
+
+      // Token présent et utilisateur approuvé
       setIsAuthenticated(true);
       setIsLoading(false);
     };

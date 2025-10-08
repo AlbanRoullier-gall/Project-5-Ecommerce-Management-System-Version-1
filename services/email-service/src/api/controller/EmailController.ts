@@ -128,4 +128,110 @@ export class EmailController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Envoyer un email de demande d'approbation backoffice
+   */
+  async sendBackofficeApprovalRequest(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      console.log("📧 EmailController: Starting sendBackofficeApprovalRequest");
+      console.log("📧 Request body:", req.body);
+
+      const { userFullName, userEmail, approvalUrl, rejectionUrl } = req.body;
+
+      const result = await this.emailService.sendBackofficeApprovalRequest({
+        userFullName,
+        userEmail,
+        approvalUrl,
+        rejectionUrl,
+      });
+
+      const response = {
+        success: true,
+        messageId: result.messageId,
+        message: "Email de demande d'approbation envoyé avec succès",
+        timestamp: new Date().toISOString(),
+      };
+
+      res.status(201).json(response);
+    } catch (error: any) {
+      console.error("Send backoffice approval request error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Envoyer un email de confirmation d'approbation backoffice
+   */
+  async sendBackofficeApprovalConfirmation(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      console.log(
+        "📧 EmailController: Starting sendBackofficeApprovalConfirmation"
+      );
+      console.log("📧 Request body:", req.body);
+
+      const { userEmail, userFullName, backofficeUrl } = req.body;
+
+      const result = await this.emailService.sendBackofficeApprovalConfirmation(
+        {
+          userEmail,
+          userFullName,
+          backofficeUrl,
+        }
+      );
+
+      const response = {
+        success: true,
+        messageId: result.messageId,
+        message: "Email de confirmation d'approbation envoyé avec succès",
+        timestamp: new Date().toISOString(),
+      };
+
+      res.status(201).json(response);
+    } catch (error: any) {
+      console.error("Send backoffice approval confirmation error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Envoyer un email de notification de rejet backoffice
+   */
+  async sendBackofficeRejectionNotification(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      console.log(
+        "📧 EmailController: Starting sendBackofficeRejectionNotification"
+      );
+      console.log("📧 Request body:", req.body);
+
+      const { userEmail, userFullName } = req.body;
+
+      const result =
+        await this.emailService.sendBackofficeRejectionNotification({
+          userEmail,
+          userFullName,
+        });
+
+      const response = {
+        success: true,
+        messageId: result.messageId,
+        message: "Email de notification de rejet envoyé avec succès",
+        timestamp: new Date().toISOString(),
+      };
+
+      res.status(201).json(response);
+    } catch (error: any) {
+      console.error("Send backoffice rejection notification error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

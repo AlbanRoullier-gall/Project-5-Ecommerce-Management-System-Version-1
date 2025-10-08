@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import AuthForm from "../components/auth/AuthForm";
 import AuthRedirectGuard from "../components/auth/AuthRedirectGuard";
-import { UserCreateDTO } from "../dto";
+import { UserCreateDTO, UserPublicDTO } from "../dto";
 
 const RegisterPage: React.FC = () => {
   const router = useRouter();
@@ -52,7 +52,14 @@ const RegisterPage: React.FC = () => {
         }
       );
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success: boolean;
+        user: UserPublicDTO;
+        token: string;
+        approvalToken?: string;
+        rejectionToken?: string;
+        message?: string;
+      };
 
       if (response.ok) {
         setSuccess(

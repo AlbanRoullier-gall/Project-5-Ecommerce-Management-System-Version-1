@@ -101,12 +101,11 @@ export class AuthService {
       // Sauvegarder en base
       const savedUser = await this.userRepository.save(user);
 
-      // Envoyer l'email de demande d'approbation backoffice
-      await this.sendBackofficeApprovalRequest(savedUser);
-
       // Générer le token JWT
       const token = this.generateJWT(savedUser);
 
+      // Note: L'API Gateway se chargera d'envoyer l'email d'approbation
+      // L'auth-service ne connaît pas l'email-service
       return {
         user: savedUser,
         token,
@@ -401,74 +400,10 @@ export class AuthService {
   }
 
   /**
-   * Envoyer une demande d'approbation backoffice par email
-   */
-  private async sendBackofficeApprovalRequest(user: User): Promise<void> {
-    try {
-      const adminEmail = process.env["ADMIN_EMAIL"] || "admin@example.com";
-      const baseUrl = process.env["API_GATEWAY_URL"] || "http://localhost:3020";
-
-      // Générer un token d'approbation
-      const approvalToken = this.generateApprovalToken(user.userId);
-      const rejectionToken = this.generateApprovalToken(user.userId, "reject");
-
-      const approvalUrl = `${baseUrl}/api/auth/approve-backoffice?token=${approvalToken}`;
-      const rejectionUrl = `${baseUrl}/api/auth/reject-backoffice?token=${rejectionToken}`;
-
-      const emailData = {
-        to: { email: adminEmail },
-        subject: `[BACKOFFICE] Nouvelle demande d'accès - ${user.fullName()}`,
-        clientName: user.fullName(),
-        clientEmail: user.email,
-        message: `
-          <h2>Nouvelle demande d'accès au backoffice</h2>
-          <p><strong>Nom:</strong> ${user.fullName()}</p>
-          <p><strong>Email:</strong> ${user.email}</p>
-          <p><strong>Date de demande:</strong> ${new Date().toLocaleString(
-            "fr-FR"
-          )}</p>
-          
-          <h3>Actions disponibles:</h3>
-          <p>
-            <a href="${approvalUrl}" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-right: 10px;">
-              ✅ APPROUVER
-            </a>
-            <a href="${rejectionUrl}" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-              ❌ REJETER
-            </a>
-          </p>
-          
-          <p><em>Ces liens sont valides pendant 24 heures.</em></p>
-        `,
-      };
-
-      // Envoyer l'email via le service email
-      const response = await fetch(
-        `${
-          process.env["EMAIL_SERVICE_URL"] || "http://localhost:3006"
-        }/api/email/send`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(emailData),
-        }
-      );
-
-      if (!response.ok) {
-        console.error("Failed to send backoffice approval request email");
-      }
-    } catch (error) {
-      console.error("Error sending backoffice approval request:", error);
-      // Ne pas faire échouer l'inscription si l'email échoue
-    }
-  }
-
-  /**
    * Générer un token d'approbation
+   * Note: Utilisé par l'API Gateway pour créer des liens d'approbation/rejet
    */
-  private generateApprovalToken(
+  generateApprovalToken(
     userId: number,
     action: "approve" | "reject" = "approve"
   ): string {
