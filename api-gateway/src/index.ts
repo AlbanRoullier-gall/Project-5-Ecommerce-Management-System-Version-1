@@ -2,6 +2,9 @@
  * API GATEWAY - VERSION RÉORGANISÉE ET MODULAIRE
  */
 
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import { PORT, isDevelopment, SERVICES } from "./config";
 import { setupGlobalMiddlewares, setupErrorHandling } from "./middleware";

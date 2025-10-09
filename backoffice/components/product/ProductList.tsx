@@ -75,7 +75,7 @@ const ProductList: React.FC = () => {
 
   // API Calls
   const getAuthToken = () => {
-    return localStorage.getItem("token");
+    return localStorage.getItem("auth_token");
   };
 
   const loadProducts = async () => {
@@ -83,14 +83,24 @@ const ProductList: React.FC = () => {
     setError(null);
     try {
       const token = getAuthToken();
-      const response = await fetch(`${API_URL}/admin/products`, {
+      console.log("Token récupéré:", token ? "Présent" : "Absent");
+      
+      if (!token) {
+        throw new Error("Token d'authentification manquant. Veuillez vous reconnecter.");
+      }
+
+      const response = await fetch(`${API_URL}/api/admin/products`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+      console.log("Response status:", response.status);
+
       if (!response.ok) {
-        throw new Error("Erreur lors du chargement des produits");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Error response:", errorData);
+        throw new Error(errorData.message || "Erreur lors du chargement des produits");
       }
 
       const data = await response.json();
@@ -108,14 +118,22 @@ const ProductList: React.FC = () => {
   const loadCategories = async () => {
     try {
       const token = getAuthToken();
-      const response = await fetch(`${API_URL}/admin/categories`, {
+      
+      if (!token) {
+        console.error("Token manquant pour chargement des catégories");
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/admin/categories`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        throw new Error("Erreur lors du chargement des catégories");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Error loading categories:", errorData);
+        throw new Error(errorData.message || "Erreur lors du chargement des catégories");
       }
 
       const data = await response.json();
@@ -132,7 +150,7 @@ const ProductList: React.FC = () => {
     setError(null);
     try {
       const token = getAuthToken();
-      const response = await fetch(`${API_URL}/admin/products`, {
+      const response = await fetch(`${API_URL}/api/admin/products`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -168,7 +186,7 @@ const ProductList: React.FC = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `${API_URL}/admin/products/${editingProduct.id}`,
+        `${API_URL}/api/admin/products/${editingProduct.id}`,
         {
           method: "PUT",
           headers: {
@@ -201,12 +219,15 @@ const ProductList: React.FC = () => {
     setError(null);
     try {
       const token = getAuthToken();
-      const response = await fetch(`${API_URL}/admin/products/${productId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${API_URL}/api/admin/products/${productId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Erreur lors de la suppression du produit");
@@ -233,7 +254,7 @@ const ProductList: React.FC = () => {
       const token = getAuthToken();
       const endpoint = currentStatus ? "deactivate" : "activate";
       const response = await fetch(
-        `${API_URL}/admin/products/${productId}/${endpoint}`,
+        `${API_URL}/api/admin/products/${productId}/${endpoint}`,
         {
           method: "POST",
           headers: {
@@ -264,7 +285,7 @@ const ProductList: React.FC = () => {
     setError(null);
     try {
       const token = getAuthToken();
-      const response = await fetch(`${API_URL}/admin/categories`, {
+      const response = await fetch(`${API_URL}/api/admin/categories`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -297,7 +318,7 @@ const ProductList: React.FC = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `${API_URL}/admin/categories/${categoryId}`,
+        `${API_URL}/api/admin/categories/${categoryId}`,
         {
           method: "PUT",
           headers: {
@@ -329,7 +350,7 @@ const ProductList: React.FC = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `${API_URL}/admin/categories/${categoryId}`,
+        `${API_URL}/api/admin/categories/${categoryId}`,
         {
           method: "DELETE",
           headers: {
@@ -363,7 +384,7 @@ const ProductList: React.FC = () => {
       formData.append("image", file);
 
       const response = await fetch(
-        `${API_URL}/admin/products/${productId}/images`,
+        `${API_URL}/api/admin/products/${productId}/images`,
         {
           method: "POST",
           headers: {
@@ -392,7 +413,7 @@ const ProductList: React.FC = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `${API_URL}/admin/products/${productId}/images/${imageId}`,
+        `${API_URL}/api/admin/products/${productId}/images/${imageId}`,
         {
           method: "DELETE",
           headers: {
@@ -425,7 +446,7 @@ const ProductList: React.FC = () => {
     setError(null);
     try {
       const token = getAuthToken();
-      const response = await fetch(`${API_URL}/admin/images/${imageId}`, {
+      const response = await fetch(`${API_URL}/api/admin/images/${imageId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

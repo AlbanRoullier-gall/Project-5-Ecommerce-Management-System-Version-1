@@ -10,8 +10,23 @@ import helmet from "helmet";
  * Configure les middlewares globaux
  */
 export const setupGlobalMiddlewares = (app: express.Application): void => {
-  app.use(helmet());
-  app.use(cors());
+  // Configuration CORS AVANT Helmet pour éviter les conflits
+  app.use(
+    cors({
+      origin: true, // Accepte toutes les origines en développement
+      credentials: true,
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    })
+  );
+
+  // Configuration Helmet avec des règles moins strictes pour le développement
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: false, // Désactive la politique stricte cross-origin
+    })
+  );
+
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true }));
 };

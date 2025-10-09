@@ -20,6 +20,10 @@ export class AuthService {
   constructor(pool: Pool) {
     this.userRepository = new UserRepository(pool);
     this.jwtSecret = process.env["JWT_SECRET"] || "your-jwt-secret-key";
+    console.log(
+      "🔐 Auth Service JWT_SECRET:",
+      this.jwtSecret.substring(0, 10) + "..."
+    );
   }
 
   // ===== MÉTHODES UTILITAIRES =====

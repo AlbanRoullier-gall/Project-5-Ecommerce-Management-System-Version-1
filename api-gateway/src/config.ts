@@ -2,12 +2,18 @@
  * Configuration de l'API Gateway
  */
 
+import dotenv from "dotenv";
+dotenv.config();
+
 // Configuration automatique selon l'environnement
 export const isDevelopment =
   process.env["NODE_ENV"] === "development" || !process.env["DOCKER_ENV"];
 
 export const PORT = parseInt(process.env["PORT"] || "3020", 10);
 export const JWT_SECRET = process.env["JWT_SECRET"] || "your-jwt-secret-key";
+
+// Log pour debug (à retirer en production)
+console.log("🔐 JWT_SECRET chargé:", JWT_SECRET.substring(0, 10) + "...");
 
 // Configuration des services
 export const SERVICES = {
