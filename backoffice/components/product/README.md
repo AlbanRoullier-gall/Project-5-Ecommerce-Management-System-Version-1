@@ -169,7 +169,7 @@ Le composant `ProductList` est autonome et gère toute la logique.
 ## Variables d'environnement requises
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:3020
 ```
 
 ## Types utilisés

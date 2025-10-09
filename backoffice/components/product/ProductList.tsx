@@ -13,7 +13,7 @@ import {
   CategoryUpdateDTO,
 } from "../../dto";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
 const ProductList: React.FC = () => {
   // States pour les produits
