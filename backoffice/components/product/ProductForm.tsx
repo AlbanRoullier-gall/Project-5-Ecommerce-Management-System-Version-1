@@ -9,7 +9,11 @@ import {
 interface ProductFormProps {
   product?: ProductPublicDTO | null;
   categories: CategoryPublicDTO[];
-  onSubmit: (data: ProductCreateDTO | ProductUpdateDTO) => void;
+  onSubmit: (
+    data: ProductCreateDTO | ProductUpdateDTO,
+    images?: File[],
+    imagesToDelete?: number[]
+  ) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -33,6 +37,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
   );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+  const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
 
   useEffect(() => {
     if (product) {
@@ -44,8 +51,19 @@ const ProductForm: React.FC<ProductFormProps> = ({
         categoryId: product.categoryId,
         isActive: product.isActive,
       });
+      // Reset les images sélectionnées en mode édition
+      setSelectedImages([]);
+      setImagePreviewUrls([]);
+      setImagesToDelete([]);
     }
   }, [product]);
+
+  // Nettoyer les preview URLs au démontage
+  useEffect(() => {
+    return () => {
+      imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [imagePreviewUrls]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -101,6 +119,58 @@ const ProductForm: React.FC<ProductFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+
+    const existingCount = product?.images?.length || 0;
+    const totalImages = existingCount + selectedImages.length + files.length;
+
+    // Limiter à 5 images total
+    if (totalImages > 5) {
+      alert(
+        `Vous ne pouvez avoir que 5 images maximum. Vous avez déjà ${
+          existingCount + selectedImages.length
+        } image(s).`
+      );
+      return;
+    }
+
+    // Valider chaque fichier
+    for (const file of files) {
+      if (!file.type.startsWith("image/")) {
+        alert(`${file.name} n'est pas une image valide`);
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        alert(`${file.name} est trop volumineux (max 10MB)`);
+        return;
+      }
+    }
+
+    // Ajouter les fichiers
+    setSelectedImages((prev) => [...prev, ...files]);
+
+    // Créer les previews
+    files.forEach((file) => {
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreviewUrls((prev) => [...prev, previewUrl]);
+    });
+
+    e.target.value = ""; // Reset input
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+    URL.revokeObjectURL(imagePreviewUrls[index]);
+    setImagePreviewUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleMarkImageForDeletion = (imageId: number) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette image ?")) {
+      setImagesToDelete((prev) => [...prev, imageId]);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -108,7 +178,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
       return;
     }
 
-    onSubmit(formData);
+    onSubmit(
+      formData,
+      selectedImages.length > 0 ? selectedImages : undefined,
+      imagesToDelete.length > 0 ? imagesToDelete : undefined
+    );
   };
 
   const inputStyle: React.CSSProperties = {
@@ -435,6 +509,251 @@ const ProductForm: React.FC<ProductFormProps> = ({
           >
             ✅ Produit actif (visible sur le site)
           </label>
+        </div>
+
+        {/* Images */}
+        <div
+          style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
+        >
+          <label style={labelStyle}>📷 Images du produit (max 5)</label>
+
+          {/* Images existantes en mode édition */}
+          {product && product.images && product.images.length > 0 && (
+            <div style={{ marginBottom: "1rem" }}>
+              <p
+                style={{
+                  fontSize: "0.9rem",
+                  color: "#6b7280",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Images actuelles (
+                {
+                  product.images.filter(
+                    (img) => !imagesToDelete.includes(img.id)
+                  ).length
+                }
+                /5) :
+              </p>
+              <div
+                style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}
+              >
+                {product.images
+                  .filter((img) => !imagesToDelete.includes(img.id))
+                  .map((img) => (
+                    <div
+                      key={img.id}
+                      style={{
+                        position: "relative",
+                        width: "100px",
+                        height: "100px",
+                        borderRadius: "10px",
+                        overflow: "hidden",
+                        border: "2px solid #e1e5e9",
+                      }}
+                    >
+                      <img
+                        src={`http://localhost:3020/${img.filePath}`}
+                        alt={img.filename}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleMarkImageForDeletion(img.id)}
+                        style={{
+                          position: "absolute",
+                          top: "4px",
+                          right: "4px",
+                          background: "rgba(239, 68, 68, 0.9)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "50%",
+                          width: "24px",
+                          height: "24px",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.75rem",
+                        }}
+                      >
+                        ✕
+                      </button>
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: "0",
+                          left: "0",
+                          right: "0",
+                          background: "rgba(0, 0, 0, 0.7)",
+                          color: "white",
+                          fontSize: "0.6rem",
+                          padding: "0.25rem",
+                          textAlign: "center",
+                        }}
+                      >
+                        #{img.orderIndex + 1}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Zone d'upload */}
+          {(() => {
+            const existingCount = product?.images
+              ? product.images.filter((img) => !imagesToDelete.includes(img.id))
+                  .length
+              : 0;
+            const totalCount = existingCount + selectedImages.length;
+            return totalCount < 5;
+          })() && (
+            <label
+              style={{
+                display: "block",
+                border: "2px dashed #d1d5db",
+                borderRadius: "10px",
+                padding: "2rem",
+                textAlign: "center",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                background: "#f9fafb",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.borderColor = "#13686a";
+                e.currentTarget.style.background = "#f0fdf4";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.borderColor = "#d1d5db";
+                e.currentTarget.style.background = "#f9fafb";
+              }}
+            >
+              <i
+                className="fas fa-cloud-upload-alt"
+                style={{
+                  fontSize: "2.5rem",
+                  color: "#9ca3af",
+                  marginBottom: "0.5rem",
+                }}
+              ></i>
+              <p
+                style={{
+                  fontSize: "1rem",
+                  color: "#6b7280",
+                  marginBottom: "0.25rem",
+                }}
+              >
+                Cliquez pour sélectionner des images
+              </p>
+              <p style={{ fontSize: "0.875rem", color: "#9ca3af" }}>
+                PNG, JPG, GIF - Max 10MB par image -{" "}
+                {(() => {
+                  const existingCount = product?.images
+                    ? product.images.filter(
+                        (img) => !imagesToDelete.includes(img.id)
+                      ).length
+                    : 0;
+                  return 5 - existingCount - selectedImages.length;
+                })()}{" "}
+                restante(s)
+              </p>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageChange}
+                style={{ display: "none" }}
+                disabled={isLoading}
+              />
+            </label>
+          )}
+
+          {/* Aperçu des nouvelles images */}
+          {selectedImages.length > 0 && (
+            <div style={{ marginTop: "1rem" }}>
+              <p
+                style={{
+                  fontSize: "0.9rem",
+                  color: "#6b7280",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Images sélectionnées ({selectedImages.length}/5) :
+              </p>
+              <div
+                style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}
+              >
+                {selectedImages.map((file, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      position: "relative",
+                      width: "100px",
+                      height: "100px",
+                      borderRadius: "10px",
+                      overflow: "hidden",
+                      border: "2px solid #10b981",
+                    }}
+                  >
+                    <img
+                      src={imagePreviewUrls[index]}
+                      alt={file.name}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      style={{
+                        position: "absolute",
+                        top: "4px",
+                        right: "4px",
+                        background: "rgba(239, 68, 68, 0.9)",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "50%",
+                        width: "24px",
+                        height: "24px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "0.75rem",
+                      }}
+                    >
+                      ✕
+                    </button>
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "0",
+                        left: "0",
+                        right: "0",
+                        background: "rgba(0, 0, 0, 0.7)",
+                        color: "white",
+                        fontSize: "0.7rem",
+                        padding: "0.25rem",
+                        textAlign: "center",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {file.name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Boutons */}

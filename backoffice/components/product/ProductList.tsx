@@ -3,7 +3,6 @@ import ProductFilters from "./ProductFilters";
 import ProductTable from "./ProductTable";
 import ProductForm from "./ProductForm";
 import CategoryManagement from "./CategoryManagement";
-import ProductImageManager from "./ProductImageManager";
 import {
   ProductPublicDTO,
   ProductCreateDTO,
@@ -36,8 +35,6 @@ const ProductList: React.FC = () => {
     null
   );
   const [showCategoryManagement, setShowCategoryManagement] = useState(false);
-  const [imageManagerProduct, setImageManagerProduct] =
-    useState<ProductPublicDTO | null>(null);
 
   // Charger les données au montage
   useEffect(() => {
@@ -84,9 +81,11 @@ const ProductList: React.FC = () => {
     try {
       const token = getAuthToken();
       console.log("Token récupéré:", token ? "Présent" : "Absent");
-      
+
       if (!token) {
-        throw new Error("Token d'authentification manquant. Veuillez vous reconnecter.");
+        throw new Error(
+          "Token d'authentification manquant. Veuillez vous reconnecter."
+        );
       }
 
       const response = await fetch(`${API_URL}/api/admin/products`, {
@@ -100,7 +99,9 @@ const ProductList: React.FC = () => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("Error response:", errorData);
-        throw new Error(errorData.message || "Erreur lors du chargement des produits");
+        throw new Error(
+          errorData.message || "Erreur lors du chargement des produits"
+        );
       }
 
       const data = await response.json();
@@ -118,7 +119,7 @@ const ProductList: React.FC = () => {
   const loadCategories = async () => {
     try {
       const token = getAuthToken();
-      
+
       if (!token) {
         console.error("Token manquant pour chargement des catégories");
         return;
@@ -133,7 +134,9 @@ const ProductList: React.FC = () => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("Error loading categories:", errorData);
-        throw new Error(errorData.message || "Erreur lors du chargement des catégories");
+        throw new Error(
+          errorData.message || "Erreur lors du chargement des catégories"
+        );
       }
 
       const data = await response.json();
@@ -144,23 +147,51 @@ const ProductList: React.FC = () => {
   };
 
   const handleCreateProduct = async (
-    data: ProductCreateDTO | ProductUpdateDTO
+    data: ProductCreateDTO | ProductUpdateDTO,
+    images?: File[]
   ) => {
     setIsLoading(true);
     setError(null);
     try {
       const token = getAuthToken();
-      const response = await fetch(`${API_URL}/api/admin/products`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
 
-      if (!response.ok) {
-        throw new Error("Erreur lors de la création du produit");
+      // Si des images sont fournies, utiliser la route /with-images
+      if (images && images.length > 0) {
+        const formData = new FormData();
+        formData.append("product", JSON.stringify(data));
+
+        images.forEach((image) => {
+          formData.append("images", image);
+        });
+
+        const response = await fetch(
+          `${API_URL}/api/admin/products/with-images`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Erreur lors de la création du produit avec images");
+        }
+      } else {
+        // Création sans images
+        const response = await fetch(`${API_URL}/api/admin/products`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+          throw new Error("Erreur lors de la création du produit");
+        }
       }
 
       await loadProducts();
@@ -177,7 +208,9 @@ const ProductList: React.FC = () => {
   };
 
   const handleUpdateProduct = async (
-    data: ProductCreateDTO | ProductUpdateDTO
+    data: ProductCreateDTO | ProductUpdateDTO,
+    images?: File[],
+    imagesToDelete?: number[]
   ) => {
     if (!editingProduct) return;
 
@@ -185,6 +218,27 @@ const ProductList: React.FC = () => {
     setError(null);
     try {
       const token = getAuthToken();
+
+      // 1. Supprimer les images marquées pour suppression
+      if (imagesToDelete && imagesToDelete.length > 0) {
+        for (const imageId of imagesToDelete) {
+          const deleteResponse = await fetch(
+            `${API_URL}/api/admin/products/${editingProduct.id}/images/${imageId}`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!deleteResponse.ok) {
+            console.error(`Erreur suppression image ${imageId}`);
+          }
+        }
+      }
+
+      // 2. Mettre à jour les données du produit
       const response = await fetch(
         `${API_URL}/api/admin/products/${editingProduct.id}`,
         {
@@ -199,6 +253,29 @@ const ProductList: React.FC = () => {
 
       if (!response.ok) {
         throw new Error("Erreur lors de la mise à jour du produit");
+      }
+
+      // 3. Ajouter les nouvelles images
+      if (images && images.length > 0) {
+        const formData = new FormData();
+        images.forEach((image) => {
+          formData.append("images", image);
+        });
+
+        const imgResponse = await fetch(
+          `${API_URL}/api/admin/products/${editingProduct.id}/images`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          }
+        );
+
+        if (!imgResponse.ok) {
+          throw new Error("Erreur lors de l'ajout des images");
+        }
       }
 
       await loadProducts();
@@ -375,101 +452,6 @@ const ProductList: React.FC = () => {
     }
   };
 
-  const handleUploadImage = async (productId: number, file: File) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const token = getAuthToken();
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const response = await fetch(
-        `${API_URL}/api/admin/products/${productId}/images`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de l'upload de l'image");
-      }
-
-      await loadProducts();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur lors de l'upload");
-      console.error("Error uploading image:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteImage = async (productId: number, imageId: number) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const token = getAuthToken();
-      const response = await fetch(
-        `${API_URL}/api/admin/products/${productId}/images/${imageId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de la suppression de l'image");
-      }
-
-      await loadProducts();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erreur lors de la suppression"
-      );
-      console.error("Error deleting image:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleUpdateImageOrder = async (
-    productId: number,
-    imageId: number,
-    newOrder: number
-  ) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_URL}/api/admin/images/${imageId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ orderIndex: newOrder }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de la mise à jour de l'ordre");
-      }
-
-      await loadProducts();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erreur lors de la mise à jour"
-      );
-      console.error("Error updating image order:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleEditProduct = (product: ProductPublicDTO) => {
     setEditingProduct(product);
     setShowProductForm(true);
@@ -483,10 +465,6 @@ const ProductList: React.FC = () => {
   const handleCancelForm = () => {
     setShowProductForm(false);
     setEditingProduct(null);
-  };
-
-  const handleManageImages = (product: ProductPublicDTO) => {
-    setImageManagerProduct(product);
   };
 
   return (
@@ -690,21 +668,8 @@ const ProductList: React.FC = () => {
             onEdit={handleEditProduct}
             onDelete={handleDeleteProduct}
             onToggleStatus={handleToggleProductStatus}
-            onManageImages={handleManageImages}
           />
         </>
-      )}
-
-      {/* Gestionnaire d'images */}
-      {imageManagerProduct && (
-        <ProductImageManager
-          product={imageManagerProduct}
-          onClose={() => setImageManagerProduct(null)}
-          onUploadImage={handleUploadImage}
-          onDeleteImage={handleDeleteImage}
-          onUpdateImageOrder={handleUpdateImageOrder}
-          isLoading={isLoading}
-        />
       )}
     </div>
   );

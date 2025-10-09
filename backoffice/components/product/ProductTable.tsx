@@ -6,7 +6,6 @@ interface ProductTableProps {
   onEdit: (product: ProductPublicDTO) => void;
   onDelete: (productId: number) => void;
   onToggleStatus: (productId: number, currentStatus: boolean) => void;
-  onManageImages: (product: ProductPublicDTO) => void;
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({
@@ -14,7 +13,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
   onEdit,
   onDelete,
   onToggleStatus,
-  onManageImages,
 }) => {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-BE", {
@@ -199,20 +197,36 @@ const ProductTable: React.FC<ProductTableProps> = ({
                     >
                       {product.images && product.images.length > 0 ? (
                         <img
-                          src={product.images[0].filePath}
+                          src={`http://localhost:3020/${product.images[0].filePath}`}
                           alt={product.name}
                           style={{
                             width: "50px",
                             height: "50px",
                             objectFit: "cover",
                           }}
+                          onError={(e) => {
+                            // Si l'image ne charge pas, afficher l'icône
+                            e.currentTarget.style.display = "none";
+                            const icon =
+                              e.currentTarget.parentElement?.querySelector("i");
+                            if (icon) {
+                              (icon as HTMLElement).style.display =
+                                "inline-block";
+                            }
+                          }}
                         />
-                      ) : (
-                        <i
-                          className="fas fa-image"
-                          style={{ fontSize: "1.5rem", color: "#9ca3af" }}
-                        ></i>
-                      )}
+                      ) : null}
+                      <i
+                        className="fas fa-image"
+                        style={{
+                          fontSize: "1.5rem",
+                          color: "#9ca3af",
+                          display:
+                            product.images && product.images.length > 0
+                              ? "none"
+                              : "inline-block",
+                        }}
+                      ></i>
                     </div>
                     <div style={{ marginLeft: "1rem" }}>
                       <div
@@ -315,31 +329,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 </td>
                 <td style={{ padding: "1.5rem 1.25rem" }}>
                   <div style={{ display: "flex", gap: "0.75rem" }}>
-                    <button
-                      onClick={() => onManageImages(product)}
-                      title="Gérer les images"
-                      style={{
-                        padding: "0.75rem",
-                        border: "none",
-                        background: "none",
-                        cursor: "pointer",
-                        color: "#a855f7",
-                        transition: "all 0.2s ease",
-                        borderRadius: "8px",
-                        fontSize: "1.2rem",
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background =
-                          "rgba(168, 85, 247, 0.1)";
-                        e.currentTarget.style.transform = "scale(1.1)";
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = "none";
-                        e.currentTarget.style.transform = "scale(1)";
-                      }}
-                    >
-                      <i className="fas fa-images"></i>
-                    </button>
                     <button
                       onClick={() => onEdit(product)}
                       title="Modifier"

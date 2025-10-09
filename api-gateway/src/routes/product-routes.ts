@@ -22,7 +22,7 @@ export const PRODUCT_ROUTES: Record<string, ServiceName> = {
   "/admin/products/with-images": "product", // POST: Créer produit avec images
   "/admin/categories": "product", // GET: Liste catégories, POST: Créer catégorie
   "/admin/categories/:id": "product", // GET: Récupérer catégorie, PUT: Modifier catégorie, DELETE: Supprimer catégorie
-  "/admin/products/:id/images": "product", // POST: Ajouter image, GET: Lister images d'un produit
+  "/admin/products/:id/images": "product", // GET: Lister images, POST: Ajouter images à un produit
+  "/admin/products/:id/images/:imageId": "product", // DELETE: Supprimer une image
   "/admin/images/:imageId": "product", // GET: Récupérer image, PUT: Modifier image
-  "/admin/products/:id/images/:imageId": "product", // DELETE: Supprimer image d'un produit
 };

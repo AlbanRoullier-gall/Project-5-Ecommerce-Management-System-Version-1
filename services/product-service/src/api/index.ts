@@ -24,20 +24,23 @@ import {
   CategoryController,
   ProductImageController,
 } from "./controller";
-import { ResponseMapper } from "./mapper";
+import { ResponseMapper, ProductMapper } from "./mapper";
 
 export class ApiRouter {
   private healthController: HealthController;
   private productController: ProductController;
   private categoryController: CategoryController;
   private productImageController: ProductImageController;
+  private productService: ProductService;
 
   constructor(pool: Pool) {
-    const productService = new ProductService(pool);
+    this.productService = new ProductService(pool);
     this.healthController = new HealthController(pool);
-    this.productController = new ProductController(productService);
-    this.categoryController = new CategoryController(productService);
-    this.productImageController = new ProductImageController(productService);
+    this.productController = new ProductController(this.productService);
+    this.categoryController = new CategoryController(this.productService);
+    this.productImageController = new ProductImageController(
+      this.productService
+    );
   }
 
   /**
@@ -320,9 +323,79 @@ export class ApiRouter {
       "/api/admin/products/with-images",
       this.requireAuth,
       upload.array("images", 10),
-      (req: Request, res: Response) => {
-        // This would need special handling for file uploads
-        res.status(501).json(ResponseMapper.internalServerError());
+      async (req: Request, res: Response) => {
+        try {
+          // Vérifier que les données du produit sont présentes
+          if (!req.body.product) {
+            res
+              .status(400)
+              .json(ResponseMapper.validationError("Product data is required"));
+            return;
+          }
+
+          // Parser les données du produit (envoyées en JSON string dans le FormData)
+          let productDTO;
+          try {
+            productDTO =
+              typeof req.body.product === "string"
+                ? JSON.parse(req.body.product)
+                : req.body.product;
+          } catch (parseError) {
+            res
+              .status(400)
+              .json(
+                ResponseMapper.validationError("Invalid product data format")
+              );
+            return;
+          }
+
+          // Valider les données du produit
+          const { error } = schemas.productCreateSchema.validate(productDTO);
+          if (error) {
+            res
+              .status(400)
+              .json(
+                ResponseMapper.validationError(
+                  error.details[0]?.message || "Validation error"
+                )
+              );
+            return;
+          }
+
+          // Créer le produit d'abord
+          const productData =
+            ProductMapper.productCreateDTOToProductData(productDTO);
+          const product = await this.productService.createProduct(productData);
+
+          // Si des fichiers sont uploadés, créer les images associées
+          const images = [];
+          if (req.files && Array.isArray(req.files)) {
+            for (let i = 0; i < req.files.length; i++) {
+              const file = req.files[i];
+              const imageData =
+                ProductMapper.productImageCreateDTOToProductImageData({
+                  productId: product.id,
+                  filename: file.filename,
+                  filePath: file.path,
+                  orderIndex: i,
+                });
+
+              const image = await this.productService.createImage(imageData);
+              images.push(ProductMapper.productImageToPublicDTO(image));
+            }
+          }
+
+          // Retourner le produit avec ses images
+          const productDTO_response = ProductMapper.productToPublicDTO(product);
+          productDTO_response.images = images;
+
+          res
+            .status(201)
+            .json(ResponseMapper.productCreated(productDTO_response));
+        } catch (error: any) {
+          console.error("Create product with images error:", error);
+          res.status(500).json(ResponseMapper.internalServerError());
+        }
       }
     );
 
@@ -375,14 +448,80 @@ export class ApiRouter {
     );
 
     // === GESTION DES IMAGES DE PRODUITS (ADMIN) ===
-    // Ajouter une image à un produit (admin)
+    // Ajouter des images à un produit existant (admin)
     app.post(
       "/api/admin/products/:id/images",
       this.requireAuth,
-      upload.single("image"),
-      (req: Request, res: Response) => {
-        // This would need special handling for file uploads
-        res.status(501).json(ResponseMapper.internalServerError());
+      upload.array("images", 5),
+      async (req: Request, res: Response) => {
+        try {
+          // Vérifier que des fichiers sont présents
+          const files = (req as any).files as Express.Multer.File[];
+          if (!files || files.length === 0) {
+            res
+              .status(400)
+              .json(ResponseMapper.validationError("No images uploaded"));
+            return;
+          }
+
+          const productId = parseInt(req.params.id);
+          if (isNaN(productId)) {
+            res
+              .status(400)
+              .json(ResponseMapper.validationError("Invalid product ID"));
+            return;
+          }
+
+          // Vérifier que le produit existe
+          const product = await this.productService.getProductById(productId);
+          if (!product) {
+            res.status(404).json(ResponseMapper.notFoundError("Product"));
+            return;
+          }
+
+          // Récupérer le nombre d'images existantes
+          const existingImages = await this.productService.listImages(
+            productId
+          );
+
+          // Limiter à 5 images total
+          if (existingImages.length + files.length > 5) {
+            res
+              .status(400)
+              .json(
+                ResponseMapper.validationError(
+                  `Cannot add ${files.length} images. Product already has ${existingImages.length} image(s). Maximum is 5.`
+                )
+              );
+            return;
+          }
+
+          // Créer les images
+          const images = [];
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const orderIndex = existingImages.length + i;
+
+            const imageData =
+              ProductMapper.productImageCreateDTOToProductImageData({
+                productId: productId,
+                filename: file.filename,
+                filePath: file.path,
+                orderIndex: orderIndex,
+              });
+
+            const image = await this.productService.createImage(imageData);
+            images.push(ProductMapper.productImageToPublicDTO(image));
+          }
+
+          res.status(201).json({
+            message: `${images.length} image(s) ajoutée(s) avec succès`,
+            images: images,
+          });
+        } catch (error: any) {
+          console.error("Add product images error:", error);
+          res.status(500).json(ResponseMapper.internalServerError());
+        }
       }
     );
 

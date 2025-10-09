@@ -4,6 +4,7 @@
 
 import { Request, Response } from "express";
 import axios from "axios";
+import FormData from "form-data";
 import { SERVICES, ServiceName } from "./config";
 import {
   isProtectedRoute,
@@ -67,10 +68,8 @@ export const handleProxyRequest = async (
 
     console.log(`📤 Envoi vers: ${targetUrl}`);
 
-    // Headers à transmettre
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
+    // Headers de base
+    const headers: Record<string, string> = {};
 
     // Ajouter l'utilisateur authentifié dans les headers si disponible
     if ((req as any).user) {
@@ -79,17 +78,68 @@ export const handleProxyRequest = async (
       headers["x-user-email"] = user.email;
     }
 
-    // Supprimer le header host pour éviter les conflits
-    delete headers["host"];
+    // Vérifier si la requête contient des fichiers uploadés
+    const hasFile = !!(req as any).file;
+    const hasFiles = !!(req as any).files;
+
+    let requestData: any;
+    let requestHeaders = { ...headers };
+
+    if (hasFile || hasFiles) {
+      // Créer un FormData pour retransmettre les fichiers
+      const formData = new FormData();
+
+      // Ajouter le(s) fichier(s)
+      if (hasFile) {
+        const file = (req as any).file;
+        formData.append("image", file.buffer, {
+          filename: file.originalname,
+          contentType: file.mimetype,
+        });
+      }
+
+      if (hasFiles) {
+        const files = (req as any).files as Express.Multer.File[];
+        files.forEach((file) => {
+          formData.append("images", file.buffer, {
+            filename: file.originalname,
+            contentType: file.mimetype,
+          });
+        });
+      }
+
+      // Ajouter les autres champs du body
+      if (req.body) {
+        Object.keys(req.body).forEach((key) => {
+          const value = req.body[key];
+          formData.append(
+            key,
+            typeof value === "object" ? JSON.stringify(value) : value
+          );
+        });
+      }
+
+      requestData = formData;
+      requestHeaders = {
+        ...requestHeaders,
+        ...formData.getHeaders(), // Ajoute Content-Type: multipart/form-data avec boundary
+      };
+    } else {
+      // Requête normale sans fichier
+      requestData = req.body;
+      requestHeaders["Content-Type"] = "application/json";
+    }
 
     // Faire la requête vers le service
     const response = await axios({
       method: req.method,
       url: targetUrl,
-      headers,
-      data: req.body,
+      headers: requestHeaders,
+      data: requestData,
       params: req.query,
       timeout: 30000,
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
     });
 
     console.log(

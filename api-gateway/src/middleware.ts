@@ -27,8 +27,33 @@ export const setupGlobalMiddlewares = (app: express.Application): void => {
     })
   );
 
-  app.use(express.json({ limit: "10mb" }));
-  app.use(express.urlencoded({ extended: true }));
+  // Parser JSON et URL-encoded SAUF pour les routes d'upload d'images
+  // Les routes multipart/form-data doivent garder le body brut
+  app.use((req, res, next) => {
+    const isImageUploadRoute =
+      (req.path.includes("/images") && req.method === "POST") ||
+      req.path.includes("/with-images");
+
+    if (isImageUploadRoute) {
+      // Skip le parsing pour les routes d'upload
+      next();
+    } else {
+      // Parser normalement
+      express.json({ limit: "10mb" })(req, res, next);
+    }
+  });
+
+  app.use((req, res, next) => {
+    const isImageUploadRoute =
+      (req.path.includes("/images") && req.method === "POST") ||
+      req.path.includes("/with-images");
+
+    if (!isImageUploadRoute) {
+      express.urlencoded({ extended: true })(req, res, next);
+    } else {
+      next();
+    }
+  });
 };
 
 /**
