@@ -3,6 +3,9 @@ import ProductFilters from "./ProductFilters";
 import ProductTable from "./ProductTable";
 import ProductForm from "./ProductForm";
 import CategoryManagement from "./CategoryManagement";
+import ErrorAlert from "./ui/ErrorAlert";
+import PageHeader from "./ui/PageHeader";
+import Button from "./ui/Button";
 import {
   ProductPublicDTO,
   ProductCreateDTO,
@@ -12,10 +15,27 @@ import {
   CategoryUpdateDTO,
 } from "../../dto";
 
+/** URL de l'API depuis les variables d'environnement */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
+/**
+ * Composant principal de gestion des produits
+ *
+ * Fonctionnalités :
+ * - Affichage de la liste des produits avec filtres (recherche, catégorie, statut)
+ * - Création et édition de produits avec gestion d'images
+ * - Gestion des catégories
+ * - Activation/désactivation de produits
+ * - Suppression de produits
+ *
+ * États gérés :
+ * - Liste des produits et catégories
+ * - Filtres de recherche
+ * - Formulaires d'ajout/édition
+ * - Gestion des erreurs et chargement
+ */
 const ProductList: React.FC = () => {
-  // States pour les produits
+  // États de données
   const [products, setProducts] = useState<ProductPublicDTO[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<ProductPublicDTO[]>(
     []
@@ -24,43 +44,43 @@ const ProductList: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // States pour les filtres
+  // États des filtres
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
-  // States pour les modales/formulaires
+  // États UI
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductPublicDTO | null>(
     null
   );
   const [showCategoryManagement, setShowCategoryManagement] = useState(false);
 
-  // Charger les données au montage
+  // Charger les données au montage du composant
   useEffect(() => {
     loadProducts();
     loadCategories();
   }, []);
 
-  // Filtrer les produits
+  /**
+   * Effet de filtrage des produits
+   * Applique les filtres de recherche, catégorie et statut
+   */
   useEffect(() => {
     let filtered = [...products];
 
-    // Filtre de recherche
     if (searchTerm) {
       filtered = filtered.filter((p) =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    // Filtre par catégorie
     if (selectedCategory) {
       filtered = filtered.filter(
         (p) => p.categoryId === parseInt(selectedCategory)
       );
     }
 
-    // Filtre par statut
     if (statusFilter === "active") {
       filtered = filtered.filter((p) => p.isActive);
     } else if (statusFilter === "inactive") {
@@ -70,17 +90,23 @@ const ProductList: React.FC = () => {
     setFilteredProducts(filtered);
   }, [products, searchTerm, selectedCategory, statusFilter]);
 
-  // API Calls
+  /**
+   * Récupère le token d'authentification du localStorage
+   * @returns Le token JWT ou null
+   */
   const getAuthToken = () => {
     return localStorage.getItem("auth_token");
   };
 
+  /**
+   * Charge la liste des produits depuis l'API
+   * Gère les erreurs et met à jour l'état de chargement
+   */
   const loadProducts = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const token = getAuthToken();
-      console.log("Token récupéré:", token ? "Présent" : "Absent");
 
       if (!token) {
         throw new Error(
@@ -94,11 +120,8 @@ const ProductList: React.FC = () => {
         },
       });
 
-      console.log("Response status:", response.status);
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("Error response:", errorData);
         throw new Error(
           errorData.message || "Erreur lors du chargement des produits"
         );
@@ -116,6 +139,9 @@ const ProductList: React.FC = () => {
     }
   };
 
+  /**
+   * Charge la liste des catégories depuis l'API
+   */
   const loadCategories = async () => {
     try {
       const token = getAuthToken();
@@ -133,7 +159,6 @@ const ProductList: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("Error loading categories:", errorData);
         throw new Error(
           errorData.message || "Erreur lors du chargement des catégories"
         );
@@ -146,6 +171,11 @@ const ProductList: React.FC = () => {
     }
   };
 
+  /**
+   * Crée un nouveau produit
+   * @param data - Données du produit
+   * @param images - Images à uploader (optionnel)
+   */
   const handleCreateProduct = async (
     data: ProductCreateDTO | ProductUpdateDTO,
     images?: File[]
@@ -155,7 +185,6 @@ const ProductList: React.FC = () => {
     try {
       const token = getAuthToken();
 
-      // Si des images sont fournies, utiliser la route /with-images
       if (images && images.length > 0) {
         const formData = new FormData();
         formData.append("product", JSON.stringify(data));
@@ -179,7 +208,6 @@ const ProductList: React.FC = () => {
           throw new Error("Erreur lors de la création du produit avec images");
         }
       } else {
-        // Création sans images
         const response = await fetch(`${API_URL}/api/admin/products`, {
           method: "POST",
           headers: {
@@ -207,6 +235,12 @@ const ProductList: React.FC = () => {
     }
   };
 
+  /**
+   * Met à jour un produit existant
+   * @param data - Nouvelles données du produit
+   * @param images - Nouvelles images à ajouter (optionnel)
+   * @param imagesToDelete - IDs des images à supprimer (optionnel)
+   */
   const handleUpdateProduct = async (
     data: ProductCreateDTO | ProductUpdateDTO,
     images?: File[],
@@ -219,7 +253,6 @@ const ProductList: React.FC = () => {
     try {
       const token = getAuthToken();
 
-      // 1. Supprimer les images marquées pour suppression
       if (imagesToDelete && imagesToDelete.length > 0) {
         for (const imageId of imagesToDelete) {
           const deleteResponse = await fetch(
@@ -238,7 +271,6 @@ const ProductList: React.FC = () => {
         }
       }
 
-      // 2. Mettre à jour les données du produit
       const response = await fetch(
         `${API_URL}/api/admin/products/${editingProduct.id}`,
         {
@@ -255,7 +287,6 @@ const ProductList: React.FC = () => {
         throw new Error("Erreur lors de la mise à jour du produit");
       }
 
-      // 3. Ajouter les nouvelles images
       if (images && images.length > 0) {
         const formData = new FormData();
         images.forEach((image) => {
@@ -291,6 +322,10 @@ const ProductList: React.FC = () => {
     }
   };
 
+  /**
+   * Supprime un produit
+   * @param productId - ID du produit à supprimer
+   */
   const handleDeleteProduct = async (productId: number) => {
     setIsLoading(true);
     setError(null);
@@ -321,6 +356,11 @@ const ProductList: React.FC = () => {
     }
   };
 
+  /**
+   * Active ou désactive un produit
+   * @param productId - ID du produit
+   * @param currentStatus - Statut actuel du produit
+   */
   const handleToggleProductStatus = async (
     productId: number,
     currentStatus: boolean
@@ -437,7 +477,6 @@ const ProductList: React.FC = () => {
       );
 
       if (!response.ok) {
-        // Gérer spécifiquement l'erreur 409 (catégorie contient des produits)
         if (response.status === 409) {
           const errorData = await response.json();
           throw new Error(
@@ -449,7 +488,7 @@ const ProductList: React.FC = () => {
       }
 
       await loadCategories();
-      await loadProducts(); // Recharger les produits car ils ont peut-être été impactés
+      await loadProducts();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors de la suppression"
@@ -460,162 +499,65 @@ const ProductList: React.FC = () => {
     }
   };
 
+  /**
+   * Ouvre le formulaire d'édition d'un produit
+   * @param product - Produit à éditer
+   */
   const handleEditProduct = (product: ProductPublicDTO) => {
     setEditingProduct(product);
     setShowProductForm(true);
+    setShowCategoryManagement(false); // Fermer la gestion des catégories
   };
 
+  /**
+   * Toggle l'affichage du formulaire de nouveau produit
+   * Ferme la gestion des catégories si on ouvre le formulaire
+   */
   const handleNewProduct = () => {
     setEditingProduct(null);
-    setShowProductForm(true);
+    setShowProductForm(!showProductForm); // Toggle le formulaire
+    if (!showProductForm) {
+      setShowCategoryManagement(false); // Fermer la gestion des catégories si on ouvre le formulaire
+    }
   };
 
+  /**
+   * Ferme le formulaire de produit et réinitialise l'édition
+   */
   const handleCancelForm = () => {
     setShowProductForm(false);
     setEditingProduct(null);
   };
 
+  /**
+   * Toggle l'affichage de la gestion des catégories
+   * Ferme le formulaire de produit si on ouvre la gestion des catégories
+   */
+  const handleToggleCategoryManagement = () => {
+    setShowCategoryManagement(!showCategoryManagement);
+    if (!showCategoryManagement) {
+      setShowProductForm(false); // Fermer le formulaire de produit si on ouvre la gestion des catégories
+      setEditingProduct(null);
+    }
+  };
+
   return (
     <div style={{ fontSize: "1rem" }}>
-      {/* Messages d'erreur */}
-      {error && (
-        <div
-          style={{
-            background: "linear-gradient(135deg, #fdf2f2 0%, #fef2f2 100%)",
-            border: "2px solid #fecaca",
-            borderLeft: "4px solid #dc2626",
-            color: "#dc2626",
-            padding: "1.5rem",
-            borderRadius: "12px",
-            marginBottom: "1.5rem",
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "1rem",
-            boxShadow: "0 4px 12px rgba(220, 38, 38, 0.1)",
-            animation: "slideIn 0.3s ease-out",
-          }}
-        >
-          <i
-            className="fas fa-exclamation-circle"
-            style={{ fontSize: "1.5rem", marginTop: "0.25rem" }}
-          ></i>
-          <div style={{ flex: 1 }}>
-            <strong
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontSize: "1.1rem",
-              }}
-            >
-              Erreur
-            </strong>
-            <span style={{ fontSize: "1rem" }}>{error}</span>
-          </div>
-          <button
-            onClick={() => setError(null)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#dc2626",
-              cursor: "pointer",
-              padding: "0.25rem",
-              fontSize: "1.25rem",
-            }}
-          >
-            <i className="fas fa-times"></i>
-          </button>
-        </div>
-      )}
+      {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
 
-      {/* Boutons d'actions */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "3rem",
-          paddingBottom: "2rem",
-          borderBottom: "3px solid #d9b970",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "3rem",
-            color: "#13686a",
-            fontWeight: "bold",
-            textShadow: "1px 1px 2px rgba(0, 0, 0, 0.05)",
-            margin: 0,
-          }}
+      <PageHeader title="Produits">
+        <Button
+          onClick={handleToggleCategoryManagement}
+          variant="gold"
+          icon="fas fa-tags"
         >
-          Produits
-        </h1>
-        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-          <button
-            onClick={() => setShowCategoryManagement(!showCategoryManagement)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.75rem",
-              padding: "1rem 2rem",
-              background: "linear-gradient(135deg, #d9b970 0%, #f4d03f 100%)",
-              color: "#13686a",
-              border: "none",
-              borderRadius: "12px",
-              fontSize: "1.1rem",
-              fontWeight: "600",
-              cursor: "pointer",
-              transition: "all 0.3s ease",
-              boxShadow: "0 4px 12px rgba(217, 185, 112, 0.2)",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow =
-                "0 8px 24px rgba(217, 185, 112, 0.35)";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 12px rgba(217, 185, 112, 0.2)";
-            }}
-          >
-            <i className="fas fa-tags" style={{ fontSize: "1.1rem" }}></i>
-            <span>Gérer les catégories</span>
-          </button>
-          <button
-            onClick={handleNewProduct}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.75rem",
-              padding: "1rem 2rem",
-              background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-              color: "white",
-              border: "none",
-              borderRadius: "12px",
-              fontSize: "1.1rem",
-              fontWeight: "600",
-              cursor: "pointer",
-              transition: "all 0.3s ease",
-              boxShadow: "0 4px 12px rgba(19, 104, 106, 0.2)",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow =
-                "0 8px 24px rgba(19, 104, 106, 0.35)";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 12px rgba(19, 104, 106, 0.2)";
-            }}
-          >
-            <i className="fas fa-plus" style={{ fontSize: "1.1rem" }}></i>
-            <span>Nouveau produit</span>
-          </button>
-        </div>
-      </div>
+          Gérer les catégories
+        </Button>
+        <Button onClick={handleNewProduct} variant="primary" icon="fas fa-plus">
+          Nouveau produit
+        </Button>
+      </PageHeader>
 
-      {/* Gestion des catégories */}
       {showCategoryManagement && (
         <CategoryManagement
           categories={categories}
@@ -626,7 +568,6 @@ const ProductList: React.FC = () => {
         />
       )}
 
-      {/* Formulaire de produit */}
       {showProductForm && (
         <ProductForm
           product={editingProduct}
@@ -637,22 +578,18 @@ const ProductList: React.FC = () => {
         />
       )}
 
-      {/* Filtres */}
-      {!showProductForm && (
-        <ProductFilters
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          categories={categories}
-        />
-      )}
-
-      {/* Tableau des produits */}
       {!showProductForm && (
         <>
+          <ProductFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            categories={categories}
+          />
+
           <div
             style={{
               display: "flex",

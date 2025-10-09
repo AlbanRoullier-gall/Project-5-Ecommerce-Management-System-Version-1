@@ -6,6 +6,18 @@ import Footer from "../components/Footer";
 import AuthGuard from "../components/auth/AuthGuard";
 import ProductList from "../components/product/ProductList";
 
+/**
+ * Page de gestion des produits et catégories
+ *
+ * Utilise le composant ProductList qui gère :
+ * - Affichage et filtrage des produits
+ * - Création/édition/suppression de produits
+ * - Gestion des images produits
+ * - Gestion des catégories
+ * - Activation/désactivation de produits
+ *
+ * Protégée par AuthGuard (accessible uniquement si authentifié et approuvé)
+ */
 const ProductsPage: React.FC = () => {
   return (
     <AuthGuard>

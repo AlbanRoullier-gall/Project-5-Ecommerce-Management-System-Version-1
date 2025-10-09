@@ -5,6 +5,17 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import AuthGuard from "../components/auth/AuthGuard";
 
+/**
+ * Page Dashboard du backoffice
+ *
+ * Page d'accueil après connexion qui affiche :
+ * - Statistiques principales (Produits, Clients, Commandes, CA)
+ * - Actions rapides vers les principales sections
+ *
+ * Protégée par AuthGuard (accessible uniquement si authentifié et approuvé)
+ *
+ * TODO: Implémenter les vraies statistiques depuis l'API
+ */
 const DashboardPage: React.FC = () => {
   return (
     <AuthGuard>

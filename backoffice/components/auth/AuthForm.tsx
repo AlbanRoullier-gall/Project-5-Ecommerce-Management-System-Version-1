@@ -1,13 +1,24 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
+import FormField from "./form/FormField";
+import FormButton from "./form/FormButton";
+import FormLinks from "./form/FormLinks";
+import GlobalMessage from "./ui/GlobalMessage";
 
+/**
+ * Props du composant AuthForm
+ */
 interface AuthFormProps {
+  /** Titre du formulaire (ex: "Connexion", "Inscription") */
   title: string;
+  /** Sous-titre optionnel */
   subtitle?: string;
+  /** Callback appelé lors de la soumission */
   onSubmit: (data: any) => void;
+  /** Texte du bouton de soumission */
   submitText: string;
+  /** Liste des champs du formulaire */
   fields: Array<{
     name: string;
     type: string;
@@ -15,16 +26,45 @@ interface AuthFormProps {
     placeholder?: string;
     required?: boolean;
   }>;
+  /** Liens supplémentaires (ex: "Mot de passe oublié ?") */
   links?: Array<{
     text: string;
     href: string;
     label: string;
   }>;
+  /** Indique si une action est en cours */
   isLoading?: boolean;
+  /** Message d'erreur global */
   globalError?: string;
+  /** Message de succès global */
   globalSuccess?: string;
 }
 
+/**
+ * Composant de formulaire d'authentification réutilisable
+ *
+ * Fonctionnalités :
+ * - Génération dynamique des champs selon la prop `fields`
+ * - Validation des champs requis
+ * - Affichage des erreurs par champ et globales
+ * - État de chargement avec bouton désactivé
+ * - Toggle de visibilité pour les champs password
+ * - Liens additionnels configurables
+ *
+ * Utilisé pour : login, inscription, reset password
+ *
+ * @example
+ * <AuthForm
+ *   title="Connexion"
+ *   fields={[
+ *     { name: "email", type: "email", label: "Email", required: true },
+ *     { name: "password", type: "password", label: "Mot de passe", required: true }
+ *   ]}
+ *   onSubmit={handleLogin}
+ *   submitText="Se connecter"
+ *   isLoading={isLoading}
+ * />
+ */
 const AuthForm: React.FC<AuthFormProps> = ({
   title,
   subtitle,
@@ -38,15 +78,6 @@ const AuthForm: React.FC<AuthFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Fonction pour formater les messages d'erreur longs
-  const formatErrorMessage = (message: string) => {
-    if (!message) return message;
-
-    // Diviser le message en phrases et les formater
-    const sentences = message.split(/[.!?]+/).filter((s) => s.trim());
-    return sentences.map((sentence) => sentence.trim()).join("\n");
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -85,81 +116,31 @@ const AuthForm: React.FC<AuthFormProps> = ({
         </div>
 
         {/* Messages globaux */}
-        {globalError && (
-          <div className="auth-error-global">
-            <i className="fas fa-exclamation-triangle"></i>
-            <div className="error-content">
-              <strong>Erreur :</strong>
-              <div className="error-message-text">
-                {formatErrorMessage(globalError)}
-              </div>
-            </div>
-          </div>
-        )}
-
+        {globalError && <GlobalMessage message={globalError} type="error" />}
         {globalSuccess && (
-          <div className="auth-success-global">
-            <i className="fas fa-check-circle"></i>
-            <div className="success-content">
-              <strong>Succès :</strong>
-              <div className="success-message-text">
-                {formatErrorMessage(globalSuccess)}
-              </div>
-            </div>
-          </div>
+          <GlobalMessage message={globalSuccess} type="success" />
         )}
 
         <form onSubmit={handleSubmit} className="auth-form">
           {fields.map((field) => (
-            <div key={field.name} className="form-group">
-              <label htmlFor={field.name} className="form-label">
-                {field.label}
-                {field.required && <span className="required">*</span>}
-              </label>
-              <input
-                type={field.type}
-                id={field.name}
-                name={field.name}
-                placeholder={field.placeholder}
-                value={formData[field.name] || ""}
-                onChange={handleInputChange}
-                className={`form-input ${errors[field.name] ? "error" : ""}`}
-                disabled={isLoading}
-              />
-              {errors[field.name] && (
-                <div className="error-message-field">
-                  <i className="fas fa-exclamation-circle"></i>
-                  <span>{errors[field.name]}</span>
-                </div>
-              )}
-            </div>
+            <FormField
+              key={field.name}
+              name={field.name}
+              type={field.type}
+              label={field.label}
+              placeholder={field.placeholder}
+              required={field.required}
+              value={formData[field.name] || ""}
+              error={errors[field.name]}
+              onChange={handleInputChange}
+              disabled={isLoading}
+            />
           ))}
 
-          <button
-            type="submit"
-            className="auth-submit-btn"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <i className="fas fa-spinner fa-spin"></i>
-                Chargement...
-              </>
-            ) : (
-              submitText
-            )}
-          </button>
+          <FormButton text={submitText} isLoading={isLoading} type="submit" />
         </form>
 
-        {links.length > 0 && (
-          <div className="auth-links">
-            {links.map((link, index) => (
-              <Link key={index} href={link.href} className="auth-link">
-                {link.text}
-              </Link>
-            ))}
-          </div>
-        )}
+        <FormLinks links={links} />
       </div>
     </div>
   );

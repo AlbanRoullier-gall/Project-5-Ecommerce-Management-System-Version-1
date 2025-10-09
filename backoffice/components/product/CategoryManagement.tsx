@@ -4,15 +4,45 @@ import {
   CategoryCreateDTO,
   CategoryUpdateDTO,
 } from "../../dto";
+import CategoryForm from "./category/CategoryForm";
+import CategoryTable from "./category/CategoryTable";
+import Button from "./ui/Button";
 
+/**
+ * Props du composant CategoryManagement
+ */
 interface CategoryManagementProps {
+  /** Liste des catégories */
   categories: CategoryPublicDTO[];
+  /** Callback appelé pour ajouter une catégorie */
   onAddCategory: (data: CategoryCreateDTO) => void;
+  /** Callback appelé pour mettre à jour une catégorie */
   onUpdateCategory: (id: number, data: CategoryUpdateDTO) => void;
+  /** Callback appelé pour supprimer une catégorie */
   onDeleteCategory: (id: number) => void;
+  /** Indique si une action est en cours */
   isLoading?: boolean;
 }
 
+/**
+ * Composant de gestion des catégories de produits
+ *
+ * Fonctionnalités :
+ * - Affichage de la liste des catégories avec compteur de produits
+ * - Création de nouvelles catégories
+ * - Édition de catégories existantes
+ * - Suppression de catégories (avec confirmation)
+ * - Gestion du formulaire inline
+ *
+ * @example
+ * <CategoryManagement
+ *   categories={categories}
+ *   onAddCategory={handleCreateCategory}
+ *   onUpdateCategory={handleUpdateCategory}
+ *   onDeleteCategory={handleDeleteCategory}
+ *   isLoading={isLoading}
+ * />
+ */
 const CategoryManagement: React.FC<CategoryManagementProps> = ({
   categories,
   onAddCategory,
@@ -104,35 +134,6 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
     }
   };
 
-  const formatDate = (date: Date | string) => {
-    return new Intl.DateTimeFormat("fr-BE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(new Date(date));
-  };
-
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "1rem 1.25rem",
-    border: "2px solid #e1e5e9",
-    borderRadius: "10px",
-    fontSize: "1rem",
-    transition: "all 0.3s ease",
-    background: "#f8f9fa",
-    fontFamily: "inherit",
-    boxSizing: "border-box",
-    maxWidth: "100%",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: "1.1rem",
-    fontWeight: "600",
-    color: "#13686a",
-    marginBottom: "0.75rem",
-  };
-
   return (
     <div
       style={{
@@ -165,501 +166,35 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
           🏷️ Catégories
         </h2>
         {!isFormOpen && (
-          <button
+          <Button
             onClick={() => setIsFormOpen(true)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.75rem",
-              padding: "1rem 2rem",
-              background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-              color: "white",
-              border: "none",
-              borderRadius: "12px",
-              fontSize: "1.1rem",
-              fontWeight: "600",
-              cursor: "pointer",
-              transition: "all 0.3s ease",
-              boxShadow: "0 4px 12px rgba(19, 104, 106, 0.2)",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow =
-                "0 8px 24px rgba(19, 104, 106, 0.35)";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 12px rgba(19, 104, 106, 0.2)";
-            }}
+            variant="primary"
+            icon="fas fa-plus"
           >
-            <i className="fas fa-plus" style={{ fontSize: "1.1rem" }}></i>
-            <span>Nouvelle catégorie</span>
-          </button>
+            Nouvelle catégorie
+          </Button>
         )}
       </div>
 
       {/* Formulaire */}
       {isFormOpen && (
-        <div
-          style={{
-            marginBottom: "2rem",
-            padding: "2rem",
-            background: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
-            borderRadius: "12px",
-            border: "2px solid rgba(19, 104, 106, 0.2)",
-            width: "100%",
-            boxSizing: "border-box",
-            overflow: "hidden",
-          }}
-        >
-          <h3
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: "600",
-              marginBottom: "1.5rem",
-              color: "#13686a",
-            }}
-          >
-            {editingCategory
-              ? "✏️ Modifier la catégorie"
-              : "➕ Nouvelle catégorie"}
-          </h3>
-          <form
-            onSubmit={handleSubmit}
-            style={{
-              display: "grid",
-              gap: "1.5rem",
-              width: "100%",
-              maxWidth: "100%",
-              boxSizing: "border-box",
-            }}
-          >
-            <div
-              style={{
-                width: "100%",
-                maxWidth: "100%",
-                boxSizing: "border-box",
-              }}
-            >
-              <label htmlFor="name" style={labelStyle}>
-                Nom *
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                style={{
-                  ...inputStyle,
-                  borderColor: errors.name ? "#dc2626" : "#e1e5e9",
-                }}
-                placeholder="Ex: Pierres précieuses"
-                onFocus={(e) => {
-                  if (!errors.name) {
-                    e.target.style.borderColor = "#13686a";
-                    e.target.style.background = "white";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(19, 104, 106, 0.1)";
-                  }
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = errors.name
-                    ? "#dc2626"
-                    : "#e1e5e9";
-                  e.target.style.background = "#f8f9fa";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-              {errors.name && (
-                <p
-                  style={{
-                    marginTop: "0.5rem",
-                    fontSize: "0.9rem",
-                    color: "#dc2626",
-                  }}
-                >
-                  ⚠️ {errors.name}
-                </p>
-              )}
-            </div>
-
-            <div
-              style={{
-                width: "100%",
-                maxWidth: "100%",
-                boxSizing: "border-box",
-              }}
-            >
-              <label htmlFor="description" style={labelStyle}>
-                Description
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={3}
-                style={inputStyle}
-                placeholder="Description de la catégorie..."
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#13686a";
-                  e.target.style.background = "white";
-                  e.target.style.boxShadow =
-                    "0 0 0 3px rgba(19, 104, 106, 0.1)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#e1e5e9";
-                  e.target.style.background = "#f8f9fa";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "1rem",
-                paddingTop: "1rem",
-                borderTop: "2px solid rgba(19, 104, 106, 0.1)",
-              }}
-            >
-              <button
-                type="button"
-                onClick={handleCancel}
-                disabled={isLoading}
-                style={{
-                  padding: "0.75rem 1.5rem",
-                  border: "2px solid #e1e5e9",
-                  background: "white",
-                  color: "#6b7280",
-                  borderRadius: "10px",
-                  fontSize: "1rem",
-                  fontWeight: "600",
-                  cursor: isLoading ? "not-allowed" : "pointer",
-                  transition: "all 0.3s ease",
-                  opacity: isLoading ? 0.5 : 1,
-                }}
-                onMouseOver={(e) => {
-                  if (!isLoading) {
-                    e.currentTarget.style.borderColor = "#13686a";
-                    e.currentTarget.style.color = "#13686a";
-                    e.currentTarget.style.background = "#f8f9fa";
-                  }
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.borderColor = "#e1e5e9";
-                  e.currentTarget.style.color = "#6b7280";
-                  e.currentTarget.style.background = "white";
-                }}
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading}
-                style={{
-                  padding: "0.75rem 1.5rem",
-                  background:
-                    "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontSize: "1rem",
-                  fontWeight: "600",
-                  cursor: isLoading ? "not-allowed" : "pointer",
-                  transition: "all 0.3s ease",
-                  boxShadow: "0 4px 12px rgba(19, 104, 106, 0.2)",
-                  opacity: isLoading ? 0.7 : 1,
-                }}
-                onMouseOver={(e) => {
-                  if (!isLoading) {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 8px 24px rgba(19, 104, 106, 0.35)";
-                  }
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow =
-                    "0 4px 12px rgba(19, 104, 106, 0.2)";
-                }}
-              >
-                {isLoading
-                  ? "⏳ En cours..."
-                  : editingCategory
-                  ? "💾 Mettre à jour"
-                  : "➕ Créer"}
-              </button>
-            </div>
-          </form>
-        </div>
+        <CategoryForm
+          formData={formData}
+          errors={errors}
+          editingCategory={editingCategory}
+          isLoading={isLoading}
+          onSubmit={handleSubmit}
+          onChange={handleChange}
+          onCancel={handleCancel}
+        />
       )}
 
       {/* Liste des catégories */}
-      <div>
-        {categories.length === 0 ? (
-          <div
-            style={{
-              background: "#f8f9fa",
-              padding: "3rem 2rem",
-              borderRadius: "12px",
-              textAlign: "center",
-              border: "2px dashed #d1d5db",
-            }}
-          >
-            <i
-              className="fas fa-tags"
-              style={{
-                fontSize: "3rem",
-                color: "#d1d5db",
-                marginBottom: "1rem",
-              }}
-            ></i>
-            <p style={{ fontSize: "1.1rem", color: "#6b7280" }}>
-              Aucune catégorie créée
-            </p>
-          </div>
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "separate",
-                borderSpacing: 0,
-                fontSize: "1rem",
-              }}
-            >
-              <thead
-                style={{
-                  background:
-                    "linear-gradient(135deg, #d9b970 0%, #f4d03f 100%)",
-                  color: "#13686a",
-                }}
-              >
-                <tr>
-                  <th
-                    style={{
-                      padding: "1.25rem 1.5rem",
-                      textAlign: "left",
-                      fontSize: "1rem",
-                      fontWeight: "700",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Nom
-                  </th>
-                  <th
-                    style={{
-                      padding: "1.25rem 1.5rem",
-                      textAlign: "left",
-                      fontSize: "1rem",
-                      fontWeight: "700",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Description
-                  </th>
-                  <th
-                    style={{
-                      padding: "1.25rem 1.5rem",
-                      textAlign: "left",
-                      fontSize: "1rem",
-                      fontWeight: "700",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Produits
-                  </th>
-                  <th
-                    style={{
-                      padding: "1.25rem 1.5rem",
-                      textAlign: "left",
-                      fontSize: "1rem",
-                      fontWeight: "700",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Date création
-                  </th>
-                  <th
-                    style={{
-                      padding: "1.25rem 1.5rem",
-                      textAlign: "left",
-                      fontSize: "1rem",
-                      fontWeight: "700",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {categories.map((category) => (
-                  <tr
-                    key={category.id}
-                    style={{
-                      borderBottom: "1px solid #e1e5e9",
-                      transition: "all 0.2s ease",
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.background =
-                        "linear-gradient(90deg, rgba(217, 185, 112, 0.05) 0%, rgba(244, 208, 63, 0.05) 100%)";
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = "white";
-                    }}
-                  >
-                    <td style={{ padding: "1.25rem 1.5rem" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.75rem",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: "40px",
-                            height: "40px",
-                            background:
-                              "linear-gradient(135deg, #d9b970 0%, #f4d03f 100%)",
-                            borderRadius: "8px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#13686a",
-                          }}
-                        >
-                          <i
-                            className="fas fa-tag"
-                            style={{ fontSize: "1.2rem" }}
-                          ></i>
-                        </div>
-                        <span
-                          style={{
-                            fontSize: "1rem",
-                            fontWeight: "600",
-                            color: "#111827",
-                          }}
-                        >
-                          {category.name}
-                        </span>
-                      </div>
-                    </td>
-                    <td style={{ padding: "1.25rem 1.5rem" }}>
-                      <span
-                        style={{
-                          fontSize: "1rem",
-                          color: "#6b7280",
-                          maxWidth: "300px",
-                          display: "block",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {category.description || "-"}
-                      </span>
-                    </td>
-                    <td style={{ padding: "1.25rem 1.5rem" }}>
-                      <div
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                          padding: "0.5rem 1rem",
-                          background: "#f3f4f6",
-                          borderRadius: "20px",
-                          fontSize: "0.9rem",
-                          fontWeight: "600",
-                          color: "#13686a",
-                        }}
-                      >
-                        <i className="fas fa-box"></i>
-                        {category.productCount || 0}
-                      </div>
-                    </td>
-                    <td
-                      style={{
-                        padding: "1.25rem 1.5rem",
-                        fontSize: "1rem",
-                        color: "#6b7280",
-                      }}
-                    >
-                      {formatDate(category.createdAt)}
-                    </td>
-                    <td style={{ padding: "1.25rem 1.5rem" }}>
-                      <div style={{ display: "flex", gap: "0.75rem" }}>
-                        <button
-                          onClick={() => handleEdit(category)}
-                          title="Modifier"
-                          style={{
-                            padding: "0.75rem",
-                            border: "none",
-                            background: "none",
-                            cursor: "pointer",
-                            color: "#3b82f6",
-                            transition: "all 0.2s ease",
-                            borderRadius: "8px",
-                            fontSize: "1.2rem",
-                          }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.background =
-                              "rgba(59, 130, 246, 0.1)";
-                            e.currentTarget.style.transform = "scale(1.1)";
-                          }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.background = "none";
-                            e.currentTarget.style.transform = "scale(1)";
-                          }}
-                        >
-                          <i className="fas fa-edit"></i>
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleDelete(category.id, category.name)
-                          }
-                          title="Supprimer"
-                          style={{
-                            padding: "0.75rem",
-                            border: "none",
-                            background: "none",
-                            cursor: "pointer",
-                            color: "#ef4444",
-                            transition: "all 0.2s ease",
-                            borderRadius: "8px",
-                            fontSize: "1.2rem",
-                          }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.background =
-                              "rgba(239, 68, 68, 0.1)";
-                            e.currentTarget.style.transform = "scale(1.1)";
-                          }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.background = "none";
-                            e.currentTarget.style.transform = "scale(1)";
-                          }}
-                        >
-                          <i className="fas fa-trash"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <CategoryTable
+        categories={categories}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
     </div>
   );
 };

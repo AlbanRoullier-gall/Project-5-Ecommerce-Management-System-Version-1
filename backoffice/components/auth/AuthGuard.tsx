@@ -3,11 +3,35 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { UserPublicDTO } from "../../dto";
+import LoadingSpinner from "./ui/LoadingSpinner";
 
+/**
+ * Props du composant AuthGuard
+ */
 interface AuthGuardProps {
+  /** Contenu à protéger (affiché uniquement si authentifié et approuvé) */
   children: React.ReactNode;
 }
 
+/**
+ * Composant de protection des routes
+ *
+ * Vérifie l'authentification et l'approbation backoffice de l'utilisateur
+ * avant d'afficher le contenu protégé
+ *
+ * Scénarios de redirection :
+ * - Pas de token → /login
+ * - Token mais rejeté → /access-rejected
+ * - Token mais pas approuvé → /pending-approval
+ * - Token et approuvé → Affiche le contenu protégé
+ *
+ * Affiche un loader pendant la vérification
+ *
+ * @example
+ * <AuthGuard>
+ *   <Dashboard />
+ * </AuthGuard>
+ */
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -61,44 +85,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
   // Afficher un loader pendant la vérification
   if (isLoading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          background: "linear-gradient(135deg, #13686a 0%, #0d4f51 100%)",
-          color: "white",
-          fontSize: "1.2rem",
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              width: "40px",
-              height: "40px",
-              border: "4px solid rgba(255,255,255,0.3)",
-              borderTop: "4px solid white",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              margin: "0 auto 1rem",
-            }}
-          ></div>
-          <p>Vérification de l'authentification...</p>
-          <style jsx>{`
-            @keyframes spin {
-              0% {
-                transform: rotate(0deg);
-              }
-              100% {
-                transform: rotate(360deg);
-              }
-            }
-          `}</style>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Vérification de l'authentification..." />;
   }
 
   // Si authentifié, afficher le contenu protégé

@@ -5,19 +5,59 @@ import {
   ProductUpdateDTO,
   CategoryPublicDTO,
 } from "../../dto";
+import FormInput from "./form/FormInput";
+import FormTextarea from "./form/FormTextarea";
+import FormSelect from "./form/FormSelect";
+import FormCheckbox from "./form/FormCheckbox";
+import FormActions from "./form/FormActions";
+import ImageUploadZone from "./image/ImageUploadZone";
+import ExistingImagesList from "./image/ExistingImagesList";
+import NewImagesList from "./image/NewImagesList";
 
+/**
+ * Props du composant ProductForm
+ */
 interface ProductFormProps {
+  /** Produit à éditer (null ou undefined pour création) */
   product?: ProductPublicDTO | null;
+  /** Liste des catégories disponibles */
   categories: CategoryPublicDTO[];
+  /** Callback appelé lors de la soumission du formulaire */
   onSubmit: (
     data: ProductCreateDTO | ProductUpdateDTO,
     images?: File[],
     imagesToDelete?: number[]
   ) => void;
+  /** Callback appelé lors de l'annulation */
   onCancel: () => void;
+  /** Indique si une action est en cours */
   isLoading?: boolean;
 }
 
+/**
+ * Composant de formulaire de produit (création/édition)
+ *
+ * Fonctionnalités :
+ * - Champs : nom, description, prix, TVA, catégorie, statut actif
+ * - Gestion des images (max 5) avec upload et suppression
+ * - Validation des données avant soumission
+ * - Gestion des états de chargement
+ * - Prévisualisation des images
+ *
+ * En mode édition, affiche les données du produit et permet de :
+ * - Modifier toutes les informations
+ * - Supprimer des images existantes
+ * - Ajouter de nouvelles images
+ *
+ * @example
+ * <ProductForm
+ *   product={editingProduct}
+ *   categories={categories}
+ *   onSubmit={handleSubmit}
+ *   onCancel={handleCancel}
+ *   isLoading={isLoading}
+ * />
+ */
 const ProductForm: React.FC<ProductFormProps> = ({
   product,
   categories,
@@ -25,6 +65,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
   onCancel,
   isLoading = false,
 }) => {
+  // État du formulaire
   const [formData, setFormData] = useState<ProductCreateDTO | ProductUpdateDTO>(
     {
       name: product?.name || "",
@@ -36,11 +77,16 @@ const ProductForm: React.FC<ProductFormProps> = ({
     }
   );
 
+  // États de validation et images
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
 
+  /**
+   * Effet : réinitialise le formulaire quand le produit change
+   * Utile en mode édition pour charger les données du produit
+   */
   useEffect(() => {
     if (product) {
       setFormData({
@@ -51,20 +97,26 @@ const ProductForm: React.FC<ProductFormProps> = ({
         categoryId: product.categoryId,
         isActive: product.isActive,
       });
-      // Reset les images sélectionnées en mode édition
       setSelectedImages([]);
       setImagePreviewUrls([]);
       setImagesToDelete([]);
     }
   }, [product]);
 
-  // Nettoyer les preview URLs au démontage
+  /**
+   * Effet de nettoyage : libère les URLs de prévisualisation
+   * Évite les fuites mémoire avec les object URLs
+   */
   useEffect(() => {
     return () => {
       imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [imagePreviewUrls]);
 
+  /**
+   * Gère les changements de valeurs dans les champs du formulaire
+   * Convertit automatiquement les valeurs numériques et booléennes
+   */
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -82,7 +134,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
           : value,
     }));
 
-    // Clear error for this field
     if (errors[name]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -92,6 +143,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
     }
   };
 
+  /**
+   * Valide les données du formulaire
+   * @returns true si toutes les validations passent, false sinon
+   */
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -119,13 +174,16 @@ const ProductForm: React.FC<ProductFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * Gère l'ajout de nouvelles images
+   * Valide le type, la taille et le nombre maximum d'images
+   */
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
 
     const existingCount = product?.images?.length || 0;
     const totalImages = existingCount + selectedImages.length + files.length;
 
-    // Limiter à 5 images total
     if (totalImages > 5) {
       alert(
         `Vous ne pouvez avoir que 5 images maximum. Vous avez déjà ${
@@ -135,7 +193,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
       return;
     }
 
-    // Valider chaque fichier
     for (const file of files) {
       if (!file.type.startsWith("image/")) {
         alert(`${file.name} n'est pas une image valide`);
@@ -147,30 +204,40 @@ const ProductForm: React.FC<ProductFormProps> = ({
       }
     }
 
-    // Ajouter les fichiers
     setSelectedImages((prev) => [...prev, ...files]);
 
-    // Créer les previews
     files.forEach((file) => {
       const previewUrl = URL.createObjectURL(file);
       setImagePreviewUrls((prev) => [...prev, previewUrl]);
     });
 
-    e.target.value = ""; // Reset input
+    e.target.value = "";
   };
 
+  /**
+   * Retire une nouvelle image de la sélection
+   * @param index - Index de l'image à retirer
+   */
   const handleRemoveImage = (index: number) => {
     setSelectedImages((prev) => prev.filter((_, i) => i !== index));
     URL.revokeObjectURL(imagePreviewUrls[index]);
     setImagePreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
+  /**
+   * Marque une image existante pour suppression
+   * @param imageId - ID de l'image à supprimer
+   */
   const handleMarkImageForDeletion = (imageId: number) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cette image ?")) {
       setImagesToDelete((prev) => [...prev, imageId]);
     }
   };
 
+  /**
+   * Gère la soumission du formulaire
+   * Valide les données et appelle le callback onSubmit
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -185,26 +252,17 @@ const ProductForm: React.FC<ProductFormProps> = ({
     );
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "1rem 1.25rem",
-    border: "2px solid #e1e5e9",
-    borderRadius: "10px",
-    fontSize: "1rem",
-    transition: "all 0.3s ease",
-    background: "#f8f9fa",
-    fontFamily: "inherit",
-    boxSizing: "border-box",
-    maxWidth: "100%",
-  };
+  // Prépare les options pour le select de catégories
+  const categoryOptions = categories.map((cat) => ({
+    value: cat.id,
+    label: cat.name,
+  }));
 
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: "1.1rem",
-    fontWeight: "600",
-    color: "#13686a",
-    marginBottom: "0.75rem",
-  };
+  // Calcule le nombre d'emplacements restants pour les images
+  const existingCount = product?.images
+    ? product.images.filter((img) => !imagesToDelete.includes(img.id)).length
+    : 0;
+  const remainingSlots = 5 - existingCount - selectedImages.length;
 
   return (
     <div
@@ -243,79 +301,27 @@ const ProductForm: React.FC<ProductFormProps> = ({
           boxSizing: "border-box",
         }}
       >
-        {/* Nom */}
-        <div
-          style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
-        >
-          <label htmlFor="name" style={labelStyle}>
-            Nom du produit *
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            style={{
-              ...inputStyle,
-              borderColor: errors.name ? "#dc2626" : "#e1e5e9",
-            }}
-            placeholder="Ex: Pierre de lune"
-            onFocus={(e) => {
-              if (!errors.name) {
-                e.target.style.borderColor = "#13686a";
-                e.target.style.background = "white";
-                e.target.style.boxShadow = "0 0 0 3px rgba(19, 104, 106, 0.1)";
-              }
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = errors.name ? "#dc2626" : "#e1e5e9";
-              e.target.style.background = "#f8f9fa";
-              e.target.style.boxShadow = "none";
-            }}
-          />
-          {errors.name && (
-            <p
-              style={{
-                marginTop: "0.5rem",
-                fontSize: "0.9rem",
-                color: "#dc2626",
-              }}
-            >
-              ⚠️ {errors.name}
-            </p>
-          )}
-        </div>
+        <FormInput
+          id="name"
+          name="name"
+          value={formData.name || ""}
+          onChange={handleChange}
+          label="Nom du produit"
+          placeholder="Ex: Pierre de lune"
+          error={errors.name}
+          required
+        />
 
-        {/* Description */}
-        <div
-          style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
-        >
-          <label htmlFor="description" style={labelStyle}>
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={4}
-            style={inputStyle}
-            placeholder="Description détaillée du produit..."
-            onFocus={(e) => {
-              e.target.style.borderColor = "#13686a";
-              e.target.style.background = "white";
-              e.target.style.boxShadow = "0 0 0 3px rgba(19, 104, 106, 0.1)";
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "#e1e5e9";
-              e.target.style.background = "#f8f9fa";
-              e.target.style.boxShadow = "none";
-            }}
-          />
-        </div>
+        <FormTextarea
+          id="description"
+          name="description"
+          value={(formData.description as string) || ""}
+          onChange={handleChange}
+          label="Description"
+          placeholder="Description détaillée du produit..."
+          rows={4}
+        />
 
-        {/* Prix et TVA */}
         <div
           style={{
             display: "grid",
@@ -325,514 +331,98 @@ const ProductForm: React.FC<ProductFormProps> = ({
             boxSizing: "border-box",
           }}
         >
-          <div
-            style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
-          >
-            <label htmlFor="price" style={labelStyle}>
-              Prix (€) *
-            </label>
-            <input
-              type="number"
-              id="price"
-              name="price"
-              value={formData.price}
-              onChange={handleChange}
-              step="0.01"
-              min="0"
-              style={{
-                ...inputStyle,
-                borderColor: errors.price ? "#dc2626" : "#e1e5e9",
-              }}
-              placeholder="0.00"
-              onFocus={(e) => {
-                if (!errors.price) {
-                  e.target.style.borderColor = "#13686a";
-                  e.target.style.background = "white";
-                  e.target.style.boxShadow =
-                    "0 0 0 3px rgba(19, 104, 106, 0.1)";
-                }
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = errors.price
-                  ? "#dc2626"
-                  : "#e1e5e9";
-                e.target.style.background = "#f8f9fa";
-                e.target.style.boxShadow = "none";
-              }}
-            />
-            {errors.price && (
-              <p
-                style={{
-                  marginTop: "0.5rem",
-                  fontSize: "0.9rem",
-                  color: "#dc2626",
-                }}
-              >
-                ⚠️ {errors.price}
-              </p>
-            )}
-          </div>
-
-          <div
-            style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
-          >
-            <label htmlFor="vatRate" style={labelStyle}>
-              Taux TVA (%) *
-            </label>
-            <input
-              type="number"
-              id="vatRate"
-              name="vatRate"
-              value={formData.vatRate}
-              onChange={handleChange}
-              step="0.01"
-              min="0"
-              max="100"
-              style={{
-                ...inputStyle,
-                borderColor: errors.vatRate ? "#dc2626" : "#e1e5e9",
-              }}
-              placeholder="21"
-              onFocus={(e) => {
-                if (!errors.vatRate) {
-                  e.target.style.borderColor = "#13686a";
-                  e.target.style.background = "white";
-                  e.target.style.boxShadow =
-                    "0 0 0 3px rgba(19, 104, 106, 0.1)";
-                }
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = errors.vatRate
-                  ? "#dc2626"
-                  : "#e1e5e9";
-                e.target.style.background = "#f8f9fa";
-                e.target.style.boxShadow = "none";
-              }}
-            />
-            {errors.vatRate && (
-              <p
-                style={{
-                  marginTop: "0.5rem",
-                  fontSize: "0.9rem",
-                  color: "#dc2626",
-                }}
-              >
-                ⚠️ {errors.vatRate}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Catégorie */}
-        <div
-          style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
-        >
-          <label htmlFor="categoryId" style={labelStyle}>
-            Catégorie *
-          </label>
-          <select
-            id="categoryId"
-            name="categoryId"
-            value={formData.categoryId}
+          <FormInput
+            id="price"
+            name="price"
+            type="number"
+            value={formData.price || 0}
             onChange={handleChange}
-            style={{
-              ...inputStyle,
-              borderColor: errors.categoryId ? "#dc2626" : "#e1e5e9",
-            }}
-            onFocus={(e) => {
-              if (!errors.categoryId) {
-                e.target.style.borderColor = "#13686a";
-                e.target.style.background = "white";
-                e.target.style.boxShadow = "0 0 0 3px rgba(19, 104, 106, 0.1)";
-              }
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = errors.categoryId
-                ? "#dc2626"
-                : "#e1e5e9";
-              e.target.style.background = "#f8f9fa";
-              e.target.style.boxShadow = "none";
-            }}
-          >
-            <option value="">Sélectionnez une catégorie</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-          {errors.categoryId && (
-            <p
-              style={{
-                marginTop: "0.5rem",
-                fontSize: "0.9rem",
-                color: "#dc2626",
-              }}
-            >
-              ⚠️ {errors.categoryId}
-            </p>
-          )}
-        </div>
-
-        {/* Statut */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            background: "#f8f9fa",
-            padding: "1.5rem",
-            borderRadius: "10px",
-            border: "2px solid #e1e5e9",
-          }}
-        >
-          <input
-            type="checkbox"
-            id="isActive"
-            name="isActive"
-            checked={formData.isActive}
-            onChange={handleChange}
-            style={{
-              width: "1.25rem",
-              height: "1.25rem",
-              marginRight: "1rem",
-              cursor: "pointer",
-            }}
+            label="Prix (€)"
+            placeholder="0.00"
+            error={errors.price}
+            required
+            step="0.01"
+            min="0"
           />
-          <label
-            htmlFor="isActive"
-            style={{
-              fontSize: "1rem",
-              color: "#111827",
-              cursor: "pointer",
-              fontWeight: "500",
-            }}
-          >
-            ✅ Produit actif (visible sur le site)
-          </label>
+
+          <FormInput
+            id="vatRate"
+            name="vatRate"
+            type="number"
+            value={formData.vatRate || 0}
+            onChange={handleChange}
+            label="Taux TVA (%)"
+            placeholder="21"
+            error={errors.vatRate}
+            required
+            step="0.01"
+            min="0"
+            max="100"
+          />
         </div>
 
-        {/* Images */}
+        <FormSelect
+          id="categoryId"
+          name="categoryId"
+          value={formData.categoryId || ""}
+          onChange={handleChange}
+          label="Catégorie"
+          options={categoryOptions}
+          error={errors.categoryId}
+          required
+          placeholder="Sélectionnez une catégorie"
+        />
+
+        <FormCheckbox
+          id="isActive"
+          name="isActive"
+          checked={formData.isActive ?? true}
+          onChange={handleChange}
+          label="✅ Produit actif (visible sur le site)"
+        />
+
         <div
           style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
         >
-          <label style={labelStyle}>📷 Images du produit (max 5)</label>
+          <label
+            style={{
+              display: "block",
+              fontSize: "1.1rem",
+              fontWeight: "600",
+              color: "#13686a",
+              marginBottom: "0.75rem",
+            }}
+          >
+            📷 Images du produit (max 5)
+          </label>
 
-          {/* Images existantes en mode édition */}
           {product && product.images && product.images.length > 0 && (
-            <div style={{ marginBottom: "1rem" }}>
-              <p
-                style={{
-                  fontSize: "0.9rem",
-                  color: "#6b7280",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                Images actuelles (
-                {
-                  product.images.filter(
-                    (img) => !imagesToDelete.includes(img.id)
-                  ).length
-                }
-                /5) :
-              </p>
-              <div
-                style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}
-              >
-                {product.images
-                  .filter((img) => !imagesToDelete.includes(img.id))
-                  .map((img) => (
-                    <div
-                      key={img.id}
-                      style={{
-                        position: "relative",
-                        width: "100px",
-                        height: "100px",
-                        borderRadius: "10px",
-                        overflow: "hidden",
-                        border: "2px solid #e1e5e9",
-                      }}
-                    >
-                      <img
-                        src={`http://localhost:3020/${img.filePath}`}
-                        alt={img.filename}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleMarkImageForDeletion(img.id)}
-                        style={{
-                          position: "absolute",
-                          top: "4px",
-                          right: "4px",
-                          background: "rgba(239, 68, 68, 0.9)",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "50%",
-                          width: "24px",
-                          height: "24px",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "0.75rem",
-                        }}
-                      >
-                        ✕
-                      </button>
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: "0",
-                          left: "0",
-                          right: "0",
-                          background: "rgba(0, 0, 0, 0.7)",
-                          color: "white",
-                          fontSize: "0.6rem",
-                          padding: "0.25rem",
-                          textAlign: "center",
-                        }}
-                      >
-                        #{img.orderIndex + 1}
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
+            <ExistingImagesList
+              images={product.images}
+              imagesToDelete={imagesToDelete}
+              onMarkForDeletion={handleMarkImageForDeletion}
+            />
           )}
 
-          {/* Zone d'upload */}
-          {(() => {
-            const existingCount = product?.images
-              ? product.images.filter((img) => !imagesToDelete.includes(img.id))
-                  .length
-              : 0;
-            const totalCount = existingCount + selectedImages.length;
-            return totalCount < 5;
-          })() && (
-            <label
-              style={{
-                display: "block",
-                border: "2px dashed #d1d5db",
-                borderRadius: "10px",
-                padding: "2rem",
-                textAlign: "center",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                background: "#f9fafb",
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.borderColor = "#13686a";
-                e.currentTarget.style.background = "#f0fdf4";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.borderColor = "#d1d5db";
-                e.currentTarget.style.background = "#f9fafb";
-              }}
-            >
-              <i
-                className="fas fa-cloud-upload-alt"
-                style={{
-                  fontSize: "2.5rem",
-                  color: "#9ca3af",
-                  marginBottom: "0.5rem",
-                }}
-              ></i>
-              <p
-                style={{
-                  fontSize: "1rem",
-                  color: "#6b7280",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                Cliquez pour sélectionner des images
-              </p>
-              <p style={{ fontSize: "0.875rem", color: "#9ca3af" }}>
-                PNG, JPG, GIF - Max 10MB par image -{" "}
-                {(() => {
-                  const existingCount = product?.images
-                    ? product.images.filter(
-                        (img) => !imagesToDelete.includes(img.id)
-                      ).length
-                    : 0;
-                  return 5 - existingCount - selectedImages.length;
-                })()}{" "}
-                restante(s)
-              </p>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImageChange}
-                style={{ display: "none" }}
-                disabled={isLoading}
-              />
-            </label>
-          )}
+          <ImageUploadZone
+            onFileChange={handleImageChange}
+            remainingSlots={remainingSlots}
+            isDisabled={isLoading}
+          />
 
-          {/* Aperçu des nouvelles images */}
-          {selectedImages.length > 0 && (
-            <div style={{ marginTop: "1rem" }}>
-              <p
-                style={{
-                  fontSize: "0.9rem",
-                  color: "#6b7280",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                Images sélectionnées ({selectedImages.length}/5) :
-              </p>
-              <div
-                style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}
-              >
-                {selectedImages.map((file, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      position: "relative",
-                      width: "100px",
-                      height: "100px",
-                      borderRadius: "10px",
-                      overflow: "hidden",
-                      border: "2px solid #10b981",
-                    }}
-                  >
-                    <img
-                      src={imagePreviewUrls[index]}
-                      alt={file.name}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(index)}
-                      style={{
-                        position: "absolute",
-                        top: "4px",
-                        right: "4px",
-                        background: "rgba(239, 68, 68, 0.9)",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "50%",
-                        width: "24px",
-                        height: "24px",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "0.75rem",
-                      }}
-                    >
-                      ✕
-                    </button>
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: "0",
-                        left: "0",
-                        right: "0",
-                        background: "rgba(0, 0, 0, 0.7)",
-                        color: "white",
-                        fontSize: "0.7rem",
-                        padding: "0.25rem",
-                        textAlign: "center",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {file.name}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <NewImagesList
+            files={selectedImages}
+            previewUrls={imagePreviewUrls}
+            onRemove={handleRemoveImage}
+          />
         </div>
 
-        {/* Boutons */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: "1rem",
-            paddingTop: "2rem",
-            borderTop: "2px solid #e1e5e9",
-          }}
-        >
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isLoading}
-            style={{
-              padding: "1rem 2rem",
-              border: "2px solid #e1e5e9",
-              background: "white",
-              color: "#6b7280",
-              borderRadius: "10px",
-              fontSize: "1.1rem",
-              fontWeight: "600",
-              cursor: isLoading ? "not-allowed" : "pointer",
-              transition: "all 0.3s ease",
-              opacity: isLoading ? 0.5 : 1,
-            }}
-            onMouseOver={(e) => {
-              if (!isLoading) {
-                e.currentTarget.style.borderColor = "#13686a";
-                e.currentTarget.style.color = "#13686a";
-                e.currentTarget.style.background = "#f8f9fa";
-              }
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.borderColor = "#e1e5e9";
-              e.currentTarget.style.color = "#6b7280";
-              e.currentTarget.style.background = "white";
-            }}
-          >
-            Annuler
-          </button>
-          <button
-            type="submit"
-            disabled={isLoading}
-            style={{
-              padding: "1rem 2rem",
-              background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-              color: "white",
-              border: "none",
-              borderRadius: "10px",
-              fontSize: "1.1rem",
-              fontWeight: "600",
-              cursor: isLoading ? "not-allowed" : "pointer",
-              transition: "all 0.3s ease",
-              boxShadow: "0 4px 12px rgba(19, 104, 106, 0.2)",
-              opacity: isLoading ? 0.7 : 1,
-            }}
-            onMouseOver={(e) => {
-              if (!isLoading) {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow =
-                  "0 8px 24px rgba(19, 104, 106, 0.35)";
-              }
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 12px rgba(19, 104, 106, 0.2)";
-            }}
-          >
-            {isLoading
-              ? "⏳ En cours..."
-              : product
-              ? "💾 Mettre à jour"
-              : "➕ Créer le produit"}
-          </button>
-        </div>
+        <FormActions
+          onCancel={onCancel}
+          isLoading={isLoading}
+          isEdit={!!product}
+          submitLabel={product ? "💾 Mettre à jour" : "➕ Créer le produit"}
+        />
       </form>
     </div>
   );

@@ -7,11 +7,31 @@ import AuthForm from "../components/auth/AuthForm";
 import AuthRedirectGuard from "../components/auth/AuthRedirectGuard";
 import { UserLoginDTO, UserPublicDTO } from "../dto";
 
+/**
+ * Page de connexion au backoffice
+ *
+ * Fonctionnalités :
+ * - Formulaire de connexion (email + password)
+ * - Validation côté client
+ * - Appel API d'authentification
+ * - Stockage du token et des infos utilisateur dans localStorage
+ * - Gestion des états d'approbation backoffice :
+ *   * Rejeté → Redirection vers /access-rejected
+ *   * En attente → Redirection vers /pending-approval
+ *   * Approuvé → Redirection vers /dashboard
+ * - Lien vers inscription et reset password
+ *
+ * Protégée par AuthRedirectGuard (redirige si déjà connecté)
+ */
 const LoginPage: React.FC = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  /**
+   * Gère la soumission du formulaire de connexion
+   * @param formData - Données du formulaire (email, password)
+   */
   const handleLogin = async (formData: any) => {
     setIsLoading(true);
     setError("");

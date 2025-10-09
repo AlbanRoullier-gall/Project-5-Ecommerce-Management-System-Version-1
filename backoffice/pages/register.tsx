@@ -7,12 +7,34 @@ import AuthForm from "../components/auth/AuthForm";
 import AuthRedirectGuard from "../components/auth/AuthRedirectGuard";
 import { UserCreateDTO, UserPublicDTO } from "../dto";
 
+/**
+ * Page d'inscription au backoffice
+ *
+ * Fonctionnalités :
+ * - Formulaire d'inscription (prénom, nom, email, password, confirmation)
+ * - Validation côté client :
+ *   * Correspondance des mots de passe
+ *   * Longueur minimale du mot de passe (6 caractères)
+ * - Appel API de création de compte
+ * - Message de succès après inscription
+ * - Redirection automatique vers login après 3 secondes
+ * - Lien vers la page de connexion
+ *
+ * Note : L'accès au backoffice nécessite une approbation admin
+ * après l'inscription
+ *
+ * Protégée par AuthRedirectGuard (redirige si déjà connecté)
+ */
 const RegisterPage: React.FC = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  /**
+   * Gère la soumission du formulaire d'inscription
+   * @param formData - Données du formulaire (email, password, firstName, lastName, confirmPassword)
+   */
   const handleRegister = async (formData: any) => {
     setIsLoading(true);
     setError("");

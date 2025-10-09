@@ -1,6 +1,15 @@
 import React from "react";
 import Link from "next/link";
 
+/**
+ * Composant Footer du backoffice
+ *
+ * Affiche :
+ * - Liens vers les réseaux sociaux (Facebook, Instagram, LinkedIn, Twitter)
+ * - Liens légaux (Mentions légales, Politique de confidentialité, CGV)
+ *
+ * Style simple et épuré pour ne pas surcharger le backoffice
+ */
 const Footer: React.FC = () => {
   return (
     <footer>

@@ -2,11 +2,33 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import LoadingSpinner from "./ui/LoadingSpinner";
 
+/**
+ * Props du composant AuthRedirectGuard
+ */
 interface AuthRedirectGuardProps {
+  /** Contenu à afficher (page d'authentification) */
   children: React.ReactNode;
 }
 
+/**
+ * Composant de redirection pour les pages d'authentification
+ *
+ * Empêche les utilisateurs déjà connectés d'accéder aux pages d'auth
+ * (login, register, reset-password)
+ *
+ * Scénarios :
+ * - Token présent → Redirige vers /dashboard
+ * - Pas de token → Affiche la page d'authentification
+ *
+ * Affiche un loader pendant la vérification
+ *
+ * @example
+ * <AuthRedirectGuard>
+ *   <LoginPage />
+ * </AuthRedirectGuard>
+ */
 const AuthRedirectGuard: React.FC<AuthRedirectGuardProps> = ({ children }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -32,44 +54,7 @@ const AuthRedirectGuard: React.FC<AuthRedirectGuardProps> = ({ children }) => {
 
   // Afficher un loader pendant la vérification
   if (isLoading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          background: "linear-gradient(135deg, #13686a 0%, #0d4f51 100%)",
-          color: "white",
-          fontSize: "1.2rem",
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              width: "40px",
-              height: "40px",
-              border: "4px solid rgba(255,255,255,0.3)",
-              borderTop: "4px solid white",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              margin: "0 auto 1rem",
-            }}
-          ></div>
-          <p>Vérification de l'authentification...</p>
-          <style jsx>{`
-            @keyframes spin {
-              0% {
-                transform: rotate(0deg);
-              }
-              100% {
-                transform: rotate(360deg);
-              }
-            }
-          `}</style>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Vérification de l'authentification..." />;
   }
 
   // Si pas connecté, afficher le contenu de la page d'authentification

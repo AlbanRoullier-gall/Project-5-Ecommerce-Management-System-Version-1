@@ -7,6 +7,26 @@ import AuthForm from "../components/auth/AuthForm";
 import AuthRedirectGuard from "../components/auth/AuthRedirectGuard";
 import { PasswordResetDTO } from "../dto";
 
+/**
+ * Page de réinitialisation de mot de passe
+ *
+ * Processus en 2 étapes :
+ *
+ * 1. Étape "email" :
+ *    - Formulaire de demande avec email
+ *    - Envoie un email avec lien de reset
+ *    - Affiche message de succès
+ *
+ * 2. Étape "reset" (avec token dans URL) :
+ *    - Formulaire de nouveau mot de passe + confirmation
+ *    - Validation de correspondance des mots de passe
+ *    - Appel API avec token pour réinitialiser
+ *    - Redirection vers login après succès
+ *
+ * La détection du token dans l'URL détermine l'étape affichée
+ *
+ * Protégée par AuthRedirectGuard (redirige si déjà connecté)
+ */
 const ResetPasswordPage: React.FC = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -14,7 +34,10 @@ const ResetPasswordPage: React.FC = () => {
   const [success, setSuccess] = useState("");
   const [step, setStep] = useState<"email" | "reset">("email");
 
-  // Détecter le token dans l'URL
+  /**
+   * Détecte le token de reset dans l'URL au montage
+   * Si présent, passe à l'étape de reset
+   */
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get("token");

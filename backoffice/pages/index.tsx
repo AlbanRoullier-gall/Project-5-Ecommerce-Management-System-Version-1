@@ -3,6 +3,16 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 
+/**
+ * Page racine du backoffice (/)
+ *
+ * Gère la redirection automatique :
+ * - Si authentifié → Redirige vers /dashboard
+ * - Si non authentifié → Redirige vers /login
+ *
+ * Affiche un loader pendant la vérification
+ * Cette page ne doit jamais être vue directement par l'utilisateur
+ */
 export default function Home() {
   const router = useRouter();
 
