@@ -103,8 +103,8 @@ export class CategoryController {
       res.json(ResponseMapper.categoryDeleted());
     } catch (error: any) {
       console.error('Delete category error:', error);
-      if (error.message === 'Cannot delete category with existing products') {
-        res.status(409).json(ResponseMapper.conflictError(error.message));
+      if (error.message.includes('supprimer cette catégorie') || error.message.includes('existing products')) {
+        res.status(409).json(ResponseMapper.conflictError('Impossible de supprimer cette catégorie car elle contient des produits'));
         return;
       }
       res.status(500).json(ResponseMapper.internalServerError());

@@ -131,7 +131,7 @@ export class CategoryRepository {
       const productCount = parseInt(checkResult.rows[0].count);
 
       if (productCount > 0) {
-        throw new Error("Cannot delete category with existing products");
+        throw new Error("Impossible de supprimer cette catégorie car elle contient des produits");
       }
 
       const query = "DELETE FROM categories WHERE id = $1";
