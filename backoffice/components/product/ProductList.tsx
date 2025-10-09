@@ -437,6 +437,14 @@ const ProductList: React.FC = () => {
       );
 
       if (!response.ok) {
+        // Gérer spécifiquement l'erreur 409 (catégorie contient des produits)
+        if (response.status === 409) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.message || 
+            "Cette catégorie contient des produits. Veuillez d'abord les supprimer ou les déplacer vers une autre catégorie."
+          );
+        }
         throw new Error("Erreur lors de la suppression de la catégorie");
       }
 

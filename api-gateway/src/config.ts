@@ -1,21 +1,39 @@
 /**
  * Configuration de l'API Gateway
+ * Centralise les variables d'environnement et URLs des services
  */
 
 import dotenv from "dotenv";
 dotenv.config();
 
-// Configuration automatique selon l'environnement
+// ===== VARIABLES D'ENVIRONNEMENT =====
+
+/**
+ * Détection automatique de l'environnement
+ */
 export const isDevelopment =
   process.env["NODE_ENV"] === "development" || !process.env["DOCKER_ENV"];
 
+/**
+ * Port du serveur API Gateway
+ */
 export const PORT = parseInt(process.env["PORT"] || "3020", 10);
+
+/**
+ * Secret pour la signature/vérification des tokens JWT
+ */
 export const JWT_SECRET = process.env["JWT_SECRET"] || "your-jwt-secret-key";
 
 // Log pour debug (à retirer en production)
 console.log("🔐 JWT_SECRET chargé:", JWT_SECRET.substring(0, 10) + "...");
 
-// Configuration des services
+// ===== CONFIGURATION DES SERVICES =====
+
+/**
+ * URLs des microservices selon l'environnement
+ * Development: localhost avec ports spécifiques
+ * Docker: noms de containers
+ */
 export const SERVICES = {
   auth: isDevelopment ? "http://localhost:3008" : "http://auth-service:3008",
   product: isDevelopment
@@ -35,4 +53,7 @@ export const SERVICES = {
     : "http://website-content-service:3005",
 } as const;
 
+/**
+ * Type pour les noms de services disponibles
+ */
 export type ServiceName = keyof typeof SERVICES;

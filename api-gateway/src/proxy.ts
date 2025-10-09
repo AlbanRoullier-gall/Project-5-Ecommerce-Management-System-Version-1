@@ -13,6 +13,117 @@ import {
   AuthenticatedUser,
 } from "./auth";
 
+// ===== HELPERS PRIVÉS =====
+
+/**
+ * Vérifie l'authentification et ajoute l'utilisateur à la requête
+ */
+const handleAuthentication = (
+  req: Request,
+  res: Response,
+  route: string
+): boolean => {
+  if (!isProtectedRoute(route)) return true;
+
+  const token = extractToken(req.headers["authorization"]);
+
+  if (!token) {
+    console.log("❌ Token manquant pour route admin");
+    res.status(401).json({
+      error: "Token d'accès requis",
+      message:
+        "Vous devez fournir un token d'authentification pour accéder aux routes admin",
+      code: "MISSING_TOKEN",
+    });
+    return false;
+  }
+
+  const user = verifyToken(token);
+  if (!user) {
+    console.log("❌ Token invalide pour route admin");
+    res.status(401).json({
+      error: "Token invalide",
+      message: "Le token d'authentification est invalide ou expiré",
+      code: "INVALID_TOKEN",
+    });
+    return false;
+  }
+
+  console.log(`🔐 Admin authentifié: ${user.email} (${user.userId})`);
+  (req as any).user = user;
+  return true;
+};
+
+/**
+ * Construit les headers de base pour la requête proxy
+ */
+const buildBaseHeaders = (req: Request): Record<string, string> => {
+  const headers: Record<string, string> = {};
+
+  if ((req as any).user) {
+    const user = (req as any).user as AuthenticatedUser;
+    headers["x-user-id"] = String(user.userId);
+    headers["x-user-email"] = user.email;
+  }
+
+  return headers;
+};
+
+/**
+ * Prépare les données multipart/form-data pour le proxy
+ */
+const prepareMultipartData = (req: Request): FormData => {
+  const formData = new FormData();
+
+  // Ajouter les fichiers uploadés
+  const hasFile = !!(req as any).file;
+  const hasFiles = !!(req as any).files;
+
+  if (hasFile) {
+    const file = (req as any).file;
+    formData.append("image", file.buffer, {
+      filename: file.originalname,
+      contentType: file.mimetype,
+    });
+  }
+
+  if (hasFiles) {
+    const files = (req as any).files as Express.Multer.File[];
+    files.forEach((file) => {
+      formData.append("images", file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype,
+      });
+    });
+  }
+
+  // Ajouter les champs texte du body
+  if (req.body) {
+    Object.keys(req.body).forEach((key) => {
+      const value = req.body[key];
+      formData.append(
+        key,
+        typeof value === "object" ? JSON.stringify(value) : value
+      );
+    });
+  }
+
+  return formData;
+};
+
+/**
+ * Détermine le chemin cible pour la requête
+ */
+const getTargetPath = (req: Request): string => {
+  // Redirection spéciale pour /customers GET vers /admin/customers
+  if (req.path === "/api/customers" && req.method === "GET") {
+    return "/api/admin/customers";
+  }
+  return req.path;
+};
+
+// ===== FONCTION PRINCIPALE =====
+
 /**
  * Gère le proxy des requêtes vers les services
  */
@@ -25,112 +136,44 @@ export const handleProxyRequest = async (
   console.log(`🚀 Route appelée: ${req.path} -> Service: ${service}`);
 
   try {
-    // Vérification de l'authentification pour les routes admin
-    if (isProtectedRoute(route)) {
-      const token = extractToken(req.headers["authorization"]);
-
-      if (!token) {
-        console.log("❌ Token manquant pour route admin");
-        res.status(401).json({
-          error: "Token d'accès requis",
-          message:
-            "Vous devez fournir un token d'authentification pour accéder aux routes admin",
-          code: "MISSING_TOKEN",
-        });
-        return;
-      }
-
-      const user = verifyToken(token);
-      if (!user) {
-        console.log("❌ Token invalide pour route admin");
-        res.status(401).json({
-          error: "Token invalide",
-          message: "Le token d'authentification est invalide ou expiré",
-          code: "INVALID_TOKEN",
-        });
-        return;
-      }
-
-      console.log(`🔐 Admin authentifié: ${user.email} (${user.userId})`);
-      (req as any).user = user;
+    // 1. Vérifier l'authentification
+    if (!handleAuthentication(req, res, route)) {
+      return;
     }
 
-    // Préparation de la requête vers le service
+    // 2. Préparer l'URL cible
     const serviceUrl = SERVICES[service];
-
-    // Redirection spéciale pour /customers GET vers /admin/customers
-    let targetPath = req.path;
-    if (req.path === "/api/customers" && req.method === "GET") {
-      targetPath = "/api/admin/customers";
-    }
-
+    const targetPath = getTargetPath(req);
     const targetUrl = `${serviceUrl}${targetPath}`;
 
     console.log(`📤 Envoi vers: ${targetUrl}`);
 
-    // Headers de base
-    const headers: Record<string, string> = {};
-
-    // Ajouter l'utilisateur authentifié dans les headers si disponible
-    if ((req as any).user) {
-      const user = (req as any).user as AuthenticatedUser;
-      headers["x-user-id"] = String(user.userId);
-      headers["x-user-email"] = user.email;
-    }
-
-    // Vérifier si la requête contient des fichiers uploadés
+    // 3. Préparer les headers et données
+    const baseHeaders = buildBaseHeaders(req);
     const hasFile = !!(req as any).file;
     const hasFiles = !!(req as any).files;
 
     let requestData: any;
-    let requestHeaders = { ...headers };
+    let requestHeaders: Record<string, string>;
 
     if (hasFile || hasFiles) {
-      // Créer un FormData pour retransmettre les fichiers
-      const formData = new FormData();
-
-      // Ajouter le(s) fichier(s)
-      if (hasFile) {
-        const file = (req as any).file;
-        formData.append("image", file.buffer, {
-          filename: file.originalname,
-          contentType: file.mimetype,
-        });
-      }
-
-      if (hasFiles) {
-        const files = (req as any).files as Express.Multer.File[];
-        files.forEach((file) => {
-          formData.append("images", file.buffer, {
-            filename: file.originalname,
-            contentType: file.mimetype,
-          });
-        });
-      }
-
-      // Ajouter les autres champs du body
-      if (req.body) {
-        Object.keys(req.body).forEach((key) => {
-          const value = req.body[key];
-          formData.append(
-            key,
-            typeof value === "object" ? JSON.stringify(value) : value
-          );
-        });
-      }
-
+      // Requête avec fichiers (multipart/form-data)
+      const formData = prepareMultipartData(req);
       requestData = formData;
       requestHeaders = {
-        ...requestHeaders,
-        ...formData.getHeaders(), // Ajoute Content-Type: multipart/form-data avec boundary
+        ...baseHeaders,
+        ...formData.getHeaders(),
       };
     } else {
-      // Requête normale sans fichier
+      // Requête normale (application/json)
       requestData = req.body;
-      requestHeaders["Content-Type"] = "application/json";
+      requestHeaders = {
+        ...baseHeaders,
+        "Content-Type": "application/json",
+      };
     }
 
-    // Faire la requête vers le service
+    // 4. Faire la requête vers le service
     const response = await axios({
       method: req.method,
       url: targetUrl,
@@ -142,6 +185,7 @@ export const handleProxyRequest = async (
       maxContentLength: Infinity,
     });
 
+    // 5. Retourner la réponse
     console.log(
       `✅ ${req.method} ${req.path} → ${service} (${response.status})`
     );

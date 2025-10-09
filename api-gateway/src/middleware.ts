@@ -6,11 +6,27 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 
+// ===== HELPERS PRIVÉS =====
+
+/**
+ * Détermine si une route doit skipper le parsing du body (multipart/form-data)
+ */
+const isMultipartRoute = (req: express.Request): boolean => {
+  return (
+    (req.path.includes("/images") && req.method === "POST") ||
+    req.path.includes("/with-images")
+  );
+};
+
+// ===== CONFIGURATION DES MIDDLEWARES =====
+
 /**
  * Configure les middlewares globaux
  */
 export const setupGlobalMiddlewares = (app: express.Application): void => {
-  // Configuration CORS AVANT Helmet pour éviter les conflits
+  // ===== SÉCURITÉ =====
+
+  // Configuration CORS (avant Helmet pour éviter les conflits)
   app.use(
     cors({
       origin: true, // Accepte toutes les origines en développement
@@ -20,38 +36,30 @@ export const setupGlobalMiddlewares = (app: express.Application): void => {
     })
   );
 
-  // Configuration Helmet avec des règles moins strictes pour le développement
+  // Configuration Helmet avec règles adaptées au développement
   app.use(
     helmet({
       crossOriginResourcePolicy: false, // Désactive la politique stricte cross-origin
     })
   );
 
-  // Parser JSON et URL-encoded SAUF pour les routes d'upload d'images
-  // Les routes multipart/form-data doivent garder le body brut
-  app.use((req, res, next) => {
-    const isImageUploadRoute =
-      (req.path.includes("/images") && req.method === "POST") ||
-      req.path.includes("/with-images");
+  // ===== PARSING DU BODY =====
 
-    if (isImageUploadRoute) {
-      // Skip le parsing pour les routes d'upload
-      next();
+  // Parser JSON (SAUF pour routes multipart/form-data)
+  app.use((req, res, next) => {
+    if (isMultipartRoute(req)) {
+      next(); // Skip le parsing pour multipart
     } else {
-      // Parser normalement
       express.json({ limit: "10mb" })(req, res, next);
     }
   });
 
+  // Parser URL-encoded (SAUF pour routes multipart/form-data)
   app.use((req, res, next) => {
-    const isImageUploadRoute =
-      (req.path.includes("/images") && req.method === "POST") ||
-      req.path.includes("/with-images");
-
-    if (!isImageUploadRoute) {
-      express.urlencoded({ extended: true })(req, res, next);
+    if (isMultipartRoute(req)) {
+      next(); // Skip le parsing pour multipart
     } else {
-      next();
+      express.urlencoded({ extended: true })(req, res, next);
     }
   });
 };

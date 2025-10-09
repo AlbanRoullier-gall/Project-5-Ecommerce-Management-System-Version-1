@@ -16,17 +16,76 @@ import {
   handleRejectBackofficeAccess,
 } from "./handlers/auth-handler";
 
-// Configuration de multer pour gérer les uploads dans le gateway
+// ===== CONFIGURATION =====
+
+/**
+ * Configuration de multer pour gérer les uploads dans le gateway
+ */
 const upload = multer({
   storage: multer.memoryStorage(), // Stocker en mémoire pour retransmettre
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
 });
 
+// ===== HELPERS PRIVÉS =====
+
+/**
+ * Détermine si une route nécessite un handler d'upload multipart
+ */
+const getUploadHandler = (route: string): "multiple" | "single" | null => {
+  if (route.includes("/with-images")) {
+    return "multiple";
+  }
+  if (route === "/admin/products/:id/images") {
+    return "single";
+  }
+  return null;
+};
+
+/**
+ * Trie les routes pour enregistrer les spécifiques avant les génériques
+ * Routes sans paramètres (:id, :slug, etc.) sont prioritaires
+ */
+const sortRoutesBySpecificity = <T>(routes: [string, T][]): [string, T][] => {
+  return routes.sort(([routeA], [routeB]) => {
+    const hasParamA = routeA.includes(":");
+    const hasParamB = routeB.includes(":");
+    if (!hasParamA && hasParamB) return -1; // routeA avant routeB
+    if (hasParamA && !hasParamB) return 1; // routeB avant routeA
+    return 0;
+  });
+};
+
+/**
+ * Handler pour servir les images statiques via proxy
+ */
+const handleStaticImageProxy = async (req: Request, res: Response) => {
+  try {
+    const imagePath = req.path;
+    const imageUrl = `${SERVICES.product}${imagePath}`;
+
+    const response = await axios.get(imageUrl, {
+      responseType: "stream",
+    });
+
+    // Copier les headers de réponse
+    res.set("Content-Type", response.headers["content-type"]);
+    res.set("Cache-Control", "public, max-age=31536000");
+    res.set("Cross-Origin-Resource-Policy", "cross-origin");
+
+    // Stream l'image
+    response.data.pipe(res);
+  } catch (error) {
+    console.error("Erreur chargement image:", error);
+    res.status(404).json({ error: "Image non trouvée" });
+  }
+};
+
 /**
  * Configure toutes les routes de l'API Gateway
  */
 export const setupRoutes = (app: any): void => {
-  // Route de santé
+  // ===== ROUTES DE BASE =====
+
   app.get("/api/health", (_req: Request, res: Response) => {
     res.json({
       status: "OK",
@@ -36,7 +95,6 @@ export const setupRoutes = (app: any): void => {
     });
   });
 
-  // Route racine
   app.get("/", (_req: Request, res: Response) => {
     res.json({
       message: "API Gateway - E-commerce Platform",
@@ -45,60 +103,33 @@ export const setupRoutes = (app: any): void => {
     });
   });
 
-  // Route pour servir les images statiques du product-service
-  app.get("/uploads/*", async (req: Request, res: Response) => {
-    try {
-      const imagePath = req.path;
-      const imageUrl = `${SERVICES.product}${imagePath}`;
+  // ===== ROUTES STATIQUES =====
 
-      const response = await axios.get(imageUrl, {
-        responseType: "stream",
-      });
+  // Proxy des images du product-service
+  app.get("/uploads/*", handleStaticImageProxy);
 
-      // Copier les headers de réponse
-      res.set("Content-Type", response.headers["content-type"]);
-      res.set("Cache-Control", "public, max-age=31536000");
-      res.set("Cross-Origin-Resource-Policy", "cross-origin");
+  // ===== ROUTES SPÉCIALISÉES =====
 
-      // Stream l'image
-      response.data.pipe(res);
-    } catch (error) {
-      console.error("Erreur chargement image:", error);
-      res.status(404).json({ error: "Image non trouvée" });
-    }
-  });
-
-  // Routes spécialisées avec handlers personnalisés
-  // Ces routes nécessitent une orchestration entre plusieurs services
+  // Routes nécessitant une orchestration entre plusieurs services
   app.post("/api/auth/register", handleRegister);
   app.post("/api/auth/reset-password", handlePasswordReset);
   app.post("/api/auth/reset-password/confirm", handlePasswordResetConfirm);
   app.get("/api/auth/approve-backoffice", handleApproveBackofficeAccess);
   app.get("/api/auth/reject-backoffice", handleRejectBackofficeAccess);
 
-  // Configuration automatique des routes
-  // IMPORTANT: Enregistrer les routes spécifiques AVANT les routes générales avec paramètres
-  const routeEntries = Object.entries(ROUTES);
+  // ===== CONFIGURATION AUTOMATIQUE DES ROUTES =====
 
-  // Trier les routes pour que les routes sans paramètres soient enregistrées en premier
-  const sortedRoutes = routeEntries.sort(([routeA], [routeB]) => {
-    const hasParamA = routeA.includes(":");
-    const hasParamB = routeB.includes(":");
-    if (!hasParamA && hasParamB) return -1; // routeA avant routeB
-    if (hasParamA && !hasParamB) return 1; // routeB avant routeA
-    return 0; // Garder l'ordre
-  });
+  // Trier les routes par spécificité (routes spécifiques avant génériques)
+  const sortedRoutes = sortRoutesBySpecificity(Object.entries(ROUTES));
 
   sortedRoutes.forEach(([route, service]) => {
     const fullRoute = `/api${route}`;
     console.log(`📝 Route enregistrée: ${fullRoute} -> ${service}`);
 
-    // Détecter les routes d'upload d'images
-    const isMultipleImageUpload = route.includes("/with-images");
-    const isAddImagesToProduct = route === "/admin/products/:id/images";
+    const uploadType = getUploadHandler(route);
 
-    if (isMultipleImageUpload) {
-      // Route pour upload multiple (créer produit avec images)
+    if (uploadType === "multiple") {
+      // Upload multiple (ex: créer produit avec images)
       app.post(
         fullRoute,
         upload.array("images", 10),
@@ -106,8 +137,8 @@ export const setupRoutes = (app: any): void => {
           await handleProxyRequest(req, res, route, service);
         }
       );
-    } else if (isAddImagesToProduct) {
-      // Route pour ajouter des images à un produit existant
+    } else if (uploadType === "single") {
+      // Upload simple (ex: ajouter images à un produit)
       app.post(
         fullRoute,
         upload.array("images", 5),
@@ -115,13 +146,13 @@ export const setupRoutes = (app: any): void => {
           await handleProxyRequest(req, res, route, service);
         }
       );
-      // Autres méthodes (GET, etc.) sans upload
+      // Autres méthodes HTTP (GET, DELETE, etc.) sans upload
       app.all(fullRoute, async (req: Request, res: Response) => {
-        if (req.method === "POST") return; // Skip, déjà géré
+        if (req.method === "POST") return; // Skip POST, déjà géré ci-dessus
         await handleProxyRequest(req, res, route, service);
       });
     } else {
-      // Routes normales sans upload
+      // Routes standards sans upload
       app.all(fullRoute, async (req: Request, res: Response) => {
         await handleProxyRequest(req, res, route, service);
       });
