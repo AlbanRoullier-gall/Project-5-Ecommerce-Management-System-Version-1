@@ -25,11 +25,11 @@ export default class OrderItemRepository {
   async createOrderItem(orderItemData: OrderItemData): Promise<OrderItem> {
     try {
       const query = `
-        INSERT INTO order_items (order_id, product_id, quantity, 
+        INSERT INTO order_items (order_id, product_id, product_name, quantity, 
                                 unit_price_ht, unit_price_ttc, vat_rate, total_price_ht, total_price_ttc, 
                                 created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
-        RETURNING id, order_id, product_id, quantity, 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+        RETURNING id, order_id, product_id, product_name, quantity, 
                   unit_price_ht, unit_price_ttc, vat_rate, total_price_ht, total_price_ttc, 
                   created_at, updated_at
       `;
@@ -37,6 +37,7 @@ export default class OrderItemRepository {
       const values = [
         orderItemData.order_id,
         orderItemData.product_id,
+        orderItemData.product_name || null,
         orderItemData.quantity,
         orderItemData.unit_price_ht,
         orderItemData.unit_price_ttc,

@@ -164,18 +164,22 @@ export default function CheckoutOrderSummary({
       // 4. Créer les articles de commande
       for (const item of cart.items) {
         const product = products.find((p) => p.productId === item.productId);
+        const vatRate = product?.product?.vatRate || 21; // Récupérer le taux de TVA du produit (en %)
+        const vatMultiplier = 1 + vatRate / 100; // Convertir en multiplicateur (21 -> 1.21)
+
         const orderItemData = {
           orderId,
           productId: item.productId,
           productName: product?.product?.name || "Produit",
           quantity: item.quantity,
-          unitPriceHT: item.price / 1.21, // Calculer HT
+          unitPriceHT: item.price / vatMultiplier,
           unitPriceTTC: item.price,
-          totalPriceHT: (item.price * item.quantity) / 1.21,
+          vatRate: vatRate, // Ajouter le taux de TVA (requis par le backend)
+          totalPriceHT: (item.price * item.quantity) / vatMultiplier,
           totalPriceTTC: item.price * item.quantity,
         };
 
-        await fetch(`${API_URL}/api/admin/order-items`, {
+        await fetch(`${API_URL}/api/orders/${orderId}/items`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(orderItemData),
@@ -186,17 +190,19 @@ export default function CheckoutOrderSummary({
       const shippingAddressData = {
         orderId,
         addressType: "shipping",
-        firstName: customerData.firstName || "",
-        lastName: customerData.lastName || "",
-        company: companyData?.companyName || "",
-        address: shippingAddress.address || "",
-        city: shippingAddress.city || "",
-        postalCode: shippingAddress.postalCode || "",
-        country: getCountryName(shippingAddress.countryId || 1),
-        phone: customerData.phoneNumber || "",
+        addressSnapshot: {
+          firstName: customerData.firstName || "",
+          lastName: customerData.lastName || "",
+          company: companyData?.companyName || "",
+          address: shippingAddress.address || "",
+          city: shippingAddress.city || "",
+          postalCode: shippingAddress.postalCode || "",
+          country: getCountryName(shippingAddress.countryId || 1),
+          phone: customerData.phoneNumber || "",
+        },
       };
 
-      await fetch(`${API_URL}/api/admin/order-addresses`, {
+      await fetch(`${API_URL}/api/orders/${orderId}/addresses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(shippingAddressData),
@@ -207,17 +213,19 @@ export default function CheckoutOrderSummary({
         const billingAddressData = {
           orderId,
           addressType: "billing",
-          firstName: customerData.firstName || "",
-          lastName: customerData.lastName || "",
-          company: companyData?.companyName || "",
-          address: billingAddress.address || "",
-          city: billingAddress.city || "",
-          postalCode: billingAddress.postalCode || "",
-          country: getCountryName(billingAddress.countryId || 1),
-          phone: customerData.phoneNumber || "",
+          addressSnapshot: {
+            firstName: customerData.firstName || "",
+            lastName: customerData.lastName || "",
+            company: companyData?.companyName || "",
+            address: billingAddress.address || "",
+            city: billingAddress.city || "",
+            postalCode: billingAddress.postalCode || "",
+            country: getCountryName(billingAddress.countryId || 1),
+            phone: customerData.phoneNumber || "",
+          },
         };
 
-        await fetch(`${API_URL}/api/admin/order-addresses`, {
+        await fetch(`${API_URL}/api/orders/${orderId}/addresses`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(billingAddressData),

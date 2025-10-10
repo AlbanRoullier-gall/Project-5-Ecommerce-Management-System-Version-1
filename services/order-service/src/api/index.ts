@@ -116,6 +116,7 @@ export class ApiRouter {
       orderItemCreateSchema: Joi.object({
         orderId: Joi.number().integer().positive().required(),
         productId: Joi.number().integer().positive().required(),
+        productName: Joi.string().required(),
         quantity: Joi.number().integer().positive().required(),
         unitPriceHT: Joi.number().positive().required(),
         unitPriceTTC: Joi.number().positive().required(),
@@ -125,6 +126,7 @@ export class ApiRouter {
       }),
       orderItemUpdateSchema: Joi.object({
         productId: Joi.number().integer().positive().optional(),
+        productName: Joi.string().optional(),
         quantity: Joi.number().integer().positive().optional(),
         unitPriceHT: Joi.number().positive().optional(),
         unitPriceTTC: Joi.number().positive().optional(),
@@ -243,11 +245,27 @@ export class ApiRouter {
     });
 
     // Routes publiques pour les articles de commande
+    app.post(
+      "/api/orders/:orderId/items",
+      this.validateRequest(schemas.orderItemCreateSchema),
+      (req: Request, res: Response) => {
+        this.orderItemController.createOrderItem(req, res);
+      }
+    );
+
     app.get("/api/orders/:orderId/items", (req: Request, res: Response) => {
       this.orderItemController.getOrderItemsByOrderId(req, res);
     });
 
     // Routes publiques pour les adresses de commande
+    app.post(
+      "/api/orders/:orderId/addresses",
+      this.validateRequest(schemas.orderAddressCreateSchema),
+      (req: Request, res: Response) => {
+        this.orderAddressController.createOrderAddress(req, res);
+      }
+    );
+
     app.get("/api/orders/:orderId/addresses", (req: Request, res: Response) => {
       this.orderAddressController.getOrderAddressesByOrderId(req, res);
     });

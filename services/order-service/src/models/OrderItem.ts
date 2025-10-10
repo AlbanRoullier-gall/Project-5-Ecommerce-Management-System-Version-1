@@ -15,6 +15,7 @@ export interface OrderItemData {
   id: number;
   order_id: number;
   product_id: number;
+  product_name?: string;
   quantity: number;
   unit_price_ht: number;
   unit_price_ttc: number;

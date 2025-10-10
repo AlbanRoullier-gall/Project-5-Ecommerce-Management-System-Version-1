@@ -98,6 +98,7 @@ export class OrderMapper {
       id: 0, // Will be set by the database
       order_id: dto.orderId,
       product_id: dto.productId,
+      product_name: dto.productName,
       quantity: dto.quantity,
       unit_price_ht: dto.unitPriceHT,
       unit_price_ttc: dto.unitPriceTTC,
@@ -117,6 +118,7 @@ export class OrderMapper {
   ): Partial<OrderItemData> {
     const data: Partial<OrderItemData> = {};
     if (dto.productId !== undefined) data.product_id = dto.productId;
+    if (dto.productName !== undefined) data.product_name = dto.productName;
     if (dto.quantity !== undefined) data.quantity = dto.quantity;
     if (dto.unitPriceHT !== undefined) data.unit_price_ht = dto.unitPriceHT;
     if (dto.unitPriceTTC !== undefined) data.unit_price_ttc = dto.unitPriceTTC;

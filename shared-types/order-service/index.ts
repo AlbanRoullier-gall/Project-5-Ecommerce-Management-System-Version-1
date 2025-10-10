@@ -61,6 +61,7 @@ export interface OrderItemCreateDTO {
   quantity: number;
   unitPriceHT: number;
   unitPriceTTC: number;
+  vatRate: number;
   totalPriceHT: number;
   totalPriceTTC: number;
 }
@@ -88,6 +89,7 @@ export interface OrderItemPublicDTO {
   quantity: number;
   unitPriceHT: number;
   unitPriceTTC: number;
+  vatRate: number;
   totalPriceHT: number;
   totalPriceTTC: number;
   createdAt: Date;

@@ -137,7 +137,7 @@ export default class OrderAddressRepository {
   ): Promise<OrderAddress> {
     const query = `
       INSERT INTO order_addresses (
-        order_id, address_type, address_snapshot
+        order_id, type, address_snapshot
       ) VALUES ($1, $2, $3)
       RETURNING *
     `;
@@ -182,7 +182,7 @@ export default class OrderAddressRepository {
       values.push(orderAddressData.order_id);
     }
     if (orderAddressData.address_type !== undefined) {
-      fields.push(`address_type = $${++paramCount}`);
+      fields.push(`type = $${++paramCount}`);
       values.push(orderAddressData.address_type);
     }
     if (orderAddressData.address_snapshot !== undefined) {
