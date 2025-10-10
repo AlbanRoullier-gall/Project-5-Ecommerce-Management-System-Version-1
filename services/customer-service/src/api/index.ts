@@ -233,6 +233,11 @@ export class ApiRouter {
       this.customerController.getCustomerById(req, res);
     });
 
+    // Récupérer un client par email (publique)
+    app.get("/api/customers/by-email/:email", (req: Request, res: Response) => {
+      this.customerController.getCustomerByEmail(req, res);
+    });
+
     // ===== ROUTES ADMIN DE CLIENTS =====
     app.get(
       "/api/admin/customers/:id",

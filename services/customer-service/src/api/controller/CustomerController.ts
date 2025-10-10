@@ -42,6 +42,35 @@ export class CustomerController {
   }
 
   /**
+   * Récupérer un client par email
+   */
+  async getCustomerByEmail(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.params;
+
+      if (!email) {
+        res.status(400).json(ResponseMapper.validationError("Email requis"));
+        return;
+      }
+
+      const customer = await this.customerService.getCustomerByEmail(
+        decodeURIComponent(email)
+      );
+
+      if (!customer) {
+        res.status(404).json(ResponseMapper.notFoundError("Client"));
+        return;
+      }
+
+      const customerDTO = CustomerMapper.customerToPublicDTO(customer);
+      res.json(ResponseMapper.customerRetrieved(customerDTO));
+    } catch (error: any) {
+      console.error("Get customer by email error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
    * Créer un nouveau client
    */
   async createCustomer(req: Request, res: Response): Promise<void> {

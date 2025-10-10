@@ -608,12 +608,9 @@ export default function CartPage() {
 
                   {/* Boutons d'action */}
                   <div style={{ marginBottom: "2rem" }}>
-                    <button
+                    <Link
+                      href="/checkout"
                       className="cart-checkout-button"
-                      onClick={() =>
-                        alert("Redirection vers le paiement (à implémenter)")
-                      }
-                      disabled={isLoading}
                       style={{
                         width: "100%",
                         padding: "1.5rem",
@@ -633,6 +630,8 @@ export default function CartPage() {
                         alignItems: "center",
                         justifyContent: "center",
                         gap: "1rem",
+                        textDecoration: "none",
+                        pointerEvents: isLoading ? "none" : "auto",
                       }}
                       onMouseOver={(e) => {
                         if (!isLoading) {
@@ -645,7 +644,7 @@ export default function CartPage() {
                     >
                       <i className="fas fa-credit-card"></i>
                       Passer la commande
-                    </button>
+                    </Link>
                   </div>
 
                   {/* Informations supplémentaires */}
