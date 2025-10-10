@@ -5,9 +5,21 @@ import ProductGrid from "./ProductGrid";
 
 /**
  * URL de l'API depuis les variables d'environnement
- * En développement, utiliser directement localhost:3020
+ * OBLIGATOIRE : La variable NEXT_PUBLIC_API_URL doit être définie dans .env.local ou .env.production
+ *
+ * Exemples :
+ * - Développement : NEXT_PUBLIC_API_URL=http://localhost:3020
+ * - Production : NEXT_PUBLIC_API_URL=https://api.votre-domaine.com
  */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+const API_URL = (() => {
+  const url = process.env.NEXT_PUBLIC_API_URL;
+  if (!url) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL n'est pas définie. Veuillez configurer cette variable d'environnement."
+    );
+  }
+  return url;
+})();
 
 /**
  * Composant principal du catalogue de produits

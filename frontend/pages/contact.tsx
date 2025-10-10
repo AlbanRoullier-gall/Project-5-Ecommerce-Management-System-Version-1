@@ -61,72 +61,273 @@ export default function Contact() {
           content="Contactez Nature de Pierre pour vos besoins en pierres naturelles"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        />
       </Head>
 
-      <div className="min-h-screen">
+      <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
         {/* HEADER */}
         <Header />
 
         {/* HERO SECTION */}
-        <section className="hero-section">
-          <div className="hero-content">
-            <h1 className="hero-title">CONTACTEZ-NOUS</h1>
-            <p className="hero-subtitle">
+        <section
+          style={{
+            background: "linear-gradient(135deg, #13686a 0%, #0d4f51 100%)",
+            color: "white",
+            textAlign: "center",
+            padding: "4rem 2rem",
+            marginBottom: "2rem",
+          }}
+        >
+          <div
+            style={{
+              maxWidth: "800px",
+              margin: "0 auto",
+            }}
+          >
+            <h1
+              style={{
+                fontSize: "4rem",
+                fontWeight: "lighter",
+                marginBottom: "1rem",
+                textShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)",
+              }}
+            >
+              CONTACTEZ-NOUS
+            </h1>
+            <p
+              style={{
+                fontSize: "1.8rem",
+                opacity: 0.9,
+                lineHeight: 1.4,
+              }}
+            >
               Notre équipe est à votre disposition pour tous vos projets
             </p>
           </div>
         </section>
 
         {/* CONTACT SECTION */}
-        <section className="contact-section">
-          <div className="contact-container">
-            <div className="contact-info">
-              <h2>Informations de Contact</h2>
-              <div className="contact-details">
-                <div className="contact-item">
-                  <i className="fas fa-map-marker-alt"></i>
+        <section
+          style={{
+            padding: "4rem 2rem",
+          }}
+        >
+          <div
+            style={{
+              maxWidth: "1200px",
+              margin: "0 auto",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "4rem",
+              alignItems: "start",
+            }}
+          >
+            {/* Info de contact */}
+            <div>
+              <h2
+                style={{
+                  fontSize: "2rem",
+                  color: "#13686a",
+                  marginBottom: "2rem",
+                  textAlign: "center",
+                  fontWeight: "bold",
+                }}
+              >
+                Informations de Contact
+              </h2>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "2rem",
+                }}
+              >
+                {/* Adresse */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "1rem",
+                    padding: "1.5rem",
+                    background: "white",
+                    borderRadius: "8px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <i
+                    className="fas fa-map-marker-alt"
+                    style={{
+                      fontSize: "2rem",
+                      color: "#13686a",
+                      minWidth: "2rem",
+                    }}
+                  ></i>
                   <div>
-                    <h3>Adresse</h3>
-                    <p>Votre adresse ici</p>
+                    <h3
+                      style={{
+                        fontSize: "1.2rem",
+                        color: "#13686a",
+                        marginBottom: "0.5rem",
+                        fontWeight: "600",
+                      }}
+                    >
+                      Adresse
+                    </h3>
+                    <p style={{ fontSize: "1rem", color: "#666", margin: 0 }}>
+                      Votre adresse ici
+                    </p>
                   </div>
                 </div>
 
-                <div className="contact-item">
-                  <i className="fas fa-phone"></i>
+                {/* Téléphone */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "1rem",
+                    padding: "1.5rem",
+                    background: "white",
+                    borderRadius: "8px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <i
+                    className="fas fa-phone"
+                    style={{
+                      fontSize: "2rem",
+                      color: "#13686a",
+                      minWidth: "2rem",
+                    }}
+                  ></i>
                   <div>
-                    <h3>Téléphone</h3>
-                    <p>+33 1 23 45 67 89</p>
+                    <h3
+                      style={{
+                        fontSize: "1.2rem",
+                        color: "#13686a",
+                        marginBottom: "0.5rem",
+                        fontWeight: "600",
+                      }}
+                    >
+                      Téléphone
+                    </h3>
+                    <p style={{ fontSize: "1rem", color: "#666", margin: 0 }}>
+                      +33 1 23 45 67 89
+                    </p>
                   </div>
                 </div>
 
-                <div className="contact-item">
-                  <i className="fas fa-envelope"></i>
+                {/* Email */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "1rem",
+                    padding: "1.5rem",
+                    background: "white",
+                    borderRadius: "8px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <i
+                    className="fas fa-envelope"
+                    style={{
+                      fontSize: "2rem",
+                      color: "#13686a",
+                      minWidth: "2rem",
+                    }}
+                  ></i>
                   <div>
-                    <h3>Email</h3>
-                    <p>contact@naturedepierre.com</p>
+                    <h3
+                      style={{
+                        fontSize: "1.2rem",
+                        color: "#13686a",
+                        marginBottom: "0.5rem",
+                        fontWeight: "600",
+                      }}
+                    >
+                      Email
+                    </h3>
+                    <p style={{ fontSize: "1rem", color: "#666", margin: 0 }}>
+                      contact@naturedepierre.com
+                    </p>
                   </div>
                 </div>
 
-                <div className="contact-item">
-                  <i className="fas fa-clock"></i>
+                {/* Horaires */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "1rem",
+                    padding: "1.5rem",
+                    background: "white",
+                    borderRadius: "8px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <i
+                    className="fas fa-clock"
+                    style={{
+                      fontSize: "2rem",
+                      color: "#13686a",
+                      minWidth: "2rem",
+                    }}
+                  ></i>
                   <div>
-                    <h3>Horaires</h3>
-                    <p>Lun - Ven : 9h00 - 18h00</p>
-                    <p>Sam : 9h00 - 12h00</p>
+                    <h3
+                      style={{
+                        fontSize: "1.2rem",
+                        color: "#13686a",
+                        marginBottom: "0.5rem",
+                        fontWeight: "600",
+                      }}
+                    >
+                      Horaires
+                    </h3>
+                    <p style={{ fontSize: "1rem", color: "#666", margin: 0 }}>
+                      Lun - Ven : 9h00 - 18h00
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "1rem",
+                        color: "#666",
+                        margin: "0.25rem 0 0 0",
+                      }}
+                    >
+                      Sam : 9h00 - 12h00
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="contact-form-container">
-              <h2>Envoyez-nous un message</h2>
+            {/* Formulaire de contact */}
+            <div
+              style={{
+                background: "white",
+                padding: "2rem",
+                borderRadius: "12px",
+                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "2rem",
+                  color: "#13686a",
+                  marginBottom: "2rem",
+                  textAlign: "center",
+                  fontWeight: "bold",
+                }}
+              >
+                Envoyez-nous un message
+              </h2>
 
               {/* Status Message */}
               {submitStatus.type && (
                 <div
-                  className={`status-message ${
-                    submitStatus.type === "success" ? "success" : "error"
-                  }`}
                   style={{
                     padding: "1rem",
                     marginBottom: "1.5rem",
@@ -144,20 +345,73 @@ export default function Contact() {
                 </div>
               )}
 
-              <form className="contact-form" onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label htmlFor="name">Nom</label>
+              <form
+                onSubmit={handleSubmit}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1.5rem",
+                }}
+              >
+                {/* Nom */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <label
+                    htmlFor="name"
+                    style={{
+                      fontSize: "1rem",
+                      color: "#13686a",
+                      marginBottom: "0.5rem",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Nom
+                  </label>
                   <input
                     type="text"
                     id="name"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
+                    style={{
+                      padding: "0.75rem",
+                      fontSize: "1rem",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      transition: "border-color 0.3s ease",
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#13686a";
+                      e.currentTarget.style.outline = "none";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "#ddd";
+                    }}
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="email">Email *</label>
+                {/* Email */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <label
+                    htmlFor="email"
+                    style={{
+                      fontSize: "1rem",
+                      color: "#13686a",
+                      marginBottom: "0.5rem",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Email *
+                  </label>
                   <input
                     type="email"
                     id="email"
@@ -165,38 +419,132 @@ export default function Contact() {
                     value={formData.email}
                     onChange={handleChange}
                     required
+                    style={{
+                      padding: "0.75rem",
+                      fontSize: "1rem",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      transition: "border-color 0.3s ease",
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#13686a";
+                      e.currentTarget.style.outline = "none";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "#ddd";
+                    }}
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="subject">Sujet</label>
+                {/* Sujet */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <label
+                    htmlFor="subject"
+                    style={{
+                      fontSize: "1rem",
+                      color: "#13686a",
+                      marginBottom: "0.5rem",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Sujet
+                  </label>
                   <input
                     type="text"
                     id="subject"
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
+                    style={{
+                      padding: "0.75rem",
+                      fontSize: "1rem",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      transition: "border-color 0.3s ease",
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#13686a";
+                      e.currentTarget.style.outline = "none";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "#ddd";
+                    }}
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="message">Message</label>
+                {/* Message */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <label
+                    htmlFor="message"
+                    style={{
+                      fontSize: "1rem",
+                      color: "#13686a",
+                      marginBottom: "0.5rem",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Message
+                  </label>
                   <textarea
                     id="message"
                     name="message"
                     rows={6}
                     value={formData.message}
                     onChange={handleChange}
+                    style={{
+                      padding: "0.75rem",
+                      fontSize: "1rem",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      resize: "vertical",
+                      fontFamily: "inherit",
+                      transition: "border-color 0.3s ease",
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#13686a";
+                      e.currentTarget.style.outline = "none";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "#ddd";
+                    }}
                   ></textarea>
                 </div>
 
+                {/* Bouton submit */}
                 <button
                   type="submit"
-                  className="submit-btn"
                   disabled={isSubmitting}
                   style={{
-                    opacity: isSubmitting ? 0.7 : 1,
+                    padding: "1rem 2rem",
+                    background: isSubmitting
+                      ? "#ccc"
+                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "1.1rem",
+                    fontWeight: "600",
                     cursor: isSubmitting ? "not-allowed" : "pointer",
+                    transition: "transform 0.2s ease",
+                    opacity: isSubmitting ? 0.7 : 1,
+                  }}
+                  onMouseOver={(e) => {
+                    if (!isSubmitting) {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
                   }}
                 >
                   {isSubmitting ? "Envoi en cours..." : "Envoyer le message"}
@@ -209,6 +557,15 @@ export default function Contact() {
         {/* FOOTER */}
         <Footer />
       </div>
+
+      <style jsx global>{`
+        @media (max-width: 768px) {
+          section > div {
+            grid-template-columns: 1fr !important;
+            gap: 2rem !important;
+          }
+        }
+      `}</style>
     </>
   );
 }

@@ -22,8 +22,19 @@ interface ProductGridProps {
 const ProductGrid: React.FC<ProductGridProps> = ({ products, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="catalog-section">
-        <div className="catalog-container">
+      <div
+        style={{
+          padding: "4rem 2rem",
+          background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
+          minHeight: "60vh",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1400px",
+            margin: "0 auto",
+          }}
+        >
           <div
             style={{
               textAlign: "center",
@@ -45,8 +56,19 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, isLoading }) => {
 
   if (products.length === 0) {
     return (
-      <div className="catalog-section">
-        <div className="catalog-container">
+      <div
+        style={{
+          padding: "4rem 2rem",
+          background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
+          minHeight: "60vh",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1400px",
+            margin: "0 auto",
+          }}
+        >
           <div
             style={{
               textAlign: "center",
@@ -72,9 +94,28 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, isLoading }) => {
   }
 
   return (
-    <div className="catalog-section">
-      <div className="catalog-container">
-        <div className="catalog-grid">
+    <div
+      style={{
+        padding: "4rem 2rem",
+        background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
+        minHeight: "60vh",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1400px",
+          margin: "0 auto",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+            gap: "2.5rem",
+            justifyItems: "center",
+            alignItems: "start",
+          }}
+        >
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

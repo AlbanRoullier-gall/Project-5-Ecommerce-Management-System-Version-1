@@ -1,12 +1,25 @@
 import React from "react";
 import Link from "next/link";
 import { ProductPublicDTO } from "../../dto";
+import { useCart } from "../../contexts/CartContext";
 
 /**
  * URL de l'API depuis les variables d'environnement
- * En développement, utiliser directement localhost:3020
+ * OBLIGATOIRE : La variable NEXT_PUBLIC_API_URL doit être définie dans .env.local ou .env.production
+ *
+ * Exemples :
+ * - Développement : NEXT_PUBLIC_API_URL=http://localhost:3020
+ * - Production : NEXT_PUBLIC_API_URL=https://api.votre-domaine.com
  */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+const API_URL = (() => {
+  const url = process.env.NEXT_PUBLIC_API_URL;
+  if (!url) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL n'est pas définie. Veuillez configurer cette variable d'environnement."
+    );
+  }
+  return url;
+})();
 
 /**
  * Props du composant ProductCard
@@ -18,12 +31,16 @@ interface ProductCardProps {
 
 /**
  * Composant carte produit pour le frontend public
- * Affiche un produit avec son image, nom, prix et un lien vers le détail
+ * Affiche un produit avec son image, nom, prix et des contrôles pour le panier
  *
  * @example
  * <ProductCard product={product} />
  */
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const [isHovered, setIsHovered] = React.useState(false);
+  const { cart, addToCart, updateQuantity, removeFromCart, isLoading } =
+    useCart();
+
   /**
    * Formate un prix en euros (fr-BE)
    */
@@ -53,24 +70,122 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     return product.price * (1 + product.vatRate / 100);
   };
 
+  /**
+   * Trouve l'article dans le panier s'il existe
+   */
+  const cartItem = cart?.items?.find((item) => item.productId === product.id);
+  const quantityInCart = cartItem?.quantity || 0;
+
+  /**
+   * Gère l'ajout au panier
+   */
+  const handleAddToCart = async () => {
+    try {
+      await addToCart(product.id, 1, getPriceWithVat());
+    } catch (error) {
+      console.error("Erreur lors de l'ajout au panier:", error);
+    }
+  };
+
+  /**
+   * Gère l'augmentation de la quantité
+   */
+  const handleIncrement = async () => {
+    try {
+      await updateQuantity(product.id, quantityInCart + 1);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour:", error);
+    }
+  };
+
+  /**
+   * Gère la diminution de la quantité
+   */
+  const handleDecrement = async () => {
+    if (quantityInCart <= 1) {
+      // Si quantité = 1, on supprime l'article
+      try {
+        await removeFromCart(product.id);
+      } catch (error) {
+        console.error("Erreur lors de la suppression:", error);
+      }
+    } else {
+      try {
+        await updateQuantity(product.id, quantityInCart - 1);
+      } catch (error) {
+        console.error("Erreur lors de la mise à jour:", error);
+      }
+    }
+  };
+
   return (
-    <div className="stone-description">
-      <Link href={`/products/${product.id}`}>
-        <div className="product-image-container">
+    <div
+      style={{
+        backgroundColor: "white",
+        border: "none",
+        borderRadius: "16px",
+        padding: 0,
+        textAlign: "center",
+        boxShadow: isHovered
+          ? "0 12px 32px rgba(19, 104, 106, 0.15)"
+          : "0 4px 20px rgba(0, 0, 0, 0.08)",
+        transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+        overflow: "hidden",
+        width: "100%",
+        maxWidth: "320px",
+        position: "relative",
+        transform: isHovered ? "translateY(-8px)" : "translateY(0)",
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Barre colorée en haut au hover */}
+      {isHovered && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: "4px",
+            background: "linear-gradient(90deg, #13686a 0%, #d9b970 100%)",
+            zIndex: 10,
+          }}
+        />
+      )}
+
+      {/* Section cliquable vers le détail */}
+      <Link href={`/products/${product.id}`} style={{ textDecoration: "none" }}>
+        <div
+          style={{
+            marginBottom: 0,
+            borderRadius: 0,
+            overflow: "hidden",
+            border: "none",
+            position: "relative",
+            background: "#f3f4f6",
+          }}
+        >
           <img
             src={getImageUrl()}
             alt={product.name}
-            className="product-image"
+            style={{
+              width: "100%",
+              height: "200px",
+              objectFit: "cover",
+              transition: "transform 0.4s ease",
+              transform: isHovered ? "scale(1.05)" : "scale(1)",
+            }}
             onError={(e) => {
               // Si l'image ne charge pas, utiliser le placeholder
               (e.target as HTMLImageElement).src = "/images/placeholder.svg";
             }}
           />
         </div>
+
         <div
-          className="text-description"
           style={{
-            padding: "1.5rem",
+            padding: "1.5rem 1.5rem 1rem 1.5rem",
           }}
         >
           {product.categoryName && (
@@ -120,7 +235,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </p>
           )}
           <div
-            className="price-container"
             style={{
               borderTop: "1px solid #e5e7eb",
               paddingTop: "1rem",
@@ -128,7 +242,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             }}
           >
             <span
-              className="price-eur"
               style={{
                 fontSize: "2.4rem",
                 fontWeight: "800",
@@ -149,10 +262,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               TTC
             </span>
           </div>
+        </div>
+      </Link>
+
+      {/* Contrôles du panier - non cliquables vers le détail */}
+      <div
+        style={{
+          padding: "0 1.5rem 1.5rem 1.5rem",
+        }}
+      >
+        {quantityInCart === 0 ? (
+          // Bouton Ajouter au panier
           <button
-            className="add-to-cart-btn"
             style={{
-              marginTop: "1.2rem",
               width: "100%",
               padding: "1rem 1.5rem",
               background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
@@ -161,31 +283,125 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               color: "white",
               fontSize: "1.3rem",
               fontWeight: "600",
-              cursor: "pointer",
+              cursor: isLoading ? "not-allowed" : "pointer",
               transition: "all 0.3s ease",
               boxShadow: "0 2px 8px rgba(19, 104, 106, 0.2)",
+              opacity: isLoading ? 0.6 : 1,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 12px rgba(19, 104, 106, 0.3)";
+              if (!isLoading) {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow =
+                  "0 4px 12px rgba(19, 104, 106, 0.3)";
+              }
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = "translateY(0)";
               e.currentTarget.style.boxShadow =
                 "0 2px 8px rgba(19, 104, 106, 0.2)";
             }}
-            onClick={(e) => {
-              e.preventDefault();
-              // TODO: Implémenter l'ajout au panier
-              console.log("Ajouter au panier:", product.id);
+            onClick={handleAddToCart}
+            disabled={isLoading}
+          >
+            <i
+              className="fas fa-shopping-cart"
+              style={{ marginRight: "0.5rem" }}
+            ></i>
+            {isLoading ? "Ajout..." : "Ajouter au panier"}
+          </button>
+        ) : (
+          // Contrôles de quantité
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "0.5rem",
             }}
           >
-            <i className="fas fa-eye" style={{ marginRight: "0.5rem" }}></i>
-            Voir le détail
-          </button>
-        </div>
-      </Link>
+            <button
+              style={{
+                flex: "0 0 auto",
+                width: "40px",
+                height: "40px",
+                background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                border: "none",
+                borderRadius: "8px",
+                color: "white",
+                fontSize: "1.5rem",
+                fontWeight: "600",
+                cursor: isLoading ? "not-allowed" : "pointer",
+                transition: "all 0.3s ease",
+                boxShadow: "0 2px 8px rgba(19, 104, 106, 0.2)",
+                opacity: isLoading ? 0.6 : 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onClick={handleDecrement}
+              disabled={isLoading}
+              onMouseEnter={(e) => {
+                if (!isLoading) {
+                  e.currentTarget.style.transform = "scale(1.1)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              <i className="fas fa-minus"></i>
+            </button>
+
+            <div
+              style={{
+                flex: "1",
+                padding: "0.8rem 1rem",
+                background: "#f3f4f6",
+                borderRadius: "8px",
+                fontSize: "1.3rem",
+                fontWeight: "700",
+                color: "#13686a",
+                textAlign: "center",
+              }}
+            >
+              {quantityInCart} {quantityInCart > 1 ? "articles" : "article"}
+            </div>
+
+            <button
+              style={{
+                flex: "0 0 auto",
+                width: "40px",
+                height: "40px",
+                background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                border: "none",
+                borderRadius: "8px",
+                color: "white",
+                fontSize: "1.5rem",
+                fontWeight: "600",
+                cursor: isLoading ? "not-allowed" : "pointer",
+                transition: "all 0.3s ease",
+                boxShadow: "0 2px 8px rgba(19, 104, 106, 0.2)",
+                opacity: isLoading ? 0.6 : 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onClick={handleIncrement}
+              disabled={isLoading}
+              onMouseEnter={(e) => {
+                if (!isLoading) {
+                  e.currentTarget.style.transform = "scale(1.1)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              <i className="fas fa-plus"></i>
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

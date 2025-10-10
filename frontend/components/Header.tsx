@@ -2,9 +2,11 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useCart } from "../contexts/CartContext";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { itemCount } = useCart();
 
   return (
     <header className="modern-header">
@@ -27,7 +29,7 @@ const Header: React.FC = () => {
           <Link href="/cart" className="cart-link">
             <div className="cart-icon">
               <i className="fas fa-shopping-cart"></i>
-              <span className="cart-count">0</span>
+              {itemCount > 0 && <span className="cart-count">{itemCount}</span>}
             </div>
           </Link>
         </div>
