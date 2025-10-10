@@ -139,4 +139,52 @@ export class ProductImageController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Serve product image file (public)
+   * Serves the actual image file instead of JSON metadata
+   */
+  async serveProductImageFile(req: Request, res: Response): Promise<void> {
+    try {
+      const { imageId } = req.params;
+      const image = await this.productService.getImageById(parseInt(imageId));
+
+      if (!image) {
+        res.status(404).json(ResponseMapper.notFoundError("Image"));
+        return;
+      }
+
+      // Construire le chemin complet du fichier
+      const path = require("path");
+      const fs = require("fs");
+      const imagePath = path.join(process.cwd(), image.filePath);
+
+      // Vérifier si le fichier existe
+      if (!fs.existsSync(imagePath)) {
+        console.error("Image file not found:", imagePath);
+        res.status(404).json(ResponseMapper.notFoundError("Image file"));
+        return;
+      }
+
+      // Déterminer le type MIME à partir de l'extension
+      const ext = path.extname(image.filename).toLowerCase();
+      const mimeTypes: { [key: string]: string } = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".gif": "image/gif",
+        ".webp": "image/webp",
+        ".svg": "image/svg+xml",
+      };
+      const mimeType = mimeTypes[ext] || "application/octet-stream";
+
+      // Envoyer le fichier
+      res.setHeader("Content-Type", mimeType);
+      res.setHeader("Cache-Control", "public, max-age=31536000"); // Cache 1 an
+      res.sendFile(imagePath);
+    } catch (error: any) {
+      console.error("Error serving image file:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

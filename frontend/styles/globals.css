@@ -343,97 +343,84 @@ ul {
 }
 
 /* FILTERS SECTION -------------------------------------------------------------------*/
-
-.filters-section {
-  background-color: #d9b970;
-  padding: 2rem;
-  border-bottom: 0.3rem solid black;
-}
-
-.filters-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.filters-container h2 {
-  font-size: 2rem;
-  margin-bottom: 1.5rem;
-  color: black;
-}
-
-.category-filters {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.filter-btn {
-  padding: 0.8rem 1.5rem;
-  background-color: white;
-  border: 0.2rem solid black;
-  font-size: 1.4rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.filter-btn:hover {
-  background-color: #13686a;
-  color: white;
-}
-
-.filter-btn.active {
-  background-color: #13686a;
-  color: white;
-}
+/* Les filtres utilisent des styles inline (comme dans le backoffice) */
 
 /* CATALOG SECTION -------------------------------------------------------------------*/
 
 .catalog-section {
-  padding: 3rem 2rem;
-  background-color: #f8f9fa;
+  padding: 4rem 2rem;
+  background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+  min-height: 60vh;
 }
 
 .catalog-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
 .catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2.5rem;
   justify-items: center;
+  align-items: start;
 }
 
 /* PRODUCT CARD ----------------------------------------------------------------------*/
 
 .stone-description {
   background-color: white;
-  border: 0.2rem solid black;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
+  border: none;
+  border-radius: 16px;
+  padding: 0;
   text-align: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  width: 100%;
+  max-width: 320px;
+  position: relative;
 }
 
 .stone-description:hover {
-  transform: translateY(-5px);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 32px rgba(19, 104, 106, 0.15);
+}
+
+.stone-description::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #13686a 0%, #d9b970 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stone-description:hover::before {
+  opacity: 1;
 }
 
 .product-image-container {
-  margin-bottom: 1.5rem;
-  border-radius: 0.5rem;
+  margin-bottom: 0;
+  border-radius: 0;
   overflow: hidden;
-  border: 0.1rem solid #ddd;
+  border: none;
+  position: relative;
+  background: #f3f4f6;
 }
 
 .product-image {
   width: 100%;
-  height: 250px;
+  height: 200px;
   object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.stone-description:hover .product-image {
+  transform: scale(1.05);
 }
 
 .text-description h3 {

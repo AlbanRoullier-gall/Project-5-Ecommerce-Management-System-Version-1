@@ -240,6 +240,11 @@ export class ApiRouter {
       this.categoryController.listCategories(req, res);
     });
 
+    // Servir une image de produit (public)
+    app.get("/api/images/:imageId", (req: Request, res: Response) => {
+      this.productImageController.serveProductImageFile(req, res);
+    });
+
     // ===== ROUTES D'ADMINISTRATION =====
     // Ces routes nécessitent une authentification admin
     // Elles permettent la gestion complète des produits, catégories et images
