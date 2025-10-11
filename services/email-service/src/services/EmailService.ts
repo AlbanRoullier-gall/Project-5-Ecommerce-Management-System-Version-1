@@ -588,7 +588,6 @@ export default class EmailService {
           PROCHAINES ÉTAPES
           - Nous préparons votre commande avec soin
           - Votre commande sera expédiée dans les meilleurs délais
-          - Nous vous contacterons si nous avons besoin d'informations complémentaires
           - Notre équipe reste à votre disposition pour toute question
           
           Une question ? Contactez-nous à contact@naturedepierre.com
