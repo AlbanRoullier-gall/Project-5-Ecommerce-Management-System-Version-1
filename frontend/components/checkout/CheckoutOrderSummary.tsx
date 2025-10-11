@@ -5,12 +5,20 @@
 import { useState, useEffect } from "react";
 import {
   CartPublicDTO,
+  CartItemPublicDTO,
   CustomerCreateDTO,
+  CustomerPublicDTO,
   AddressCreateDTO,
   CompanyCreateDTO,
+  OrderCreateDTO,
+  ProductPublicDTO,
 } from "../../dto";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+
+interface CartItemWithProduct extends CartItemPublicDTO {
+  product?: ProductPublicDTO;
+}
 
 interface CheckoutOrderSummaryProps {
   cart: CartPublicDTO | null;
@@ -33,7 +41,7 @@ export default function CheckoutOrderSummary({
 }: CheckoutOrderSummaryProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<CartItemWithProduct[]>([]);
 
   // Charger les détails des produits
   useEffect(() => {
@@ -74,7 +82,7 @@ export default function CheckoutOrderSummary({
     try {
       // 1. Vérifier si le client existe déjà par email
       let customerId: number;
-      let customer: any;
+      let customer: CustomerPublicDTO;
 
       // Essayer de récupérer le client existant
       const emailEncoded = encodeURIComponent(customerData.email || "");
@@ -128,7 +136,7 @@ export default function CheckoutOrderSummary({
       }
 
       // 3. Créer la commande
-      const orderData: any = {
+      const orderData: OrderCreateDTO = {
         customerId,
         customerSnapshot: {
           ...customerData,
@@ -138,12 +146,10 @@ export default function CheckoutOrderSummary({
         totalAmountHT: cart.subtotal,
         totalAmountTTC: cart.total,
         paymentMethod: "stripe",
+        notes: companyData && companyData.companyName 
+          ? `Commande entreprise: ${companyData.companyName}`
+          : undefined,
       };
-
-      // Ajouter notes uniquement si c'est une commande entreprise
-      if (companyData && companyData.companyName) {
-        orderData.notes = `Commande entreprise: ${companyData.companyName}`;
-      }
 
       const orderResponse = await fetch(`${API_URL}/api/orders`, {
         method: "POST",
