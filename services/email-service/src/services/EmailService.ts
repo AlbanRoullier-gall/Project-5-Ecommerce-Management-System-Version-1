@@ -534,8 +534,8 @@ export default class EmailService {
                 <h3 style="color: #13686a; font-size: 16px; margin: 0 0 10px 0;">📦 Que se passe-t-il maintenant ?</h3>
                 <ul style="margin: 0; padding-left: 20px; color: #666; line-height: 1.8;">
                   <li>Nous préparons votre commande avec soin</li>
-                  <li>Vous recevrez un email avec les détails de livraison</li>
-                  <li>Vous pourrez suivre votre colis en temps réel</li>
+                  <li>Votre commande sera expédiée dans les meilleurs délais</li>
+                  <li>Nous vous contacterons si nous avons besoin d'informations complémentaires</li>
                   <li>Notre équipe reste à votre disposition pour toute question</li>
                 </ul>
               </div>
@@ -584,6 +584,12 @@ export default class EmailService {
           ${data.shippingAddress.address}
           ${data.shippingAddress.postalCode} ${data.shippingAddress.city}
           ${data.shippingAddress.country}
+          
+          PROCHAINES ÉTAPES
+          - Nous préparons votre commande avec soin
+          - Votre commande sera expédiée dans les meilleurs délais
+          - Nous vous contacterons si nous avons besoin d'informations complémentaires
+          - Notre équipe reste à votre disposition pour toute question
           
           Une question ? Contactez-nous à contact@naturedepierre.com
           
