@@ -93,68 +93,202 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
     : "/images/placeholder.svg";
 
   return (
-    <div className={`cart-item ${isUpdating ? "updating" : ""}`}>
-      <div className="cart-item-image">
-        <img
-          src={productImage}
-          alt={product?.name || "Produit"}
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/images/placeholder.svg";
-          }}
-        />
-      </div>
-
-      <div className="cart-item-details">
-        <h3 className="cart-item-name">{product?.name || "Chargement..."}</h3>
-        {product?.description && (
-          <p className="cart-item-description">
-            {product.description.substring(0, 100)}
-            {product.description.length > 100 ? "..." : ""}
-          </p>
-        )}
-      </div>
-
-      <div className="cart-item-quantity">
-        <button
-          onClick={() => handleQuantityChange(quantity - 1)}
-          disabled={isUpdating || quantity <= 1}
-          className="quantity-btn"
-        >
-          <i className="fas fa-minus"></i>
-        </button>
-        <input
-          type="number"
-          value={quantity}
-          onChange={(e) => {
-            const val = parseInt(e.target.value) || 1;
-            handleQuantityChange(val);
-          }}
-          min="1"
-          disabled={isUpdating}
-          className="quantity-input"
-        />
-        <button
-          onClick={() => handleQuantityChange(quantity + 1)}
-          disabled={isUpdating}
-          className="quantity-btn"
-        >
-          <i className="fas fa-plus"></i>
-        </button>
-      </div>
-
-      <div className="cart-item-price">
-        <span className="item-unit-price">{item.price.toFixed(2)} €</span>
-        <span className="item-total-price">{item.total.toFixed(2)} €</span>
-      </div>
-
-      <button
-        onClick={handleRemove}
-        disabled={isUpdating}
-        className="cart-item-remove"
-        title="Supprimer"
+    <div
+      style={{
+        background: "white",
+        borderRadius: "16px",
+        padding: "2rem",
+        marginBottom: "2rem",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        opacity: isUpdating ? 0.6 : 1,
+        transition: "opacity 0.3s ease",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "150px 1fr auto",
+          gap: "2rem",
+          alignItems: "center",
+        }}
       >
-        <i className="fas fa-trash"></i>
-      </button>
+        {/* Image */}
+        <div
+          style={{
+            width: "150px",
+            height: "150px",
+            borderRadius: "12px",
+            overflow: "hidden",
+            background: "#f5f5f5",
+          }}
+        >
+          <img
+            src={productImage}
+            alt={product?.name || "Produit"}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "/images/placeholder.svg";
+            }}
+          />
+        </div>
+
+        {/* Infos produit */}
+        <div>
+          <h3
+            style={{
+              fontSize: "1.8rem",
+              fontWeight: "600",
+              marginBottom: "0.8rem",
+              color: "#333",
+            }}
+          >
+            {product?.name || "Chargement..."}
+          </h3>
+          {product?.description && (
+            <p
+              style={{
+                fontSize: "1.2rem",
+                color: "#666",
+                marginBottom: "1.5rem",
+                lineHeight: "1.6",
+              }}
+            >
+              {product.description.substring(0, 100)}
+              {product.description.length > 100 ? "..." : ""}
+            </p>
+          )}
+
+          {/* Contrôles quantité */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "1rem",
+            }}
+          >
+            <button
+              onClick={() => handleQuantityChange(quantity - 1)}
+              disabled={isUpdating || quantity <= 1}
+              style={{
+                width: "40px",
+                height: "40px",
+                border: "2px solid #13686a",
+                background: "white",
+                color: "#13686a",
+                borderRadius: "8px",
+                cursor: quantity <= 1 || isUpdating ? "not-allowed" : "pointer",
+                fontSize: "1.5rem",
+                fontWeight: "bold",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: quantity <= 1 || isUpdating ? 0.5 : 1,
+                transition: "all 0.2s ease",
+              }}
+            >
+              <i className="fas fa-minus"></i>
+            </button>
+            <input
+              type="number"
+              value={quantity}
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || 1;
+                handleQuantityChange(val);
+              }}
+              min="1"
+              disabled={isUpdating}
+              style={{
+                width: "80px",
+                height: "40px",
+                textAlign: "center",
+                border: "2px solid #ddd",
+                fontSize: "1.4rem",
+                borderRadius: "8px",
+                fontWeight: "600",
+              }}
+            />
+            <button
+              onClick={() => handleQuantityChange(quantity + 1)}
+              disabled={isUpdating}
+              style={{
+                width: "40px",
+                height: "40px",
+                border: "2px solid #13686a",
+                background: isUpdating ? "#ccc" : "#13686a",
+                color: "white",
+                borderRadius: "8px",
+                cursor: isUpdating ? "not-allowed" : "pointer",
+                fontSize: "1.5rem",
+                fontWeight: "bold",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <i className="fas fa-plus"></i>
+            </button>
+          </div>
+        </div>
+
+        {/* Prix et suppression */}
+        <div style={{ textAlign: "right" }}>
+          <div
+            style={{
+              fontSize: "1.3rem",
+              color: "#666",
+              marginBottom: "0.5rem",
+            }}
+          >
+            {item.price.toFixed(2)} € / unité
+          </div>
+          <div
+            style={{
+              fontSize: "2.2rem",
+              color: "#13686a",
+              fontWeight: "700",
+              marginBottom: "2rem",
+            }}
+          >
+            {item.total.toFixed(2)} €
+          </div>
+
+          <button
+            onClick={handleRemove}
+            disabled={isUpdating}
+            style={{
+              padding: "0.8rem 1.5rem",
+              background: "#fee",
+              color: "#c33",
+              border: "2px solid #fcc",
+              borderRadius: "8px",
+              cursor: isUpdating ? "not-allowed" : "pointer",
+              fontSize: "1.2rem",
+              fontWeight: "600",
+              transition: "all 0.2s ease",
+            }}
+            onMouseOver={(e) => {
+              if (!isUpdating) {
+                e.currentTarget.style.background = "#c33";
+                e.currentTarget.style.color = "white";
+                e.currentTarget.style.borderColor = "#c33";
+              }
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = "#fee";
+              e.currentTarget.style.color = "#c33";
+              e.currentTarget.style.borderColor = "#fcc";
+            }}
+            title="Supprimer"
+          >
+            <i className="fas fa-trash"></i> Retirer
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
