@@ -76,10 +76,6 @@ export default function CheckoutPage() {
       <>
         <Head>
           <title>Chargement... - Nature de Pierre</title>
-          <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-          />
         </Head>
         <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
           <Header />
@@ -109,10 +105,6 @@ export default function CheckoutPage() {
       <Head>
         <title>Passer la commande - Nature de Pierre</title>
         <meta name="description" content="Finalisez votre commande" />
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-        />
       </Head>
 
       <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>

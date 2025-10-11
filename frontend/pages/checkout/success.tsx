@@ -3,10 +3,12 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { useCart } from "../../contexts/CartContext";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
 /**
  * Page de confirmation de commande réussie
@@ -15,23 +17,143 @@ export default function CheckoutSuccessPage() {
   const router = useRouter();
   const { orderId } = router.query;
   const { clearCart } = useCart();
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Vider le panier après une commande réussie
+  // Vider le panier et envoyer l'email de confirmation (une seule fois)
   useEffect(() => {
-    if (orderId) {
+    if (orderId && !emailSent && !isProcessing) {
+      setIsProcessing(true);
       clearCart();
+      sendOrderConfirmationEmail(Number(orderId));
     }
-  }, [orderId, clearCart]);
+  }, [orderId]);
+
+  // Fonction pour envoyer l'email de confirmation de commande
+  const sendOrderConfirmationEmail = async (orderIdNum: number) => {
+    try {
+      console.log("📧 Fetching order details for order:", orderIdNum);
+
+      // 1. Récupérer les détails de la commande
+      const orderResponse = await fetch(`${API_URL}/api/orders/${orderIdNum}`);
+      if (!orderResponse.ok) {
+        throw new Error("Impossible de récupérer les détails de la commande");
+      }
+      const orderData = await orderResponse.json();
+      const order = orderData.order;
+
+      console.log("📦 Order details:", order);
+
+      // 2. Récupérer les articles de commande
+      const itemsResponse = await fetch(
+        `${API_URL}/api/orders/${orderIdNum}/items`
+      );
+      if (!itemsResponse.ok) {
+        throw new Error("Impossible de récupérer les articles de la commande");
+      }
+      const itemsData = await itemsResponse.json();
+      const orderItems = itemsData.data?.orderItems || itemsData.items || [];
+
+      console.log("🛍️ Order items:", orderItems);
+
+      // 3. Récupérer les adresses
+      const addressesResponse = await fetch(
+        `${API_URL}/api/orders/${orderIdNum}/addresses`
+      );
+      if (!addressesResponse.ok) {
+        throw new Error("Impossible de récupérer les adresses de la commande");
+      }
+      const addressesData = await addressesResponse.json();
+      const addresses =
+        addressesData.data?.orderAddresses || addressesData.addresses || [];
+
+      console.log("📍 Addresses:", addresses);
+
+      // Trouver l'adresse de livraison
+      const shippingAddress = addresses.find(
+        (addr: any) => addr.addressType === "shipping"
+      );
+
+      if (!shippingAddress?.addressSnapshot) {
+        throw new Error("Adresse de livraison introuvable");
+      }
+
+      // Extraire les informations du customer snapshot
+      const customerSnapshot = order.customerSnapshot || {};
+      const customerName =
+        `${customerSnapshot.firstName || ""} ${
+          customerSnapshot.lastName || ""
+        }`.trim() || "Client";
+      const customerEmail = customerSnapshot.email || order.customerEmail || "";
+
+      if (!customerEmail) {
+        throw new Error("Email du client introuvable");
+      }
+
+      // 4. Préparer les données pour l'email
+      const emailData = {
+        customerEmail,
+        customerName,
+        orderId: orderIdNum,
+        orderDate: order.createdAt || new Date().toISOString(),
+        items: orderItems.map((item: any) => ({
+          name: item.productName || "Produit",
+          quantity: item.quantity,
+          unitPrice: item.unitPriceTTC || 0,
+          totalPrice: item.totalPriceTTC || 0,
+        })),
+        subtotal: order.totalAmountHT || 0,
+        tax: (order.totalAmountTTC || 0) - (order.totalAmountHT || 0),
+        total: order.totalAmountTTC || 0,
+        shippingAddress: {
+          firstName: shippingAddress.addressSnapshot.firstName || "",
+          lastName: shippingAddress.addressSnapshot.lastName || "",
+          address: shippingAddress.addressSnapshot.address || "",
+          city: shippingAddress.addressSnapshot.city || "",
+          postalCode: shippingAddress.addressSnapshot.postalCode || "",
+          country: shippingAddress.addressSnapshot.country || "Belgique",
+        },
+      };
+
+      console.log("📧 Sending order confirmation email:", emailData);
+
+      // 5. Envoyer l'email de confirmation
+      const emailResponse = await fetch(
+        `${API_URL}/api/email/order-confirmation`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(emailData),
+        }
+      );
+
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json();
+        console.error("Email sending error:", errorData);
+        throw new Error(
+          errorData.message || "Erreur lors de l'envoi de l'email"
+        );
+      }
+
+      const result = await emailResponse.json();
+      console.log("✅ Order confirmation email sent:", result);
+      setEmailSent(true);
+      setIsProcessing(false);
+    } catch (error) {
+      console.error("Error sending order confirmation email:", error);
+      setEmailError(true);
+      setEmailSent(true); // Marquer comme traité même en erreur pour éviter la boucle
+      setIsProcessing(false);
+      // Ne pas bloquer l'affichage de la page si l'email échoue
+    }
+  };
 
   return (
     <>
       <Head>
         <title>Commande réussie - Nature de Pierre</title>
         <meta name="description" content="Votre commande a été confirmée" />
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-        />
       </Head>
 
       <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>

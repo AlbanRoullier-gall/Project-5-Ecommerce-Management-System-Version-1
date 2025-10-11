@@ -137,12 +137,15 @@ export class OrderMapper {
       id: orderItem.id,
       orderId: orderItem.orderId,
       productId: orderItem.productId,
-      productSnapshot: orderItem.productSnapshot,
+      productName: orderItem.productName || "Produit",
       quantity: orderItem.quantity,
       unitPriceHT: orderItem.unitPriceHT,
       unitPriceTTC: orderItem.unitPriceTTC,
+      vatRate: orderItem.vatRate || 21,
       totalPriceHT: orderItem.totalPriceHT,
       totalPriceTTC: orderItem.totalPriceTTC,
+      createdAt: orderItem.createdAt,
+      updatedAt: orderItem.updatedAt,
     };
   }
 

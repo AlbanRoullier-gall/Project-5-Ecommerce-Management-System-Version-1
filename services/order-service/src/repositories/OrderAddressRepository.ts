@@ -15,9 +15,9 @@ export default class OrderAddressRepository {
    */
   async save(address: OrderAddress): Promise<OrderAddress> {
     const query = `
-      INSERT INTO order_addresses (order_id, addressType, address_snapshot, created_at, updated_at)
+      INSERT INTO order_addresses (order_id, type, address_snapshot, created_at, updated_at)
       VALUES ($1, $2, $3, NOW(), NOW())
-      RETURNING id, order_id, addressType, address_snapshot, created_at, updated_at
+      RETURNING id, order_id, type AS address_type, address_snapshot, created_at, updated_at
     `;
 
     const values = [
@@ -38,9 +38,9 @@ export default class OrderAddressRepository {
   async update(address: OrderAddress): Promise<OrderAddress> {
     const query = `
       UPDATE order_addresses 
-      SET order_id = $1, addressType = $2, address_snapshot = $3
+      SET order_id = $1, type = $2, address_snapshot = $3
       WHERE id = $4
-      RETURNING id, order_id, addressType, address_snapshot, created_at, updated_at
+      RETURNING id, order_id, type AS address_type, address_snapshot, created_at, updated_at
     `;
 
     const values = [
@@ -72,7 +72,7 @@ export default class OrderAddressRepository {
    */
   async getById(id: number): Promise<OrderAddress | null> {
     const query = `
-      SELECT id, order_id, addressType, address_snapshot, created_at, updated_at
+      SELECT id, order_id, type AS address_type, address_snapshot, created_at, updated_at
       FROM order_addresses 
       WHERE id = $1
     `;
@@ -88,7 +88,7 @@ export default class OrderAddressRepository {
    */
   async listByOrder(orderId: number): Promise<OrderAddress[]> {
     const query = `
-      SELECT id, order_id, addressType, address_snapshot, created_at, updated_at
+      SELECT id, order_id, type AS address_type, address_snapshot, created_at, updated_at
       FROM order_addresses 
       WHERE order_id = $1
       ORDER BY created_at
@@ -109,9 +109,9 @@ export default class OrderAddressRepository {
     addressType: "shipping" | "billing"
   ): Promise<OrderAddress | null> {
     const query = `
-      SELECT id, order_id, addressType, address_snapshot, created_at, updated_at
+      SELECT id, order_id, type AS address_type, address_snapshot, created_at, updated_at
       FROM order_addresses 
-      WHERE order_id = $1 AND addressType = $2
+      WHERE order_id = $1 AND type = $2
     `;
 
     const result = await this.pool.query(query, [orderId, addressType]);
@@ -139,7 +139,7 @@ export default class OrderAddressRepository {
       INSERT INTO order_addresses (
         order_id, type, address_snapshot
       ) VALUES ($1, $2, $3)
-      RETURNING *
+      RETURNING id, order_id, type AS address_type, address_snapshot, created_at, updated_at
     `;
 
     const values = [
@@ -156,7 +156,7 @@ export default class OrderAddressRepository {
    * Get order address by ID
    */
   async getOrderAddressById(id: number): Promise<OrderAddress | null> {
-    const query = `SELECT * FROM order_addresses WHERE id = $1`;
+    const query = `SELECT id, order_id, type AS address_type, address_snapshot, created_at, updated_at FROM order_addresses WHERE id = $1`;
     const result = await this.pool.query(query, [id]);
 
     if (result.rows.length === 0) {
@@ -200,7 +200,7 @@ export default class OrderAddressRepository {
       UPDATE order_addresses 
       SET ${fields.join(", ")} 
       WHERE id = $${++paramCount}
-      RETURNING *
+      RETURNING id, order_id, type AS address_type, address_snapshot, created_at, updated_at
     `;
 
     const result = await this.pool.query(query, values);
@@ -225,7 +225,8 @@ export default class OrderAddressRepository {
    */
   async getOrderAddressesByOrderId(orderId: number): Promise<OrderAddress[]> {
     const query = `
-      SELECT * FROM order_addresses 
+      SELECT id, order_id, type AS address_type, address_snapshot, created_at, updated_at
+      FROM order_addresses 
       WHERE order_id = $1 
       ORDER BY created_at
     `;

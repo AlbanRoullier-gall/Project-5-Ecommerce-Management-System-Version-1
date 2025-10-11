@@ -123,12 +123,14 @@ export interface PaymentPublicDTO {
     | "failed"
     | "canceled"
     | "refunded"
-    | "requires_payment_method";
+    | "requires_payment_method"
+    | "unpaid";
   amount: number;
   currency: string;
   customerEmail: string;
   createdAt: Date;
   clientSecret?: string;
+  url?: string; // URL de redirection vers Stripe Checkout
   error?: string;
   message?: string;
 }

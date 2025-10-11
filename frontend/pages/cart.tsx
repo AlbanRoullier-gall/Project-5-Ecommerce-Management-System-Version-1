@@ -288,10 +288,6 @@ export default function CartPage() {
       <Head>
         <title>Votre Panier - Nature de Pierre</title>
         <meta name="description" content="Consultez votre panier d'achat" />
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-        />
       </Head>
 
       <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>

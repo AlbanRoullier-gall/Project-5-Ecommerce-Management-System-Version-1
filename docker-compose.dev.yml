@@ -100,7 +100,7 @@ services:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://order_user:order_password@order-db:5432/order_db
       - JWT_SECRET=your-jwt-secret-key
-      - STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+      - STRIPE_SECRET_KEY=sk_test_51RtjchLi6vN59MNetUhP86QSndKeI5GfJCMseKO8dSq4D93k0td4AZyJ5d4SiKTveQh9pThKaj9d9MyzpTEuoFdU00ZW6qtK90
     volumes:
       - ./services/order-service/src:/app/src
       - ./shared-types:/app/shared-types
@@ -178,8 +178,8 @@ services:
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://payment_user:payment_password@payment-db:5432/payment_db
-      - STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
-      - STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
+      - STRIPE_SECRET_KEY=sk_test_51RtjchLi6vN59MNetUhP86QSndKeI5GfJCMseKO8dSq4D93k0td4AZyJ5d4SiKTveQh9pThKaj9d9MyzpTEuoFdU00ZW6qtK90
+      - STRIPE_PUBLISHABLE_KEY=pk_test_51RtjchLi6vN59MNe1w9bJlC4Gg2Pnuti0Oub3RRuh4QFVPmh77ZE9oOmL3ewA6vnB2NvWjSizIup9gq9Y6pyTmdV00xFVugPSe
       - JWT_SECRET=your-jwt-secret-key
     volumes:
       - ./services/payment-service/src:/app/src

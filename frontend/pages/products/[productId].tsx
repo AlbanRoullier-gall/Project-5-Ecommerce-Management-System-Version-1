@@ -185,10 +185,6 @@ export default function ProductDetailPage() {
       <>
         <Head>
           <title>Chargement... - Nature de Pierre</title>
-          <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-          />
         </Head>
         <div className="min-h-screen">
           <Header />
@@ -217,10 +213,6 @@ export default function ProductDetailPage() {
       <>
         <Head>
           <title>Erreur - Nature de Pierre</title>
-          <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-          />
         </Head>
         <div className="min-h-screen">
           <Header />
@@ -281,10 +273,6 @@ export default function ProductDetailPage() {
           content={product.description || `Découvrez ${product.name}`}
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-        />
       </Head>
 
       <div

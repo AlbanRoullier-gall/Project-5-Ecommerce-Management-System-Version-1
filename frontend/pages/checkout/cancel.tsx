@@ -18,10 +18,6 @@ export default function CheckoutCancelPage() {
       <Head>
         <title>Paiement annulé - Nature de Pierre</title>
         <meta name="description" content="Votre paiement a été annulé" />
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-        />
       </Head>
 
       <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>

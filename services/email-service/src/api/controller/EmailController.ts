@@ -234,4 +234,66 @@ export class EmailController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Envoyer un email de confirmation de commande
+   */
+  async sendOrderConfirmationEmail(req: Request, res: Response): Promise<void> {
+    try {
+      console.log("📧 EmailController: Starting sendOrderConfirmationEmail");
+      console.log("📧 Request body:", req.body);
+
+      const {
+        customerEmail,
+        customerName,
+        orderId,
+        orderDate,
+        items,
+        subtotal,
+        tax,
+        total,
+        shippingAddress,
+      } = req.body;
+
+      // Validation des données
+      if (
+        !customerEmail ||
+        !customerName ||
+        !orderId ||
+        !items ||
+        !shippingAddress
+      ) {
+        res.status(400).json({
+          success: false,
+          message: "Données manquantes pour l'envoi de l'email de confirmation",
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const result = await this.emailService.sendOrderConfirmationEmail({
+        customerEmail,
+        customerName,
+        orderId,
+        orderDate: orderDate ? new Date(orderDate) : new Date(),
+        items,
+        subtotal,
+        tax,
+        total,
+        shippingAddress,
+      });
+
+      const response = {
+        success: true,
+        messageId: result.messageId,
+        message: "Email de confirmation de commande envoyé avec succès",
+        timestamp: new Date().toISOString(),
+      };
+
+      res.status(201).json(response);
+    } catch (error: any) {
+      console.error("Send order confirmation email error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

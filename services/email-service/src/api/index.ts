@@ -87,6 +87,36 @@ export class ApiRouter {
         userEmail: Joi.string().email().required(),
         userFullName: Joi.string().max(200).required(),
       }),
+
+      // Order confirmation email schema
+      orderConfirmationEmailSchema: Joi.object({
+        customerEmail: Joi.string().email().required(),
+        customerName: Joi.string().max(200).required(),
+        orderId: Joi.number().integer().positive().required(),
+        orderDate: Joi.date().optional(),
+        items: Joi.array()
+          .items(
+            Joi.object({
+              name: Joi.string().required(),
+              quantity: Joi.number().integer().positive().required(),
+              unitPrice: Joi.number().positive().required(),
+              totalPrice: Joi.number().positive().required(),
+            })
+          )
+          .min(1)
+          .required(),
+        subtotal: Joi.number().positive().required(),
+        tax: Joi.number().min(0).required(),
+        total: Joi.number().positive().required(),
+        shippingAddress: Joi.object({
+          firstName: Joi.string().required(),
+          lastName: Joi.string().required(),
+          address: Joi.string().required(),
+          city: Joi.string().required(),
+          postalCode: Joi.string().required(),
+          country: Joi.string().required(),
+        }).required(),
+      }),
     };
   }
 
@@ -179,6 +209,16 @@ export class ApiRouter {
       this.validateRequest(schemas.backofficeRejectionNotificationSchema),
       (req: Request, res: Response) => {
         this.emailController.sendBackofficeRejectionNotification(req, res);
+      }
+    );
+
+    // ===== ROUTES COMMANDES =====
+    // Envoyer un email de confirmation de commande
+    app.post(
+      "/api/email/order-confirmation",
+      this.validateRequest(schemas.orderConfirmationEmailSchema),
+      (req: Request, res: Response) => {
+        this.emailController.sendOrderConfirmationEmail(req, res);
       }
     );
 

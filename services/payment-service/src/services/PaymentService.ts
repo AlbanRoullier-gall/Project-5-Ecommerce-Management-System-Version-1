@@ -28,31 +28,44 @@ export default class PaymentService {
    */
   async createPayment(paymentData: any): Promise<any> {
     try {
-      // Créer le PaymentIntent
-      const paymentIntent = await this.stripe.paymentIntents.create({
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        receipt_email: paymentData.customer.email,
+      // Créer les line items pour Stripe Checkout
+      const line_items = paymentData.items.map((item: any) => ({
+        price_data: {
+          currency: item.currency || "eur",
+          product_data: {
+            name: item.name,
+            description: item.description || "",
+          },
+          unit_amount: item.price, // Prix en centimes
+        },
+        quantity: item.quantity,
+      }));
+
+      // Créer une session Stripe Checkout
+      const session = await this.stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items,
+        mode: "payment",
+        customer_email: paymentData.customer.email,
+        success_url:
+          paymentData.successUrl || "http://localhost:3000/checkout/success",
+        cancel_url:
+          paymentData.cancelUrl || "http://localhost:3000/checkout/cancel",
         metadata: {
           customer_name: paymentData.customer.name || "",
           customer_phone: paymentData.customer.phone || "",
-          items: JSON.stringify(paymentData.items),
           ...paymentData.metadata,
-        },
-        automatic_payment_methods: {
-          enabled: true,
-          allow_redirects: "never",
         },
       });
 
       return {
-        id: paymentIntent.id,
-        status: paymentIntent.status,
-        amount: paymentIntent.amount,
-        currency: paymentIntent.currency,
+        id: session.id,
+        url: session.url, // URL de redirection vers Stripe Checkout
+        status: session.payment_status,
+        amount: session.amount_total,
+        currency: paymentData.currency,
         customerEmail: paymentData.customer.email,
-        createdAt: new Date(paymentIntent.created * 1000),
-        clientSecret: paymentIntent.client_secret,
+        createdAt: new Date(session.created * 1000),
       };
     } catch (error: any) {
       console.error("Error creating payment:", error);

@@ -272,12 +272,17 @@ export default function CheckoutOrderSummary({
         );
       }
 
-      const { url } = await paymentResponse.json();
+      const paymentResult = await paymentResponse.json();
+      const url = paymentResult.payment?.url || paymentResult.url;
+
+      console.log("Payment result:", paymentResult);
+      console.log("Stripe Checkout URL:", url);
 
       // Rediriger vers Stripe
       if (url) {
         window.location.href = url;
       } else {
+        console.error("No URL in payment response:", paymentResult);
         onSuccess(orderId);
       }
     } catch (err) {

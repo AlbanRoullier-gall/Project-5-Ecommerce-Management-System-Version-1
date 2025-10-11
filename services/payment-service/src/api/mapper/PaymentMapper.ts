@@ -59,18 +59,26 @@ export class PaymentMapper {
   }
 
   /**
-   * Convert Stripe PaymentIntent to PaymentPublicDTO
+   * Convert Stripe PaymentIntent or Checkout Session to PaymentPublicDTO
    */
   static stripePaymentIntentToPublicDTO(paymentIntent: any): PaymentPublicDTO {
     return {
       id: paymentIntent.id,
-      status: paymentIntent.status,
+      status: paymentIntent.status || paymentIntent.payment_status || "pending",
       amount: paymentIntent.amount,
       currency: paymentIntent.currency,
       customerEmail:
-        paymentIntent.receipt_email || paymentIntent.customer?.email || "",
-      createdAt: new Date(paymentIntent.created * 1000),
+        paymentIntent.receipt_email ||
+        paymentIntent.customerEmail ||
+        paymentIntent.customer?.email ||
+        "",
+      createdAt:
+        paymentIntent.createdAt ||
+        (paymentIntent.created
+          ? new Date(paymentIntent.created * 1000)
+          : new Date()),
       clientSecret: paymentIntent.client_secret,
+      url: paymentIntent.url, // URL pour Stripe Checkout
       error: paymentIntent.last_payment_error?.message,
     };
   }

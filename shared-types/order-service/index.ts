@@ -135,14 +135,16 @@ export interface OrderAddressPublicDTO {
   id: number;
   orderId: number;
   addressType: "shipping" | "billing";
-  firstName: string;
-  lastName: string;
-  company: string | null;
-  address: string;
-  city: string;
-  postalCode: string;
-  country: string;
-  phone: string | null;
+  addressSnapshot: {
+    firstName: string;
+    lastName: string;
+    company?: string;
+    address: string;
+    city: string;
+    postalCode: string;
+    country: string;
+    phone?: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }

@@ -18,6 +18,9 @@ export const EMAIL_ROUTES: Record<string, ServiceName> = {
   "/email/backoffice-approval-confirmation": "email", // POST: Confirmation d'approbation backoffice
   "/email/backoffice-rejection-notification": "email", // POST: Notification de rejet backoffice
 
+  // Routes commandes
+  "/email/order-confirmation": "email", // POST: Envoyer email de confirmation de commande
+
   // Routes admin (avec authentification)
   "/admin/email/templates": "email", // GET: Lister les templates, POST: Créer template
   "/admin/email/templates/:id": "email", // GET: Détails template, PUT: Modifier, DELETE: Supprimer

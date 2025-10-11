@@ -38,6 +38,7 @@ class OrderItem {
   public readonly id: number;
   public readonly orderId: number;
   public readonly productId: number;
+  public readonly productName?: string;
   public readonly quantity: number;
   public readonly unitPriceHT: number;
   public readonly unitPriceTTC: number;
@@ -51,6 +52,7 @@ class OrderItem {
     this.id = data.id;
     this.orderId = data.order_id;
     this.productId = data.product_id;
+    this.productName = data.product_name;
     this.quantity = data.quantity;
     this.unitPriceHT = data.unit_price_ht;
     this.unitPriceTTC = data.unit_price_ttc;

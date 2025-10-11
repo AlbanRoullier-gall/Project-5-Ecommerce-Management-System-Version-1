@@ -186,10 +186,10 @@ start_backend_service() {
             additional_env="export REDIS_URL=redis://localhost:6379;"
             ;;
         "order-service"|"payment-service")
-            additional_env="export STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key;"
+            additional_env="export STRIPE_SECRET_KEY=sk_test_51RtjchLi6vN59MNetUhP86QSndKeI5GfJCMseKO8dSq4D93k0td4AZyJ5d4SiKTveQh9pThKaj9d9MyzpTEuoFdU00ZW6qtK90;"
             ;;
         "payment-service")
-            additional_env="export STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key; export STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key;"
+            additional_env="export STRIPE_SECRET_KEY=sk_test_51RtjchLi6vN59MNetUhP86QSndKeI5GfJCMseKO8dSq4D93k0td4AZyJ5d4SiKTveQh9pThKaj9d9MyzpTEuoFdU00ZW6qtK90; export STRIPE_PUBLISHABLE_KEY=pk_test_51RtjchLi6vN59MNe1w9bJlC4Gg2Pnuti0Oub3RRuh4QFVPmh77ZE9oOmL3ewA6vnB2NvWjSizIup9gq9Y6pyTmdV00xFVugPSe;"
             ;;
         "email-service")
             additional_env="export GMAIL_USER=u4999410740@gmail.com; export GMAIL_APP_PASSWORD='vyli fdmp hrww jvlz'; export ADMIN_EMAIL=u4999410740@gmail.com;"

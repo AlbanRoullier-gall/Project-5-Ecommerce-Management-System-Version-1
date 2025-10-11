@@ -90,7 +90,7 @@ export default class OrderItemRepository {
   async getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]> {
     try {
       const query = `
-        SELECT id, order_id, product_id, quantity, 
+        SELECT id, order_id, product_id, product_name, quantity, 
                unit_price_ht, unit_price_ttc, vat_rate, total_price_ht, total_price_ttc, 
                created_at, updated_at
         FROM order_items 
