@@ -5,6 +5,8 @@ import Head from "next/head";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+
 export default function Contact() {
   const [formData, setFormData] = useState({
     email: "",
@@ -24,8 +26,38 @@ export default function Contact() {
     setIsSubmitting(true);
     setSubmitStatus({ type: null, message: "" });
 
-    // Simulation d'envoi (remplacer par votre logique d'envoi)
-    setTimeout(() => {
+    try {
+      // Préparer les données pour l'API email
+      const emailData = {
+        to: {
+          email: "u4999410740@gmail.com", // Email de l'admin qui recevra les messages
+          name: "Nature de Pierre",
+        },
+        subject: formData.subject || "Nouveau message de contact",
+        message: formData.message,
+        clientName: formData.name,
+        clientEmail: formData.email,
+      };
+
+      console.log("📧 Envoi du message de contact:", emailData);
+
+      // Envoyer l'email via l'API Gateway
+      const response = await fetch(`${API_URL}/api/email/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailData),
+      });
+
+      const result = await response.json();
+      console.log("📧 Réponse de l'API:", result);
+
+      if (!response.ok) {
+        throw new Error(result.message || "Erreur lors de l'envoi du message");
+      }
+
+      // Succès
       setSubmitStatus({
         type: "success",
         message:
@@ -39,8 +71,17 @@ export default function Contact() {
         subject: "",
         message: "",
       });
+    } catch (error: any) {
+      console.error("❌ Erreur lors de l'envoi:", error);
+      setSubmitStatus({
+        type: "error",
+        message:
+          error.message ||
+          "Une erreur s'est produite lors de l'envoi du message. Veuillez réessayer.",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   const handleChange = (
