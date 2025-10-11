@@ -117,6 +117,75 @@ export default function CheckoutOrderSummary({
         console.log("✅ Nouveau client créé:", customerId);
       }
 
+      // 1.5. Enregistrer les adresses dans le carnet d'adresses du client
+      try {
+        // Créer l'adresse de livraison
+        if (shippingAddress && shippingAddress.address) {
+          const shippingAddressDTO = {
+            addressType: "shipping" as const,
+            address: shippingAddress.address,
+            postalCode: shippingAddress.postalCode || "",
+            city: shippingAddress.city || "",
+            countryId: shippingAddress.countryId || 1,
+            isDefault: true, // Première adresse = adresse par défaut
+          };
+
+          const shippingAddressResponse = await fetch(
+            `${API_URL}/api/customers/${customerId}/addresses`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(shippingAddressDTO),
+            }
+          );
+
+          if (shippingAddressResponse.ok) {
+            console.log("✅ Adresse de livraison enregistrée pour le client");
+          } else {
+            console.warn("⚠️ Impossible d'enregistrer l'adresse de livraison");
+          }
+        }
+
+        // Créer l'adresse de facturation si différente
+        if (
+          billingAddress &&
+          billingAddress.address &&
+          billingAddress.address !== shippingAddress.address
+        ) {
+          const billingAddressDTO = {
+            addressType: "billing" as const,
+            address: billingAddress.address,
+            postalCode: billingAddress.postalCode || "",
+            city: billingAddress.city || "",
+            countryId: billingAddress.countryId || 1,
+            isDefault: false,
+          };
+
+          const billingAddressResponse = await fetch(
+            `${API_URL}/api/customers/${customerId}/addresses`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(billingAddressDTO),
+            }
+          );
+
+          if (billingAddressResponse.ok) {
+            console.log("✅ Adresse de facturation enregistrée pour le client");
+          } else {
+            console.warn(
+              "⚠️ Impossible d'enregistrer l'adresse de facturation"
+            );
+          }
+        }
+      } catch (addressError) {
+        // Ne pas bloquer la commande si l'enregistrement des adresses échoue
+        console.error(
+          "Erreur lors de l'enregistrement des adresses:",
+          addressError
+        );
+      }
+
       // 2. Créer l'entreprise si nécessaire
       let companyId = null;
       if (companyData && companyData.companyName) {
