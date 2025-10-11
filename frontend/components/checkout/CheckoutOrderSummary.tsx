@@ -119,16 +119,23 @@ export default function CheckoutOrderSummary({
 
       // 1.5. Enregistrer les adresses dans le carnet d'adresses du client
       try {
+        console.log("📍 Données d'adresse reçues:", {
+          shippingAddress,
+          billingAddress,
+        });
+
         // Créer l'adresse de livraison
         if (shippingAddress && shippingAddress.address) {
           const shippingAddressDTO = {
             addressType: "shipping" as const,
             address: shippingAddress.address,
-            postalCode: shippingAddress.postalCode || "",
-            city: shippingAddress.city || "",
-            countryId: shippingAddress.countryId || 1,
+            postalCode: shippingAddress.postalCode,
+            city: shippingAddress.city,
+            countryId: shippingAddress.countryId,
             isDefault: true, // Première adresse = adresse par défaut
           };
+
+          console.log("📤 Envoi adresse de livraison:", shippingAddressDTO);
 
           const shippingAddressResponse = await fetch(
             `${API_URL}/api/customers/${customerId}/addresses`,
@@ -140,10 +147,17 @@ export default function CheckoutOrderSummary({
           );
 
           if (shippingAddressResponse.ok) {
-            console.log("✅ Adresse de livraison enregistrée pour le client");
+            const responseData = await shippingAddressResponse.json();
+            console.log("✅ Adresse de livraison enregistrée:", responseData);
           } else {
-            console.warn("⚠️ Impossible d'enregistrer l'adresse de livraison");
+            const errorData = await shippingAddressResponse.json();
+            console.error(
+              "⚠️ Erreur lors de l'enregistrement de l'adresse de livraison:",
+              errorData
+            );
           }
+        } else {
+          console.warn("⚠️ Adresse de livraison manquante ou incomplète");
         }
 
         // Créer l'adresse de facturation si différente
@@ -155,11 +169,13 @@ export default function CheckoutOrderSummary({
           const billingAddressDTO = {
             addressType: "billing" as const,
             address: billingAddress.address,
-            postalCode: billingAddress.postalCode || "",
-            city: billingAddress.city || "",
-            countryId: billingAddress.countryId || 1,
+            postalCode: billingAddress.postalCode,
+            city: billingAddress.city,
+            countryId: billingAddress.countryId,
             isDefault: false,
           };
+
+          console.log("📤 Envoi adresse de facturation:", billingAddressDTO);
 
           const billingAddressResponse = await fetch(
             `${API_URL}/api/customers/${customerId}/addresses`,
@@ -171,17 +187,24 @@ export default function CheckoutOrderSummary({
           );
 
           if (billingAddressResponse.ok) {
-            console.log("✅ Adresse de facturation enregistrée pour le client");
+            const responseData = await billingAddressResponse.json();
+            console.log("✅ Adresse de facturation enregistrée:", responseData);
           } else {
-            console.warn(
-              "⚠️ Impossible d'enregistrer l'adresse de facturation"
+            const errorData = await billingAddressResponse.json();
+            console.error(
+              "⚠️ Erreur lors de l'enregistrement de l'adresse de facturation:",
+              errorData
             );
           }
+        } else {
+          console.log(
+            "ℹ️ Même adresse pour facturation ou adresse de facturation manquante"
+          );
         }
       } catch (addressError) {
         // Ne pas bloquer la commande si l'enregistrement des adresses échoue
         console.error(
-          "Erreur lors de l'enregistrement des adresses:",
+          "❌ Erreur lors de l'enregistrement des adresses:",
           addressError
         );
       }
