@@ -285,6 +285,50 @@ export class ApiRouter {
       }
     );
 
+    // Routes d'activation/désactivation
+    app.post(
+      "/api/admin/customers/:id/activate",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.activateCustomer(req, res);
+      }
+    );
+
+    app.post(
+      "/api/admin/customers/:id/deactivate",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.deactivateCustomer(req, res);
+      }
+    );
+
+    // ===== ROUTES DE RÉFÉRENCE ADMIN =====
+    // Routes admin pour obtenir les données de référence (civilités, catégories, pays)
+    // Utilisées dans le backoffice
+    app.get(
+      "/api/admin/customers/civilities",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.getCivilities(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/customers/categories",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.getCategories(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/customers/countries",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.getCountries(req, res);
+      }
+    );
+
     // ===== ROUTES PUBLIQUES D'ADRESSES =====
     // Ajout d'adresse (publique pour les clients)
     app.post(

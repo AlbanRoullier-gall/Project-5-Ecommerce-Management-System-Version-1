@@ -23,7 +23,7 @@ export interface CustomerListResult {
 }
 
 class CustomerRepository {
-  private pool: Pool;
+  public pool: Pool;
 
   constructor(pool: Pool) {
     this.pool = pool;

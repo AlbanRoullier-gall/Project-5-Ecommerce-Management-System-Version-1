@@ -185,4 +185,87 @@ export class CustomerController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Activate customer
+   */
+  async activateCustomer(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const customer = await this.customerService.activateCustomer(
+        parseInt(id!)
+      );
+      const customerDTO = CustomerMapper.customerToPublicDTO(customer);
+
+      res.json(ResponseMapper.customerUpdated(customerDTO));
+    } catch (error: any) {
+      console.error("Activate customer error:", error);
+      if (error.message === "Customer not found") {
+        res.status(404).json(ResponseMapper.notFoundError("Customer"));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Deactivate customer
+   */
+  async deactivateCustomer(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const customer = await this.customerService.deactivateCustomer(
+        parseInt(id!)
+      );
+      const customerDTO = CustomerMapper.customerToPublicDTO(customer);
+
+      res.json(ResponseMapper.customerUpdated(customerDTO));
+    } catch (error: any) {
+      console.error("Deactivate customer error:", error);
+      if (error.message === "Customer not found") {
+        res.status(404).json(ResponseMapper.notFoundError("Customer"));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Get all civilities
+   */
+  async getCivilities(req: Request, res: Response): Promise<void> {
+    try {
+      const civilities = await this.customerService.getCivilities();
+      res.json({ message: "Civilities retrieved", civilities });
+    } catch (error: any) {
+      console.error("Get civilities error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Get all socio-professional categories
+   */
+  async getCategories(req: Request, res: Response): Promise<void> {
+    try {
+      const categories = await this.customerService.getCategories();
+      res.json({ message: "Categories retrieved", categories });
+    } catch (error: any) {
+      console.error("Get categories error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Get all countries
+   */
+  async getCountries(req: Request, res: Response): Promise<void> {
+    try {
+      const countries = await this.customerService.getCountries();
+      res.json({ message: "Countries retrieved", countries });
+    } catch (error: any) {
+      console.error("Get countries error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

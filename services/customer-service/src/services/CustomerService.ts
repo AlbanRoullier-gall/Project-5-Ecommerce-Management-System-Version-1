@@ -558,6 +558,107 @@ class CustomerService {
       throw error;
     }
   }
+
+  // ===== ACTIVATION/DÉSACTIVATION =====
+
+  /**
+   * Activer un client
+   * @param {number} id Customer ID
+   * @returns {Promise<Customer>} Activated customer
+   */
+  async activateCustomer(id: number): Promise<Customer> {
+    try {
+      const customer = await this.customerRepository.getById(id);
+      if (!customer) {
+        throw new Error("Customer not found");
+      }
+
+      customer.activate();
+      return await this.customerRepository.update(customer);
+    } catch (error) {
+      console.error("Error activating customer:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Désactiver un client
+   * @param {number} id Customer ID
+   * @returns {Promise<Customer>} Deactivated customer
+   */
+  async deactivateCustomer(id: number): Promise<Customer> {
+    try {
+      const customer = await this.customerRepository.getById(id);
+      if (!customer) {
+        throw new Error("Customer not found");
+      }
+
+      customer.deactivate();
+      return await this.customerRepository.update(customer);
+    } catch (error) {
+      console.error("Error deactivating customer:", error);
+      throw error;
+    }
+  }
+
+  // ===== DONNÉES DE RÉFÉRENCE =====
+
+  /**
+   * Récupérer toutes les civilités
+   * @returns {Promise<any[]>} List of civilities
+   */
+  async getCivilities(): Promise<any[]> {
+    try {
+      const result = await this.customerRepository.pool.query(
+        "SELECT civility_id, abbreviation FROM civilities ORDER BY civility_id"
+      );
+      return result.rows.map((row) => ({
+        civilityId: row.civility_id,
+        abbreviation: row.abbreviation,
+      }));
+    } catch (error) {
+      console.error("Error getting civilities:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Récupérer toutes les catégories socio-professionnelles
+   * @returns {Promise<any[]>} List of categories
+   */
+  async getCategories(): Promise<any[]> {
+    try {
+      const result = await this.customerRepository.pool.query(
+        "SELECT category_id, category_name FROM socio_professional_categories ORDER BY category_id"
+      );
+      return result.rows.map((row) => ({
+        categoryId: row.category_id,
+        categoryName: row.category_name,
+      }));
+    } catch (error) {
+      console.error("Error getting categories:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Récupérer tous les pays
+   * @returns {Promise<any[]>} List of countries
+   */
+  async getCountries(): Promise<any[]> {
+    try {
+      const result = await this.customerRepository.pool.query(
+        "SELECT country_id, country_name FROM countries ORDER BY country_name"
+      );
+      return result.rows.map((row) => ({
+        countryId: row.country_id,
+        countryName: row.country_name,
+      }));
+    } catch (error) {
+      console.error("Error getting countries:", error);
+      throw error;
+    }
+  }
 }
 
 export default CustomerService;
