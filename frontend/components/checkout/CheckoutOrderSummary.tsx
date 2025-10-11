@@ -146,9 +146,10 @@ export default function CheckoutOrderSummary({
         totalAmountHT: cart.subtotal,
         totalAmountTTC: cart.total,
         paymentMethod: "stripe",
-        notes: companyData && companyData.companyName 
-          ? `Commande entreprise: ${companyData.companyName}`
-          : undefined,
+        notes:
+          companyData && companyData.companyName
+            ? `Commande entreprise: ${companyData.companyName}`
+            : undefined,
       };
 
       const orderResponse = await fetch(`${API_URL}/api/orders`, {
