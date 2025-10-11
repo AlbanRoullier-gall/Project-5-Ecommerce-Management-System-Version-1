@@ -23,8 +23,8 @@ class CustomerCompany {
   public companyId: number | null;
   public customerId: number | null;
   public companyName: string;
-  public siretNumber: string;
-  public vatNumber: string;
+  public siretNumber: string | null;
+  public vatNumber: string | null;
   public createdAt: Date | null;
   public updatedAt: Date | null;
 
@@ -32,8 +32,8 @@ class CustomerCompany {
     this.companyId = data.companyId || null;
     this.customerId = data.customerId || null;
     this.companyName = data.companyName || "";
-    this.siretNumber = data.siretNumber || "";
-    this.vatNumber = data.vatNumber || "";
+    this.siretNumber = data.siretNumber || null;
+    this.vatNumber = data.vatNumber || null;
     this.createdAt = data.createdAt || null;
     this.updatedAt = data.updatedAt || null;
   }
@@ -44,8 +44,10 @@ class CustomerCompany {
    */
   getCompanyInfo(): string {
     const parts = [this.companyName];
-    if (this.siretNumber) parts.push(`SIRET: ${this.siretNumber}`);
-    if (this.vatNumber) parts.push(`TVA: ${this.vatNumber}`);
+    if (this.siretNumber && this.siretNumber.trim())
+      parts.push(`SIRET: ${this.siretNumber}`);
+    if (this.vatNumber && this.vatNumber.trim())
+      parts.push(`TVA: ${this.vatNumber}`);
     return parts.join(" - ");
   }
 

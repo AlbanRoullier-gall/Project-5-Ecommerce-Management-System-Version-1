@@ -164,7 +164,8 @@ export class OrderMapper {
       total_amount_ttc: dto.totalAmountTTC,
       reason: dto.reason,
       description: dto.description || null,
-      payment_method: dto.paymentMethod,
+      issue_date: dto.issueDate ? new Date(dto.issueDate) : null,
+      payment_method: dto.paymentMethod || null,
       notes: dto.notes || null,
     };
   }
@@ -182,6 +183,8 @@ export class OrderMapper {
       data.total_amount_ttc = dto.totalAmountTTC;
     if (dto.reason !== undefined) data.reason = dto.reason;
     if (dto.description !== undefined) data.description = dto.description;
+    if (dto.issueDate !== undefined)
+      data.issue_date = dto.issueDate ? new Date(dto.issueDate) : null;
     if (dto.paymentMethod !== undefined)
       data.payment_method = dto.paymentMethod;
     if (dto.notes !== undefined) data.notes = dto.notes;
@@ -219,9 +222,11 @@ export class OrderMapper {
     return {
       credit_note_id: dto.creditNoteId,
       product_id: dto.productId,
+      product_name: dto.productName || null,
       quantity: dto.quantity,
       unit_price_ht: dto.unitPriceHT,
       unit_price_ttc: dto.unitPriceTTC,
+      vat_rate: dto.vatRate,
       total_price_ht: dto.totalPriceHT,
       total_price_ttc: dto.totalPriceTTC,
     };
@@ -234,6 +239,7 @@ export class OrderMapper {
     dto: CreditNoteItemUpdateDTO
   ): Partial<CreditNoteItemData> {
     const data: Partial<CreditNoteItemData> = {};
+    if (dto.productName !== undefined) data.product_name = dto.productName;
     if (dto.quantity !== undefined) data.quantity = dto.quantity;
     if (dto.unitPriceHT !== undefined) data.unit_price_ht = dto.unitPriceHT;
     if (dto.unitPriceTTC !== undefined) data.unit_price_ttc = dto.unitPriceTTC;
@@ -253,6 +259,7 @@ export class OrderMapper {
       id: creditNoteItem.id,
       creditNoteId: creditNoteItem.creditNoteId,
       productId: creditNoteItem.productId,
+      productName: creditNoteItem.productName || "",
       quantity: creditNoteItem.quantity,
       unitPriceHT: creditNoteItem.unitPriceHT,
       unitPriceTTC: creditNoteItem.unitPriceTTC,

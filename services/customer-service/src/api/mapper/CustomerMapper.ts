@@ -179,8 +179,8 @@ export class CustomerMapper {
   ): Partial<CustomerCompanyData> {
     return {
       companyName: dto.companyName,
-      siretNumber: dto.siretNumber || "",
-      vatNumber: dto.vatNumber || "",
+      siretNumber: dto.siretNumber || null,
+      vatNumber: dto.vatNumber || null,
     };
   }
 
@@ -194,8 +194,9 @@ export class CustomerMapper {
 
     if (dto.companyName !== undefined) updateData.companyName = dto.companyName;
     if (dto.siretNumber !== undefined)
-      updateData.siretNumber = dto.siretNumber || "";
-    if (dto.vatNumber !== undefined) updateData.vatNumber = dto.vatNumber || "";
+      updateData.siretNumber = dto.siretNumber || null;
+    if (dto.vatNumber !== undefined)
+      updateData.vatNumber = dto.vatNumber || null;
 
     return updateData;
   }

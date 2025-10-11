@@ -15,6 +15,7 @@ export interface CreditNoteItemData {
   id: number;
   credit_note_id: number;
   product_id: number;
+  product_name?: string | null;
   quantity: number;
   unit_price_ht: number;
   unit_price_ttc: number;
@@ -37,6 +38,7 @@ class CreditNoteItem {
   public readonly id: number;
   public readonly creditNoteId: number;
   public readonly productId: number;
+  public readonly productName: string | null;
   public readonly quantity: number;
   public readonly unitPriceHT: number;
   public readonly unitPriceTTC: number;
@@ -50,6 +52,7 @@ class CreditNoteItem {
     this.id = data.id;
     this.creditNoteId = data.credit_note_id;
     this.productId = data.product_id;
+    this.productName = data.product_name || null;
     this.quantity = data.quantity;
     this.unitPriceHT = data.unit_price_ht;
     this.unitPriceTTC = data.unit_price_ttc;

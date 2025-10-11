@@ -155,8 +155,12 @@ export interface OrderAddressPublicDTO {
  * DTO pour la création d'un avoir
  */
 export interface CreditNoteCreateDTO {
+  customerId: number;
   orderId: number;
   reason: string;
+  description?: string;
+  issueDate?: string; // ISO date string
+  paymentMethod?: string;
   totalAmountHT: number;
   totalAmountTTC: number;
   notes?: string;
@@ -167,6 +171,9 @@ export interface CreditNoteCreateDTO {
  */
 export interface CreditNoteUpdateDTO {
   reason?: string;
+  description?: string;
+  issueDate?: string; // ISO date string
+  paymentMethod?: string;
   totalAmountHT?: number;
   totalAmountTTC?: number;
   notes?: string;
@@ -177,8 +184,12 @@ export interface CreditNoteUpdateDTO {
  */
 export interface CreditNotePublicDTO {
   id: number;
+  customerId: number;
   orderId: number;
   reason: string;
+  description: string | null;
+  issueDate: Date | null;
+  paymentMethod: string | null;
   totalAmountHT: number;
   totalAmountTTC: number;
   notes: string | null;

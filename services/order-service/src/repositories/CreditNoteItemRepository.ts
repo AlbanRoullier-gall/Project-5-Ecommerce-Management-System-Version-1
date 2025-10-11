@@ -15,20 +15,24 @@ export default class CreditNoteItemRepository {
    */
   async save(item: CreditNoteItem): Promise<CreditNoteItem> {
     const query = `
-      INSERT INTO credit_note_items (credit_note_id, product_id, quantity, unit_price_ht, 
-                                    unit_price_ttc, // vatRate removed - not in model, total_price_ht, total_price_ttc, 
+      INSERT INTO credit_note_items (credit_note_id, product_id, product_name, quantity, 
+                                    unit_price_ht, unit_price_ttc, vat_rate, 
+                                    total_price_ht, total_price_ttc, 
                                     created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
-      RETURNING id, credit_note_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
-                // vatRate removed - not in model, total_price_ht, total_price_ttc, created_at, updated_at
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+      RETURNING id, credit_note_id, product_id, product_name, quantity, 
+                unit_price_ht, unit_price_ttc, vat_rate, 
+                total_price_ht, total_price_ttc, created_at, updated_at
     `;
 
     const values = [
       item.creditNoteId,
       item.productId,
+      item.productName,
       item.quantity,
       item.unitPriceHT,
       item.unitPriceTTC,
+      item.vatRate,
       item.totalPriceHT,
       item.totalPriceTTC,
     ];
@@ -45,19 +49,23 @@ export default class CreditNoteItemRepository {
   async update(item: CreditNoteItem): Promise<CreditNoteItem> {
     const query = `
       UPDATE credit_note_items 
-      SET credit_note_id = $1, product_id = $2, quantity = $3, unit_price_ht = $4, 
-          unit_price_ttc = $5, // vatRate removed - not in model = $6, total_price_ht = $7, total_price_ttc = $8
-      WHERE id = $9
-      RETURNING id, credit_note_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
-                // vatRate removed - not in model, total_price_ht, total_price_ttc, created_at, updated_at
+      SET credit_note_id = $1, product_id = $2, product_name = $3, quantity = $4, 
+          unit_price_ht = $5, unit_price_ttc = $6, vat_rate = $7, 
+          total_price_ht = $8, total_price_ttc = $9
+      WHERE id = $10
+      RETURNING id, credit_note_id, product_id, product_name, quantity, 
+                unit_price_ht, unit_price_ttc, vat_rate, 
+                total_price_ht, total_price_ttc, created_at, updated_at
     `;
 
     const values = [
       item.creditNoteId,
       item.productId,
+      item.productName,
       item.quantity,
       item.unitPriceHT,
       item.unitPriceTTC,
+      item.vatRate,
       item.totalPriceHT,
       item.totalPriceTTC,
       item.id,
@@ -85,8 +93,9 @@ export default class CreditNoteItemRepository {
    */
   async getById(id: number): Promise<CreditNoteItem | null> {
     const query = `
-      SELECT id, credit_note_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
-             // vatRate removed - not in model, total_price_ht, total_price_ttc, created_at, updated_at
+      SELECT id, credit_note_id, product_id, product_name, quantity, 
+             unit_price_ht, unit_price_ttc, vat_rate, 
+             total_price_ht, total_price_ttc, created_at, updated_at
       FROM credit_note_items 
       WHERE id = $1
     `;
@@ -102,8 +111,9 @@ export default class CreditNoteItemRepository {
    */
   async listByCreditNote(creditNoteId: number): Promise<CreditNoteItem[]> {
     const query = `
-      SELECT id, credit_note_id, product_id, quantity, unit_price_ht, unit_price_ttc, 
-             // vatRate removed - not in model, total_price_ht, total_price_ttc, created_at, updated_at
+      SELECT id, credit_note_id, product_id, product_name, quantity, 
+             unit_price_ht, unit_price_ttc, vat_rate, 
+             total_price_ht, total_price_ttc, created_at, updated_at
       FROM credit_note_items 
       WHERE credit_note_id = $1
       ORDER BY created_at

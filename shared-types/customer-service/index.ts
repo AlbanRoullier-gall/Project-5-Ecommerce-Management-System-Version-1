@@ -149,8 +149,8 @@ export interface CompanyPublicDTO {
   companyId: number | null;
   customerId: number | null;
   companyName: string;
-  siretNumber: string; // Aligné avec le modèle CustomerCompany (non nullable)
-  vatNumber: string; // Aligné avec le modèle CustomerCompany (non nullable)
+  siretNumber: string | null; // Aligné avec la DB (nullable)
+  vatNumber: string | null; // Aligné avec la DB (nullable)
   createdAt: Date | null;
   updatedAt: Date | null;
 }
@@ -170,7 +170,7 @@ export interface CompanyListResponse {
  */
 export interface CivilityDTO {
   civilityId: number;
-  label: string;
+  abbreviation: string;
 }
 
 /**
@@ -178,8 +178,7 @@ export interface CivilityDTO {
  */
 export interface CountryDTO {
   countryId: number;
-  name: string;
-  code: string;
+  countryName: string;
 }
 
 /**
@@ -187,5 +186,5 @@ export interface CountryDTO {
  */
 export interface SocioProfessionalCategoryDTO {
   categoryId: number;
-  label: string;
+  categoryName: string;
 }
