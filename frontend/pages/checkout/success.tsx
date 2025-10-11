@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { useCart } from "../../contexts/CartContext";
+import { OrderAddressPublicDTO, OrderItemPublicDTO } from "../../dto";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
@@ -72,7 +73,7 @@ export default function CheckoutSuccessPage() {
 
       // Trouver l'adresse de livraison
       const shippingAddress = addresses.find(
-        (addr: any) => addr.addressType === "shipping"
+        (addr: OrderAddressPublicDTO) => addr.addressType === "shipping"
       );
 
       if (!shippingAddress?.addressSnapshot) {
@@ -97,7 +98,7 @@ export default function CheckoutSuccessPage() {
         customerName,
         orderId: orderIdNum,
         orderDate: order.createdAt || new Date().toISOString(),
-        items: orderItems.map((item: any) => ({
+        items: orderItems.map((item: OrderItemPublicDTO) => ({
           name: item.productName || "Produit",
           quantity: item.quantity,
           unitPrice: item.unitPriceTTC || 0,

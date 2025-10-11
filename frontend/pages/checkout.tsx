@@ -15,6 +15,12 @@ import {
 } from "../components/checkout";
 import { CustomerCreateDTO, AddressCreateDTO, CompanyCreateDTO } from "../dto";
 
+interface AddressFormData {
+  shipping: Partial<AddressCreateDTO>;
+  billing: Partial<AddressCreateDTO>;
+  useSameAddress: boolean;
+}
+
 /**
  * Page de passage de commande (checkout)
  * Processus en plusieurs étapes avec validation
@@ -28,7 +34,7 @@ export default function CheckoutPage() {
   const [customerData, setCustomerData] = useState<Partial<CustomerCreateDTO>>(
     {}
   );
-  const [addressData, setAddressData] = useState({
+  const [addressData, setAddressData] = useState<AddressFormData>({
     shipping: {} as Partial<AddressCreateDTO>,
     billing: {} as Partial<AddressCreateDTO>,
     useSameAddress: true,
@@ -48,7 +54,7 @@ export default function CheckoutPage() {
     setCurrentStep(2);
   };
 
-  const handleAddressNext = (data: any) => {
+  const handleAddressNext = (data: AddressFormData) => {
     setAddressData(data);
     setCurrentStep(3);
   };
