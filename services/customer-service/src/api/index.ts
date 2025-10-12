@@ -238,6 +238,64 @@ export class ApiRouter {
       this.customerController.getCustomerByEmail(req, res);
     });
 
+    // ===== ROUTES DE RÉFÉRENCE ADMIN =====
+    // Routes admin pour obtenir les données de référence (civilités, catégories, pays)
+    // Utilisées dans le backoffice
+    // IMPORTANT: Ces routes doivent être définies AVANT les routes avec paramètres
+    app.get(
+      "/api/admin/customers/civilities",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.getCivilities(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/customers/categories",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.getCategories(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/customers/countries",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.getCountries(req, res);
+      }
+    );
+
+    // Route de recherche de clients
+    app.get(
+      "/api/admin/customers/search",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        // Mapper le paramètre 'q' vers 'search' pour la compatibilité
+        if (req.query.q && !req.query.search) {
+          req.query.search = req.query.q;
+        }
+        this.customerController.listCustomers(req, res);
+      }
+    );
+
+    // Routes d'activation/désactivation
+    app.post(
+      "/api/admin/customers/:id/activate",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.activateCustomer(req, res);
+      }
+    );
+
+    app.post(
+      "/api/admin/customers/:id/deactivate",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.deactivateCustomer(req, res);
+      }
+    );
+
     // ===== ROUTES ADMIN DE CLIENTS =====
     app.get(
       "/api/admin/customers/:id",
@@ -272,60 +330,12 @@ export class ApiRouter {
       }
     );
 
-    // Route de recherche de clients
-    app.get(
-      "/api/admin/customers/search",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        // Mapper le paramètre 'q' vers 'search' pour la compatibilité
-        if (req.query.q && !req.query.search) {
-          req.query.search = req.query.q;
-        }
-        this.customerController.listCustomers(req, res);
-      }
-    );
-
-    // Routes d'activation/désactivation
     app.post(
-      "/api/admin/customers/:id/activate",
+      "/api/admin/customers",
       this.requireAuth,
+      this.validateRequest(schemas.customerCreateSchema),
       (req: Request, res: Response) => {
-        this.customerController.activateCustomer(req, res);
-      }
-    );
-
-    app.post(
-      "/api/admin/customers/:id/deactivate",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.customerController.deactivateCustomer(req, res);
-      }
-    );
-
-    // ===== ROUTES DE RÉFÉRENCE ADMIN =====
-    // Routes admin pour obtenir les données de référence (civilités, catégories, pays)
-    // Utilisées dans le backoffice
-    app.get(
-      "/api/admin/customers/civilities",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.customerController.getCivilities(req, res);
-      }
-    );
-
-    app.get(
-      "/api/admin/customers/categories",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.customerController.getCategories(req, res);
-      }
-    );
-
-    app.get(
-      "/api/admin/customers/countries",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.customerController.getCountries(req, res);
+        this.customerController.createCustomer(req, res);
       }
     );
 

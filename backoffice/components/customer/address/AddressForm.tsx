@@ -31,7 +31,7 @@ interface AddressFormProps {
  */
 const AddressForm: React.FC<AddressFormProps> = ({
   address,
-  countries,
+  countries = [],
   onSubmit,
   onCancel,
   isLoading,
@@ -186,20 +186,23 @@ const AddressForm: React.FC<AddressFormProps> = ({
         >
           {/* Type d'adresse */}
           <FormSelect
+            id="addressType"
             label="Type d'adresse"
             name="addressType"
             value={formData.addressType}
             onChange={handleChange}
             required
             error={errors.addressType}
-          >
-            <option value="shipping">Livraison</option>
-            <option value="billing">Facturation</option>
-          </FormSelect>
+            options={[
+              { value: "shipping", label: "Livraison" },
+              { value: "billing", label: "Facturation" },
+            ]}
+          />
 
           {/* Adresse */}
           <div style={{ gridColumn: "1 / -1" }}>
             <FormInput
+              id="address"
               label="Adresse"
               name="address"
               value={formData.address}
@@ -211,6 +214,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
 
           {/* Code postal */}
           <FormInput
+            id="postalCode"
             label="Code postal"
             name="postalCode"
             value={formData.postalCode}
@@ -221,6 +225,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
 
           {/* Ville */}
           <FormInput
+            id="city"
             label="Ville"
             name="city"
             value={formData.city}
@@ -231,27 +236,27 @@ const AddressForm: React.FC<AddressFormProps> = ({
 
           {/* Pays */}
           <FormSelect
+            id="countryId"
             label="Pays"
             name="countryId"
             value={formData.countryId.toString()}
             onChange={handleChange}
             required
             error={errors.countryId}
-          >
-            <option value="0">Sélectionner un pays</option>
-            {countries.map((country) => (
-              <option key={country.countryId} value={country.countryId}>
-                {country.countryName}
-              </option>
-            ))}
-          </FormSelect>
+            placeholder="Sélectionner un pays"
+            options={countries.map((country) => ({
+              value: country.countryId,
+              label: country.countryName,
+            }))}
+          />
 
           {/* Adresse par défaut */}
           <div style={{ gridColumn: "1 / -1" }}>
             <FormCheckbox
+              id="isDefault"
               label="Adresse par défaut"
               name="isDefault"
-              checked={formData.isDefault}
+              checked={formData.isDefault || false}
               onChange={handleChange}
             />
           </div>

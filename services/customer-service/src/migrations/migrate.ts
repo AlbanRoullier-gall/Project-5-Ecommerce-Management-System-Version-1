@@ -107,9 +107,12 @@ export async function runMigrations(): Promise<void> {
     console.error("❌ Échec de la migration :", error);
     throw error;
   } finally {
-    // Toujours libérer la connexion et fermer le pool
+    // Toujours libérer la connexion
     client.release();
-    await pool.end();
+    // Ne fermer le pool que si ce script est exécuté directement
+    if (require.main === module) {
+      await pool.end();
+    }
   }
 }
 
