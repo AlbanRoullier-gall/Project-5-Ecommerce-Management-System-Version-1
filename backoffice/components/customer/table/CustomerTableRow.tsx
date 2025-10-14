@@ -73,13 +73,6 @@ const CustomerTableRow: React.FC<CustomerTableRowProps> = ({
         </span>
       </td>
 
-      {/* Catégorie socio-professionnelle */}
-      <td style={{ padding: "1.5rem 1.25rem" }}>
-        <span style={{ color: "#6b7280", fontSize: "1rem" }}>
-          CSP ID: {customer.socioProfessionalCategoryId}
-        </span>
-      </td>
-
       {/* Statut */}
       <td style={{ padding: "1.5rem 1.25rem" }}>
         <StatusBadge

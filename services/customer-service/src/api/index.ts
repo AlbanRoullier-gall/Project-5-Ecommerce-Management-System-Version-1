@@ -358,6 +358,15 @@ export class ApiRouter {
     );
 
     // ===== ROUTES ADMIN D'ADRESSES =====
+    app.post(
+      "/api/admin/customers/:customerId/addresses",
+      this.requireAuth,
+      this.validateRequest(schemas.addressCreateSchema),
+      (req: Request, res: Response) => {
+        this.addressController.createAddress(req, res);
+      }
+    );
+
     app.get(
       "/api/admin/customers/:customerId/addresses",
       this.requireAuth,

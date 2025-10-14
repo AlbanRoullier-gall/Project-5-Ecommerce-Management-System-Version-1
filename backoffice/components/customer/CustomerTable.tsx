@@ -132,18 +132,6 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
                   letterSpacing: "0.5px",
                 }}
               >
-                Catégorie
-              </th>
-              <th
-                style={{
-                  padding: "1.5rem 1.25rem",
-                  textAlign: "left",
-                  fontSize: "1rem",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                }}
-              >
                 Statut
               </th>
               <th
