@@ -110,8 +110,21 @@ class CustomerAddressRepository {
         [customerId]
       );
 
+      // Map explicit snake_case DB columns to camelCase model fields
       return result.rows.map(
-        (row) => new CustomerAddress(row as CustomerAddressData)
+        (row) =>
+          new CustomerAddress({
+            addressId: row.address_id,
+            customerId: row.customer_id,
+            addressType: row.address_type,
+            address: row.address,
+            postalCode: row.postal_code,
+            city: row.city,
+            countryId: row.country_id,
+            isDefault: row.is_default,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+          } as CustomerAddressData)
       );
     } catch (error) {
       console.error("Error listing addresses by customer:", error);
