@@ -228,14 +228,27 @@ export class ApiRouter {
       }
     );
 
-    // Voir un client spécifique (publique)
-    app.get("/api/customers/:id", (req: Request, res: Response) => {
-      this.customerController.getCustomerById(req, res);
-    });
-
     // Récupérer un client par email (publique)
     app.get("/api/customers/by-email/:email", (req: Request, res: Response) => {
       this.customerController.getCustomerByEmail(req, res);
+    });
+
+    // Données de référence publiques (civilités, catégories, pays)
+    app.get("/api/customers/civilities", (req: Request, res: Response) => {
+      this.customerController.getCivilities(req, res);
+    });
+
+    app.get("/api/customers/categories", (req: Request, res: Response) => {
+      this.customerController.getCategories(req, res);
+    });
+
+    app.get("/api/customers/countries", (req: Request, res: Response) => {
+      this.customerController.getCountries(req, res);
+    });
+
+    // Voir un client spécifique (publique) — doit être après les routes spécifiques ci-dessus
+    app.get("/api/customers/:id", (req: Request, res: Response) => {
+      this.customerController.getCustomerById(req, res);
     });
 
     // ===== ROUTES DE RÉFÉRENCE ADMIN =====

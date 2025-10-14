@@ -2,8 +2,12 @@
  * Composant formulaire informations client
  */
 
-import React from "react";
-import { CustomerCreateDTO } from "../../dto";
+import React, { useEffect, useState } from "react";
+import {
+  CustomerCreateDTO,
+  CivilityDTO,
+  SocioProfessionalCategoryDTO,
+} from "../../dto";
 
 interface CheckoutCustomerFormProps {
   formData: Partial<CustomerCreateDTO>;
@@ -12,12 +16,49 @@ interface CheckoutCustomerFormProps {
   onBack?: () => void;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+
 export default function CheckoutCustomerForm({
   formData,
   onChange,
   onNext,
   onBack,
 }: CheckoutCustomerFormProps) {
+  const [civilities, setCivilities] = useState<CivilityDTO[]>([]);
+  const [categories, setCategories] = useState<SocioProfessionalCategoryDTO[]>(
+    []
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadRefs = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const [civRes, catRes] = await Promise.all([
+          fetch(`${API_URL}/api/customers/civilities`),
+          fetch(`${API_URL}/api/customers/categories`),
+        ]);
+
+        if (!civRes.ok) throw new Error("Impossible de charger les civilités");
+        if (!catRes.ok) throw new Error("Impossible de charger les catégories");
+
+        const civData = await civRes.json();
+        const catData = await catRes.json();
+
+        setCivilities(civData.civilities || civData);
+        setCategories(catData.categories || catData);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Erreur de chargement");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadRefs();
+  }, []);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -34,7 +75,6 @@ export default function CheckoutCustomerForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
     if (
       !formData.firstName ||
       !formData.lastName ||
@@ -102,7 +142,6 @@ export default function CheckoutCustomerForm({
             marginBottom: "2rem",
           }}
         >
-          {/* Civilité */}
           <div className="checkout-form-group">
             <label
               style={{
@@ -130,15 +169,17 @@ export default function CheckoutCustomerForm({
               }}
               onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
+              disabled={isLoading}
             >
               <option value="">Sélectionnez</option>
-              <option value="1">M.</option>
-              <option value="2">Mme</option>
-              <option value="3">Autre</option>
+              {civilities.map((civ) => (
+                <option key={civ.civilityId} value={civ.civilityId}>
+                  {civ.abbreviation}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* Catégorie socio-professionnelle */}
           <div className="checkout-form-group">
             <label
               style={{
@@ -167,22 +208,17 @@ export default function CheckoutCustomerForm({
               }}
               onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
+              disabled={isLoading}
             >
               <option value="">Sélectionnez</option>
-              <option value="1">Agriculteurs exploitants</option>
-              <option value="2">
-                Artisans, commerçants, chefs d'entreprise
-              </option>
-              <option value="3">Cadres et professions intellectuelles</option>
-              <option value="4">Professions intermédiaires</option>
-              <option value="5">Employés</option>
-              <option value="6">Ouvriers</option>
-              <option value="7">Retraités</option>
-              <option value="8">Autres</option>
+              {categories.map((cat) => (
+                <option key={cat.categoryId} value={cat.categoryId}>
+                  {cat.categoryName}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* Prénom */}
           <div className="checkout-form-group">
             <label
               style={{
@@ -215,7 +251,6 @@ export default function CheckoutCustomerForm({
             />
           </div>
 
-          {/* Nom */}
           <div className="checkout-form-group">
             <label
               style={{
@@ -248,7 +283,6 @@ export default function CheckoutCustomerForm({
             />
           </div>
 
-          {/* Email */}
           <div className="checkout-form-group">
             <label
               style={{
@@ -281,7 +315,6 @@ export default function CheckoutCustomerForm({
             />
           </div>
 
-          {/* Téléphone */}
           <div className="checkout-form-group">
             <label
               style={{
@@ -313,7 +346,6 @@ export default function CheckoutCustomerForm({
             />
           </div>
 
-          {/* Date de naissance */}
           <div className="checkout-form-group" style={{ gridColumn: "1 / -1" }}>
             <label
               style={{
@@ -345,7 +377,22 @@ export default function CheckoutCustomerForm({
           </div>
         </div>
 
-        {/* Boutons de navigation */}
+        {error && (
+          <div
+            style={{
+              background: "#fee",
+              border: "2px solid #fcc",
+              color: "#c33",
+              padding: "1rem",
+              borderRadius: "8px",
+              marginBottom: "1rem",
+              fontSize: "1.2rem",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         <div
           style={{
             display: "flex",
@@ -406,6 +453,7 @@ export default function CheckoutCustomerForm({
             onMouseOut={(e) => {
               e.currentTarget.style.transform = "translateY(0)";
             }}
+            disabled={isLoading}
           >
             Continuer
             <i

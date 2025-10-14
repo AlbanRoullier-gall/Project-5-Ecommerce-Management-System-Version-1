@@ -2,7 +2,7 @@
  * Composant récapitulatif de commande et paiement
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   CartPublicDTO,
   CartItemPublicDTO,
@@ -12,6 +12,7 @@ import {
   CompanyCreateDTO,
   OrderCreateDTO,
   ProductPublicDTO,
+  CountryDTO,
 } from "../../dto";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
@@ -42,8 +43,8 @@ export default function CheckoutOrderSummary({
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [products, setProducts] = useState<CartItemWithProduct[]>([]);
+  const [countries, setCountries] = useState<CountryDTO[]>([]);
 
-  // Charger les détails des produits
   useEffect(() => {
     const loadProducts = async () => {
       if (!cart?.items) return;
@@ -70,6 +71,36 @@ export default function CheckoutOrderSummary({
     loadProducts();
   }, [cart]);
 
+  useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/customers/countries`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setCountries(data.countries || data);
+      } catch (e) {
+        // silent fail, fallback below
+      }
+    };
+    loadCountries();
+  }, []);
+
+  const countryNameById = useMemo(() => {
+    const map = new Map<number, string>();
+    countries.forEach((c) => map.set(c.countryId, c.countryName));
+    return (id?: number) => map.get(id || 0) || "";
+  }, [countries]);
+
+  const inferredVatRate = useMemo(() => {
+    if (!cart || !cart.subtotal) return 21;
+    // If subtotal > 0, try to infer VAT rate: tax = subtotal * rate
+    const rate =
+      cart.tax && cart.subtotal
+        ? Math.round((cart.tax / cart.subtotal) * 100)
+        : 21;
+    return Number.isFinite(rate) && rate > 0 ? rate : 21;
+  }, [cart]);
+
   const handleCompleteOrder = async () => {
     if (!cart) {
       alert("Votre panier est vide");
@@ -80,24 +111,19 @@ export default function CheckoutOrderSummary({
     setError(null);
 
     try {
-      // 1. Vérifier si le client existe déjà par email
       let customerId: number;
       let customer: CustomerPublicDTO;
 
-      // Essayer de récupérer le client existant
       const emailEncoded = encodeURIComponent(customerData.email || "");
       const existingCustomerResponse = await fetch(
         `${API_URL}/api/customers/by-email/${emailEncoded}`
       );
 
       if (existingCustomerResponse.ok) {
-        // Client existe déjà, on utilise son ID
         const existingData = await existingCustomerResponse.json();
         customer = existingData.customer;
         customerId = customer.customerId;
-        console.log("✅ Client existant trouvé:", customerId);
       } else {
-        // Client n'existe pas, on le crée
         const customerResponse = await fetch(`${API_URL}/api/customers`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -114,17 +140,9 @@ export default function CheckoutOrderSummary({
         const customerResponseData = await customerResponse.json();
         customer = customerResponseData.customer;
         customerId = customer.customerId;
-        console.log("✅ Nouveau client créé:", customerId);
       }
 
-      // 1.5. Enregistrer les adresses dans le carnet d'adresses du client
       try {
-        console.log("📍 Données d'adresse reçues:", {
-          shippingAddress,
-          billingAddress,
-        });
-
-        // Créer l'adresse de livraison
         if (shippingAddress && shippingAddress.address) {
           const shippingAddressDTO = {
             addressType: "shipping" as const,
@@ -132,35 +150,16 @@ export default function CheckoutOrderSummary({
             postalCode: shippingAddress.postalCode,
             city: shippingAddress.city,
             countryId: shippingAddress.countryId,
-            isDefault: true, // Première adresse = adresse par défaut
+            isDefault: true,
           };
 
-          console.log("📤 Envoi adresse de livraison:", shippingAddressDTO);
-
-          const shippingAddressResponse = await fetch(
-            `${API_URL}/api/customers/${customerId}/addresses`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(shippingAddressDTO),
-            }
-          );
-
-          if (shippingAddressResponse.ok) {
-            const responseData = await shippingAddressResponse.json();
-            console.log("✅ Adresse de livraison enregistrée:", responseData);
-          } else {
-            const errorData = await shippingAddressResponse.json();
-            console.error(
-              "⚠️ Erreur lors de l'enregistrement de l'adresse de livraison:",
-              errorData
-            );
-          }
-        } else {
-          console.warn("⚠️ Adresse de livraison manquante ou incomplète");
+          await fetch(`${API_URL}/api/customers/${customerId}/addresses`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(shippingAddressDTO),
+          });
         }
 
-        // Créer l'adresse de facturation si différente
         if (
           billingAddress &&
           billingAddress.address &&
@@ -175,41 +174,16 @@ export default function CheckoutOrderSummary({
             isDefault: false,
           };
 
-          console.log("📤 Envoi adresse de facturation:", billingAddressDTO);
-
-          const billingAddressResponse = await fetch(
-            `${API_URL}/api/customers/${customerId}/addresses`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(billingAddressDTO),
-            }
-          );
-
-          if (billingAddressResponse.ok) {
-            const responseData = await billingAddressResponse.json();
-            console.log("✅ Adresse de facturation enregistrée:", responseData);
-          } else {
-            const errorData = await billingAddressResponse.json();
-            console.error(
-              "⚠️ Erreur lors de l'enregistrement de l'adresse de facturation:",
-              errorData
-            );
-          }
-        } else {
-          console.log(
-            "ℹ️ Même adresse pour facturation ou adresse de facturation manquante"
-          );
+          await fetch(`${API_URL}/api/customers/${customerId}/addresses`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(billingAddressDTO),
+          });
         }
       } catch (addressError) {
-        // Ne pas bloquer la commande si l'enregistrement des adresses échoue
-        console.error(
-          "❌ Erreur lors de l'enregistrement des adresses:",
-          addressError
-        );
+        console.error("Address book save error (non-blocking):", addressError);
       }
 
-      // 2. Créer l'entreprise si nécessaire
       let companyId = null;
       if (companyData && companyData.companyName) {
         const companyResponse = await fetch(
@@ -227,7 +201,6 @@ export default function CheckoutOrderSummary({
         }
       }
 
-      // 3. Créer la commande
       const orderData: OrderCreateDTO = {
         customerId,
         customerSnapshot: {
@@ -260,11 +233,10 @@ export default function CheckoutOrderSummary({
       const { order } = await orderResponse.json();
       const orderId = order.id;
 
-      // 4. Créer les articles de commande
       for (const item of cart.items) {
         const product = products.find((p) => p.productId === item.productId);
-        const vatRate = product?.product?.vatRate || 21; // Récupérer le taux de TVA du produit (en %)
-        const vatMultiplier = 1 + vatRate / 100; // Convertir en multiplicateur (21 -> 1.21)
+        const vatRate = product?.product?.vatRate || inferredVatRate;
+        const vatMultiplier = 1 + vatRate / 100;
 
         const orderItemData = {
           orderId,
@@ -273,7 +245,7 @@ export default function CheckoutOrderSummary({
           quantity: item.quantity,
           unitPriceHT: item.price / vatMultiplier,
           unitPriceTTC: item.price,
-          vatRate: vatRate, // Ajouter le taux de TVA (requis par le backend)
+          vatRate: vatRate,
           totalPriceHT: (item.price * item.quantity) / vatMultiplier,
           totalPriceTTC: item.price * item.quantity,
         };
@@ -285,7 +257,6 @@ export default function CheckoutOrderSummary({
         });
       }
 
-      // 5. Créer les adresses de commande
       const shippingAddressData = {
         orderId,
         addressType: "shipping",
@@ -296,7 +267,7 @@ export default function CheckoutOrderSummary({
           address: shippingAddress.address || "",
           city: shippingAddress.city || "",
           postalCode: shippingAddress.postalCode || "",
-          country: getCountryName(shippingAddress.countryId || 1),
+          country: countryNameById(shippingAddress.countryId),
           phone: customerData.phoneNumber || "",
         },
       };
@@ -307,7 +278,6 @@ export default function CheckoutOrderSummary({
         body: JSON.stringify(shippingAddressData),
       });
 
-      // Adresse de facturation (si différente)
       if (billingAddress.address !== shippingAddress.address) {
         const billingAddressData = {
           orderId,
@@ -319,7 +289,7 @@ export default function CheckoutOrderSummary({
             address: billingAddress.address || "",
             city: billingAddress.city || "",
             postalCode: billingAddress.postalCode || "",
-            country: getCountryName(billingAddress.countryId || 1),
+            country: countryNameById(billingAddress.countryId),
             phone: customerData.phoneNumber || "",
           },
         };
@@ -331,13 +301,12 @@ export default function CheckoutOrderSummary({
         });
       }
 
-      // 6. Créer le paiement Stripe
       const paymentItems = cart.items.map((item) => {
         const product = products.find((p) => p.productId === item.productId);
         return {
           name: product?.product?.name || "Produit",
           description: product?.product?.description || "",
-          price: Math.round(item.price * 100), // Convertir en centimes
+          price: Math.round(item.price * 100),
           quantity: item.quantity,
           currency: "eur",
         };
@@ -374,14 +343,9 @@ export default function CheckoutOrderSummary({
       const paymentResult = await paymentResponse.json();
       const url = paymentResult.payment?.url || paymentResult.url;
 
-      console.log("Payment result:", paymentResult);
-      console.log("Stripe Checkout URL:", url);
-
-      // Rediriger vers Stripe
       if (url) {
         window.location.href = url;
       } else {
-        console.error("No URL in payment response:", paymentResult);
         onSuccess(orderId);
       }
     } catch (err) {
@@ -389,17 +353,6 @@ export default function CheckoutOrderSummary({
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
       setIsProcessing(false);
     }
-  };
-
-  const getCountryName = (countryId: number): string => {
-    const countries: Record<number, string> = {
-      1: "Belgique",
-      2: "France",
-      3: "Luxembourg",
-      4: "Pays-Bas",
-      5: "Allemagne",
-    };
-    return countries[countryId] || "Belgique";
   };
 
   const getCivilityLabel = (civilityId: number): string => {
@@ -455,7 +408,6 @@ export default function CheckoutOrderSummary({
         </h2>
       </div>
 
-      {/* Message d'erreur */}
       {error && (
         <div
           style={{
@@ -479,9 +431,7 @@ export default function CheckoutOrderSummary({
       <div
         style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3rem" }}
       >
-        {/* Colonne gauche - Informations */}
         <div>
-          {/* Informations client */}
           <div style={{ marginBottom: "2.5rem" }}>
             <h3
               style={{
@@ -530,7 +480,6 @@ export default function CheckoutOrderSummary({
             </div>
           </div>
 
-          {/* Adresse de livraison */}
           <div style={{ marginBottom: "2.5rem" }}>
             <h3
               style={{
@@ -559,11 +508,10 @@ export default function CheckoutOrderSummary({
               <p>
                 {shippingAddress.postalCode} {shippingAddress.city}
               </p>
-              <p>{getCountryName(shippingAddress.countryId || 1)}</p>
+              <p>{countryNameById(shippingAddress.countryId)}</p>
             </div>
           </div>
 
-          {/* Adresse de facturation */}
           {billingAddress.address !== shippingAddress.address && (
             <div style={{ marginBottom: "2.5rem" }}>
               <h3
@@ -593,12 +541,11 @@ export default function CheckoutOrderSummary({
                 <p>
                   {billingAddress.postalCode} {billingAddress.city}
                 </p>
-                <p>{getCountryName(billingAddress.countryId || 1)}</p>
+                <p>{countryNameById(billingAddress.countryId)}</p>
               </div>
             </div>
           )}
 
-          {/* Informations entreprise */}
           {companyData && companyData.companyName && (
             <div style={{ marginBottom: "2.5rem" }}>
               <h3
@@ -639,7 +586,6 @@ export default function CheckoutOrderSummary({
           )}
         </div>
 
-        {/* Colonne droite - Récapitulatif panier */}
         <div>
           <h3
             style={{
@@ -656,7 +602,6 @@ export default function CheckoutOrderSummary({
             Votre commande
           </h3>
 
-          {/* Articles */}
           <div style={{ marginBottom: "2rem" }}>
             {products.map((item, index) => (
               <div
@@ -687,7 +632,6 @@ export default function CheckoutOrderSummary({
             ))}
           </div>
 
-          {/* Totaux */}
           <div
             style={{
               padding: "2rem",
@@ -719,7 +663,7 @@ export default function CheckoutOrderSummary({
                 color: "#666",
               }}
             >
-              <span>TVA (21%)</span>
+              <span>TVA ({inferredVatRate}%)</span>
               <span style={{ fontWeight: "600" }}>
                 {cart?.tax.toFixed(2)} €
               </span>
@@ -743,7 +687,6 @@ export default function CheckoutOrderSummary({
         </div>
       </div>
 
-      {/* Informations paiement */}
       <div
         style={{
           marginTop: "3rem",
@@ -776,7 +719,6 @@ export default function CheckoutOrderSummary({
         </p>
       </div>
 
-      {/* Boutons de navigation */}
       <div
         style={{
           display: "flex",

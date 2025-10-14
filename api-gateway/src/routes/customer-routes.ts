@@ -11,6 +11,9 @@ export const CUSTOMER_ROUTES: Record<string, ServiceName> = {
   // Routes spécifiques avec chemins fixes
   "/customers": "customer", // POST: Créer un client, GET: Liste des clients (redirige vers admin)
   "/customers/by-email/:email": "customer", // GET: Récupérer un client par email
+  "/customers/civilities": "customer", // GET: Liste des civilités (public)
+  "/customers/categories": "customer", // GET: Liste des catégories (public)
+  "/customers/countries": "customer", // GET: Liste des pays (public)
 
   // Routes avec paramètres (doivent être en dernier)
   "/customers/:id": "customer", // GET: Récupérer un client spécifique

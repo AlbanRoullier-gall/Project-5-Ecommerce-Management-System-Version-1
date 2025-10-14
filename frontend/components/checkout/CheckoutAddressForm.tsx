@@ -2,8 +2,8 @@
  * Composant formulaire adresses de livraison et facturation
  */
 
-import React, { useState } from "react";
-import { AddressCreateDTO } from "../../dto";
+import React, { useState, useEffect } from "react";
+import { AddressCreateDTO, CountryDTO } from "../../dto";
 
 interface AddressFormData {
   shipping: Partial<AddressCreateDTO>;
@@ -18,6 +18,8 @@ interface CheckoutAddressFormProps {
   onBack: () => void;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+
 export default function CheckoutAddressForm({
   formData,
   onChange,
@@ -27,6 +29,27 @@ export default function CheckoutAddressForm({
   const [useSameAddress, setUseSameAddress] = useState(
     formData.useSameAddress || false
   );
+  const [countries, setCountries] = useState<CountryDTO[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadCountries = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_URL}/api/customers/countries`);
+        if (!res.ok) throw new Error("Impossible de charger les pays");
+        const data = await res.json();
+        setCountries(data.countries || data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Erreur de chargement");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadCountries();
+  }, []);
 
   const handleShippingChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -72,7 +95,6 @@ export default function CheckoutAddressForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation adresse de livraison
     if (
       !formData.shipping.address ||
       !formData.shipping.city ||
@@ -85,7 +107,6 @@ export default function CheckoutAddressForm({
       return;
     }
 
-    // Validation adresse de facturation si différente
     if (!useSameAddress) {
       if (
         !formData.billing.address ||
@@ -111,7 +132,6 @@ export default function CheckoutAddressForm({
     ) => void
   ) => (
     <>
-      {/* Adresse */}
       <div className="checkout-form-group" style={{ gridColumn: "1 / -1" }}>
         <label
           style={{
@@ -144,7 +164,6 @@ export default function CheckoutAddressForm({
         />
       </div>
 
-      {/* Code postal */}
       <div className="checkout-form-group">
         <label
           style={{
@@ -177,7 +196,6 @@ export default function CheckoutAddressForm({
         />
       </div>
 
-      {/* Ville */}
       <div className="checkout-form-group">
         <label
           style={{
@@ -210,7 +228,6 @@ export default function CheckoutAddressForm({
         />
       </div>
 
-      {/* Pays */}
       <div className="checkout-form-group" style={{ gridColumn: "1 / -1" }}>
         <label
           style={{
@@ -238,13 +255,14 @@ export default function CheckoutAddressForm({
           }}
           onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
           onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
+          disabled={isLoading}
         >
           <option value="">Sélectionnez un pays</option>
-          <option value="1">Belgique</option>
-          <option value="2">France</option>
-          <option value="3">Luxembourg</option>
-          <option value="4">Pays-Bas</option>
-          <option value="5">Allemagne</option>
+          {countries.map((c) => (
+            <option key={c.countryId} value={c.countryId}>
+              {c.countryName}
+            </option>
+          ))}
         </select>
       </div>
     </>
@@ -295,7 +313,6 @@ export default function CheckoutAddressForm({
       </div>
 
       <form onSubmit={handleSubmit}>
-        {/* Adresse de livraison */}
         <div style={{ marginBottom: "3rem" }}>
           <h3
             style={{
@@ -326,7 +343,6 @@ export default function CheckoutAddressForm({
           </div>
         </div>
 
-        {/* Case à cocher pour utiliser la même adresse */}
         <div
           style={{
             marginBottom: "3rem",
@@ -360,7 +376,6 @@ export default function CheckoutAddressForm({
           </label>
         </div>
 
-        {/* Adresse de facturation (si différente) */}
         {!useSameAddress && (
           <div style={{ marginBottom: "2rem" }}>
             <h3
@@ -393,7 +408,22 @@ export default function CheckoutAddressForm({
           </div>
         )}
 
-        {/* Boutons de navigation */}
+        {error && (
+          <div
+            style={{
+              background: "#fee",
+              border: "2px solid #fcc",
+              color: "#c33",
+              padding: "1rem",
+              borderRadius: "8px",
+              marginBottom: "1rem",
+              fontSize: "1.2rem",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         <div
           style={{
             display: "flex",
@@ -452,6 +482,7 @@ export default function CheckoutAddressForm({
             onMouseOut={(e) => {
               e.currentTarget.style.transform = "translateY(0)";
             }}
+            disabled={isLoading}
           >
             Continuer
             <i
