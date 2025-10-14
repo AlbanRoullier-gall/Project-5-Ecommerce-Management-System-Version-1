@@ -95,14 +95,31 @@ export default class OrderRepository {
   async getOrderByIdWithJoins(id: number): Promise<Order | null> {
     try {
       const query = `
-        SELECT o.id, o.customer_id, o.customer_snapshot, o.total_amount_ht, o.total_amount_ttc, 
-               o.payment_method, o.notes, o.created_at, o.updated_at,
-               c.first_name, c.last_name, c.email
+        SELECT 
+          o.id, 
+          o.customer_id, 
+          o.customer_snapshot, 
+          o.total_amount_ht, 
+          o.total_amount_ttc, 
+          o.payment_method, 
+          o.notes, 
+          o.created_at, 
+          o.updated_at,
+          COALESCE(
+            o.customer_snapshot->>'first_name',
+            o.customer_snapshot->>'firstName',
+            o.customer_snapshot->>'firstname'
+          ) AS first_name,
+          COALESCE(
+            o.customer_snapshot->>'last_name',
+            o.customer_snapshot->>'lastName',
+            o.customer_snapshot->>'lastname'
+          ) AS last_name,
+          COALESCE(
+            o.customer_snapshot->>'email',
+            o.customer_snapshot->>'emailAddress'
+          ) AS email
         FROM orders o
-        LEFT JOIN LATERAL (
-          SELECT first_name, last_name, email 
-          FROM jsonb_to_record(o.customer_snapshot) AS t(first_name text, last_name text, email text)
-        ) c ON true
         WHERE o.id = $1
       `;
 
@@ -238,11 +255,33 @@ export default class OrderRepository {
         conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
       const query = `
-        SELECT id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
-               payment_method, notes, created_at, updated_at
-        FROM orders 
+        SELECT 
+          o.id, 
+          o.customer_id, 
+          o.customer_snapshot, 
+          o.total_amount_ht, 
+          o.total_amount_ttc, 
+          o.payment_method, 
+          o.notes, 
+          o.created_at, 
+          o.updated_at,
+          COALESCE(
+            o.customer_snapshot->>'first_name',
+            o.customer_snapshot->>'firstName',
+            o.customer_snapshot->>'firstname'
+          ) AS first_name,
+          COALESCE(
+            o.customer_snapshot->>'last_name',
+            o.customer_snapshot->>'lastName',
+            o.customer_snapshot->>'lastname'
+          ) AS last_name,
+          COALESCE(
+            o.customer_snapshot->>'email',
+            o.customer_snapshot->>'emailAddress'
+          ) AS email
+        FROM orders o
         ${whereClause}
-        ORDER BY created_at DESC
+        ORDER BY o.created_at DESC
         LIMIT $${++paramCount} OFFSET $${++paramCount}
       `;
 
@@ -258,7 +297,13 @@ export default class OrderRepository {
       );
 
       return {
-        orders: result.rows.map((row) => new Order(row as OrderData)),
+        orders: result.rows.map((row) => {
+          const order = new Order(row as OrderData);
+          order.customerFirstName = (row as any).first_name;
+          order.customerLastName = (row as any).last_name;
+          order.customerEmail = (row as any).email;
+          return order;
+        }),
         pagination: {
           page,
           limit,
