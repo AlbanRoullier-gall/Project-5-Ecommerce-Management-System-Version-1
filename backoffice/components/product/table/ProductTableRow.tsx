@@ -73,7 +73,9 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
           >
             {product.images && product.images.length > 0 ? (
               <img
-                src={`http://localhost:3020/${product.images[0].filePath}`}
+                src={`${
+                  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020"
+                }/api/images/${product.images[0].id}`}
                 alt={product.name}
                 style={{
                   width: "50px",

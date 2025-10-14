@@ -174,6 +174,9 @@ export const handleProxyRequest = async (
     }
 
     // 4. Faire la requête vers le service
+    const expectBinaryResponse =
+      req.path.startsWith("/api/images/") || req.path.startsWith("/uploads/");
+
     const response = await axios({
       method: req.method,
       url: targetUrl,
@@ -183,13 +186,50 @@ export const handleProxyRequest = async (
       timeout: 30000,
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
+      responseType: expectBinaryResponse ? "arraybuffer" : "json",
     });
 
     // 5. Retourner la réponse
     console.log(
       `✅ ${req.method} ${req.path} → ${service} (${response.status})`
     );
-    res.status(response.status).json(response.data);
+    const contentType = (response.headers["content-type"] as string) || "";
+    const isJson = contentType.includes("application/json");
+    const isImage = contentType.startsWith("image/");
+    const isBinary = !isJson && (expectBinaryResponse || isImage);
+
+    if (isBinary) {
+      // Propager quelques headers utiles
+      if (contentType) {
+        res.set("Content-Type", contentType);
+      }
+      const cacheControl = response.headers["cache-control"];
+      if (cacheControl) {
+        res.set("Cache-Control", cacheControl);
+      }
+      res.status(response.status).send(response.data);
+    } else if (isJson) {
+      // Lorsque responseType=arraybuffer mais le service renvoie du JSON (erreur), décoder le buffer
+      const data = response.data as any;
+      if (Buffer.isBuffer(data)) {
+        try {
+          const text = data.toString("utf8");
+          const parsed = JSON.parse(text);
+          res.status(response.status).json(parsed);
+        } catch {
+          res
+            .status(response.status)
+            .set("Content-Type", "application/json")
+            .send(data.toString("utf8"));
+        }
+      } else {
+        res.status(response.status).json(response.data);
+      }
+    } else {
+      // Par défaut, relayer tel quel (texte ou autre)
+      if (contentType) res.set("Content-Type", contentType);
+      res.status(response.status).send(response.data);
+    }
   } catch (error: any) {
     console.log(`❌ ${req.method} ${req.path} → ${service} (500)`);
 
