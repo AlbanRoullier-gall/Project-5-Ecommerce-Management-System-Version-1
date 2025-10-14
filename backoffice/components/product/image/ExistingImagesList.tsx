@@ -30,6 +30,7 @@ const ExistingImagesList: React.FC<ExistingImagesListProps> = ({
   imagesToDelete,
   onMarkForDeletion,
 }) => {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
   // Filtrer les images non marquées pour suppression
   const visibleImages = images.filter(
     (img) => !imagesToDelete.includes(img.id)
@@ -66,7 +67,7 @@ const ExistingImagesList: React.FC<ExistingImagesListProps> = ({
           >
             {/* Image */}
             <img
-              src={`http://localhost:3020/${img.filePath}`}
+              src={`${API_URL}/api/images/${img.id}`}
               alt={img.filename}
               style={{
                 width: "100%",
