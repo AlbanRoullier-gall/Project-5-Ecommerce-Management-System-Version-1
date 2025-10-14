@@ -151,4 +151,27 @@ export class CreditNoteController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * List all credit notes (admin)
+   */
+  async listCreditNotes(req: Request, res: Response): Promise<void> {
+    try {
+      const options = {
+        page: parseInt(req.query.page as string) || 1,
+        limit: parseInt(req.query.limit as string) || 10,
+        ...(req.query.customerId && {
+          customerId: parseInt(req.query.customerId as string),
+        }),
+        startDate: (req.query.startDate as string) || undefined,
+        endDate: (req.query.endDate as string) || undefined,
+      } as any;
+
+      const result = await this.orderService.listCreditNotes(options);
+      res.json(ResponseMapper.success(result));
+    } catch (error: any) {
+      console.error("List credit notes error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

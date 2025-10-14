@@ -337,6 +337,15 @@ export default class OrderService {
   }
 
   /**
+   * Lister les avoirs avec pagination/filtre (admin)
+   */
+  async listCreditNotes(
+    options: OrderListOptions = {}
+  ): Promise<{ creditNotes: CreditNote[]; pagination: any }> {
+    return await this.creditNoteRepository.listAll(options);
+  }
+
+  /**
    * Récupérer un avoir par ID
    */
   async getCreditNoteById(id: number): Promise<CreditNote | null> {

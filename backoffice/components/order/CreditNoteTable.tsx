@@ -85,10 +85,10 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                 <td style={{ padding: "0.75rem 1rem" }}>{c.orderId}</td>
                 <td style={{ padding: "0.75rem 1rem" }}>{c.reason}</td>
                 <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
-                  {c.totalAmountHT.toFixed(2)} €
+                  {(Number(c.totalAmountHT) || 0).toFixed(2)} €
                 </td>
                 <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
-                  {c.totalAmountTTC.toFixed(2)} €
+                  {(Number(c.totalAmountTTC) || 0).toFixed(2)} €
                 </td>
                 <td style={{ padding: "0.75rem 1rem" }}>
                   {c.issueDate

@@ -382,7 +382,7 @@ export class ApiRouter {
       "/api/admin/credit-notes",
       this.requireAuth,
       (req: Request, res: Response) => {
-        this.creditNoteController.getCreditNotesByCustomerId(req, res);
+        this.creditNoteController.listCreditNotes(req, res);
       }
     );
 

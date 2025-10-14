@@ -88,10 +88,10 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, isLoading }) => {
                     {o.customerEmail || "—"}
                   </td>
                   <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
-                    {o.totalAmountHT.toFixed(2)} €
+                    {(Number(o.totalAmountHT) || 0).toFixed(2)} €
                   </td>
                   <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
-                    {o.totalAmountTTC.toFixed(2)} €
+                    {(Number(o.totalAmountTTC) || 0).toFixed(2)} €
                   </td>
                   <td style={{ padding: "0.75rem 1rem" }}>
                     {o.paymentMethod || "—"}

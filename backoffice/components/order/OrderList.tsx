@@ -36,11 +36,21 @@ const OrderList: React.FC = () => {
       if (!ordersRes.ok) throw new Error("Erreur chargement commandes");
       if (!creditNotesRes.ok) throw new Error("Erreur chargement avoirs");
 
-      const ordersData = await ordersRes.json();
-      const creditNotesData = await creditNotesRes.json();
+      const ordersJson = await ordersRes.json();
+      const creditNotesJson = await creditNotesRes.json();
 
-      setOrders(ordersData.orders || ordersData || []);
-      setCreditNotes(creditNotesData.creditNotes || creditNotesData || []);
+      const ordersList =
+        ordersJson?.data?.orders ??
+        ordersJson?.orders ??
+        (Array.isArray(ordersJson) ? ordersJson : []);
+
+      const creditNotesList =
+        creditNotesJson?.data?.creditNotes ??
+        creditNotesJson?.creditNotes ??
+        (Array.isArray(creditNotesJson) ? creditNotesJson : []);
+
+      setOrders(ordersList);
+      setCreditNotes(creditNotesList);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur lors du chargement");
     } finally {
