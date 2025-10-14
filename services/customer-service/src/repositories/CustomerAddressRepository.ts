@@ -254,6 +254,37 @@ class CustomerAddressRepository {
       throw new Error("Failed to delete address");
     }
   }
+
+  /**
+   * Unset default for all addresses of a customer (optionally excluding one)
+   * @param {number} customerId Customer ID
+   * @param {number} [excludeAddressId] Address ID to exclude from update
+   */
+  async unsetDefaultForCustomer(
+    customerId: number,
+    excludeAddressId?: number
+  ): Promise<void> {
+    try {
+      if (excludeAddressId) {
+        await this.pool.query(
+          `UPDATE customer_addresses
+           SET is_default = false
+           WHERE customer_id = $1 AND address_id <> $2 AND is_default = true`,
+          [customerId, excludeAddressId]
+        );
+      } else {
+        await this.pool.query(
+          `UPDATE customer_addresses
+           SET is_default = false
+           WHERE customer_id = $1 AND is_default = true`,
+          [customerId]
+        );
+      }
+    } catch (error) {
+      console.error("Error unsetting default addresses:", error);
+      throw new Error("Failed to unset default addresses");
+    }
+  }
 }
 
 export default CustomerAddressRepository;

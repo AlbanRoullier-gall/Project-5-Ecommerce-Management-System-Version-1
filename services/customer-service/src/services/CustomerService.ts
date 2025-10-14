@@ -285,20 +285,9 @@ class CustomerService {
         throw new Error("Customer not found");
       }
 
-      // If this is set as default, unset other default addresses of the same type
+      // If this is set as default, unset other default addresses for the customer
       if (addressData.isDefault) {
-        const existingAddresses = await this.addressRepository.listByCustomer(
-          customerId
-        );
-        for (const address of existingAddresses) {
-          if (
-            address.addressType === addressData.addressType &&
-            address.isDefault
-          ) {
-            address.isDefault = false;
-            await this.addressRepository.update(address);
-          }
-        }
+        await this.addressRepository.unsetDefaultForCustomer(customerId);
       }
 
       // Create address entity
@@ -330,21 +319,12 @@ class CustomerService {
         throw new Error("Address not found");
       }
 
-      // If this is set as default, unset other default addresses of the same type
+      // If this is set as default, unset other default addresses for the customer
       if (addressData.isDefault && !address.isDefault) {
-        const existingAddresses = await this.addressRepository.listByCustomer(
-          address.customerId!
+        await this.addressRepository.unsetDefaultForCustomer(
+          address.customerId!,
+          addressId
         );
-        for (const existingAddress of existingAddresses) {
-          if (
-            existingAddress.addressType === address.addressType &&
-            existingAddress.addressId !== addressId &&
-            existingAddress.isDefault
-          ) {
-            existingAddress.isDefault = false;
-            await this.addressRepository.update(existingAddress);
-          }
-        }
       }
 
       // Update address entity
