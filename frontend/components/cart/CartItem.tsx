@@ -119,7 +119,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
             height: "150px",
             borderRadius: "12px",
             overflow: "hidden",
-            background: "#f5f5f5",
+            background: "#ffffff",
           }}
         >
           <img
@@ -128,7 +128,8 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
             style={{
               width: "100%",
               height: "100%",
-              objectFit: "cover",
+              objectFit: "contain",
+              backgroundColor: "#fff",
             }}
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/images/placeholder.svg";

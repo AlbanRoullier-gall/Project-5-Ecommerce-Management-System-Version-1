@@ -163,7 +163,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             overflow: "hidden",
             border: "none",
             position: "relative",
-            background: "#f3f4f6",
+            background: "#ffffff",
           }}
         >
           <img
@@ -172,7 +172,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             style={{
               width: "100%",
               height: "200px",
-              objectFit: "cover",
+              objectFit: "contain",
+              backgroundColor: "#fff",
               transition: "transform 0.4s ease",
               transform: isHovered ? "scale(1.05)" : "scale(1)",
             }}

@@ -408,7 +408,8 @@ export default function ProductDetailPage() {
                     style={{
                       width: "100%",
                       height: "550px",
-                      objectFit: "cover",
+                      objectFit: "contain",
+                      backgroundColor: "#fff",
                       transition: "transform 0.4s ease",
                       transform: imageHovered ? "scale(1.02)" : "scale(1)",
                     }}
@@ -425,7 +426,8 @@ export default function ProductDetailPage() {
                     style={{
                       width: "100%",
                       height: "550px",
-                      objectFit: "cover",
+                      objectFit: "contain",
+                      backgroundColor: "#fff",
                     }}
                   />
                 )}
