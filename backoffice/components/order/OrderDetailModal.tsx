@@ -131,10 +131,10 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
       <div
         style={{
           width: "100%",
-          maxWidth: 720,
+          maxWidth: 860,
           background: "white",
           borderRadius: 16,
-          border: "1px solid #e5e7eb",
+          border: "2px solid rgba(19, 104, 106, 0.1)",
           boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
           overflow: "hidden",
         }}
@@ -146,14 +146,21 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             alignItems: "center",
             justifyContent: "space-between",
             padding: "1.25rem 1.5rem",
-            background: "#f9fafb",
+            background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
             borderBottom: "1px solid #e5e7eb",
           }}
         >
-          <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#111827" }}>
+          <h3
+            style={{
+              margin: 0,
+              fontSize: "1.35rem",
+              color: "white",
+              fontWeight: 700,
+            }}
+          >
             Détail de la commande {order ? `#${order.id}` : ""}
           </h3>
-          <Button variant="secondary" onClick={onClose} icon="fas fa-times">
+          <Button variant="gold" onClick={onClose} icon="fas fa-times">
             Fermer
           </Button>
         </div>
@@ -385,14 +392,24 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                         width: "100%",
                         borderCollapse: "separate",
                         borderSpacing: 0,
+                        fontSize: "1rem",
                       }}
                     >
-                      <thead>
-                        <tr style={{ background: "#f9fafb", color: "#374151" }}>
+                      <thead
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                          color: "white",
+                        }}
+                      >
+                        <tr>
                           <th
                             style={{
                               textAlign: "left",
-                              padding: "0.5rem 0.75rem",
+                              padding: "1rem 1.25rem",
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
                             }}
                           >
                             Produit
@@ -400,7 +417,10 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           <th
                             style={{
                               textAlign: "right",
-                              padding: "0.5rem 0.75rem",
+                              padding: "1rem 1.25rem",
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
                             }}
                           >
                             Qté
@@ -408,7 +428,10 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           <th
                             style={{
                               textAlign: "right",
-                              padding: "0.5rem 0.75rem",
+                              padding: "1rem 1.25rem",
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
                             }}
                           >
                             Prix unit. HT
@@ -416,7 +439,10 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           <th
                             style={{
                               textAlign: "right",
-                              padding: "0.5rem 0.75rem",
+                              padding: "1rem 1.25rem",
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
                             }}
                           >
                             TVA
@@ -424,7 +450,10 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           <th
                             style={{
                               textAlign: "right",
-                              padding: "0.5rem 0.75rem",
+                              padding: "1rem 1.25rem",
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
                             }}
                           >
                             Total HT
@@ -432,7 +461,10 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           <th
                             style={{
                               textAlign: "right",
-                              padding: "0.5rem 0.75rem",
+                              padding: "1rem 1.25rem",
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
                             }}
                           >
                             Total TTC

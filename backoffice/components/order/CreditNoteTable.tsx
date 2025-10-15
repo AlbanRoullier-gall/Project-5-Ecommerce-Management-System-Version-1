@@ -13,92 +13,171 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
   return (
     <div
       style={{
-        overflowX: "auto",
-        borderRadius: 12,
-        border: "1px solid #e5e7eb",
+        background: "white",
+        borderRadius: 16,
+        overflow: "hidden",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+        border: "2px solid rgba(19, 104, 106, 0.1)",
       }}
     >
-      <table
-        style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}
-      >
-        <thead>
-          <tr style={{ background: "#f9fafb", color: "#374151" }}>
-            <th style={{ textAlign: "left", padding: "0.75rem 1rem" }}>#</th>
-            <th style={{ textAlign: "left", padding: "0.75rem 1rem" }}>
-              Client
-            </th>
-            <th style={{ textAlign: "left", padding: "0.75rem 1rem" }}>
-              Commande
-            </th>
-            <th style={{ textAlign: "left", padding: "0.75rem 1rem" }}>
-              Motif
-            </th>
-            <th style={{ textAlign: "right", padding: "0.75rem 1rem" }}>
-              Total HT
-            </th>
-            <th style={{ textAlign: "right", padding: "0.75rem 1rem" }}>
-              Total TTC
-            </th>
-            <th style={{ textAlign: "left", padding: "0.75rem 1rem" }}>
-              Émise
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {isLoading && (
+      <div style={{ overflowX: "auto" }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "separate",
+            borderSpacing: 0,
+            fontSize: "1rem",
+          }}
+        >
+          <thead
+            style={{
+              background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+              color: "white",
+            }}
+          >
             <tr>
-              <td
-                colSpan={7}
+              <th
                 style={{
-                  padding: "1rem",
-                  textAlign: "center",
-                  color: "#6b7280",
+                  padding: "1.25rem 1.25rem",
+                  textAlign: "left",
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
                 }}
               >
-                Chargement...
-              </td>
-            </tr>
-          )}
-          {!isLoading && creditNotes.length === 0 && (
-            <tr>
-              <td
-                colSpan={7}
+                #
+              </th>
+              <th
                 style={{
-                  padding: "1rem",
-                  textAlign: "center",
-                  color: "#6b7280",
+                  padding: "1.25rem 1.25rem",
+                  textAlign: "left",
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
                 }}
               >
-                Aucun avoir trouvé
-              </td>
+                Client
+              </th>
+              <th
+                style={{
+                  padding: "1.25rem 1.25rem",
+                  textAlign: "left",
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                Commande
+              </th>
+              <th
+                style={{
+                  padding: "1.25rem 1.25rem",
+                  textAlign: "left",
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                Motif
+              </th>
+              <th
+                style={{
+                  padding: "1.25rem 1.25rem",
+                  textAlign: "right",
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                Total HT
+              </th>
+              <th
+                style={{
+                  padding: "1.25rem 1.25rem",
+                  textAlign: "right",
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                Total TTC
+              </th>
+              <th
+                style={{
+                  padding: "1.25rem 1.25rem",
+                  textAlign: "left",
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                Émise
+              </th>
             </tr>
-          )}
-          {!isLoading &&
-            creditNotes.map((c) => (
-              <tr key={c.id} style={{ borderTop: "1px solid #f3f4f6" }}>
-                <td style={{ padding: "0.75rem 1rem", color: "#111827" }}>
-                  {c.id}
-                </td>
-                <td style={{ padding: "0.75rem 1rem", color: "#111827" }}>
-                  {c.customerId}
-                </td>
-                <td style={{ padding: "0.75rem 1rem" }}>{c.orderId}</td>
-                <td style={{ padding: "0.75rem 1rem" }}>{c.reason}</td>
-                <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
-                  {(Number(c.totalAmountHT) || 0).toFixed(2)} €
-                </td>
-                <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
-                  {(Number(c.totalAmountTTC) || 0).toFixed(2)} €
-                </td>
-                <td style={{ padding: "0.75rem 1rem" }}>
-                  {c.issueDate
-                    ? new Date(c.issueDate).toLocaleDateString()
-                    : "—"}
+          </thead>
+          <tbody>
+            {isLoading && (
+              <tr>
+                <td
+                  colSpan={7}
+                  style={{
+                    padding: "1rem",
+                    textAlign: "center",
+                    color: "#6b7280",
+                  }}
+                >
+                  Chargement...
                 </td>
               </tr>
-            ))}
-        </tbody>
-      </table>
+            )}
+            {!isLoading && creditNotes.length === 0 && (
+              <tr>
+                <td
+                  colSpan={7}
+                  style={{
+                    padding: "1rem",
+                    textAlign: "center",
+                    color: "#6b7280",
+                  }}
+                >
+                  Aucun avoir trouvé
+                </td>
+              </tr>
+            )}
+            {!isLoading &&
+              creditNotes.map((c) => (
+                <tr key={c.id} style={{ borderTop: "1px solid #f3f4f6" }}>
+                  <td style={{ padding: "0.75rem 1rem", color: "#111827" }}>
+                    {c.id}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", color: "#111827" }}>
+                    {c.customerId}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem" }}>{c.orderId}</td>
+                  <td style={{ padding: "0.75rem 1rem" }}>{c.reason}</td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
+                    {(Number(c.totalAmountHT) || 0).toFixed(2)} €
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
+                    {(Number(c.totalAmountTTC) || 0).toFixed(2)} €
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem" }}>
+                    {c.issueDate
+                      ? new Date(c.issueDate).toLocaleDateString()
+                      : "—"}
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
