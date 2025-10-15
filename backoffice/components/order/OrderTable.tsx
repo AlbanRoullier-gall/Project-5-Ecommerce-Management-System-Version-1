@@ -196,13 +196,32 @@ const OrderTable: React.FC<OrderTableProps> = ({
                       {new Date(o.createdAt).toLocaleString()}
                     </td>
                     <td style={{ padding: "0.75rem 1rem" }}>
-                      <Button
-                        variant="secondary"
-                        onClick={() => onView && onView(o.id)}
-                        icon="fas fa-eye"
-                      >
-                        Voir
-                      </Button>
+                      <div style={{ display: "flex", gap: "0.75rem" }}>
+                        <button
+                          onClick={() => onView && onView(o.id)}
+                          title="Voir"
+                          style={{
+                            padding: "0.75rem",
+                            border: "none",
+                            background: "none",
+                            cursor: "pointer",
+                            color: "#3b82f6",
+                            transition: "all 0.2s ease",
+                            borderRadius: "8px",
+                            fontSize: "1.2rem",
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+                            e.currentTarget.style.transform = "scale(1.1)";
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.background = "none";
+                            e.currentTarget.style.transform = "scale(1)";
+                          }}
+                        >
+                          <i className="fas fa-eye"></i>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

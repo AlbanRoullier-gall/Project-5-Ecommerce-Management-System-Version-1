@@ -208,25 +208,61 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                       {(Number(c.totalAmountTTC) || 0).toFixed(2)} €
                     </td>
                     <td style={{ padding: "0.75rem 1rem" }}>{emitted}</td>
-                    <td style={{ padding: "0.75rem 1rem", display: "flex", gap: 8 }}>
-                      {onView && (
-                        <Button
-                          variant="secondary"
-                          icon="fas fa-eye"
-                          onClick={() => onView(c.id)}
-                        >
-                          Voir
-                        </Button>
-                      )}
-                      {onDelete && (
-                        <Button
-                          variant="danger"
-                          icon="fas fa-trash"
-                          onClick={() => onDelete(c.id)}
-                        >
-                          Supprimer
-                        </Button>
-                      )}
+                    <td style={{ padding: "0.75rem 1rem" }}>
+                      <div style={{ display: "flex", gap: "0.75rem" }}>
+                        {onView && (
+                          <button
+                            onClick={() => onView(c.id)}
+                            title="Voir"
+                            style={{
+                              padding: "0.75rem",
+                              border: "none",
+                              background: "none",
+                              cursor: "pointer",
+                              color: "#3b82f6",
+                              transition: "all 0.2s ease",
+                              borderRadius: "8px",
+                              fontSize: "1.2rem",
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+                              e.currentTarget.style.transform = "scale(1.1)";
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.background = "none";
+                              e.currentTarget.style.transform = "scale(1)";
+                            }}
+                          >
+                            <i className="fas fa-eye"></i>
+                          </button>
+                        )}
+                        {onDelete && (
+                          <button
+                            onClick={() => onDelete(c.id)}
+                            title="Supprimer"
+                            style={{
+                              padding: "0.75rem",
+                              border: "none",
+                              background: "none",
+                              cursor: "pointer",
+                              color: "#ef4444",
+                              transition: "all 0.2s ease",
+                              borderRadius: "8px",
+                              fontSize: "1.2rem",
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                              e.currentTarget.style.transform = "scale(1.1)";
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.background = "none";
+                              e.currentTarget.style.transform = "scale(1)";
+                            }}
+                          >
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

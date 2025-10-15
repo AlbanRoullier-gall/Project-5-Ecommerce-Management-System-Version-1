@@ -127,13 +127,30 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
           </h3>
           <div style={{ display: "flex", gap: "0.5rem" }}>
             {onDelete && (
-              <Button
-                variant="danger"
-                icon="fas fa-trash"
+              <button
                 onClick={() => onDelete(creditNote.id)}
+                title="Supprimer"
+                style={{
+                  padding: "0.75rem",
+                  border: "none",
+                  background: "none",
+                  cursor: "pointer",
+                  color: "#ef4444",
+                  transition: "all 0.2s ease",
+                  borderRadius: "8px",
+                  fontSize: "1.2rem",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                  e.currentTarget.style.transform = "scale(1.1)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = "none";
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
               >
-                Supprimer
-              </Button>
+                <i className="fas fa-trash"></i>
+              </button>
             )}
             <Button variant="gold" onClick={onClose} icon="fas fa-times">
               Fermer
