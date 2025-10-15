@@ -167,18 +167,21 @@ export default class CreditNoteItemRepository {
   ): Promise<CreditNoteItem> {
     const query = `
       INSERT INTO credit_note_items (
-        credit_note_id, product_id, quantity, unit_price_ht, 
-        unit_price_ttc, total_price_ht, total_price_ttc
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        credit_note_id, product_id, product_name, quantity, unit_price_ht,
+        unit_price_ttc, vat_rate, total_price_ht, total_price_ttc
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `;
 
     const values = [
       creditNoteItemData.credit_note_id,
       creditNoteItemData.product_id,
+      // product_name is optional in model; default to null
+      (creditNoteItemData as any).product_name ?? null,
       creditNoteItemData.quantity,
       creditNoteItemData.unit_price_ht,
       creditNoteItemData.unit_price_ttc,
+      creditNoteItemData.vat_rate,
       creditNoteItemData.total_price_ht,
       creditNoteItemData.total_price_ttc,
     ];

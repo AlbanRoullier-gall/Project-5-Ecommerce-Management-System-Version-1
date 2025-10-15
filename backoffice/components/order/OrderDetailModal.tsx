@@ -5,6 +5,7 @@ import {
   OrderAddressPublicDTO,
 } from "../../dto";
 import Button from "../product/ui/Button";
+import CreateCreditNoteModal from "./CreateCreditNoteModal";
 
 interface OrderDetailModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   const [addresses, setAddresses] = useState<OrderAddressPublicDTO[]>([]);
   const [addressesLoading, setAddressesLoading] = useState(false);
   const [addressesError, setAddressesError] = useState<string | null>(null);
+  const [isCreateCreditNoteOpen, setIsCreateCreditNoteOpen] = useState(false);
 
   useEffect(() => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
@@ -160,9 +162,19 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           >
             Détail de la commande {order ? `#${order.id}` : ""}
           </h3>
-          <Button variant="gold" onClick={onClose} icon="fas fa-times">
-            Fermer
-          </Button>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <Button
+              variant="primary"
+              icon="fas fa-file-invoice-dollar"
+              onClick={() => setIsCreateCreditNoteOpen(true)}
+              disabled={!order}
+            >
+              Créer un avoir
+            </Button>
+            <Button variant="gold" onClick={onClose} icon="fas fa-times">
+              Fermer
+            </Button>
+          </div>
         </div>
 
         {/* Body */}
@@ -613,6 +625,16 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           )}
         </div>
       </div>
+      {/* Create Credit Note Modal */}
+      <CreateCreditNoteModal
+        isOpen={isCreateCreditNoteOpen}
+        order={order}
+        onClose={() => setIsCreateCreditNoteOpen(false)}
+        onCreated={() => {
+          // No-op: parent page will refresh the credit notes list
+          setIsCreateCreditNoteOpen(false);
+        }}
+      />
     </div>
   );
 };

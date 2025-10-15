@@ -159,6 +159,7 @@ export class ApiRouter {
       creditNoteItemCreateSchema: Joi.object({
         creditNoteId: Joi.number().integer().positive().required(),
         productId: Joi.number().integer().positive().required(),
+        productName: Joi.string().optional(),
         quantity: Joi.number().integer().positive().required(),
         unitPriceHT: Joi.number().positive().required(),
         unitPriceTTC: Joi.number().positive().required(),

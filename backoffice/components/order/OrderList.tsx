@@ -4,8 +4,10 @@ import Button from "../product/ui/Button";
 import ErrorAlert from "../product/ui/ErrorAlert";
 import OrderTable from "./OrderTable";
 import CreditNoteTable from "./CreditNoteTable";
+import CreditNoteDetailModal from "./CreditNoteDetailModal";
 import { OrderPublicDTO, CreditNotePublicDTO } from "../../dto";
 import OrderDetailModal from "./OrderDetailModal";
+import CreateCreditNoteModal from "./CreateCreditNoteModal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
@@ -19,6 +21,9 @@ const OrderList: React.FC = () => {
   const [detailOrder, setDetailOrder] = useState<OrderPublicDTO | null>(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const [isCreateCreditNoteOpen, setIsCreateCreditNoteOpen] = useState(false);
+  const [isCreditNoteDetailOpen, setIsCreditNoteDetailOpen] = useState(false);
+  const [detailCreditNote, setDetailCreditNote] = useState<any | null>(null);
 
   const getAuthToken = () => localStorage.getItem("auth_token");
 
@@ -93,6 +98,26 @@ const OrderList: React.FC = () => {
     }
   };
 
+  const handleCreditNoteCreated = async () => {
+    // Refresh credit notes list only
+    try {
+      const token = getAuthToken();
+      if (!token) return;
+      const res = await fetch(`${API_URL}/api/admin/credit-notes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const json = await res.json();
+      const creditNotesList =
+        json?.data?.creditNotes ??
+        json?.creditNotes ??
+        (Array.isArray(json) ? json : []);
+      setCreditNotes(creditNotesList);
+    } catch (e) {
+      // Silent refresh failure
+    }
+  };
+
   const filteredOrders = useMemo(() => {
     if (!search) return orders;
     const term = search.toLowerCase();
@@ -140,14 +165,112 @@ const OrderList: React.FC = () => {
       </div>
 
       <PageHeader title="Avoirs" />
-      <CreditNoteTable creditNotes={creditNotes} isLoading={isLoading} />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "0.75rem",
+        }}
+      >
+        <div />
+        <Button
+          variant="primary"
+          icon="fas fa-file-invoice-dollar"
+          onClick={() => setIsCreateCreditNoteOpen(true)}
+        >
+          Créer un avoir
+        </Button>
+      </div>
+      <CreditNoteTable
+        creditNotes={creditNotes}
+        isLoading={isLoading}
+        orders={orders}
+        onView={async (creditNoteId) => {
+          const token = getAuthToken();
+          if (!token) return;
+          try {
+            const res = await fetch(
+              `${API_URL}/api/admin/credit-notes/${creditNoteId}`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (!res.ok)
+              throw new Error("Erreur lors du chargement de l'avoir");
+            const json = await res.json();
+            const creditNote =
+              json?.data?.creditNote || json?.creditNote || json;
+            setDetailCreditNote(creditNote);
+            setIsCreditNoteDetailOpen(true);
+          } catch (e) {
+            // noop
+          }
+        }}
+        onDelete={async (creditNoteId) => {
+          if (!window.confirm("Supprimer cet avoir ?")) return;
+          const token = getAuthToken();
+          if (!token) return;
+          try {
+            const res = await fetch(
+              `${API_URL}/api/admin/credit-notes/${creditNoteId}`,
+              { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (!res.ok) throw new Error("Suppression de l'avoir échouée");
+            await handleCreditNoteCreated();
+          } catch (e) {
+            // noop (optionally show toast)
+          }
+        }}
+      />
 
       <OrderDetailModal
         isOpen={isDetailOpen}
         order={detailOrder}
         isLoading={isDetailLoading}
         error={detailError}
-        onClose={() => setIsDetailOpen(false)}
+        onClose={() => {
+          setIsDetailOpen(false);
+          // If a credit note was just created, parent modal already closed; still refresh list
+          handleCreditNoteCreated();
+        }}
+      />
+
+      <CreateCreditNoteModal
+        isOpen={isCreateCreditNoteOpen}
+        order={null}
+        orders={orders}
+        onClose={() => setIsCreateCreditNoteOpen(false)}
+        onCreated={() => {
+          setIsCreateCreditNoteOpen(false);
+          handleCreditNoteCreated();
+        }}
+      />
+
+      <CreditNoteDetailModal
+        isOpen={isCreditNoteDetailOpen}
+        creditNote={detailCreditNote}
+        order={
+          detailCreditNote
+            ? orders.find((o) => o.id === detailCreditNote.orderId) || null
+            : null
+        }
+        onClose={() => setIsCreditNoteDetailOpen(false)}
+        onDelete={async (creditNoteId) => {
+          if (!window.confirm("Supprimer cet avoir ?")) return;
+          const token = getAuthToken();
+          if (!token) return;
+          try {
+            const res = await fetch(
+              `${API_URL}/api/admin/credit-notes/${creditNoteId}`,
+              { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (!res.ok) throw new Error("Suppression de l'avoir échouée");
+            setIsCreditNoteDetailOpen(false);
+            setDetailCreditNote(null);
+            await handleCreditNoteCreated();
+          } catch (e) {
+            // noop
+          }
+        }}
       />
     </div>
   );

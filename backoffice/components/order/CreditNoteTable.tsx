@@ -1,15 +1,28 @@
 import React from "react";
-import { CreditNotePublicDTO } from "../../dto";
+import { CreditNotePublicDTO, OrderPublicDTO } from "../../dto";
+import Button from "../product/ui/Button";
 
 interface CreditNoteTableProps {
   creditNotes: CreditNotePublicDTO[];
   isLoading?: boolean;
+  orders?: OrderPublicDTO[];
+  onView?: (creditNoteId: number) => void;
+  onDelete?: (creditNoteId: number) => void;
 }
 
 const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
   creditNotes,
   isLoading,
+  orders = [],
+  onView,
+  onDelete,
 }) => {
+  const orderById = React.useMemo(() => {
+    const map = new Map<number, OrderPublicDTO>();
+    orders.forEach((o) => map.set(o.id, o));
+    return map;
+  }, [orders]);
+
   return (
     <div
       style={{
@@ -120,6 +133,18 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
               >
                 Émise
               </th>
+              <th
+                style={{
+                  padding: "1.25rem 1.25rem",
+                  textAlign: "left",
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -152,29 +177,60 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
               </tr>
             )}
             {!isLoading &&
-              creditNotes.map((c) => (
-                <tr key={c.id} style={{ borderTop: "1px solid #f3f4f6" }}>
-                  <td style={{ padding: "0.75rem 1rem", color: "#111827" }}>
-                    {c.id}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", color: "#111827" }}>
-                    {c.customerId}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem" }}>{c.orderId}</td>
-                  <td style={{ padding: "0.75rem 1rem" }}>{c.reason}</td>
-                  <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
-                    {(Number(c.totalAmountHT) || 0).toFixed(2)} €
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
-                    {(Number(c.totalAmountTTC) || 0).toFixed(2)} €
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem" }}>
-                    {c.issueDate
-                      ? new Date(c.issueDate).toLocaleDateString()
-                      : "—"}
-                  </td>
-                </tr>
-              ))}
+              creditNotes.map((c) => {
+                const order = orderById.get(c.orderId);
+                const customerName = order
+                  ? `${order.customerFirstName || ""} ${
+                      order.customerLastName || ""
+                    }`.trim() ||
+                    order.customerEmail ||
+                    `Client #${c.customerId}`
+                  : `Client #${c.customerId}`;
+                const emitted = c.issueDate
+                  ? new Date(c.issueDate as any).toLocaleDateString()
+                  : c.createdAt
+                  ? new Date(c.createdAt as any).toLocaleDateString()
+                  : "—";
+                return (
+                  <tr key={c.id} style={{ borderTop: "1px solid #f3f4f6" }}>
+                    <td style={{ padding: "0.75rem 1rem", color: "#111827" }}>
+                      {c.id}
+                    </td>
+                    <td style={{ padding: "0.75rem 1rem", color: "#111827" }}>
+                      {customerName}
+                    </td>
+                    <td style={{ padding: "0.75rem 1rem" }}>{c.orderId}</td>
+                    <td style={{ padding: "0.75rem 1rem" }}>{c.reason}</td>
+                    <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
+                      {(Number(c.totalAmountHT) || 0).toFixed(2)} €
+                    </td>
+                    <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
+                      {(Number(c.totalAmountTTC) || 0).toFixed(2)} €
+                    </td>
+                    <td style={{ padding: "0.75rem 1rem" }}>{emitted}</td>
+                    <td style={{ padding: "0.75rem 1rem", display: "flex", gap: 8 }}>
+                      {onView && (
+                        <Button
+                          variant="secondary"
+                          icon="fas fa-eye"
+                          onClick={() => onView(c.id)}
+                        >
+                          Voir
+                        </Button>
+                      )}
+                      {onDelete && (
+                        <Button
+                          variant="secondary"
+                          icon="fas fa-trash"
+                          onClick={() => onDelete(c.id)}
+                        >
+                          Supprimer
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
       </div>
