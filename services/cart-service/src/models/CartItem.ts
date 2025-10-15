@@ -13,6 +13,7 @@ export interface CartItemData {
   product_id: number;
   quantity: number;
   price: number;
+  vat_rate: number;
   added_at: Date;
 }
 
@@ -21,6 +22,7 @@ export class CartItem {
   public readonly productId: number;
   public readonly quantity: number;
   public readonly price: number;
+  public readonly vatRate: number;
   public readonly addedAt: Date;
 
   constructor(data: CartItemData) {
@@ -28,6 +30,7 @@ export class CartItem {
     this.productId = data.product_id;
     this.quantity = data.quantity;
     this.price = data.price;
+    this.vatRate = data.vat_rate;
     this.addedAt = data.added_at;
   }
 
@@ -36,6 +39,15 @@ export class CartItem {
    */
   getTotal(): number {
     return this.price * this.quantity;
+  }
+
+  /**
+   * Total HT (en supposant que price est TTC unitaire)
+   */
+  getTotalHT(): number {
+    const multiplier = 1 + (this.vatRate || 0) / 100;
+    if (multiplier <= 0) return this.getTotal();
+    return this.getTotal() / multiplier;
   }
 
   /**
@@ -63,6 +75,7 @@ export class CartItem {
       product_id: this.productId,
       quantity: newQuantity,
       price: this.price,
+      vat_rate: this.vatRate,
       added_at: this.addedAt,
     });
   }

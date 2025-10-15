@@ -83,6 +83,8 @@ export class OrderMapper {
       customerFirstName: order.customerFirstName,
       customerLastName: order.customerLastName,
       customerEmail: order.customerEmail,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
     };
   }
 

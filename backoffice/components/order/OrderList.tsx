@@ -5,6 +5,7 @@ import ErrorAlert from "../product/ui/ErrorAlert";
 import OrderTable from "./OrderTable";
 import CreditNoteTable from "./CreditNoteTable";
 import { OrderPublicDTO, CreditNotePublicDTO } from "../../dto";
+import OrderDetailModal from "./OrderDetailModal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
@@ -14,6 +15,10 @@ const OrderList: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [detailOrder, setDetailOrder] = useState<OrderPublicDTO | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   const getAuthToken = () => localStorage.getItem("auth_token");
 
@@ -62,6 +67,32 @@ const OrderList: React.FC = () => {
     loadData();
   }, []);
 
+  const openOrderDetail = async (orderId: number) => {
+    setIsDetailOpen(true);
+    setDetailOrder(null);
+    setDetailError(null);
+    setIsDetailLoading(true);
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error("Non authentifié");
+
+      const res = await fetch(`${API_URL}/api/admin/orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Erreur lors du chargement du détail");
+
+      const json = await res.json();
+      const order: OrderPublicDTO = json?.order || json?.data?.order || json;
+      setDetailOrder(order);
+    } catch (e) {
+      setDetailError(
+        e instanceof Error ? e.message : "Erreur lors du chargement du détail"
+      );
+    } finally {
+      setIsDetailLoading(false);
+    }
+  };
+
   const filteredOrders = useMemo(() => {
     if (!search) return orders;
     const term = search.toLowerCase();
@@ -101,11 +132,23 @@ const OrderList: React.FC = () => {
       </PageHeader>
 
       <div style={{ marginBottom: "2.5rem" }}>
-        <OrderTable orders={filteredOrders} isLoading={isLoading} />
+        <OrderTable
+          orders={filteredOrders}
+          isLoading={isLoading}
+          onView={openOrderDetail}
+        />
       </div>
 
       <PageHeader title="Avoirs" />
       <CreditNoteTable creditNotes={creditNotes} isLoading={isLoading} />
+
+      <OrderDetailModal
+        isOpen={isDetailOpen}
+        order={detailOrder}
+        isLoading={isDetailLoading}
+        error={detailError}
+        onClose={() => setIsDetailOpen(false)}
+      />
     </div>
   );
 };

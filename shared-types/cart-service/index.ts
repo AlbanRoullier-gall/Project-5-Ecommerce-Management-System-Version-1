@@ -13,6 +13,7 @@ export interface CartItemCreateDTO {
   productId: number;
   quantity: number;
   price: number;
+  vatRate: number; // taux de TVA du produit (en %)
 }
 
 /**
@@ -32,6 +33,7 @@ export interface CartItemPublicDTO {
   productId: number;
   quantity: number;
   price: number;
+  vatRate: number;
   total: number;
   addedAt: Date;
 }

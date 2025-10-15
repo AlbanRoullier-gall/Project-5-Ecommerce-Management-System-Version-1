@@ -156,7 +156,7 @@ export default function ProductDetailPage() {
       } else {
         // Nouveau produit : l'ajouter au panier
         const priceWithVat = product.price * (1 + product.vatRate / 100);
-        await addToCart(product.id, quantity, priceWithVat);
+        await addToCart(product.id, quantity, priceWithVat, product.vatRate);
         alert(`${quantity} article(s) ajouté(s) au panier avec succès !`);
       }
 

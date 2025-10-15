@@ -33,7 +33,8 @@ interface CartContextType {
   addToCart: (
     productId: number,
     quantity: number,
-    price: number
+    priceTTC: number,
+    vatRate: number
   ) => Promise<void>;
   updateQuantity: (productId: number, quantity: number) => Promise<void>;
   removeFromCart: (productId: number) => Promise<void>;
@@ -148,7 +149,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const addToCart = async (
     productId: number,
     quantity: number,
-    price: number
+    priceTTC: number,
+    vatRate: number
   ) => {
     if (!sessionId) {
       console.log("⚠️ Pas de sessionId, impossible d'ajouter au panier");
@@ -156,7 +158,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     }
 
     console.log(
-      `➕ Ajout au panier: produit ${productId}, quantité ${quantity}, prix ${price}`
+      `➕ Ajout au panier: produit ${productId}, quantité ${quantity}, prix ${priceTTC}`
     );
     setIsLoading(true);
     setError(null);
@@ -173,7 +175,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         body: JSON.stringify({
           productId,
           quantity,
-          price,
+          price: priceTTC,
+          vatRate,
         }),
       });
 

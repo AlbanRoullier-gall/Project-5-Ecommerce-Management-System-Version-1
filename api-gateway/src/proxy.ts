@@ -119,6 +119,35 @@ const getTargetPath = (req: Request): string => {
   if (req.path === "/api/customers" && req.method === "GET") {
     return "/api/admin/customers";
   }
+  // Redirection admin -> public pour récupérer les items d'une commande
+  // Expose /api/admin/orders/:orderId/items en proxy vers /api/orders/:orderId/items (service)
+  if (
+    req.path.startsWith("/api/admin/orders/") &&
+    req.path.endsWith("/items") &&
+    req.method === "GET"
+  ) {
+    const parts = req.path.split("/api/admin/orders/");
+    const tail = parts.length > 1 ? parts[1] : "";
+    const orderId = tail ? tail.replace("/items", "") : "";
+    if (!orderId) {
+      return req.path;
+    }
+    return `/api/orders/${orderId}/items`;
+  }
+  // Admin → public pour les adresses d'une commande
+  if (
+    req.path.startsWith("/api/admin/orders/") &&
+    req.path.endsWith("/addresses") &&
+    req.method === "GET"
+  ) {
+    const parts = req.path.split("/api/admin/orders/");
+    const tail = parts.length > 1 ? parts[1] : "";
+    const orderId = tail ? tail.replace("/addresses", "") : "";
+    if (!orderId) {
+      return req.path;
+    }
+    return `/api/orders/${orderId}/addresses`;
+  }
   return req.path;
 };
 

@@ -28,16 +28,8 @@ const CartSummary: React.FC = () => {
       <h2 className="cart-summary-title">Résumé</h2>
 
       <div className="cart-summary-details">
-        <div className="summary-row">
-          <span>Sous-total</span>
-          <span>{cart.subtotal.toFixed(2)} €</span>
-        </div>
-        <div className="summary-row">
-          <span>TVA (21%)</span>
-          <span>{cart.tax.toFixed(2)} €</span>
-        </div>
         <div className="summary-row summary-total">
-          <span>Total</span>
+          <span>Total TTC</span>
           <span>{cart.total.toFixed(2)} €</span>
         </div>
       </div>

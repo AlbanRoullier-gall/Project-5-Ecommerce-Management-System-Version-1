@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from "uuid";
 import { CartRepository } from "../repositories/CartRepository";
 import { Cart } from "../models/Cart";
 import { CartItem } from "../models/CartItem";
-import { CartItemCreateDTO, CartCreateDTO } from "../api/dto";
+import * as DTO from "@tfe/shared-types/cart-service";
 
 export default class CartService {
   private cartRepository: CartRepository;
@@ -24,7 +24,7 @@ export default class CartService {
   /**
    * Créer un nouveau panier
    */
-  async createCart(cartData: CartCreateDTO): Promise<Cart> {
+  async createCart(cartData: DTO.CartCreateDTO): Promise<Cart> {
     const cartId = uuidv4();
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 1 jour
@@ -55,7 +55,10 @@ export default class CartService {
   /**
    * Ajouter un article au panier
    */
-  async addItem(sessionId: string, itemData: CartItemCreateDTO): Promise<Cart> {
+  async addItem(
+    sessionId: string,
+    itemData: DTO.CartItemCreateDTO
+  ): Promise<Cart> {
     let cart = await this.getCart(sessionId);
 
     if (!cart) {
@@ -67,6 +70,7 @@ export default class CartService {
       product_id: itemData.productId,
       quantity: itemData.quantity,
       price: itemData.price,
+      vat_rate: (itemData as any).vatRate ?? 0,
       added_at: new Date(),
     });
 

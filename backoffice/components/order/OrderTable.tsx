@@ -4,9 +4,14 @@ import { OrderPublicDTO } from "../../dto";
 interface OrderTableProps {
   orders: OrderPublicDTO[];
   isLoading?: boolean;
+  onView?: (orderId: number) => void;
 }
 
-const OrderTable: React.FC<OrderTableProps> = ({ orders, isLoading }) => {
+const OrderTable: React.FC<OrderTableProps> = ({
+  orders,
+  isLoading,
+  onView,
+}) => {
   return (
     <div
       style={{
@@ -38,6 +43,9 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, isLoading }) => {
             </th>
             <th style={{ textAlign: "left", padding: "0.75rem 1rem" }}>
               Créée
+            </th>
+            <th style={{ textAlign: "left", padding: "0.75rem 1rem" }}>
+              Actions
             </th>
           </tr>
         </thead>
@@ -98,6 +106,23 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, isLoading }) => {
                   </td>
                   <td style={{ padding: "0.75rem 1rem" }}>
                     {new Date(o.createdAt).toLocaleString()}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem" }}>
+                    <button
+                      onClick={() => onView && onView(o.id)}
+                      style={{
+                        padding: "0.5rem 0.85rem",
+                        borderRadius: 10,
+                        border: "2px solid #e5e7eb",
+                        background: "white",
+                        color: "#13686a",
+                        cursor: "pointer",
+                      }}
+                      title="Voir le détail"
+                    >
+                      <i className="fas fa-eye" style={{ marginRight: 6 }}></i>
+                      Voir
+                    </button>
                   </td>
                 </tr>
               );

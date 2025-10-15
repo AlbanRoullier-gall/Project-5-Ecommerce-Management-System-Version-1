@@ -57,7 +57,33 @@ export class OrderController {
         return;
       }
 
+      // Recalculer les totaux à partir des articles pour garantir la cohérence
+      let totalAmountHT = order.totalAmountHT;
+      let totalAmountTTC = order.totalAmountTTC;
+      try {
+        const items = await this.orderService.getOrderItemsByOrderId(
+          parseInt(id!)
+        );
+        if (Array.isArray(items) && items.length > 0) {
+          const sumHT = items.reduce(
+            (acc, it: any) => acc + Number(it.totalPriceHT || 0),
+            0
+          );
+          const sumTTC = items.reduce(
+            (acc, it: any) => acc + Number(it.totalPriceTTC || 0),
+            0
+          );
+          totalAmountHT = Number(sumHT.toFixed(2));
+          totalAmountTTC = Number(sumTTC.toFixed(2));
+        }
+      } catch (e) {
+        // En cas d'erreur sur le chargement des items, on garde les totaux d'origine
+      }
+
       const orderDTO = OrderMapper.orderToPublicDTO(order);
+      (orderDTO as any).totalAmountHT = totalAmountHT;
+      (orderDTO as any).totalAmountTTC = totalAmountTTC;
+
       res.json(ResponseMapper.orderRetrieved(orderDTO));
     } catch (error: any) {
       console.error("Get order error:", error);

@@ -279,36 +279,6 @@ export default function CartPage() {
 
                   <div style={{ marginBottom: "2rem" }}>
                     <div
-                      className="cart-summary-row"
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "1rem 0",
-                        fontSize: "1.3rem",
-                        color: "#666",
-                      }}
-                    >
-                      <span>Sous-total</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {cart.subtotal.toFixed(2)} €
-                      </span>
-                    </div>
-                    <div
-                      className="cart-summary-row"
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "1rem 0",
-                        fontSize: "1.3rem",
-                        color: "#666",
-                      }}
-                    >
-                      <span>TVA (21%)</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {cart.tax.toFixed(2)} €
-                      </span>
-                    </div>
-                    <div
                       className="cart-summary-row cart-summary-total"
                       style={{
                         display: "flex",
@@ -321,7 +291,7 @@ export default function CartPage() {
                         marginTop: "1rem",
                       }}
                     >
-                      <span>Total</span>
+                      <span>Total TTC</span>
                       <span>{cart.total.toFixed(2)} €</span>
                     </div>
                   </div>

@@ -91,15 +91,7 @@ export default function CheckoutOrderSummary({
     return (id?: number) => map.get(id || 0) || "";
   }, [countries]);
 
-  const inferredVatRate = useMemo(() => {
-    if (!cart || !cart.subtotal) return 21;
-    // If subtotal > 0, try to infer VAT rate: tax = subtotal * rate
-    const rate =
-      cart.tax && cart.subtotal
-        ? Math.round((cart.tax / cart.subtotal) * 100)
-        : 21;
-    return Number.isFinite(rate) && rate > 0 ? rate : 21;
-  }, [cart]);
+  // On n'affiche plus de pourcentage de TVA global car les articles peuvent avoir des taux différents.
 
   const handleCompleteOrder = async () => {
     if (!cart) {
@@ -235,7 +227,7 @@ export default function CheckoutOrderSummary({
 
       for (const item of cart.items) {
         const product = products.find((p) => p.productId === item.productId);
-        const vatRate = product?.product?.vatRate || inferredVatRate;
+        const vatRate = product?.product?.vatRate ?? 21;
         const vatMultiplier = 1 + vatRate / 100;
 
         const orderItemData = {
@@ -644,43 +636,13 @@ export default function CheckoutOrderSummary({
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                padding: "1rem 0",
-                fontSize: "1.3rem",
-                color: "#666",
-              }}
-            >
-              <span>Sous-total</span>
-              <span style={{ fontWeight: "600" }}>
-                {cart?.subtotal.toFixed(2)} €
-              </span>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "1rem 0",
-                fontSize: "1.3rem",
-                color: "#666",
-              }}
-            >
-              <span>TVA ({inferredVatRate}%)</span>
-              <span style={{ fontWeight: "600" }}>
-                {cart?.tax.toFixed(2)} €
-              </span>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
                 padding: "1.5rem 0",
                 fontSize: "1.8rem",
                 color: "#13686a",
                 fontWeight: "700",
-                borderTop: "2px solid #e0e0e0",
-                marginTop: "1rem",
               }}
             >
-              <span>Total</span>
+              <span>Total TTC</span>
               <span>{cart?.total.toFixed(2)} €</span>
             </div>
           </div>

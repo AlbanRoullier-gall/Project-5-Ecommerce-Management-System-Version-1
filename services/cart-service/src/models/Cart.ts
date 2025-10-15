@@ -120,9 +120,20 @@ export class Cart {
    * Créer un nouveau panier avec les articles donnés
    */
   private createCartWithItems(items: CartItem[]): Cart {
-    const subtotal = items.reduce((sum, item) => sum + item.getTotal(), 0);
-    const tax = subtotal * 0.2; // 20% de TVA
-    const total = subtotal + tax;
+    // Interpréter item.price comme un prix TTC unitaire
+    // Calculer par ligne pour limiter les erreurs d'arrondi
+    const VAT_RATE = 0.2; // 20%
+    const lineTotalsTTC = items.map((item) => item.getTotal());
+    const lineTotalsHT = items.map((item) => item.getTotal() / (1 + VAT_RATE));
+
+    const totalTTC = lineTotalsTTC.reduce((sum, v) => sum + v, 0);
+    const subtotalHT = lineTotalsHT.reduce((sum, v) => sum + v, 0);
+    const tax = totalTTC - subtotalHT;
+
+    // Arrondir à 2 décimales de manière cohérente
+    const subtotal = Math.round(subtotalHT * 100) / 100;
+    const total = Math.round(totalTTC * 100) / 100;
+    const taxRounded = Math.round(tax * 100) / 100;
 
     return new Cart({
       id: this.id,
@@ -135,7 +146,7 @@ export class Cart {
         added_at: item.addedAt,
       })),
       subtotal,
-      tax,
+      tax: taxRounded,
       total,
       created_at: this.createdAt,
       updated_at: new Date(),

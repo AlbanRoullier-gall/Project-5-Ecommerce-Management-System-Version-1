@@ -3,13 +3,7 @@
  * Mapper pour les conversions DTO ↔ Service
  */
 
-import {
-  CartItemCreateDTO,
-  CartItemUpdateDTO,
-  CartCreateDTO,
-  CartPublicDTO,
-  CartItemPublicDTO,
-} from "../dto";
+import * as DTO from "@tfe/shared-types/cart-service";
 import { Cart } from "../../models/Cart";
 import { CartItem } from "../../models/CartItem";
 
@@ -21,7 +15,7 @@ export class CartMapper {
    * Convert CartItemCreateDTO to CartItem
    */
   static cartItemCreateDTOToCartItem(
-    dto: CartItemCreateDTO,
+    dto: DTO.CartItemCreateDTO,
     id: string
   ): CartItem {
     return new CartItem({
@@ -29,6 +23,7 @@ export class CartMapper {
       product_id: dto.productId,
       quantity: dto.quantity,
       price: dto.price,
+      vat_rate: dto.vatRate,
       added_at: new Date(),
     });
   }
@@ -36,7 +31,7 @@ export class CartMapper {
   /**
    * Convert CartCreateDTO to service data
    */
-  static cartCreateDTOToServiceData(dto: CartCreateDTO): any {
+  static cartCreateDTOToServiceData(dto: DTO.CartCreateDTO): any {
     return {
       sessionId: dto.sessionId,
     };
@@ -45,7 +40,7 @@ export class CartMapper {
   /**
    * Convert Cart model to CartPublicDTO
    */
-  static cartToPublicDTO(cart: Cart): CartPublicDTO {
+  static cartToPublicDTO(cart: Cart): DTO.CartPublicDTO {
     return {
       id: cart.id,
       sessionId: cart.sessionId,
@@ -62,12 +57,13 @@ export class CartMapper {
   /**
    * Convert CartItem model to CartItemPublicDTO
    */
-  static cartItemToPublicDTO(item: CartItem): CartItemPublicDTO {
+  static cartItemToPublicDTO(item: CartItem): DTO.CartItemPublicDTO {
     return {
       id: item.id,
       productId: item.productId,
       quantity: item.quantity,
       price: item.price,
+      vatRate: item.vatRate,
       total: item.getTotal(),
       addedAt: item.addedAt,
     };
@@ -76,18 +72,19 @@ export class CartMapper {
   /**
    * Convert CartItemCreateDTO to service data
    */
-  static cartItemCreateDTOToServiceData(dto: CartItemCreateDTO): any {
+  static cartItemCreateDTOToServiceData(dto: DTO.CartItemCreateDTO): any {
     return {
       productId: dto.productId,
       quantity: dto.quantity,
       price: dto.price,
+      vatRate: dto.vatRate,
     };
   }
 
   /**
    * Convert CartItemUpdateDTO to service data
    */
-  static cartItemUpdateDTOToServiceData(dto: CartItemUpdateDTO): any {
+  static cartItemUpdateDTOToServiceData(dto: DTO.CartItemUpdateDTO): any {
     return {
       quantity: dto.quantity,
     };

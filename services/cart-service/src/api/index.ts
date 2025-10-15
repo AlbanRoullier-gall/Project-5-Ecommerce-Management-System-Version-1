@@ -48,6 +48,7 @@ export class ApiRouter {
         productId: Joi.number().positive().required(),
         quantity: Joi.number().positive().required(),
         price: Joi.number().positive().required(),
+        vatRate: Joi.number().min(0).max(100).required(),
       }),
 
       // Cart item update schema
