@@ -101,6 +101,16 @@ export class AddressController {
         res.status(404).json(ResponseMapper.notFoundError("Customer"));
         return;
       }
+      if (
+        error.message === "Address already exists" ||
+        (typeof error.message === "string" &&
+          error.message.toLowerCase().includes("already exists"))
+      ) {
+        res
+          .status(409)
+          .json(ResponseMapper.conflictError("Address already exists"));
+        return;
+      }
       if (error.message.includes("validation")) {
         res.status(400).json(ResponseMapper.validationError(error.message));
         return;

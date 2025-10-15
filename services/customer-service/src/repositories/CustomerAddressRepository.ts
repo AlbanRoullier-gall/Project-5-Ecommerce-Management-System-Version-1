@@ -15,6 +15,44 @@ class CustomerAddressRepository {
   }
 
   /**
+   * Check if an address already exists for a customer with the same fields
+   * A duplicate is defined by same customer_id, address_type, address, postal_code, city, country_id
+   */
+  async existsForCustomer(params: {
+    customerId: number;
+    addressType: string;
+    address: string;
+    postalCode: string;
+    city: string;
+    countryId: number;
+  }): Promise<boolean> {
+    try {
+      const result = await this.pool.query(
+        `SELECT address_id FROM customer_addresses
+         WHERE customer_id = $1
+           AND address_type = $2
+           AND address = $3
+           AND postal_code = $4
+           AND city = $5
+           AND country_id = $6
+         LIMIT 1`,
+        [
+          params.customerId,
+          params.addressType,
+          params.address,
+          params.postalCode,
+          params.city,
+          params.countryId,
+        ]
+      );
+      return result.rows.length > 0;
+    } catch (error) {
+      console.error("Error checking existing address:", error);
+      throw new Error("Failed to check existing address");
+    }
+  }
+
+  /**
    * Get address by ID
    * @param {number} id Address ID
    * @returns {Promise<CustomerAddress|null>} CustomerAddress or null if not found

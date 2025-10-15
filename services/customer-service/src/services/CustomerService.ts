@@ -184,6 +184,19 @@ class CustomerService {
         throw new Error("Client non trouvé");
       }
 
+      // Check for duplicate address before creating
+      const duplicateExists = await this.addressRepository.existsForCustomer({
+        customerId,
+        addressType: addressData.addressType,
+        address: addressData.address,
+        postalCode: addressData.postalCode,
+        city: addressData.city,
+        countryId: addressData.countryId,
+      });
+      if (duplicateExists) {
+        throw new Error("Address already exists");
+      }
+
       // Créer l'adresse
       const address = new CustomerAddress(addressData);
       address.customerId = customerId;
@@ -283,6 +296,19 @@ class CustomerService {
       const customer = await this.customerRepository.getById(customerId);
       if (!customer) {
         throw new Error("Customer not found");
+      }
+
+      // Check for duplicate address before mutating defaults
+      const duplicateExists = await this.addressRepository.existsForCustomer({
+        customerId,
+        addressType: addressData.addressType,
+        address: addressData.address,
+        postalCode: addressData.postalCode,
+        city: addressData.city,
+        countryId: addressData.countryId,
+      });
+      if (duplicateExists) {
+        throw new Error("Address already exists");
       }
 
       // If this is set as default, unset other default addresses for the customer
