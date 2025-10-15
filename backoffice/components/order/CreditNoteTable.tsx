@@ -1,6 +1,5 @@
 import React from "react";
 import { CreditNotePublicDTO, OrderPublicDTO } from "../../dto";
-import Button from "../product/ui/Button";
 
 interface CreditNoteTableProps {
   creditNotes: CreditNotePublicDTO[];
@@ -225,7 +224,8 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                               fontSize: "1.2rem",
                             }}
                             onMouseOver={(e) => {
-                              e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+                              e.currentTarget.style.background =
+                                "rgba(59, 130, 246, 0.1)";
                               e.currentTarget.style.transform = "scale(1.1)";
                             }}
                             onMouseOut={(e) => {
@@ -251,7 +251,8 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                               fontSize: "1.2rem",
                             }}
                             onMouseOver={(e) => {
-                              e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                              e.currentTarget.style.background =
+                                "rgba(239, 68, 68, 0.1)";
                               e.currentTarget.style.transform = "scale(1.1)";
                             }}
                             onMouseOut={(e) => {

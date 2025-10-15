@@ -1,6 +1,5 @@
 import React from "react";
 import { OrderPublicDTO } from "../../dto";
-import Button from "../product/ui/Button";
 
 interface OrderTableProps {
   orders: OrderPublicDTO[];
@@ -211,7 +210,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
                             fontSize: "1.2rem",
                           }}
                           onMouseOver={(e) => {
-                            e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+                            e.currentTarget.style.background =
+                              "rgba(59, 130, 246, 0.1)";
                             e.currentTarget.style.transform = "scale(1.1)";
                           }}
                           onMouseOut={(e) => {
