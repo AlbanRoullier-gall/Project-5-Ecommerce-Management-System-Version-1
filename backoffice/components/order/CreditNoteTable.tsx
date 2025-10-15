@@ -220,7 +220,7 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                       )}
                       {onDelete && (
                         <Button
-                          variant="secondary"
+                          variant="danger"
                           icon="fas fa-trash"
                           onClick={() => onDelete(c.id)}
                         >

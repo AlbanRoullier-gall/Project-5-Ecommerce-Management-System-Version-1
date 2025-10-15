@@ -9,7 +9,7 @@ interface ButtonProps {
   /** Type de bouton HTML */
   type?: "button" | "submit" | "reset";
   /** Variante de style du bouton */
-  variant?: "primary" | "secondary" | "gold";
+  variant?: "primary" | "secondary" | "gold" | "danger";
   /** État désactivé du bouton */
   disabled?: boolean;
   /** Contenu du bouton */
@@ -60,6 +60,12 @@ const Button: React.FC<ButtonProps> = ({
           color: "#13686a",
           boxShadow: "0 4px 12px rgba(217, 185, 112, 0.2)",
         };
+      case "danger":
+        return {
+          background: "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)",
+          color: "white",
+          boxShadow: "0 4px 12px rgba(220, 38, 38, 0.25)",
+        };
     }
   };
 
@@ -91,6 +97,9 @@ const Button: React.FC<ButtonProps> = ({
           } else if (variant === "gold") {
             e.currentTarget.style.boxShadow =
               "0 8px 24px rgba(217, 185, 112, 0.35)";
+          } else if (variant === "danger") {
+            e.currentTarget.style.boxShadow =
+              "0 8px 24px rgba(220, 38, 38, 0.35)";
           } else {
             e.currentTarget.style.borderColor = "#13686a";
             e.currentTarget.style.color = "#13686a";

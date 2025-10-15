@@ -128,7 +128,7 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
           <div style={{ display: "flex", gap: "0.5rem" }}>
             {onDelete && (
               <Button
-                variant="secondary"
+                variant="danger"
                 icon="fas fa-trash"
                 onClick={() => onDelete(creditNote.id)}
               >
