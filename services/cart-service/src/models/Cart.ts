@@ -121,10 +121,9 @@ export class Cart {
    */
   private createCartWithItems(items: CartItem[]): Cart {
     // Interpréter item.price comme un prix TTC unitaire
-    // Calculer par ligne pour limiter les erreurs d'arrondi
-    const VAT_RATE = 0.2; // 20%
+    // Calculer par ligne avec le taux de TVA propre à chaque article
     const lineTotalsTTC = items.map((item) => item.getTotal());
-    const lineTotalsHT = items.map((item) => item.getTotal() / (1 + VAT_RATE));
+    const lineTotalsHT = items.map((item) => item.getTotalHT());
 
     const totalTTC = lineTotalsTTC.reduce((sum, v) => sum + v, 0);
     const subtotalHT = lineTotalsHT.reduce((sum, v) => sum + v, 0);
@@ -143,6 +142,7 @@ export class Cart {
         product_id: item.productId,
         quantity: item.quantity,
         price: item.price,
+        vat_rate: item.vatRate,
         added_at: item.addedAt,
       })),
       subtotal,

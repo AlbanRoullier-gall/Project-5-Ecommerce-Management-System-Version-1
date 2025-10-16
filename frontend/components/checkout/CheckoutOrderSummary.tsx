@@ -93,6 +93,39 @@ export default function CheckoutOrderSummary({
 
   // On n'affiche plus de pourcentage de TVA global car les articles peuvent avoir des taux différents.
 
+  const totals = useMemo(() => {
+    if (!cart || !cart.items || cart.items.length === 0) {
+      return {
+        totalHT: 0,
+        totalTTC: cart?.total || 0,
+        vatAmount: 0,
+        breakdown: [] as { rate: number; amount: number }[],
+      };
+    }
+
+    let totalHT = 0;
+    const vatByRate = new Map<number, number>();
+
+    for (const item of cart.items) {
+      const rate = item.vatRate ?? 0;
+      const multiplier = 1 + rate / 100;
+      const lineTotalTTC = item.price * item.quantity;
+      const lineTotalHT = lineTotalTTC / multiplier;
+      const vat = lineTotalTTC - lineTotalHT;
+
+      totalHT += lineTotalHT;
+      vatByRate.set(rate, (vatByRate.get(rate) || 0) + vat);
+    }
+
+    const totalTTC = cart.total;
+    const vatAmount = totalTTC - totalHT;
+    const breakdown = Array.from(vatByRate.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([rate, amount]) => ({ rate, amount }));
+
+    return { totalHT, totalTTC, vatAmount, breakdown };
+  }, [cart]);
+
   const handleCompleteOrder = async () => {
     if (!cart) {
       alert("Votre panier est vide");
@@ -636,10 +669,41 @@ export default function CheckoutOrderSummary({
               style={{
                 display: "flex",
                 justifyContent: "space-between",
+                padding: "0.6rem 0",
+                fontSize: "1.5rem",
+                color: "#555",
+              }}
+            >
+              <span>Total HT</span>
+              <span>{totals.totalHT.toFixed(2)} €</span>
+            </div>
+
+            {totals.breakdown.map((b) => (
+              <div
+                key={b.rate}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "0.4rem 0",
+                  fontSize: "1.4rem",
+                  color: "#777",
+                }}
+              >
+                <span>TVA ({b.rate}%)</span>
+                <span>{b.amount.toFixed(2)} €</span>
+              </div>
+            ))}
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
                 padding: "1.5rem 0",
                 fontSize: "1.8rem",
                 color: "#13686a",
                 fontWeight: "700",
+                borderTop: "2px solid #e0e0e0",
+                marginTop: "1rem",
               }}
             >
               <span>Total TTC</span>

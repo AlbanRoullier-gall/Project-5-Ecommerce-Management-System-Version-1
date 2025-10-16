@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useCart } from "../../contexts/CartContext";
 import { useRouter } from "next/router";
 
@@ -23,11 +23,54 @@ const CartSummary: React.FC = () => {
     router.push("/checkout");
   };
 
+  const totals = useMemo(() => {
+    if (!cart || !cart.items || cart.items.length === 0) {
+      return {
+        totalHT: 0,
+        totalTTC: cart?.total || 0,
+        vatAmount: 0,
+        breakdown: [] as { rate: number; amount: number }[],
+      };
+    }
+
+    let totalHT = 0;
+    const vatByRate = new Map<number, number>();
+
+    for (const item of cart.items) {
+      const rate = item.vatRate ?? 0;
+      const multiplier = 1 + rate / 100;
+      const lineTotalTTC = item.price * item.quantity;
+      const lineTotalHT = lineTotalTTC / multiplier;
+      const vat = lineTotalTTC - lineTotalHT;
+
+      totalHT += lineTotalHT;
+      vatByRate.set(rate, (vatByRate.get(rate) || 0) + vat);
+    }
+
+    const totalTTC = cart.total;
+    const vatAmount = totalTTC - totalHT;
+    const breakdown = Array.from(vatByRate.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([rate, amount]) => ({ rate, amount }));
+
+    return { totalHT, totalTTC, vatAmount, breakdown };
+  }, [cart]);
+
   return (
     <div className="cart-summary">
       <h2 className="cart-summary-title">Résumé</h2>
 
       <div className="cart-summary-details">
+        <div className="summary-row">
+          <span>Total HT</span>
+          <span>{totals.totalHT.toFixed(2)} €</span>
+        </div>
+        {totals.breakdown.map((b) => (
+          <div key={b.rate} className="summary-row">
+            <span>TVA ({b.rate}%)</span>
+            <span>{b.amount.toFixed(2)} €</span>
+          </div>
+        ))}
         <div className="summary-row summary-total">
           <span>Total TTC</span>
           <span>{cart.total.toFixed(2)} €</span>

@@ -6,6 +6,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useCart } from "../contexts/CartContext";
 import CartItem from "../components/cart/CartItem";
+import { useMemo } from "react";
 
 /**
  * Page du panier
@@ -13,6 +14,39 @@ import CartItem from "../components/cart/CartItem";
  */
 export default function CartPage() {
   const { cart, isLoading, error } = useCart();
+
+  const totals = useMemo(() => {
+    if (!cart || !cart.items || cart.items.length === 0) {
+      return {
+        totalHT: 0,
+        totalTTC: cart?.total || 0,
+        vatAmount: 0,
+        breakdown: [] as { rate: number; amount: number }[],
+      };
+    }
+
+    let totalHT = 0;
+    const vatByRate = new Map<number, number>();
+
+    for (const item of cart.items) {
+      const rate = item.vatRate ?? 0;
+      const multiplier = 1 + rate / 100;
+      const lineTotalTTC = item.price * item.quantity;
+      const lineTotalHT = lineTotalTTC / multiplier;
+      const vat = lineTotalTTC - lineTotalHT;
+
+      totalHT += lineTotalHT;
+      vatByRate.set(rate, (vatByRate.get(rate) || 0) + vat);
+    }
+
+    const totalTTC = cart.total;
+    const vatAmount = totalTTC - totalHT;
+    const breakdown = Array.from(vatByRate.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([rate, amount]) => ({ rate, amount }));
+
+    return { totalHT, totalTTC, vatAmount, breakdown };
+  }, [cart]);
 
   return (
     <>
@@ -278,6 +312,37 @@ export default function CartPage() {
                   </h2>
 
                   <div style={{ marginBottom: "2rem" }}>
+                    <div
+                      className="cart-summary-row"
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        padding: "0.6rem 0",
+                        fontSize: "1.4rem",
+                        color: "#555",
+                      }}
+                    >
+                      <span>Total HT</span>
+                      <span>{totals.totalHT.toFixed(2)} €</span>
+                    </div>
+
+                    {totals.breakdown.map((b) => (
+                      <div
+                        key={b.rate}
+                        className="cart-summary-row"
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          padding: "0.4rem 0",
+                          fontSize: "1.3rem",
+                          color: "#777",
+                        }}
+                      >
+                        <span>TVA ({b.rate}%)</span>
+                        <span>{b.amount.toFixed(2)} €</span>
+                      </div>
+                    ))}
+
                     <div
                       className="cart-summary-row cart-summary-total"
                       style={{
