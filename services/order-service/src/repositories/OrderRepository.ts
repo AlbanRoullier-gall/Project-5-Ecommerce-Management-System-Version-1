@@ -318,6 +318,53 @@ export default class OrderRepository {
   }
 
   /**
+   * Obtenir le total HT des commandes (avec filtres optionnels)
+   * @param {OrderListOptions} options Options de filtrage
+   * @returns {Promise<number>} Somme HT
+   */
+  async getOrdersTotalHT(options: OrderListOptions = {}): Promise<number> {
+    try {
+      const { customerId, startDate, endDate } = options as any;
+
+      const conditions: string[] = [];
+      const params: any[] = [];
+      let paramCount = 0;
+
+      if (customerId) {
+        conditions.push(`customer_id = $${++paramCount}`);
+        params.push(customerId);
+      }
+
+      if (startDate) {
+        conditions.push(`created_at >= $${++paramCount}`);
+        params.push(startDate);
+      }
+
+      if (endDate) {
+        conditions.push(`created_at <= $${++paramCount}`);
+        params.push(endDate);
+      }
+
+      const whereClause =
+        conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+      const query = `
+        SELECT COALESCE(SUM(total_amount_ht), 0) AS total_ht
+        FROM orders
+        ${whereClause}
+      `;
+
+      const result = await this.pool.query(query, params);
+      const row = result.rows[0];
+      // pg returns DECIMAL as string → parseFloat safely
+      return parseFloat(row.total_ht);
+    } catch (error) {
+      console.error("Error getting orders total HT:", error);
+      throw new Error("Failed to retrieve orders total HT");
+    }
+  }
+
+  /**
    * Vérifier si une commande existe
    * @param {number} id ID de la commande
    * @returns {Promise<boolean>} True si existe, false sinon

@@ -1,0 +1,153 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import StatCard from "./StatCard";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+
+interface StatsData {
+  productsCount: number;
+  customersCount: number;
+  ordersCount: number;
+  totalRevenue: number; // TTC
+  totalRevenueHT?: number; // HT (admin)
+}
+
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 2,
+  }).format(amount || 0);
+};
+
+const StatsOverview: React.FC = () => {
+  const [stats, setStats] = useState<StatsData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const getAuthToken = () => localStorage.getItem("auth_token");
+
+  const loadStats = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error("Non authentifié");
+
+      // Appels parallèles vers l'API Gateway (admin routes)
+      const [productsRes, customersRes, ordersRes, revenueRes] =
+        await Promise.all([
+          fetch(`${API_URL}/api/admin/products`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${API_URL}/api/admin/customers`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${API_URL}/api/admin/orders`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          // Statistiques admin pour récupérer TTC et HT
+          fetch(`${API_URL}/api/admin/statistics/orders`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+      if (!productsRes.ok) throw new Error("Erreur chargement produits");
+      if (!customersRes.ok) throw new Error("Erreur chargement clients");
+      if (!ordersRes.ok) throw new Error("Erreur chargement commandes");
+      if (!revenueRes.ok) throw new Error("Erreur chargement statistiques");
+
+      const [productsJson, customersJson, ordersJson, revenueJson] =
+        await Promise.all([
+          productsRes.json(),
+          customersRes.json(),
+          ordersRes.json(),
+          revenueRes.json(),
+        ]);
+
+      const productsCount =
+        productsJson?.data?.products?.length ??
+        productsJson?.products?.length ??
+        (Array.isArray(productsJson) ? productsJson.length : 0);
+
+      const customersCount =
+        customersJson?.data?.customers?.length ??
+        customersJson?.customers?.length ??
+        (Array.isArray(customersJson) ? customersJson.length : 0);
+
+      const ordersCount =
+        ordersJson?.data?.orders?.length ??
+        ordersJson?.orders?.length ??
+        (Array.isArray(ordersJson) ? ordersJson.length : 0);
+
+      const totalRevenue = Number(
+        revenueJson?.data?.statistics?.totalAmount ??
+          revenueJson?.statistics?.totalAmount ??
+          revenueJson?.data?.totalAmount ??
+          revenueJson?.totalAmount ??
+          0
+      );
+
+      const totalRevenueHT = Number(
+        revenueJson?.data?.statistics?.totalAmountHT ??
+          revenueJson?.statistics?.totalAmountHT ??
+          0
+      );
+
+      setStats({
+        productsCount,
+        customersCount,
+        ordersCount,
+        totalRevenue,
+        totalRevenueHT,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erreur lors du chargement");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="stats-container">
+        <div className="stat-card">
+          <h3>Chargement...</h3>
+          <p className="stat-number">—</p>
+          <p className="stat-label">Veuillez patienter</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="stats-container">
+        <div className="stat-card">
+          <h3>Erreur</h3>
+          <p className="stat-number">!</p>
+          <p className="stat-label">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="stats-container">
+      <StatCard title="Produits" value={stats?.productsCount ?? 0} />
+      <StatCard title="Clients" value={stats?.customersCount ?? 0} />
+      <StatCard title="Commandes" value={stats?.ordersCount ?? 0} />
+      <StatCard
+        title="Chiffre d'Affaires"
+        value={formatCurrency(stats?.totalRevenueHT ?? 0)}
+      />
+    </div>
+  );
+};
+
+export default StatsOverview;

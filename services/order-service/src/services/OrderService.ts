@@ -235,29 +235,10 @@ export default class OrderService {
    */
   async getOrderStatistics(options: OrderListOptions = {}): Promise<any> {
     try {
-      // Cette méthode pourrait être implémentée pour calculer des statistiques
-      // Pour l'instant, retournons des données de base
-      const { orders } = await this.listOrders(options);
-
-      const totalOrders = orders.length;
-      const totalAmount = orders.reduce(
-        (sum, order) => sum + order.totalAmountTTC,
-        0
+      const totalAmountHT = await this.orderRepository.getOrdersTotalHT(
+        options
       );
-      const averageOrderValue = totalOrders > 0 ? totalAmount / totalOrders : 0;
-
-      return {
-        totalOrders,
-        totalAmount,
-        averageOrderValue,
-        orders: orders.map((order) => ({
-          id: order.id,
-          customerId: order.customerId,
-          totalAmountTTC: order.totalAmountTTC,
-          paymentMethod: order.paymentMethod,
-          createdAt: order.createdAt,
-        })),
-      };
+      return { totalAmountHT };
     } catch (error: any) {
       console.error("Error getting order statistics:", error);
       throw new Error(`Failed to retrieve order statistics: ${error.message}`);
