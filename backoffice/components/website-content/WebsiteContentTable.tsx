@@ -87,7 +87,16 @@ const WebsiteContentTable: React.FC<WebsiteContentTableProps> = ({
               </tr>
             )}
             {!isLoading &&
-              pages.map((p) => (
+              pages
+                .filter((p) =>
+                  [
+                    "contact",
+                    "mentions-legales",
+                    "politique-de-confidentialite",
+                    "conditions-generales",
+                  ].includes(p.pageSlug)
+                )
+                .map((p) => (
                 <tr key={p.id} style={{ borderTop: "1px solid #f3f4f6" }}>
                   <td style={{ padding: "0.75rem 1rem", color: "#111827" }}>
                     {p.pageSlug}

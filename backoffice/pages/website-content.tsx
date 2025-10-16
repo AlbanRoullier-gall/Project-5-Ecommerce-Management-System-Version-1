@@ -110,16 +110,6 @@ export default function WebsiteContentPage() {
                   }}
                 />
                 <Button
-                  onClick={() => {
-                    setPageToEdit(null);
-                    setIsFormOpen(true);
-                  }}
-                  variant="primary"
-                  icon="fas fa-plus"
-                >
-                  Nouvelle page
-                </Button>
-                <Button
                   onClick={loadPages}
                   variant="secondary"
                   icon="fas fa-rotate"
