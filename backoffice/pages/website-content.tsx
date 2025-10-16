@@ -55,7 +55,9 @@ export default function WebsiteContentPage() {
     if (!search) return pages;
     const term = search.toLowerCase();
     return pages.filter((p) =>
-      [p.pageSlug, p.pageTitle].some((v) => (v || "").toLowerCase().includes(term))
+      [p.pageSlug, p.pageTitle].some((v) =>
+        (v || "").toLowerCase().includes(term)
+      )
     );
   }, [pages, search]);
 
@@ -71,7 +73,9 @@ export default function WebsiteContentPage() {
       if (!res.ok) throw new Error("Suppression échouée");
       await loadPages();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur lors de la suppression");
+      setError(
+        e instanceof Error ? e.message : "Erreur lors de la suppression"
+      );
     }
   };
 
@@ -88,7 +92,9 @@ export default function WebsiteContentPage() {
 
         <main className="main-content">
           <div className="page-container">
-            {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
+            {error && (
+              <ErrorAlert message={error} onClose={() => setError(null)} />
+            )}
 
             <PageHeader title="Gestion du contenu">
               <div style={{ display: "flex", gap: "0.5rem" }}>
@@ -113,7 +119,11 @@ export default function WebsiteContentPage() {
                 >
                   Nouvelle page
                 </Button>
-                <Button onClick={loadPages} variant="secondary" icon="fas fa-rotate">
+                <Button
+                  onClick={loadPages}
+                  variant="secondary"
+                  icon="fas fa-rotate"
+                >
                   Actualiser
                 </Button>
               </div>
@@ -143,5 +153,3 @@ export default function WebsiteContentPage() {
     </AuthGuard>
   );
 }
-
-

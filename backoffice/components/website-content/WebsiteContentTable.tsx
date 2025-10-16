@@ -62,7 +62,11 @@ const WebsiteContentTable: React.FC<WebsiteContentTableProps> = ({
               <tr>
                 <td
                   colSpan={5}
-                  style={{ padding: "1rem", textAlign: "center", color: "#6b7280" }}
+                  style={{
+                    padding: "1rem",
+                    textAlign: "center",
+                    color: "#6b7280",
+                  }}
                 >
                   Chargement...
                 </td>
@@ -72,7 +76,11 @@ const WebsiteContentTable: React.FC<WebsiteContentTableProps> = ({
               <tr>
                 <td
                   colSpan={5}
-                  style={{ padding: "1rem", textAlign: "center", color: "#6b7280" }}
+                  style={{
+                    padding: "1rem",
+                    textAlign: "center",
+                    color: "#6b7280",
+                  }}
                 >
                   Aucune page
                 </td>
@@ -108,7 +116,8 @@ const WebsiteContentTable: React.FC<WebsiteContentTableProps> = ({
                             fontSize: "1.2rem",
                           }}
                           onMouseOver={(e) => {
-                            e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+                            e.currentTarget.style.background =
+                              "rgba(59, 130, 246, 0.1)";
                             e.currentTarget.style.transform = "scale(1.1)";
                           }}
                           onMouseOut={(e) => {
@@ -134,7 +143,8 @@ const WebsiteContentTable: React.FC<WebsiteContentTableProps> = ({
                             fontSize: "1.2rem",
                           }}
                           onMouseOver={(e) => {
-                            e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                            e.currentTarget.style.background =
+                              "rgba(239, 68, 68, 0.1)";
                             e.currentTarget.style.transform = "scale(1.1)";
                           }}
                           onMouseOut={(e) => {
@@ -157,5 +167,3 @@ const WebsiteContentTable: React.FC<WebsiteContentTableProps> = ({
 };
 
 export default WebsiteContentTable;
-
-

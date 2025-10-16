@@ -66,7 +66,8 @@ const WebsiteContentFormModal: React.FC<WebsiteContentFormModalProps> = ({
             body: JSON.stringify(payload),
           }
         );
-        if (!res.ok) throw new Error("Erreur lors de la mise à jour de la page");
+        if (!res.ok)
+          throw new Error("Erreur lors de la mise à jour de la page");
       } else {
         const payload: WebsitePageCreateDTO = {
           pageSlug,
@@ -163,7 +164,13 @@ const WebsiteContentFormModal: React.FC<WebsiteContentFormModalProps> = ({
             </div>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "0.75rem",
+            }}
+          >
             <div>
               <label style={{ display: "block", fontWeight: 600 }}>Slug</label>
               <input
@@ -196,7 +203,9 @@ const WebsiteContentFormModal: React.FC<WebsiteContentFormModalProps> = ({
           </div>
 
           <div>
-            <label style={{ display: "block", fontWeight: 600 }}>Contenu (Markdown)</label>
+            <label style={{ display: "block", fontWeight: 600 }}>
+              Contenu (Markdown)
+            </label>
             <textarea
               value={markdownContent}
               onChange={(e) => setMarkdownContent(e.target.value)}
@@ -207,7 +216,8 @@ const WebsiteContentFormModal: React.FC<WebsiteContentFormModalProps> = ({
                 padding: "0.75rem",
                 borderRadius: 10,
                 border: "2px solid #e1e5e9",
-                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+                fontFamily:
+                  "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
               }}
             />
           </div>
@@ -240,5 +250,3 @@ const WebsiteContentFormModal: React.FC<WebsiteContentFormModalProps> = ({
 };
 
 export default WebsiteContentFormModal;
-
-
