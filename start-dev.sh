@@ -83,7 +83,7 @@ create_databases() {
         "product_db"
         "order_db"
         "cart_db"
-        "website_content_db"
+        # removed: website_content_db
         "payment_db"
         "email_db"
     )
@@ -358,7 +358,7 @@ backend_services=(
     "product-service:3002:services/product-service:postgresql://microservices_user@localhost:5432/product_db"
     "order-service:3003:services/order-service:postgresql://microservices_user@localhost:5432/order_db"
     "cart-service:3004:services/cart-service:postgresql://albanroullier-gall@localhost:5432/cart_db"
-    "website-content-service:3005:services/website-content-service:postgresql://microservices_user@localhost:5432/website_content_db"
+    # removed: website-content-service
     "payment-service:3007:services/payment-service:postgresql://albanroullier-gall@localhost:5432/payment_db"
     "email-service:3006:services/email-service:postgresql://albanroullier-gall@localhost:5432/email_db"
 )
@@ -445,7 +445,7 @@ services_backend=(
     "product-service:3002"
     "order-service:3003"
     "cart-service:3004"
-    "website-content-service:3005"
+    # removed: website-content-service
     "payment-service:3007"
     "email-service:3006"
 )
@@ -511,7 +511,7 @@ if [ $backend_ok -eq $backend_total ] && [ $frontend_ok -eq $frontend_total ]; t
     echo "   📦 Product Service: http://localhost:3002"
     echo "   📋 Order Service: http://localhost:3003"
     echo "   🛒 Cart Service: http://localhost:3004"
-    echo "   📄 Website Content Service: http://localhost:3005"
+    # removed: Website Content Service URL
     echo "   📧 Email Service: http://localhost:3006"
     echo "   💳 Payment Service: http://localhost:3007"
     echo ""

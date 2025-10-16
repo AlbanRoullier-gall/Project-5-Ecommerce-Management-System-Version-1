@@ -22,8 +22,7 @@ services:
         condition: service_healthy
       cart-service:
         condition: service_healthy
-      website-content-service:
-        condition: service_healthy
+      # removed: website-content-service
       payment-service:
         condition: service_healthy
       email-service:
@@ -143,30 +142,7 @@ services:
       retries: 3
       start_period: 40s
 
-  # Website Content Service
-  website-content-service:
-    build:
-      context: .
-      dockerfile: services/website-content-service/Dockerfile.dev
-    ports:
-      - "3005:3005"
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://content_user:content_password@content-db:5432/website_content_db
-      - JWT_SECRET=your-jwt-secret-key
-    volumes:
-      - ./services/website-content-service/src:/app/src
-      - ./shared-types:/app/shared-types
-      - /app/node_modules
-    depends_on:
-      content-db:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3005/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+  # removed: Website Content Service
 
   # Payment Service
   payment-service:
@@ -325,19 +301,7 @@ services:
       timeout: 5s
       retries: 5
 
-  content-db:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=website_content_db
-      - POSTGRES_USER=content_user
-      - POSTGRES_PASSWORD=content_password
-    volumes:
-      - content_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U content_user -d website_content_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # removed: content-db
 
   payment-db:
     image: postgres:15
@@ -418,7 +382,7 @@ volumes:
   product_data:
   order_data:
   cart_data:
-  content_data:
+  # removed: content_data
   payment_data:
   email_data:
   auth_data:

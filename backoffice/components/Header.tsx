@@ -94,10 +94,7 @@ const Header: React.FC = () => {
             <i className="fas fa-shopping-bag"></i>
             <span>Commandes</span>
           </Link>
-          <Link href="/website-content" className="nav-item">
-            <i className="fas fa-file-alt"></i>
-            <span>Contenu</span>
-          </Link>
+          {/* Website content link removed */}
         </div>
       </nav>
 
@@ -136,14 +133,7 @@ const Header: React.FC = () => {
             <i className="fas fa-shopping-bag"></i>
             <span>Commandes</span>
           </Link>
-          <Link
-            href="/website-content"
-            className="mobile-nav-item"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            <i className="fas fa-file-alt"></i>
-            <span>Contenu</span>
-          </Link>
+          {/* Website content link removed from mobile nav */}
         </nav>
       )}
     </header>

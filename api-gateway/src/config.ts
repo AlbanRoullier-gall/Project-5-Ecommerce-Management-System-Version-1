@@ -48,9 +48,6 @@ export const SERVICES = {
     ? "http://localhost:3007"
     : "http://payment-service:3007",
   email: isDevelopment ? "http://localhost:3006" : "http://email-service:3006",
-  "website-content": isDevelopment
-    ? "http://localhost:3005"
-    : "http://website-content-service:3005",
 } as const;
 
 /**
