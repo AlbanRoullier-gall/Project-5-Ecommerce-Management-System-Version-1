@@ -33,7 +33,7 @@ export default function Philosophie() {
           <div style={{ maxWidth: "900px", margin: "0 auto" }}>
             <h1
               style={{
-                fontSize: "3.2rem",
+                fontSize: "4rem",
                 fontWeight: "lighter",
                 marginBottom: "1rem",
                 textShadow: "2px 2px 4px rgba(0, 0, 0, 0.25)",
@@ -44,7 +44,7 @@ export default function Philosophie() {
             </h1>
             <p
               style={{
-                fontSize: "1.4rem",
+                fontSize: "1.8rem",
                 opacity: 0.92,
                 lineHeight: 1.5,
               }}
