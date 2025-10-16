@@ -498,9 +498,9 @@ export default class EmailService {
                     ).toFixed(2)} €</td>
                   </tr>
                   <tr>
-                    <td style="padding: 8px 0; color: #666; font-size: 14px;">TVA (21%):</td>
+                    <td style="padding: 8px 0; color: #666; font-size: 14px;">TVA:</td>
                     <td style="padding: 8px 0; text-align: right; color: #666; font-size: 14px;">${Number(
-                      data.tax
+                      Number(data.total) - Number(data.subtotal)
                     ).toFixed(2)} €</td>
                   </tr>
                   <tr style="border-top: 2px solid #13686a;">
@@ -576,7 +576,9 @@ export default class EmailService {
           
           TOTAUX
           Sous-total HT: ${Number(data.subtotal).toFixed(2)} €
-          TVA (21%): ${Number(data.tax).toFixed(2)} €
+          TVA : ${Number(Number(data.total) - Number(data.subtotal)).toFixed(
+            2
+          )} €
           Total TTC: ${Number(data.total).toFixed(2)} €
           
           ADRESSE DE LIVRAISON
