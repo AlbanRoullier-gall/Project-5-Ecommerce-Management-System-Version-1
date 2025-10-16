@@ -5,6 +5,7 @@ import ErrorAlert from "../product/ui/ErrorAlert";
 import OrderTable from "./OrderTable";
 import CreditNoteTable from "./CreditNoteTable";
 import CreditNoteDetailModal from "./CreditNoteDetailModal";
+import OrderFilters from "./OrderFilters";
 import { OrderPublicDTO, CreditNotePublicDTO } from "../../dto";
 import OrderDetailModal from "./OrderDetailModal";
 import CreateCreditNoteModal from "./CreateCreditNoteModal";
@@ -138,23 +139,12 @@ const OrderList: React.FC = () => {
       {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
 
       <PageHeader title="Commandes">
-        <div style={{ display: "flex", gap: "0.5rem" }}>
-          <input
-            placeholder="Rechercher (ID, client, email)"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              padding: "0.85rem 1rem",
-              borderRadius: 12,
-              border: "2px solid #e1e5e9",
-              minWidth: 320,
-            }}
-          />
-          <Button onClick={loadData} variant="secondary" icon="fas fa-rotate">
-            Actualiser
-          </Button>
-        </div>
+        <Button onClick={loadData} variant="secondary" icon="fas fa-rotate">
+          Actualiser
+        </Button>
       </PageHeader>
+
+      <OrderFilters searchTerm={search} onSearchChange={setSearch} />
 
       <div style={{ marginBottom: "2.5rem" }}>
         <OrderTable
@@ -212,7 +202,10 @@ const OrderList: React.FC = () => {
           try {
             const res = await fetch(
               `${API_URL}/api/admin/credit-notes/${creditNoteId}`,
-              { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+              {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+              }
             );
             if (!res.ok) throw new Error("Suppression de l'avoir échouée");
             await handleCreditNoteCreated();
@@ -261,7 +254,10 @@ const OrderList: React.FC = () => {
           try {
             const res = await fetch(
               `${API_URL}/api/admin/credit-notes/${creditNoteId}`,
-              { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+              {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+              }
             );
             if (!res.ok) throw new Error("Suppression de l'avoir échouée");
             setIsCreditNoteDetailOpen(false);
