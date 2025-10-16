@@ -11,12 +11,32 @@ VALUES (
 )
 ON CONFLICT (page_slug) DO NOTHING;
 
--- Footer links page
+-- Mentions légales page
 INSERT INTO website_pages (page_slug, page_title, markdown_content, version)
 VALUES (
-  'footer-liens',
-  'Liens du pied de page',
-  'Mentions légales | Politique de confidentialité | Conditions générales',
+  'mentions-legales',
+  'Mentions légales',
+  '# Mentions légales\n\nContenu des mentions légales à compléter.',
+  1
+)
+ON CONFLICT (page_slug) DO NOTHING;
+
+-- Politique de confidentialité page
+INSERT INTO website_pages (page_slug, page_title, markdown_content, version)
+VALUES (
+  'politique-de-confidentialite',
+  'Politique de confidentialité',
+  '# Politique de confidentialité\n\nContenu de la politique de confidentialité à compléter.',
+  1
+)
+ON CONFLICT (page_slug) DO NOTHING;
+
+-- Conditions générales page
+INSERT INTO website_pages (page_slug, page_title, markdown_content, version)
+VALUES (
+  'conditions-generales',
+  'Conditions générales',
+  '# Conditions générales\n\nContenu des conditions générales à compléter.',
   1
 )
 ON CONFLICT (page_slug) DO NOTHING;
