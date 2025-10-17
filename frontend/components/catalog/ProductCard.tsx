@@ -125,7 +125,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         border: "1px solid #eaeef2",
         borderRadius: "12px",
         padding: 0,
-        textAlign: "center",
+        textAlign: "left",
         boxShadow: isHovered
           ? "0 10px 24px rgba(19, 104, 106, 0.12)"
           : "0 2px 12px rgba(0, 0, 0, 0.06)",
@@ -134,12 +134,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         width: "100%",
         position: "relative",
         transform: isHovered ? "translateY(-4px)" : "translateY(0)",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        background: "linear-gradient(to bottom, #ffffff 0%, #fcfdfd 100%)",
+        willChange: "transform, box-shadow",
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Section cliquable vers le détail */}
-      <Link href={`/products/${product.id}`} style={{ textDecoration: "none" }}>
+      <Link
+        href={`/catalog/${product.id}`}
+        style={{ textDecoration: "none", display: "block", flex: "1 1 auto" }}
+      >
         <div
           style={{
             marginBottom: 0,
@@ -148,6 +156,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             border: "none",
             position: "relative",
             background: "#ffffff",
+            borderBottom: "1px solid #eef2f7",
           }}
         >
           <img
@@ -170,56 +179,47 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         <div
           style={{
-            padding: "1rem 1rem 0.75rem 1rem",
+            padding: "1rem 1rem 0.85rem 1rem",
           }}
         >
           {product.categoryName && (
-            <div
-              style={{
-                display: "inline-block",
-                padding: "0.35rem 0.9rem",
-                background: "rgba(19, 104, 106, 0.08)",
-                color: "#13686a",
-                borderRadius: "9999px",
-                border: "1px solid rgba(19, 104, 106, 0.2)",
-                fontSize: "0.9rem",
-                fontWeight: "600",
-                marginBottom: "0.75rem",
-                textTransform: "uppercase",
-                letterSpacing: "0.4px",
-              }}
-            >
-              {product.categoryName}
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: "0.35rem 0.9rem",
+                  background: "rgba(19, 104, 106, 0.08)",
+                  color: "#13686a",
+                  borderRadius: "9999px",
+                  border: "1px solid rgba(19, 104, 106, 0.2)",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  marginBottom: "0.75rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.4px",
+                }}
+              >
+                {product.categoryName}
+              </div>
             </div>
           )}
           <h3
             style={{
               fontSize: "1.5rem",
               fontWeight: "700",
-              marginBottom: "0.5rem",
+              marginBottom: "0.25rem",
               color: "#1a1a1a",
+              lineHeight: 1.3,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              minHeight: "3.9rem", // 2 lines x 1.3 line-height x 1.5rem font-size
+              letterSpacing: "-0.01em",
             }}
           >
             {product.name}
           </h3>
-          {product.description && (
-            <p
-              style={{
-                fontSize: "1rem",
-                color: "#6b7280",
-                marginBottom: "1rem",
-                minHeight: "2.4rem",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                lineHeight: "1.5",
-              }}
-            >
-              {product.description}
-            </p>
-          )}
           <div
             style={{
               borderTop: "1px solid #eef2f7",
@@ -227,26 +227,47 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               marginTop: "0.75rem",
             }}
           >
-            <span
+            <div
               style={{
-                fontSize: "1.8rem",
-                fontWeight: "700",
-                color: "#13686a",
-                display: "block",
-                marginBottom: "0.25rem",
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "flex-end",
+                gap: "1rem",
+                flexWrap: "nowrap",
               }}
             >
-              {formatPrice(getPriceWithVat())}
-            </span>
-            <span
-              style={{
-                fontSize: "0.9rem",
-                color: "#9ca3af",
-                fontWeight: "500",
-              }}
-            >
-              TTC
-            </span>
+              {/* Prix à droite */}
+              <div
+                style={{
+                  flex: "0 0 auto",
+                  textAlign: "right",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "1.8rem",
+                    fontWeight: 700,
+                    color: "#13686a",
+                    lineHeight: 1.1,
+                    letterSpacing: "-0.02em",
+                    transition: "transform 0.2s ease, color 0.2s ease",
+                    transform: isHovered ? "translateY(-1px)" : "none",
+                  }}
+                >
+                  {formatPrice(getPriceWithVat())}
+                </div>
+                <div
+                  style={{
+                    fontSize: "0.85rem",
+                    color: "#9ca3af",
+                    fontWeight: 500,
+                    marginTop: "0.2rem",
+                  }}
+                >
+                  TTC
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </Link>
@@ -255,6 +276,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div
         style={{
           padding: "0 1rem 1rem 1rem",
+          marginTop: "auto",
+          borderTop: "1px solid #eef2f7",
+          background: "#fff",
         }}
       >
         {quantityInCart === 0 ? (

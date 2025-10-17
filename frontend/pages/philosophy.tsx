@@ -25,8 +25,8 @@ export default function PhilosophyPage() {
 
         <PhilosophyHero />
 
-        <main style={{ padding: "3rem 2rem" }}>
-          <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+        <main style={{ padding: "3.5rem 2rem 4rem" }}>
+          <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
             <ValuesSection />
             <SustainabilitySection />
             <CraftSection />
@@ -40,6 +40,9 @@ export default function PhilosophyPage() {
         @media (max-width: 900px) {
           main > div section {
             grid-template-columns: 1fr !important;
+          }
+          main {
+            padding: 2.5rem 1.5rem 3rem !important;
           }
         }
       `}</style>

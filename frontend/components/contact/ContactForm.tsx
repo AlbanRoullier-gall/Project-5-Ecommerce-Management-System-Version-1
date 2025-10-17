@@ -72,13 +72,17 @@ export default function ContactForm() {
         padding: "2rem",
         borderRadius: "12px",
         boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
       }}
     >
       <h2
         style={{
           fontSize: "2rem",
           color: "#13686a",
-          marginBottom: "2rem",
+          marginBottom: "1.5rem",
           textAlign: "center",
           fontWeight: "bold",
         }}
@@ -106,7 +110,11 @@ export default function ContactForm() {
 
       <form
         onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "1.5rem",
+        }}
       >
         <div style={{ display: "flex", flexDirection: "column" }}>
           <label

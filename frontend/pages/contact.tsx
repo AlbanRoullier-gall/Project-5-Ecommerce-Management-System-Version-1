@@ -30,9 +30,10 @@ export default function Contact() {
               maxWidth: "1200px",
               margin: "0 auto",
               display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              gridTemplateColumns: "minmax(0, 520px) minmax(0, 520px)",
+              justifyContent: "center",
               gap: "4rem",
-              alignItems: "start",
+              alignItems: "stretch",
             }}
           >
             <ContactInfo />
@@ -48,6 +49,7 @@ export default function Contact() {
           section > div {
             grid-template-columns: 1fr !important;
             gap: 2rem !important;
+            justify-content: stretch !important;
           }
         }
       `}</style>

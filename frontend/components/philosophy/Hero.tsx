@@ -11,14 +11,13 @@ export default function PhilosophyHero() {
         marginBottom: "2rem",
       }}
     >
-      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+      <div style={{ maxWidth: "800px", margin: "0 auto" }}>
         <h1
           style={{
             fontSize: "4rem",
             fontWeight: "lighter",
             marginBottom: "1rem",
-            textShadow: "2px 2px 4px rgba(0, 0, 0, 0.25)",
-            letterSpacing: 1,
+            textShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)",
           }}
         >
           NOTRE PHILOSOPHIE
@@ -26,8 +25,8 @@ export default function PhilosophyHero() {
         <p
           style={{
             fontSize: "1.8rem",
-            opacity: 0.92,
-            lineHeight: 1.5,
+            opacity: 0.9,
+            lineHeight: 1.4,
           }}
         >
           Une vision artisanale, durable et respectueuse de la nature.
