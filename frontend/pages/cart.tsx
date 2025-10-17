@@ -317,6 +317,22 @@ export default function CartPage() {
                       </div>
                     ))}
 
+                    {/* Total TVA (cumul) */}
+                    <div
+                      className="cart-summary-row"
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        padding: "0.8rem 0",
+                        fontSize: "1.5rem",
+                        color: "#333",
+                        fontWeight: 700,
+                      }}
+                    >
+                      <span>Total TVA</span>
+                      <span>{totals.vatAmount.toFixed(2)} €</span>
+                    </div>
+
                     <div
                       className="cart-summary-row cart-summary-total"
                       style={{

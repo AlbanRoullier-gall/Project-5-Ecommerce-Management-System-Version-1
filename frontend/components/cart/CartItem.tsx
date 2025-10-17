@@ -91,6 +91,8 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
   const productImage = product?.images?.[0]
     ? `${API_URL}/${product.images[0].filePath}`
     : "/images/placeholder.svg";
+  // Prix HTVA unitaire calculé à partir du prix TTC et du taux de TVA
+  const unitPriceHT = item.price / (1 + (item.vatRate || 0) / 100);
 
   return (
     <div
@@ -166,13 +168,28 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
           </h3>
           <div
             style={{
-              fontSize: "1.2rem",
-              color: "#7a7a7a",
               textAlign: "right",
               whiteSpace: "nowrap",
             }}
           >
-            {item.price.toFixed(2)} € / unité
+            <div
+              style={{
+                fontSize: "1.2rem",
+                color: "#333",
+                fontWeight: 600,
+              }}
+            >
+              {unitPriceHT.toFixed(2)} € HTVA / unité
+            </div>
+            <div
+              style={{
+                fontSize: "1.1rem",
+                color: "#7a7a7a",
+                marginTop: "0.2rem",
+              }}
+            >
+              TVA {item.vatRate}%
+            </div>
           </div>
         </div>
 

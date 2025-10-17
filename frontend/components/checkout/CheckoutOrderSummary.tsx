@@ -454,9 +454,25 @@ export default function CheckoutOrderSummary({
       )}
 
       <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3rem" }}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "3rem",
+          alignItems: "stretch",
+        }}
       >
-        <div>
+        <div
+          style={{
+            gridColumn: 1,
+            background: "white",
+            borderRadius: "16px",
+            padding: "2rem",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <div style={{ marginBottom: "2.5rem" }}>
             <h3
               style={{
@@ -611,7 +627,19 @@ export default function CheckoutOrderSummary({
           )}
         </div>
 
-        <div>
+        <div
+          style={{
+            gridColumn: 2,
+            background: "white",
+            borderRadius: "16px",
+            padding: "2rem",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+          }}
+        >
           <h3
             style={{
               fontSize: "1.6rem",
@@ -628,33 +656,57 @@ export default function CheckoutOrderSummary({
           </h3>
 
           <div style={{ marginBottom: "2rem" }}>
-            {products.map((item, index) => (
-              <div
-                key={index}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "1.2rem",
-                  background: "#f8f9fa",
-                  borderRadius: "8px",
-                  marginBottom: "1rem",
-                  fontSize: "1.3rem",
-                }}
-              >
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: "600", marginBottom: "0.3rem" }}>
-                    {item.product?.name || "Produit"}
+            {products.map((item, index) => {
+              const vatMultiplier = 1 + (item.vatRate || 0) / 100;
+              const unitPriceHT = item.price / vatMultiplier;
+              return (
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "1.2rem",
+                    background: "#f8f9fa",
+                    borderRadius: "8px",
+                    marginBottom: "1rem",
+                    fontSize: "1.3rem",
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "600", marginBottom: "0.3rem" }}>
+                      {item.product?.name || "Produit"}
+                    </div>
+                    <div style={{ color: "#666", fontSize: "1.2rem" }}>
+                      Quantité: {item.quantity} × {item.price.toFixed(2)} €
+                    </div>
                   </div>
-                  <div style={{ color: "#666", fontSize: "1.2rem" }}>
-                    Quantité: {item.quantity} × {item.price.toFixed(2)} €
+                  <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                    <div
+                      style={{
+                        fontSize: "1.2rem",
+                        color: "#333",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {unitPriceHT.toFixed(2)} € HTVA / unité
+                    </div>
+                    <div style={{ fontSize: "1.1rem", color: "#7a7a7a" }}>
+                      TVA {item.vatRate}%
+                    </div>
+                    <div
+                      style={{
+                        fontWeight: "700",
+                        color: "#13686a",
+                        marginTop: "0.4rem",
+                      }}
+                    >
+                      {item.total.toFixed(2)} €
+                    </div>
                   </div>
                 </div>
-                <div style={{ fontWeight: "700", color: "#13686a" }}>
-                  {item.total.toFixed(2)} €
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div
@@ -693,6 +745,21 @@ export default function CheckoutOrderSummary({
                 <span>{b.amount.toFixed(2)} €</span>
               </div>
             ))}
+
+            {/* Total TVA (cumul) */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "0.8rem 0",
+                fontSize: "1.6rem",
+                color: "#333",
+                fontWeight: 700,
+              }}
+            >
+              <span>Total TVA</span>
+              <span>{totals.vatAmount.toFixed(2)} €</span>
+            </div>
 
             <div
               style={{

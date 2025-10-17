@@ -71,6 +71,10 @@ const CartSummary: React.FC = () => {
             <span>{b.amount.toFixed(2)} €</span>
           </div>
         ))}
+        <div className="summary-row" style={{ fontWeight: 700 }}>
+          <span>Total TVA</span>
+          <span>{totals.vatAmount.toFixed(2)} €</span>
+        </div>
         <div className="summary-row summary-total">
           <span>Total TTC</span>
           <span>{cart.total.toFixed(2)} €</span>
