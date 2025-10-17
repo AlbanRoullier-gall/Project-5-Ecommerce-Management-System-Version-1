@@ -276,6 +276,7 @@ export default function CartPage() {
                 display: "grid",
                 gridTemplateColumns: "1fr 400px",
                 gap: "3rem",
+                alignItems: "start",
               }}
             >
               {/* Liste des articles */}
@@ -285,7 +286,10 @@ export default function CartPage() {
                 ))}
               </div>
               {/* Résumé du panier */}
-              <div className="cart-summary-wrapper">
+              <div
+                className="cart-summary-wrapper"
+                style={{ alignSelf: "center" }}
+              >
                 <div
                   className="cart-summary"
                   style={{

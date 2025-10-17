@@ -149,19 +149,6 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
           >
             {product?.name || "Chargement..."}
           </h3>
-          {product?.description && (
-            <p
-              style={{
-                fontSize: "1.2rem",
-                color: "#666",
-                marginBottom: "1.5rem",
-                lineHeight: "1.6",
-              }}
-            >
-              {product.description.substring(0, 100)}
-              {product.description.length > 100 ? "..." : ""}
-            </p>
-          )}
 
           {/* Contrôles quantité */}
           <div

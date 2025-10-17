@@ -4,6 +4,11 @@ export default function Document() {
   return (
     <Html lang="fr">
       <Head>
+        <link
+          rel="icon"
+          href="/images/logoNatureDePierreIcon.svg"
+          type="image/svg+xml"
+        />
         {/* Font Awesome */}
         <link
           rel="stylesheet"

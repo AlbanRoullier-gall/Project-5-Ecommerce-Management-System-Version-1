@@ -479,8 +479,9 @@ footer {
 .auth-background {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: center; /* center inner container like header */
+  padding: 0; /* padding handled by inner container */
   background: linear-gradient(
     135deg,
     rgba(19, 104, 106, 0.9) 0%,
@@ -502,19 +503,26 @@ footer {
 }
 
 .auth-logo {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
   color: white;
   z-index: 1;
   position: relative;
+  width: 100%;
+  max-width: 1400px; /* mirror frontend header-container */
+  margin: 0 auto; /* horizontally center */
+  padding: 1rem 2rem; /* mirror header-container padding */
 }
 
 .auth-logo-img {
-  width: 80px;
-  height: 80px;
+  width: 50px; /* match frontend header logo */
+  height: 50px; /* match frontend header logo */
   border-radius: 50%;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  margin-bottom: 2rem;
-  animation: float 3s ease-in-out infinite;
+  margin-bottom: 0;
+  animation: none;
 }
 
 @keyframes float {
@@ -528,17 +536,15 @@ footer {
 }
 
 .auth-logo-text {
-  font-size: 2.5rem;
+  font-size: 1.8rem; /* match frontend brand text */
   font-weight: 700;
-  letter-spacing: 2px;
-  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+  margin-bottom: 0;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .auth-logo-subtitle {
-  font-size: 1.2rem;
-  opacity: 0.9;
-  font-weight: 300;
+  display: none; /* hide to mirror frontend header */
 }
 
 .auth-content {

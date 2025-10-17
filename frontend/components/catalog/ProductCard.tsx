@@ -145,7 +145,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     >
       {/* Section cliquable vers le détail */}
       <Link
-        href={`/catalog/${product.id}`}
+        href={`/product?productId=${product.id}`}
         style={{ textDecoration: "none", display: "block", flex: "1 1 auto" }}
       >
         <div
