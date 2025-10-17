@@ -80,19 +80,19 @@ const Header: React.FC = () => {
         <div className="nav-container">
           <Link href="/dashboard" className="nav-item">
             <i className="fas fa-tachometer-alt"></i>
-            <span>Dashboard</span>
+            <span>DASHBOARD</span>
           </Link>
           <Link href="/products" className="nav-item">
             <i className="fas fa-box"></i>
-            <span>Produits</span>
+            <span>PRODUITS</span>
           </Link>
           <Link href="/customers" className="nav-item">
             <i className="fas fa-users"></i>
-            <span>Clients</span>
+            <span>CLIENTS</span>
           </Link>
           <Link href="/orders" className="nav-item">
             <i className="fas fa-shopping-bag"></i>
-            <span>Commandes</span>
+            <span>COMMANDES</span>
           </Link>
           {/* Website content link removed */}
         </div>
@@ -107,7 +107,7 @@ const Header: React.FC = () => {
             onClick={() => setIsMenuOpen(false)}
           >
             <i className="fas fa-tachometer-alt"></i>
-            <span>Dashboard</span>
+            <span>DASHBOARD</span>
           </Link>
           <Link
             href="/products"
@@ -115,7 +115,7 @@ const Header: React.FC = () => {
             onClick={() => setIsMenuOpen(false)}
           >
             <i className="fas fa-box"></i>
-            <span>Produits</span>
+            <span>PRODUITS</span>
           </Link>
           <Link
             href="/customers"
@@ -123,7 +123,7 @@ const Header: React.FC = () => {
             onClick={() => setIsMenuOpen(false)}
           >
             <i className="fas fa-users"></i>
-            <span>Clients</span>
+            <span>CLIENTS</span>
           </Link>
           <Link
             href="/orders"
@@ -131,7 +131,7 @@ const Header: React.FC = () => {
             onClick={() => setIsMenuOpen(false)}
           >
             <i className="fas fa-shopping-bag"></i>
-            <span>Commandes</span>
+            <span>COMMANDES</span>
           </Link>
           {/* Website content link removed from mobile nav */}
         </nav>
