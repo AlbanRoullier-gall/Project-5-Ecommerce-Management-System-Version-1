@@ -8,7 +8,6 @@ import Footer from "../components/Footer";
 import { ProductPublicDTO } from "../dto";
 import { useCart } from "../contexts/CartContext";
 import {
-  ProductBreadcrumb,
   ProductImageGallery,
   ProductInfo,
   ProductPriceBox,
@@ -220,7 +219,7 @@ export default function ProductPage() {
       >
         <Header />
 
-        <ProductBreadcrumb productName={product.name} />
+        {/* Breadcrumb supprimé */}
 
         <div
           className="product-detail-container"

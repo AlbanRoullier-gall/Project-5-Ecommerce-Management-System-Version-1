@@ -58,37 +58,7 @@ export default function CartPage() {
       <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
         <Header />
 
-        {/* Breadcrumb */}
-        <div
-          style={{
-            background: "#fff",
-            padding: "1.5rem 2rem",
-            borderBottom: "2px solid #e0e0e0",
-          }}
-        >
-          <div
-            style={{
-              maxWidth: "1200px",
-              margin: "0 auto",
-              fontSize: "1.2rem",
-              color: "#666",
-            }}
-          >
-            <Link
-              href="/"
-              style={{
-                color: "#13686a",
-                textDecoration: "none",
-                fontWeight: "500",
-              }}
-            >
-              <i className="fas fa-home" style={{ marginRight: "0.5rem" }}></i>
-              Accueil
-            </Link>
-            <span style={{ margin: "0 1rem", color: "#ccc" }}>/</span>
-            <span style={{ color: "#333", fontWeight: "600" }}>Panier</span>
-          </div>
-        </div>
+        {/* Breadcrumb supprimé */}
 
         {/* Main Content */}
         <div
