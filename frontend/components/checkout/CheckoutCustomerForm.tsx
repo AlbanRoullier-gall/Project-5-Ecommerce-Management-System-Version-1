@@ -3,11 +3,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import {
-  CustomerCreateDTO,
-  CivilityDTO,
-  SocioProfessionalCategoryDTO,
-} from "../../dto";
+import { CustomerCreateDTO } from "../../dto";
 
 interface CheckoutCustomerFormProps {
   formData: Partial<CustomerCreateDTO>;
@@ -16,47 +12,17 @@ interface CheckoutCustomerFormProps {
   onBack?: () => void;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
-
 export default function CheckoutCustomerForm({
   formData,
   onChange,
   onNext,
   onBack,
 }: CheckoutCustomerFormProps) {
-  const [civilities, setCivilities] = useState<CivilityDTO[]>([]);
-  const [categories, setCategories] = useState<SocioProfessionalCategoryDTO[]>(
-    []
-  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
-    const loadRefs = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const [civRes, catRes] = await Promise.all([
-          fetch(`${API_URL}/api/customers/civilities`),
-          fetch(`${API_URL}/api/customers/categories`),
-        ]);
-
-        if (!civRes.ok) throw new Error("Impossible de charger les civilités");
-        if (!catRes.ok) throw new Error("Impossible de charger les catégories");
-
-        const civData = await civRes.json();
-        const catData = await catRes.json();
-
-        setCivilities(civData.civilities || civData);
-        setCategories(catData.categories || catData);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erreur de chargement");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadRefs();
+    // No reference data to load anymore
+    setError(null);
   }, []);
 
   const handleChange = (
@@ -65,23 +31,14 @@ export default function CheckoutCustomerForm({
     const { name, value } = e.target;
     onChange({
       ...formData,
-      [name]:
-        name === "civilityId" || name === "socioProfessionalCategoryId"
-          ? parseInt(value)
-          : value,
+      [name]: value,
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !formData.firstName ||
-      !formData.lastName ||
-      !formData.email ||
-      !formData.civilityId ||
-      !formData.socioProfessionalCategoryId
-    ) {
+    if (!formData.firstName || !formData.lastName || !formData.email) {
       alert("Veuillez remplir tous les champs obligatoires");
       return;
     }
@@ -142,82 +99,9 @@ export default function CheckoutCustomerForm({
             marginBottom: "2rem",
           }}
         >
-          <div className="checkout-form-group">
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.8rem",
-                fontSize: "1.3rem",
-                fontWeight: "600",
-                color: "#333",
-              }}
-            >
-              Civilité <span style={{ color: "#c33" }}>*</span>
-            </label>
-            <select
-              name="civilityId"
-              value={formData.civilityId || ""}
-              onChange={handleChange}
-              required
-              style={{
-                width: "100%",
-                padding: "1.2rem",
-                fontSize: "1.3rem",
-                border: "2px solid #ddd",
-                borderRadius: "8px",
-                transition: "border-color 0.3s ease",
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-              disabled={isLoading}
-            >
-              <option value="">Sélectionnez</option>
-              {civilities.map((civ) => (
-                <option key={civ.civilityId} value={civ.civilityId}>
-                  {civ.abbreviation}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Civilité supprimée */}
 
-          <div className="checkout-form-group">
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.8rem",
-                fontSize: "1.3rem",
-                fontWeight: "600",
-                color: "#333",
-              }}
-            >
-              Catégorie socio-professionnelle{" "}
-              <span style={{ color: "#c33" }}>*</span>
-            </label>
-            <select
-              name="socioProfessionalCategoryId"
-              value={formData.socioProfessionalCategoryId || ""}
-              onChange={handleChange}
-              required
-              style={{
-                width: "100%",
-                padding: "1.2rem",
-                fontSize: "1.3rem",
-                border: "2px solid #ddd",
-                borderRadius: "8px",
-                transition: "border-color 0.3s ease",
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-              disabled={isLoading}
-            >
-              <option value="">Sélectionnez</option>
-              {categories.map((cat) => (
-                <option key={cat.categoryId} value={cat.categoryId}>
-                  {cat.categoryName}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Catégorie socio-professionnelle supprimée */}
 
           <div className="checkout-form-group">
             <label
@@ -346,35 +230,7 @@ export default function CheckoutCustomerForm({
             />
           </div>
 
-          <div className="checkout-form-group" style={{ gridColumn: "1 / -1" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.8rem",
-                fontSize: "1.3rem",
-                fontWeight: "600",
-                color: "#333",
-              }}
-            >
-              Date de naissance
-            </label>
-            <input
-              type="date"
-              name="birthday"
-              value={formData.birthday || ""}
-              onChange={handleChange}
-              style={{
-                width: "100%",
-                padding: "1.2rem",
-                fontSize: "1.3rem",
-                border: "2px solid #ddd",
-                borderRadius: "8px",
-                transition: "border-color 0.3s ease",
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-            />
-          </div>
+          {/* Date de naissance supprimée */}
         </div>
 
         {error && (
