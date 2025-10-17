@@ -97,9 +97,11 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
       style={{
         background: "white",
         borderRadius: "16px",
-        padding: "2rem",
+        padding: "2.4rem",
         marginBottom: "2rem",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        boxShadow: "0 6px 20px rgba(0,0,0,0.06)",
+        border: "1px solid #eaeaea",
+        minHeight: "180px",
         opacity: isUpdating ? 0.6 : 1,
         transition: "opacity 0.3s ease",
       }}
@@ -108,7 +110,9 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
         style={{
           display: "grid",
           gridTemplateColumns: "150px 1fr auto",
-          gap: "2rem",
+          gridTemplateRows: "auto auto",
+          columnGap: "2.4rem",
+          rowGap: "1.6rem",
           alignItems: "center",
         }}
       >
@@ -120,6 +124,8 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
             borderRadius: "12px",
             overflow: "hidden",
             background: "#ffffff",
+            border: "1px solid #eee",
+            gridRow: "1 / span 2",
           }}
         >
           <img
@@ -137,37 +143,61 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
           />
         </div>
 
-        {/* Infos produit */}
-        <div>
+        {/* Ligne 1: conteneur aligné (nom ↔ prix unitaire) */}
+        <div
+          style={{
+            gridColumn: "2 / 4",
+            gridRow: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "1.2rem",
+          }}
+        >
           <h3
             style={{
-              fontSize: "1.8rem",
+              fontSize: "2rem",
               fontWeight: "600",
-              marginBottom: "0.8rem",
+              margin: 0,
               color: "#333",
             }}
           >
             {product?.name || "Chargement..."}
           </h3>
-
-          {/* Contrôles quantité */}
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
+              fontSize: "1.2rem",
+              color: "#7a7a7a",
+              textAlign: "right",
+              whiteSpace: "nowrap",
             }}
           >
+            {item.price.toFixed(2)} € / unité
+          </div>
+        </div>
+
+        {/* Ligne 2: conteneur aligné (quantité ↔ Retirer) */}
+        <div
+          style={{
+            gridColumn: "2 / 4",
+            gridRow: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "1.2rem",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
             <button
               onClick={() => handleQuantityChange(quantity - 1)}
               disabled={isUpdating || quantity <= 1}
               style={{
-                width: "40px",
-                height: "40px",
+                width: "44px",
+                height: "44px",
                 border: "2px solid #13686a",
                 background: "white",
                 color: "#13686a",
-                borderRadius: "8px",
+                borderRadius: "10px",
                 cursor: quantity <= 1 || isUpdating ? "not-allowed" : "pointer",
                 fontSize: "1.5rem",
                 fontWeight: "bold",
@@ -190,12 +220,12 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
               min="1"
               disabled={isUpdating}
               style={{
-                width: "80px",
-                height: "40px",
+                width: "100px",
+                height: "44px",
                 textAlign: "center",
                 border: "2px solid #ddd",
                 fontSize: "1.4rem",
-                borderRadius: "8px",
+                borderRadius: "10px",
                 fontWeight: "600",
               }}
             />
@@ -203,12 +233,12 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
               onClick={() => handleQuantityChange(quantity + 1)}
               disabled={isUpdating}
               style={{
-                width: "40px",
-                height: "40px",
+                width: "44px",
+                height: "44px",
                 border: "2px solid #13686a",
                 background: isUpdating ? "#ccc" : "#13686a",
                 color: "white",
-                borderRadius: "8px",
+                borderRadius: "10px",
                 cursor: isUpdating ? "not-allowed" : "pointer",
                 fontSize: "1.5rem",
                 fontWeight: "bold",
@@ -221,61 +251,59 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
               <i className="fas fa-plus"></i>
             </button>
           </div>
-        </div>
 
-        {/* Prix et suppression */}
-        <div style={{ textAlign: "right" }}>
           <div
             style={{
-              fontSize: "1.3rem",
-              color: "#666",
-              marginBottom: "0.5rem",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: "0.6rem",
             }}
           >
-            {item.price.toFixed(2)} € / unité
+            <div
+              style={{
+                fontSize: "2.2rem",
+                color: "#13686a",
+                fontWeight: "700",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item.total.toFixed(2)} €
+            </div>
+            <button
+              onClick={handleRemove}
+              disabled={isUpdating}
+              style={{
+                padding: "0.6rem 1.2rem",
+                background: "#fff5f5",
+                color: "#c33",
+                border: "2px solid #f5b7b7",
+                borderRadius: "8px",
+                cursor: isUpdating ? "not-allowed" : "pointer",
+                fontSize: "1.1rem",
+                fontWeight: "600",
+                transition: "all 0.2s ease",
+              }}
+              onMouseOver={(e) => {
+                if (!isUpdating) {
+                  e.currentTarget.style.background = "#c33";
+                  e.currentTarget.style.color = "white";
+                  e.currentTarget.style.borderColor = "#c33";
+                }
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = "#fff5f5";
+                e.currentTarget.style.color = "#c33";
+                e.currentTarget.style.borderColor = "#f5b7b7";
+              }}
+              title="Supprimer"
+            >
+              <i className="fas fa-trash"></i> Retirer
+            </button>
           </div>
-          <div
-            style={{
-              fontSize: "2.2rem",
-              color: "#13686a",
-              fontWeight: "700",
-              marginBottom: "2rem",
-            }}
-          >
-            {item.total.toFixed(2)} €
-          </div>
-
-          <button
-            onClick={handleRemove}
-            disabled={isUpdating}
-            style={{
-              padding: "0.8rem 1.5rem",
-              background: "#fee",
-              color: "#c33",
-              border: "2px solid #fcc",
-              borderRadius: "8px",
-              cursor: isUpdating ? "not-allowed" : "pointer",
-              fontSize: "1.2rem",
-              fontWeight: "600",
-              transition: "all 0.2s ease",
-            }}
-            onMouseOver={(e) => {
-              if (!isUpdating) {
-                e.currentTarget.style.background = "#c33";
-                e.currentTarget.style.color = "white";
-                e.currentTarget.style.borderColor = "#c33";
-              }
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = "#fee";
-              e.currentTarget.style.color = "#c33";
-              e.currentTarget.style.borderColor = "#fcc";
-            }}
-            title="Supprimer"
-          >
-            <i className="fas fa-trash"></i> Retirer
-          </button>
         </div>
+
+        {/* Total et action intégrés à la ligne 2 (à droite) */}
       </div>
     </div>
   );
