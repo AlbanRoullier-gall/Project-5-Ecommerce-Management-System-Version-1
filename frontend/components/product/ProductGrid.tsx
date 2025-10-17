@@ -24,7 +24,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, isLoading }) => {
     return (
       <div
         style={{
-          padding: "4rem 2rem",
+          padding: "4rem 0",
           background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
           minHeight: "60vh",
         }}
@@ -58,7 +58,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, isLoading }) => {
     return (
       <div
         style={{
-          padding: "4rem 2rem",
+          padding: "4rem 0",
           background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
           minHeight: "60vh",
         }}
@@ -96,7 +96,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, isLoading }) => {
   return (
     <div
       style={{
-        padding: "4rem 2rem",
+        padding: "4rem 0",
         background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
         minHeight: "60vh",
       }}
