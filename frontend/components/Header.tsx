@@ -50,7 +50,7 @@ const Header: React.FC = () => {
             <i className="fas fa-th-large"></i>
             <span>CATALOGUE</span>
           </Link>
-          <Link href="/philosophie" className="nav-item">
+          <Link href="/philosophy" className="nav-item">
             <i className="fas fa-leaf"></i>
             <span>PHILOSOPHIE</span>
           </Link>
@@ -73,7 +73,7 @@ const Header: React.FC = () => {
             <span>CATALOGUE</span>
           </Link>
           <Link
-            href="/philosophie"
+            href="/philosophy"
             className="mobile-nav-item"
             onClick={() => setIsMenuOpen(false)}
           >
