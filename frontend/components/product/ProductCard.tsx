@@ -122,38 +122,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <div
       style={{
         backgroundColor: "white",
-        border: "none",
-        borderRadius: "16px",
+        border: "1px solid #eaeef2",
+        borderRadius: "12px",
         padding: 0,
         textAlign: "center",
         boxShadow: isHovered
-          ? "0 12px 32px rgba(19, 104, 106, 0.15)"
-          : "0 4px 20px rgba(0, 0, 0, 0.08)",
-        transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+          ? "0 10px 24px rgba(19, 104, 106, 0.12)"
+          : "0 2px 12px rgba(0, 0, 0, 0.06)",
+        transition: "box-shadow 0.3s ease, transform 0.3s ease",
         overflow: "hidden",
         width: "100%",
-        maxWidth: "320px",
         position: "relative",
-        transform: isHovered ? "translateY(-8px)" : "translateY(0)",
+        transform: isHovered ? "translateY(-4px)" : "translateY(0)",
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Barre colorée en haut au hover */}
-      {isHovered && (
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: "4px",
-            background: "linear-gradient(90deg, #13686a 0%, #d9b970 100%)",
-            zIndex: 10,
-          }}
-        />
-      )}
-
       {/* Section cliquable vers le détail */}
       <Link href={`/products/${product.id}`} style={{ textDecoration: "none" }}>
         <div
@@ -171,10 +155,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             alt={product.name}
             style={{
               width: "100%",
-              height: "200px",
+              height: "220px",
               objectFit: "contain",
-              backgroundColor: "#fff",
-              transition: "transform 0.4s ease",
+              backgroundColor: "#fafafa",
+              transition: "transform 0.3s ease",
               transform: isHovered ? "scale(1.05)" : "scale(1)",
             }}
             onError={(e) => {
@@ -186,22 +170,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         <div
           style={{
-            padding: "1.5rem 1.5rem 1rem 1.5rem",
+            padding: "1rem 1rem 0.75rem 1rem",
           }}
         >
           {product.categoryName && (
             <div
               style={{
                 display: "inline-block",
-                padding: "0.4rem 1rem",
-                background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-                color: "white",
-                borderRadius: "20px",
-                fontSize: "1rem",
+                padding: "0.35rem 0.9rem",
+                background: "rgba(19, 104, 106, 0.08)",
+                color: "#13686a",
+                borderRadius: "9999px",
+                border: "1px solid rgba(19, 104, 106, 0.2)",
+                fontSize: "0.9rem",
                 fontWeight: "600",
-                marginBottom: "1rem",
+                marginBottom: "0.75rem",
                 textTransform: "uppercase",
-                letterSpacing: "0.5px",
+                letterSpacing: "0.4px",
               }}
             >
               {product.categoryName}
@@ -209,9 +194,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           )}
           <h3
             style={{
-              fontSize: "1.8rem",
+              fontSize: "1.5rem",
               fontWeight: "700",
-              marginBottom: "0.8rem",
+              marginBottom: "0.5rem",
               color: "#1a1a1a",
             }}
           >
@@ -220,16 +205,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {product.description && (
             <p
               style={{
-                fontSize: "1.2rem",
-                color: "#666",
-                marginBottom: "1.2rem",
+                fontSize: "1rem",
+                color: "#6b7280",
+                marginBottom: "1rem",
                 minHeight: "2.4rem",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
-                lineHeight: "1.2",
+                lineHeight: "1.5",
               }}
             >
               {product.description}
@@ -237,25 +222,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           )}
           <div
             style={{
-              borderTop: "1px solid #e5e7eb",
-              paddingTop: "1rem",
-              marginTop: "1rem",
+              borderTop: "1px solid #eef2f7",
+              paddingTop: "0.75rem",
+              marginTop: "0.75rem",
             }}
           >
             <span
               style={{
-                fontSize: "2.4rem",
-                fontWeight: "800",
+                fontSize: "1.8rem",
+                fontWeight: "700",
                 color: "#13686a",
                 display: "block",
-                marginBottom: "0.3rem",
+                marginBottom: "0.25rem",
               }}
             >
               {formatPrice(getPriceWithVat())}
             </span>
             <span
               style={{
-                fontSize: "1.1rem",
+                fontSize: "0.9rem",
                 color: "#9ca3af",
                 fontWeight: "500",
               }}
@@ -269,7 +254,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       {/* Contrôles du panier - non cliquables vers le détail */}
       <div
         style={{
-          padding: "0 1.5rem 1.5rem 1.5rem",
+          padding: "0 1rem 1rem 1rem",
         }}
       >
         {quantityInCart === 0 ? (
@@ -277,12 +262,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <button
             style={{
               width: "100%",
-              padding: "1rem 1.5rem",
+              padding: "0.9rem 1.2rem",
               background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
               border: "none",
-              borderRadius: "8px",
+              borderRadius: "10px",
               color: "white",
-              fontSize: "1.3rem",
+              fontSize: "1.1rem",
               fontWeight: "600",
               cursor: isLoading ? "not-allowed" : "pointer",
               transition: "all 0.3s ease",
@@ -323,13 +308,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <button
               style={{
                 flex: "0 0 auto",
-                width: "40px",
-                height: "40px",
+                width: "38px",
+                height: "38px",
                 background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
                 border: "none",
-                borderRadius: "8px",
+                borderRadius: "10px",
                 color: "white",
-                fontSize: "1.5rem",
+                fontSize: "1.2rem",
                 fontWeight: "600",
                 cursor: isLoading ? "not-allowed" : "pointer",
                 transition: "all 0.3s ease",
@@ -356,10 +341,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <div
               style={{
                 flex: "1",
-                padding: "0.8rem 1rem",
+                padding: "0.7rem 1rem",
                 background: "#f3f4f6",
-                borderRadius: "8px",
-                fontSize: "1.3rem",
+                borderRadius: "10px",
+                fontSize: "1.1rem",
                 fontWeight: "700",
                 color: "#13686a",
                 textAlign: "center",
@@ -371,13 +356,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <button
               style={{
                 flex: "0 0 auto",
-                width: "40px",
-                height: "40px",
+                width: "38px",
+                height: "38px",
                 background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
                 border: "none",
-                borderRadius: "8px",
+                borderRadius: "10px",
                 color: "white",
-                fontSize: "1.5rem",
+                fontSize: "1.2rem",
                 fontWeight: "600",
                 cursor: isLoading ? "not-allowed" : "pointer",
                 transition: "all 0.3s ease",

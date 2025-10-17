@@ -179,49 +179,15 @@ const ProductCatalog: React.FC = () => {
         </div>
       )}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr",
-          gap: "1.5rem",
-          maxWidth: "1400px",
-          margin: "0 auto",
-          padding: "0 1rem",
-        }}
-      >
-        {/* Sidebar à gauche (au-dessus en mobile) */}
-        {categories.length > 0 && (
-          <div
-            style={{
-              position: "sticky",
-              top: "1rem",
-              height: "fit-content",
-              zIndex: 3000,
-            }}
-          >
-            <CategoryFilter
-              categories={categories}
-              selectedCategoryId={selectedCategoryId}
-              onCategoryChange={handleCategoryChange}
-              variant="sidebar"
-            />
-          </div>
-        )}
+      {categories.length > 0 && (
+        <CategoryFilter
+          categories={categories}
+          selectedCategoryId={selectedCategoryId}
+          onCategoryChange={handleCategoryChange}
+        />
+      )}
 
-        {/* Grille produits à droite */}
-        <div>
-          <ProductGrid products={filteredProducts} isLoading={isLoading} />
-        </div>
-      </div>
-
-      <style jsx>{`
-        @media (min-width: 1024px) {
-          div[style*="display: grid"] {
-            grid-template-columns: 280px 1fr !important;
-            align-items: start;
-          }
-        }
-      `}</style>
+      <ProductGrid products={filteredProducts} isLoading={isLoading} />
     </>
   );
 };

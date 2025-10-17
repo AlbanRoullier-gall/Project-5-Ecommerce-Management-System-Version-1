@@ -273,17 +273,16 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
     <div
       style={{
         background: "#f8f9fa",
-        padding: "2rem 2rem 1.5rem 2rem",
-        borderBottom: "1px solid #e5e7eb",
+        padding: "2rem 0 1.5rem 0",
       }}
     >
       <div
         style={{
-          maxWidth: "1200px",
+          maxWidth: "1400px",
           margin: "0 auto",
         }}
       >
-        <div style={{ maxWidth: "300px", margin: "0 auto" }}>{Dropdown}</div>
+        <div style={{ maxWidth: "300px", margin: 0 }}>{Dropdown}</div>
       </div>
 
       <style jsx>{`
