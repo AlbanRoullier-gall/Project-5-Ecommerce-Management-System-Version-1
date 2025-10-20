@@ -179,7 +179,10 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
               const p = r.data?.product || r.data;
               if (p) {
                 const name = p.name || p.product?.name || "Produit";
-                const vatRate = p.vatRate ?? p.product?.vatRate;
+                const rawVat = p.vatRate ?? p.product?.vatRate;
+                const parsedVat = Number(rawVat);
+                const vatRate =
+                  Number.isFinite(parsedVat) && parsedVat >= 0 ? parsedVat : 0;
                 productIdToInfo.set(pid, { name, vatRate });
               }
             } catch {}
@@ -229,11 +232,11 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
       for (const item of sourceItems || []) {
         try {
           const pid = Number(item.productId ?? item.product_id);
-          const rawVatRate = (productIdToInfo.get(pid)?.vatRate ??
-            item.vatRate ??
-            item.vat_rate) as number | undefined;
+          const rawVatAny =
+            productIdToInfo.get(pid)?.vatRate ?? item.vatRate ?? item.vat_rate;
+          const parsedVat = Number(rawVatAny);
           const vatRate =
-            typeof rawVatRate === "number" && rawVatRate > 0 ? rawVatRate : 21;
+            Number.isFinite(parsedVat) && parsedVat >= 0 ? parsedVat : 0;
           const vatMultiplier = 1 + vatRate / 100;
           const pInfo = productIdToInfo.get(pid);
 
@@ -311,7 +314,7 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
         const customerLastName =
           snapshot.customer?.lastName || shipping.lastName || "";
 
-        // Construire les items pour l'email (unitPrice/totalPrice TTC)
+        // Construire les items pour l'email (TTC) + taux de TVA pour calcul HT côté email-service
         const emailItems = (sourceItems || []).map((item: any) => {
           const pid = Number(item.productId ?? item.product_id);
           const pInfo = productIdToInfo.get(pid);
@@ -323,7 +326,12 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
           const unitPrice = Number(item.price);
           const quantity = Number(item.quantity);
           const totalPrice = unitPrice * quantity;
-          return { name, quantity, unitPrice, totalPrice };
+          const rawVatAny =
+            productIdToInfo.get(pid)?.vatRate ?? item.vatRate ?? item.vat_rate;
+          const parsedVat = Number(rawVatAny);
+          const vatRate =
+            Number.isFinite(parsedVat) && parsedVat >= 0 ? parsedVat : 21;
+          return { name, quantity, unitPrice, totalPrice, vatRate };
         });
 
         const emailPayload = {
@@ -489,11 +497,11 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     for (const item of cart.items || []) {
       try {
         const pid = Number(item.productId ?? item.product_id);
-        const rawVatRate = (productIdToInfo.get(pid)?.vatRate ??
-          item.vatRate ??
-          item.vat_rate) as number | undefined;
+        const rawVatAny =
+          productIdToInfo.get(pid)?.vatRate ?? item.vatRate ?? item.vat_rate;
+        const parsedVat = Number(rawVatAny);
         const vatRate =
-          typeof rawVatRate === "number" && rawVatRate > 0 ? rawVatRate : 21;
+          Number.isFinite(parsedVat) && parsedVat >= 0 ? parsedVat : 0;
         const vatMultiplier = 1 + vatRate / 100;
         const pInfo = productIdToInfo.get(pid);
 
@@ -578,7 +586,12 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         const unitPrice = Number(item.price);
         const quantity = Number(item.quantity);
         const totalPrice = unitPrice * quantity;
-        return { name, quantity, unitPrice, totalPrice };
+        const rawVatAny =
+          productIdToInfo.get(pid)?.vatRate ?? item.vatRate ?? item.vat_rate;
+        const parsedVat = Number(rawVatAny);
+        const vatRate =
+          Number.isFinite(parsedVat) && parsedVat >= 0 ? parsedVat : 21;
+        return { name, quantity, unitPrice, totalPrice, vatRate };
       });
 
       const emailPayload = {

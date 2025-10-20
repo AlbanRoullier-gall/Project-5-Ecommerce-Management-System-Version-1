@@ -389,6 +389,7 @@ export default class EmailService {
       quantity: number;
       unitPrice: number;
       totalPrice: number;
+      vatRate?: number; // taux de TVA (%) optionnel
     }>;
     subtotal: number;
     tax: number;
@@ -408,10 +409,18 @@ export default class EmailService {
     }
 
     try {
-      // Générer les lignes HTML pour les articles
+      // Générer les lignes HTML pour les articles (affichage HT/TVA/TTC)
       const itemsHtml = data.items
-        .map(
-          (item) => `
+        .map((item) => {
+          const rawVatAny: any = (item as any).vatRate;
+          const parsedVat = Number(rawVatAny);
+          const vatRate =
+            Number.isFinite(parsedVat) && parsedVat >= 0 ? parsedVat : 21;
+          const multiplier = 1 + vatRate / 100;
+          const unitPriceHT = Number(item.unitPrice) / multiplier;
+          const totalPriceHT = Number(item.totalPrice) / multiplier;
+
+          return `
           <tr>
             <td style="padding: 12px; border-bottom: 1px solid #eee;">${
               item.name
@@ -419,15 +428,21 @@ export default class EmailService {
             <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${
               item.quantity
             }</td>
-            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${Number(
-              item.unitPrice
-            ).toFixed(2)} €</td>
+            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${unitPriceHT.toFixed(
+              2
+            )} €</td>
+            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${vatRate.toFixed(
+              0
+            )}%</td>
+            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${totalPriceHT.toFixed(
+              2
+            )} €</td>
             <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${Number(
               item.totalPrice
             ).toFixed(2)} €</td>
           </tr>
-        `
-        )
+        `;
+        })
         .join("");
 
       const mailOptions = {
@@ -477,10 +492,12 @@ export default class EmailService {
               <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
                 <thead>
                   <tr style="background-color: #f8f9fa;">
-                    <th style="padding: 12px; text-align: left; color: #13686a; font-size: 14px;">Article</th>
-                    <th style="padding: 12px; text-align: center; color: #13686a; font-size: 14px;">Quantité</th>
-                    <th style="padding: 12px; text-align: right; color: #13686a; font-size: 14px;">Prix unitaire</th>
-                    <th style="padding: 12px; text-align: right; color: #13686a; font-size: 14px;">Total</th>
+                    <th style="padding: 12px; text-align: left; color: #13686a; font-size: 14px;">PRODUIT</th>
+                    <th style="padding: 12px; text-align: center; color: #13686a; font-size: 14px;">QTÉ</th>
+                    <th style="padding: 12px; text-align: right; color: #13686a; font-size: 14px;">PRIX UNIT. HT</th>
+                    <th style="padding: 12px; text-align: right; color: #13686a; font-size: 14px;">TVA</th>
+                    <th style="padding: 12px; text-align: right; color: #13686a; font-size: 14px;">TOTAL HT</th>
+                    <th style="padding: 12px; text-align: right; color: #13686a; font-size: 14px;">TOTAL TTC</th>
                   </tr>
                 </thead>
                 <tbody>

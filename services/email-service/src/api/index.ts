@@ -99,8 +99,9 @@ export class ApiRouter {
             Joi.object({
               name: Joi.string().required(),
               quantity: Joi.number().integer().positive().required(),
-              unitPrice: Joi.number().positive().required(),
-              totalPrice: Joi.number().positive().required(),
+              unitPrice: Joi.number().positive().required(), // TTC unitaire
+              totalPrice: Joi.number().positive().required(), // TTC total
+              vatRate: Joi.number().min(0).max(100).optional(), // pour calculer HT/TVA par ligne
             })
           )
           .min(1)
