@@ -61,22 +61,22 @@ const CartSummary: React.FC = () => {
       <h2 className="cart-summary-title">Résumé</h2>
 
       <div className="cart-summary-details">
-        <div className="summary-row">
+        <div className="summary-row" style={{ fontWeight: 700 }}>
           <span>Total HT</span>
           <span>{totals.totalHT.toFixed(2)} €</span>
         </div>
         {totals.breakdown.map((b) => (
           <div key={b.rate} className="summary-row">
-            <span>TVA ({b.rate}%)</span>
+            <span>TVA (Belgique) ({b.rate}%)</span>
             <span>{b.amount.toFixed(2)} €</span>
           </div>
         ))}
-        <div className="summary-row" style={{ fontWeight: 700 }}>
+        <div className="summary-row" style={{ fontWeight: 400 }}>
           <span>Total TVA</span>
           <span>{totals.vatAmount.toFixed(2)} €</span>
         </div>
         <div className="summary-row summary-total">
-          <span>Total TTC</span>
+          <span>Total TTC (Belgique)</span>
           <span>{cart.total.toFixed(2)} €</span>
         </div>
       </div>
@@ -90,6 +90,17 @@ const CartSummary: React.FC = () => {
           <i className="fas fa-credit-card"></i>
           Passer la commande
         </button>
+        <div
+          style={{
+            marginTop: "0.4rem",
+            fontSize: "0.95rem",
+            color: "#94a3b8",
+            fontWeight: 600,
+            textAlign: "center",
+          }}
+        >
+          TVA recalculée selon le pays de livraison dans l’UE
+        </div>
       </div>
 
       <div className="cart-summary-info">

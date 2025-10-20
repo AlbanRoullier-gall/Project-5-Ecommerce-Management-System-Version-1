@@ -282,8 +282,24 @@ export default function CartPage() {
                       borderBottom: "2px solid #e0e0e0",
                     }}
                   >
-                    Résumé de la commande
+                    Résumé du panier
                   </h2>
+
+                  {/* Indication du pays avec transparence */}
+                  <div
+                    style={{
+                      fontSize: "0.95rem",
+                      color: "#64748b",
+                      opacity: 0.7,
+                      fontWeight: 600,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                      marginTop: "-1.2rem",
+                      marginBottom: "1.2rem",
+                    }}
+                  >
+                    Belgique
+                  </div>
 
                   <div style={{ marginBottom: "2rem" }}>
                     <div
@@ -294,28 +310,14 @@ export default function CartPage() {
                         padding: "0.6rem 0",
                         fontSize: "1.4rem",
                         color: "#555",
+                        fontWeight: 700,
                       }}
                     >
                       <span>Total HT</span>
                       <span>{totals.totalHT.toFixed(2)} €</span>
                     </div>
 
-                    {totals.breakdown.map((b) => (
-                      <div
-                        key={b.rate}
-                        className="cart-summary-row"
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          padding: "0.4rem 0",
-                          fontSize: "1.3rem",
-                          color: "#777",
-                        }}
-                      >
-                        <span>TVA ({b.rate}%)</span>
-                        <span>{b.amount.toFixed(2)} €</span>
-                      </div>
-                    ))}
+                    {/* Détail des taux de TVA par ligne supprimé sur demande */}
 
                     {/* Total TVA (cumul) */}
                     <div
@@ -326,7 +328,7 @@ export default function CartPage() {
                         padding: "0.8rem 0",
                         fontSize: "1.5rem",
                         color: "#333",
-                        fontWeight: 700,
+                        fontWeight: 400,
                       }}
                     >
                       <span>Total TVA</span>
@@ -390,6 +392,17 @@ export default function CartPage() {
                       <i className="fas fa-credit-card"></i>
                       Passer la commande
                     </Link>
+                    <div
+                      style={{
+                        marginTop: "0.6rem",
+                        fontSize: "1.2rem",
+                        color: "#94a3b8",
+                        fontWeight: 600,
+                        textAlign: "center",
+                      }}
+                    >
+                      TVA recalculée selon le pays de livraison dans l’UE
+                    </div>
                   </div>
 
                   {/* Informations supplémentaires */}
@@ -432,6 +445,17 @@ export default function CartPage() {
                       ></i>
                       <span>Livraison gratuite dès 50 €</span>
                     </div>
+
+                    <div
+                      className="cart-info-item"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "1rem",
+                        fontSize: "1.2rem",
+                        color: "#666",
+                      }}
+                    ></div>
                   </div>
                 </div>
               </div>
