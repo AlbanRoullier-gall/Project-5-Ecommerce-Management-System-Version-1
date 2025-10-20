@@ -183,7 +183,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           }}
         >
           {product.categoryName && (
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
               <div
                 style={{
                   display: "inline-block",
