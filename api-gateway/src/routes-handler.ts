@@ -15,6 +15,10 @@ import {
   handleApproveBackofficeAccess,
   handleRejectBackofficeAccess,
 } from "./handlers/auth-handler";
+import {
+  handleCreatePayment,
+  handleStripeWebhook,
+} from "./handlers/payment-handler";
 
 // ===== CONFIGURATION =====
 
@@ -116,6 +120,18 @@ export const setupRoutes = (app: any): void => {
   app.post("/api/auth/reset-password/confirm", handlePasswordResetConfirm);
   app.get("/api/auth/approve-backoffice", handleApproveBackofficeAccess);
   app.get("/api/auth/reject-backoffice", handleRejectBackofficeAccess);
+
+  // Orchestration paiement (snapshot + session Stripe)
+  app.post("/api/payment/create", handleCreatePayment);
+
+  // Webhook Stripe (raw body + signature vérifiée en handler)
+  app.post("/api/webhooks/stripe", handleStripeWebhook);
+
+  // Finalisation manuelle (dev/recovery)
+  app.post(
+    "/api/payment/finalize",
+    require("../src/handlers/payment-handler").handleFinalizePayment
+  );
 
   // ===== CONFIGURATION AUTOMATIQUE DES ROUTES =====
 

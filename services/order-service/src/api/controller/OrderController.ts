@@ -29,6 +29,11 @@ export class OrderController {
 
       // Convert DTO to OrderData
       const orderData = OrderMapper.orderCreateDTOToOrderData(orderCreateDTO);
+      if ((orderCreateDTO as any).paymentIntentId) {
+        (orderData as any).payment_intent_id = (
+          orderCreateDTO as any
+        ).paymentIntentId;
+      }
 
       const order = await this.orderService.createOrder(orderData);
       const orderDTO = OrderMapper.orderToPublicDTO(order);

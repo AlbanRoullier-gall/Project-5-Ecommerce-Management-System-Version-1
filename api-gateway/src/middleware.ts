@@ -45,22 +45,32 @@ export const setupGlobalMiddlewares = (app: express.Application): void => {
 
   // ===== PARSING DU BODY =====
 
-  // Parser JSON (SAUF pour routes multipart/form-data)
+  // Parser JSON (SAUF pour routes multipart/form-data et webhook Stripe)
   app.use((req, res, next) => {
-    if (isMultipartRoute(req)) {
+    if (isMultipartRoute(req) || req.path === "/api/webhooks/stripe") {
       next(); // Skip le parsing pour multipart
     } else {
       express.json({ limit: "10mb" })(req, res, next);
     }
   });
 
-  // Parser URL-encoded (SAUF pour routes multipart/form-data)
+  // Parser URL-encoded (SAUF pour routes multipart/form-data et webhook Stripe)
   app.use((req, res, next) => {
-    if (isMultipartRoute(req)) {
+    if (isMultipartRoute(req) || req.path === "/api/webhooks/stripe") {
       next(); // Skip le parsing pour multipart
     } else {
       express.urlencoded({ extended: true })(req, res, next);
     }
+  });
+
+  // Raw body pour Stripe (pour la vérification de signature)
+  app.use("/api/webhooks/stripe", (req: any, _res, next) => {
+    let data: Buffer[] = [];
+    req.on("data", (chunk: Buffer) => data.push(chunk));
+    req.on("end", () => {
+      req.rawBody = Buffer.concat(data);
+      next();
+    });
   });
 };
 

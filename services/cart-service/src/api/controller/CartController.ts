@@ -236,4 +236,55 @@ export class CartController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Attacher un snapshot de checkout au panier
+   */
+  async attachCheckoutSnapshot(req: Request, res: Response): Promise<void> {
+    try {
+      const { sessionId } = req.query;
+      if (!sessionId) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("sessionId is required"));
+        return;
+      }
+      await this.cartService.attachCheckoutSnapshot(
+        sessionId as string,
+        req.body
+      );
+      res.status(204).send();
+    } catch (error: any) {
+      console.error("Attach checkout snapshot error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Récupérer le snapshot de checkout pour un panier
+   */
+  async getCheckoutSnapshot(req: Request, res: Response): Promise<void> {
+    try {
+      const { sessionId } = req.query;
+      if (!sessionId) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("sessionId is required"));
+        return;
+      }
+      const snapshot = await this.cartService.getCheckoutSnapshot(
+        sessionId as string
+      );
+      if (!snapshot) {
+        res.status(404).json(ResponseMapper.notFoundError("Checkout snapshot"));
+        return;
+      }
+      res.status(200).json({ snapshot });
+    } catch (error: any) {
+      console.error("Get checkout snapshot error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  // REMOVED: any Stripe-specific mapping endpoints. Kept only snapshot attach.
 }

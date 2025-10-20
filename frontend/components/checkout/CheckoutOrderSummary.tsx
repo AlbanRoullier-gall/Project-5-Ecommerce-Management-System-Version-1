@@ -10,7 +10,6 @@ import {
   CustomerPublicDTO,
   AddressCreateDTO,
   CompanyCreateDTO,
-  OrderCreateDTO,
   ProductPublicDTO,
   CountryDTO,
 } from "../../dto";
@@ -226,106 +225,6 @@ export default function CheckoutOrderSummary({
         }
       }
 
-      const orderData: OrderCreateDTO = {
-        customerId,
-        customerSnapshot: {
-          ...customerData,
-          companyId,
-          companyData: companyData || null,
-        },
-        totalAmountHT: cart.subtotal,
-        totalAmountTTC: cart.total,
-        paymentMethod: "stripe",
-        notes:
-          companyData && companyData.companyName
-            ? `Commande entreprise: ${companyData.companyName}`
-            : undefined,
-      };
-
-      const orderResponse = await fetch(`${API_URL}/api/orders`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderData),
-      });
-
-      if (!orderResponse.ok) {
-        const errorData = await orderResponse.json();
-        throw new Error(
-          errorData.message || "Erreur lors de la création de la commande"
-        );
-      }
-
-      const { order } = await orderResponse.json();
-      const orderId = order.id;
-
-      for (const item of cart.items) {
-        const product = products.find((p) => p.productId === item.productId);
-        const vatRate = product?.product?.vatRate ?? 21;
-        const vatMultiplier = 1 + vatRate / 100;
-
-        const orderItemData = {
-          orderId,
-          productId: item.productId,
-          productName: product?.product?.name || "Produit",
-          quantity: item.quantity,
-          unitPriceHT: item.price / vatMultiplier,
-          unitPriceTTC: item.price,
-          vatRate: vatRate,
-          totalPriceHT: (item.price * item.quantity) / vatMultiplier,
-          totalPriceTTC: item.price * item.quantity,
-        };
-
-        await fetch(`${API_URL}/api/orders/${orderId}/items`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(orderItemData),
-        });
-      }
-
-      const shippingAddressData = {
-        orderId,
-        addressType: "shipping",
-        addressSnapshot: {
-          firstName: customerData.firstName || "",
-          lastName: customerData.lastName || "",
-          company: companyData?.companyName || "",
-          address: shippingAddress.address || "",
-          city: shippingAddress.city || "",
-          postalCode: shippingAddress.postalCode || "",
-          country: countryNameById(shippingAddress.countryId),
-          phone: customerData.phoneNumber || "",
-        },
-      };
-
-      await fetch(`${API_URL}/api/orders/${orderId}/addresses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(shippingAddressData),
-      });
-
-      if (billingAddress.address !== shippingAddress.address) {
-        const billingAddressData = {
-          orderId,
-          addressType: "billing",
-          addressSnapshot: {
-            firstName: customerData.firstName || "",
-            lastName: customerData.lastName || "",
-            company: companyData?.companyName || "",
-            address: billingAddress.address || "",
-            city: billingAddress.city || "",
-            postalCode: billingAddress.postalCode || "",
-            country: countryNameById(billingAddress.countryId),
-            phone: customerData.phoneNumber || "",
-          },
-        };
-
-        await fetch(`${API_URL}/api/orders/${orderId}/addresses`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(billingAddressData),
-        });
-      }
-
       const paymentItems = cart.items.map((item) => {
         const product = products.find((p) => p.productId === item.productId);
         return {
@@ -337,25 +236,72 @@ export default function CheckoutOrderSummary({
         };
       });
 
-      const paymentData = {
+      // Construire le snapshot checkout à attacher au panier
+      const snapshot = {
         customer: {
-          email: customerData.email || "",
-          name: `${customerData.firstName} ${customerData.lastName}`,
-          phone: customerData.phoneNumber,
+          ...customerData,
+          companyId,
+          companyData: companyData || null,
         },
-        items: paymentItems,
-        successUrl: `${window.location.origin}/checkout/success?orderId=${orderId}`,
-        cancelUrl: `${window.location.origin}/checkout/cancel?orderId=${orderId}`,
-        metadata: {
-          orderId: orderId.toString(),
-          customerId: customerId.toString(),
+        shippingAddress: {
+          firstName: customerData.firstName || "",
+          lastName: customerData.lastName || "",
+          company: companyData?.companyName || "",
+          address: shippingAddress.address || "",
+          city: shippingAddress.city || "",
+          postalCode: shippingAddress.postalCode || "",
+          country: countryNameById(shippingAddress.countryId),
+          phone: customerData.phoneNumber || "",
+        },
+        billingAddress:
+          billingAddress.address !== shippingAddress.address
+            ? {
+                firstName: customerData.firstName || "",
+                lastName: customerData.lastName || "",
+                company: companyData?.companyName || "",
+                address: billingAddress.address || "",
+                city: billingAddress.city || "",
+                postalCode: billingAddress.postalCode || "",
+                country: countryNameById(billingAddress.countryId),
+                phone: customerData.phoneNumber || "",
+              }
+            : null,
+        notes:
+          companyData && companyData.companyName
+            ? `Commande entreprise: ${companyData.companyName}`
+            : undefined,
+      };
+
+      const cartSessionId =
+        (typeof window !== "undefined" &&
+          window.localStorage.getItem("cart_session_id")) ||
+        "";
+      if (!cartSessionId) {
+        throw new Error("Session panier introuvable");
+      }
+
+      const paymentCreatePayload = {
+        cartSessionId,
+        snapshot,
+        payment: {
+          customer: {
+            email: customerData.email || "",
+            name: `${customerData.firstName} ${customerData.lastName}`,
+            phone: customerData.phoneNumber,
+          },
+          items: paymentItems,
+          successUrl: `${window.location.origin}/checkout/success`,
+          cancelUrl: `${window.location.origin}/checkout/cancel`,
+          metadata: {
+            customerId: customerId.toString(),
+          },
         },
       };
 
       const paymentResponse = await fetch(`${API_URL}/api/payment/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(paymentData),
+        body: JSON.stringify(paymentCreatePayload),
       });
 
       if (!paymentResponse.ok) {
@@ -366,12 +312,12 @@ export default function CheckoutOrderSummary({
       }
 
       const paymentResult = await paymentResponse.json();
-      const url = paymentResult.payment?.url || paymentResult.url;
+      const url = paymentResult.url || paymentResult.payment?.url;
 
       if (url) {
         window.location.href = url;
       } else {
-        onSuccess(orderId);
+        throw new Error("URL de paiement non reçue");
       }
     } catch (err) {
       console.error("Error completing order:", err);

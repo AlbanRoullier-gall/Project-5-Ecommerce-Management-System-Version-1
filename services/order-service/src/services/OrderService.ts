@@ -80,6 +80,8 @@ export default class OrderService {
         total_amount_ttc: orderData.total_amount_ttc,
         payment_method: orderData.payment_method,
         notes: orderData.notes || "",
+        // @ts-ignore - extended field allowed to pass through repo to support idempotence on payment
+        payment_intent_id: (orderData as any).payment_intent_id || null,
         created_at: new Date(),
         updated_at: new Date(),
       });

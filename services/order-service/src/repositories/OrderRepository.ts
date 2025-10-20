@@ -37,8 +37,9 @@ export default class OrderRepository {
     try {
       const query = `
         INSERT INTO orders (customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
-                           payment_method, notes, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+                           payment_method, notes, payment_intent_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        ON CONFLICT (payment_intent_id) WHERE payment_intent_id IS NOT NULL DO UPDATE SET updated_at = NOW()
         RETURNING id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
                   payment_method, notes, created_at, updated_at
       `;
@@ -50,6 +51,7 @@ export default class OrderRepository {
         orderData.total_amount_ttc,
         orderData.payment_method,
         orderData.notes,
+        (orderData as any).payment_intent_id || null,
       ];
 
       const result = await this.pool.query(query, values);

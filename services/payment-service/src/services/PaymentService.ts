@@ -29,17 +29,20 @@ export default class PaymentService {
   async createPayment(paymentData: any): Promise<any> {
     try {
       // Créer les line items pour Stripe Checkout
-      const line_items = paymentData.items.map((item: any) => ({
-        price_data: {
-          currency: item.currency || "eur",
-          product_data: {
-            name: item.name,
-            description: item.description || "",
+      const line_items = paymentData.items.map((item: any) => {
+        const product_data: any = { name: item.name };
+        if (item.description && String(item.description).trim().length > 0) {
+          product_data.description = item.description;
+        }
+        return {
+          price_data: {
+            currency: item.currency || "eur",
+            product_data,
+            unit_amount: item.price, // Prix en centimes
           },
-          unit_amount: item.price, // Prix en centimes
-        },
-        quantity: item.quantity,
-      }));
+          quantity: item.quantity,
+        };
+      });
 
       // Créer une session Stripe Checkout
       const session = await this.stripe.checkout.sessions.create({

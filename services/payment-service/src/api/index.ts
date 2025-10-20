@@ -43,13 +43,13 @@ export class ApiRouter {
         customer: Joi.object({
           email: Joi.string().email().required(),
           name: Joi.string().max(100).optional(),
-          phone: Joi.string().max(20).optional(),
+          phone: Joi.string().max(20).allow("").optional(),
         }).required(),
         items: Joi.array()
           .items(
             Joi.object({
               name: Joi.string().max(100).required(),
-              description: Joi.string().max(255).optional(),
+              description: Joi.string().allow("").max(255).optional(),
               price: Joi.number().positive().required(),
               quantity: Joi.number().positive().required(),
               currency: Joi.string().length(3).required(),
@@ -57,8 +57,10 @@ export class ApiRouter {
           )
           .min(1)
           .required(),
-        successUrl: Joi.string().uri().required(),
-        cancelUrl: Joi.string().uri().required(),
+        // Accepter les placeholders Stripe {CHECKOUT_SESSION_ID}
+        // Joi.uri() rejette les accolades, on assouplit donc la validation
+        successUrl: Joi.string().required(),
+        cancelUrl: Joi.string().required(),
         metadata: Joi.object().optional(),
       }),
 

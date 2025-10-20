@@ -103,6 +103,7 @@ export class ApiRouter {
         totalAmountTTC: Joi.number().positive().required(),
         paymentMethod: Joi.string().required(),
         notes: Joi.string().optional(),
+        paymentIntentId: Joi.string().optional(),
       }),
       orderUpdateSchema: Joi.object({
         customerSnapshot: Joi.object().optional(),

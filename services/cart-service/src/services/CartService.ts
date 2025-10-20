@@ -184,4 +184,19 @@ export default class CartService {
       redisPort: process.env.REDIS_PORT || "6379",
     };
   }
+
+  // ===== CHECKOUT SNAPSHOT & CHECKOUT SESSION MAPPING =====
+
+  async attachCheckoutSnapshot(
+    sessionId: string,
+    snapshot: any
+  ): Promise<void> {
+    await this.cartRepository.setCheckoutSnapshot(sessionId, snapshot);
+  }
+
+  async getCheckoutSnapshot(sessionId: string): Promise<any | null> {
+    return await this.cartRepository.getCheckoutSnapshot(sessionId);
+  }
+
+  // REMOVED: any Stripe-specific mapping. The cart-service stays Stripe-agnostic.
 }

@@ -55,6 +55,11 @@ export class ApiRouter {
       cartItemUpdateSchema: Joi.object({
         quantity: Joi.number().positive().required(),
       }),
+
+      // Checkout snapshot schema (loosely validated)
+      checkoutSnapshotSchema: Joi.object({}).unknown(true),
+
+      // Checkout session mapping schema (removed to keep service Stripe-agnostic)
     };
   }
 
@@ -141,6 +146,22 @@ export class ApiRouter {
     app.get("/api/cart/validate", (req: Request, res: Response) => {
       this.cartController.validateCart(req, res);
     });
+
+    // Attacher un snapshot de checkout au panier
+    app.patch(
+      "/api/cart/checkout",
+      this.validateRequest(schemas.checkoutSnapshotSchema),
+      (req: Request, res: Response) => {
+        this.cartController.attachCheckoutSnapshot(req, res);
+      }
+    );
+
+    // Récupérer le snapshot de checkout
+    app.get("/api/cart/checkout", (req: Request, res: Response) => {
+      this.cartController.getCheckoutSnapshot(req, res);
+    });
+
+    // Removed csid mapping and retrieval routes to keep Stripe-agnostic.
 
     // Statistiques des paniers
     app.get("/api/cart/stats", (req: Request, res: Response) => {

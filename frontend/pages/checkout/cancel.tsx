@@ -11,7 +11,7 @@ import Footer from "../../components/Footer";
  */
 export default function CheckoutCancelPage() {
   const router = useRouter();
-  const { orderId } = router.query;
+  const { csid } = router.query;
 
   return (
     <>
@@ -63,8 +63,8 @@ export default function CheckoutCancelPage() {
             Paiement annulé
           </h1>
 
-          {/* Numéro de commande */}
-          {orderId && (
+          {/* Identifiant de session */}
+          {/* csid && (
             <div
               style={{
                 fontSize: "1.6rem",
@@ -72,9 +72,10 @@ export default function CheckoutCancelPage() {
                 marginBottom: "3rem",
               }}
             >
-              Commande: <strong style={{ color: "#13686a" }}>#{orderId}</strong>
+              Session de paiement:{" "}
+              <strong style={{ color: "#13686a" }}>#{csid}</strong>
             </div>
-          )}
+          ) */}
 
           {/* Message d'information */}
           <div
