@@ -280,6 +280,7 @@ export default function CartPage() {
                       fontWeight: "700",
                       paddingBottom: "1.5rem",
                       borderBottom: "2px solid #e0e0e0",
+                      textAlign: "center",
                     }}
                   >
                     Résumé du panier
@@ -410,6 +411,7 @@ export default function CartPage() {
                     style={{
                       paddingTop: "2rem",
                       borderTop: "2px solid #e0e0e0",
+                      textAlign: "center",
                     }}
                   >
                     <div
@@ -421,6 +423,7 @@ export default function CartPage() {
                         marginBottom: "1rem",
                         fontSize: "1.2rem",
                         color: "#666",
+                        justifyContent: "center",
                       }}
                     >
                       <i
@@ -438,13 +441,7 @@ export default function CartPage() {
                         fontSize: "1.2rem",
                         color: "#666",
                       }}
-                    >
-                      <i
-                        className="fas fa-truck"
-                        style={{ color: "#13686a", fontSize: "1.4rem" }}
-                      ></i>
-                      <span>Livraison gratuite dès 50 €</span>
-                    </div>
+                    ></div>
 
                     <div
                       className="cart-info-item"

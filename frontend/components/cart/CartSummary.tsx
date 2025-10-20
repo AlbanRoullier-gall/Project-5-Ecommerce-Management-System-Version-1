@@ -58,7 +58,9 @@ const CartSummary: React.FC = () => {
 
   return (
     <div className="cart-summary">
-      <h2 className="cart-summary-title">Résumé</h2>
+      <h2 className="cart-summary-title" style={{ textAlign: "center" }}>
+        Résumé
+      </h2>
 
       <div className="cart-summary-details">
         <div className="summary-row" style={{ fontWeight: 700 }}>
@@ -103,14 +105,10 @@ const CartSummary: React.FC = () => {
         </div>
       </div>
 
-      <div className="cart-summary-info">
+      <div className="cart-summary-info" style={{ textAlign: "center" }}>
         <p>
           <i className="fas fa-lock"></i>
           Paiement sécurisé
-        </p>
-        <p>
-          <i className="fas fa-truck"></i>
-          Livraison gratuite dès 50 €
         </p>
       </div>
     </div>

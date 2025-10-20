@@ -298,6 +298,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 >
                   <span
                     style={{
+                      fontSize: "0.8rem",
+                      color: "#94a3b8",
+                      fontWeight: 600,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    TTC (Belgique)
+                  </span>
+                  <span
+                    style={{
                       fontSize: "1.9rem",
                       fontWeight: 800,
                       color: "#13686a",
@@ -308,17 +319,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     }}
                   >
                     {formatPrice(getPriceWithVat())}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "0.8rem",
-                      color: "#94a3b8",
-                      fontWeight: 600,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    TTC (Belgique)
                   </span>
                 </div>
               </div>
