@@ -44,25 +44,37 @@ class CustomerService {
         throw new Error("Un client avec cet email existe déjà");
       }
 
-      // Validate required fields
-      if (
-        !data.civilityId ||
-        !data.firstName ||
-        !data.lastName ||
-        !data.email ||
-        !data.socioProfessionalCategoryId
-      ) {
+      // Validate required fields (civility and category optional)
+      if (!data.firstName || !data.lastName || !data.email) {
         throw new Error("Tous les champs obligatoires doivent être fournis");
+      }
+
+      // Determine civility (optional → default to first civility if not provided)
+      let civilityIdToUse = data.civilityId || null;
+      if (!civilityIdToUse) {
+        const civilityRes = await this.customerRepository.pool.query(
+          "SELECT civility_id FROM civilities ORDER BY civility_id LIMIT 1"
+        );
+        civilityIdToUse = civilityRes.rows[0]?.civility_id || null;
+      }
+
+      // Determine socio-professional category (optional → default to 'Other' if present, else first)
+      let categoryIdToUse = data.socioProfessionalCategoryId || null;
+      if (!categoryIdToUse) {
+        const categoryRes = await this.customerRepository.pool.query(
+          "SELECT category_id FROM socio_professional_categories ORDER BY category_name = 'Other' DESC, category_id LIMIT 1"
+        );
+        categoryIdToUse = categoryRes.rows[0]?.category_id || null;
       }
 
       // Create customer entity with temporary data for insertion
       const customerData: CustomerData = {
         customerId: 0, // Will be replaced by DB
-        civilityId: data.civilityId,
+        civilityId: civilityIdToUse!,
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        socioProfessionalCategoryId: data.socioProfessionalCategoryId,
+        socioProfessionalCategoryId: categoryIdToUse!,
         phoneNumber: data.phoneNumber || null,
         birthday: data.birthday || null,
         isActive: true,

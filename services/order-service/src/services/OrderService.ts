@@ -237,10 +237,24 @@ export default class OrderService {
    */
   async getOrderStatistics(options: OrderListOptions = {}): Promise<any> {
     try {
-      const totalAmountHT = await this.orderRepository.getOrdersTotalHT(
-        options
+      // Retrieve gross totals from orders (HT/TTC)
+      const ordersTotals = await this.orderRepository.getOrdersTotals(options);
+
+      // Retrieve totals from credit notes (HT/TTC)
+      const creditNotesTotals =
+        await this.creditNoteRepository.getCreditNotesTotals(options);
+
+      // Net revenue = Orders - CreditNotes
+      const totalAmountHT = Math.max(
+        0,
+        Number((ordersTotals.totalHT - creditNotesTotals.totalHT).toFixed(2))
       );
-      return { totalAmountHT };
+      const totalAmountTTC = Math.max(
+        0,
+        Number((ordersTotals.totalTTC - creditNotesTotals.totalTTC).toFixed(2))
+      );
+
+      return { totalAmountHT, totalAmountTTC };
     } catch (error: any) {
       console.error("Error getting order statistics:", error);
       throw new Error(`Failed to retrieve order statistics: ${error.message}`);

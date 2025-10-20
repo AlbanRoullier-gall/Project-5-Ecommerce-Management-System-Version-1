@@ -255,6 +255,54 @@ export default class CreditNoteRepository {
   }
 
   /**
+   * Obtenir les totaux HT et TTC des avoirs (avec filtres optionnels)
+   * @param {OrderListOptions} options Options de filtrage (dates, client)
+   * @returns {Promise<{ totalHT: number; totalTTC: number }>} Totaux des avoirs
+   */
+  async getCreditNotesTotals(
+    options: OrderListOptions = {}
+  ): Promise<{ totalHT: number; totalTTC: number }> {
+    const { startDate, endDate, customerId } = options;
+    const params: any[] = [];
+    let paramCount = 0;
+    const conditions: string[] = [];
+
+    if (customerId) {
+      conditions.push(`customer_id = $${++paramCount}`);
+      params.push(customerId);
+    }
+
+    if (startDate) {
+      conditions.push(`created_at >= $${++paramCount}`);
+      params.push(startDate);
+    }
+
+    if (endDate) {
+      conditions.push(`created_at <= $${++paramCount}`);
+      params.push(endDate);
+    }
+
+    let whereClause = "";
+    if (conditions.length > 0) {
+      whereClause = ` WHERE ${conditions.join(" AND ")}`;
+    }
+
+    const query = `
+      SELECT 
+        COALESCE(SUM(total_amount_ht), 0) AS total_ht,
+        COALESCE(SUM(total_amount_ttc), 0) AS total_ttc
+      FROM credit_notes${whereClause}
+    `;
+
+    const result = await this.pool.query(query, params);
+    const row = result.rows[0];
+    return {
+      totalHT: parseFloat(row.total_ht),
+      totalTTC: parseFloat(row.total_ttc),
+    };
+  }
+
+  /**
    * Create credit note
    */
   async createCreditNote(creditNoteData: CreditNoteData): Promise<CreditNote> {

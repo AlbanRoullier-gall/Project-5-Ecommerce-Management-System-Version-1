@@ -10,11 +10,11 @@
  * Basé sur CustomerData avec ajout de la validation
  */
 export interface CustomerCreateDTO {
-  civilityId: number;
+  civilityId?: number;
   firstName: string;
   lastName: string;
   email: string;
-  socioProfessionalCategoryId: number;
+  socioProfessionalCategoryId?: number;
   phoneNumber?: string;
   birthday?: string; // ISO date string
 }

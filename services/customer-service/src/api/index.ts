@@ -55,11 +55,11 @@ export class ApiRouter {
   private setupValidationSchemas(): any {
     return {
       customerCreateSchema: Joi.object({
-        civilityId: Joi.number().integer().required(),
+        civilityId: Joi.number().integer().optional(),
         firstName: Joi.string().max(100).required(),
         lastName: Joi.string().max(100).required(),
         email: Joi.string().email().max(255).required(),
-        socioProfessionalCategoryId: Joi.number().integer().required(),
+        socioProfessionalCategoryId: Joi.number().integer().optional(),
         phoneNumber: Joi.string().max(20).optional(),
         birthday: Joi.date().optional(),
       }),

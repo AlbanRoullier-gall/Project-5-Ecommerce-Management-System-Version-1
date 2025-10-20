@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import PageHeader from "../product/ui/PageHeader";
 import Button from "../product/ui/Button";
 import ErrorAlert from "../product/ui/ErrorAlert";
@@ -16,8 +16,12 @@ const OrderList: React.FC = () => {
   const [orders, setOrders] = useState<OrderPublicDTO[]>([]);
   const [creditNotes, setCreditNotes] = useState<CreditNotePublicDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+  const [hasMore, setHasMore] = useState(true);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [detailOrder, setDetailOrder] = useState<OrderPublicDTO | null>(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -25,43 +29,71 @@ const OrderList: React.FC = () => {
   const [isCreateCreditNoteOpen, setIsCreateCreditNoteOpen] = useState(false);
   const [isCreditNoteDetailOpen, setIsCreditNoteDetailOpen] = useState(false);
   const [detailCreditNote, setDetailCreditNote] = useState<any | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const getAuthToken = () => localStorage.getItem("auth_token");
 
-  const loadData = async () => {
+  const loadOrdersPage = async (targetPage: number, append: boolean) => {
+    const token = getAuthToken();
+    if (!token) throw new Error("Non authentifié");
+
+    const url = new URL(`${API_URL}/api/admin/orders`);
+    url.searchParams.set("page", String(targetPage));
+    url.searchParams.set("limit", String(limit));
+    if (search) url.searchParams.set("search", search);
+
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Erreur chargement commandes");
+    const json = await res.json();
+    const ordersList: OrderPublicDTO[] =
+      json?.data?.orders ?? json?.orders ?? (Array.isArray(json) ? json : []);
+    const pagination = json?.data?.pagination ?? json?.pagination ?? null;
+
+    setOrders((prev) => {
+      if (!append) return ordersList;
+      const map = new Map<number, OrderPublicDTO>();
+      for (const o of prev) map.set(o.id, o);
+      for (const o of ordersList) map.set(o.id, o);
+      return Array.from(map.values());
+    });
+
+    if (pagination) {
+      const hasNext = targetPage < (pagination.pages ?? targetPage);
+      setHasMore(hasNext);
+    } else {
+      // If no pagination info, assume no more when we received empty page
+      setHasMore(ordersList.length > 0);
+    }
+
+    setPage(targetPage);
+  };
+
+  const loadInitial = async () => {
     setIsLoading(true);
     setError(null);
     try {
+      await loadOrdersPage(1, false);
+      // Load credit notes separately
       const token = getAuthToken();
-      if (!token) throw new Error("Non authentifié");
-
-      const [ordersRes, creditNotesRes] = await Promise.all([
-        fetch(`${API_URL}/api/admin/orders`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${API_URL}/api/admin/credit-notes`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ]);
-
-      if (!ordersRes.ok) throw new Error("Erreur chargement commandes");
-      if (!creditNotesRes.ok) throw new Error("Erreur chargement avoirs");
-
-      const ordersJson = await ordersRes.json();
-      const creditNotesJson = await creditNotesRes.json();
-
-      const ordersList =
-        ordersJson?.data?.orders ??
-        ordersJson?.orders ??
-        (Array.isArray(ordersJson) ? ordersJson : []);
-
-      const creditNotesList =
-        creditNotesJson?.data?.creditNotes ??
-        creditNotesJson?.creditNotes ??
-        (Array.isArray(creditNotesJson) ? creditNotesJson : []);
-
-      setOrders(ordersList);
-      setCreditNotes(creditNotesList);
+      if (token) {
+        const creditNotesRes = await fetch(
+          `${API_URL}/api/admin/credit-notes`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (creditNotesRes.ok) {
+          const creditNotesJson = await creditNotesRes.json();
+          const creditNotesList =
+            creditNotesJson?.data?.creditNotes ??
+            creditNotesJson?.creditNotes ??
+            (Array.isArray(creditNotesJson) ? creditNotesJson : []);
+          setCreditNotes(creditNotesList);
+        }
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur lors du chargement");
     } finally {
@@ -70,8 +102,44 @@ const OrderList: React.FC = () => {
   };
 
   useEffect(() => {
-    loadData();
+    loadInitial();
   }, []);
+
+  // Reload when search changes (debounced behavior kept simple)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHasMore(true);
+      setPage(1);
+      loadInitial();
+    }, 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!hasMore || isLoading || isLoadingMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first && first.isIntersecting) {
+          setIsLoadingMore(true);
+          loadOrdersPage(page + 1, true)
+            .catch(() => {
+              /* noop, error handled elsewhere via setError if needed */
+            })
+            .finally(() => setIsLoadingMore(false));
+        }
+      },
+      { root: containerRef.current, rootMargin: "200px", threshold: 0 }
+    );
+    const node = sentinelRef.current;
+    if (node) observer.observe(node);
+    return () => {
+      observer.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, isLoading, isLoadingMore, page, search]);
 
   const openOrderDetail = async (orderId: number) => {
     setIsDetailOpen(true);
@@ -139,19 +207,30 @@ const OrderList: React.FC = () => {
       {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
 
       <PageHeader title="Commandes">
-        <Button onClick={loadData} variant="secondary" icon="fas fa-rotate">
+        <Button onClick={loadInitial} variant="secondary" icon="fas fa-rotate">
           Actualiser
         </Button>
       </PageHeader>
 
       <OrderFilters searchTerm={search} onSearchChange={setSearch} />
 
-      <div style={{ marginBottom: "2.5rem" }}>
+      <div
+        ref={containerRef}
+        style={{ marginBottom: "2.5rem", height: "60vh", overflowY: "auto" }}
+      >
         <OrderTable
           orders={filteredOrders}
           isLoading={isLoading}
           onView={openOrderDetail}
         />
+        {isLoadingMore && (
+          <div
+            style={{ padding: "1rem", textAlign: "center", color: "#6b7280" }}
+          >
+            Chargement...
+          </div>
+        )}
+        <div ref={sentinelRef} />
       </div>
 
       <PageHeader title="Avoirs" />

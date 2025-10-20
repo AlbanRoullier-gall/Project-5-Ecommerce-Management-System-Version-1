@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   CustomerPublicDTO,
   CustomerCreateDTO,
@@ -41,7 +41,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
   isLoading,
 }) => {
   const [formData, setFormData] = useState<CustomerCreateDTO>({
-    civilityId: 0,
+    civilityId: undefined,
     firstName: "",
     lastName: "",
     email: "",
@@ -51,6 +51,14 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Catégorie par défaut si aucune n'est choisie (ex: "Other")
+  const defaultCategoryId = useMemo(() => {
+    const other = categories.find(
+      (c) => c.categoryName?.toLowerCase() === "other"
+    );
+    return other?.categoryId ?? categories[0]?.categoryId;
+  }, [categories]);
 
   // Initialiser le formulaire avec les données du client en édition
   useEffect(() => {
@@ -80,7 +88,9 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
       ...prev,
       [name]:
         name === "civilityId" || name === "socioProfessionalCategoryId"
-          ? parseInt(value)
+          ? value
+            ? parseInt(value)
+            : undefined
           : value,
     }));
     // Effacer l'erreur du champ modifié
@@ -114,13 +124,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
       newErrors.email = "L'email n'est pas valide";
     }
 
-    if (!customer && formData.civilityId === 0) {
-      newErrors.civilityId = "La civilité est requise";
-    }
-
-    if (!customer && formData.socioProfessionalCategoryId === 0) {
-      newErrors.socioProfessionalCategoryId = "La catégorie est requise";
-    }
+    // civilityId devient optionnel
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -168,8 +172,15 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
       onSubmit(updateData);
     } else {
       // Mode création : envoyer tous les champs
+      const categoryIdToSend =
+        formData.socioProfessionalCategoryId &&
+        formData.socioProfessionalCategoryId !== 0
+          ? formData.socioProfessionalCategoryId
+          : defaultCategoryId;
+
       onSubmit({
         ...formData,
+        socioProfessionalCategoryId: categoryIdToSend as number,
         phoneNumber: formData.phoneNumber || undefined,
         birthday: formData.birthday || undefined,
       });
@@ -226,11 +237,15 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
           {!customer && (
             <FormSelect
               id="civilityId"
-              label="Civilité"
+              label="Civilité (optionnel)"
               name="civilityId"
-              value={formData.civilityId.toString()}
+              value={
+                typeof formData.civilityId === "number"
+                  ? String(formData.civilityId)
+                  : ""
+              }
               onChange={handleChange}
-              required
+              required={false}
               error={errors.civilityId}
               placeholder="Sélectionner une civilité"
               options={civilities.map((civility) => ({
@@ -279,9 +294,13 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
             id="socioProfessionalCategoryId"
             label="Catégorie socio-professionnelle"
             name="socioProfessionalCategoryId"
-            value={formData.socioProfessionalCategoryId.toString()}
+            value={
+              typeof formData.socioProfessionalCategoryId === "number"
+                ? String(formData.socioProfessionalCategoryId)
+                : ""
+            }
             onChange={handleChange}
-            required={!customer}
+            required={false}
             error={errors.socioProfessionalCategoryId}
             placeholder="Sélectionner une catégorie"
             options={categories.map((category) => ({

@@ -367,6 +367,59 @@ export default class OrderRepository {
   }
 
   /**
+   * Obtenir les totaux HT et TTC des commandes (avec filtres optionnels)
+   * @param {OrderListOptions} options Options de filtrage
+   * @returns {Promise<{ totalHT: number; totalTTC: number }>} Totaux
+   */
+  async getOrdersTotals(
+    options: OrderListOptions = {}
+  ): Promise<{ totalHT: number; totalTTC: number }> {
+    try {
+      const { customerId, startDate, endDate } = options as any;
+
+      const conditions: string[] = [];
+      const params: any[] = [];
+      let paramCount = 0;
+
+      if (customerId) {
+        conditions.push(`customer_id = $${++paramCount}`);
+        params.push(customerId);
+      }
+
+      if (startDate) {
+        conditions.push(`created_at >= $${++paramCount}`);
+        params.push(startDate);
+      }
+
+      if (endDate) {
+        conditions.push(`created_at <= $${++paramCount}`);
+        params.push(endDate);
+      }
+
+      const whereClause =
+        conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+      const query = `
+        SELECT 
+          COALESCE(SUM(total_amount_ht), 0) AS total_ht,
+          COALESCE(SUM(total_amount_ttc), 0) AS total_ttc
+        FROM orders
+        ${whereClause}
+      `;
+
+      const result = await this.pool.query(query, params);
+      const row = result.rows[0];
+      return {
+        totalHT: parseFloat(row.total_ht),
+        totalTTC: parseFloat(row.total_ttc),
+      };
+    } catch (error) {
+      console.error("Error getting orders totals:", error);
+      throw new Error("Failed to retrieve orders totals");
+    }
+  }
+
+  /**
    * Vérifier si une commande existe
    * @param {number} id ID de la commande
    * @returns {Promise<boolean>} True si existe, false sinon

@@ -77,6 +77,8 @@ const StatsOverview: React.FC = () => {
         (Array.isArray(customersJson) ? customersJson.length : 0);
 
       const ordersCount =
+        ordersJson?.data?.pagination?.total ??
+        ordersJson?.pagination?.total ??
         ordersJson?.data?.orders?.length ??
         ordersJson?.orders?.length ??
         (Array.isArray(ordersJson) ? ordersJson.length : 0);
