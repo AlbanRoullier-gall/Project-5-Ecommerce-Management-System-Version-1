@@ -241,30 +241,85 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 style={{
                   flex: "0 0 auto",
                   textAlign: "right",
+                  background: "transparent",
+                  border: "none",
+                  borderRadius: 0,
+                  padding: 0,
+                  boxShadow: "none",
                 }}
               >
+                {/* Ligne HT en premier */}
                 <div
                   style={{
-                    fontSize: "1.8rem",
-                    fontWeight: 700,
-                    color: "#13686a",
-                    lineHeight: 1.1,
-                    letterSpacing: "-0.02em",
-                    transition: "transform 0.2s ease, color 0.2s ease",
-                    transform: isHovered ? "translateY(-1px)" : "none",
+                    display: "inline-flex",
+                    alignItems: "baseline",
+                    justifyContent: "flex-end",
+                    gap: "0.5rem",
+                    marginBottom: "0.5rem",
                   }}
                 >
-                  {formatPrice(getPriceWithVat())}
+                  <span
+                    style={{
+                      display: "inline-block",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      color: "#64748b",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    HT
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "1.1rem",
+                      color: "#0f172a",
+                      fontWeight: 700,
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    {formatPrice(product.price)}
+                  </span>
                 </div>
+
                 <div
                   style={{
-                    fontSize: "0.85rem",
-                    color: "#9ca3af",
-                    fontWeight: 500,
-                    marginTop: "0.2rem",
+                    borderTop: "1px solid #eef2f7",
+                    margin: "0.25rem 0 0.5rem 0",
+                  }}
+                />
+
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "baseline",
+                    gap: "0.5rem",
                   }}
                 >
-                  TTC
+                  <span
+                    style={{
+                      fontSize: "1.9rem",
+                      fontWeight: 800,
+                      color: "#13686a",
+                      lineHeight: 1.1,
+                      letterSpacing: "-0.02em",
+                      transition: "transform 0.2s ease, color 0.2s ease",
+                      transform: isHovered ? "translateY(-1px)" : "none",
+                    }}
+                  >
+                    {formatPrice(getPriceWithVat())}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "0.8rem",
+                      color: "#94a3b8",
+                      fontWeight: 600,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    TTC (Belgique)
+                  </span>
                 </div>
               </div>
             </div>

@@ -188,7 +188,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
                 marginTop: "0.2rem",
               }}
             >
-              TVA {item.vatRate}%
+              TVA (Belgique) {item.vatRate}%
             </div>
           </div>
         </div>
@@ -286,6 +286,18 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
               }}
             >
               {item.total.toFixed(2)} €
+            </div>
+            <div
+              style={{
+                fontSize: "0.85rem",
+                color: "#94a3b8",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                marginTop: "-0.3rem",
+              }}
+            >
+              TTC (Belgique)
             </div>
             <button
               onClick={handleRemove}
