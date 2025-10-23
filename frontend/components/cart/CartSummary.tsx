@@ -92,17 +92,6 @@ const CartSummary: React.FC = () => {
           <i className="fas fa-credit-card"></i>
           Passer la commande
         </button>
-        <div
-          style={{
-            marginTop: "0.4rem",
-            fontSize: "0.95rem",
-            color: "#94a3b8",
-            fontWeight: 600,
-            textAlign: "center",
-          }}
-        >
-          TVA recalculée selon le pays de livraison dans l’UE
-        </div>
       </div>
 
       <div className="cart-summary-info" style={{ textAlign: "center" }}>

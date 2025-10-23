@@ -75,10 +75,9 @@ export interface CustomerListDTO {
 // ===== TYPES POUR LES ADRESSES =====
 
 /**
- * DTO pour la création d'une adresse
+ * DTO pour la création d'une adresse (livraison uniquement)
  */
 export interface AddressCreateDTO {
-  addressType: "shipping" | "billing";
   address: string;
   postalCode: string;
   city: string;
@@ -87,10 +86,9 @@ export interface AddressCreateDTO {
 }
 
 /**
- * DTO pour la mise à jour d'une adresse
+ * DTO pour la mise à jour d'une adresse (livraison uniquement)
  */
 export interface AddressUpdateDTO {
-  addressType?: "shipping" | "billing";
   address?: string;
   postalCode?: string;
   city?: string;
@@ -99,13 +97,12 @@ export interface AddressUpdateDTO {
 }
 
 /**
- * DTO public pour les informations d'adresse
+ * DTO public pour les informations d'adresse (livraison uniquement)
  * Types alignés exactement avec le modèle CustomerAddress
  */
 export interface AddressPublicDTO {
   addressId: number;
   customerId: number;
-  addressType: string;
   address: string;
   postalCode: string;
   city: string;

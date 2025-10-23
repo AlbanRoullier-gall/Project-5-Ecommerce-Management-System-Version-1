@@ -335,6 +335,14 @@ export class ApiRouter {
       }
     );
 
+    app.patch(
+      "/api/admin/orders/:id/delivery-status",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderController.updateDeliveryStatus(req, res);
+      }
+    );
+
     // Routes admin pour les articles de commande
     app.post(
       "/api/admin/order-items",

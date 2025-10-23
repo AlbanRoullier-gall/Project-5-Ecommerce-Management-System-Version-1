@@ -71,7 +71,7 @@ export default class OrderRepository {
     try {
       const query = `
         SELECT id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
-               payment_method, notes, created_at, updated_at
+               payment_method, notes, delivered, created_at, updated_at
         FROM orders 
         WHERE id = $1
       `;
@@ -105,6 +105,7 @@ export default class OrderRepository {
           o.total_amount_ttc, 
           o.payment_method, 
           o.notes, 
+          o.delivered,
           o.created_at, 
           o.updated_at,
           COALESCE(
@@ -265,6 +266,7 @@ export default class OrderRepository {
           o.total_amount_ttc, 
           o.payment_method, 
           o.notes, 
+          o.delivered,
           o.created_at, 
           o.updated_at,
           COALESCE(
@@ -432,6 +434,38 @@ export default class OrderRepository {
     } catch (error) {
       console.error("Error checking if order exists:", error);
       return false;
+    }
+  }
+
+  /**
+   * Mettre à jour l'état de livraison d'une commande
+   * @param {number} id ID de la commande
+   * @param {boolean} delivered État de livraison
+   * @returns {Promise<Order | null>} Commande mise à jour ou null
+   */
+  async updateDeliveryStatus(
+    id: number,
+    delivered: boolean
+  ): Promise<Order | null> {
+    try {
+      const query = `
+        UPDATE orders 
+        SET delivered = $1, updated_at = NOW()
+        WHERE id = $2
+        RETURNING id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+                  payment_method, notes, delivered, created_at, updated_at
+      `;
+
+      const result = await this.pool.query(query, [delivered, id]);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return new Order(result.rows[0] as OrderData);
+    } catch (error) {
+      console.error("Error updating delivery status:", error);
+      throw new Error("Failed to update delivery status");
     }
   }
 }

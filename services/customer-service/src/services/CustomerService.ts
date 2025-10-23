@@ -313,7 +313,6 @@ class CustomerService {
       // Check for duplicate address before mutating defaults
       const duplicateExists = await this.addressRepository.existsForCustomer({
         customerId,
-        addressType: addressData.addressType,
         address: addressData.address,
         postalCode: addressData.postalCode,
         city: addressData.city,

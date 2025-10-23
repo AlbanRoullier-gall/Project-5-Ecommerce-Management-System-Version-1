@@ -19,6 +19,7 @@ export interface OrderData {
   total_amount_ttc: number;
   payment_method: string | null;
   notes: string | null;
+  delivered: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -39,6 +40,7 @@ class Order {
   public readonly totalAmountTTC: number;
   public readonly paymentMethod: string | null;
   public readonly notes: string | null;
+  public readonly delivered: boolean;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -55,6 +57,7 @@ class Order {
     this.totalAmountTTC = data.total_amount_ttc;
     this.paymentMethod = data.payment_method;
     this.notes = data.notes;
+    this.delivered = data.delivered;
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
   }

@@ -169,4 +169,37 @@ export class OrderController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Update delivery status of an order
+   */
+  async updateDeliveryStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const orderId = parseInt(req.params.id);
+      const { delivered } = req.body;
+
+      if (typeof delivered !== "boolean") {
+        res
+          .status(400)
+          .json(ResponseMapper.badRequestError("delivered must be a boolean"));
+        return;
+      }
+
+      const order = await this.orderService.updateDeliveryStatus(
+        orderId,
+        delivered
+      );
+
+      if (!order) {
+        res.status(404).json(ResponseMapper.notFoundError("Order"));
+        return;
+      }
+
+      const orderDTO = OrderMapper.orderToPublicDTO(order);
+      res.json(ResponseMapper.success(orderDTO));
+    } catch (error: any) {
+      console.error("Update delivery status error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

@@ -474,4 +474,25 @@ export default class OrderService {
       orderId
     );
   }
+
+  /**
+   * Mettre à jour l'état de livraison d'une commande
+   * @param {number} orderId ID de la commande
+   * @param {boolean} delivered État de livraison
+   * @returns {Promise<Order | null>} Commande mise à jour ou null
+   */
+  async updateDeliveryStatus(
+    orderId: number,
+    delivered: boolean
+  ): Promise<Order | null> {
+    try {
+      return await this.orderRepository.updateDeliveryStatus(
+        orderId,
+        delivered
+      );
+    } catch (error) {
+      console.error("Error updating delivery status:", error);
+      throw error;
+    }
+  }
 }

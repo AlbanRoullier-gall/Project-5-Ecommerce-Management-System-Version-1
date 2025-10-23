@@ -37,11 +37,10 @@ const AddressForm: React.FC<AddressFormProps> = ({
   isLoading,
 }) => {
   const [formData, setFormData] = useState<AddressCreateDTO>({
-    addressType: "shipping",
     address: "",
     postalCode: "",
     city: "",
-    countryId: 0,
+    countryId: 1, // Belgium by default
     isDefault: false,
   });
 
@@ -51,7 +50,6 @@ const AddressForm: React.FC<AddressFormProps> = ({
   useEffect(() => {
     if (address) {
       setFormData({
-        addressType: address.addressType as "shipping" | "billing",
         address: address.address,
         postalCode: address.postalCode,
         city: address.city,
@@ -234,21 +232,26 @@ const AddressForm: React.FC<AddressFormProps> = ({
             error={errors.city}
           />
 
-          {/* Pays */}
-          <FormSelect
-            id="countryId"
-            label="Pays"
-            name="countryId"
-            value={formData.countryId.toString()}
-            onChange={handleChange}
-            required
-            error={errors.countryId}
-            placeholder="Sélectionner un pays"
-            options={countries.map((country) => ({
-              value: country.countryId,
-              label: country.countryName,
-            }))}
-          />
+          {/* Pays - Belgique uniquement */}
+          <div className="form-group">
+            <label htmlFor="countryDisplay" className="form-label">
+              Pays <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="countryDisplay"
+              value="Belgique"
+              readOnly
+              className="form-input"
+              style={{
+                backgroundColor: "#f8f9fa",
+                color: "#666",
+                cursor: "not-allowed",
+                border: "1px solid #e0e0e0",
+              }}
+            />
+            <input type="hidden" name="countryId" value={formData.countryId} />
+          </div>
 
           {/* Adresse par défaut */}
           <div style={{ gridColumn: "1 / -1" }}>

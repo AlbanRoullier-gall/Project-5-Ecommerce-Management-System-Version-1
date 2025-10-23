@@ -208,32 +208,11 @@ const CustomerList: React.FC = () => {
   };
 
   /**
-   * Charge la liste des pays depuis l'API
+   * Charge la liste des pays depuis l'API - Belgique uniquement
    */
   const loadCountries = async () => {
-    try {
-      const token = getAuthToken();
-
-      if (!token) {
-        console.error("Token manquant pour chargement des pays");
-        return;
-      }
-
-      const response = await fetch(`${API_URL}/api/admin/customers/countries`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Erreur lors du chargement des pays");
-      }
-
-      const data = await response.json();
-      setCountries(data.countries || data || []);
-    } catch (err) {
-      console.error("Error loading countries:", err);
-    }
+    // Set Belgium as the only available country
+    setCountries([{ countryId: 1, countryName: "Belgique" }]);
   };
 
   /**

@@ -16,11 +16,10 @@ class CustomerAddressRepository {
 
   /**
    * Check if an address already exists for a customer with the same fields
-   * A duplicate is defined by same customer_id, address_type, address, postal_code, city, country_id
+   * A duplicate is defined by same customer_id, address, postal_code, city, country_id
    */
   async existsForCustomer(params: {
     customerId: number;
-    addressType: string;
     address: string;
     postalCode: string;
     city: string;
@@ -30,15 +29,13 @@ class CustomerAddressRepository {
       const result = await this.pool.query(
         `SELECT address_id FROM customer_addresses
          WHERE customer_id = $1
-           AND address_type = $2
-           AND address = $3
-           AND postal_code = $4
-           AND city = $5
-           AND country_id = $6
+           AND address = $2
+           AND postal_code = $3
+           AND city = $4
+           AND country_id = $5
          LIMIT 1`,
         [
           params.customerId,
-          params.addressType,
           params.address,
           params.postalCode,
           params.city,
@@ -60,7 +57,7 @@ class CustomerAddressRepository {
   async getById(id: number): Promise<CustomerAddress | null> {
     try {
       const result = await this.pool.query(
-        `SELECT address_id, customer_id, address_type, address, postal_code, city, 
+        `SELECT address_id, customer_id, address, postal_code, city, 
                 country_id, is_default, created_at, updated_at
          FROM customer_addresses 
          WHERE address_id = $1`,
@@ -75,7 +72,6 @@ class CustomerAddressRepository {
       const addressData: CustomerAddressData = {
         addressId: row.address_id,
         customerId: row.customer_id,
-        addressType: row.address_type,
         address: row.address,
         postalCode: row.postal_code,
         city: row.city,
@@ -99,7 +95,7 @@ class CustomerAddressRepository {
   async getByIdWithJoins(id: number): Promise<CustomerAddress | null> {
     try {
       const result = await this.pool.query(
-        `SELECT ca.address_id, ca.customer_id, ca.address_type, ca.address, ca.postal_code, 
+        `SELECT ca.address_id, ca.customer_id, ca.address, ca.postal_code, 
                 ca.city, ca.country_id, ca.is_default, ca.created_at, ca.updated_at,
                 co.country_name
          FROM customer_addresses ca
@@ -116,7 +112,6 @@ class CustomerAddressRepository {
       const addressData: CustomerAddressData = {
         addressId: row.address_id,
         customerId: row.customer_id,
-        addressType: row.address_type,
         address: row.address,
         postalCode: row.postal_code,
         city: row.city,
@@ -140,7 +135,7 @@ class CustomerAddressRepository {
   async listByCustomer(customerId: number): Promise<CustomerAddress[]> {
     try {
       const result = await this.pool.query(
-        `SELECT address_id, customer_id, address_type, address, postal_code, city, 
+        `SELECT address_id, customer_id, address, postal_code, city, 
                 country_id, is_default, created_at, updated_at
          FROM customer_addresses 
          WHERE customer_id = $1
@@ -154,7 +149,6 @@ class CustomerAddressRepository {
           new CustomerAddress({
             addressId: row.address_id,
             customerId: row.customer_id,
-            addressType: row.address_type,
             address: row.address,
             postalCode: row.postal_code,
             city: row.city,
@@ -203,7 +197,6 @@ class CustomerAddressRepository {
       const addressData: CustomerAddressData = {
         addressId: row.address_id,
         customerId: row.customer_id,
-        addressType: row.address_type,
         address: row.address,
         postalCode: row.postal_code,
         city: row.city,
@@ -258,7 +251,6 @@ class CustomerAddressRepository {
       const addressData: CustomerAddressData = {
         addressId: row.address_id,
         customerId: row.customer_id,
-        addressType: row.address_type,
         address: row.address,
         postalCode: row.postal_code,
         city: row.city,

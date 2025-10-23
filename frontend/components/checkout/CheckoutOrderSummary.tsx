@@ -71,24 +71,13 @@ export default function CheckoutOrderSummary({
   }, [cart]);
 
   useEffect(() => {
-    const loadCountries = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/customers/countries`);
-        if (!res.ok) return;
-        const data = await res.json();
-        setCountries(data.countries || data);
-      } catch (e) {
-        // silent fail, fallback below
-      }
-    };
-    loadCountries();
+    // Set Belgium as the only available country
+    setCountries([{ countryId: 1, countryName: "Belgique" }]);
   }, []);
 
   const countryNameById = useMemo(() => {
-    const map = new Map<number, string>();
-    countries.forEach((c) => map.set(c.countryId, c.countryName));
-    return (id?: number) => map.get(id || 0) || "";
-  }, [countries]);
+    return (id?: number) => "Belgique";
+  }, []);
 
   // On n'affiche plus de pourcentage de TVA global car les articles peuvent avoir des taux différents.
 
@@ -169,7 +158,6 @@ export default function CheckoutOrderSummary({
       try {
         if (shippingAddress && shippingAddress.address) {
           const shippingAddressDTO = {
-            addressType: "shipping" as const,
             address: shippingAddress.address,
             postalCode: shippingAddress.postalCode,
             city: shippingAddress.city,
@@ -181,27 +169,6 @@ export default function CheckoutOrderSummary({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(shippingAddressDTO),
-          });
-        }
-
-        if (
-          billingAddress &&
-          billingAddress.address &&
-          billingAddress.address !== shippingAddress.address
-        ) {
-          const billingAddressDTO = {
-            addressType: "billing" as const,
-            address: billingAddress.address,
-            postalCode: billingAddress.postalCode,
-            city: billingAddress.city,
-            countryId: billingAddress.countryId,
-            isDefault: false,
-          };
-
-          await fetch(`${API_URL}/api/customers/${customerId}/addresses`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(billingAddressDTO),
           });
         }
       } catch (addressError) {

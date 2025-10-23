@@ -1,11 +1,10 @@
 /**
  * CustomerAddress ORM Entity
- * Represents a customer's address (shipping or billing)
+ * Represents a customer's shipping address
  */
 export interface CustomerAddressData {
   addressId: number;
   customerId: number;
-  addressType: string;
   address: string;
   postalCode: string;
   city: string;
@@ -25,7 +24,6 @@ export interface ValidationResult {
 class CustomerAddress {
   public addressId: number;
   public customerId: number;
-  public addressType: string;
   public address: string;
   public postalCode: string;
   public city: string;
@@ -38,7 +36,6 @@ class CustomerAddress {
   constructor(data: CustomerAddressData) {
     this.addressId = data.addressId;
     this.customerId = data.customerId;
-    this.addressType = data.addressType;
     this.address = data.address;
     this.postalCode = data.postalCode;
     this.city = data.city;
@@ -72,13 +69,6 @@ class CustomerAddress {
 
     if (!this.customerId) {
       errors.push("Customer ID is required");
-    }
-
-    if (
-      !this.addressType ||
-      !["shipping", "billing"].includes(this.addressType)
-    ) {
-      errors.push('Address type must be either "shipping" or "billing"');
     }
 
     if (!this.address || this.address.trim().length === 0) {

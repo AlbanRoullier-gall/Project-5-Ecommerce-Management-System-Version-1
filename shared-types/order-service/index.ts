@@ -42,6 +42,7 @@ export interface OrderPublicDTO {
   totalAmountTTC: number;
   paymentMethod: string | null;
   notes: string | null;
+  delivered: boolean;
   customerFirstName?: string;
   customerLastName?: string;
   customerEmail?: string;

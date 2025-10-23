@@ -7,8 +7,6 @@ import { AddressCreateDTO, CountryDTO } from "../../dto";
 
 interface AddressFormData {
   shipping: Partial<AddressCreateDTO>;
-  billing: Partial<AddressCreateDTO>;
-  useSameAddress: boolean;
 }
 
 interface CheckoutAddressFormProps {
@@ -26,29 +24,24 @@ export default function CheckoutAddressForm({
   onNext,
   onBack,
 }: CheckoutAddressFormProps) {
-  const [useSameAddress, setUseSameAddress] = useState(
-    formData.useSameAddress || false
-  );
   const [countries, setCountries] = useState<CountryDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadCountries = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`${API_URL}/api/customers/countries`);
-        if (!res.ok) throw new Error("Impossible de charger les pays");
-        const data = await res.json();
-        setCountries(data.countries || data);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erreur de chargement");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadCountries();
+    // Set Belgium as the only available country
+    const belgiumCountry = { countryId: 1, countryName: "Belgique" };
+    setCountries([belgiumCountry]);
+
+    // Set Belgium as default for shipping address
+    if (!formData.shipping.countryId) {
+      onChange({
+        shipping: {
+          ...formData.shipping,
+          countryId: belgiumCountry.countryId,
+        },
+      });
+    }
   }, []);
 
   const handleShippingChange = (
@@ -58,37 +51,10 @@ export default function CheckoutAddressForm({
     const updatedShipping = {
       ...formData.shipping,
       [name]: name === "countryId" ? parseInt(value) : value,
-      addressType: "shipping" as const,
     };
 
     onChange({
-      ...formData,
       shipping: updatedShipping,
-      billing: useSameAddress ? updatedShipping : formData.billing,
-    });
-  };
-
-  const handleBillingChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    onChange({
-      ...formData,
-      billing: {
-        ...formData.billing,
-        [name]: name === "countryId" ? parseInt(value) : value,
-        addressType: "billing" as const,
-      },
-    });
-  };
-
-  const handleSameAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
-    setUseSameAddress(checked);
-    onChange({
-      ...formData,
-      useSameAddress: checked,
-      billing: checked ? formData.shipping : formData.billing,
     });
   };
 
@@ -107,25 +73,10 @@ export default function CheckoutAddressForm({
       return;
     }
 
-    if (!useSameAddress) {
-      if (
-        !formData.billing.address ||
-        !formData.billing.city ||
-        !formData.billing.postalCode ||
-        !formData.billing.countryId
-      ) {
-        alert(
-          "Veuillez remplir tous les champs obligatoires de l'adresse de facturation"
-        );
-        return;
-      }
-    }
-
     onNext();
   };
 
   const renderAddressFields = (
-    type: "shipping" | "billing",
     data: Partial<AddressCreateDTO>,
     handleChange: (
       e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -240,30 +191,22 @@ export default function CheckoutAddressForm({
         >
           Pays <span style={{ color: "#c33" }}>*</span>
         </label>
-        <select
-          name="countryId"
-          value={data.countryId || ""}
-          onChange={handleChange}
-          required
+        <input
+          type="text"
+          value="Belgique"
+          readOnly
           style={{
             width: "100%",
             padding: "1.2rem",
             fontSize: "1.3rem",
-            border: "2px solid #ddd",
+            border: "2px solid #e0e0e0",
             borderRadius: "8px",
-            transition: "border-color 0.3s ease",
+            backgroundColor: "#f8f9fa",
+            color: "#666",
+            cursor: "not-allowed",
           }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-          onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-          disabled={isLoading}
-        >
-          <option value="">Sélectionnez un pays</option>
-          {countries.map((c) => (
-            <option key={c.countryId} value={c.countryId}>
-              {c.countryName}
-            </option>
-          ))}
-        </select>
+        />
+        <input type="hidden" name="countryId" value={data.countryId || 1} />
       </div>
     </>
   );
@@ -308,7 +251,7 @@ export default function CheckoutAddressForm({
             color: "#333",
           }}
         >
-          Adresses de livraison et facturation
+          Adresse de livraison
         </h2>
       </div>
 
@@ -335,78 +278,9 @@ export default function CheckoutAddressForm({
               gap: "2rem",
             }}
           >
-            {renderAddressFields(
-              "shipping",
-              formData.shipping,
-              handleShippingChange
-            )}
+            {renderAddressFields(formData.shipping, handleShippingChange)}
           </div>
         </div>
-
-        <div
-          style={{
-            marginBottom: "3rem",
-            padding: "1.5rem",
-            background: "#f8f9fa",
-            borderRadius: "8px",
-            border: "2px solid #e0e0e0",
-          }}
-        >
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
-              cursor: "pointer",
-              fontSize: "1.4rem",
-              fontWeight: "600",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={useSameAddress}
-              onChange={handleSameAddressChange}
-              style={{
-                width: "24px",
-                height: "24px",
-                cursor: "pointer",
-              }}
-            />
-            <span>Utiliser la même adresse pour la facturation</span>
-          </label>
-        </div>
-
-        {!useSameAddress && (
-          <div style={{ marginBottom: "2rem" }}>
-            <h3
-              style={{
-                fontSize: "1.8rem",
-                fontWeight: "600",
-                color: "#13686a",
-                marginBottom: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.8rem",
-              }}
-            >
-              <i className="fas fa-file-invoice"></i>
-              Adresse de facturation
-            </h3>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "2rem",
-              }}
-            >
-              {renderAddressFields(
-                "billing",
-                formData.billing,
-                handleBillingChange
-              )}
-            </div>
-          </div>
-        )}
 
         {error && (
           <div

@@ -29,10 +29,6 @@ const AddressTableRow: React.FC<AddressTableRowProps> = ({
     return country ? country.countryName : `Pays ID: ${countryId}`;
   };
 
-  const getAddressTypeLabel = (type: string): string => {
-    return type === "shipping" ? "Livraison" : "Facturation";
-  };
-
   const buttonBaseStyle: React.CSSProperties = {
     padding: "0.5rem 1rem",
     border: "none",
@@ -60,25 +56,6 @@ const AddressTableRow: React.FC<AddressTableRowProps> = ({
         e.currentTarget.style.backgroundColor = "white";
       }}
     >
-      {/* Type */}
-      <td style={{ padding: "1rem 1rem" }}>
-        <span
-          style={{
-            padding: "0.25rem 0.75rem",
-            borderRadius: "6px",
-            fontSize: "0.9rem",
-            fontWeight: "500",
-            background:
-              address.addressType === "shipping"
-                ? "linear-gradient(135deg, #10b981 0%, #34d399 100%)"
-                : "linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)",
-            color: "white",
-          }}
-        >
-          {getAddressTypeLabel(address.addressType)}
-        </span>
-      </td>
-
       {/* Adresse */}
       <td style={{ padding: "1rem 1rem" }}>
         <span style={{ color: "#1f2937", fontSize: "0.95rem" }}>

@@ -83,18 +83,6 @@ const AddressTable: React.FC<AddressTableProps> = ({
                   letterSpacing: "0.5px",
                 }}
               >
-                Type
-              </th>
-              <th
-                style={{
-                  padding: "1rem 1rem",
-                  textAlign: "left",
-                  fontSize: "0.95rem",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                }}
-              >
                 Adresse
               </th>
               <th

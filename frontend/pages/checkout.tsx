@@ -17,8 +17,6 @@ import { CustomerCreateDTO, AddressCreateDTO, CompanyCreateDTO } from "../dto";
 
 interface AddressFormData {
   shipping: Partial<AddressCreateDTO>;
-  billing: Partial<AddressCreateDTO>;
-  useSameAddress: boolean;
 }
 
 /**
@@ -36,8 +34,6 @@ export default function CheckoutPage() {
   );
   const [addressData, setAddressData] = useState<AddressFormData>({
     shipping: {} as Partial<AddressCreateDTO>,
-    billing: {} as Partial<AddressCreateDTO>,
-    useSameAddress: true,
   });
   const [companyData, setCompanyData] =
     useState<Partial<CompanyCreateDTO> | null>(null);
@@ -306,11 +302,7 @@ export default function CheckoutPage() {
                 cart={cart}
                 customerData={customerData}
                 shippingAddress={addressData.shipping}
-                billingAddress={
-                  addressData.useSameAddress
-                    ? addressData.shipping
-                    : addressData.billing
-                }
+                billingAddress={addressData.shipping}
                 companyData={companyData}
                 onBack={() => setCurrentStep(3)}
                 onSuccess={handleOrderSuccess}

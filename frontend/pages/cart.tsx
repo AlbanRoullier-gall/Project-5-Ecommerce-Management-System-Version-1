@@ -393,17 +393,6 @@ export default function CartPage() {
                       <i className="fas fa-credit-card"></i>
                       Passer la commande
                     </Link>
-                    <div
-                      style={{
-                        marginTop: "0.6rem",
-                        fontSize: "1.2rem",
-                        color: "#94a3b8",
-                        fontWeight: 600,
-                        textAlign: "center",
-                      }}
-                    >
-                      TVA recalculée selon le pays de livraison dans l’UE
-                    </div>
                   </div>
 
                   {/* Informations supplémentaires */}

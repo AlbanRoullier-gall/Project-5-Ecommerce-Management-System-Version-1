@@ -18,6 +18,7 @@ export const ORDER_ROUTES: Record<string, ServiceName> = {
   // Routes admin
   "/admin/orders": "order", // GET: Liste toutes les commandes, PUT: Modifier commande, DELETE: Supprimer commande
   "/admin/orders/:id": "order", // GET: Voir commande admin, PUT: Modifier commande admin, DELETE: Supprimer commande admin
+  "/admin/orders/:id/delivery-status": "order", // PATCH: Mettre à jour l'état de livraison
   "/admin/orders/:orderId/items": "order", // GET: Articles d'une commande (admin)
   "/admin/orders/:orderId/addresses": "order", // GET: Adresses d'une commande (admin)
   "/admin/order-items": "order", // POST: Créer article de commande

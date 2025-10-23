@@ -5,12 +5,14 @@ interface OrderTableProps {
   orders: OrderPublicDTO[];
   isLoading?: boolean;
   onView?: (orderId: number) => void;
+  onToggleDelivery?: (orderId: number, delivered: boolean) => void;
 }
 
 const OrderTable: React.FC<OrderTableProps> = ({
   orders,
   isLoading,
   onView,
+  onToggleDelivery,
 }) => {
   return (
     <div
@@ -132,6 +134,18 @@ const OrderTable: React.FC<OrderTableProps> = ({
                   letterSpacing: "0.5px",
                 }}
               >
+                Livré
+              </th>
+              <th
+                style={{
+                  padding: "1.25rem 1.25rem",
+                  textAlign: "left",
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
                 Actions
               </th>
             </tr>
@@ -140,7 +154,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
             {isLoading && (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   style={{
                     padding: "1rem",
                     textAlign: "center",
@@ -154,7 +168,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
             {!isLoading && orders.length === 0 && (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   style={{
                     padding: "1rem",
                     textAlign: "center",
@@ -194,6 +208,39 @@ const OrderTable: React.FC<OrderTableProps> = ({
                     <td style={{ padding: "0.75rem 1rem" }}>
                       {new Date(o.createdAt).toLocaleString()}
                     </td>
+                    <td
+                      style={{ padding: "0.75rem 1rem", textAlign: "center" }}
+                    >
+                      {o.delivered ? (
+                        <span
+                          style={{
+                            padding: "0.25rem 0.75rem",
+                            borderRadius: "6px",
+                            fontSize: "0.9rem",
+                            fontWeight: "500",
+                            background:
+                              "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
+                            color: "white",
+                          }}
+                        >
+                          Livré
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            padding: "0.25rem 0.75rem",
+                            borderRadius: "6px",
+                            fontSize: "0.9rem",
+                            fontWeight: "500",
+                            background:
+                              "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)",
+                            color: "white",
+                          }}
+                        >
+                          En attente
+                        </span>
+                      )}
+                    </td>
                     <td style={{ padding: "0.75rem 1rem" }}>
                       <div style={{ display: "flex", gap: "0.75rem" }}>
                         <button
@@ -221,6 +268,42 @@ const OrderTable: React.FC<OrderTableProps> = ({
                         >
                           <i className="fas fa-eye"></i>
                         </button>
+                        {onToggleDelivery && (
+                          <button
+                            onClick={() => onToggleDelivery(o.id, !o.delivered)}
+                            title={
+                              o.delivered
+                                ? "Marquer comme non livré"
+                                : "Marquer comme livré"
+                            }
+                            style={{
+                              padding: "0.75rem",
+                              border: "none",
+                              background: "none",
+                              cursor: "pointer",
+                              color: o.delivered ? "#ef4444" : "#10b981",
+                              transition: "all 0.2s ease",
+                              borderRadius: "8px",
+                              fontSize: "1.2rem",
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.background = o.delivered
+                                ? "rgba(239, 68, 68, 0.1)"
+                                : "rgba(16, 185, 129, 0.1)";
+                              e.currentTarget.style.transform = "scale(1.1)";
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.background = "none";
+                              e.currentTarget.style.transform = "scale(1)";
+                            }}
+                          >
+                            <i
+                              className={
+                                o.delivered ? "fas fa-undo" : "fas fa-check"
+                              }
+                            ></i>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
