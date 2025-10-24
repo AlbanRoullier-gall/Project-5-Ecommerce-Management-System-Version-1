@@ -192,6 +192,7 @@ echo ""
 echo "📦 ARRÊT DES SERVICES BACKEND..."
 
 # Arrêter les services backend dans l'ordre inverse du démarrage
+stop_service "pdf-export-service" "3040"
 stop_service "email-service" "3006"
 stop_service "payment-service" "3007"
 ## removed: website-content-service
@@ -242,7 +243,7 @@ echo ""
 echo "🔍 VÉRIFICATION FINALE..."
 
 # Vérifier qu'aucun service n'écoute plus sur nos ports
-ports=(3000 3001 3002 3003 3004 3006 3007 3008 3009 3020)
+ports=(3000 3001 3002 3003 3004 3006 3007 3008 3009 3020 3040)
 services_running=0
 
 for port in "${ports[@]}"; do

@@ -343,6 +343,14 @@ export class ApiRouter {
       }
     );
 
+    app.get(
+      "/api/admin/orders/year/:year/export-data",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderController.getYearExportData(req, res);
+      }
+    );
+
     // Routes admin pour les articles de commande
     app.post(
       "/api/admin/order-items",

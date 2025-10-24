@@ -19,6 +19,7 @@ import {
   handleCreatePayment,
   handleStripeWebhook,
 } from "./handlers/payment-handler";
+import { ExportHandler } from "./handlers/export-handler";
 
 // ===== CONFIGURATION =====
 
@@ -126,6 +127,42 @@ export const setupRoutes = (app: any): void => {
 
   // Webhook Stripe (raw body + signature vérifiée en handler)
   app.post("/api/webhooks/stripe", handleStripeWebhook);
+
+  // ===== ROUTES D'EXPORT =====
+
+  // Export des commandes par année
+  const exportHandler = new ExportHandler();
+  app.get(
+    "/api/admin/exports/orders-year/:year",
+    async (req: Request, res: Response) => {
+      // Vérifier l'authentification avant de traiter la requête
+      const token = req.headers["authorization"]?.replace("Bearer ", "");
+      if (!token) {
+        res.status(401).json({ error: "Token d'authentification requis" });
+        return;
+      }
+
+      try {
+        // Vérifier le token JWT
+        const jwt = require("jsonwebtoken");
+        const decoded = jwt.verify(
+          token,
+          process.env["JWT_SECRET"] || "your-jwt-secret"
+        );
+
+        // Ajouter les informations utilisateur à la requête
+        (req as any).user = {
+          userId: decoded.userId,
+          email: decoded.email,
+        };
+
+        await exportHandler.exportOrdersYear(req, res);
+      } catch (error) {
+        res.status(401).json({ error: "Token d'authentification invalide" });
+        return;
+      }
+    }
+  );
 
   // Finalisation manuelle (dev/recovery)
   app.post(

@@ -20,6 +20,7 @@ const OrderList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [deliveryFilter, setDeliveryFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const [hasMore, setHasMore] = useState(true);
@@ -57,8 +58,17 @@ const OrderList: React.FC = () => {
     });
     if (!res.ok) throw new Error("Erreur chargement commandes");
     const json = await res.json();
-    const ordersList: OrderPublicDTO[] =
+    let ordersList: OrderPublicDTO[] =
       json?.data?.orders ?? json?.orders ?? (Array.isArray(json) ? json : []);
+
+    // Appliquer le filtre par année côté client
+    if (yearFilter) {
+      ordersList = ordersList.filter((order) => {
+        const orderYear = new Date(order.createdAt).getFullYear();
+        return orderYear.toString() === yearFilter;
+      });
+    }
+
     const pagination = json?.data?.pagination ?? json?.pagination ?? null;
 
     setOrders((prev) => {
@@ -93,10 +103,19 @@ const OrderList: React.FC = () => {
     });
     if (!res.ok) throw new Error("Erreur chargement avoirs");
     const json = await res.json();
-    const creditNotesList: CreditNotePublicDTO[] =
+    let creditNotesList: CreditNotePublicDTO[] =
       json?.data?.creditNotes ??
       json?.creditNotes ??
       (Array.isArray(json) ? json : []);
+
+    // Appliquer le filtre par année côté client
+    if (yearFilter) {
+      creditNotesList = creditNotesList.filter((creditNote) => {
+        const creditNoteYear = new Date(creditNote.createdAt).getFullYear();
+        return creditNoteYear.toString() === yearFilter;
+      });
+    }
+
     const pagination = json?.data?.pagination ?? json?.pagination ?? null;
 
     setCreditNotes((prev) => {
@@ -156,6 +175,16 @@ const OrderList: React.FC = () => {
     loadInitial();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deliveryFilter]);
+
+  // Reload when year filter changes
+  useEffect(() => {
+    setHasMore(true);
+    setPage(1);
+    setHasMoreCreditNotes(true);
+    setCreditNotesPage(1);
+    loadInitial();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [yearFilter]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -333,10 +362,12 @@ const OrderList: React.FC = () => {
         onSearchChange={setSearch}
         deliveryFilter={deliveryFilter}
         onDeliveryFilterChange={setDeliveryFilter}
+        yearFilter={yearFilter}
+        onYearFilterChange={setYearFilter}
       />
 
       {/* Indicateur de filtrage */}
-      {(search || deliveryFilter) && (
+      {(search || deliveryFilter || yearFilter) && (
         <div
           style={{
             background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",

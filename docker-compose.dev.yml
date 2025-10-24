@@ -28,6 +28,7 @@ services:
       email-service:
         condition: service_healthy
       auth-service:
+      pdf-export-service:
         condition: service_healthy
       redis:
         condition: service_started
@@ -371,6 +372,26 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # PDF Export Service
+  pdf-export-service:
+    build:
+      context: .
+      dockerfile: services/pdf-export-service/Dockerfile.dev
+    ports:
+      - "3040:3040"
+    environment:
+      - NODE_ENV=development
+      - PORT=3040
+    volumes:
+      - ./services/pdf-export-service/src:/app/src
+      - /app/node_modules
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3040/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   redis:
     image: redis:7-alpine

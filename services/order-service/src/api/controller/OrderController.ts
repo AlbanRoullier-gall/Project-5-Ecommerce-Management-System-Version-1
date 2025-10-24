@@ -202,4 +202,35 @@ export class OrderController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Get year export data (orders and credit notes)
+   */
+  async getYearExportData(req: Request, res: Response): Promise<void> {
+    try {
+      const year = parseInt(req.params.year);
+
+      if (isNaN(year) || year < 2025) {
+        res.status(400).json({
+          success: false,
+          error: "Année invalide. L'année doit être >= 2025",
+        });
+        return;
+      }
+
+      const data = await this.orderService.getYearExportData(year);
+
+      res.json({
+        success: true,
+        year,
+        data,
+      });
+    } catch (error: any) {
+      console.error("Get year export data error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Erreur lors de la récupération des données d'export",
+      });
+    }
+  }
 }

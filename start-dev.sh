@@ -361,6 +361,7 @@ backend_services=(
     # removed: website-content-service
     "payment-service:3007:services/payment-service:postgresql://albanroullier-gall@localhost:5432/payment_db"
     "email-service:3006:services/email-service:postgresql://albanroullier-gall@localhost:5432/email_db"
+    "pdf-export-service:3040:services/pdf-export-service:"
 )
 
 backend_success=0
@@ -448,6 +449,7 @@ services_backend=(
     # removed: website-content-service
     "payment-service:3007"
     "email-service:3006"
+    "pdf-export-service:3040"
 )
 
 backend_ok=0
@@ -514,6 +516,7 @@ if [ $backend_ok -eq $backend_total ] && [ $frontend_ok -eq $frontend_total ]; t
     # removed: Website Content Service URL
     echo "   📧 Email Service: http://localhost:3006"
     echo "   💳 Payment Service: http://localhost:3007"
+    echo "   📄 PDF Export Service: http://localhost:3040"
     echo ""
     echo "💡 Pour arrêter tous les services : ./stop-dev.sh"
     echo "📝 Logs disponibles dans le dossier logs/"

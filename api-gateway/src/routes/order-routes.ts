@@ -32,4 +32,5 @@ export const ORDER_ROUTES: Record<string, ServiceName> = {
   "/admin/order-addresses/:id": "order", // GET: Voir adresse, PUT: Modifier adresse, DELETE: Supprimer adresse
   "/admin/statistics/orders": "order", // GET: Statistiques admin des commandes
   "/admin/customers/:customerId/statistics/orders": "order", // GET: Statistiques commandes d'un client
+  "/admin/orders/year/:year/export-data": "order", // GET: Données d'export par année
 };

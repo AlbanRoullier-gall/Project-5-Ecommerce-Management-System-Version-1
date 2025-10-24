@@ -22,6 +22,7 @@ import CreditNoteItemRepository from "../repositories/CreditNoteItemRepository";
 import OrderAddressRepository from "../repositories/OrderAddressRepository";
 
 export default class OrderService {
+  private pool: Pool;
   private orderRepository: OrderRepository;
   private orderItemRepository: OrderItemRepository;
   private creditNoteRepository: CreditNoteRepository;
@@ -29,6 +30,7 @@ export default class OrderService {
   private orderAddressRepository: OrderAddressRepository;
 
   constructor(pool: Pool) {
+    this.pool = pool;
     this.orderRepository = new OrderRepository(pool);
     this.orderItemRepository = new OrderItemRepository(pool);
     this.creditNoteRepository = new CreditNoteRepository(pool);
@@ -492,6 +494,109 @@ export default class OrderService {
       );
     } catch (error) {
       console.error("Error updating delivery status:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get orders and credit notes for year export
+   */
+  async getYearExportData(year: number): Promise<{
+    orders: any[];
+    creditNotes: any[];
+  }> {
+    try {
+      // Get orders for the year with details
+      const ordersQuery = `
+        SELECT 
+          o.id, o.customer_id as "customerId", o.customer_snapshot as "customerSnapshot",
+          o.total_amount_ht as "totalAmountHT", o.total_amount_ttc as "totalAmountTTC",
+          o.payment_method as "paymentMethod", o.notes, o.delivered,
+          o.created_at as "createdAt", o.updated_at as "updatedAt"
+        FROM orders o
+        WHERE EXTRACT(YEAR FROM o.created_at) = $1
+        ORDER BY o.created_at DESC
+      `;
+
+      const ordersResult = await this.pool.query(ordersQuery, [year]);
+      const orders = ordersResult.rows;
+
+      // Get order items for each order
+      for (const order of orders) {
+        const orderItemsQuery = `
+          SELECT 
+            oi.id, oi.product_id as "productId", oi.product_name as "productName",
+            oi.quantity, oi.unit_price_ht as "unitPriceHT", oi.unit_price_ttc as "unitPriceTTC",
+            oi.total_price_ht as "totalPriceHT", oi.total_price_ttc as "totalPriceTTC"
+          FROM order_items oi
+          WHERE oi.order_id = $1
+          ORDER BY oi.id
+        `;
+        const orderItemsResult = await this.pool.query(orderItemsQuery, [
+          order.id,
+        ]);
+        order.items = orderItemsResult.rows;
+
+        // Get order addresses for each order
+        const orderAddressesQuery = `
+          SELECT 
+            oa.id, oa.type, oa.address_snapshot as "addressSnapshot"
+          FROM order_addresses oa
+          WHERE oa.order_id = $1
+          ORDER BY oa.id
+        `;
+        const orderAddressesResult = await this.pool.query(
+          orderAddressesQuery,
+          [order.id]
+        );
+        // Parse the address_snapshot JSON for each address
+        order.addresses = orderAddressesResult.rows.map((row) => ({
+          id: row.id,
+          type: row.type,
+          ...(row.addressSnapshot || {}),
+        }));
+      }
+
+      // Get credit notes for the year with details
+      const creditNotesQuery = `
+        SELECT 
+          cn.id, cn.customer_id as "customerId", cn.order_id as "orderId",
+          cn.reason, cn.description, cn.issue_date as "issueDate",
+          cn.payment_method as "paymentMethod", cn.total_amount_ht as "totalAmountHT",
+          cn.total_amount_ttc as "totalAmountTTC", cn.notes,
+          cn.created_at as "createdAt", cn.updated_at as "updatedAt"
+        FROM credit_notes cn
+        WHERE EXTRACT(YEAR FROM cn.created_at) = $1
+        ORDER BY cn.created_at DESC
+      `;
+
+      const creditNotesResult = await this.pool.query(creditNotesQuery, [year]);
+      const creditNotes = creditNotesResult.rows;
+
+      // Get credit note items for each credit note
+      for (const creditNote of creditNotes) {
+        const creditNoteItemsQuery = `
+          SELECT 
+            cni.id, cni.product_id as "productId", cni.product_name as "productName",
+            cni.quantity, cni.unit_price_ht as "unitPriceHT", cni.unit_price_ttc as "unitPriceTTC",
+            cni.total_price_ht as "totalPriceHT", cni.total_price_ttc as "totalPriceTTC"
+          FROM credit_note_items cni
+          WHERE cni.credit_note_id = $1
+          ORDER BY cni.id
+        `;
+        const creditNoteItemsResult = await this.pool.query(
+          creditNoteItemsQuery,
+          [creditNote.id]
+        );
+        creditNote.items = creditNoteItemsResult.rows;
+      }
+
+      return {
+        orders,
+        creditNotes,
+      };
+    } catch (error) {
+      console.error("Error getting year export data:", error);
       throw error;
     }
   }
