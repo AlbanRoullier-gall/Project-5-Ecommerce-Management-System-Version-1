@@ -142,42 +142,204 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
         </div>
 
         <div style={{ padding: "1.5rem" }}>
-          <div style={{ display: "grid", gap: "1rem" }}>
+          <div style={{ display: "grid", gap: "1.5rem" }}>
+            {/* Informations principales */}
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "1rem",
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                padding: "1.25rem",
+                background: "#f9fafb",
               }}
             >
-              <div
+              <h4
                 style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  padding: "1rem",
+                  margin: "0 0 1rem 0",
+                  fontSize: "1.1rem",
+                  color: "#111827",
+                  fontWeight: 600,
                 }}
               >
-                <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                  Client
+                Informations générales
+              </h4>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: "1rem",
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#6b7280",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Client
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "1rem",
+                      color: "#111827",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {customerName}
+                  </div>
                 </div>
-                <div style={{ fontSize: "1.05rem", color: "#111827" }}>
-                  {customerName}
+
+                <div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#6b7280",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Commande associée
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "1rem",
+                      color: "#111827",
+                      fontWeight: 500,
+                    }}
+                  >
+                    #{creditNote.orderId}
+                  </div>
+                </div>
+
+                <div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#6b7280",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Date d'émission
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "1rem",
+                      color: "#111827",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {emitted}
+                  </div>
+                </div>
+
+                <div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#6b7280",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Méthode de paiement
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "1rem",
+                      color: "#111827",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {creditNote.paymentMethod || "—"}
+                  </div>
                 </div>
               </div>
+            </div>
 
-              <div
+            {/* Détails de l'avoir */}
+            <div
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                padding: "1.25rem",
+              }}
+            >
+              <h4
                 style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  padding: "1rem",
+                  margin: "0 0 1rem 0",
+                  fontSize: "1.1rem",
+                  color: "#111827",
+                  fontWeight: 600,
                 }}
               >
-                <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                  Émise le
+                Détails de l'avoir
+              </h4>
+              <div style={{ display: "grid", gap: "1rem" }}>
+                <div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#6b7280",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Motif
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "1rem",
+                      color: "#111827",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {creditNote.reason}
+                  </div>
                 </div>
-                <div style={{ fontSize: "1.05rem", color: "#111827" }}>
-                  {emitted}
-                </div>
+
+                {creditNote.description && (
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "0.85rem",
+                        color: "#6b7280",
+                        marginBottom: "0.25rem",
+                      }}
+                    >
+                      Description
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "1rem",
+                        color: "#111827",
+                        lineHeight: "1.5",
+                      }}
+                    >
+                      {creditNote.description}
+                    </div>
+                  </div>
+                )}
+
+                {creditNote.notes && (
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "0.85rem",
+                        color: "#6b7280",
+                        marginBottom: "0.25rem",
+                      }}
+                    >
+                      Notes internes
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "1rem",
+                        color: "#111827",
+                        lineHeight: "1.5",
+                      }}
+                    >
+                      {creditNote.notes}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -276,6 +438,28 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                             letterSpacing: "0.5px",
                           }}
                         >
+                          Prix unit. HT
+                        </th>
+                        <th
+                          style={{
+                            textAlign: "right",
+                            padding: "1rem 1.25rem",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.5px",
+                          }}
+                        >
+                          Prix unit. TTC
+                        </th>
+                        <th
+                          style={{
+                            textAlign: "right",
+                            padding: "1rem 1.25rem",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.5px",
+                          }}
+                        >
                           Total HT
                         </th>
                         <th
@@ -295,7 +479,7 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                       {items.length === 0 && (
                         <tr>
                           <td
-                            colSpan={4}
+                            colSpan={6}
                             style={{
                               padding: "0.75rem",
                               textAlign: "center",
@@ -313,32 +497,56 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                         >
                           <td
                             style={{
-                              padding: "0.5rem 0.75rem",
+                              padding: "0.75rem 1rem",
                               color: "#111827",
+                              fontWeight: 500,
                             }}
                           >
                             {it.productName || `Produit #${it.productId}`}
                           </td>
                           <td
                             style={{
-                              padding: "0.5rem 0.75rem",
+                              padding: "0.75rem 1rem",
                               textAlign: "right",
+                              color: "#111827",
                             }}
                           >
                             {it.quantity}
                           </td>
                           <td
                             style={{
-                              padding: "0.5rem 0.75rem",
+                              padding: "0.75rem 1rem",
                               textAlign: "right",
+                              color: "#111827",
+                            }}
+                          >
+                            {(Number(it.unitPriceHT) || 0).toFixed(2)} €
+                          </td>
+                          <td
+                            style={{
+                              padding: "0.75rem 1rem",
+                              textAlign: "right",
+                              color: "#111827",
+                            }}
+                          >
+                            {(Number(it.unitPriceTTC) || 0).toFixed(2)} €
+                          </td>
+                          <td
+                            style={{
+                              padding: "0.75rem 1rem",
+                              textAlign: "right",
+                              color: "#13686a",
+                              fontWeight: 600,
                             }}
                           >
                             {(Number(it.totalPriceHT) || 0).toFixed(2)} €
                           </td>
                           <td
                             style={{
-                              padding: "0.5rem 0.75rem",
+                              padding: "0.75rem 1rem",
                               textAlign: "right",
+                              color: "#13686a",
+                              fontWeight: 600,
                             }}
                           >
                             {(Number(it.totalPriceTTC) || 0).toFixed(2)} €
@@ -351,65 +559,154 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
               )}
             </div>
 
+            {/* Date de commande */}
+            {order && (
+              <div
+                style={{
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 12,
+                  padding: "1.25rem",
+                  background: "#f8fafc",
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#6b7280",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Date de commande
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "1rem",
+                      color: "#111827",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {order.createdAt
+                      ? new Date(order.createdAt as any).toLocaleDateString()
+                      : "—"}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Totaux */}
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "1rem",
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                padding: "1.25rem",
+                background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
               }}
             >
-              <div
+              <h4
                 style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  padding: "1rem",
+                  margin: "0 0 1rem 0",
+                  fontSize: "1.1rem",
+                  color: "#111827",
+                  fontWeight: 600,
                 }}
               >
-                <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                  Total HT
+                Montants
+              </h4>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                  gap: "1rem",
+                }}
+              >
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "0.75rem",
+                    background: "white",
+                    borderRadius: 8,
+                    border: "1px solid #e1e5e9",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#6b7280",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Total HT
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "1.25rem",
+                      color: "#13686a",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {(Number(creditNote.totalAmountHT) || 0).toFixed(2)} €
+                  </div>
                 </div>
                 <div
                   style={{
-                    fontSize: "1.05rem",
-                    color: "#13686a",
-                    fontWeight: 600,
+                    textAlign: "center",
+                    padding: "0.75rem",
+                    background: "white",
+                    borderRadius: 8,
+                    border: "1px solid #e1e5e9",
                   }}
                 >
-                  {(Number(creditNote.totalAmountHT) || 0).toFixed(2)} €
-                </div>
-              </div>
-              <div
-                style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  padding: "1rem",
-                }}
-              >
-                <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                  Total TTC
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#6b7280",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Total TTC
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "1.25rem",
+                      color: "#13686a",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {(Number(creditNote.totalAmountTTC) || 0).toFixed(2)} €
+                  </div>
                 </div>
                 <div
                   style={{
-                    fontSize: "1.05rem",
-                    color: "#13686a",
-                    fontWeight: 600,
+                    textAlign: "center",
+                    padding: "0.75rem",
+                    background: "white",
+                    borderRadius: 8,
+                    border: "1px solid #e1e5e9",
                   }}
                 >
-                  {(Number(creditNote.totalAmountTTC) || 0).toFixed(2)} €
-                </div>
-              </div>
-              <div
-                style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  padding: "1rem",
-                }}
-              >
-                <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                  Motif
-                </div>
-                <div style={{ fontSize: "1.05rem", color: "#111827" }}>
-                  {creditNote.reason}
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#6b7280",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    TVA
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "1.25rem",
+                      color: "#13686a",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {(
+                      (Number(creditNote.totalAmountTTC) || 0) -
+                      (Number(creditNote.totalAmountHT) || 0)
+                    ).toFixed(2)}{" "}
+                    €
+                  </div>
                 </div>
               </div>
             </div>

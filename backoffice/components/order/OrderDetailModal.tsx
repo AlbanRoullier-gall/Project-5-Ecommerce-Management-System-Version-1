@@ -668,7 +668,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
         order={order}
         onClose={() => setIsCreateCreditNoteOpen(false)}
         onCreated={() => {
-          // No-op: parent page will refresh the credit notes list
+          // No-op: parent page will reload the credit notes list
           setIsCreateCreditNoteOpen(false);
         }}
       />

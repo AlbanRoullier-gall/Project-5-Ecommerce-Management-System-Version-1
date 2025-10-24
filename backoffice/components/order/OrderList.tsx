@@ -23,6 +23,12 @@ const OrderList: React.FC = () => {
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const [hasMore, setHasMore] = useState(true);
+
+  // États pour la pagination des avoirs
+  const [creditNotesPage, setCreditNotesPage] = useState(1);
+  const [hasMoreCreditNotes, setHasMoreCreditNotes] = useState(true);
+  const [isLoadingMoreCreditNotes, setIsLoadingMoreCreditNotes] =
+    useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [detailOrder, setDetailOrder] = useState<OrderPublicDTO | null>(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -32,6 +38,8 @@ const OrderList: React.FC = () => {
   const [detailCreditNote, setDetailCreditNote] = useState<any | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const creditNotesSentinelRef = useRef<HTMLDivElement | null>(null);
+  const creditNotesContainerRef = useRef<HTMLDivElement | null>(null);
 
   const getAuthToken = () => localStorage.getItem("auth_token");
 
@@ -72,29 +80,49 @@ const OrderList: React.FC = () => {
     setPage(targetPage);
   };
 
+  const loadCreditNotesPage = async (targetPage: number, append: boolean) => {
+    const token = getAuthToken();
+    if (!token) throw new Error("Non authentifié");
+
+    const url = new URL(`${API_URL}/api/admin/credit-notes`);
+    url.searchParams.set("page", String(targetPage));
+    url.searchParams.set("limit", String(limit));
+
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Erreur chargement avoirs");
+    const json = await res.json();
+    const creditNotesList: CreditNotePublicDTO[] =
+      json?.data?.creditNotes ??
+      json?.creditNotes ??
+      (Array.isArray(json) ? json : []);
+    const pagination = json?.data?.pagination ?? json?.pagination ?? null;
+
+    setCreditNotes((prev) => {
+      if (!append) return creditNotesList;
+      const map = new Map<number, CreditNotePublicDTO>();
+      for (const c of prev) map.set(c.id, c);
+      for (const c of creditNotesList) map.set(c.id, c);
+      return Array.from(map.values());
+    });
+
+    if (pagination) {
+      const hasNext = targetPage < (pagination.pages ?? targetPage);
+      setHasMoreCreditNotes(hasNext);
+    } else {
+      setHasMoreCreditNotes(creditNotesList.length > 0);
+    }
+
+    setCreditNotesPage(targetPage);
+  };
+
   const loadInitial = async () => {
     setIsLoading(true);
     setError(null);
     try {
       await loadOrdersPage(1, false);
-      // Load credit notes separately
-      const token = getAuthToken();
-      if (token) {
-        const creditNotesRes = await fetch(
-          `${API_URL}/api/admin/credit-notes`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (creditNotesRes.ok) {
-          const creditNotesJson = await creditNotesRes.json();
-          const creditNotesList =
-            creditNotesJson?.data?.creditNotes ??
-            creditNotesJson?.creditNotes ??
-            (Array.isArray(creditNotesJson) ? creditNotesJson : []);
-          setCreditNotes(creditNotesList);
-        }
-      }
+      await loadCreditNotesPage(1, false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur lors du chargement");
     } finally {
@@ -111,6 +139,8 @@ const OrderList: React.FC = () => {
     const timer = setTimeout(() => {
       setHasMore(true);
       setPage(1);
+      setHasMoreCreditNotes(true);
+      setCreditNotesPage(1);
       loadInitial();
     }, 300);
     return () => clearTimeout(timer);
@@ -121,6 +151,8 @@ const OrderList: React.FC = () => {
   useEffect(() => {
     setHasMore(true);
     setPage(1);
+    setHasMoreCreditNotes(true);
+    setCreditNotesPage(1);
     loadInitial();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deliveryFilter]);
@@ -149,6 +181,41 @@ const OrderList: React.FC = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasMore, isLoading, isLoadingMore, page, search]);
+
+  // Infinite scroll observer for credit notes
+  useEffect(() => {
+    if (!hasMoreCreditNotes || isLoading || isLoadingMoreCreditNotes) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first && first.isIntersecting) {
+          setIsLoadingMoreCreditNotes(true);
+          loadCreditNotesPage(creditNotesPage + 1, true)
+            .catch(() => {
+              /* noop, error handled elsewhere via setError if needed */
+            })
+            .finally(() => setIsLoadingMoreCreditNotes(false));
+        }
+      },
+      {
+        root: creditNotesContainerRef.current,
+        rootMargin: "200px",
+        threshold: 0,
+      }
+    );
+    const node = creditNotesSentinelRef.current;
+    if (node) observer.observe(node);
+    return () => {
+      observer.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    hasMoreCreditNotes,
+    isLoading,
+    isLoadingMoreCreditNotes,
+    creditNotesPage,
+    search,
+  ]);
 
   const toggleDeliveryStatus = async (orderId: number, delivered: boolean) => {
     try {
@@ -212,22 +279,13 @@ const OrderList: React.FC = () => {
   };
 
   const handleCreditNoteCreated = async () => {
-    // Refresh credit notes list only
+    // Reload credit notes list with pagination
     try {
-      const token = getAuthToken();
-      if (!token) return;
-      const res = await fetch(`${API_URL}/api/admin/credit-notes`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
-      const json = await res.json();
-      const creditNotesList =
-        json?.data?.creditNotes ??
-        json?.creditNotes ??
-        (Array.isArray(json) ? json : []);
-      setCreditNotes(creditNotesList);
+      setHasMoreCreditNotes(true);
+      setCreditNotesPage(1);
+      await loadCreditNotesPage(1, false);
     } catch (e) {
-      // Silent refresh failure
+      // Silent reload failure
     }
   };
 
@@ -268,11 +326,7 @@ const OrderList: React.FC = () => {
     <div>
       {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
 
-      <PageHeader title="Commandes">
-        <Button onClick={loadInitial} variant="secondary" icon="fas fa-rotate">
-          Actualiser
-        </Button>
-      </PageHeader>
+      <PageHeader title="Commandes" />
 
       <OrderFilters
         searchTerm={search}
@@ -376,48 +430,61 @@ const OrderList: React.FC = () => {
           Créer un avoir
         </Button>
       </div>
-      <CreditNoteTable
-        creditNotes={creditNotes}
-        isLoading={isLoading}
-        orders={orders}
-        onView={async (creditNoteId) => {
-          const token = getAuthToken();
-          if (!token) return;
-          try {
-            const res = await fetch(
-              `${API_URL}/api/admin/credit-notes/${creditNoteId}`,
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
-            if (!res.ok)
-              throw new Error("Erreur lors du chargement de l'avoir");
-            const json = await res.json();
-            const creditNote =
-              json?.data?.creditNote || json?.creditNote || json;
-            setDetailCreditNote(creditNote);
-            setIsCreditNoteDetailOpen(true);
-          } catch (e) {
-            // noop
-          }
-        }}
-        onDelete={async (creditNoteId) => {
-          if (!window.confirm("Supprimer cet avoir ?")) return;
-          const token = getAuthToken();
-          if (!token) return;
-          try {
-            const res = await fetch(
-              `${API_URL}/api/admin/credit-notes/${creditNoteId}`,
-              {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            );
-            if (!res.ok) throw new Error("Suppression de l'avoir échouée");
-            await handleCreditNoteCreated();
-          } catch (e) {
-            // noop (optionally show toast)
-          }
-        }}
-      />
+      <div
+        ref={creditNotesContainerRef}
+        style={{ marginBottom: "2.5rem", height: "60vh", overflowY: "auto" }}
+      >
+        <CreditNoteTable
+          creditNotes={creditNotes}
+          isLoading={isLoading}
+          orders={orders}
+          onView={async (creditNoteId) => {
+            const token = getAuthToken();
+            if (!token) return;
+            try {
+              const res = await fetch(
+                `${API_URL}/api/admin/credit-notes/${creditNoteId}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+              if (!res.ok)
+                throw new Error("Erreur lors du chargement de l'avoir");
+              const json = await res.json();
+              const creditNote =
+                json?.data?.creditNote || json?.creditNote || json;
+              setDetailCreditNote(creditNote);
+              setIsCreditNoteDetailOpen(true);
+            } catch (e) {
+              // noop
+            }
+          }}
+          onDelete={async (creditNoteId) => {
+            if (!window.confirm("Supprimer cet avoir ?")) return;
+            const token = getAuthToken();
+            if (!token) return;
+            try {
+              const res = await fetch(
+                `${API_URL}/api/admin/credit-notes/${creditNoteId}`,
+                {
+                  method: "DELETE",
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+              if (!res.ok) throw new Error("Suppression de l'avoir échouée");
+              await handleCreditNoteCreated();
+            } catch (e) {
+              // noop (optionally show toast)
+            }
+          }}
+        />
+        {isLoadingMoreCreditNotes && (
+          <div
+            style={{ padding: "1rem", textAlign: "center", color: "#6b7280" }}
+          >
+            Chargement...
+          </div>
+        )}
+        <div ref={creditNotesSentinelRef} />
+      </div>
 
       <OrderDetailModal
         isOpen={isDetailOpen}
@@ -426,7 +493,7 @@ const OrderList: React.FC = () => {
         error={detailError}
         onClose={() => {
           setIsDetailOpen(false);
-          // If a credit note was just created, parent modal already closed; still refresh list
+          // If a credit note was just created, parent modal already closed; still reload list
           handleCreditNoteCreated();
         }}
       />
