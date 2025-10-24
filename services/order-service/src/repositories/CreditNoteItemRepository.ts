@@ -289,4 +289,32 @@ export default class CreditNoteItemRepository {
     const result = await this.pool.query(query, [creditNoteId]);
     return result.rows.map((row) => new CreditNoteItem(row));
   }
+
+  /**
+   * Récupérer les articles d'un avoir
+   * @param {number} creditNoteId ID de l'avoir
+   * @returns {Promise<any[]>} Liste des articles
+   */
+  async getItemsByCreditNoteId(creditNoteId: number): Promise<any[]> {
+    try {
+      const query = `
+        SELECT 
+          cni.id, cni.product_id as "productId", cni.product_name as "productName",
+          cni.quantity, cni.unit_price_ht as "unitPriceHT", cni.unit_price_ttc as "unitPriceTTC",
+          cni.total_price_ht as "totalPriceHT", cni.total_price_ttc as "totalPriceTTC"
+        FROM credit_note_items cni
+        WHERE cni.credit_note_id = $1
+        ORDER BY cni.id
+      `;
+
+      const result = await this.pool.query(query, [creditNoteId]);
+      return result.rows;
+    } catch (error) {
+      console.error(
+        "Error getting credit note items by credit note ID:",
+        error
+      );
+      throw error;
+    }
+  }
 }

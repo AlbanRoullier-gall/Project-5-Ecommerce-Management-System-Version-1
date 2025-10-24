@@ -37,12 +37,58 @@ const OrderList: React.FC = () => {
   const [isCreateCreditNoteOpen, setIsCreateCreditNoteOpen] = useState(false);
   const [isCreditNoteDetailOpen, setIsCreditNoteDetailOpen] = useState(false);
   const [detailCreditNote, setDetailCreditNote] = useState<any | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const creditNotesSentinelRef = useRef<HTMLDivElement | null>(null);
   const creditNotesContainerRef = useRef<HTMLDivElement | null>(null);
 
   const getAuthToken = () => localStorage.getItem("auth_token");
+
+  const handleExportPDF = async () => {
+    if (!yearFilter) {
+      alert("Veuillez sélectionner une année pour l'export");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        alert("Non authentifié");
+        return;
+      }
+
+      const response = await fetch(
+        `/api/admin/exports/orders-year/${yearFilter}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de l'export");
+      }
+
+      // Créer un blob et télécharger le fichier
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `export-commandes-${yearFilter}.html`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Erreur lors de l'export du fichier");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const loadOrdersPage = async (targetPage: number, append: boolean) => {
     const token = getAuthToken();
@@ -515,6 +561,103 @@ const OrderList: React.FC = () => {
           </div>
         )}
         <div ref={creditNotesSentinelRef} />
+      </div>
+
+      {/* Section Export - Après les avoirs */}
+      <div
+        style={{
+          marginTop: "2rem",
+          padding: "1.5rem",
+          backgroundColor: "#f8f9fa",
+          borderRadius: "12px",
+          border: "2px solid #e9ecef",
+          textAlign: "center",
+        }}
+      >
+        <h3
+          style={{
+            margin: "0 0 1rem 0",
+            color: "#13686a",
+            fontSize: "1.2rem",
+            fontWeight: "600",
+          }}
+        >
+          📊 Export des données
+        </h3>
+        <p
+          style={{
+            margin: "0 0 1.5rem 0",
+            color: "#666",
+            fontSize: "0.9rem",
+          }}
+        >
+          Exportez les commandes et avoirs pour une année spécifique
+        </p>
+        <button
+          onClick={handleExportPDF}
+          disabled={isExporting || !yearFilter}
+          style={{
+            padding: "1rem 2rem",
+            border: "2px solid #13686a",
+            borderRadius: "8px",
+            fontSize: "1.1rem",
+            backgroundColor: yearFilter ? "#13686a" : "#e0e0e0",
+            color: yearFilter ? "white" : "#666",
+            cursor: yearFilter ? "pointer" : "not-allowed",
+            transition: "all 0.3s ease",
+            fontWeight: "600",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.75rem",
+            minWidth: "200px",
+            boxShadow: yearFilter
+              ? "0 4px 12px rgba(19, 104, 106, 0.2)"
+              : "none",
+          }}
+          onMouseEnter={(e) => {
+            if (yearFilter) {
+              e.currentTarget.style.backgroundColor = "#0dd3d1";
+              e.currentTarget.style.borderColor = "#0dd3d1";
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow =
+                "0 6px 16px rgba(19, 104, 106, 0.3)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (yearFilter) {
+              e.currentTarget.style.backgroundColor = "#13686a";
+              e.currentTarget.style.borderColor = "#13686a";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow =
+                "0 4px 12px rgba(19, 104, 106, 0.2)";
+            }
+          }}
+        >
+          {isExporting ? (
+            <>
+              <span>Génération...</span>
+              <span>⏳</span>
+            </>
+          ) : (
+            <>
+              <span>Exporter HTML</span>
+              <span>📄</span>
+            </>
+          )}
+        </button>
+        {!yearFilter && (
+          <p
+            style={{
+              margin: "1rem 0 0 0",
+              color: "#e74c3c",
+              fontSize: "0.85rem",
+              fontStyle: "italic",
+            }}
+          >
+            ⚠️ Veuillez sélectionner une année pour activer l'export
+          </p>
+        )}
       </div>
 
       <OrderDetailModal

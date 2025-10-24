@@ -32,6 +32,7 @@ export class OrderStatisticsController {
           ? parseInt(req.query.customerId as string)
           : undefined,
         status: req.query.status as string,
+        year: req.query.year ? parseInt(req.query.year as string) : undefined,
       };
 
       const statistics = await this.orderService.getOrderStatistics(options);

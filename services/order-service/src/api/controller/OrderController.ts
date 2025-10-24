@@ -10,7 +10,7 @@
 
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
-import { OrderCreateDTO, OrderUpdateDTO } from "../dto";
+import { OrderCreateDTO, OrderUpdateDTO } from "../dto/OrderDTOs";
 import { OrderMapper, ResponseMapper } from "../mapper";
 
 export class OrderController {
@@ -159,6 +159,9 @@ export class OrderController {
         search: req.query.search as string,
         ...(req.query.customerId && {
           customerId: parseInt(req.query.customerId as string),
+        }),
+        ...(req.query.year && {
+          year: parseInt(req.query.year as string),
         }),
       };
 

@@ -19,6 +19,7 @@ export interface OrderListOptions {
   startDate?: string;
   endDate?: string;
   sort?: string;
+  year?: number | undefined;
 }
 
 export default class OrderRepository {
@@ -235,7 +236,7 @@ export default class OrderRepository {
     options: OrderListOptions = {}
   ): Promise<{ orders: Order[]; pagination: any }> {
     try {
-      const { page = 1, limit = 10, search, customerId } = options;
+      const { page = 1, limit = 10, search, customerId, year } = options;
 
       const offset = (page - 1) * limit;
       const conditions = [];
@@ -252,6 +253,11 @@ export default class OrderRepository {
           `(notes ILIKE $${++paramCount} OR payment_method ILIKE $${++paramCount})`
         );
         params.push(`%${search}%`, `%${search}%`);
+      }
+
+      if (year) {
+        conditions.push(`EXTRACT(YEAR FROM created_at) = $${++paramCount}`);
+        params.push(year);
       }
 
       const whereClause =
@@ -377,7 +383,7 @@ export default class OrderRepository {
     options: OrderListOptions = {}
   ): Promise<{ totalHT: number; totalTTC: number }> {
     try {
-      const { customerId, startDate, endDate } = options as any;
+      const { customerId, startDate, endDate, year } = options as any;
 
       const conditions: string[] = [];
       const params: any[] = [];
@@ -396,6 +402,11 @@ export default class OrderRepository {
       if (endDate) {
         conditions.push(`created_at <= $${++paramCount}`);
         params.push(endDate);
+      }
+
+      if (year) {
+        conditions.push(`EXTRACT(YEAR FROM created_at) = $${++paramCount}`);
+        params.push(year);
       }
 
       const whereClause =
@@ -466,6 +477,32 @@ export default class OrderRepository {
     } catch (error) {
       console.error("Error updating delivery status:", error);
       throw new Error("Failed to update delivery status");
+    }
+  }
+
+  /**
+   * Récupérer les commandes par année pour l'export
+   * @param {number} year Année
+   * @returns {Promise<any[]>} Liste des commandes
+   */
+  async getOrdersByYear(year: number): Promise<any[]> {
+    try {
+      const query = `
+        SELECT 
+          o.id, o.customer_id as "customerId", o.customer_snapshot as "customerSnapshot",
+          o.total_amount_ht as "totalAmountHT", o.total_amount_ttc as "totalAmountTTC",
+          o.payment_method as "paymentMethod", o.notes, o.delivered,
+          o.created_at as "createdAt", o.updated_at as "updatedAt"
+        FROM orders o
+        WHERE EXTRACT(YEAR FROM o.created_at) = $1
+        ORDER BY o.created_at DESC
+      `;
+
+      const result = await this.pool.query(query, [year]);
+      return result.rows;
+    } catch (error) {
+      console.error("Error getting orders by year:", error);
+      throw error;
     }
   }
 }

@@ -234,4 +234,32 @@ export default class OrderAddressRepository {
     const result = await this.pool.query(query, [orderId]);
     return result.rows.map((row) => new OrderAddress(row));
   }
+
+  /**
+   * Récupérer les adresses d'une commande pour l'export
+   * @param {number} orderId ID de la commande
+   * @returns {Promise<any[]>} Liste des adresses
+   */
+  async getAddressesByOrderId(orderId: number): Promise<any[]> {
+    try {
+      const query = `
+        SELECT 
+          oa.id, oa.type, oa.address_snapshot as "addressSnapshot"
+        FROM order_addresses oa
+        WHERE oa.order_id = $1
+        ORDER BY oa.id
+      `;
+
+      const result = await this.pool.query(query, [orderId]);
+      // Parse the address_snapshot JSON for each address
+      return result.rows.map((row) => ({
+        id: row.id,
+        type: row.type,
+        ...(row.addressSnapshot || {}),
+      }));
+    } catch (error) {
+      console.error("Error getting order addresses by order ID:", error);
+      throw error;
+    }
+  }
 }

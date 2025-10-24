@@ -144,8 +144,10 @@ export class PDFGenerator {
             text-align: left;
           }
           .items-table th {
-            background-color: #f5f5f5;
+            background-color: #13686a;
+            color: white;
             font-weight: bold;
+            text-align: center;
           }
           .address-block {
             border: 1px solid #e0e0e0;

@@ -210,4 +210,29 @@ export default class OrderItemRepository {
       throw new Error("Failed to delete order items");
     }
   }
+
+  /**
+   * Récupérer les articles d'une commande
+   * @param {number} orderId ID de la commande
+   * @returns {Promise<any[]>} Liste des articles
+   */
+  async getItemsByOrderId(orderId: number): Promise<any[]> {
+    try {
+      const query = `
+        SELECT 
+          oi.id, oi.product_id as "productId", oi.product_name as "productName",
+          oi.quantity, oi.unit_price_ht as "unitPriceHT", oi.unit_price_ttc as "unitPriceTTC",
+          oi.total_price_ht as "totalPriceHT", oi.total_price_ttc as "totalPriceTTC"
+        FROM order_items oi
+        WHERE oi.order_id = $1
+        ORDER BY oi.id
+      `;
+
+      const result = await this.pool.query(query, [orderId]);
+      return result.rows;
+    } catch (error) {
+      console.error("Error getting order items by order ID:", error);
+      throw error;
+    }
+  }
 }

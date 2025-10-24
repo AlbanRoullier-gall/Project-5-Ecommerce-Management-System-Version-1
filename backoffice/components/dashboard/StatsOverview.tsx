@@ -25,6 +25,9 @@ const StatsOverview: React.FC = () => {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<number>(
+    new Date().getFullYear()
+  );
 
   const getAuthToken = () => localStorage.getItem("auth_token");
 
@@ -36,19 +39,20 @@ const StatsOverview: React.FC = () => {
       if (!token) throw new Error("Non authentifié");
 
       // Appels parallèles vers l'API Gateway (admin routes)
+      // Note: Les clients ne sont pas filtrés par année
       const [productsRes, customersRes, ordersRes, revenueRes] =
         await Promise.all([
-          fetch(`${API_URL}/api/admin/products`, {
+          fetch(`${API_URL}/api/admin/products?year=${selectedYear}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetch(`${API_URL}/api/admin/customers`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch(`${API_URL}/api/admin/orders`, {
+          fetch(`${API_URL}/api/admin/orders?year=${selectedYear}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
           // Statistiques admin pour récupérer TTC et HT
-          fetch(`${API_URL}/api/admin/statistics/orders`, {
+          fetch(`${API_URL}/api/admin/statistics/orders?year=${selectedYear}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -113,7 +117,7 @@ const StatsOverview: React.FC = () => {
 
   useEffect(() => {
     loadStats();
-  }, []);
+  }, [selectedYear]);
 
   if (isLoading) {
     return (
@@ -139,15 +143,86 @@ const StatsOverview: React.FC = () => {
     );
   }
 
+  // Générer les années disponibles (2025 à année actuelle + 5)
+  const currentYear = new Date().getFullYear();
+  const availableYears = Array.from(
+    { length: currentYear - 2025 + 6 },
+    (_, i) => 2025 + i
+  );
+
   return (
-    <div className="stats-container">
-      <StatCard title="Produits" value={stats?.productsCount ?? 0} />
-      <StatCard title="Clients" value={stats?.customersCount ?? 0} />
-      <StatCard title="Commandes" value={stats?.ordersCount ?? 0} />
-      <StatCard
-        title="Chiffre d'Affaires"
-        value={formatCurrency(stats?.totalRevenueHT ?? 0)}
-      />
+    <div
+      style={{
+        width: "100%",
+        maxWidth: "1200px",
+        margin: "0 auto",
+        padding: "0 1rem",
+      }}
+    >
+      {/* Filtre par année - En haut, centré */}
+      <div
+        style={{
+          marginBottom: "2rem",
+          textAlign: "center",
+          padding: "1rem",
+          backgroundColor: "#f8f9fa",
+          borderRadius: "8px",
+          border: "1px solid #e9ecef",
+        }}
+      >
+        <label
+          htmlFor="year-select"
+          style={{
+            display: "inline-block",
+            marginRight: "1rem",
+            fontWeight: "600",
+            color: "#13686a",
+            fontSize: "1.1rem",
+          }}
+        >
+          Filtrer par année :
+        </label>
+        <select
+          id="year-select"
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+          style={{
+            padding: "0.5rem 1rem",
+            border: "2px solid #13686a",
+            borderRadius: "6px",
+            backgroundColor: "white",
+            color: "#13686a",
+            fontSize: "1rem",
+            fontWeight: "600",
+            minWidth: "120px",
+            cursor: "pointer",
+          }}
+        >
+          {availableYears.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Cards de statistiques - Grille 2x2 */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gap: "1.5rem",
+          marginBottom: "2rem",
+        }}
+      >
+        <StatCard title="Produits" value={stats?.productsCount ?? 0} />
+        <StatCard title="Clients" value={stats?.customersCount ?? 0} />
+        <StatCard title="Commandes" value={stats?.ordersCount ?? 0} />
+        <StatCard
+          title="Chiffre d'Affaires"
+          value={formatCurrency(stats?.totalRevenueHT ?? 0)}
+        />
+      </div>
     </div>
   );
 };

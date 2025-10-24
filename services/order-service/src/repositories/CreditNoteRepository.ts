@@ -262,7 +262,7 @@ export default class CreditNoteRepository {
   async getCreditNotesTotals(
     options: OrderListOptions = {}
   ): Promise<{ totalHT: number; totalTTC: number }> {
-    const { startDate, endDate, customerId } = options;
+    const { startDate, endDate, customerId, year } = options;
     const params: any[] = [];
     let paramCount = 0;
     const conditions: string[] = [];
@@ -280,6 +280,11 @@ export default class CreditNoteRepository {
     if (endDate) {
       conditions.push(`created_at <= $${++paramCount}`);
       params.push(endDate);
+    }
+
+    if (year) {
+      conditions.push(`EXTRACT(YEAR FROM created_at) = $${++paramCount}`);
+      params.push(year);
     }
 
     let whereClause = "";
@@ -429,5 +434,32 @@ export default class CreditNoteRepository {
 
     const result = await this.pool.query(query, [customerId]);
     return result.rows.map((row) => new CreditNote(row));
+  }
+
+  /**
+   * Récupérer les avoirs par année pour l'export
+   * @param {number} year Année
+   * @returns {Promise<any[]>} Liste des avoirs
+   */
+  async getCreditNotesByYear(year: number): Promise<any[]> {
+    try {
+      const query = `
+        SELECT 
+          cn.id, cn.customer_id as "customerId", cn.order_id as "orderId",
+          cn.reason, cn.description, cn.issue_date as "issueDate",
+          cn.payment_method as "paymentMethod", cn.total_amount_ht as "totalAmountHT",
+          cn.total_amount_ttc as "totalAmountTTC", cn.notes,
+          cn.created_at as "createdAt", cn.updated_at as "updatedAt"
+        FROM credit_notes cn
+        WHERE EXTRACT(YEAR FROM cn.created_at) = $1
+        ORDER BY cn.created_at DESC
+      `;
+
+      const result = await this.pool.query(query, [year]);
+      return result.rows;
+    } catch (error) {
+      console.error("Error getting credit notes by year:", error);
+      throw error;
+    }
   }
 }
