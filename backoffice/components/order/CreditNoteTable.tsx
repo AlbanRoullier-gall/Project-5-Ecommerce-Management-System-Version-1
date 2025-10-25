@@ -7,6 +7,7 @@ interface CreditNoteTableProps {
   orders?: OrderPublicDTO[];
   onView?: (creditNoteId: number) => void;
   onDelete?: (creditNoteId: number) => void;
+  onToggleStatus?: (creditNoteId: number, newStatus: string) => void;
 }
 
 const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
@@ -15,6 +16,7 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
   orders = [],
   onView,
   onDelete,
+  onToggleStatus,
 }) => {
   const orderById = React.useMemo(() => {
     const map = new Map<number, OrderPublicDTO>();
@@ -135,6 +137,18 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
               <th
                 style={{
                   padding: "1.25rem 1.25rem",
+                  textAlign: "center",
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                Statut
+              </th>
+              <th
+                style={{
+                  padding: "1.25rem 1.25rem",
                   textAlign: "left",
                   fontSize: "1rem",
                   fontWeight: 700,
@@ -150,7 +164,7 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
             {isLoading && (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   style={{
                     padding: "1rem",
                     textAlign: "center",
@@ -164,7 +178,7 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
             {!isLoading && creditNotes.length === 0 && (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   style={{
                     padding: "1rem",
                     textAlign: "center",
@@ -207,6 +221,39 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                       {(Number(c.totalAmountTTC) || 0).toFixed(2)} €
                     </td>
                     <td style={{ padding: "0.75rem 1rem" }}>{emitted}</td>
+                    <td
+                      style={{ padding: "0.75rem 1rem", textAlign: "center" }}
+                    >
+                      {(c.status || "pending") === "refunded" ? (
+                        <span
+                          style={{
+                            padding: "0.25rem 0.75rem",
+                            borderRadius: "6px",
+                            fontSize: "0.9rem",
+                            fontWeight: "500",
+                            background:
+                              "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
+                            color: "white",
+                          }}
+                        >
+                          Remboursé
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            padding: "0.25rem 0.75rem",
+                            borderRadius: "6px",
+                            fontSize: "0.9rem",
+                            fontWeight: "500",
+                            background:
+                              "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)",
+                            color: "white",
+                          }}
+                        >
+                          En attente
+                        </span>
+                      )}
+                    </td>
                     <td style={{ padding: "0.75rem 1rem" }}>
                       <div style={{ display: "flex", gap: "0.75rem" }}>
                         {onView && (
@@ -234,6 +281,54 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                             }}
                           >
                             <i className="fas fa-eye"></i>
+                          </button>
+                        )}
+                        {onToggleStatus && (
+                          <button
+                            onClick={() => {
+                              const newStatus =
+                                (c.status || "pending") === "refunded"
+                                  ? "pending"
+                                  : "refunded";
+                              onToggleStatus(c.id, newStatus);
+                            }}
+                            title={
+                              (c.status || "pending") === "refunded"
+                                ? "Marquer comme en attente"
+                                : "Marquer comme remboursé"
+                            }
+                            style={{
+                              padding: "0.75rem",
+                              border: "none",
+                              background: "none",
+                              cursor: "pointer",
+                              color:
+                                (c.status || "pending") === "refunded"
+                                  ? "#f59e0b"
+                                  : "#10b981",
+                              transition: "all 0.2s ease",
+                              borderRadius: "8px",
+                              fontSize: "1.2rem",
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.background =
+                                (c.status || "pending") === "refunded"
+                                  ? "rgba(245, 158, 11, 0.1)"
+                                  : "rgba(16, 185, 129, 0.1)";
+                              e.currentTarget.style.transform = "scale(1.1)";
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.background = "none";
+                              e.currentTarget.style.transform = "scale(1)";
+                            }}
+                          >
+                            <i
+                              className={
+                                (c.status || "pending") === "refunded"
+                                  ? "fas fa-undo"
+                                  : "fas fa-check"
+                              }
+                            ></i>
                           </button>
                         )}
                         {onDelete && (

@@ -515,6 +515,56 @@ const OrderList: React.FC = () => {
           creditNotes={creditNotes}
           isLoading={isLoading}
           orders={orders}
+          onToggleStatus={async (creditNoteId, newStatus) => {
+            try {
+              const token = getAuthToken();
+              if (!token) {
+                alert("Non authentifié");
+                return;
+              }
+
+              // Mise à jour optimiste de l'interface
+              setCreditNotes((prevCreditNotes) =>
+                prevCreditNotes.map((cn) =>
+                  cn.id === creditNoteId ? { ...cn, status: newStatus } : cn
+                )
+              );
+
+              const response = await fetch(
+                `${API_URL}/api/admin/credit-notes/${creditNoteId}/status`,
+                {
+                  method: "PATCH",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ status: newStatus }),
+                }
+              );
+
+              if (!response.ok) {
+                // Revenir à l'état précédent en cas d'erreur
+                setCreditNotes((prevCreditNotes) =>
+                  prevCreditNotes.map((cn) =>
+                    cn.id === creditNoteId
+                      ? {
+                          ...cn,
+                          status:
+                            newStatus === "refunded" ? "pending" : "refunded",
+                        }
+                      : cn
+                  )
+                );
+                throw new Error("Erreur lors de la mise à jour du statut");
+              }
+
+              // Recharger la liste des avoirs pour s'assurer de la cohérence
+              await handleCreditNoteCreated();
+            } catch (error) {
+              console.error("Toggle credit note status error:", error);
+              alert("Erreur lors de la mise à jour du statut de l'avoir");
+            }
+          }}
           onView={async (creditNoteId) => {
             const token = getAuthToken();
             if (!token) return;

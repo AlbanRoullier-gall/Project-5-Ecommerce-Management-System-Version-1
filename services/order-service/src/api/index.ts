@@ -429,6 +429,14 @@ export class ApiRouter {
       }
     );
 
+    app.patch(
+      "/api/admin/credit-notes/:id/status",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderController.updateCreditNoteStatus(req, res);
+      }
+    );
+
     // Routes admin pour les articles d'avoirs
     app.post(
       "/api/admin/credit-note-items",

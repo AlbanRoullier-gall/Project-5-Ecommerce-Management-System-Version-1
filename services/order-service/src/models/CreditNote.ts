@@ -22,6 +22,7 @@ export interface CreditNoteData {
   issue_date: Date | null;
   payment_method: string;
   notes: string | null;
+  status?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -45,6 +46,7 @@ class CreditNote {
   public readonly issueDate: Date | null;
   public readonly paymentMethod: string;
   public readonly notes: string | null;
+  public readonly status: string;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -59,6 +61,7 @@ class CreditNote {
     this.issueDate = data.issue_date;
     this.paymentMethod = data.payment_method;
     this.notes = data.notes;
+    this.status = data.status || "pending";
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
   }
@@ -85,6 +88,20 @@ class CreditNote {
       this.totalAmountTTC >= 0 &&
       this.reason.length > 0
     );
+  }
+
+  /**
+   * Vérifier si l'avoir est remboursé
+   */
+  isRefunded(): boolean {
+    return this.status === "refunded";
+  }
+
+  /**
+   * Vérifier si l'avoir est en attente de remboursement
+   */
+  isPending(): boolean {
+    return this.status === "pending";
   }
 
   /**

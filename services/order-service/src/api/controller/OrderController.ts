@@ -207,6 +207,41 @@ export class OrderController {
   }
 
   /**
+   * Update credit note status
+   */
+  async updateCreditNoteStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      if (!status || !["pending", "refunded"].includes(status)) {
+        res.status(400).json({
+          success: false,
+          error: "Statut invalide. Doit être 'pending' ou 'refunded'",
+        });
+        return;
+      }
+
+      const creditNote = await this.orderService.updateCreditNoteStatus(
+        parseInt(id),
+        status
+      );
+
+      res.json({
+        success: true,
+        message: `Statut de l'avoir mis à jour vers ${status}`,
+        data: OrderMapper.creditNoteToPublicDTO(creditNote),
+      });
+    } catch (error: any) {
+      console.error("Update credit note status error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Erreur lors de la mise à jour du statut de l'avoir",
+      });
+    }
+  }
+
+  /**
    * Get year export data (orders and credit notes)
    */
   async getYearExportData(req: Request, res: Response): Promise<void> {

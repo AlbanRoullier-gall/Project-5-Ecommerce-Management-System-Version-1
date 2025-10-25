@@ -499,6 +499,24 @@ export default class OrderService {
   }
 
   /**
+   * Mettre à jour le statut d'un avoir
+   * @param {number} creditNoteId ID de l'avoir
+   * @param {string} status Nouveau statut
+   * @returns {Promise<CreditNote>} Avoir mis à jour
+   */
+  async updateCreditNoteStatus(
+    creditNoteId: number,
+    status: string
+  ): Promise<CreditNote> {
+    try {
+      return await this.creditNoteRepository.updateStatus(creditNoteId, status);
+    } catch (error) {
+      console.error("Error updating credit note status:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Get orders and credit notes for year export
    */
   async getYearExportData(year: number): Promise<{

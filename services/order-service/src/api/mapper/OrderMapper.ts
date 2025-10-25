@@ -208,6 +208,7 @@ export class OrderMapper {
       issueDate: creditNote.issueDate,
       paymentMethod: creditNote.paymentMethod,
       notes: creditNote.notes,
+      status: creditNote.status || "pending",
       createdAt: creditNote.createdAt,
       updatedAt: creditNote.updatedAt,
     };

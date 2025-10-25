@@ -194,6 +194,7 @@ export interface CreditNotePublicDTO {
   totalAmountHT: number;
   totalAmountTTC: number;
   notes: string | null;
+  status: string;
   createdAt: Date;
   updatedAt: Date;
 }

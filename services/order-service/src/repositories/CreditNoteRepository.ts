@@ -91,7 +91,7 @@ export default class CreditNoteRepository {
   async getById(id: number): Promise<CreditNote | null> {
     const query = `
       SELECT id, customer_id, order_id, total_amount_ht, total_amount_ttc, 
-             reason, description, issue_date, payment_method, notes, created_at, updated_at
+             reason, description, issue_date, payment_method, notes, COALESCE(status, 'pending') as status, created_at, updated_at
       FROM credit_notes 
       WHERE id = $1
     `;
@@ -142,7 +142,7 @@ export default class CreditNoteRepository {
 
     const query = `
       SELECT id, customer_id, order_id, total_amount_ht, total_amount_ttc, 
-             reason, description, issue_date, payment_method, notes, created_at, updated_at
+             reason, description, issue_date, payment_method, notes, COALESCE(status, 'pending') as status, created_at, updated_at
       FROM credit_notes 
       ${whereClause}
       ORDER BY ${sort} 
@@ -178,7 +178,7 @@ export default class CreditNoteRepository {
   async listByCustomer(customerId: number): Promise<CreditNote[]> {
     const query = `
       SELECT id, customer_id, order_id, total_amount_ht, total_amount_ttc, 
-             reason, description, issue_date, payment_method, notes, created_at, updated_at
+             reason, description, issue_date, payment_method, notes, COALESCE(status, 'pending') as status, created_at, updated_at
       FROM credit_notes 
       WHERE customer_id = $1
       ORDER BY created_at DESC
@@ -196,7 +196,7 @@ export default class CreditNoteRepository {
   async listByOrder(orderId: number): Promise<CreditNote[]> {
     const query = `
       SELECT id, customer_id, order_id, total_amount_ht, total_amount_ttc, 
-             reason, description, issue_date, payment_method, notes, created_at, updated_at
+             reason, description, issue_date, payment_method, notes, COALESCE(status, 'pending') as status, created_at, updated_at
       FROM credit_notes 
       WHERE order_id = $1
       ORDER BY created_at DESC
@@ -410,6 +410,26 @@ export default class CreditNoteRepository {
       throw new Error("Credit note not found");
     }
 
+    return new CreditNote(result.rows[0]);
+  }
+
+  /**
+   * Update credit note status
+   * @param {number} id Credit note ID
+   * @param {string} status New status
+   */
+  async updateStatus(id: number, status: string): Promise<CreditNote> {
+    const query = `
+      UPDATE credit_notes
+      SET status = $1, updated_at = NOW()
+      WHERE id = $2
+      RETURNING id, customer_id, order_id, total_amount_ht, total_amount_ttc,
+                reason, description, issue_date, payment_method, notes, status, created_at, updated_at
+    `;
+    const result = await this.pool.query(query, [status, id]);
+    if (result.rows.length === 0) {
+      throw new Error(`Credit note with ID ${id} not found`);
+    }
     return new CreditNote(result.rows[0]);
   }
 

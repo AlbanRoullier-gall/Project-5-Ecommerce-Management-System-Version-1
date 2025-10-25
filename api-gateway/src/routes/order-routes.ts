@@ -25,6 +25,7 @@ export const ORDER_ROUTES: Record<string, ServiceName> = {
   "/admin/order-items/:id": "order", // GET: Voir article, PUT: Modifier article, DELETE: Supprimer article
   "/admin/credit-notes": "order", // POST: Créer avoir, GET: Liste avoirs
   "/admin/credit-notes/:id": "order", // GET: Voir avoir, PUT: Modifier avoir, DELETE: Supprimer avoir
+  "/admin/credit-notes/:id/status": "order", // PATCH: Mettre à jour le statut d'un avoir
   "/admin/credit-note-items": "order", // POST: Créer article d'avoir
   "/admin/credit-note-items/:id": "order", // GET: Voir article avoir, PUT: Modifier article avoir, DELETE: Supprimer article avoir
   "/admin/credit-notes/:creditNoteId/items": "order", // GET: Articles d'un avoir
