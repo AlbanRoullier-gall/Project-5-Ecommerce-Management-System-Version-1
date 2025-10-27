@@ -592,6 +592,7 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                   borderRadius: 12,
                   padding: "1.25rem",
                   background: "#f8fafc",
+                  textAlign: "center",
                 }}
               >
                 <div>

@@ -6,7 +6,6 @@ import {
   CountryDTO,
 } from "../../../dto";
 import FormInput from "../../product/form/FormInput";
-import FormSelect from "../../product/form/FormSelect";
 import FormCheckbox from "../../product/form/FormCheckbox";
 import FormActions from "../../product/form/FormActions";
 
@@ -127,9 +126,6 @@ const AddressForm: React.FC<AddressFormProps> = ({
     if (address) {
       // Mode édition : envoyer seulement les champs modifiés
       const updateData: AddressUpdateDTO = {};
-      if (formData.addressType !== address.addressType) {
-        updateData.addressType = formData.addressType;
-      }
       if (formData.address !== address.address) {
         updateData.address = formData.address;
       }
@@ -182,21 +178,6 @@ const AddressForm: React.FC<AddressFormProps> = ({
             gap: "1.5rem",
           }}
         >
-          {/* Type d'adresse */}
-          <FormSelect
-            id="addressType"
-            label="Type d'adresse"
-            name="addressType"
-            value={formData.addressType}
-            onChange={handleChange}
-            required
-            error={errors.addressType}
-            options={[
-              { value: "shipping", label: "Livraison" },
-              { value: "billing", label: "Facturation" },
-            ]}
-          />
-
           {/* Adresse */}
           <div style={{ gridColumn: "1 / -1" }}>
             <FormInput

@@ -26,7 +26,17 @@ const AddressTableRow: React.FC<AddressTableRowProps> = ({
 }) => {
   const getCountryName = (countryId: number): string => {
     const country = countries.find((c) => c.countryId === countryId);
-    return country ? country.countryName : `Pays ID: ${countryId}`;
+    if (country) {
+      return country.countryName;
+    }
+
+    // Fallback: si l'ID n'est pas trouvé, vérifier si c'est probablement la Belgique
+    // (parfois l'ID peut être différent selon la base de données)
+    if (countryId === 4 || countryId === 1) {
+      return "Belgique";
+    }
+
+    return `Pays ID: ${countryId}`;
   };
 
   const buttonBaseStyle: React.CSSProperties = {

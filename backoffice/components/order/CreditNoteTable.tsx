@@ -283,8 +283,9 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                         style={{
                           display: "flex",
                           gap: "0.5rem",
-                          flexWrap: "wrap",
+                          flexWrap: "nowrap",
                           justifyContent: "center",
+                          alignItems: "center",
                         }}
                       >
                         {onView && (

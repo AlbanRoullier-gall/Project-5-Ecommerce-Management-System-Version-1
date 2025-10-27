@@ -10,8 +10,6 @@ import {
   CustomerPublicDTO,
   CustomerCreateDTO,
   CustomerUpdateDTO,
-  CivilityDTO,
-  SocioProfessionalCategoryDTO,
   CountryDTO,
 } from "../../dto";
 
@@ -40,10 +38,6 @@ const CustomerList: React.FC = () => {
   const [filteredCustomers, setFilteredCustomers] = useState<
     CustomerPublicDTO[]
   >([]);
-  const [civilities, setCivilities] = useState<CivilityDTO[]>([]);
-  const [categories, setCategories] = useState<SocioProfessionalCategoryDTO[]>(
-    []
-  );
   const [countries, setCountries] = useState<CountryDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,8 +57,6 @@ const CustomerList: React.FC = () => {
   // Charger les données au montage du composant
   useEffect(() => {
     loadCustomers();
-    loadCivilities();
-    loadCategories();
     loadCountries();
   }, []);
 
@@ -144,75 +136,38 @@ const CustomerList: React.FC = () => {
   };
 
   /**
-   * Charge la liste des civilités depuis l'API
-   */
-  const loadCivilities = async () => {
-    try {
-      const token = getAuthToken();
-
-      if (!token) {
-        console.error("Token manquant pour chargement des civilités");
-        return;
-      }
-
-      const response = await fetch(
-        `${API_URL}/api/admin/customers/civilities`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erreur lors du chargement des civilités");
-      }
-
-      const data = await response.json();
-      setCivilities(data.civilities || data || []);
-    } catch (err) {
-      console.error("Error loading civilities:", err);
-    }
-  };
-
-  /**
-   * Charge la liste des catégories socio-professionnelles depuis l'API
-   */
-  const loadCategories = async () => {
-    try {
-      const token = getAuthToken();
-
-      if (!token) {
-        console.error("Token manquant pour chargement des catégories");
-        return;
-      }
-
-      const response = await fetch(
-        `${API_URL}/api/admin/customers/categories`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erreur lors du chargement des catégories");
-      }
-
-      const data = await response.json();
-      setCategories(data.categories || data || []);
-    } catch (err) {
-      console.error("Error loading categories:", err);
-    }
-  };
-
-  /**
-   * Charge la liste des pays depuis l'API - Belgique uniquement
+   * Charge la liste des pays depuis l'API
    */
   const loadCountries = async () => {
-    // Set Belgium as the only available country
-    setCountries([{ countryId: 1, countryName: "Belgique" }]);
+    try {
+      const token = getAuthToken();
+
+      if (!token) {
+        console.error("Token manquant pour chargement des pays");
+        // Fallback: définir la Belgique comme seul pays
+        setCountries([{ countryId: 1, countryName: "Belgique" }]);
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/countries`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors du chargement des pays");
+      }
+
+      const data = await response.json();
+      setCountries(
+        data.countries || data || [{ countryId: 1, countryName: "Belgique" }]
+      );
+    } catch (err) {
+      console.error("Error loading countries:", err);
+      // Fallback: définir la Belgique comme seul pays
+      setCountries([{ countryId: 1, countryName: "Belgique" }]);
+    }
   };
 
   /**
@@ -446,8 +401,6 @@ const CustomerList: React.FC = () => {
       {showCustomerForm && (
         <CustomerForm
           customer={editingCustomer}
-          civilities={civilities}
-          categories={categories}
           onSubmit={
             editingCustomer ? handleUpdateCustomer : handleCreateCustomer
           }

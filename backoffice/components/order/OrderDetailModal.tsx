@@ -687,6 +687,31 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                 )}
               </div>
 
+              {/* Créée le */}
+              <div
+                className="order-created-section"
+                style={{
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 8,
+                  padding: "1rem",
+                  background: "#f9fafb",
+                  marginBottom: "1rem",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
+                    textAlign: "center",
+                  }}
+                >
+                  <strong>Créée le :</strong>{" "}
+                  {order.createdAt
+                    ? new Date(order.createdAt as any).toLocaleString("fr-FR")
+                    : "—"}
+                </div>
+              </div>
+
               {/* Montants */}
               <div
                 className="order-totals-section"
@@ -708,34 +733,36 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                   Montants
                 </div>
                 <div
+                  className="amounts-grid"
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
                     gap: "1rem",
                   }}
                 >
                   <div
                     style={{
-                      border: "1px solid #e5e7eb",
-                      borderRadius: 8,
+                      textAlign: "center",
                       padding: "0.75rem",
                       background: "white",
+                      borderRadius: 8,
+                      border: "1px solid #e1e5e9",
                     }}
                   >
                     <div
                       style={{
                         fontSize: "0.85rem",
                         color: "#6b7280",
-                        marginBottom: "0.5rem",
+                        marginBottom: "0.25rem",
                       }}
                     >
                       Total HT
                     </div>
                     <div
                       style={{
-                        fontSize: "1.2rem",
-                        color: "#111827",
-                        fontWeight: "600",
+                        fontSize: "1.25rem",
+                        color: "#13686a",
+                        fontWeight: "700",
                       }}
                     >
                       {(order.totalAmountHT || 0).toFixed(2)} €
@@ -743,26 +770,27 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                   </div>
                   <div
                     style={{
-                      border: "1px solid #e5e7eb",
-                      borderRadius: 8,
+                      textAlign: "center",
                       padding: "0.75rem",
                       background: "white",
+                      borderRadius: 8,
+                      border: "1px solid #e1e5e9",
                     }}
                   >
                     <div
                       style={{
                         fontSize: "0.85rem",
                         color: "#6b7280",
-                        marginBottom: "0.5rem",
+                        marginBottom: "0.25rem",
                       }}
                     >
                       Total TTC
                     </div>
                     <div
                       style={{
-                        fontSize: "1.2rem",
-                        color: "#111827",
-                        fontWeight: "600",
+                        fontSize: "1.25rem",
+                        color: "#13686a",
+                        fontWeight: "700",
                       }}
                     >
                       {(order.totalAmountTTC || 0).toFixed(2)} €
@@ -770,26 +798,27 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                   </div>
                   <div
                     style={{
-                      border: "1px solid #e5e7eb",
-                      borderRadius: 8,
+                      textAlign: "center",
                       padding: "0.75rem",
                       background: "white",
+                      borderRadius: 8,
+                      border: "1px solid #e1e5e9",
                     }}
                   >
                     <div
                       style={{
                         fontSize: "0.85rem",
                         color: "#6b7280",
-                        marginBottom: "0.5rem",
+                        marginBottom: "0.25rem",
                       }}
                     >
                       TVA
                     </div>
                     <div
                       style={{
-                        fontSize: "1.2rem",
-                        color: "#111827",
-                        fontWeight: "600",
+                        fontSize: "1.25rem",
+                        color: "#13686a",
+                        fontWeight: "700",
                       }}
                     >
                       {(
@@ -797,22 +826,6 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                       ).toFixed(2)}{" "}
                       €
                     </div>
-                  </div>
-                </div>
-                <div
-                  style={{
-                    marginTop: "1rem",
-                    paddingTop: "1rem",
-                    borderTop: "1px solid #e5e7eb",
-                    fontSize: "0.9rem",
-                    color: "#6b7280",
-                  }}
-                >
-                  <div style={{ marginBottom: "0.25rem" }}>
-                    <strong>Créée le :</strong>{" "}
-                    {order.createdAt
-                      ? new Date(order.createdAt as any).toLocaleString("fr-FR")
-                      : "—"}
                   </div>
                 </div>
               </div>

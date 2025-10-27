@@ -10,10 +10,9 @@ import { useCart } from "../contexts/CartContext";
 import {
   CheckoutCustomerForm,
   CheckoutAddressForm,
-  CheckoutCompanyForm,
   CheckoutOrderSummary,
 } from "../components/checkout";
-import { CustomerCreateDTO, AddressCreateDTO, CompanyCreateDTO } from "../dto";
+import { CustomerCreateDTO, AddressCreateDTO } from "../dto";
 
 interface AddressFormData {
   shipping: Partial<AddressCreateDTO>;
@@ -35,8 +34,6 @@ export default function CheckoutPage() {
   const [addressData, setAddressData] = useState<AddressFormData>({
     shipping: {} as Partial<AddressCreateDTO>,
   });
-  const [companyData, setCompanyData] =
-    useState<Partial<CompanyCreateDTO> | null>(null);
 
   // Vérifier si le panier est vide
   useEffect(() => {
@@ -55,11 +52,6 @@ export default function CheckoutPage() {
     setCurrentStep(3);
   };
 
-  const handleCompanyNext = (data: Partial<CompanyCreateDTO> | null) => {
-    setCompanyData(data);
-    setCurrentStep(4);
-  };
-
   const handleOrderSuccess = (orderId: number) => {
     console.log("Commande créée avec succès:", orderId);
     // Redirection gérée par Stripe
@@ -69,8 +61,7 @@ export default function CheckoutPage() {
   const steps = [
     { number: 1, label: "Informations", icon: "fa-user" },
     { number: 2, label: "Adresses", icon: "fa-map-marker-alt" },
-    { number: 3, label: "Entreprise", icon: "fa-building" },
-    { number: 4, label: "Paiement", icon: "fa-credit-card" },
+    { number: 3, label: "Paiement", icon: "fa-credit-card" },
   ];
 
   if (isLoading) {
@@ -297,22 +288,12 @@ export default function CheckoutPage() {
             )}
 
             {currentStep === 3 && (
-              <CheckoutCompanyForm
-                formData={companyData}
-                onChange={setCompanyData}
-                onNext={() => handleCompanyNext(companyData)}
-                onBack={() => setCurrentStep(2)}
-              />
-            )}
-
-            {currentStep === 4 && (
               <CheckoutOrderSummary
                 cart={cart}
                 customerData={customerData}
                 shippingAddress={addressData.shipping}
                 billingAddress={addressData.shipping}
-                companyData={companyData}
-                onBack={() => setCurrentStep(3)}
+                onBack={() => setCurrentStep(2)}
                 onSuccess={handleOrderSuccess}
               />
             )}

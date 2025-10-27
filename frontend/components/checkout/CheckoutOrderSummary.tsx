@@ -9,7 +9,6 @@ import {
   CustomerCreateDTO,
   CustomerPublicDTO,
   AddressCreateDTO,
-  CompanyCreateDTO,
   ProductPublicDTO,
   CountryDTO,
 } from "../../dto";
@@ -25,7 +24,6 @@ interface CheckoutOrderSummaryProps {
   customerData: Partial<CustomerCreateDTO>;
   shippingAddress: Partial<AddressCreateDTO>;
   billingAddress: Partial<AddressCreateDTO>;
-  companyData: Partial<CompanyCreateDTO> | null;
   onBack: () => void;
   onSuccess: (orderId: number) => void;
 }
@@ -35,7 +33,6 @@ export default function CheckoutOrderSummary({
   customerData,
   shippingAddress,
   billingAddress,
-  companyData,
   onBack,
   onSuccess,
 }: CheckoutOrderSummaryProps) {
@@ -175,23 +172,6 @@ export default function CheckoutOrderSummary({
         console.error("Address book save error (non-blocking):", addressError);
       }
 
-      let companyId = null;
-      if (companyData && companyData.companyName) {
-        const companyResponse = await fetch(
-          `${API_URL}/api/customers/${customerId}/companies`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(companyData),
-          }
-        );
-
-        if (companyResponse.ok) {
-          const { company } = await companyResponse.json();
-          companyId = company.companyId;
-        }
-      }
-
       const paymentItems = cart.items.map((item) => {
         const product = products.find((p) => p.productId === item.productId);
         return {
@@ -207,13 +187,11 @@ export default function CheckoutOrderSummary({
       const snapshot = {
         customer: {
           ...customerData,
-          companyId,
-          companyData: companyData || null,
         },
         shippingAddress: {
           firstName: customerData.firstName || "",
           lastName: customerData.lastName || "",
-          company: companyData?.companyName || "",
+          company: "",
           address: shippingAddress.address || "",
           city: shippingAddress.city || "",
           postalCode: shippingAddress.postalCode || "",
@@ -225,7 +203,7 @@ export default function CheckoutOrderSummary({
             ? {
                 firstName: customerData.firstName || "",
                 lastName: customerData.lastName || "",
-                company: companyData?.companyName || "",
+                company: "",
                 address: billingAddress.address || "",
                 city: billingAddress.city || "",
                 postalCode: billingAddress.postalCode || "",
@@ -233,10 +211,7 @@ export default function CheckoutOrderSummary({
                 phone: customerData.phoneNumber || "",
               }
             : null,
-        notes:
-          companyData && companyData.companyName
-            ? `Commande entreprise: ${companyData.companyName}`
-            : undefined,
+        notes: undefined,
       };
 
       const cartSessionId =
@@ -499,45 +474,6 @@ export default function CheckoutOrderSummary({
                   {billingAddress.postalCode} {billingAddress.city}
                 </p>
                 <p>{countryNameById(billingAddress.countryId)}</p>
-              </div>
-            </div>
-          )}
-
-          {companyData && companyData.companyName && (
-            <div style={{ marginBottom: "2.5rem" }}>
-              <h3
-                style={{
-                  fontSize: "1.6rem",
-                  fontWeight: "600",
-                  color: "#13686a",
-                  marginBottom: "1.5rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.8rem",
-                }}
-              >
-                <i className="fas fa-building"></i>
-                Informations entreprise
-              </h3>
-              <div
-                style={{
-                  padding: "1.5rem",
-                  background: "#f8f9fa",
-                  borderRadius: "8px",
-                  fontSize: "1.3rem",
-                }}
-              >
-                <p style={{ marginBottom: "0.5rem" }}>
-                  <strong>{companyData.companyName}</strong>
-                </p>
-                {companyData.siretNumber && (
-                  <p style={{ color: "#666", marginBottom: "0.5rem" }}>
-                    SIRET: {companyData.siretNumber}
-                  </p>
-                )}
-                {companyData.vatNumber && (
-                  <p style={{ color: "#666" }}>TVA: {companyData.vatNumber}</p>
-                )}
               </div>
             </div>
           )}

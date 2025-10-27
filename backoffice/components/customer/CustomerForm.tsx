@@ -1,13 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   CustomerPublicDTO,
   CustomerCreateDTO,
   CustomerUpdateDTO,
-  CivilityDTO,
-  SocioProfessionalCategoryDTO,
 } from "../../dto";
 import FormInput from "../product/form/FormInput";
-import FormSelect from "../product/form/FormSelect";
 import FormActions from "../product/form/FormActions";
 
 /**
@@ -16,10 +13,6 @@ import FormActions from "../product/form/FormActions";
 interface CustomerFormProps {
   /** Client à éditer (null si création) */
   customer: CustomerPublicDTO | null;
-  /** Liste des civilités disponibles */
-  civilities: CivilityDTO[];
-  /** Liste des catégories socio-professionnelles */
-  categories: SocioProfessionalCategoryDTO[];
   /** Callback appelé lors de la soumission */
   onSubmit: (data: CustomerCreateDTO | CustomerUpdateDTO) => void;
   /** Callback appelé lors de l'annulation */
@@ -34,45 +27,27 @@ interface CustomerFormProps {
  */
 const CustomerForm: React.FC<CustomerFormProps> = ({
   customer,
-  civilities,
-  categories,
   onSubmit,
   onCancel,
   isLoading,
 }) => {
   const [formData, setFormData] = useState<CustomerCreateDTO>({
-    civilityId: undefined,
     firstName: "",
     lastName: "",
     email: "",
-    socioProfessionalCategoryId: 0,
     phoneNumber: "",
-    birthday: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Catégorie par défaut si aucune n'est choisie (ex: "Other")
-  const defaultCategoryId = useMemo(() => {
-    const other = categories.find(
-      (c) => c.categoryName?.toLowerCase() === "other"
-    );
-    return other?.categoryId ?? categories[0]?.categoryId;
-  }, [categories]);
 
   // Initialiser le formulaire avec les données du client en édition
   useEffect(() => {
     if (customer) {
       setFormData({
-        civilityId: customer.civilityId,
         firstName: customer.firstName,
         lastName: customer.lastName,
         email: customer.email,
-        socioProfessionalCategoryId: customer.socioProfessionalCategoryId,
         phoneNumber: customer.phoneNumber || "",
-        birthday: customer.birthday
-          ? new Date(customer.birthday).toISOString().split("T")[0]
-          : "",
       });
     }
   }, [customer]);
@@ -86,12 +61,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]:
-        name === "civilityId" || name === "socioProfessionalCategoryId"
-          ? value
-            ? parseInt(value)
-            : undefined
-          : value,
+      [name]: value,
     }));
     // Effacer l'erreur du champ modifié
     if (errors[name]) {
@@ -124,8 +94,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
       newErrors.email = "L'email n'est pas valide";
     }
 
-    // civilityId devient optionnel
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -152,37 +120,16 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
       if (formData.email !== customer.email) {
         updateData.email = formData.email;
       }
-      if (
-        formData.socioProfessionalCategoryId !==
-        customer.socioProfessionalCategoryId
-      ) {
-        updateData.socioProfessionalCategoryId =
-          formData.socioProfessionalCategoryId;
-      }
       if (formData.phoneNumber !== customer.phoneNumber) {
         updateData.phoneNumber = formData.phoneNumber || undefined;
-      }
-      const customerBirthday = customer.birthday
-        ? new Date(customer.birthday).toISOString().split("T")[0]
-        : "";
-      if (formData.birthday !== customerBirthday) {
-        updateData.birthday = formData.birthday || undefined;
       }
 
       onSubmit(updateData);
     } else {
       // Mode création : envoyer tous les champs
-      const categoryIdToSend =
-        formData.socioProfessionalCategoryId &&
-        formData.socioProfessionalCategoryId !== 0
-          ? formData.socioProfessionalCategoryId
-          : defaultCategoryId;
-
       onSubmit({
         ...formData,
-        socioProfessionalCategoryId: categoryIdToSend as number,
         phoneNumber: formData.phoneNumber || undefined,
-        birthday: formData.birthday || undefined,
       });
     }
   };
@@ -233,28 +180,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
             boxSizing: "border-box",
           }}
         >
-          {/* Civilité */}
-          {!customer && (
-            <FormSelect
-              id="civilityId"
-              label="Civilité (optionnel)"
-              name="civilityId"
-              value={
-                typeof formData.civilityId === "number"
-                  ? String(formData.civilityId)
-                  : ""
-              }
-              onChange={handleChange}
-              required={false}
-              error={errors.civilityId}
-              placeholder="Sélectionner une civilité"
-              options={civilities.map((civility) => ({
-                value: civility.civilityId,
-                label: civility.abbreviation,
-              }))}
-            />
-          )}
-
           {/* Prénom */}
           <FormInput
             id="firstName"
@@ -289,26 +214,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
             error={errors.email}
           />
 
-          {/* Catégorie socio-professionnelle */}
-          <FormSelect
-            id="socioProfessionalCategoryId"
-            label="Catégorie socio-professionnelle"
-            name="socioProfessionalCategoryId"
-            value={
-              typeof formData.socioProfessionalCategoryId === "number"
-                ? String(formData.socioProfessionalCategoryId)
-                : ""
-            }
-            onChange={handleChange}
-            required={false}
-            error={errors.socioProfessionalCategoryId}
-            placeholder="Sélectionner une catégorie"
-            options={categories.map((category) => ({
-              value: category.categoryId,
-              label: category.categoryName,
-            }))}
-          />
-
           {/* Téléphone */}
           <FormInput
             id="phoneNumber"
@@ -318,17 +223,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
             value={formData.phoneNumber || ""}
             onChange={handleChange}
             error={errors.phoneNumber}
-          />
-
-          {/* Date de naissance */}
-          <FormInput
-            id="birthday"
-            label="Date de naissance"
-            name="birthday"
-            type="date"
-            value={formData.birthday || ""}
-            onChange={handleChange}
-            error={errors.birthday}
           />
         </div>
 

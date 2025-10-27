@@ -616,6 +616,10 @@ footer {
   font-size: 1rem;
   transition: all 0.3s ease;
   background: #f8f9fa;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .form-input:focus {
@@ -893,6 +897,8 @@ footer {
 @media (max-width: 480px) {
   .auth-card {
     padding: 1.5rem;
+    margin: 0.5rem;
+    max-width: calc(100vw - 1rem);
   }
 
   .auth-title {
@@ -931,124 +937,240 @@ footer {
     line-height: 1.5;
   }
 
+  /* Styles spécifiques pour les champs de formulaire sur iPhone */
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-input {
+    padding: 0.875rem;
+    font-size: 16px; /* Évite le zoom automatique sur iOS */
+    border-radius: 6px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+  }
+
+  .form-label {
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .auth-submit-btn {
+    padding: 0.875rem;
+    font-size: 1rem;
+    border-radius: 6px;
+  }
+
   .error-message-field {
     padding: 0.4rem 0.6rem;
     font-size: 0.8rem;
   }
+}
 
-  /* Modales responsive - Styles globaux */
-  .order-detail-modal,
-  .create-credit-note-modal,
-  .credit-note-detail-modal {
-    margin: 0.5rem !important;
-    max-width: calc(100vw - 1rem) !important;
-    max-height: calc(100vh - 1rem) !important;
+/* Styles pour très petits écrans (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  .auth-card {
+    padding: 1rem;
+    margin: 0.25rem;
+    max-width: calc(100vw - 0.5rem);
   }
 
-  .modal-header {
-    padding: 0.75rem !important;
-    min-height: 50px !important;
+  .auth-title {
+    font-size: 1.6rem;
   }
 
-  .modal-header h3 {
-    font-size: 1.2rem !important;
+  .form-input {
+    padding: 0.75rem;
+    font-size: 16px;
   }
 
-  .modal-content {
-    padding: 0.75rem !important;
+  .form-label {
+    font-size: 0.9rem;
   }
 
-  .modal-actions {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 0.5rem !important;
-    padding: 0.75rem !important;
+  .auth-submit-btn {
+    padding: 0.75rem;
+    font-size: 0.95rem;
   }
 
-  .modal-actions .btn {
-    width: 100% !important;
-    justify-content: center !important;
+  .form-group {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Styles pour écrans ultra-petits */
+@media (max-width: 320px) {
+  .auth-card {
+    padding: 0.75rem;
+    margin: 0.125rem;
+    max-width: calc(100vw - 0.25rem);
   }
 
-  /* Grilles responsive */
-  .order-info-grid,
-  .credit-note-info-grid {
+  .auth-title {
+    font-size: 1.4rem;
+  }
+
+  .form-input {
+    padding: 0.625rem;
+    font-size: 16px;
+  }
+
+  .form-label {
+    font-size: 0.85rem;
+  }
+
+  .auth-submit-btn {
+    padding: 0.625rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Modales responsive - Styles globaux */
+.order-detail-modal,
+.create-credit-note-modal,
+.credit-note-detail-modal {
+  margin: 0.5rem !important;
+  max-width: calc(100vw - 1rem) !important;
+  max-height: calc(100vh - 1rem) !important;
+}
+
+.modal-header {
+  padding: 0.75rem !important;
+  min-height: 50px !important;
+}
+
+.modal-header h3 {
+  font-size: 1.2rem !important;
+}
+
+.modal-content {
+  padding: 0.75rem !important;
+}
+
+.modal-actions {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 0.5rem !important;
+  padding: 0.75rem !important;
+}
+
+.modal-actions .btn {
+  width: 100% !important;
+  justify-content: center !important;
+}
+
+/* Grilles responsive */
+.order-info-grid,
+.credit-note-info-grid {
+  grid-template-columns: 1fr !important;
+  gap: 0.5rem !important;
+}
+
+.form-fields {
+  padding: 0.5rem !important;
+  gap: 0.5rem !important;
+  grid-template-columns: 1fr !important;
+}
+
+.form-field {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.form-field-full {
+  grid-column: 1 / -1 !important;
+}
+
+.total-field {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.totals-grid {
+  grid-template-columns: 1fr !important;
+  gap: 0.5rem !important;
+}
+
+/* Tableaux responsive */
+.table-responsive {
+  overflow-x: auto !important;
+}
+
+.table-responsive table {
+  min-width: 600px !important;
+}
+
+/* Modal détail de commande - Styles spécifiques */
+.order-detail-content {
+  display: grid !important;
+  gap: 1rem !important;
+}
+
+.order-main-info {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 1rem !important;
+}
+
+.order-totals-section {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  padding: 1rem !important;
+  background: #f9fafb !important;
+  margin-top: 1rem !important;
+}
+
+/* Section Créée le */
+.order-created-section {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  padding: 1rem !important;
+  background: #f9fafb !important;
+  margin-bottom: 1rem !important;
+}
+
+.order-totals-section > div:last-child {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 1rem !important;
+}
+
+/* Grille des montants responsive */
+.amounts-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+  gap: 1rem !important;
+}
+
+/* Responsive pour les montants sur petits écrans */
+@media (max-width: 768px) {
+  .amounts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+    gap: 0.75rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .amounts-grid {
     grid-template-columns: 1fr !important;
     gap: 0.5rem !important;
   }
+}
 
-  .form-fields {
-    padding: 0.5rem !important;
-    gap: 0.5rem !important;
-    grid-template-columns: 1fr !important;
-  }
+.addresses-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 1rem !important;
+}
 
-  .form-field {
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  .form-field-full {
-    grid-column: 1 / -1 !important;
-  }
-
-  .total-field {
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  .totals-grid {
-    grid-template-columns: 1fr !important;
-    gap: 0.5rem !important;
-  }
-
-  /* Tableaux responsive */
-  .table-responsive {
-    overflow-x: auto !important;
-  }
-
-  .table-responsive table {
-    min-width: 600px !important;
-  }
-
-  /* Modal détail de commande - Styles spécifiques */
-  .order-detail-content {
-    display: grid !important;
-    gap: 1rem !important;
-  }
-
-  .order-main-info {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
-    gap: 1rem !important;
-  }
-
-  .order-totals-section {
-    border: 1px solid #e5e7eb !important;
-    border-radius: 8px !important;
-    padding: 1rem !important;
-    background: #f9fafb !important;
-    margin-top: 1rem !important;
-  }
-
-  .order-totals-section > div:last-child {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
-    gap: 1rem !important;
-  }
-
-  .addresses-grid {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
-    gap: 1rem !important;
-  }
-
-  .address-card {
-    background: #f9fafb !important;
-    border: 1px solid #e5e7eb !important;
-    border-radius: 8px !important;
-    padding: 0.75rem !important;
-  }
+.address-card {
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  padding: 0.75rem !important;
 }
 
 /* Modal détail de commande - Breakpoint 741px */
@@ -1115,6 +1237,24 @@ footer {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
   gap: 1rem !important;
   margin-top: 1rem !important;
+}
+
+/* Boutons d'action dans les tableaux */
+.action-buttons {
+  display: flex !important;
+  gap: 0.5rem !important;
+  flex-wrap: nowrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.action-btn {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
 }
 
 /* Gestion des adresses responsive */
@@ -1359,8 +1499,26 @@ footer {
     padding: 0.75rem !important;
   }
 
+  .order-created-section {
+    margin-bottom: 0.75rem !important;
+    padding: 0.75rem !important;
+  }
+
   .addresses-grid {
     grid-template-columns: 1fr !important;
+  }
+
+  /* Boutons d'action - restent côte à côte même sur mobile */
+  .action-buttons {
+    flex-wrap: nowrap !important;
+    gap: 0.25rem !important;
+  }
+
+  .action-btn {
+    min-width: 40px !important;
+    min-height: 40px !important;
+    font-size: 1rem !important;
+    padding: 0.5rem !important;
   }
 
   /* Modal Créer un avoir responsive */
