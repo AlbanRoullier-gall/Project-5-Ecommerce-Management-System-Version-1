@@ -70,13 +70,14 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
         border: "2px solid rgba(19, 104, 106, 0.1)",
       }}
     >
-      <div style={{ overflowX: "auto" }}>
+      <div className="table-responsive" style={{ overflowX: "auto" }}>
         <table
           style={{
             width: "100%",
             borderCollapse: "separate",
             borderSpacing: 0,
             fontSize: "1rem",
+            minWidth: "600px",
           }}
         >
           <thead
@@ -111,6 +112,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
                 Email
               </th>
               <th
+                className="mobile-hide"
                 style={{
                   padding: "1.5rem 1.25rem",
                   textAlign: "left",

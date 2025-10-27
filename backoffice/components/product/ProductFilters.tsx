@@ -60,10 +60,11 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
       }}
     >
       <div
+        className="filters-grid"
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-          gap: "2rem",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: "1.5rem",
           alignItems: "start",
         }}
       >

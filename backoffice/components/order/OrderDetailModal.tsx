@@ -125,31 +125,39 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
         alignItems: "center",
         justifyContent: "center",
         zIndex: 1000,
-        padding: "1rem",
+        padding: "0.5rem",
       }}
       role="dialog"
       aria-modal="true"
     >
       <div
+        className="order-detail-modal"
         style={{
           width: "100%",
-          maxWidth: 860,
+          maxWidth: "min(98vw, 900px)",
+          maxHeight: "98vh",
           background: "white",
-          borderRadius: 16,
+          borderRadius: 8,
           border: "2px solid rgba(19, 104, 106, 0.1)",
           boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
           overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         {/* Header */}
         <div
+          className="modal-header"
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "1.25rem 1.5rem",
+            padding: "1rem",
             background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
             borderBottom: "1px solid #e5e7eb",
+            flexWrap: "wrap",
+            gap: "0.75rem",
+            minHeight: "60px",
           }}
         >
           <h3
@@ -162,7 +170,10 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           >
             Détail de la commande {order ? `#${order.id}` : ""}
           </h3>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div
+            className="modal-header-actions"
+            style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
+          >
             <Button
               variant="primary"
               icon="fas fa-file-invoice-dollar"
@@ -178,7 +189,15 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
         </div>
 
         {/* Body */}
-        <div style={{ padding: "1.5rem" }}>
+        <div
+          className="modal-content"
+          style={{
+            padding: "1rem",
+            overflowY: "auto",
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
           {isLoading && (
             <div style={{ color: "#6b7280" }}>Chargement du détail…</div>
           )}
@@ -198,19 +217,24 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           )}
 
           {!isLoading && !error && order && (
-            <div style={{ display: "grid", gap: "1rem" }}>
+            <div
+              className="order-detail-content"
+              style={{ display: "grid", gap: "1rem" }}
+            >
+              {/* Informations principales */}
               <div
+                className="order-main-info"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
                   gap: "1rem",
                 }}
               >
                 <div
                   style={{
                     border: "1px solid #e5e7eb",
-                    borderRadius: 12,
-                    padding: "1rem",
+                    borderRadius: 8,
+                    padding: "0.75rem",
                   }}
                 >
                   <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
@@ -277,8 +301,8 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                 <div
                   style={{
                     border: "1px solid #e5e7eb",
-                    borderRadius: 12,
-                    padding: "1rem",
+                    borderRadius: 8,
+                    padding: "0.75rem",
                   }}
                 >
                   <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
@@ -290,13 +314,13 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                 </div>
               </div>
 
-              {/* Client compact affiché une seule fois ci-dessus, bloc doublon supprimé */}
               {/* Adresses */}
               <div
+                className="order-addresses-section"
                 style={{
                   border: "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  padding: "1rem",
+                  borderRadius: 8,
+                  padding: "0.75rem",
                 }}
               >
                 <div
@@ -339,45 +363,101 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                 )}
 
                 {!addressesLoading && !addressesError && (
-                  <div style={{ display: "grid", gap: "0.75rem" }}>
+                  <div
+                    className="addresses-grid"
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(280px, 1fr))",
+                      gap: "1rem",
+                    }}
+                  >
                     {addresses.length === 0 && (
-                      <div style={{ color: "#6b7280" }}>Aucune adresse</div>
+                      <div
+                        style={{
+                          color: "#6b7280",
+                          gridColumn: "1 / -1",
+                          textAlign: "center",
+                          padding: "1rem",
+                        }}
+                      >
+                        Aucune adresse
+                      </div>
                     )}
                     {addresses.map((addr) => (
                       <div
                         key={addr.id}
+                        className="address-card"
                         style={{
                           border: "1px solid #e5e7eb",
-                          borderRadius: 10,
-                          padding: "0.75rem 1rem",
+                          borderRadius: 8,
+                          padding: "0.75rem",
+                          background: "#f9fafb",
                         }}
                       >
-                        <div style={{ fontWeight: 600, color: "#111827" }}>
+                        <div
+                          style={{
+                            fontWeight: 600,
+                            color: "#111827",
+                            marginBottom: "0.5rem",
+                            fontSize: "0.9rem",
+                          }}
+                        >
                           {addr.addressType === "shipping"
                             ? "Livraison"
                             : "Facturation"}
                         </div>
-                        <div style={{ color: "#111827" }}>
+                        <div
+                          style={{
+                            color: "#111827",
+                            marginBottom: "0.25rem",
+                            fontSize: "0.85rem",
+                          }}
+                        >
                           {addr.addressSnapshot.firstName}{" "}
                           {addr.addressSnapshot.lastName}
                         </div>
                         {addr.addressSnapshot.company && (
-                          <div style={{ color: "#6b7280" }}>
+                          <div
+                            style={{
+                              color: "#6b7280",
+                              marginBottom: "0.25rem",
+                              fontSize: "0.8rem",
+                            }}
+                          >
                             {addr.addressSnapshot.company}
                           </div>
                         )}
-                        <div style={{ color: "#6b7280" }}>
+                        <div
+                          style={{
+                            color: "#6b7280",
+                            marginBottom: "0.25rem",
+                            fontSize: "0.8rem",
+                          }}
+                        >
                           {addr.addressSnapshot.address}
                         </div>
-                        <div style={{ color: "#6b7280" }}>
+                        <div
+                          style={{
+                            color: "#6b7280",
+                            marginBottom: "0.25rem",
+                            fontSize: "0.8rem",
+                          }}
+                        >
                           {addr.addressSnapshot.postalCode}{" "}
                           {addr.addressSnapshot.city}
                         </div>
-                        <div style={{ color: "#6b7280" }}>
+                        <div
+                          style={{
+                            color: "#6b7280",
+                            marginBottom: "0.25rem",
+                            fontSize: "0.8rem",
+                          }}
+                        >
                           {addr.addressSnapshot.country}
                         </div>
                         {addr.addressSnapshot.phone && (
-                          <div style={{ color: "#6b7280" }}>
+                          <div style={{ color: "#6b7280", fontSize: "0.8rem" }}>
                             {addr.addressSnapshot.phone}
                           </div>
                         )}
@@ -389,10 +469,11 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
 
               {/* Items */}
               <div
+                className="order-items-section"
                 style={{
                   border: "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  padding: "1rem",
+                  borderRadius: 8,
+                  padding: "0.75rem",
                 }}
               >
                 <div
@@ -435,13 +516,17 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                 )}
 
                 {!itemsLoading && !itemsError && (
-                  <div style={{ overflowX: "auto" }}>
+                  <div
+                    className="table-responsive"
+                    style={{ overflowX: "auto" }}
+                  >
                     <table
                       style={{
                         width: "100%",
                         borderCollapse: "separate",
                         borderSpacing: 0,
-                        fontSize: "1rem",
+                        fontSize: "0.9rem",
+                        minWidth: "700px",
                       }}
                     >
                       <thead
@@ -455,43 +540,49 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           <th
                             style={{
                               textAlign: "left",
-                              padding: "1rem 1.25rem",
+                              padding: "0.75rem 1rem",
                               fontWeight: 700,
                               textTransform: "uppercase",
                               letterSpacing: "0.5px",
+                              fontSize: "0.85rem",
                             }}
                           >
                             Produit
                           </th>
                           <th
                             style={{
-                              textAlign: "right",
-                              padding: "1rem 1.25rem",
+                              textAlign: "center",
+                              padding: "0.75rem 1rem",
                               fontWeight: 700,
                               textTransform: "uppercase",
                               letterSpacing: "0.5px",
+                              fontSize: "0.85rem",
                             }}
                           >
                             Qté
                           </th>
                           <th
+                            className="mobile-hide"
                             style={{
                               textAlign: "right",
-                              padding: "1rem 1.25rem",
+                              padding: "0.75rem 1rem",
                               fontWeight: 700,
                               textTransform: "uppercase",
                               letterSpacing: "0.5px",
+                              fontSize: "0.85rem",
                             }}
                           >
                             Prix unit. HT
                           </th>
                           <th
+                            className="mobile-hide"
                             style={{
                               textAlign: "right",
-                              padding: "1rem 1.25rem",
+                              padding: "0.75rem 1rem",
                               fontWeight: 700,
                               textTransform: "uppercase",
                               letterSpacing: "0.5px",
+                              fontSize: "0.85rem",
                             }}
                           >
                             TVA
@@ -596,65 +687,132 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                 )}
               </div>
 
+              {/* Montants */}
               <div
+                className="order-totals-section"
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: "1rem",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 8,
+                  padding: "1rem",
+                  background: "#f9fafb",
                 }}
               >
                 <div
                   style={{
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 12,
-                    padding: "1rem",
+                    fontSize: "1rem",
+                    color: "#111827",
+                    fontWeight: "600",
+                    marginBottom: "1rem",
                   }}
                 >
-                  <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                    Total HT
+                  Montants
+                </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                    gap: "1rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      border: "1px solid #e5e7eb",
+                      borderRadius: 8,
+                      padding: "0.75rem",
+                      background: "white",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "0.85rem",
+                        color: "#6b7280",
+                        marginBottom: "0.5rem",
+                      }}
+                    >
+                      Total HT
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "1.2rem",
+                        color: "#111827",
+                        fontWeight: "600",
+                      }}
+                    >
+                      {(order.totalAmountHT || 0).toFixed(2)} €
+                    </div>
                   </div>
                   <div
                     style={{
-                      fontSize: "1.05rem",
-                      color: "#13686a",
-                      fontWeight: 600,
+                      border: "1px solid #e5e7eb",
+                      borderRadius: 8,
+                      padding: "0.75rem",
+                      background: "white",
                     }}
                   >
-                    {(Number(order.totalAmountHT) || 0).toFixed(2)} €
+                    <div
+                      style={{
+                        fontSize: "0.85rem",
+                        color: "#6b7280",
+                        marginBottom: "0.5rem",
+                      }}
+                    >
+                      Total TTC
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "1.2rem",
+                        color: "#111827",
+                        fontWeight: "600",
+                      }}
+                    >
+                      {(order.totalAmountTTC || 0).toFixed(2)} €
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      border: "1px solid #e5e7eb",
+                      borderRadius: 8,
+                      padding: "0.75rem",
+                      background: "white",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "0.85rem",
+                        color: "#6b7280",
+                        marginBottom: "0.5rem",
+                      }}
+                    >
+                      TVA
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "1.2rem",
+                        color: "#111827",
+                        fontWeight: "600",
+                      }}
+                    >
+                      {(
+                        (order.totalAmountTTC || 0) - (order.totalAmountHT || 0)
+                      ).toFixed(2)}{" "}
+                      €
+                    </div>
                   </div>
                 </div>
                 <div
                   style={{
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 12,
-                    padding: "1rem",
+                    marginTop: "1rem",
+                    paddingTop: "1rem",
+                    borderTop: "1px solid #e5e7eb",
+                    fontSize: "0.9rem",
+                    color: "#6b7280",
                   }}
                 >
-                  <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                    Total TTC
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "1.05rem",
-                      color: "#13686a",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {(Number(order.totalAmountTTC) || 0).toFixed(2)} €
-                  </div>
-                </div>
-                <div
-                  style={{
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 12,
-                    padding: "1rem",
-                  }}
-                >
-                  <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                    Créée le
-                  </div>
-                  <div style={{ fontSize: "1.05rem", color: "#111827" }}>
-                    {new Date(order.createdAt).toLocaleString()}
+                  <div style={{ marginBottom: "0.25rem" }}>
+                    <strong>Créée le :</strong>{" "}
+                    {order.createdAt
+                      ? new Date(order.createdAt as any).toLocaleString("fr-FR")
+                      : "—"}
                   </div>
                 </div>
               </div>

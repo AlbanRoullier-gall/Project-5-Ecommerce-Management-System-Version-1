@@ -22,6 +22,7 @@ interface PageHeaderProps {
 const PageHeader: React.FC<PageHeaderProps> = ({ title, children }) => {
   return (
     <div
+      className="page-header"
       style={{
         display: "flex",
         justifyContent: "space-between",
@@ -29,9 +30,12 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, children }) => {
         marginBottom: "3rem",
         paddingBottom: "2rem",
         borderBottom: "3px solid #d9b970",
+        flexWrap: "wrap",
+        gap: "1rem",
       }}
     >
       <h1
+        className="page-header-title"
         style={{
           fontSize: "3rem",
           color: "#13686a",
@@ -43,7 +47,10 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, children }) => {
         {title}
       </h1>
       {children && (
-        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+        <div
+          className="page-header-actions"
+          style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}
+        >
           {children}
         </div>
       )}

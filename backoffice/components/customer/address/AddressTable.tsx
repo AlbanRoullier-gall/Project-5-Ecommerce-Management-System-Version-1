@@ -51,34 +51,36 @@ const AddressTable: React.FC<AddressTableProps> = ({
   return (
     <div
       style={{
-        background: "#f9fafb",
-        borderRadius: "12px",
+        background: "white",
+        borderRadius: 16,
         overflow: "hidden",
-        border: "1px solid #e5e7eb",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+        border: "2px solid rgba(19, 104, 106, 0.1)",
       }}
     >
-      <div style={{ overflowX: "auto" }}>
+      <div className="table-responsive" style={{ overflowX: "auto" }}>
         <table
           style={{
             width: "100%",
             borderCollapse: "separate",
             borderSpacing: 0,
             fontSize: "1rem",
+            minWidth: "800px",
           }}
         >
           <thead
             style={{
-              background: "linear-gradient(135deg, #d9b970 0%, #f4d03f 100%)",
-              color: "#13686a",
+              background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+              color: "white",
             }}
           >
             <tr>
               <th
                 style={{
-                  padding: "1rem 1rem",
+                  padding: "1.25rem 1.25rem",
                   textAlign: "left",
-                  fontSize: "0.95rem",
-                  fontWeight: "700",
+                  fontSize: "1rem",
+                  fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                 }}
@@ -87,10 +89,10 @@ const AddressTable: React.FC<AddressTableProps> = ({
               </th>
               <th
                 style={{
-                  padding: "1rem 1rem",
-                  textAlign: "left",
-                  fontSize: "0.95rem",
-                  fontWeight: "700",
+                  padding: "1.25rem 1.25rem",
+                  textAlign: "center",
+                  fontSize: "1rem",
+                  fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                 }}
@@ -99,10 +101,10 @@ const AddressTable: React.FC<AddressTableProps> = ({
               </th>
               <th
                 style={{
-                  padding: "1rem 1rem",
+                  padding: "1.25rem 1.25rem",
                   textAlign: "left",
-                  fontSize: "0.95rem",
-                  fontWeight: "700",
+                  fontSize: "1rem",
+                  fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                 }}
@@ -110,11 +112,12 @@ const AddressTable: React.FC<AddressTableProps> = ({
                 Ville
               </th>
               <th
+                className="mobile-hide"
                 style={{
-                  padding: "1rem 1rem",
+                  padding: "1.25rem 1.25rem",
                   textAlign: "left",
-                  fontSize: "0.95rem",
-                  fontWeight: "700",
+                  fontSize: "1rem",
+                  fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                 }}
@@ -123,10 +126,10 @@ const AddressTable: React.FC<AddressTableProps> = ({
               </th>
               <th
                 style={{
-                  padding: "1rem 1rem",
-                  textAlign: "left",
-                  fontSize: "0.95rem",
-                  fontWeight: "700",
+                  padding: "1.25rem 1.25rem",
+                  textAlign: "center",
+                  fontSize: "1rem",
+                  fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                 }}
@@ -135,10 +138,10 @@ const AddressTable: React.FC<AddressTableProps> = ({
               </th>
               <th
                 style={{
-                  padding: "1rem 1rem",
-                  textAlign: "left",
-                  fontSize: "0.95rem",
-                  fontWeight: "700",
+                  padding: "1.25rem 1.25rem",
+                  textAlign: "center",
+                  fontSize: "1rem",
+                  fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                 }}

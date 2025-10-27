@@ -39,6 +39,7 @@ const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
 
   return (
     <label
+      className="image-upload-zone"
       style={{
         display: "block",
         border: "2px dashed #d1d5db",
@@ -48,6 +49,11 @@ const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
         cursor: "pointer",
         transition: "all 0.3s ease",
         background: "#f9fafb",
+        minHeight: "120px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
       }}
       onMouseOver={(e) => {
         e.currentTarget.style.borderColor = "#13686a";

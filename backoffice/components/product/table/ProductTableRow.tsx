@@ -147,7 +147,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
           {formatPrice(product.price)}
         </span>
       </td>
-      <td style={{ padding: "1.5rem 1.25rem" }}>
+      <td className="mobile-hide" style={{ padding: "1.5rem 1.25rem" }}>
         <span style={{ fontSize: "1rem", color: "#111827" }}>
           {product.vatRate}%
         </span>
@@ -159,6 +159,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         />
       </td>
       <td
+        className="mobile-hide"
         style={{
           padding: "1.5rem 1.25rem",
           fontSize: "1rem",

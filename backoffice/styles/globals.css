@@ -935,4 +935,464 @@ footer {
     padding: 0.4rem 0.6rem;
     font-size: 0.8rem;
   }
+
+  /* Modales responsive - Styles globaux */
+  .order-detail-modal,
+  .create-credit-note-modal,
+  .credit-note-detail-modal {
+    margin: 0.5rem !important;
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100vh - 1rem) !important;
+  }
+
+  .modal-header {
+    padding: 0.75rem !important;
+    min-height: 50px !important;
+  }
+
+  .modal-header h3 {
+    font-size: 1.2rem !important;
+  }
+
+  .modal-content {
+    padding: 0.75rem !important;
+  }
+
+  .modal-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+    padding: 0.75rem !important;
+  }
+
+  .modal-actions .btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Grilles responsive */
+  .order-info-grid,
+  .credit-note-info-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .form-fields {
+    padding: 0.5rem !important;
+    gap: 0.5rem !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .form-field {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .form-field-full {
+    grid-column: 1 / -1 !important;
+  }
+
+  .total-field {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .totals-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Tableaux responsive */
+  .table-responsive {
+    overflow-x: auto !important;
+  }
+
+  .table-responsive table {
+    min-width: 600px !important;
+  }
+
+  /* Modal détail de commande - Styles spécifiques */
+  .order-detail-content {
+    display: grid !important;
+    gap: 1rem !important;
+  }
+
+  .order-main-info {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    gap: 1rem !important;
+  }
+
+  .order-totals-section {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 1rem !important;
+    background: #f9fafb !important;
+    margin-top: 1rem !important;
+  }
+
+  .order-totals-section > div:last-child {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    gap: 1rem !important;
+  }
+
+  .addresses-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    gap: 1rem !important;
+  }
+
+  .address-card {
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 0.75rem !important;
+  }
+}
+
+/* Modal détail de commande - Breakpoint 741px */
+@media (max-width: 741px) {
+  .order-main-info {
+    grid-template-columns: 1fr !important;
+  }
+
+  .order-totals-section > div:last-child {
+    grid-template-columns: 1fr !important;
+  }
+
+  .order-totals-section {
+    margin-top: 0.75rem !important;
+    padding: 0.75rem !important;
+  }
+
+  .addresses-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .order-items-section,
+  .order-addresses-section {
+    margin-bottom: 1rem !important;
+  }
+
+  .order-items-section h4,
+  .order-addresses-section h4 {
+    font-size: 1rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .order-items-section .table-responsive {
+    border-radius: 6px !important;
+    overflow: hidden !important;
+  }
+
+  .order-items-section table th {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .order-items-section table td {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+}
+
+/* Modal Créer un avoir - Styles spécifiques */
+.create-credit-note-modal .form-fields {
+  padding: 1rem !important;
+  gap: 1rem !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+}
+
+.create-credit-note-modal .form-field input,
+.create-credit-note-modal .form-field textarea,
+.create-credit-note-modal .form-field select {
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+.create-credit-note-modal .totals-grid {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+  gap: 1rem !important;
+  margin-top: 1rem !important;
+}
+
+/* Gestion des adresses responsive */
+.address-management-header {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 1rem !important;
+}
+
+.address-management-actions {
+  width: 100% !important;
+  justify-content: flex-start !important;
+}
+
+.address-management-actions .btn {
+  flex: 1 !important;
+  min-width: 150px !important;
+}
+
+/* Modales sur très petits écrans */
+.order-detail-modal,
+.create-credit-note-modal,
+.credit-note-detail-modal {
+  margin: 0.25rem !important;
+  max-width: calc(100vw - 0.5rem) !important;
+  max-height: calc(100vh - 0.5rem) !important;
+}
+
+.modal-header {
+  padding: 0.5rem !important;
+  min-height: 45px !important;
+}
+
+.modal-header h3 {
+  font-size: 1.1rem !important;
+}
+
+.modal-content {
+  padding: 0.5rem !important;
+}
+
+.modal-actions {
+  padding: 0.5rem !important;
+}
+
+.form-fields {
+  padding: 0.25rem !important;
+  gap: 0.5rem !important;
+}
+
+.totals-grid {
+  gap: 0.25rem !important;
+}
+
+.order-info-grid,
+.credit-note-info-grid {
+  gap: 0.25rem !important;
+}
+
+.order-info-grid > div,
+.credit-note-info-grid > div {
+  padding: 0.5rem !important;
+}
+
+/* Champs de formulaire sur très petits écrans */
+.form-fields input,
+.form-fields textarea,
+.form-fields select {
+  font-size: 16px !important; /* Évite le zoom sur iOS */
+}
+
+.form-field label {
+  font-size: 0.85rem !important;
+}
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+  padding: 0.5rem !important;
+  font-size: 0.9rem !important;
+}
+
+.total-field label {
+  font-size: 0.85rem !important;
+}
+
+.total-field input {
+  padding: 0.5rem !important;
+  font-size: 0.9rem !important;
+}
+
+/* Améliorations spécifiques pour iPhone */
+@media (max-width: 375px) {
+  .order-detail-modal,
+  .create-credit-note-modal,
+  .credit-note-detail-modal {
+    margin: 0.125rem !important;
+    max-width: calc(100vw - 0.25rem) !important;
+    max-height: calc(100vh - 0.25rem) !important;
+  }
+
+  .modal-header {
+    padding: 0.375rem !important;
+    min-height: 40px !important;
+  }
+
+  .modal-header h3 {
+    font-size: 1rem !important;
+  }
+
+  .modal-content {
+    padding: 0.25rem !important;
+  }
+
+  .modal-actions {
+    padding: 0.375rem !important;
+  }
+
+  .form-fields {
+    padding: 0.125rem !important;
+    gap: 0.25rem !important;
+  }
+
+  .form-field label {
+    font-size: 0.8rem !important;
+  }
+
+  .form-field input,
+  .form-field textarea,
+  .form-field select {
+    padding: 0.375rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .total-field label {
+    font-size: 0.8rem !important;
+  }
+
+  .total-field input {
+    padding: 0.375rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .order-info-grid > div,
+  .credit-note-info-grid > div {
+    padding: 0.375rem !important;
+  }
+
+  .table-responsive table {
+    min-width: 500px !important;
+  }
+
+  /* Modal détail de commande sur iPhone */
+  .order-main-info {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .order-totals-section {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .addresses-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .order-detail-content {
+    gap: 0.75rem !important;
+  }
+
+  /* Optimisations spécifiques pour iPhone */
+  .order-main-info > div,
+  .order-totals-section > div,
+  .address-card {
+    padding: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .order-main-info > div:last-child,
+  .order-totals-section > div:last-child,
+  .address-card:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Typographie optimisée pour iPhone */
+  .order-main-info > div > div:first-child,
+  .order-totals-section > div > div:first-child,
+  .address-card > div:first-child {
+    font-size: 0.8rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .order-main-info > div > div:not(:first-child),
+  .order-totals-section > div > div:not(:first-child),
+  .address-card > div:not(:first-child) {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  /* Modal détail de commande sur très petits écrans */
+  .order-items-section,
+  .order-addresses-section {
+    padding: 0.5rem !important;
+  }
+
+  .order-items-section table th,
+  .order-items-section table td {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  .order-info-grid > div {
+    padding: 0.5rem !important;
+  }
+
+  /* Modal détail de commande responsive */
+  .order-main-info {
+    grid-template-columns: 1fr !important;
+  }
+
+  .order-totals-section {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+  }
+
+  .addresses-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modal détail de commande responsive */
+  .order-main-info {
+    grid-template-columns: 1fr !important;
+  }
+
+  .order-totals-section > div:last-child {
+    grid-template-columns: 1fr !important;
+  }
+
+  .order-totals-section {
+    margin-top: 0.75rem !important;
+    padding: 0.75rem !important;
+  }
+
+  .addresses-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modal Créer un avoir responsive */
+  .create-credit-note-modal .form-fields {
+    grid-template-columns: 1fr !important;
+    padding: 0.75rem !important;
+    gap: 0.75rem !important;
+  }
+
+  .create-credit-note-modal .totals-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .create-credit-note-modal .form-field input,
+  .create-credit-note-modal .form-field textarea,
+  .create-credit-note-modal .form-field select {
+    font-size: 16px !important; /* Évite le zoom sur iOS */
+  }
+}
+
+/* Gestion des adresses sur très petits écrans */
+.address-management-header h2 {
+  font-size: 1.4rem !important;
+}
+
+.address-management-actions {
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+}
+
+.address-management-actions .btn {
+  width: 100% !important;
+  min-width: auto !important;
 }

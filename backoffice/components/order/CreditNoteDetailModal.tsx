@@ -89,30 +89,38 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
         alignItems: "center",
         justifyContent: "center",
         zIndex: 1000,
-        padding: "1rem",
+        padding: "0.5rem",
       }}
       role="dialog"
       aria-modal="true"
     >
       <div
+        className="credit-note-detail-modal"
         style={{
           width: "100%",
-          maxWidth: 860,
+          maxWidth: "min(98vw, 900px)",
+          maxHeight: "98vh",
           background: "white",
-          borderRadius: 16,
+          borderRadius: 8,
           border: "2px solid rgba(19, 104, 106, 0.1)",
           boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
           overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         <div
+          className="modal-header"
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "1.25rem 1.5rem",
+            padding: "1rem",
             background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
             borderBottom: "1px solid #e5e7eb",
+            flexWrap: "wrap",
+            gap: "0.75rem",
+            minHeight: "60px",
           }}
         >
           <h3
@@ -125,7 +133,10 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
           >
             Détail de l'avoir #{creditNote.id}
           </h3>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div
+            className="modal-header-actions"
+            style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
+          >
             {onDelete && (
               <Button
                 variant="danger"
@@ -141,7 +152,15 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
           </div>
         </div>
 
-        <div style={{ padding: "1.5rem" }}>
+        <div
+          className="modal-content"
+          style={{
+            padding: "1rem",
+            overflowY: "auto",
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
           <div style={{ display: "grid", gap: "1.5rem" }}>
             {/* Informations principales */}
             <div
@@ -163,6 +182,7 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                 Informations générales
               </h4>
               <div
+                className="credit-note-info-grid"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
@@ -390,13 +410,14 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
               )}
 
               {!itemsLoading && !itemsError && (
-                <div style={{ overflowX: "auto" }}>
+                <div className="table-responsive" style={{ overflowX: "auto" }}>
                   <table
                     style={{
                       width: "100%",
                       borderCollapse: "separate",
                       borderSpacing: 0,
                       fontSize: "1rem",
+                      minWidth: "700px",
                     }}
                   >
                     <thead
@@ -430,6 +451,7 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                           Qté
                         </th>
                         <th
+                          className="mobile-hide"
                           style={{
                             textAlign: "right",
                             padding: "1rem 1.25rem",
@@ -441,6 +463,7 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                           Prix unit. HT
                         </th>
                         <th
+                          className="mobile-hide"
                           style={{
                             textAlign: "right",
                             padding: "1rem 1.25rem",
@@ -514,6 +537,7 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                             {it.quantity}
                           </td>
                           <td
+                            className="mobile-hide"
                             style={{
                               padding: "0.75rem 1rem",
                               textAlign: "right",
@@ -523,6 +547,7 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                             {(Number(it.unitPriceHT) || 0).toFixed(2)} €
                           </td>
                           <td
+                            className="mobile-hide"
                             style={{
                               padding: "0.75rem 1rem",
                               textAlign: "right",
@@ -614,6 +639,7 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                 Montants
               </h4>
               <div
+                className="amounts-grid"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",

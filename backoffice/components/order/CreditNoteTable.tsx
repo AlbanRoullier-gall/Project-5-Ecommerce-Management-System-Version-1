@@ -34,13 +34,14 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
         border: "2px solid rgba(19, 104, 106, 0.1)",
       }}
     >
-      <div style={{ overflowX: "auto" }}>
+      <div className="table-responsive" style={{ overflowX: "auto" }}>
         <table
           style={{
             width: "100%",
             borderCollapse: "separate",
             borderSpacing: 0,
             fontSize: "1rem",
+            minWidth: "800px",
           }}
         >
           <thead
@@ -77,7 +78,7 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
               <th
                 style={{
                   padding: "1.25rem 1.25rem",
-                  textAlign: "left",
+                  textAlign: "center",
                   fontSize: "1rem",
                   fontWeight: 700,
                   textTransform: "uppercase",
@@ -87,6 +88,7 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                 Commande
               </th>
               <th
+                className="mobile-hide"
                 style={{
                   padding: "1.25rem 1.25rem",
                   textAlign: "left",
@@ -99,6 +101,7 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                 Motif
               </th>
               <th
+                className="mobile-hide"
                 style={{
                   padding: "1.25rem 1.25rem",
                   textAlign: "right",
@@ -123,6 +126,7 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                 Total TTC
               </th>
               <th
+                className="mobile-hide"
                 style={{
                   padding: "1.25rem 1.25rem",
                   textAlign: "left",
@@ -149,7 +153,7 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
               <th
                 style={{
                   padding: "1.25rem 1.25rem",
-                  textAlign: "left",
+                  textAlign: "center",
                   fontSize: "1rem",
                   fontWeight: 700,
                   textTransform: "uppercase",
@@ -212,15 +216,32 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                     <td style={{ padding: "0.75rem 1rem", color: "#111827" }}>
                       {customerName}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem" }}>{c.orderId}</td>
-                    <td style={{ padding: "0.75rem 1rem" }}>{c.reason}</td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
+                    <td
+                      style={{ padding: "0.75rem 1rem", textAlign: "center" }}
+                    >
+                      {c.orderId}
+                    </td>
+                    <td
+                      className="mobile-hide"
+                      style={{ padding: "0.75rem 1rem" }}
+                    >
+                      {c.reason}
+                    </td>
+                    <td
+                      className="mobile-hide"
+                      style={{ padding: "0.75rem 1rem", textAlign: "right" }}
+                    >
                       {(Number(c.totalAmountHT) || 0).toFixed(2)} €
                     </td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
                       {(Number(c.totalAmountTTC) || 0).toFixed(2)} €
                     </td>
-                    <td style={{ padding: "0.75rem 1rem" }}>{emitted}</td>
+                    <td
+                      className="mobile-hide"
+                      style={{ padding: "0.75rem 1rem" }}
+                    >
+                      {emitted}
+                    </td>
                     <td
                       style={{ padding: "0.75rem 1rem", textAlign: "center" }}
                     >
@@ -254,12 +275,23 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem" }}>
-                      <div style={{ display: "flex", gap: "0.75rem" }}>
+                    <td
+                      style={{ padding: "0.75rem 1rem", textAlign: "center" }}
+                    >
+                      <div
+                        className="action-buttons"
+                        style={{
+                          display: "flex",
+                          gap: "0.5rem",
+                          flexWrap: "wrap",
+                          justifyContent: "center",
+                        }}
+                      >
                         {onView && (
                           <button
                             onClick={() => onView(c.id)}
                             title="Voir"
+                            className="action-btn action-btn-view"
                             style={{
                               padding: "0.75rem",
                               border: "none",
@@ -269,6 +301,11 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                               transition: "all 0.2s ease",
                               borderRadius: "8px",
                               fontSize: "1.2rem",
+                              minWidth: "44px",
+                              minHeight: "44px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
                             }}
                             onMouseOver={(e) => {
                               e.currentTarget.style.background =
@@ -297,6 +334,7 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                                 ? "Marquer comme en attente"
                                 : "Marquer comme remboursé"
                             }
+                            className="action-btn action-btn-toggle"
                             style={{
                               padding: "0.75rem",
                               border: "none",
@@ -309,6 +347,11 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                               transition: "all 0.2s ease",
                               borderRadius: "8px",
                               fontSize: "1.2rem",
+                              minWidth: "44px",
+                              minHeight: "44px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
                             }}
                             onMouseOver={(e) => {
                               e.currentTarget.style.background =
@@ -335,6 +378,7 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                           <button
                             onClick={() => onDelete(c.id)}
                             title="Supprimer"
+                            className="action-btn action-btn-delete"
                             style={{
                               padding: "0.75rem",
                               border: "none",
@@ -344,6 +388,11 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                               transition: "all 0.2s ease",
                               borderRadius: "8px",
                               fontSize: "1.2rem",
+                              minWidth: "44px",
+                              minHeight: "44px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
                             }}
                             onMouseOver={(e) => {
                               e.currentTarget.style.background =

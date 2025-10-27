@@ -234,29 +234,37 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
         alignItems: "center",
         justifyContent: "center",
         zIndex: 1000,
-        padding: "1rem",
+        padding: "0.5rem",
       }}
       role="dialog"
       aria-modal="true"
     >
       <div
+        className="create-credit-note-modal"
         style={{
           width: "100%",
-          maxWidth: 720,
+          maxWidth: "min(98vw, 800px)",
+          maxHeight: "98vh",
           background: "white",
-          borderRadius: 16,
+          borderRadius: 8,
           border: "2px solid rgba(19, 104, 106, 0.1)",
           boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
           overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         <div
+          className="modal-header"
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "1rem 1.25rem",
+            padding: "1rem",
             background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+            flexWrap: "wrap",
+            gap: "0.75rem",
+            minHeight: "60px",
           }}
         >
           <h3 style={{ margin: 0, color: "white" }}>Créer un avoir</h3>
@@ -265,7 +273,15 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
           </Button>
         </div>
 
-        <div style={{ padding: "1rem 1.25rem" }}>
+        <div
+          className="modal-content"
+          style={{
+            padding: "1rem",
+            overflowY: "auto",
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
           {error && (
             <div
               style={{
@@ -281,7 +297,10 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
             </div>
           )}
 
-          <div style={{ display: "grid", gap: "1rem" }}>
+          <div
+            className="credit-note-form"
+            style={{ display: "grid", gap: "1rem" }}
+          >
             {selectedOrder ? (
               <div style={{ color: "#6b7280" }}>
                 Commande #{selectedOrder.id}
@@ -359,13 +378,17 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                 )}
 
                 {!itemsLoading && !itemsError && (
-                  <div style={{ overflowX: "auto" }}>
+                  <div
+                    className="table-responsive"
+                    style={{ overflowX: "auto" }}
+                  >
                     <table
                       style={{
                         width: "100%",
                         borderCollapse: "separate",
                         borderSpacing: 0,
                         fontSize: "0.95rem",
+                        minWidth: "500px",
                       }}
                     >
                       <thead
@@ -381,7 +404,10 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                           <th style={{ textAlign: "right", padding: "0.5rem" }}>
                             Qté
                           </th>
-                          <th style={{ textAlign: "right", padding: "0.5rem" }}>
+                          <th
+                            className="mobile-hide"
+                            style={{ textAlign: "right", padding: "0.5rem" }}
+                          >
                             Total HT
                           </th>
                           <th style={{ textAlign: "right", padding: "0.5rem" }}>
@@ -439,6 +465,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                                 {it.quantity}
                               </td>
                               <td
+                                className="mobile-hide"
                                 style={{
                                   padding: "0.5rem",
                                   textAlign: "right",
@@ -465,16 +492,24 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
             )}
 
             <div
+              className="form-fields"
               style={{
                 border: "1px solid #e5e7eb",
-                borderRadius: 12,
-                padding: "0.75rem",
+                borderRadius: 8,
+                padding: "1rem",
                 display: "grid",
-                gap: "0.75rem",
+                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                gap: "1rem",
               }}
             >
-              <div>
-                <label style={{ display: "block", fontWeight: 600 }}>
+              <div className="form-field">
+                <label
+                  style={{
+                    display: "block",
+                    fontWeight: 600,
+                    marginBottom: "0.5rem",
+                  }}
+                >
                   Motif
                 </label>
                 <input
@@ -484,14 +519,29 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                   style={{
                     width: "100%",
                     padding: "0.75rem",
-                    borderRadius: 10,
+                    borderRadius: 8,
                     border: "2px solid #e1e5e9",
+                    fontSize: "1rem",
+                    transition: "border-color 0.2s ease",
+                    boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#13686a";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e1e5e9";
                   }}
                 />
               </div>
 
-              <div>
-                <label style={{ display: "block", fontWeight: 600 }}>
+              <div className="form-field">
+                <label
+                  style={{
+                    display: "block",
+                    fontWeight: 600,
+                    marginBottom: "0.5rem",
+                  }}
+                >
                   Date d'émission
                 </label>
                 <input
@@ -501,16 +551,24 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                   style={{
                     width: "100%",
                     padding: "0.75rem",
-                    borderRadius: 10,
+                    borderRadius: 8,
                     border: "2px solid #e1e5e9",
                     background: "#f9fafb",
                     color: "#6b7280",
+                    fontSize: "1rem",
+                    boxSizing: "border-box",
                   }}
                 />
               </div>
 
-              <div>
-                <label style={{ display: "block", fontWeight: 600 }}>
+              <div className="form-field form-field-full">
+                <label
+                  style={{
+                    display: "block",
+                    fontWeight: 600,
+                    marginBottom: "0.5rem",
+                  }}
+                >
                   Description
                 </label>
                 <textarea
@@ -521,14 +579,31 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                   style={{
                     width: "100%",
                     padding: "0.75rem",
-                    borderRadius: 10,
+                    borderRadius: 8,
                     border: "2px solid #e1e5e9",
+                    fontSize: "1rem",
+                    resize: "vertical",
+                    minHeight: "80px",
+                    transition: "border-color 0.2s ease",
+                    boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#13686a";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e1e5e9";
                   }}
                 />
               </div>
 
-              <div>
-                <label style={{ display: "block", fontWeight: 600 }}>
+              <div className="form-field">
+                <label
+                  style={{
+                    display: "block",
+                    fontWeight: 600,
+                    marginBottom: "0.5rem",
+                  }}
+                >
                   Paiement
                 </label>
                 <input
@@ -538,14 +613,29 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                   style={{
                     width: "100%",
                     padding: "0.75rem",
-                    borderRadius: 10,
+                    borderRadius: 8,
                     border: "2px solid #e1e5e9",
+                    fontSize: "1rem",
+                    transition: "border-color 0.2s ease",
+                    boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#13686a";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e1e5e9";
                   }}
                 />
               </div>
 
-              <div>
-                <label style={{ display: "block", fontWeight: 600 }}>
+              <div className="form-field">
+                <label
+                  style={{
+                    display: "block",
+                    fontWeight: 600,
+                    marginBottom: "0.5rem",
+                  }}
+                >
                   Notes
                 </label>
                 <input
@@ -555,21 +645,39 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                   style={{
                     width: "100%",
                     padding: "0.75rem",
-                    borderRadius: 10,
+                    borderRadius: 8,
                     border: "2px solid #e1e5e9",
+                    fontSize: "1rem",
+                    transition: "border-color 0.2s ease",
+                    boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#13686a";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e1e5e9";
                   }}
                 />
               </div>
 
               <div
+                className="totals-grid"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr",
-                  gap: "0.75rem",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                  gap: "1rem",
+                  gridColumn: "1 / -1",
+                  marginTop: "1rem",
                 }}
               >
-                <div>
-                  <label style={{ display: "block", fontWeight: 600 }}>
+                <div className="total-field">
+                  <label
+                    style={{
+                      display: "block",
+                      fontWeight: 600,
+                      marginBottom: "0.5rem",
+                    }}
+                  >
                     Total HT
                   </label>
                   <input
@@ -584,13 +692,28 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                     style={{
                       width: "100%",
                       padding: "0.75rem",
-                      borderRadius: 10,
+                      borderRadius: 8,
                       border: "2px solid #e1e5e9",
+                      fontSize: "1rem",
+                      transition: "border-color 0.2s ease",
+                      boxSizing: "border-box",
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = "#13686a";
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = "#e1e5e9";
                     }}
                   />
                 </div>
-                <div>
-                  <label style={{ display: "block", fontWeight: 600 }}>
+                <div className="total-field">
+                  <label
+                    style={{
+                      display: "block",
+                      fontWeight: 600,
+                      marginBottom: "0.5rem",
+                    }}
+                  >
                     Total TTC
                   </label>
                   <input
@@ -605,8 +728,17 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                     style={{
                       width: "100%",
                       padding: "0.75rem",
-                      borderRadius: 10,
+                      borderRadius: 8,
                       border: "2px solid #e1e5e9",
+                      fontSize: "1rem",
+                      transition: "border-color 0.2s ease",
+                      boxSizing: "border-box",
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = "#13686a";
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = "#e1e5e9";
                     }}
                   />
                 </div>
@@ -616,12 +748,14 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
         </div>
 
         <div
+          className="modal-actions"
           style={{
             display: "flex",
             justifyContent: "flex-end",
             gap: "0.5rem",
             padding: "0.75rem 1.25rem",
             borderTop: "1px solid #e5e7eb",
+            flexWrap: "wrap",
           }}
         >
           <Button

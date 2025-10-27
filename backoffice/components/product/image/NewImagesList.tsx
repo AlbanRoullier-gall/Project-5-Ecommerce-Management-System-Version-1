@@ -45,7 +45,10 @@ const NewImagesList: React.FC<NewImagesListProps> = ({
       >
         Images sélectionnées ({files.length}/5) :
       </p>
-      <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+      <div
+        className="images-grid"
+        style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}
+      >
         {files.map((file, index) => (
           <div
             key={index}

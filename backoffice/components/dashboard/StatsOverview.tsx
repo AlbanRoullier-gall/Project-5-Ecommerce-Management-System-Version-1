@@ -206,12 +206,10 @@ const StatsOverview: React.FC = () => {
         </select>
       </div>
 
-      {/* Cards de statistiques - Grille 2x2 */}
+      {/* Cards de statistiques - Grille responsive */}
       <div
+        className="stats-container"
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(2, 1fr)",
-          gap: "1.5rem",
           marginBottom: "2rem",
         }}
       >

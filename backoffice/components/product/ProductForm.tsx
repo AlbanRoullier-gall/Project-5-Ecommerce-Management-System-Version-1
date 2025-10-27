@@ -323,10 +323,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
         />
 
         <div
+          className="form-grid"
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "2rem",
+            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+            gap: "1.5rem",
             width: "100%",
             boxSizing: "border-box",
           }}
@@ -382,6 +383,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         />
 
         <div
+          className="images-section"
           style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
         >
           <label

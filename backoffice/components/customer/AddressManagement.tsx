@@ -259,11 +259,14 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
       {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
 
       <div
+        className="address-management-header"
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "2rem",
+          flexWrap: "wrap",
+          gap: "1rem",
         }}
       >
         <div>
@@ -281,7 +284,10 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
             {addresses.length} adresse(s) enregistrée(s)
           </p>
         </div>
-        <div style={{ display: "flex", gap: "1rem" }}>
+        <div
+          className="address-management-actions"
+          style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}
+        >
           <Button
             onClick={handleNewAddress}
             variant="primary"

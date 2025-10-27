@@ -24,13 +24,14 @@ const OrderTable: React.FC<OrderTableProps> = ({
         border: "2px solid rgba(19, 104, 106, 0.1)",
       }}
     >
-      <div style={{ overflowX: "auto" }}>
+      <div className="table-responsive" style={{ overflowX: "auto" }}>
         <table
           style={{
             width: "100%",
             borderCollapse: "separate",
             borderSpacing: 0,
             fontSize: "1rem",
+            minWidth: "900px",
           }}
         >
           <thead
@@ -65,6 +66,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                 Client
               </th>
               <th
+                className="mobile-hide"
                 style={{
                   padding: "1.25rem 1.25rem",
                   textAlign: "left",
@@ -77,6 +79,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                 Email
               </th>
               <th
+                className="mobile-hide"
                 style={{
                   padding: "1.25rem 1.25rem",
                   textAlign: "right",
@@ -101,6 +104,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                 Total TTC
               </th>
               <th
+                className="mobile-hide"
                 style={{
                   padding: "1.25rem 1.25rem",
                   textAlign: "left",
@@ -113,6 +117,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                 Paiement
               </th>
               <th
+                className="mobile-hide"
                 style={{
                   padding: "1.25rem 1.25rem",
                   textAlign: "left",
@@ -127,7 +132,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
               <th
                 style={{
                   padding: "1.25rem 1.25rem",
-                  textAlign: "left",
+                  textAlign: "center",
                   fontSize: "1rem",
                   fontWeight: 700,
                   textTransform: "uppercase",
@@ -193,19 +198,31 @@ const OrderTable: React.FC<OrderTableProps> = ({
                     <td style={{ padding: "0.75rem 1rem", color: "#111827" }}>
                       {customerName}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", color: "#6b7280" }}>
+                    <td
+                      className="mobile-hide"
+                      style={{ padding: "0.75rem 1rem", color: "#6b7280" }}
+                    >
                       {o.customerEmail || "—"}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
+                    <td
+                      className="mobile-hide"
+                      style={{ padding: "0.75rem 1rem", textAlign: "right" }}
+                    >
                       {(Number(o.totalAmountHT) || 0).toFixed(2)} €
                     </td>
                     <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
                       {(Number(o.totalAmountTTC) || 0).toFixed(2)} €
                     </td>
-                    <td style={{ padding: "0.75rem 1rem" }}>
+                    <td
+                      className="mobile-hide"
+                      style={{ padding: "0.75rem 1rem" }}
+                    >
                       {o.paymentMethod || "—"}
                     </td>
-                    <td style={{ padding: "0.75rem 1rem" }}>
+                    <td
+                      className="mobile-hide"
+                      style={{ padding: "0.75rem 1rem" }}
+                    >
                       {new Date(o.createdAt).toLocaleString()}
                     </td>
                     <td

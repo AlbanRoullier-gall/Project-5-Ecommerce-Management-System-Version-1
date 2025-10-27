@@ -68,13 +68,14 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
   }
 
   return (
-    <div style={{ overflowX: "auto" }}>
+    <div className="table-responsive" style={{ overflowX: "auto" }}>
       <table
         style={{
           width: "100%",
           borderCollapse: "separate",
           borderSpacing: 0,
           fontSize: "1rem",
+          minWidth: "600px",
         }}
       >
         <thead
@@ -97,6 +98,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
               Nom
             </th>
             <th
+              className="mobile-hide"
               style={{
                 padding: "1.25rem 1.5rem",
                 textAlign: "left",
@@ -121,6 +123,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
               Produits
             </th>
             <th
+              className="mobile-hide"
               style={{
                 padding: "1.25rem 1.5rem",
                 textAlign: "left",

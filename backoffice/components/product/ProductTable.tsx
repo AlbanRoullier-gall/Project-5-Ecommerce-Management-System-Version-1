@@ -101,13 +101,14 @@ const ProductTable: React.FC<ProductTableProps> = ({
         border: "2px solid rgba(19, 104, 106, 0.1)",
       }}
     >
-      <div style={{ overflowX: "auto" }}>
+      <div className="table-responsive" style={{ overflowX: "auto" }}>
         <table
           style={{
             width: "100%",
             borderCollapse: "separate",
             borderSpacing: 0,
             fontSize: "1rem",
+            minWidth: "800px",
           }}
         >
           <thead
@@ -154,6 +155,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 Prix
               </th>
               <th
+                className="mobile-hide"
                 style={{
                   padding: "1.5rem 1.25rem",
                   textAlign: "left",
@@ -178,6 +180,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 Statut
               </th>
               <th
+                className="mobile-hide"
                 style={{
                   padding: "1.5rem 1.25rem",
                   textAlign: "left",

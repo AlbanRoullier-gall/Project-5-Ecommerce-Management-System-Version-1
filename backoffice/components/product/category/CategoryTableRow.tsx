@@ -61,7 +61,7 @@ const CategoryTableRow: React.FC<CategoryTableRowProps> = ({
           </span>
         </div>
       </td>
-      <td style={{ padding: "1.25rem 1.5rem" }}>
+      <td className="mobile-hide" style={{ padding: "1.25rem 1.5rem" }}>
         <span
           style={{
             fontSize: "1rem",
@@ -95,6 +95,7 @@ const CategoryTableRow: React.FC<CategoryTableRowProps> = ({
         </div>
       </td>
       <td
+        className="mobile-hide"
         style={{
           padding: "1.25rem 1.5rem",
           fontSize: "1rem",
@@ -104,10 +105,14 @@ const CategoryTableRow: React.FC<CategoryTableRowProps> = ({
         {formatDate(category.createdAt)}
       </td>
       <td style={{ padding: "1.25rem 1.5rem" }}>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
+        <div
+          className="action-buttons"
+          style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
+        >
           <button
             onClick={() => onEdit(category)}
             title="Modifier"
+            className="action-btn action-btn-edit"
             style={{
               padding: "0.75rem",
               border: "none",
@@ -117,6 +122,11 @@ const CategoryTableRow: React.FC<CategoryTableRowProps> = ({
               transition: "all 0.2s ease",
               borderRadius: "8px",
               fontSize: "1.2rem",
+              minWidth: "44px",
+              minHeight: "44px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
@@ -132,6 +142,7 @@ const CategoryTableRow: React.FC<CategoryTableRowProps> = ({
           <button
             onClick={() => onDelete(category.id, category.name)}
             title="Supprimer"
+            className="action-btn action-btn-delete"
             style={{
               padding: "0.75rem",
               border: "none",
@@ -141,6 +152,11 @@ const CategoryTableRow: React.FC<CategoryTableRowProps> = ({
               transition: "all 0.2s ease",
               borderRadius: "8px",
               fontSize: "1.2rem",
+              minWidth: "44px",
+              minHeight: "44px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";

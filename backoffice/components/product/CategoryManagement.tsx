@@ -146,6 +146,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
       }}
     >
       <div
+        className="category-header"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -153,6 +154,8 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
           marginBottom: "2rem",
           paddingBottom: "1rem",
           borderBottom: "3px solid #d9b970",
+          flexWrap: "wrap",
+          gap: "1rem",
         }}
       >
         <h2

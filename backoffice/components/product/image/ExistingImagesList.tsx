@@ -52,7 +52,10 @@ const ExistingImagesList: React.FC<ExistingImagesListProps> = ({
       >
         Images actuelles ({visibleImages.length}/5) :
       </p>
-      <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+      <div
+        className="images-grid"
+        style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}
+      >
         {visibleImages.map((img) => (
           <div
             key={img.id}

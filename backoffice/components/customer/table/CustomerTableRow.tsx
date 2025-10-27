@@ -67,7 +67,7 @@ const CustomerTableRow: React.FC<CustomerTableRowProps> = ({
       </td>
 
       {/* Téléphone */}
-      <td style={{ padding: "1.5rem 1.25rem" }}>
+      <td className="mobile-hide" style={{ padding: "1.5rem 1.25rem" }}>
         <span style={{ color: "#6b7280", fontSize: "1rem" }}>
           {customer.phoneNumber || "-"}
         </span>

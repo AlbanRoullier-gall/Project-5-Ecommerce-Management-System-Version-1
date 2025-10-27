@@ -30,16 +30,18 @@ const AddressTableRow: React.FC<AddressTableRowProps> = ({
   };
 
   const buttonBaseStyle: React.CSSProperties = {
-    padding: "0.5rem 1rem",
+    padding: "0.75rem",
     border: "none",
     borderRadius: "8px",
-    fontSize: "0.9rem",
+    fontSize: "1.2rem",
     fontWeight: "500",
     cursor: "pointer",
     transition: "all 0.2s ease",
-    display: "inline-flex",
+    display: "flex",
     alignItems: "center",
-    gap: "0.5rem",
+    justifyContent: "center",
+    minWidth: "44px",
+    minHeight: "44px",
   };
 
   return (
@@ -64,86 +66,110 @@ const AddressTableRow: React.FC<AddressTableRowProps> = ({
       </td>
 
       {/* Code postal */}
-      <td style={{ padding: "1rem 1rem" }}>
-        <span style={{ color: "#6b7280", fontSize: "0.95rem" }}>
+      <td style={{ padding: "0.75rem 1rem", textAlign: "center" }}>
+        <span style={{ color: "#6b7280", fontSize: "1rem" }}>
           {address.postalCode}
         </span>
       </td>
 
       {/* Ville */}
-      <td style={{ padding: "1rem 1rem" }}>
-        <span style={{ color: "#6b7280", fontSize: "0.95rem" }}>
+      <td style={{ padding: "0.75rem 1rem" }}>
+        <span style={{ color: "#6b7280", fontSize: "1rem" }}>
           {address.city}
         </span>
       </td>
 
       {/* Pays */}
-      <td style={{ padding: "1rem 1rem" }}>
-        <span style={{ color: "#6b7280", fontSize: "0.95rem" }}>
+      <td className="mobile-hide" style={{ padding: "0.75rem 1rem" }}>
+        <span style={{ color: "#6b7280", fontSize: "1rem" }}>
           {getCountryName(address.countryId)}
         </span>
       </td>
 
       {/* Par défaut */}
-      <td style={{ padding: "1rem 1rem" }}>
+      <td style={{ padding: "0.75rem 1rem", textAlign: "center" }}>
         {address.isDefault ? (
-          <i
-            className="fas fa-check-circle"
-            style={{ color: "#10b981", fontSize: "1.2rem" }}
-          ></i>
+          <span
+            style={{
+              padding: "0.25rem 0.75rem",
+              borderRadius: "6px",
+              fontSize: "0.9rem",
+              fontWeight: "500",
+              background: "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
+              color: "white",
+            }}
+          >
+            Oui
+          </span>
         ) : (
-          <i
-            className="fas fa-times-circle"
-            style={{ color: "#d1d5db", fontSize: "1.2rem" }}
-          ></i>
+          <span
+            style={{
+              padding: "0.25rem 0.75rem",
+              borderRadius: "6px",
+              fontSize: "0.9rem",
+              fontWeight: "500",
+              background: "linear-gradient(135deg, #6b7280 0%, #9ca3af 100%)",
+              color: "white",
+            }}
+          >
+            Non
+          </span>
         )}
       </td>
 
       {/* Actions */}
-      <td style={{ padding: "1rem 1rem" }}>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+      <td style={{ padding: "0.75rem 1rem", textAlign: "center" }}>
+        <div
+          className="action-buttons"
+          style={{
+            display: "flex",
+            gap: "0.5rem",
+            flexWrap: "wrap",
+            justifyContent: "center",
+          }}
+        >
           {/* Bouton Éditer */}
           <button
             onClick={() => onEdit(address)}
+            className="action-btn action-btn-edit"
+            title="Éditer"
             style={{
               ...buttonBaseStyle,
-              background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-              color: "white",
+              background: "none",
+              color: "#3b82f6",
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 12px rgba(19, 104, 106, 0.3)";
+              e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+              e.currentTarget.style.transform = "scale(1.1)";
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.background = "none";
+              e.currentTarget.style.transform = "scale(1)";
             }}
           >
             <i className="fas fa-edit"></i>
-            Éditer
           </button>
 
           {/* Bouton Supprimer */}
           <button
             onClick={() => onDelete(address.addressId)}
+            className="action-btn action-btn-delete"
+            title="Supprimer"
             style={{
               ...buttonBaseStyle,
-              background: "linear-gradient(135deg, #ef4444 0%, #f87171 100%)",
-              color: "white",
+              background: "none",
+              color: "#ef4444",
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 12px rgba(239, 68, 68, 0.3)";
+              e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+              e.currentTarget.style.transform = "scale(1.1)";
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.background = "none";
+              e.currentTarget.style.transform = "scale(1)";
             }}
           >
             <i className="fas fa-trash"></i>
-            Supprimer
           </button>
         </div>
       </td>
