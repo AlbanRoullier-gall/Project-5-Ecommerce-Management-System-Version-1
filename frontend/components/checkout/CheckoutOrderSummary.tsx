@@ -304,6 +304,7 @@ export default function CheckoutOrderSummary({
 
   return (
     <div
+      className="checkout-form-container"
       style={{
         background: "white",
         borderRadius: "16px",
@@ -312,6 +313,7 @@ export default function CheckoutOrderSummary({
       }}
     >
       <div
+        className="checkout-form-header"
         style={{
           display: "flex",
           alignItems: "center",
@@ -336,6 +338,7 @@ export default function CheckoutOrderSummary({
           4
         </div>
         <h2
+          className="checkout-form-title"
           style={{
             fontSize: "2.2rem",
             fontWeight: "700",
@@ -726,6 +729,7 @@ export default function CheckoutOrderSummary({
       </div>
 
       <div
+        className="checkout-form-actions"
         style={{
           display: "flex",
           gap: "1.5rem",
@@ -811,6 +815,294 @@ export default function CheckoutOrderSummary({
           )}
         </button>
       </div>
+
+      <style jsx>{`
+        /* Responsive Design pour CheckoutOrderSummary */
+
+        /* Tablette */
+        @media (max-width: 1024px) {
+          .checkout-form-container {
+            padding: 2.5rem !important;
+          }
+
+          .checkout-form-title {
+            font-size: 2rem !important;
+          }
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+          .checkout-form-container {
+            padding: 2rem !important;
+            margin: 0 1rem !important;
+          }
+
+          .checkout-form-header {
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 1rem !important;
+            margin-bottom: 2rem !important;
+          }
+
+          .checkout-form-title {
+            font-size: 1.8rem !important;
+            line-height: 1.3 !important;
+          }
+
+          .checkout-form-actions {
+            flex-direction: column !important;
+            gap: 1rem !important;
+            align-items: stretch !important;
+          }
+
+          .checkout-form-actions button {
+            width: 100% !important;
+            padding: 1rem 2rem !important;
+            font-size: 1.3rem !important;
+            justify-content: center !important;
+          }
+
+          /* Grilles responsives */
+          div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
+          }
+
+          /* Tableaux responsives */
+          table {
+            font-size: 1.1rem !important;
+          }
+
+          table th,
+          table td {
+            padding: 0.8rem 0.5rem !important;
+          }
+
+          /* Cartes d'information */
+          div[style*="background: #f0f9ff"] {
+            padding: 1.5rem !important;
+            margin-top: 2rem !important;
+          }
+
+          div[style*="background: #f0f9ff"] h3 {
+            font-size: 1.4rem !important;
+          }
+
+          div[style*="background: #f0f9ff"] p {
+            font-size: 1.2rem !important;
+          }
+        }
+
+        /* iPhone - Design complètement revu */
+        @media (max-width: 480px) {
+          .checkout-form-container {
+            padding: 0.8rem !important;
+            margin: 0 0.2rem !important;
+            border-radius: 8px !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+          }
+
+          .checkout-form-header {
+            margin-bottom: 0.8rem !important;
+            text-align: center !important;
+          }
+
+          .checkout-form-title {
+            font-size: 1.2rem !important;
+            line-height: 1.1 !important;
+            margin-bottom: 0.3rem !important;
+          }
+
+          .checkout-form-actions {
+            padding-top: 0.8rem !important;
+            margin-top: 0.8rem !important;
+          }
+
+          .checkout-form-actions button {
+            padding: 0.6rem 1rem !important;
+            font-size: 1rem !important;
+            border-radius: 6px !important;
+            width: 100% !important;
+          }
+
+          /* Récapitulatif - Design en cartes */
+          div[style*="marginBottom: 3rem"] {
+            margin-bottom: 1rem !important;
+          }
+
+          h3[style*="fontSize: 1.8rem"] {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.8rem !important;
+            text-align: center !important;
+            color: #13686a !important;
+            border-bottom: 2px solid #e0e0e0 !important;
+            padding-bottom: 0.5rem !important;
+          }
+
+          h4[style*="fontSize: 1.4rem"] {
+            font-size: 0.9rem !important;
+            margin-bottom: 0.5rem !important;
+            color: #13686a !important;
+            font-weight: 600 !important;
+          }
+
+          /* Informations client - Design en carte */
+          div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"] {
+            display: block !important;
+            background: #f8f9fa !important;
+            padding: 0.8rem !important;
+            border-radius: 6px !important;
+            margin-bottom: 0.8rem !important;
+            border-left: 4px solid #13686a !important;
+          }
+
+          /* Texte des informations */
+          p[style*="fontSize: 1.3rem"] {
+            font-size: 0.85rem !important;
+            line-height: 1.3 !important;
+            margin: 0.2rem 0 !important;
+            color: #333 !important;
+          }
+
+          /* Tableau des produits - Design simplifié */
+          table {
+            font-size: 0.75rem !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin: 0.5rem 0 !important;
+          }
+
+          table th {
+            background: #13686a !important;
+            color: white !important;
+            padding: 0.4rem 0.2rem !important;
+            font-size: 0.7rem !important;
+            text-align: center !important;
+          }
+
+          table td {
+            padding: 0.4rem 0.2rem !important;
+            border-bottom: 1px solid #e0e0e0 !important;
+            text-align: center !important;
+            vertical-align: top !important;
+          }
+
+          /* Colonnes du tableau */
+          table th:first-child,
+          table td:first-child {
+            width: 35% !important;
+            text-align: left !important;
+            font-weight: 600 !important;
+          }
+
+          table th:nth-child(2),
+          table td:nth-child(2) {
+            width: 25% !important;
+            font-size: 0.65rem !important;
+          }
+
+          table th:last-child,
+          table td:last-child {
+            width: 40% !important;
+            text-align: right !important;
+            font-weight: 600 !important;
+            color: #13686a !important;
+          }
+
+          /* Totaux - Design en carte */
+          div[style*="background: #f0f9ff"] {
+            background: #f8f9fa !important;
+            padding: 0.8rem !important;
+            margin-top: 0.8rem !important;
+            border-radius: 6px !important;
+            border: 1px solid #e0e0e0 !important;
+          }
+
+          div[style*="background: #f0f9ff"] h3 {
+            font-size: 0.9rem !important;
+            margin-bottom: 0.4rem !important;
+            color: #13686a !important;
+            text-align: center !important;
+          }
+
+          div[style*="background: #f0f9ff"] p {
+            font-size: 0.8rem !important;
+            line-height: 1.2 !important;
+            margin: 0.2rem 0 !important;
+            text-align: center !important;
+          }
+
+          /* Grilles de totaux */
+          div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"] {
+            display: block !important;
+            text-align: center !important;
+          }
+
+          div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"]
+            > div {
+            margin: 0.3rem 0 !important;
+            padding: 0.3rem !important;
+            background: white !important;
+            border-radius: 4px !important;
+            border: 1px solid #e0e0e0 !important;
+          }
+
+          /* Total final */
+          div[style*="fontSize: 1.8rem"] {
+            font-size: 1.2rem !important;
+            font-weight: 700 !important;
+            color: #13686a !important;
+            text-align: center !important;
+            margin: 0.5rem 0 !important;
+            padding: 0.5rem !important;
+            background: linear-gradient(
+              135deg,
+              #13686a 0%,
+              #0dd3d1 100%
+            ) !important;
+            color: white !important;
+            border-radius: 6px !important;
+          }
+        }
+
+        /* Très petits écrans */
+        @media (max-width: 360px) {
+          .checkout-form-container {
+            padding: 1rem !important;
+            margin: 0 0.3rem !important;
+          }
+
+          .checkout-form-title {
+            font-size: 1.4rem !important;
+          }
+
+          .checkout-form-actions button {
+            padding: 0.7rem 1.2rem !important;
+            font-size: 1.1rem !important;
+          }
+
+          table {
+            font-size: 0.9rem !important;
+          }
+
+          table th,
+          table td {
+            padding: 0.5rem 0.2rem !important;
+          }
+
+          div[style*="background: #f0f9ff"] {
+            padding: 1rem !important;
+          }
+
+          div[style*="background: #f0f9ff"] h3 {
+            font-size: 1.1rem !important;
+          }
+
+          div[style*="background: #f0f9ff"] p {
+            font-size: 1rem !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

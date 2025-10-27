@@ -157,6 +157,7 @@ export default function CheckoutPage() {
 
         {/* Main Content */}
         <div
+          className="checkout-main-content"
           style={{
             maxWidth: "1200px",
             margin: "3rem auto",
@@ -165,8 +166,12 @@ export default function CheckoutPage() {
           }}
         >
           {/* En-tête */}
-          <div style={{ marginBottom: "3rem", textAlign: "center" }}>
+          <div
+            className="checkout-header"
+            style={{ marginBottom: "3rem", textAlign: "center" }}
+          >
             <h1
+              className="checkout-title"
               style={{
                 fontSize: "3rem",
                 color: "#333",
@@ -176,7 +181,10 @@ export default function CheckoutPage() {
             >
               Finaliser votre commande
             </h1>
-            <p style={{ fontSize: "1.4rem", color: "#666" }}>
+            <p
+              className="checkout-subtitle"
+              style={{ fontSize: "1.4rem", color: "#666" }}
+            >
               Complétez les étapes ci-dessous pour passer votre commande
             </p>
           </div>
@@ -421,7 +429,15 @@ export default function CheckoutPage() {
       </div>
 
       <style jsx global>{`
+        /* Responsive Design pour Checkout */
+
+        /* Tablette */
         @media (max-width: 1024px) {
+          .checkout-main-content {
+            margin: 2rem auto !important;
+            padding: 0 1.5rem !important;
+          }
+
           .checkout-progress {
             padding: 0 1rem !important;
           }
@@ -429,35 +445,97 @@ export default function CheckoutPage() {
           .checkout-step-label {
             font-size: 1.1rem !important;
           }
+
+          .checkout-title {
+            font-size: 2.5rem !important;
+          }
+
+          .checkout-subtitle {
+            font-size: 1.2rem !important;
+          }
         }
 
+        /* Mobile */
         @media (max-width: 768px) {
+          .checkout-main-content {
+            margin: 1.5rem auto !important;
+            padding: 0 1rem !important;
+          }
+
+          /* Masquer le titre et sous-titre sur mobile */
+          .checkout-header {
+            display: none !important;
+          }
+
+          /* Masquer l'indicateur de progression sur mobile */
           .checkout-progress {
-            padding: 0 !important;
-          }
-
-          .checkout-progress > div {
-            flex-direction: column;
-          }
-
-          .checkout-step-label {
-            font-size: 1rem !important;
+            display: none !important;
           }
 
           /* Grille des cartes info en 1 colonne sur mobile */
           .checkout-info-card {
             grid-column: 1 / -1 !important;
+            margin-bottom: 1rem !important;
           }
         }
 
+        /* iPhone - Design complètement revu */
         @media (max-width: 480px) {
+          .checkout-main-content {
+            margin: 0.5rem auto !important;
+            padding: 0 0.3rem !important;
+            max-width: 100% !important;
+          }
+
+          /* Masquer le titre et sous-titre sur iPhone */
+          .checkout-header {
+            display: none !important;
+          }
+
+          /* Masquer l'indicateur de progression sur iPhone */
           .checkout-progress {
-            flex-wrap: wrap;
-            gap: 2rem;
+            display: none !important;
+          }
+
+          .checkout-info-card {
+            padding: 1.5rem !important;
+          }
+
+          .checkout-info-card h3 {
+            font-size: 1.2rem !important;
+          }
+
+          .checkout-info-card p {
+            font-size: 1rem !important;
+          }
+
+          .checkout-info-card i {
+            font-size: 2.5rem !important;
+          }
+        }
+
+        /* Très petits écrans */
+        @media (max-width: 360px) {
+          .checkout-main-content {
+            padding: 0 0.5rem !important;
+          }
+
+          .checkout-title {
+            font-size: 1.6rem !important;
           }
 
           .checkout-progress > div {
-            flex: 1 1 calc(50% - 1rem);
+            padding: 0.6rem !important;
+          }
+
+          .checkout-progress > div > div:first-child {
+            width: 40px !important;
+            height: 40px !important;
+            font-size: 1.2rem !important;
+          }
+
+          .checkout-step-label {
+            font-size: 0.8rem !important;
           }
         }
       `}</style>

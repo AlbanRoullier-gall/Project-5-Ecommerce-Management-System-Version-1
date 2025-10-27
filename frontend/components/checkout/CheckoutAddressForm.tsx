@@ -213,6 +213,7 @@ export default function CheckoutAddressForm({
 
   return (
     <div
+      className="checkout-form-container"
       style={{
         background: "white",
         borderRadius: "16px",
@@ -221,6 +222,7 @@ export default function CheckoutAddressForm({
       }}
     >
       <div
+        className="checkout-form-header"
         style={{
           display: "flex",
           alignItems: "center",
@@ -245,6 +247,7 @@ export default function CheckoutAddressForm({
           2
         </div>
         <h2
+          className="checkout-form-title"
           style={{
             fontSize: "2.2rem",
             fontWeight: "700",
@@ -272,6 +275,7 @@ export default function CheckoutAddressForm({
             Adresse de livraison
           </h3>
           <div
+            className="checkout-form-grid"
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
@@ -299,6 +303,7 @@ export default function CheckoutAddressForm({
         )}
 
         <div
+          className="checkout-form-actions"
           style={{
             display: "flex",
             gap: "1.5rem",
@@ -366,6 +371,144 @@ export default function CheckoutAddressForm({
           </button>
         </div>
       </form>
+
+      <style jsx>{`
+        /* Responsive Design pour CheckoutAddressForm */
+
+        /* Tablette */
+        @media (max-width: 1024px) {
+          .checkout-form-container {
+            padding: 2.5rem !important;
+          }
+
+          .checkout-form-title {
+            font-size: 2rem !important;
+          }
+
+          .checkout-form-grid {
+            gap: 1.5rem !important;
+          }
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+          .checkout-form-container {
+            padding: 2rem !important;
+            margin: 0 1rem !important;
+          }
+
+          .checkout-form-header {
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 1rem !important;
+            margin-bottom: 2rem !important;
+          }
+
+          .checkout-form-title {
+            font-size: 1.8rem !important;
+            line-height: 1.3 !important;
+          }
+
+          .checkout-form-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
+          }
+
+          .checkout-form-group label {
+            font-size: 1.2rem !important;
+            margin-bottom: 0.6rem !important;
+          }
+
+          .checkout-form-group input,
+          .checkout-form-group select {
+            padding: 1rem !important;
+            font-size: 1.2rem !important;
+          }
+
+          .checkout-form-actions {
+            flex-direction: column !important;
+            gap: 1rem !important;
+            align-items: stretch !important;
+          }
+
+          .checkout-form-actions button {
+            width: 100% !important;
+            padding: 1rem 2rem !important;
+            font-size: 1.3rem !important;
+            justify-content: center !important;
+          }
+        }
+
+        /* iPhone */
+        @media (max-width: 480px) {
+          .checkout-form-container {
+            padding: 1.5rem !important;
+            margin: 0 0.5rem !important;
+            border-radius: 12px !important;
+          }
+
+          .checkout-form-header {
+            margin-bottom: 1.5rem !important;
+          }
+
+          .checkout-form-title {
+            font-size: 1.6rem !important;
+          }
+
+          .checkout-form-grid {
+            gap: 1.2rem !important;
+          }
+
+          .checkout-form-group label {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+
+          .checkout-form-group input,
+          .checkout-form-group select {
+            padding: 0.8rem !important;
+            font-size: 1.1rem !important;
+            border-radius: 6px !important;
+          }
+
+          .checkout-form-actions {
+            padding-top: 1.5rem !important;
+          }
+
+          .checkout-form-actions button {
+            padding: 0.8rem 1.5rem !important;
+            font-size: 1.2rem !important;
+            border-radius: 6px !important;
+          }
+        }
+
+        /* Très petits écrans */
+        @media (max-width: 360px) {
+          .checkout-form-container {
+            padding: 1rem !important;
+            margin: 0 0.3rem !important;
+          }
+
+          .checkout-form-title {
+            font-size: 1.4rem !important;
+          }
+
+          .checkout-form-group label {
+            font-size: 1rem !important;
+          }
+
+          .checkout-form-group input,
+          .checkout-form-group select {
+            padding: 0.7rem !important;
+            font-size: 1rem !important;
+          }
+
+          .checkout-form-actions button {
+            padding: 0.7rem 1.2rem !important;
+            font-size: 1.1rem !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

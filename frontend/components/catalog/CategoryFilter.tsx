@@ -73,6 +73,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
     >
       {/* Bouton principal du dropdown */}
       <button
+        className="dropdown-button"
         onClick={() => setIsOpen(!isOpen)}
         style={{
           width: "100%",
@@ -139,6 +140,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
         >
           {/* Option "Toutes les pierres" */}
           <button
+            className="dropdown-option"
             onClick={() => handleSelectCategory(0)}
             style={{
               width: "100%",
@@ -176,6 +178,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
           {categories.map((category, index) => (
             <button
               key={category.id}
+              className="dropdown-option"
               onClick={() => handleSelectCategory(category.id)}
               style={{
                 width: "100%",
@@ -270,22 +273,28 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   }
 
   return (
-    <div
-      style={{
-        background: "#f8f9fa",
-        padding: "2rem 0 1.5rem 0",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "1400px",
-          margin: "0 auto",
-        }}
-      >
-        <div style={{ maxWidth: "300px", margin: 0 }}>{Dropdown}</div>
+    <div className="category-filter-container">
+      <div className="category-filter-wrapper">
+        <div className="category-filter-dropdown">{Dropdown}</div>
       </div>
 
       <style jsx>{`
+        .category-filter-container {
+          background: #f8f9fa;
+          padding: 2rem 0 1.5rem 0;
+        }
+
+        .category-filter-wrapper {
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 0 2rem;
+        }
+
+        .category-filter-dropdown {
+          max-width: 300px;
+          margin: 0;
+        }
+
         @keyframes slideDown {
           from {
             opacity: 0;
@@ -294,6 +303,51 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+          .category-filter-container {
+            padding: 1.5rem 0 1rem 0;
+          }
+
+          .category-filter-wrapper {
+            padding: 0 1rem;
+          }
+
+          .category-filter-dropdown {
+            max-width: 100%;
+          }
+
+          .dropdown-button {
+            padding: 0.7rem 1rem !important;
+            font-size: 1.1rem !important;
+          }
+
+          .dropdown-option {
+            padding: 0.8rem 1rem !important;
+            font-size: 1.1rem !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .category-filter-container {
+            padding: 1rem 0 0.75rem 0;
+          }
+
+          .category-filter-wrapper {
+            padding: 0 0.75rem;
+          }
+
+          .dropdown-button {
+            padding: 0.6rem 0.8rem !important;
+            font-size: 1rem !important;
+          }
+
+          .dropdown-option {
+            padding: 0.7rem 0.8rem !important;
+            font-size: 1rem !important;
           }
         }
       `}</style>
