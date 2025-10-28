@@ -69,50 +69,6 @@ class CustomerRepository {
   }
 
   /**
-   * Récupérer un client par ID avec jointures
-   * @param {number} id ID du client
-   * @returns {Promise<Customer|null>} Client avec données jointes ou null si non trouvé
-   */
-  async getByIdWithJoins(id: number): Promise<Customer | null> {
-    try {
-      const result = await this.pool.query(
-        `SELECT c.customer_id, c.civility_id, c.first_name, c.last_name, c.email, 
-                c.socio_professional_category_id, c.phone_number, c.birthday,
-                c.created_at, c.updated_at,
-                civ.abbreviation as civility,
-                spc.category_name as socio_professional_category
-         FROM customers c
-         LEFT JOIN civilities civ ON c.civility_id = civ.civility_id
-         LEFT JOIN socio_professional_categories spc ON c.socio_professional_category_id = spc.category_id
-         WHERE c.customer_id = $1`,
-        [id]
-      );
-
-      if (result.rows.length === 0) {
-        return null;
-      }
-
-      const row = result.rows[0];
-      const customerData: CustomerData = {
-        customerId: row.customer_id,
-        civilityId: row.civility_id,
-        firstName: row.first_name,
-        lastName: row.last_name,
-        email: row.email,
-        socioProfessionalCategoryId: row.socio_professional_category_id,
-        phoneNumber: row.phone_number,
-        birthday: row.birthday,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-      };
-      return new Customer(customerData);
-    } catch (error) {
-      console.error("Error getting customer by ID with joins:", error);
-      throw new Error("Failed to retrieve customer");
-    }
-  }
-
-  /**
    * Récupérer un client par email
    * @param {string} email Email du client
    * @returns {Promise<Customer|null>} Client ou null si non trouvé

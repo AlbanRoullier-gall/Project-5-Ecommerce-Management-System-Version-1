@@ -28,6 +28,26 @@ class CustomerService {
 
   // ===== MÉTHODES UTILITAIRES =====
 
+  /**
+   * Méthode utilitaire pour récupérer une entité par ID
+   * @param {Function} repositoryMethod Méthode du repository à appeler
+   * @param {number} id ID de l'entité
+   * @param {string} entityName Nom de l'entité pour les logs
+   * @returns {Promise<T|null>} Entité ou null si non trouvée
+   */
+  private async getEntityById<T>(
+    repositoryMethod: (id: number) => Promise<T | null>,
+    id: number,
+    entityName: string
+  ): Promise<T | null> {
+    try {
+      return await repositoryMethod(id);
+    } catch (error) {
+      console.error(`Error getting ${entityName} by ID:`, error);
+      throw error;
+    }
+  }
+
   // ===== CRÉATION DE CLIENTS =====
 
   /**
@@ -100,12 +120,11 @@ class CustomerService {
    * @returns {Promise<Customer|null>} Customer or null if not found
    */
   async getCustomerById(id: number): Promise<Customer | null> {
-    try {
-      return await this.customerRepository.getByIdWithJoins(id);
-    } catch (error) {
-      console.error("Error getting customer by ID:", error);
-      throw error;
-    }
+    return this.getEntityById(
+      this.customerRepository.getById.bind(this.customerRepository),
+      id,
+      "customer"
+    );
   }
 
   /**
@@ -181,72 +200,9 @@ class CustomerService {
 
   // ===== GESTION DES ADRESSES =====
 
-  /**
-   * Créer une nouvelle adresse
-   */
-  async createCustomerAddress(
-    customerId: number,
-    addressData: any
-  ): Promise<CustomerAddress> {
-    try {
-      // Vérifier que le client existe
-      const customer = await this.customerRepository.getById(customerId);
-      if (!customer) {
-        throw new Error("Client non trouvé");
-      }
-
-      // Vérifier les adresses en double avant la création
-      const duplicateExists = await this.addressRepository.existsForCustomer({
-        customerId,
-        address: addressData.address,
-        postalCode: addressData.postalCode,
-        city: addressData.city,
-        countryId: addressData.countryId,
-      });
-      if (duplicateExists) {
-        throw new Error("Address already exists");
-      }
-
-      // Créer l'adresse
-      const address = new CustomerAddress(addressData);
-      address.customerId = customerId;
-
-      return await this.addressRepository.save(address);
-    } catch (error) {
-      console.error("Error creating customer address:", error);
-      throw error;
-    }
-  }
-
   // ===== GESTION DES ENTREPRISES =====
 
-  /**
-   * Créer une nouvelle entreprise
-   */
-  async createCustomerCompany(
-    customerId: number,
-    companyData: any
-  ): Promise<CustomerCompany> {
-    try {
-      // Vérifier que le client existe
-      const customer = await this.customerRepository.getById(customerId);
-      if (!customer) {
-        throw new Error("Client non trouvé");
-      }
-
-      // Créer l'entreprise
-      const company = new CustomerCompany(companyData);
-      company.customerId = customerId;
-
-      return await this.companyRepository.save(company);
-    } catch (error) {
-      console.error("Error creating customer company:", error);
-      throw error;
-    }
-  }
-
   // ===== LISTES ET RECHERCHES =====
-
 
   /**
    * List customers with pagination and search
@@ -393,12 +349,11 @@ class CustomerService {
    * @returns {Promise<CustomerAddress|null>} Address or null if not found
    */
   async getAddressById(addressId: number): Promise<CustomerAddress | null> {
-    try {
-      return await this.addressRepository.getById(addressId);
-    } catch (error) {
-      console.error("Error getting address by ID:", error);
-      throw error;
-    }
+    return this.getEntityById(
+      this.addressRepository.getById.bind(this.addressRepository),
+      addressId,
+      "address"
+    );
   }
 
   // Méthodes de gestion des entreprises
@@ -547,12 +502,11 @@ class CustomerService {
    * @returns {Promise<CustomerCompany|null>} Company or null if not found
    */
   async getCompanyById(companyId: number): Promise<CustomerCompany | null> {
-    try {
-      return await this.companyRepository.getById(companyId);
-    } catch (error) {
-      console.error("Error getting company by ID:", error);
-      throw error;
-    }
+    return this.getEntityById(
+      this.companyRepository.getById.bind(this.companyRepository),
+      companyId,
+      "company"
+    );
   }
 
   // ===== DONNÉES DE RÉFÉRENCE =====
