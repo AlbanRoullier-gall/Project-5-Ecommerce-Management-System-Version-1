@@ -161,18 +161,12 @@ export class CustomerController {
    */
   async listCustomers(req: Request, res: Response): Promise<void> {
     try {
-      const {
-        page = 1,
-        limit = 10,
-        search = "",
-        activeOnly = false,
-      } = req.query;
+      const { page = 1, limit = 10, search = "" } = req.query;
 
       const result = await this.customerService.listCustomers({
         page: parseInt(page as string) || 1,
         limit: parseInt(limit as string) || 10,
         search: (search as string) || "",
-        activeOnly: activeOnly === "true",
       });
       const response = CustomerMapper.createCustomerListResponse(
         result.customers,
@@ -182,50 +176,6 @@ export class CustomerController {
       res.json(response);
     } catch (error: any) {
       console.error("List customers error:", error);
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Activer un client
-   */
-  async activateCustomer(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const customer = await this.customerService.activateCustomer(
-        parseInt(id!)
-      );
-      const customerDTO = CustomerMapper.customerToPublicDTO(customer);
-
-      res.json(ResponseMapper.customerUpdated(customerDTO));
-    } catch (error: any) {
-      console.error("Activate customer error:", error);
-      if (error.message === "Customer not found") {
-        res.status(404).json(ResponseMapper.notFoundError("Customer"));
-        return;
-      }
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Désactiver un client
-   */
-  async deactivateCustomer(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const customer = await this.customerService.deactivateCustomer(
-        parseInt(id!)
-      );
-      const customerDTO = CustomerMapper.customerToPublicDTO(customer);
-
-      res.json(ResponseMapper.customerUpdated(customerDTO));
-    } catch (error: any) {
-      console.error("Deactivate customer error:", error);
-      if (error.message === "Customer not found") {
-        res.status(404).json(ResponseMapper.notFoundError("Customer"));
-        return;
-      }
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }

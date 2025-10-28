@@ -11,7 +11,6 @@ export interface CustomerData {
   socioProfessionalCategoryId: number;
   phoneNumber: string | null;
   birthday: Date | null;
-  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,7 +29,6 @@ class Customer {
   public socioProfessionalCategoryId: number;
   public phoneNumber: string | null;
   public birthday: Date | null;
-  public isActive: boolean;
   public createdAt: Date;
   public updatedAt: Date;
   public civility?: any;
@@ -45,7 +43,6 @@ class Customer {
     this.socioProfessionalCategoryId = data.socioProfessionalCategoryId;
     this.phoneNumber = data.phoneNumber;
     this.birthday = data.birthday;
-    this.isActive = data.isActive;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
   }
@@ -56,20 +53,6 @@ class Customer {
    */
   fullName(): string {
     return `${this.firstName} ${this.lastName}`.trim();
-  }
-
-  /**
-   * Activer le client
-   */
-  activate(): void {
-    this.isActive = true;
-  }
-
-  /**
-   * Désactiver le client
-   */
-  deactivate(): void {
-    this.isActive = false;
   }
 
   /**

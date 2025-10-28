@@ -1,6 +1,5 @@
 import React from "react";
 import SearchInput from "../product/filters/SearchInput";
-import StatusFilter from "../product/filters/StatusFilter";
 
 /**
  * Props du composant CustomerFilters
@@ -10,10 +9,6 @@ interface CustomerFiltersProps {
   searchTerm: string;
   /** Callback appelé lors du changement de recherche */
   onSearchChange: (value: string) => void;
-  /** Filtre de statut actuel */
-  statusFilter: string;
-  /** Callback appelé lors du changement de statut */
-  onStatusFilterChange: (value: string) => void;
 }
 
 /**
@@ -23,8 +18,6 @@ interface CustomerFiltersProps {
 const CustomerFilters: React.FC<CustomerFiltersProps> = ({
   searchTerm,
   onSearchChange,
-  statusFilter,
-  onStatusFilterChange,
 }) => {
   return (
     <div
@@ -52,9 +45,6 @@ const CustomerFilters: React.FC<CustomerFiltersProps> = ({
           onChange={onSearchChange}
           placeholder="Rechercher par nom, email ou téléphone..."
         />
-
-        {/* Filtre de statut */}
-        <StatusFilter value={statusFilter} onChange={onStatusFilterChange} />
       </div>
     </div>
   );

@@ -46,7 +46,6 @@ export interface CustomerPublicDTO {
   socioProfessionalCategoryId: number;
   phoneNumber: string | null;
   birthday: Date | null;
-  isActive: boolean;
 }
 
 // ===== TYPES SPÉCIFIQUES =====
@@ -58,7 +57,6 @@ export interface CustomerSearchDTO {
   page?: number;
   limit?: number;
   search?: string;
-  activeOnly?: boolean;
 }
 
 /**
@@ -78,6 +76,7 @@ export interface CustomerListDTO {
  * DTO pour la création d'une adresse (livraison uniquement)
  */
 export interface AddressCreateDTO {
+  addressType: "shipping" | "billing";
   address: string;
   postalCode: string;
   city: string;
@@ -89,6 +88,7 @@ export interface AddressCreateDTO {
  * DTO pour la mise à jour d'une adresse (livraison uniquement)
  */
 export interface AddressUpdateDTO {
+  addressType?: "shipping" | "billing";
   address?: string;
   postalCode?: string;
   city?: string;
@@ -103,6 +103,7 @@ export interface AddressUpdateDTO {
 export interface AddressPublicDTO {
   addressId: number;
   customerId: number;
+  addressType: "shipping" | "billing";
   address: string;
   postalCode: string;
   city: string;

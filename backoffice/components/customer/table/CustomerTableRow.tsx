@@ -1,6 +1,5 @@
 import React from "react";
 import { CustomerPublicDTO } from "../../../dto";
-import StatusBadge from "../../product/table/StatusBadge";
 import ActionButtons from "./ActionButtons";
 
 /**
@@ -13,8 +12,6 @@ interface CustomerTableRowProps {
   onEdit: (customer: CustomerPublicDTO) => void;
   /** Callback pour supprimer le client */
   onDelete: (customerId: number) => void;
-  /** Callback pour changer le statut */
-  onToggleStatus: (customerId: number, currentStatus: boolean) => void;
   /** Callback pour gérer les adresses */
   onManageAddresses: (customer: CustomerPublicDTO) => void;
 }
@@ -27,7 +24,6 @@ const CustomerTableRow: React.FC<CustomerTableRowProps> = ({
   customer,
   onEdit,
   onDelete,
-  onToggleStatus,
   onManageAddresses,
 }) => {
   return (
@@ -71,14 +67,6 @@ const CustomerTableRow: React.FC<CustomerTableRowProps> = ({
         <span style={{ color: "#6b7280", fontSize: "1rem" }}>
           {customer.phoneNumber || "-"}
         </span>
-      </td>
-
-      {/* Statut */}
-      <td style={{ padding: "1.5rem 1.25rem" }}>
-        <StatusBadge
-          isActive={customer.isActive}
-          onClick={() => onToggleStatus(customer.customerId, customer.isActive)}
-        />
       </td>
 
       {/* Actions */}

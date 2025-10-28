@@ -69,13 +69,39 @@ export default function CheckoutOrderSummary({
   }, [cart]);
 
   useEffect(() => {
-    // Set Belgium as the only available country
-    setCountries([{ countryId: 1, countryName: "Belgique" }]);
+    const loadCountries = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/customers/countries`);
+        if (response.ok) {
+          const data = await response.json();
+          const allCountries = data.countries || [];
+          // Filtrer pour ne garder que la Belgique
+          const belgiumOnly = allCountries.filter(
+            (country: any) =>
+              country.countryName === "Belgique" || country.countryId === 11
+          );
+          setCountries(belgiumOnly);
+        } else {
+          // Fallback: définir la Belgique comme seul pays
+          setCountries([{ countryId: 11, countryName: "Belgique" }]);
+        }
+      } catch (error) {
+        console.error("Error loading countries:", error);
+        // Fallback: définir la Belgique comme seul pays
+        setCountries([{ countryId: 11, countryName: "Belgique" }]);
+      }
+    };
+
+    loadCountries();
   }, []);
 
   const countryNameById = useMemo(() => {
-    return (id?: number) => "Belgique";
-  }, []);
+    return (id?: number) => {
+      if (!id) return "Pays non spécifié";
+      const country = countries.find((c) => c.countryId === id);
+      return country ? country.countryName : `Pays ID: ${id}`;
+    };
+  }, [countries]);
 
   // Utiliser les totaux calculés par le CartContext
   const { totals } = useCart();
@@ -121,21 +147,90 @@ export default function CheckoutOrderSummary({
         customerId = customer.customerId;
       }
 
+      // Sauvegarder les adresses dans le carnet d'adresses du client
       try {
+        // Créer l'adresse de livraison (toujours par défaut)
         if (shippingAddress && shippingAddress.address) {
           const shippingAddressDTO = {
+            addressType: "shipping",
             address: shippingAddress.address,
             postalCode: shippingAddress.postalCode,
             city: shippingAddress.city,
             countryId: shippingAddress.countryId,
-            isDefault: true,
+            isDefault: true, // Toujours définir l'adresse de livraison comme par défaut
           };
 
-          await fetch(`${API_URL}/api/customers/${customerId}/addresses`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(shippingAddressDTO),
-          });
+          const shippingResponse = await fetch(
+            `${API_URL}/api/customers/${customerId}/addresses`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(shippingAddressDTO),
+            }
+          );
+
+          if (!shippingResponse.ok) {
+            const errorData = await shippingResponse.json().catch(() => ({}));
+            if (
+              shippingResponse.status === 409 &&
+              errorData.message?.includes("already exists")
+            ) {
+              console.log(
+                "Shipping address already exists in customer address book"
+              );
+            } else {
+              console.warn(
+                "Failed to save shipping address to customer address book:",
+                errorData.message
+              );
+            }
+          } else {
+            console.log("Shipping address saved to customer address book");
+          }
+        }
+
+        // Créer l'adresse de facturation si elle est différente de l'adresse de livraison
+        if (
+          billingAddress &&
+          billingAddress.address &&
+          billingAddress.address !== shippingAddress?.address
+        ) {
+          const billingAddressDTO = {
+            addressType: "billing",
+            address: billingAddress.address,
+            postalCode: billingAddress.postalCode,
+            city: billingAddress.city,
+            countryId: billingAddress.countryId,
+            isDefault: false, // L'adresse de facturation n'est pas par défaut
+          };
+
+          const billingResponse = await fetch(
+            `${API_URL}/api/customers/${customerId}/addresses`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(billingAddressDTO),
+            }
+          );
+
+          if (!billingResponse.ok) {
+            const errorData = await billingResponse.json().catch(() => ({}));
+            if (
+              billingResponse.status === 409 &&
+              errorData.message?.includes("already exists")
+            ) {
+              console.log(
+                "Billing address already exists in customer address book"
+              );
+            } else {
+              console.warn(
+                "Failed to save billing address to customer address book:",
+                errorData.message
+              );
+            }
+          } else {
+            console.log("Billing address saved to customer address book");
+          }
         }
       } catch (addressError) {
         console.error("Address book save error (non-blocking):", addressError);

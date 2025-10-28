@@ -35,15 +35,23 @@ export class CustomerMapper {
   static customerCreateDTOToCustomerData(
     dto: CustomerCreateDTO
   ): Partial<CustomerData> {
-    return {
-      civilityId: dto.civilityId,
+    const data: Partial<CustomerData> = {
       firstName: dto.firstName,
       lastName: dto.lastName,
       email: dto.email,
-      socioProfessionalCategoryId: dto.socioProfessionalCategoryId,
-      phoneNumber: dto.phoneNumber || null,
+      phoneNumber: dto.phoneNumber ?? null,
       birthday: dto.birthday ? new Date(dto.birthday) : null,
     };
+
+    if (dto.civilityId !== undefined) {
+      data.civilityId = dto.civilityId;
+    }
+
+    if (dto.socioProfessionalCategoryId !== undefined) {
+      data.socioProfessionalCategoryId = dto.socioProfessionalCategoryId;
+    }
+
+    return data;
   }
 
   /**
@@ -80,7 +88,6 @@ export class CustomerMapper {
       socioProfessionalCategoryId: customer.socioProfessionalCategoryId,
       phoneNumber: customer.phoneNumber,
       birthday: customer.birthday,
-      isActive: customer.isActive,
       fullName: customer.fullName(),
     };
   }
@@ -177,11 +184,19 @@ export class CustomerMapper {
   static companyCreateDTOToCompanyData(
     dto: CompanyCreateDTO
   ): Partial<CustomerCompanyData> {
-    return {
+    const data: Partial<CustomerCompanyData> = {
       companyName: dto.companyName,
-      siretNumber: dto.siretNumber || null,
-      vatNumber: dto.vatNumber || null,
     };
+
+    if (dto.siretNumber !== undefined) {
+      data.siretNumber = dto.siretNumber;
+    }
+
+    if (dto.vatNumber !== undefined) {
+      data.vatNumber = dto.vatNumber;
+    }
+
+    return data;
   }
 
   /**
@@ -194,9 +209,9 @@ export class CustomerMapper {
 
     if (dto.companyName !== undefined) updateData.companyName = dto.companyName;
     if (dto.siretNumber !== undefined)
-      updateData.siretNumber = dto.siretNumber || null;
+      updateData.siretNumber = dto.siretNumber ?? null;
     if (dto.vatNumber !== undefined)
-      updateData.vatNumber = dto.vatNumber || null;
+      updateData.vatNumber = dto.vatNumber ?? null;
 
     return updateData;
   }

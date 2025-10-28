@@ -5,6 +5,7 @@
 export interface CustomerAddressData {
   addressId: number;
   customerId: number;
+  addressType: "shipping" | "billing";
   address: string;
   postalCode: string;
   city: string;
@@ -22,6 +23,7 @@ export interface ValidationResult {
 class CustomerAddress {
   public addressId: number;
   public customerId: number;
+  public addressType: "shipping" | "billing";
   public address: string;
   public postalCode: string;
   public city: string;
@@ -34,6 +36,7 @@ class CustomerAddress {
   constructor(data: CustomerAddressData) {
     this.addressId = data.addressId;
     this.customerId = data.customerId;
+    this.addressType = data.addressType;
     this.address = data.address;
     this.postalCode = data.postalCode;
     this.city = data.city;

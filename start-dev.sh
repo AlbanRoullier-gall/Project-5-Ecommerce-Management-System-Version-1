@@ -354,7 +354,7 @@ echo "📦 DÉMARRAGE DES SERVICES BACKEND..."
 # Utiliser les vrais utilisateurs et configurations de base de données
 backend_services=(
     "auth-service:3008:services/auth-service:postgresql://albanroullier-gall@localhost:5432/auth_db"
-    "customer-service:3001:services/customer-service:postgresql://microservices_user@localhost:5432/customer_db"
+    "customer-service:3001:services/customer-service:postgresql://customer_user:customer_password@localhost:5432/customer_db"
     "product-service:3002:services/product-service:postgresql://microservices_user@localhost:5432/product_db"
     "order-service:3003:services/order-service:postgresql://microservices_user@localhost:5432/order_db"
     "cart-service:3004:services/cart-service:postgresql://albanroullier-gall@localhost:5432/cart_db"

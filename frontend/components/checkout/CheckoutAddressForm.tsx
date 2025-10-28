@@ -29,19 +29,60 @@ export default function CheckoutAddressForm({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Set Belgium as the only available country
-    const belgiumCountry = { countryId: 1, countryName: "Belgique" };
-    setCountries([belgiumCountry]);
+    const loadCountries = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/customers/countries`);
+        if (response.ok) {
+          const data = await response.json();
+          const allCountries = data.countries || [];
+          // Filtrer pour ne garder que la Belgique
+          const belgiumOnly = allCountries.filter(
+            (country: any) =>
+              country.countryName === "Belgique" || country.countryId === 11
+          );
+          setCountries(belgiumOnly);
 
-    // Set Belgium as default for shipping address
-    if (!formData.shipping.countryId) {
-      onChange({
-        shipping: {
-          ...formData.shipping,
-          countryId: belgiumCountry.countryId,
-        },
-      });
-    }
+          // Set Belgium as default for shipping address
+          if (!formData.shipping.countryId && belgiumOnly.length > 0) {
+            onChange({
+              shipping: {
+                ...formData.shipping,
+                countryId: belgiumOnly[0].countryId,
+              },
+            });
+          }
+        } else {
+          // Fallback: définir la Belgique comme seul pays
+          const belgiumCountry = { countryId: 11, countryName: "Belgique" };
+          setCountries([belgiumCountry]);
+
+          if (!formData.shipping.countryId) {
+            onChange({
+              shipping: {
+                ...formData.shipping,
+                countryId: belgiumCountry.countryId,
+              },
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error loading countries:", error);
+        // Fallback: définir la Belgique comme seul pays
+        const belgiumCountry = { countryId: 11, countryName: "Belgique" };
+        setCountries([belgiumCountry]);
+
+        if (!formData.shipping.countryId) {
+          onChange({
+            shipping: {
+              ...formData.shipping,
+              countryId: belgiumCountry.countryId,
+            },
+          });
+        }
+      }
+    };
+
+    loadCountries();
   }, []);
 
   const handleShippingChange = (
@@ -206,7 +247,7 @@ export default function CheckoutAddressForm({
             cursor: "not-allowed",
           }}
         />
-        <input type="hidden" name="countryId" value={data.countryId || 1} />
+        <input type="hidden" name="countryId" value={data.countryId || 11} />
       </div>
     </>
   );

@@ -12,8 +12,6 @@ interface CustomerTableProps {
   onEdit: (customer: CustomerPublicDTO) => void;
   /** Callback appelé pour supprimer un client */
   onDelete: (customerId: number) => void;
-  /** Callback appelé pour changer le statut d'un client */
-  onToggleStatus: (customerId: number, currentStatus: boolean) => void;
   /** Callback appelé pour gérer les adresses d'un client */
   onManageAddresses: (customer: CustomerPublicDTO) => void;
 }
@@ -25,7 +23,6 @@ interface CustomerTableProps {
  * - Email
  * - Téléphone
  * - Catégorie socio-professionnelle
- * - Statut
  * - Actions (éditer/supprimer/gérer adresses)
  *
  * Affiche un message si aucun client n'est trouvé
@@ -34,7 +31,6 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
   customers,
   onEdit,
   onDelete,
-  onToggleStatus,
   onManageAddresses,
 }) => {
   if (customers.length === 0) {
@@ -134,18 +130,6 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
                   letterSpacing: "0.5px",
                 }}
               >
-                Statut
-              </th>
-              <th
-                style={{
-                  padding: "1.5rem 1.25rem",
-                  textAlign: "left",
-                  fontSize: "1rem",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                }}
-              >
                 Actions
               </th>
             </tr>
@@ -157,7 +141,6 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
                 customer={customer}
                 onEdit={onEdit}
                 onDelete={onDelete}
-                onToggleStatus={onToggleStatus}
                 onManageAddresses={onManageAddresses}
               />
             ))}

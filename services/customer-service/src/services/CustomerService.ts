@@ -77,7 +77,6 @@ class CustomerService {
         socioProfessionalCategoryId: categoryIdToUse!,
         phoneNumber: data.phoneNumber || null,
         birthday: data.birthday || null,
-        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -199,7 +198,6 @@ class CustomerService {
       // Vérifier les adresses en double avant la création
       const duplicateExists = await this.addressRepository.existsForCustomer({
         customerId,
-        addressType: addressData.addressType,
         address: addressData.address,
         postalCode: addressData.postalCode,
         city: addressData.city,
@@ -249,17 +247,6 @@ class CustomerService {
 
   // ===== LISTES ET RECHERCHES =====
 
-  /**
-   * Lister les clients actifs
-   */
-  async listActiveCustomers(): Promise<Customer[]> {
-    try {
-      return await this.customerRepository.listAllActive();
-    } catch (error) {
-      console.error("Error listing active customers:", error);
-      throw error;
-    }
-  }
 
   /**
    * List customers with pagination and search
@@ -271,12 +258,10 @@ class CustomerService {
       page?: number;
       limit?: number;
       search?: string;
-      activeOnly?: boolean;
     } = {
       page: 1,
       limit: 10,
       search: "",
-      activeOnly: false,
     }
   ): Promise<any> {
     try {
@@ -566,48 +551,6 @@ class CustomerService {
       return await this.companyRepository.getById(companyId);
     } catch (error) {
       console.error("Error getting company by ID:", error);
-      throw error;
-    }
-  }
-
-  // ===== ACTIVATION/DÉSACTIVATION =====
-
-  /**
-   * Activer un client
-   * @param {number} id Customer ID
-   * @returns {Promise<Customer>} Activated customer
-   */
-  async activateCustomer(id: number): Promise<Customer> {
-    try {
-      const customer = await this.customerRepository.getById(id);
-      if (!customer) {
-        throw new Error("Customer not found");
-      }
-
-      customer.activate();
-      return await this.customerRepository.update(customer);
-    } catch (error) {
-      console.error("Error activating customer:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Désactiver un client
-   * @param {number} id Customer ID
-   * @returns {Promise<Customer>} Deactivated customer
-   */
-  async deactivateCustomer(id: number): Promise<Customer> {
-    try {
-      const customer = await this.customerRepository.getById(id);
-      if (!customer) {
-        throw new Error("Customer not found");
-      }
-
-      customer.deactivate();
-      return await this.customerRepository.update(customer);
-    } catch (error) {
-      console.error("Error deactivating customer:", error);
       throw error;
     }
   }

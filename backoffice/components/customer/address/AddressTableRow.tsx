@@ -32,7 +32,7 @@ const AddressTableRow: React.FC<AddressTableRowProps> = ({
 
     // Fallback: si l'ID n'est pas trouvé, vérifier si c'est probablement la Belgique
     // (parfois l'ID peut être différent selon la base de données)
-    if (countryId === 4 || countryId === 1) {
+    if (countryId === 11) {
       return "Belgique";
     }
 

@@ -44,7 +44,6 @@ const CustomerList: React.FC = () => {
 
   // États des filtres
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
 
   // États UI
   const [showCustomerForm, setShowCustomerForm] = useState(false);
@@ -77,14 +76,8 @@ const CustomerList: React.FC = () => {
       );
     }
 
-    if (statusFilter === "active") {
-      filtered = filtered.filter((c) => c.isActive);
-    } else if (statusFilter === "inactive") {
-      filtered = filtered.filter((c) => !c.isActive);
-    }
-
     setFilteredCustomers(filtered);
-  }, [customers, searchTerm, statusFilter]);
+  }, [customers, searchTerm]);
 
   /**
    * Récupère le token d'authentification du localStorage
@@ -145,11 +138,11 @@ const CustomerList: React.FC = () => {
       if (!token) {
         console.error("Token manquant pour chargement des pays");
         // Fallback: définir la Belgique comme seul pays
-        setCountries([{ countryId: 1, countryName: "Belgique" }]);
+        setCountries([{ countryId: 11, countryName: "Belgique" }]);
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/countries`, {
+      const response = await fetch(`${API_URL}/api/admin/customers/countries`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -160,13 +153,16 @@ const CustomerList: React.FC = () => {
       }
 
       const data = await response.json();
-      setCountries(
-        data.countries || data || [{ countryId: 1, countryName: "Belgique" }]
+      const allCountries = data.countries || data || [];
+      // Filtrer pour ne garder que la Belgique
+      const belgiumOnly = allCountries.filter((country: any) => 
+        country.countryName === "Belgique" || country.countryId === 11
       );
+      setCountries(belgiumOnly.length > 0 ? belgiumOnly : [{ countryId: 11, countryName: "Belgique" }]);
     } catch (err) {
       console.error("Error loading countries:", err);
       // Fallback: définir la Belgique comme seul pays
-      setCountries([{ countryId: 1, countryName: "Belgique" }]);
+      setCountries([{ countryId: 11, countryName: "Belgique" }]);
     }
   };
 
@@ -254,6 +250,20 @@ const CustomerList: React.FC = () => {
   };
 
   /**
+   * Gère la soumission du formulaire (création ou mise à jour)
+   * @param data - Données du client
+   */
+  const handleSaveCustomer = async (
+    data: CustomerCreateDTO | CustomerUpdateDTO
+  ) => {
+    if (editingCustomer) {
+      await handleUpdateCustomer(data as CustomerUpdateDTO);
+    } else {
+      await handleCreateCustomer(data as CustomerCreateDTO);
+    }
+  };
+
+  /**
    * Supprime un client
    * @param customerId - ID du client à supprimer
    */
@@ -289,47 +299,6 @@ const CustomerList: React.FC = () => {
         err instanceof Error ? err.message : "Erreur lors de la suppression"
       );
       console.error("Error deleting customer:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Active ou désactive un client
-   * @param customerId - ID du client
-   * @param currentStatus - Statut actuel du client
-   */
-  const handleToggleCustomerStatus = async (
-    customerId: number,
-    currentStatus: boolean
-  ) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const token = getAuthToken();
-      const endpoint = currentStatus
-        ? `${API_URL}/api/admin/customers/${customerId}/deactivate`
-        : `${API_URL}/api/admin/customers/${customerId}/activate`;
-
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Erreur lors du changement de statut");
-      }
-
-      await loadCustomers();
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Erreur lors du changement de statut"
-      );
-      console.error("Error toggling customer status:", err);
     } finally {
       setIsLoading(false);
     }
@@ -401,9 +370,7 @@ const CustomerList: React.FC = () => {
       {showCustomerForm && (
         <CustomerForm
           customer={editingCustomer}
-          onSubmit={
-            editingCustomer ? handleUpdateCustomer : handleCreateCustomer
-          }
+          onSubmit={handleSaveCustomer}
           onCancel={handleCancelForm}
           isLoading={isLoading}
         />
@@ -422,8 +389,6 @@ const CustomerList: React.FC = () => {
           <CustomerFilters
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
           />
 
           <div
@@ -448,7 +413,6 @@ const CustomerList: React.FC = () => {
             customers={filteredCustomers}
             onEdit={handleEditCustomer}
             onDelete={handleDeleteCustomer}
-            onToggleStatus={handleToggleCustomerStatus}
             onManageAddresses={handleManageAddresses}
           />
         </>

@@ -292,22 +292,6 @@ export class ApiRouter {
       }
     );
 
-    // Routes d'activation/désactivation
-    app.post(
-      "/api/admin/customers/:id/activate",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.customerController.activateCustomer(req, res);
-      }
-    );
-
-    app.post(
-      "/api/admin/customers/:id/deactivate",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.customerController.deactivateCustomer(req, res);
-      }
-    );
 
     // ===== ROUTES ADMIN DE CLIENTS =====
     app.get(

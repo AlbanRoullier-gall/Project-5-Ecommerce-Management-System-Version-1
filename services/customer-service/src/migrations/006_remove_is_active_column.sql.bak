@@ -1,0 +1,11 @@
+-- Migration : Supprimer la colonne is_active de la table customers
+-- Description : Supprime la colonne is_active et l'index associé
+
+-- Supprimer l'index sur is_active
+DROP INDEX IF EXISTS idx_customers_active;
+
+-- Supprimer la colonne is_active
+ALTER TABLE customers DROP COLUMN IF EXISTS is_active;
+
+-- Ajouter un commentaire pour la documentation
+COMMENT ON TABLE customers IS 'Main table for customer information (is_active column removed)';

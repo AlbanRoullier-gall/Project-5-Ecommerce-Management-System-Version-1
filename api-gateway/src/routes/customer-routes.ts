@@ -32,10 +32,6 @@ export const CUSTOMER_ROUTES: Record<string, ServiceName> = {
   "/admin/customers/categories": "customer", // GET: Liste des catégories socio-professionnelles (admin)
   "/admin/customers/countries": "customer", // GET: Liste des pays (admin)
 
-  // Routes avec paramètres et chemins spécifiques
-  "/admin/customers/:id/activate": "customer", // POST: Activer un client
-  "/admin/customers/:id/deactivate": "customer", // POST: Désactiver un client
-
   // Routes génériques avec paramètres (en dernier)
   "/admin/customers/:id": "customer", // GET: Récupérer client, PUT: Modifier client, DELETE: Supprimer client
   "/admin/customers/:customerId/addresses": "customer", // GET: Liste des adresses d'un client, POST: Ajouter une adresse

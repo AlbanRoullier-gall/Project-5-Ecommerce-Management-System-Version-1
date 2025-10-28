@@ -9,7 +9,6 @@ export interface CustomerListOptions {
   page?: number;
   limit?: number;
   search?: string;
-  activeOnly?: boolean;
 }
 
 export interface CustomerListResult {
@@ -38,7 +37,7 @@ class CustomerRepository {
     try {
       const result = await this.pool.query(
         `SELECT customer_id, civility_id, first_name, last_name, email, 
-                socio_professional_category_id, phone_number, birthday, is_active, 
+                socio_professional_category_id, phone_number, birthday, 
                 created_at, updated_at
          FROM customers 
          WHERE customer_id = $1`,
@@ -59,7 +58,6 @@ class CustomerRepository {
         socioProfessionalCategoryId: row.socio_professional_category_id,
         phoneNumber: row.phone_number,
         birthday: row.birthday,
-        isActive: row.is_active,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       };
@@ -79,7 +77,7 @@ class CustomerRepository {
     try {
       const result = await this.pool.query(
         `SELECT c.customer_id, c.civility_id, c.first_name, c.last_name, c.email, 
-                c.socio_professional_category_id, c.phone_number, c.birthday, c.is_active,
+                c.socio_professional_category_id, c.phone_number, c.birthday,
                 c.created_at, c.updated_at,
                 civ.abbreviation as civility,
                 spc.category_name as socio_professional_category
@@ -104,7 +102,6 @@ class CustomerRepository {
         socioProfessionalCategoryId: row.socio_professional_category_id,
         phoneNumber: row.phone_number,
         birthday: row.birthday,
-        isActive: row.is_active,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       };
@@ -124,7 +121,7 @@ class CustomerRepository {
     try {
       const result = await this.pool.query(
         `SELECT customer_id, civility_id, first_name, last_name, email, 
-                socio_professional_category_id, phone_number, birthday, is_active, 
+                socio_professional_category_id, phone_number, birthday, 
                 created_at, updated_at
          FROM customers 
          WHERE email = $1`,
@@ -145,7 +142,6 @@ class CustomerRepository {
         socioProfessionalCategoryId: row.socio_professional_category_id,
         phoneNumber: row.phone_number,
         birthday: row.birthday,
-        isActive: row.is_active,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       };
@@ -153,28 +149,6 @@ class CustomerRepository {
     } catch (error) {
       console.error("Error getting customer by email:", error);
       throw new Error("Failed to retrieve customer");
-    }
-  }
-
-  /**
-   * Lister tous les clients actifs
-   * @returns {Promise<Customer[]>} Tableau des clients actifs
-   */
-  async listAllActive(): Promise<Customer[]> {
-    try {
-      const result = await this.pool.query(
-        `SELECT customer_id, civility_id, first_name, last_name, email, 
-                socio_professional_category_id, phone_number, birthday, is_active, 
-                created_at, updated_at
-         FROM customers 
-         WHERE is_active = true
-         ORDER BY created_at DESC`
-      );
-
-      return result.rows.map((row) => new Customer(row as CustomerData));
-    } catch (error) {
-      console.error("Error listing active customers:", error);
-      throw new Error("Failed to retrieve customers");
     }
   }
 
@@ -187,12 +161,12 @@ class CustomerRepository {
     options: CustomerListOptions = {}
   ): Promise<CustomerListResult> {
     try {
-      const { page = 1, limit = 10, search = "", activeOnly = false } = options;
+      const { page = 1, limit = 10, search = "" } = options;
       const offset = (page - 1) * limit;
 
       let query = `
         SELECT c.customer_id, c.civility_id, c.first_name, c.last_name, c.email, 
-               c.socio_professional_category_id, c.phone_number, c.birthday, c.is_active, 
+               c.socio_professional_category_id, c.phone_number, c.birthday, 
                c.created_at, c.updated_at,
                civ.abbreviation as civility,
                spc.category_name as socio_professional_category
@@ -204,10 +178,6 @@ class CustomerRepository {
       const params: any[] = [];
       let paramCount = 0;
       const conditions: string[] = [];
-
-      if (activeOnly) {
-        conditions.push(`c.is_active = true`);
-      }
 
       if (search) {
         conditions.push(
@@ -253,7 +223,6 @@ class CustomerRepository {
             socioProfessionalCategoryId: row.socio_professional_category_id,
             phoneNumber: row.phone_number,
             birthday: row.birthday,
-            isActive: row.is_active,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
           };
@@ -286,10 +255,10 @@ class CustomerRepository {
 
       const result = await this.pool.query(
         `INSERT INTO customers (civility_id, first_name, last_name, email, 
-                               socio_professional_category_id, phone_number, birthday, is_active)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                               socio_professional_category_id, phone_number, birthday)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING customer_id, civility_id, first_name, last_name, email, 
-                   socio_professional_category_id, phone_number, birthday, is_active, 
+                   socio_professional_category_id, phone_number, birthday, 
                    created_at, updated_at`,
         [
           customer.civilityId,
@@ -299,7 +268,6 @@ class CustomerRepository {
           customer.socioProfessionalCategoryId,
           customer.phoneNumber,
           customer.birthday,
-          customer.isActive,
         ]
       );
 
@@ -313,7 +281,6 @@ class CustomerRepository {
         socioProfessionalCategoryId: row.socio_professional_category_id,
         phoneNumber: row.phone_number,
         birthday: row.birthday,
-        isActive: row.is_active,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       };
@@ -339,11 +306,10 @@ class CustomerRepository {
       const result = await this.pool.query(
         `UPDATE customers 
          SET civility_id = $1, first_name = $2, last_name = $3, email = $4, 
-             socio_professional_category_id = $5, phone_number = $6, birthday = $7, 
-             is_active = $8
-         WHERE customer_id = $9
+             socio_professional_category_id = $5, phone_number = $6, birthday = $7
+         WHERE customer_id = $8
          RETURNING customer_id, civility_id, first_name, last_name, email, 
-                   socio_professional_category_id, phone_number, birthday, is_active, 
+                   socio_professional_category_id, phone_number, birthday, 
                    created_at, updated_at`,
         [
           customer.civilityId,
@@ -353,7 +319,6 @@ class CustomerRepository {
           customer.socioProfessionalCategoryId,
           customer.phoneNumber,
           customer.birthday,
-          customer.isActive,
           customer.customerId,
         ]
       );
@@ -372,7 +337,6 @@ class CustomerRepository {
         socioProfessionalCategoryId: row.socio_professional_category_id,
         phoneNumber: row.phone_number,
         birthday: row.birthday,
-        isActive: row.is_active,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       };
@@ -447,7 +411,6 @@ class CustomerRepository {
         existingCustomer.socioProfessionalCategoryId,
       phoneNumber: updateData.phoneNumber ?? existingCustomer.phoneNumber,
       birthday: updateData.birthday ?? existingCustomer.birthday,
-      isActive: updateData.isActive ?? existingCustomer.isActive,
       createdAt: existingCustomer.createdAt,
       updatedAt: new Date(),
     });

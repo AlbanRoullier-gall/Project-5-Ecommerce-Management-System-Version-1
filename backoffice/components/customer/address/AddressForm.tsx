@@ -39,7 +39,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
     address: "",
     postalCode: "",
     city: "",
-    countryId: 1, // Belgium by default
+    countryId: 11, // Belgium by default
     isDefault: false,
   });
 

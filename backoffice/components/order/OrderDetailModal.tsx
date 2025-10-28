@@ -22,7 +22,6 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   error = null,
   onClose,
 }) => {
-  if (!isOpen) return null;
   const [items, setItems] = useState<OrderItemPublicDTO[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
   const [itemsError, setItemsError] = useState<string | null>(null);
@@ -114,6 +113,8 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
       "";
     return `${first} ${last}`.trim();
   })();
+
+  if (!isOpen) return null;
 
   return (
     <div
