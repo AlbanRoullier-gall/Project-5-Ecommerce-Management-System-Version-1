@@ -120,14 +120,14 @@ export default function ValuesSection() {
           }
 
           .values-title {
-            font-size: 2rem;
+            font-size: 2.25rem;
             text-align: center;
           }
 
           .values-description {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             text-align: center;
-            line-height: 1.7;
+            line-height: 1.8;
           }
         }
 
@@ -142,13 +142,13 @@ export default function ValuesSection() {
           }
 
           .values-title {
-            font-size: 1.75rem;
-            margin-bottom: 0.75rem;
+            font-size: 2.25rem;
+            margin-bottom: 1rem;
           }
 
           .values-description {
-            font-size: 1rem;
-            line-height: 1.7;
+            font-size: 1.2rem;
+            line-height: 1.8;
           }
 
           .features-list {
@@ -177,12 +177,12 @@ export default function ValuesSection() {
           }
 
           .values-title {
-            font-size: 1.5rem;
+            font-size: 2.25rem;
           }
 
           .values-description {
-            font-size: 0.95rem;
-            line-height: 1.6;
+            font-size: 1.2rem;
+            line-height: 1.8;
           }
 
           .features-list {
