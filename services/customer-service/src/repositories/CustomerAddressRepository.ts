@@ -88,46 +88,6 @@ class CustomerAddressRepository {
     }
   }
 
-  /**
-   * Récupérer une adresse par ID avec jointures
-   * @param {number} id ID de l'adresse
-   * @returns {Promise<CustomerAddress|null>} CustomerAddress avec données jointes ou null si non trouvée
-   */
-  async getByIdWithJoins(id: number): Promise<CustomerAddress | null> {
-    try {
-      const result = await this.pool.query(
-        `SELECT ca.address_id, ca.customer_id, ca.address_type, ca.address, ca.postal_code, 
-                ca.city, ca.country_id, ca.is_default, ca.created_at, ca.updated_at,
-                co.country_name
-         FROM customer_addresses ca
-         LEFT JOIN countries co ON ca.country_id = co.country_id
-         WHERE ca.address_id = $1`,
-        [id]
-      );
-
-      if (result.rows.length === 0) {
-        return null;
-      }
-
-      const row = result.rows[0];
-      const addressData: CustomerAddressData = {
-        addressId: row.address_id,
-        customerId: row.customer_id,
-        addressType: row.address_type,
-        address: row.address,
-        postalCode: row.postal_code,
-        city: row.city,
-        countryId: row.country_id,
-        isDefault: row.is_default,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-      };
-      return new CustomerAddress(addressData);
-    } catch (error) {
-      console.error("Error getting address by ID with joins:", error);
-      throw new Error("Failed to retrieve address");
-    }
-  }
 
   /**
    * Lister les adresses par client
