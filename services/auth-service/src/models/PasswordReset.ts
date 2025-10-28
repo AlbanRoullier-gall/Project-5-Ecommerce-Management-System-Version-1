@@ -1,6 +1,6 @@
 /**
- * PasswordReset Model
- * Represents a password reset request in the authentication system
+ * Modèle PasswordReset
+ * Représente une demande de réinitialisation de mot de passe dans le système d'authentification
  *
  * PRINCIPES :
  * - Contient la logique métier des réinitialisations
@@ -34,31 +34,31 @@ export class PasswordReset {
   }
 
   /**
-   * Check if reset token is expired
-   * @returns {boolean} True if expired
+   * Vérifier si le token de réinitialisation est expiré
+   * @returns {boolean} True si expiré
    */
   isExpired(): boolean {
     return new Date() > new Date(this.expiresAt);
   }
 
   /**
-   * Check if reset token is valid (not expired)
-   * @returns {boolean} True if valid
+   * Vérifier si le token de réinitialisation est valide (non expiré)
+   * @returns {boolean} True si valide
    */
   isValid(): boolean {
     return !this.isExpired();
   }
 
   /**
-   * Invalidate reset token (set to expired)
+   * Invalider le token de réinitialisation (le marquer comme expiré)
    */
   invalidate(): void {
     (this as any).expiresAt = new Date();
   }
 
   /**
-   * Get time until expiration in milliseconds
-   * @returns {number} Time until expiration
+   * Obtenir le temps restant jusqu'à l'expiration en millisecondes
+   * @returns {number} Temps restant jusqu'à l'expiration
    */
   getTimeUntilExpiration(): number {
     const now = new Date();
@@ -67,36 +67,36 @@ export class PasswordReset {
   }
 
   /**
-   * Generate a secure random token
-   * @param {number} length Token length
-   * @returns {string} Random token
+   * Générer un token aléatoire sécurisé
+   * @param {number} length Longueur du token
+   * @returns {string} Token aléatoire
    */
   static generateToken(length: number = 32): string {
     return crypto.randomBytes(length).toString("hex");
   }
 
   /**
-   * Hash a reset token for storage
-   * @param {string} token Plain token
-   * @returns {string} Hashed token
+   * Hasher un token de réinitialisation pour le stockage
+   * @param {string} token Token en clair
+   * @returns {string} Token hashé
    */
   static hashToken(token: string): string {
     return crypto.createHash("sha256").update(token).digest("hex");
   }
 
   /**
-   * Verify a token against its hash
-   * @param {string} token Plain token
-   * @param {string} hash Token hash
-   * @returns {boolean} True if valid
+   * Vérifier un token contre son hash
+   * @param {string} token Token en clair
+   * @param {string} hash Hash du token
+   * @returns {boolean} True si valide
    */
   static verifyToken(token: string, hash: string): boolean {
     return PasswordReset.hashToken(token) === hash;
   }
 
   /**
-   * Convert to public object
-   * @returns {Object} Public reset data
+   * Convertir en objet public
+   * @returns {Object} Données de réinitialisation publiques
    */
   toPublicObject() {
     return {
@@ -110,8 +110,8 @@ export class PasswordReset {
   }
 
   /**
-   * Convert to database object
-   * @returns {Object} Database object
+   * Convertir en objet de base de données
+   * @returns {Object} Objet de base de données
    */
   toDatabaseObject(): PasswordResetData {
     return {

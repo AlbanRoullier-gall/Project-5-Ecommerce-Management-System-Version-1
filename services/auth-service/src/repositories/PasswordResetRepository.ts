@@ -1,6 +1,6 @@
 /**
  * PasswordResetRepository
- * Data access layer for PasswordReset entities
+ * Couche d'accès aux données pour les entités PasswordReset
  *
  * PRINCIPES :
  * - Accès aux données uniquement
@@ -20,9 +20,9 @@ export class PasswordResetRepository {
   }
 
   /**
-   * Get password reset by ID
-   * @param {number} id Reset ID
-   * @returns {Promise<PasswordReset|null>} Reset or null
+   * Obtenir une réinitialisation de mot de passe par ID
+   * @param {number} id ID de réinitialisation
+   * @returns {Promise<PasswordReset|null>} Réinitialisation ou null
    */
   async getById(id: number): Promise<PasswordReset | null> {
     try {
@@ -45,9 +45,9 @@ export class PasswordResetRepository {
   }
 
   /**
-   * Get password reset by token
-   * @param {string} token Reset token
-   * @returns {Promise<PasswordReset|null>} Reset or null
+   * Obtenir une réinitialisation de mot de passe par token
+   * @param {string} token Token de réinitialisation
+   * @returns {Promise<PasswordReset|null>} Réinitialisation ou null
    */
   async getByToken(token: string): Promise<PasswordReset | null> {
     try {
@@ -70,9 +70,9 @@ export class PasswordResetRepository {
   }
 
   /**
-   * List password resets by user
-   * @param {number} userId User ID
-   * @returns {Promise<PasswordReset[]>} List of resets
+   * Lister les réinitialisations de mot de passe par utilisateur
+   * @param {number} userId ID utilisateur
+   * @returns {Promise<PasswordReset[]>} Liste des réinitialisations
    */
   async listByUser(userId: number): Promise<PasswordReset[]> {
     try {
@@ -94,9 +94,9 @@ export class PasswordResetRepository {
   }
 
   /**
-   * List active password resets by user
-   * @param {number} userId User ID
-   * @returns {Promise<PasswordReset[]>} List of active resets
+   * Lister les réinitialisations de mot de passe actives par utilisateur
+   * @param {number} userId ID utilisateur
+   * @returns {Promise<PasswordReset[]>} Liste des réinitialisations actives
    */
   async listActiveByUser(userId: number): Promise<PasswordReset[]> {
     try {
@@ -118,9 +118,9 @@ export class PasswordResetRepository {
   }
 
   /**
-   * Save new password reset
-   * @param {PasswordReset} reset Reset to save
-   * @returns {Promise<PasswordReset>} Saved reset
+   * Sauvegarder une nouvelle réinitialisation de mot de passe
+   * @param {PasswordReset} reset Réinitialisation à sauvegarder
+   * @returns {Promise<PasswordReset>} Réinitialisation sauvegardée
    */
   async save(reset: PasswordReset): Promise<PasswordReset> {
     try {
@@ -140,9 +140,9 @@ export class PasswordResetRepository {
   }
 
   /**
-   * Update password reset
-   * @param {PasswordReset} reset Reset to update
-   * @returns {Promise<PasswordReset>} Updated reset
+   * Mettre à jour une réinitialisation de mot de passe
+   * @param {PasswordReset} reset Réinitialisation à mettre à jour
+   * @returns {Promise<PasswordReset>} Réinitialisation mise à jour
    */
   async update(reset: PasswordReset): Promise<PasswordReset> {
     try {
@@ -173,9 +173,9 @@ export class PasswordResetRepository {
   }
 
   /**
-   * Delete password reset
-   * @param {PasswordReset} reset Reset to delete
-   * @returns {Promise<boolean>} True if deleted
+   * Supprimer une réinitialisation de mot de passe
+   * @param {PasswordReset} reset Réinitialisation à supprimer
+   * @returns {Promise<boolean>} True si supprimée
    */
   async delete(reset: PasswordReset): Promise<boolean> {
     try {
@@ -190,9 +190,9 @@ export class PasswordResetRepository {
   }
 
   /**
-   * Delete password reset by ID
-   * @param {number} resetId Reset ID
-   * @returns {Promise<boolean>} True if deleted
+   * Supprimer une réinitialisation de mot de passe par ID
+   * @param {number} resetId ID de réinitialisation
+   * @returns {Promise<boolean>} True si supprimée
    */
   async deleteById(resetId: number): Promise<boolean> {
     try {
@@ -207,9 +207,9 @@ export class PasswordResetRepository {
   }
 
   /**
-   * Delete all password resets for a user
-   * @param {number} userId User ID
-   * @returns {Promise<number>} Number of deleted resets
+   * Supprimer toutes les réinitialisations de mot de passe pour un utilisateur
+   * @param {number} userId ID utilisateur
+   * @returns {Promise<number>} Nombre de réinitialisations supprimées
    */
   async deleteByUser(userId: number): Promise<number> {
     try {
@@ -224,8 +224,8 @@ export class PasswordResetRepository {
   }
 
   /**
-   * Delete expired password resets
-   * @returns {Promise<number>} Number of deleted resets
+   * Supprimer les réinitialisations de mot de passe expirées
+   * @returns {Promise<number>} Nombre de réinitialisations supprimées
    */
   async deleteExpired(): Promise<number> {
     try {
@@ -241,9 +241,9 @@ export class PasswordResetRepository {
   }
 
   /**
-   * Count active password resets for a user
-   * @param {number} userId User ID
-   * @returns {Promise<number>} Number of active resets
+   * Compter les réinitialisations de mot de passe actives pour un utilisateur
+   * @param {number} userId ID utilisateur
+   * @returns {Promise<number>} Nombre de réinitialisations actives
    */
   async countActiveByUser(userId: number): Promise<number> {
     try {

@@ -5,20 +5,25 @@
  * Architecture : Service layer
  * - Orchestre les repositories
  * - Contient la logique métier
- * - Gère les tokens JWT
+ * - Gère les tokens JWT pour l'authentification
+ * - Gère les tokens de réinitialisation via base de données
  * - Travaille uniquement avec les modèles
  */
 import { Pool } from "pg";
 import jwt, { SignOptions } from "jsonwebtoken";
 import { User, UserData } from "../models/User";
 import { UserRepository } from "../repositories/UserRepository";
+import { PasswordResetRepository } from "../repositories/PasswordResetRepository";
+import { PasswordReset } from "../models/PasswordReset";
 
 export class AuthService {
   private userRepository: UserRepository;
+  private passwordResetRepository: PasswordResetRepository;
   private jwtSecret: string;
 
   constructor(pool: Pool) {
     this.userRepository = new UserRepository(pool);
+    this.passwordResetRepository = new PasswordResetRepository(pool);
     this.jwtSecret = process.env["JWT_SECRET"] || "your-jwt-secret-key";
     console.log(
       "🔐 Auth Service JWT_SECRET:",
@@ -245,10 +250,11 @@ export class AuthService {
     }
   }
 
-  // ===== RÉINITIALISATION DE MOT DE PASSE =====
+  // ===== RÉINITIALISATION DE MOT DE PASSE (BASE DE DONNÉES) =====
 
   /**
    * Générer un token de réinitialisation de mot de passe
+   * Utilise la base de données pour stocker des tokens uniques et sécurisés
    */
   async generateResetToken(
     email: string
@@ -260,16 +266,24 @@ export class AuthService {
         throw new Error("Utilisateur non trouvé");
       }
 
-      // Générer un token unique
-      const resetToken = jwt.sign(
-        {
-          userId: user.userId,
-          email: user.email,
-          type: "password_reset",
-        },
-        this.jwtSecret,
-        { expiresIn: "15m" } // Token valide 15 minutes
-      );
+      // Supprimer les anciens tokens de réinitialisation pour cet utilisateur
+      await this.passwordResetRepository.deleteByUser(user.userId);
+
+      // Générer un token unique et sécurisé
+      const resetToken = PasswordReset.generateToken();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+      // Créer l'entité PasswordReset
+      const passwordReset = new PasswordReset({
+        reset_id: null,
+        user_id: user.userId,
+        reset_token: PasswordReset.hashToken(resetToken),
+        expires_at: expiresAt,
+        created_at: null,
+      });
+
+      // Sauvegarder en base de données
+      await this.passwordResetRepository.save(passwordReset);
 
       return {
         token: resetToken,
@@ -283,21 +297,31 @@ export class AuthService {
 
   /**
    * Confirmer la réinitialisation de mot de passe
+   * Valide le token via la base de données et le supprime après utilisation
    */
   async confirmResetPassword(
     token: string,
     newPassword: string
   ): Promise<void> {
     try {
-      // Vérifier le token
-      const decoded = jwt.verify(token, this.jwtSecret) as any;
+      // Récupérer le token de réinitialisation depuis la base de données
+      const passwordReset = await this.passwordResetRepository.getByToken(
+        PasswordReset.hashToken(token)
+      );
 
-      if (decoded.type !== "password_reset") {
+      if (!passwordReset) {
         throw new Error("Token de réinitialisation invalide");
       }
 
+      // Vérifier que le token n'est pas expiré
+      if (passwordReset.isExpired()) {
+        // Supprimer le token expiré
+        await this.passwordResetRepository.delete(passwordReset);
+        throw new Error("Token de réinitialisation expiré");
+      }
+
       // Récupérer l'utilisateur
-      const user = await this.userRepository.getById(decoded.userId);
+      const user = await this.userRepository.getById(passwordReset.userId);
       if (!user) {
         throw new Error("Utilisateur non trouvé");
       }
@@ -314,14 +338,11 @@ export class AuthService {
       });
 
       await this.userRepository.update(updatedUser);
+
+      // Supprimer le token de réinitialisation après utilisation
+      await this.passwordResetRepository.delete(passwordReset);
     } catch (error: any) {
       console.error("Error confirming reset password:", error);
-      if (error.name === "TokenExpiredError") {
-        throw new Error("Token de réinitialisation expiré");
-      }
-      if (error.name === "JsonWebTokenError") {
-        throw new Error("Token de réinitialisation invalide");
-      }
       throw error;
     }
   }
@@ -329,7 +350,14 @@ export class AuthService {
   // ===== GESTION DES TOKENS JWT =====
 
   /**
-   * Générer un token JWT
+   * Méthode privée pour générer des tokens JWT
+   */
+  private generateToken(payload: any, expiresIn: string = "24h"): string {
+    return jwt.sign(payload, this.jwtSecret, { expiresIn } as SignOptions);
+  }
+
+  /**
+   * Générer un token JWT pour l'authentification
    */
   generateJWT(user: User, expiresIn: string = "24h"): string {
     const payload = {
@@ -339,7 +367,7 @@ export class AuthService {
       lastName: user.lastName,
     };
 
-    return jwt.sign(payload, this.jwtSecret, { expiresIn } as SignOptions);
+    return this.generateToken(payload, expiresIn);
   }
 
   // ===== GESTION APPROBATION BACKOFFICE =====
@@ -417,7 +445,7 @@ export class AuthService {
       timestamp: Date.now(),
     };
 
-    return jwt.sign(payload, this.jwtSecret, { expiresIn: "24h" });
+    return this.generateToken(payload, "24h");
   }
 
   /**
