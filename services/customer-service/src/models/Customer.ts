@@ -1,6 +1,6 @@
 /**
- * Customer ORM Entity
- * Represents a customer with personal information and authentication
+ * Entité ORM Customer
+ * Représente un client avec ses informations personnelles et son authentification
  */
 export interface CustomerData {
   customerId: number;
@@ -15,8 +15,6 @@ export interface CustomerData {
   createdAt: Date;
   updatedAt: Date;
 }
-
-// CustomerPublicDTO moved to /api/dto/CustomerDTO.ts
 
 export interface ValidationResult {
   isValid: boolean;
@@ -53,30 +51,30 @@ class Customer {
   }
 
   /**
-   * Get full name of the customer
-   * @returns {string} Full name
+   * Obtenir le nom complet du client
+   * @returns {string} Nom complet
    */
   fullName(): string {
     return `${this.firstName} ${this.lastName}`.trim();
   }
 
   /**
-   * Activate the customer
+   * Activer le client
    */
   activate(): void {
     this.isActive = true;
   }
 
   /**
-   * Deactivate the customer
+   * Désactiver le client
    */
   deactivate(): void {
     this.isActive = false;
   }
 
   /**
-   * Validate entity data
-   * @returns {Object} Validation result
+   * Valider les données de l'entité
+   * @returns {Object} Résultat de validation
    */
   validate(): ValidationResult {
     const errors: string[] = [];

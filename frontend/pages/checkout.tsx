@@ -1,7 +1,6 @@
 "use client";
 
 import Head from "next/head";
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Header from "../components/Header";
@@ -102,49 +101,6 @@ export default function CheckoutPage() {
 
       <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
         <Header />
-
-        {/* Breadcrumb */}
-        <div
-          style={{
-            background: "#fff",
-            padding: "1.5rem 2rem",
-            borderBottom: "2px solid #e0e0e0",
-          }}
-        >
-          <div
-            style={{
-              maxWidth: "1200px",
-              margin: "0 auto",
-              fontSize: "1.2rem",
-              color: "#666",
-            }}
-          >
-            <Link
-              href="/"
-              style={{
-                color: "#13686a",
-                textDecoration: "none",
-                fontWeight: "500",
-              }}
-            >
-              <i className="fas fa-home" style={{ marginRight: "0.5rem" }}></i>
-              Accueil
-            </Link>
-            <span style={{ margin: "0 1rem", color: "#ccc" }}>/</span>
-            <Link
-              href="/cart"
-              style={{
-                color: "#13686a",
-                textDecoration: "none",
-                fontWeight: "500",
-              }}
-            >
-              Panier
-            </Link>
-            <span style={{ margin: "0 1rem", color: "#ccc" }}>/</span>
-            <span style={{ color: "#333", fontWeight: "600" }}>Commande</span>
-          </div>
-        </div>
 
         {/* Main Content */}
         <div

@@ -1,11 +1,11 @@
 /**
- * CustomerService
- * Business logic layer for customer management
+ * Service Client
+ * Couche de logique métier pour la gestion des clients
  *
- * Architecture : Service pattern
- * - Business logic orchestration
- * - Data validation and transformation
- * - Repository coordination
+ * Architecture : Pattern Service
+ * - Orchestration de la logique métier
+ * - Validation et transformation des données
+ * - Coordination des repositories
  */
 import { Pool } from "pg";
 import Customer, { CustomerData } from "../models/Customer";
@@ -35,7 +35,7 @@ class CustomerService {
    */
   async createCustomer(data: Partial<CustomerData>): Promise<Customer> {
     try {
-      // Check if email already exists
+      // Vérifier si l'email existe déjà
       if (!data.email) {
         throw new Error("L'email est obligatoire");
       }
@@ -44,12 +44,12 @@ class CustomerService {
         throw new Error("Un client avec cet email existe déjà");
       }
 
-      // Validate required fields (civility and category optional)
+      // Valider les champs obligatoires (civilité et catégorie optionnels)
       if (!data.firstName || !data.lastName || !data.email) {
         throw new Error("Tous les champs obligatoires doivent être fournis");
       }
 
-      // Determine civility (optional → default to first civility if not provided)
+      // Déterminer la civilité (optionnel → par défaut la première civilité si non fournie)
       let civilityIdToUse = data.civilityId || null;
       if (!civilityIdToUse) {
         const civilityRes = await this.customerRepository.pool.query(
@@ -58,7 +58,7 @@ class CustomerService {
         civilityIdToUse = civilityRes.rows[0]?.civility_id || null;
       }
 
-      // Determine socio-professional category (optional → default to 'Other' if present, else first)
+      // Déterminer la catégorie socio-professionnelle (optionnel → par défaut 'Autre' si présent, sinon la première)
       let categoryIdToUse = data.socioProfessionalCategoryId || null;
       if (!categoryIdToUse) {
         const categoryRes = await this.customerRepository.pool.query(
@@ -67,9 +67,9 @@ class CustomerService {
         categoryIdToUse = categoryRes.rows[0]?.category_id || null;
       }
 
-      // Create customer entity with temporary data for insertion
+      // Créer l'entité client avec des données temporaires pour l'insertion
       const customerData: CustomerData = {
-        customerId: 0, // Will be replaced by DB
+        customerId: 0, // Sera remplacé par la DB
         civilityId: civilityIdToUse!,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -84,10 +84,10 @@ class CustomerService {
 
       const customer = new Customer(customerData);
 
-      // Save customer
+      // Sauvegarder le client
       const savedCustomer = await this.customerRepository.save(customer);
 
-      // Return customer
+      // Retourner le client
       return savedCustomer;
     } catch (error) {
       console.error("Error creating customer:", error);
@@ -138,7 +138,7 @@ class CustomerService {
         throw new Error("Customer not found");
       }
 
-      // Check if email is being updated and if it conflicts
+      // Vérifier si l'email est mis à jour et s'il y a conflit
       if (data.email && data.email !== customer.email) {
         const emailExists = await this.customerRepository.emailExists(
           data.email,
@@ -149,7 +149,7 @@ class CustomerService {
         }
       }
 
-      // Create updated customer with merge (like auth-service)
+      // Créer un client mis à jour avec fusion (comme auth-service)
       const updatedCustomer = this.customerRepository.createCustomerWithMerge(
         customer,
         data
@@ -196,7 +196,7 @@ class CustomerService {
         throw new Error("Client non trouvé");
       }
 
-      // Check for duplicate address before creating
+      // Vérifier les adresses en double avant la création
       const duplicateExists = await this.addressRepository.existsForCustomer({
         customerId,
         addressType: addressData.addressType,
@@ -287,12 +287,6 @@ class CustomerService {
     }
   }
 
-  // Note: authenticateCustomer method removed - authentication handled elsewhere
-
-  // Note: changePassword method removed - authentication handled elsewhere
-
-  // Address management methods
-
   /**
    * Add address to customer
    * @param {number} customerId Customer ID
@@ -304,13 +298,13 @@ class CustomerService {
     addressData: any
   ): Promise<CustomerAddress> {
     try {
-      // Verify customer exists
+      // Vérifier que le client existe
       const customer = await this.customerRepository.getById(customerId);
       if (!customer) {
         throw new Error("Customer not found");
       }
 
-      // Check for duplicate address before mutating defaults
+      // Vérifier les adresses en double avant de modifier les valeurs par défaut
       const duplicateExists = await this.addressRepository.existsForCustomer({
         customerId,
         address: addressData.address,
@@ -322,12 +316,12 @@ class CustomerService {
         throw new Error("Address already exists");
       }
 
-      // If this is set as default, unset other default addresses for the customer
+      // Si ceci est défini comme par défaut, désactiver les autres adresses par défaut pour le client
       if (addressData.isDefault) {
         await this.addressRepository.unsetDefaultForCustomer(customerId);
       }
 
-      // Create address entity
+      // Créer l'entité adresse
       const address = new CustomerAddress({
         ...addressData,
         customerId,
@@ -356,7 +350,7 @@ class CustomerService {
         throw new Error("Address not found");
       }
 
-      // If this is set as default, unset other default addresses for the customer
+      // Si ceci est défini comme par défaut, désactiver les autres adresses par défaut pour le client
       if (addressData.isDefault && !address.isDefault) {
         await this.addressRepository.unsetDefaultForCustomer(
           address.customerId!,
@@ -364,9 +358,9 @@ class CustomerService {
         );
       }
 
-      // Update address entity
+      // Mettre à jour l'entité adresse
       Object.assign(address, addressData);
-      address.addressId = addressId; // Ensure ID is preserved
+      address.addressId = addressId; // S'assurer que l'ID est préservé
 
       return await this.addressRepository.update(address);
     } catch (error) {
@@ -422,7 +416,7 @@ class CustomerService {
     }
   }
 
-  // Company management methods
+  // Méthodes de gestion des entreprises
 
   /**
    * Add company to customer
@@ -435,13 +429,13 @@ class CustomerService {
     companyData: any
   ): Promise<CustomerCompany> {
     try {
-      // Verify customer exists
+      // Vérifier que le client existe
       const customer = await this.customerRepository.getById(customerId);
       if (!customer) {
         throw new Error("Customer not found");
       }
 
-      // Check if SIRET already exists
+      // Vérifier si le SIRET existe déjà
       if (companyData.siretNumber) {
         const siretExists = await this.companyRepository.siretExists(
           companyData.siretNumber
@@ -451,7 +445,7 @@ class CustomerService {
         }
       }
 
-      // Check if VAT number already exists
+      // Vérifier si le numéro de TVA existe déjà
       if (companyData.vatNumber) {
         const vatExists = await this.companyRepository.vatExists(
           companyData.vatNumber
@@ -461,7 +455,7 @@ class CustomerService {
         }
       }
 
-      // Create company entity
+      // Créer l'entité entreprise
       const company = new CustomerCompany({
         ...companyData,
         customerId,
@@ -490,7 +484,7 @@ class CustomerService {
         throw new Error("Company not found");
       }
 
-      // Check if SIRET is being updated and if it conflicts
+      // Vérifier si le SIRET est mis à jour et s'il y a conflit
       if (
         companyData.siretNumber &&
         companyData.siretNumber !== company.siretNumber
@@ -504,7 +498,7 @@ class CustomerService {
         }
       }
 
-      // Check if VAT number is being updated and if it conflicts
+      // Vérifier si le numéro de TVA est mis à jour et s'il y a conflit
       if (
         companyData.vatNumber &&
         companyData.vatNumber !== company.vatNumber
@@ -518,9 +512,9 @@ class CustomerService {
         }
       }
 
-      // Update company entity
+      // Mettre à jour l'entité entreprise
       Object.assign(company, companyData);
-      company.companyId = companyId; // Ensure ID is preserved
+      company.companyId = companyId; // S'assurer que l'ID est préservé
 
       return await this.companyRepository.update(company);
     } catch (error) {

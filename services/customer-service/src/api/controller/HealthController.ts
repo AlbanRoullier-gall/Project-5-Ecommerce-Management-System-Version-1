@@ -1,11 +1,11 @@
 /**
- * Health Controller
- * Health check endpoints for service monitoring
+ * Contrôleur de Santé
+ * Points de terminaison de vérification de santé pour la surveillance du service
  *
- * Architecture : Controller pattern
- * - Health monitoring endpoints
- * - Service status reporting
- * - System diagnostics
+ * Architecture : Pattern Contrôleur
+ * - Points de terminaison de surveillance de santé
+ * - Rapport de statut du service
+ * - Diagnostics système
  */
 
 import { Request, Response } from "express";
@@ -20,7 +20,7 @@ export class HealthController {
   }
 
   /**
-   * Basic health check
+   * Vérification de santé basique
    */
   async healthCheck(req: Request, res: Response): Promise<void> {
     try {
@@ -32,7 +32,7 @@ export class HealthController {
   }
 
   /**
-   * Detailed health check with database connectivity
+   * Vérification de santé détaillée avec connectivité base de données
    */
   async detailedHealthCheck(req: Request, res: Response): Promise<void> {
     try {
@@ -56,7 +56,7 @@ export class HealthController {
   }
 
   /**
-   * Check database connection
+   * Vérifier la connexion à la base de données
    */
   private async checkDatabaseConnection(): Promise<any> {
     try {

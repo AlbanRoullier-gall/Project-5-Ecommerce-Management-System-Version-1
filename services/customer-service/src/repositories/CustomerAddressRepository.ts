@@ -1,6 +1,6 @@
 /**
- * CustomerAddressRepository
- * Handles database operations for CustomerAddress entities
+ * Repository d'Adresses Clients
+ * Gère les opérations de base de données pour les entités CustomerAddress
  */
 import { Pool } from "pg";
 import CustomerAddress, {
@@ -15,8 +15,8 @@ class CustomerAddressRepository {
   }
 
   /**
-   * Check if an address already exists for a customer with the same fields
-   * A duplicate is defined by same customer_id, address, postal_code, city, country_id
+   * Vérifier si une adresse existe déjà pour un client avec les mêmes champs
+   * Un doublon est défini par le même customer_id, address, postal_code, city, country_id
    */
   async existsForCustomer(params: {
     customerId: number;
@@ -50,9 +50,9 @@ class CustomerAddressRepository {
   }
 
   /**
-   * Get address by ID
-   * @param {number} id Address ID
-   * @returns {Promise<CustomerAddress|null>} CustomerAddress or null if not found
+   * Récupérer une adresse par ID
+   * @param {number} id ID de l'adresse
+   * @returns {Promise<CustomerAddress|null>} CustomerAddress ou null si non trouvée
    */
   async getById(id: number): Promise<CustomerAddress | null> {
     try {
@@ -88,9 +88,9 @@ class CustomerAddressRepository {
   }
 
   /**
-   * Get address by ID with joins
-   * @param {number} id Address ID
-   * @returns {Promise<CustomerAddress|null>} CustomerAddress with joined data or null if not found
+   * Récupérer une adresse par ID avec jointures
+   * @param {number} id ID de l'adresse
+   * @returns {Promise<CustomerAddress|null>} CustomerAddress avec données jointes ou null si non trouvée
    */
   async getByIdWithJoins(id: number): Promise<CustomerAddress | null> {
     try {
@@ -128,9 +128,9 @@ class CustomerAddressRepository {
   }
 
   /**
-   * List addresses by customer
-   * @param {number} customerId Customer ID
-   * @returns {Promise<CustomerAddress[]>} Array of addresses
+   * Lister les adresses par client
+   * @param {number} customerId ID du client
+   * @returns {Promise<CustomerAddress[]>} Tableau d'adresses
    */
   async listByCustomer(customerId: number): Promise<CustomerAddress[]> {
     try {
@@ -143,7 +143,7 @@ class CustomerAddressRepository {
         [customerId]
       );
 
-      // Map explicit snake_case DB columns to camelCase model fields
+      // Mapper explicitement les colonnes snake_case de la DB vers les champs camelCase du modèle
       return result.rows.map(
         (row) =>
           new CustomerAddress({
@@ -165,9 +165,9 @@ class CustomerAddressRepository {
   }
 
   /**
-   * Save new address
-   * @param {CustomerAddress} address CustomerAddress entity to save
-   * @returns {Promise<CustomerAddress>} Saved address with ID
+   * Sauvegarder une nouvelle adresse
+   * @param {CustomerAddress} address Entité CustomerAddress à sauvegarder
+   * @returns {Promise<CustomerAddress>} Adresse sauvegardée avec ID
    */
   async save(address: CustomerAddress): Promise<CustomerAddress> {
     try {
@@ -213,9 +213,9 @@ class CustomerAddressRepository {
   }
 
   /**
-   * Update existing address
-   * @param {CustomerAddress} address CustomerAddress entity to update
-   * @returns {Promise<CustomerAddress>} Updated address
+   * Mettre à jour une adresse existante
+   * @param {CustomerAddress} address Entité CustomerAddress à mettre à jour
+   * @returns {Promise<CustomerAddress>} Adresse mise à jour
    */
   async update(address: CustomerAddress): Promise<CustomerAddress> {
     try {
@@ -267,9 +267,9 @@ class CustomerAddressRepository {
   }
 
   /**
-   * Delete address
-   * @param {CustomerAddress} address CustomerAddress entity to delete
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Supprimer une adresse
+   * @param {CustomerAddress} address Entité CustomerAddress à supprimer
+   * @returns {Promise<boolean>} True si supprimée avec succès
    */
   async delete(address: CustomerAddress): Promise<boolean> {
     try {
@@ -286,9 +286,9 @@ class CustomerAddressRepository {
   }
 
   /**
-   * Unset default for all addresses of a customer (optionally excluding one)
-   * @param {number} customerId Customer ID
-   * @param {number} [excludeAddressId] Address ID to exclude from update
+   * Désactiver l'adresse par défaut pour toutes les adresses d'un client (en excluant optionnellement une)
+   * @param {number} customerId ID du client
+   * @param {number} [excludeAddressId] ID de l'adresse à exclure de la mise à jour
    */
   async unsetDefaultForCustomer(
     customerId: number,

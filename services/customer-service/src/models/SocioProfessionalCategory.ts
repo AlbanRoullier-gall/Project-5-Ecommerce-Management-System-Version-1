@@ -1,6 +1,6 @@
 /**
- * SocioProfessionalCategory ORM Entity
- * Represents socio-professional categories
+ * Entité ORM SocioProfessionalCategory
+ * Représente les catégories socio-professionnelles
  */
 export interface SocioProfessionalCategoryData {
   categoryId?: number | null;
@@ -25,8 +25,8 @@ class SocioProfessionalCategory {
   }
 
   /**
-   * Validate entity data
-   * @returns {Object} Validation result
+   * Valider les données de l'entité
+   * @returns {Object} Résultat de validation
    */
   validate(): ValidationResult {
     const errors: string[] = [];

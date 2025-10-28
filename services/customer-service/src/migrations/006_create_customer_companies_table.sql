@@ -1,5 +1,5 @@
--- Migration: Create customer_companies table
--- Description: Creates the table for customer company information
+-- Migration : Créer la table customer_companies
+-- Description : Crée la table pour les informations d'entreprise des clients
 
 CREATE TABLE IF NOT EXISTS customer_companies (
     company_id SERIAL PRIMARY KEY,
@@ -11,19 +11,19 @@ CREATE TABLE IF NOT EXISTS customer_companies (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create index on customer_id for fast lookups
+-- Créer un index sur customer_id pour des recherches rapides
 CREATE INDEX IF NOT EXISTS idx_customer_companies_customer ON customer_companies(customer_id);
 
--- Create index on company_name for search
+-- Créer un index sur company_name pour la recherche
 CREATE INDEX IF NOT EXISTS idx_customer_companies_name ON customer_companies(company_name);
 
--- Create index on siret_number for uniqueness checks
+-- Créer un index sur siret_number pour les vérifications d'unicité
 CREATE INDEX IF NOT EXISTS idx_customer_companies_siret ON customer_companies(siret_number);
 
--- Create index on vat_number for uniqueness checks
+-- Créer un index sur vat_number pour les vérifications d'unicité
 CREATE INDEX IF NOT EXISTS idx_customer_companies_vat ON customer_companies(vat_number);
 
--- Add comments for documentation
+-- Ajouter des commentaires pour la documentation
 COMMENT ON TABLE customer_companies IS 'Table for customer company information';
 COMMENT ON COLUMN customer_companies.company_id IS 'Primary key for the company';
 COMMENT ON COLUMN customer_companies.customer_id IS 'Reference to the customer';

@@ -1,5 +1,5 @@
--- Migration: Create socio_professional_categories table
--- Description: Creates the reference table for socio-professional categories
+-- Migration : Créer la table socio_professional_categories
+-- Description : Crée la table de référence pour les catégories socio-professionnelles
 
 CREATE TABLE IF NOT EXISTS socio_professional_categories (
     category_id SERIAL PRIMARY KEY,
@@ -7,16 +7,16 @@ CREATE TABLE IF NOT EXISTS socio_professional_categories (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create index on category_name for fast lookups
+-- Créer un index sur category_name pour des recherches rapides
 CREATE INDEX IF NOT EXISTS idx_socio_professional_categories_name ON socio_professional_categories(category_name);
 
--- Add comments for documentation
+-- Ajouter des commentaires pour la documentation
 COMMENT ON TABLE socio_professional_categories IS 'Reference table for socio-professional categories';
 COMMENT ON COLUMN socio_professional_categories.category_id IS 'Primary key for the category';
 COMMENT ON COLUMN socio_professional_categories.category_name IS 'Name of the socio-professional category';
 COMMENT ON COLUMN socio_professional_categories.created_at IS 'When the category was created';
 
--- Insert default socio-professional categories
+-- Insérer les catégories socio-professionnelles par défaut
 INSERT INTO socio_professional_categories (category_name) VALUES 
     ('Employee'),
     ('Manager'),

@@ -1,12 +1,12 @@
 /**
- * API Router
- * Main API configuration and routing
+ * Routeur API
+ * Configuration et routage principaux de l'API
  *
- * Architecture : Router pattern
- * - Centralized route configuration
- * - Middleware setup
- * - Authentication handling
- * - Request validation
+ * Architecture : Pattern Routeur
+ * - Configuration centralisée des routes
+ * - Configuration des middlewares
+ * - Gestion de l'authentification
+ * - Validation des requêtes
  */
 
 import express, { Request, Response, NextFunction } from "express";
@@ -23,7 +23,7 @@ import {
   CompanyController,
 } from "./controller";
 import { ResponseMapper } from "./mapper";
-// Routes are now defined directly in setupRoutes method
+// Les routes sont maintenant définies directement dans la méthode setupRoutes
 
 export class ApiRouter {
   private healthController: HealthController;
@@ -40,13 +40,13 @@ export class ApiRouter {
   }
 
   /**
-   * Setup middlewares
+   * Configuration des middlewares
    */
   private setupMiddlewares(app: express.Application): void {
-    app.use(helmet()); // Security headers
-    app.use(cors()); // CORS handling
-    app.use(express.json()); // JSON parsing
-    app.use(morgan("combined")); // Request logging
+    app.use(helmet()); // En-têtes de sécurité
+    app.use(cors()); // Gestion CORS
+    app.use(express.json()); // Analyse JSON
+    app.use(morgan("combined")); // Journalisation des requêtes
   }
 
   /**
@@ -118,7 +118,7 @@ export class ApiRouter {
   }
 
   /**
-   * Validation middleware
+   * Middleware de validation
    */
   private validateRequest = (schema: Joi.ObjectSchema) => {
     return (req: Request, res: Response, next: NextFunction): void => {

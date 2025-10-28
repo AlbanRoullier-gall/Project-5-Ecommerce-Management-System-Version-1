@@ -1,6 +1,6 @@
 /**
- * CustomerCompany ORM Entity
- * Represents a company associated with a customer
+ * Entité ORM CustomerCompany
+ * Représente une entreprise associée à un client
  */
 export interface CustomerCompanyData {
   companyId?: number | null;
@@ -11,8 +11,6 @@ export interface CustomerCompanyData {
   createdAt?: Date | null;
   updatedAt?: Date | null;
 }
-
-// CustomerCompanyPublicDTO moved to /api/dto/CompanyDTO.ts
 
 export interface ValidationResult {
   isValid: boolean;
@@ -39,8 +37,8 @@ class CustomerCompany {
   }
 
   /**
-   * Get company information as a formatted string
-   * @returns {string} Formatted company info
+   * Obtenir les informations de l'entreprise sous forme de chaîne formatée
+   * @returns {string} Informations d'entreprise formatées
    */
   getCompanyInfo(): string {
     const parts = [this.companyName];
@@ -52,8 +50,8 @@ class CustomerCompany {
   }
 
   /**
-   * Validate entity data
-   * @returns {Object} Validation result
+   * Valider les données de l'entité
+   * @returns {Object} Résultat de validation
    */
   validate(): ValidationResult {
     const errors: string[] = [];
@@ -87,24 +85,24 @@ class CustomerCompany {
   }
 
   /**
-   * Validate SIRET number format
-   * @param {string} siret SIRET number
-   * @returns {boolean} True if valid
+   * Valider le format du numéro SIRET
+   * @param {string} siret Numéro SIRET
+   * @returns {boolean} True si valide
    */
   static validateSiret(siret: string): boolean {
-    if (!siret) return true; // Optional field
+    if (!siret) return true; // Champ optionnel
 
     const cleanSiret = siret.replace(/\s/g, "");
     return /^\d{14}$/.test(cleanSiret);
   }
 
   /**
-   * Validate VAT number format
-   * @param {string} vat VAT number
-   * @returns {boolean} True if valid
+   * Valider le format du numéro de TVA
+   * @param {string} vat Numéro de TVA
+   * @returns {boolean} True si valide
    */
   static validateVat(vat: string): boolean {
-    if (!vat) return true; // Optional field
+    if (!vat) return true; // Champ optionnel
 
     const cleanVat = vat.replace(/\s/g, "");
     return /^[A-Z]{2}[A-Z0-9]{2,12}$/.test(cleanVat);

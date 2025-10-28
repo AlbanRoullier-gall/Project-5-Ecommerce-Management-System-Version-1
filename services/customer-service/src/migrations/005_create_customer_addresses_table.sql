@@ -1,5 +1,5 @@
--- Migration: Create customer_addresses table
--- Description: Creates the table for customer addresses
+-- Migration : Créer la table customer_addresses
+-- Description : Crée la table pour les adresses des clients
 
 CREATE TABLE IF NOT EXISTS customer_addresses (
     address_id SERIAL PRIMARY KEY,
@@ -14,16 +14,16 @@ CREATE TABLE IF NOT EXISTS customer_addresses (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create index on customer_id for fast lookups
+-- Créer un index sur customer_id pour des recherches rapides
 CREATE INDEX IF NOT EXISTS idx_customer_addresses_customer ON customer_addresses(customer_id);
 
--- Create index on address_type for filtering
+-- Créer un index sur address_type pour le filtrage
 CREATE INDEX IF NOT EXISTS idx_customer_addresses_type ON customer_addresses(address_type);
 
--- Create index on is_default for filtering
+-- Créer un index sur is_default pour le filtrage
 CREATE INDEX IF NOT EXISTS idx_customer_addresses_default ON customer_addresses(is_default);
 
--- Add comments for documentation
+-- Ajouter des commentaires pour la documentation
 COMMENT ON TABLE customer_addresses IS 'Table for customer addresses';
 COMMENT ON COLUMN customer_addresses.address_id IS 'Primary key for the address';
 COMMENT ON COLUMN customer_addresses.customer_id IS 'Reference to the customer';

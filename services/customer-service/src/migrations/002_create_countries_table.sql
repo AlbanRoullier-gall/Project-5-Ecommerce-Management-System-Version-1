@@ -1,5 +1,5 @@
--- Migration: Create countries table
--- Description: Creates the reference table for countries
+-- Migration : Créer la table countries
+-- Description : Crée la table de référence pour les pays
 
 CREATE TABLE IF NOT EXISTS countries (
     country_id SERIAL PRIMARY KEY,
@@ -7,16 +7,16 @@ CREATE TABLE IF NOT EXISTS countries (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create index on country_name for fast lookups
+-- Créer un index sur country_name pour des recherches rapides
 CREATE INDEX IF NOT EXISTS idx_countries_name ON countries(country_name);
 
--- Add comments for documentation
+-- Ajouter des commentaires pour la documentation
 COMMENT ON TABLE countries IS 'Reference table for countries';
 COMMENT ON COLUMN countries.country_id IS 'Primary key for the country';
 COMMENT ON COLUMN countries.country_name IS 'Name of the country';
 COMMENT ON COLUMN countries.created_at IS 'When the country was created';
 
--- Insert default countries
+-- Insérer les pays par défaut
 INSERT INTO countries (country_name) VALUES 
     ('France'),
     ('United States'),

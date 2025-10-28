@@ -1,6 +1,6 @@
 /**
- * CustomerCompanyRepository
- * Handles database operations for CustomerCompany entities
+ * Repository d'Entreprises Clients
+ * Gère les opérations de base de données pour les entités CustomerCompany
  */
 import { Pool } from "pg";
 import CustomerCompany, {
@@ -15,9 +15,9 @@ class CustomerCompanyRepository {
   }
 
   /**
-   * Get company by ID
-   * @param {number} id Company ID
-   * @returns {Promise<CustomerCompany|null>} CustomerCompany or null if not found
+   * Récupérer une entreprise par ID
+   * @param {number} id ID de l'entreprise
+   * @returns {Promise<CustomerCompany|null>} CustomerCompany ou null si non trouvée
    */
   async getById(id: number): Promise<CustomerCompany | null> {
     try {
@@ -51,9 +51,9 @@ class CustomerCompanyRepository {
   }
 
   /**
-   * List companies by customer
-   * @param {number} customerId Customer ID
-   * @returns {Promise<CustomerCompany[]>} Array of companies
+   * Lister les entreprises par client
+   * @param {number} customerId ID du client
+   * @returns {Promise<CustomerCompany[]>} Tableau d'entreprises
    */
   async listByCustomer(customerId: number): Promise<CustomerCompany[]> {
     try {
@@ -85,9 +85,9 @@ class CustomerCompanyRepository {
   }
 
   /**
-   * Save new company
-   * @param {CustomerCompany} company CustomerCompany entity to save
-   * @returns {Promise<CustomerCompany>} Saved company with ID
+   * Sauvegarder une nouvelle entreprise
+   * @param {CustomerCompany} company Entité CustomerCompany à sauvegarder
+   * @returns {Promise<CustomerCompany>} Entreprise sauvegardée avec ID
    */
   async save(company: CustomerCompany): Promise<CustomerCompany> {
     try {
@@ -128,9 +128,9 @@ class CustomerCompanyRepository {
   }
 
   /**
-   * Update existing company
-   * @param {CustomerCompany} company CustomerCompany entity to update
-   * @returns {Promise<CustomerCompany>} Updated company
+   * Mettre à jour une entreprise existante
+   * @param {CustomerCompany} company Entité CustomerCompany à mettre à jour
+   * @returns {Promise<CustomerCompany>} Entreprise mise à jour
    */
   async update(company: CustomerCompany): Promise<CustomerCompany> {
     try {
@@ -176,9 +176,9 @@ class CustomerCompanyRepository {
   }
 
   /**
-   * Delete company
-   * @param {CustomerCompany} company CustomerCompany entity to delete
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Supprimer une entreprise
+   * @param {CustomerCompany} company Entité CustomerCompany à supprimer
+   * @returns {Promise<boolean>} True si supprimée avec succès
    */
   async delete(company: CustomerCompany): Promise<boolean> {
     try {
@@ -195,10 +195,10 @@ class CustomerCompanyRepository {
   }
 
   /**
-   * Check if SIRET exists
-   * @param {string} siret SIRET number
-   * @param {number|null} excludeId Company ID to exclude from check
-   * @returns {Promise<boolean>} True if SIRET exists
+   * Vérifier si le SIRET existe
+   * @param {string} siret Numéro SIRET
+   * @param {number|null} excludeId ID de l'entreprise à exclure de la vérification
+   * @returns {Promise<boolean>} True si le SIRET existe
    */
   async siretExists(
     siret: string,
@@ -223,10 +223,10 @@ class CustomerCompanyRepository {
   }
 
   /**
-   * Check if VAT number exists
-   * @param {string} vat VAT number
-   * @param {number|null} excludeId Company ID to exclude from check
-   * @returns {Promise<boolean>} True if VAT number exists
+   * Vérifier si le numéro de TVA existe
+   * @param {string} vat Numéro de TVA
+   * @param {number|null} excludeId ID de l'entreprise à exclure de la vérification
+   * @returns {Promise<boolean>} True si le numéro de TVA existe
    */
   async vatExists(
     vat: string,

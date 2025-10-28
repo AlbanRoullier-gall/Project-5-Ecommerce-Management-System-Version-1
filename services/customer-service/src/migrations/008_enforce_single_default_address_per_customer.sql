@@ -1,5 +1,5 @@
--- Enforce a single default address per customer
--- 1) Clean existing data to ensure at most one default per customer
+-- Imposer une seule adresse par défaut par client
+-- 1) Nettoyer les données existantes pour s'assurer qu'il y a au plus une par défaut par client
 WITH duplicates AS (
   SELECT
     address_id,
@@ -17,7 +17,7 @@ FROM duplicates d
 WHERE ca.address_id = d.address_id
   AND d.rn > 1;
 
--- 2) Create a partial unique index to guarantee only one default per customer
+-- 2) Créer un index unique partiel pour garantir une seule adresse par défaut par client
 DO $$
 BEGIN
   BEGIN

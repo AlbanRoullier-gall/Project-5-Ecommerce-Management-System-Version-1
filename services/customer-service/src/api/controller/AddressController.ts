@@ -1,11 +1,11 @@
 /**
- * Address Controller
- * Handles customer address management operations
+ * Contrôleur d'Adresses
+ * Gère les opérations de gestion des adresses clients
  *
- * Architecture : Controller pattern
- * - HTTP request handling
- * - Business logic orchestration
- * - Response formatting
+ * Architecture : Pattern Contrôleur
+ * - Gestion des requêtes HTTP
+ * - Orchestration de la logique métier
+ * - Formatage des réponses
  */
 
 import { Request, Response } from "express";
@@ -17,7 +17,7 @@ export class AddressController {
   constructor(private customerService: CustomerService) {}
 
   /**
-   * Get customer addresses
+   * Récupérer les adresses d'un client
    */
   async getCustomerAddresses(req: Request, res: Response): Promise<void> {
     try {
@@ -46,7 +46,7 @@ export class AddressController {
   }
 
   /**
-   * Get address by ID
+   * Récupérer une adresse par ID
    */
   async getAddressById(req: Request, res: Response): Promise<void> {
     try {
@@ -73,7 +73,7 @@ export class AddressController {
   }
 
   /**
-   * Create new address
+   * Créer une nouvelle adresse
    */
   async createAddress(req: Request, res: Response): Promise<void> {
     try {
@@ -120,7 +120,7 @@ export class AddressController {
   }
 
   /**
-   * Update address
+   * Mettre à jour une adresse
    */
   async updateAddress(req: Request, res: Response): Promise<void> {
     try {
@@ -153,7 +153,7 @@ export class AddressController {
   }
 
   /**
-   * Delete address
+   * Supprimer une adresse
    */
   async deleteAddress(req: Request, res: Response): Promise<void> {
     try {

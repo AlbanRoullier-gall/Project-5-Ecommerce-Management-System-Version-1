@@ -1,6 +1,6 @@
 /**
- * CustomerRepository
- * Handles database operations for Customer entities
+ * Repository de Clients
+ * Gère les opérations de base de données pour les entités Customer
  */
 import { Pool } from "pg";
 import Customer, { CustomerData } from "../models/Customer";
@@ -30,9 +30,9 @@ class CustomerRepository {
   }
 
   /**
-   * Get customer by ID
-   * @param {number} id Customer ID
-   * @returns {Promise<Customer|null>} Customer or null if not found
+   * Récupérer un client par ID
+   * @param {number} id ID du client
+   * @returns {Promise<Customer|null>} Client ou null si non trouvé
    */
   async getById(id: number): Promise<Customer | null> {
     try {
@@ -71,9 +71,9 @@ class CustomerRepository {
   }
 
   /**
-   * Get customer by ID with joins
-   * @param {number} id Customer ID
-   * @returns {Promise<Customer|null>} Customer with joined data or null if not found
+   * Récupérer un client par ID avec jointures
+   * @param {number} id ID du client
+   * @returns {Promise<Customer|null>} Client avec données jointes ou null si non trouvé
    */
   async getByIdWithJoins(id: number): Promise<Customer | null> {
     try {
@@ -116,9 +116,9 @@ class CustomerRepository {
   }
 
   /**
-   * Get customer by email
-   * @param {string} email Customer email
-   * @returns {Promise<Customer|null>} Customer or null if not found
+   * Récupérer un client par email
+   * @param {string} email Email du client
+   * @returns {Promise<Customer|null>} Client ou null si non trouvé
    */
   async getByEmail(email: string): Promise<Customer | null> {
     try {
@@ -157,8 +157,8 @@ class CustomerRepository {
   }
 
   /**
-   * List all active customers
-   * @returns {Promise<Customer[]>} Array of active customers
+   * Lister tous les clients actifs
+   * @returns {Promise<Customer[]>} Tableau des clients actifs
    */
   async listAllActive(): Promise<Customer[]> {
     try {
@@ -179,9 +179,9 @@ class CustomerRepository {
   }
 
   /**
-   * List customers with pagination and search
-   * @param {Object} options Pagination and search options
-   * @returns {Promise<Object>} Customers and pagination info
+   * Lister les clients avec pagination et recherche
+   * @param {Object} options Options de pagination et de recherche
+   * @returns {Promise<Object>} Clients et informations de pagination
    */
   async listAll(
     options: CustomerListOptions = {}
@@ -225,7 +225,7 @@ class CustomerRepository {
 
       const result = await this.pool.query(query, params);
 
-      // Get total count
+      // Obtenir le nombre total
       let countQuery = `
         SELECT COUNT(*) 
         FROM customers c
@@ -273,9 +273,9 @@ class CustomerRepository {
   }
 
   /**
-   * Save new customer
-   * @param {Customer} customer Customer entity to save
-   * @returns {Promise<Customer>} Saved customer with ID
+   * Sauvegarder un nouveau client
+   * @param {Customer} customer Entité Customer à sauvegarder
+   * @returns {Promise<Customer>} Client sauvegardé avec ID
    */
   async save(customer: Customer): Promise<Customer> {
     try {
@@ -325,9 +325,9 @@ class CustomerRepository {
   }
 
   /**
-   * Update existing customer
-   * @param {Customer} customer Customer entity to update
-   * @returns {Promise<Customer>} Updated customer
+   * Mettre à jour un client existant
+   * @param {Customer} customer Entité Customer à mettre à jour
+   * @returns {Promise<Customer>} Client mis à jour
    */
   async update(customer: Customer): Promise<Customer> {
     try {
@@ -384,9 +384,9 @@ class CustomerRepository {
   }
 
   /**
-   * Delete customer
-   * @param {Customer} customer Customer entity to delete
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Supprimer un client
+   * @param {Customer} customer Entité Customer à supprimer
+   * @returns {Promise<boolean>} True si supprimé avec succès
    */
   async delete(customer: Customer): Promise<boolean> {
     try {
@@ -403,10 +403,10 @@ class CustomerRepository {
   }
 
   /**
-   * Check if email exists
-   * @param {string} email Email to check
-   * @param {number|null} excludeId Customer ID to exclude from check (for updates)
-   * @returns {Promise<boolean>} True if email exists
+   * Vérifier si l'email existe
+   * @param {string} email Email à vérifier
+   * @param {number|null} excludeId ID du client à exclure de la vérification (pour les mises à jour)
+   * @returns {Promise<boolean>} True si l'email existe
    */
   async emailExists(
     email: string,
@@ -430,7 +430,7 @@ class CustomerRepository {
   }
 
   /**
-   * Create customer with merge of data (like auth-service)
+   * Créer un client avec fusion des données (comme auth-service)
    */
   createCustomerWithMerge(
     existingCustomer: Customer,

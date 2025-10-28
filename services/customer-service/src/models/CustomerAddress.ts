@@ -1,6 +1,6 @@
 /**
- * CustomerAddress ORM Entity
- * Represents a customer's shipping address
+ * Entité ORM CustomerAddress
+ * Représente l'adresse d'expédition d'un client
  */
 export interface CustomerAddressData {
   addressId: number;
@@ -13,8 +13,6 @@ export interface CustomerAddressData {
   createdAt: Date;
   updatedAt: Date;
 }
-
-// CustomerAddressPublicDTO moved to /api/dto/AddressDTO.ts
 
 export interface ValidationResult {
   isValid: boolean;
@@ -46,23 +44,23 @@ class CustomerAddress {
   }
 
   /**
-   * Format address as a single string
-   * @returns {string} Formatted address
+   * Formater l'adresse en une seule chaîne
+   * @returns {string} Adresse formatée
    */
   formatAddress(): string {
     return `${this.address}, ${this.postalCode} ${this.city}`.trim();
   }
 
   /**
-   * Set this address as default
+   * Définir cette adresse comme par défaut
    */
   setAsDefault(): void {
     this.isDefault = true;
   }
 
   /**
-   * Validate entity data
-   * @returns {Object} Validation result
+   * Valider les données de l'entité
+   * @returns {Object} Résultat de validation
    */
   validate(): ValidationResult {
     const errors: string[] = [];

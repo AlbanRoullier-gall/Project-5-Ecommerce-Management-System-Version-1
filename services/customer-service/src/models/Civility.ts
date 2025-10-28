@@ -1,6 +1,6 @@
 /**
- * Civility ORM Entity
- * Represents civility titles (Mr, Mrs, etc.)
+ * Entité ORM Civility
+ * Représente les titres de civilité (M., Mme, etc.)
  */
 export interface CivilityData {
   civilityId?: number | null;
@@ -25,8 +25,8 @@ class Civility {
   }
 
   /**
-   * Validate entity data
-   * @returns {Object} Validation result
+   * Valider les données de l'entité
+   * @returns {Object} Résultat de validation
    */
   validate(): ValidationResult {
     const errors: string[] = [];

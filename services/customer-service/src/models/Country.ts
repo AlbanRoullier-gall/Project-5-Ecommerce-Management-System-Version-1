@@ -1,6 +1,6 @@
 /**
- * Country ORM Entity
- * Represents countries
+ * Entité ORM Country
+ * Représente les pays
  */
 export interface CountryData {
   countryId?: number | null;
@@ -25,8 +25,8 @@ class Country {
   }
 
   /**
-   * Validate entity data
-   * @returns {Object} Validation result
+   * Valider les données de l'entité
+   * @returns {Object} Résultat de validation
    */
   validate(): ValidationResult {
     const errors: string[] = [];

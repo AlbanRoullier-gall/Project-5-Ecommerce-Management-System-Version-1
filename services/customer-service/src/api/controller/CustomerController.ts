@@ -1,11 +1,11 @@
 /**
- * Customer Controller
- * Handles customer management operations
+ * Contrôleur de Clients
+ * Gère les opérations de gestion des clients
  *
- * Architecture : Controller pattern
- * - HTTP request handling
- * - Business logic orchestration
- * - Response formatting
+ * Architecture : Pattern Contrôleur
+ * - Gestion des requêtes HTTP
+ * - Orchestration de la logique métier
+ * - Formatage des réponses
  */
 
 import { Request, Response } from "express";
@@ -100,7 +100,7 @@ export class CustomerController {
   }
 
   /**
-   * Update customer
+   * Mettre à jour un client
    */
   async updateCustomer(req: Request, res: Response): Promise<void> {
     try {
@@ -133,7 +133,7 @@ export class CustomerController {
   }
 
   /**
-   * Delete customer
+   * Supprimer un client
    */
   async deleteCustomer(req: Request, res: Response): Promise<void> {
     try {
@@ -157,7 +157,7 @@ export class CustomerController {
   }
 
   /**
-   * List customers with pagination
+   * Lister les clients avec pagination
    */
   async listCustomers(req: Request, res: Response): Promise<void> {
     try {
@@ -187,7 +187,7 @@ export class CustomerController {
   }
 
   /**
-   * Activate customer
+   * Activer un client
    */
   async activateCustomer(req: Request, res: Response): Promise<void> {
     try {
@@ -209,7 +209,7 @@ export class CustomerController {
   }
 
   /**
-   * Deactivate customer
+   * Désactiver un client
    */
   async deactivateCustomer(req: Request, res: Response): Promise<void> {
     try {
@@ -231,7 +231,7 @@ export class CustomerController {
   }
 
   /**
-   * Get all civilities
+   * Récupérer toutes les civilités
    */
   async getCivilities(req: Request, res: Response): Promise<void> {
     try {
@@ -244,7 +244,7 @@ export class CustomerController {
   }
 
   /**
-   * Get all socio-professional categories
+   * Récupérer toutes les catégories socio-professionnelles
    */
   async getCategories(req: Request, res: Response): Promise<void> {
     try {
@@ -257,7 +257,7 @@ export class CustomerController {
   }
 
   /**
-   * Get all countries
+   * Récupérer tous les pays
    */
   async getCountries(req: Request, res: Response): Promise<void> {
     try {

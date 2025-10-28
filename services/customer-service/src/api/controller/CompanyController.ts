@@ -1,11 +1,11 @@
 /**
- * Company Controller
- * Handles customer company management operations
+ * Contrôleur d'Entreprises
+ * Gère les opérations de gestion des entreprises clients
  *
- * Architecture : Controller pattern
- * - HTTP request handling
- * - Business logic orchestration
- * - Response formatting
+ * Architecture : Pattern Contrôleur
+ * - Gestion des requêtes HTTP
+ * - Orchestration de la logique métier
+ * - Formatage des réponses
  */
 
 import { Request, Response } from "express";
@@ -17,7 +17,7 @@ export class CompanyController {
   constructor(private customerService: CustomerService) {}
 
   /**
-   * Get customer companies
+   * Récupérer les entreprises d'un client
    */
   async getCustomerCompanies(req: Request, res: Response): Promise<void> {
     try {
@@ -46,7 +46,7 @@ export class CompanyController {
   }
 
   /**
-   * Get company by ID
+   * Récupérer une entreprise par ID
    */
   async getCompanyById(req: Request, res: Response): Promise<void> {
     try {
@@ -73,7 +73,7 @@ export class CompanyController {
   }
 
   /**
-   * Create new company
+   * Créer une nouvelle entreprise
    */
   async createCompany(req: Request, res: Response): Promise<void> {
     try {
@@ -114,7 +114,7 @@ export class CompanyController {
   }
 
   /**
-   * Update company
+   * Mettre à jour une entreprise
    */
   async updateCompany(req: Request, res: Response): Promise<void> {
     try {
@@ -151,7 +151,7 @@ export class CompanyController {
   }
 
   /**
-   * Delete company
+   * Supprimer une entreprise
    */
   async deleteCompany(req: Request, res: Response): Promise<void> {
     try {

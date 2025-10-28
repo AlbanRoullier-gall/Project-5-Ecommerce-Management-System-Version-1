@@ -1,5 +1,5 @@
--- Migration: Remove billing addresses
--- Description: Removes all billing addresses
+-- Migration : Supprimer les adresses de facturation
+-- Description : Supprime toutes les adresses de facturation
 
--- Delete all billing addresses
+-- Supprimer toutes les adresses de facturation
 DELETE FROM customer_addresses WHERE address_type = 'billing';

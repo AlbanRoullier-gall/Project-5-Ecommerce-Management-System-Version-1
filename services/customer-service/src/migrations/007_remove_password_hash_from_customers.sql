@@ -1,8 +1,8 @@
--- Migration: Remove password_hash from customers table
--- Description: Removes the password_hash column since customer-service doesn't handle authentication
+-- Migration : Supprimer password_hash de la table customers
+-- Description : Supprime la colonne password_hash car le service client ne gère pas l'authentification
 
--- Drop the password_hash column from customers table
+-- Supprimer la colonne password_hash de la table customers
 ALTER TABLE customers DROP COLUMN IF EXISTS password_hash;
 
--- Update the comment to reflect the change
+-- Mettre à jour le commentaire pour refléter le changement
 COMMENT ON TABLE customers IS 'Main table for customer information (no authentication)';

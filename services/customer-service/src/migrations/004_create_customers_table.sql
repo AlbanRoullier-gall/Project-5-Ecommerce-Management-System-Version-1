@@ -1,5 +1,5 @@
--- Migration: Create customers table
--- Description: Creates the main table for customer information
+-- Migration : Créer la table customers
+-- Description : Crée la table principale pour les informations des clients
 
 CREATE TABLE IF NOT EXISTS customers (
     customer_id SERIAL PRIMARY KEY,
@@ -15,19 +15,19 @@ CREATE TABLE IF NOT EXISTS customers (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create index on email for fast lookups
+-- Créer un index sur email pour des recherches rapides
 CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
 
--- Create index on first_name and last_name for search
+-- Créer un index sur first_name et last_name pour la recherche
 CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(first_name, last_name);
 
--- Create index on is_active for filtering
+-- Créer un index sur is_active pour le filtrage
 CREATE INDEX IF NOT EXISTS idx_customers_active ON customers(is_active);
 
--- Create index on created_at for ordering
+-- Créer un index sur created_at pour le tri
 CREATE INDEX IF NOT EXISTS idx_customers_created ON customers(created_at);
 
--- Add comments for documentation
+-- Ajouter des commentaires pour la documentation
 COMMENT ON TABLE customers IS 'Main table for customer information';
 COMMENT ON COLUMN customers.customer_id IS 'Primary key for the customer';
 COMMENT ON COLUMN customers.civility_id IS 'Reference to civility';
