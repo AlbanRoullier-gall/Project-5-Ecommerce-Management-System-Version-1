@@ -22,16 +22,16 @@ export default class CartService {
   }
 
   /**
-   * Créer un nouveau panier
+   * Créer un nouveau panier (méthode interne)
    */
-  async createCart(cartData: DTO.CartCreateDTO): Promise<Cart> {
+  private async createCart(sessionId: string): Promise<Cart> {
     const cartId = uuidv4();
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 1 jour
 
     const cart = new Cart({
       id: cartId,
-      session_id: cartData.sessionId,
+      session_id: sessionId,
       items: [],
       subtotal: 0,
       tax: 0,
@@ -62,7 +62,7 @@ export default class CartService {
     let cart = await this.getCart(sessionId);
 
     if (!cart) {
-      cart = await this.createCart({ sessionId });
+      cart = await this.createCart(sessionId);
     }
 
     const cartItem = new CartItem({

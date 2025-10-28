@@ -6,29 +6,13 @@
 import { Request, Response } from "express";
 import CartService from "../../services/CartService";
 import { CartMapper, ResponseMapper } from "../mapper";
-import { CartItemCreateDTO, CartItemUpdateDTO, CartCreateDTO } from "../dto";
+import { CartItemCreateDTO, CartItemUpdateDTO, CartClearDTO } from "../dto";
 
 export class CartController {
   private cartService: CartService;
 
   constructor(cartService: CartService) {
     this.cartService = cartService;
-  }
-
-  /**
-   * Créer un panier
-   */
-  async createCart(req: Request, res: Response): Promise<void> {
-    try {
-      const cartData = CartMapper.cartCreateDTOToServiceData(
-        req.body as CartCreateDTO
-      );
-      const cart = await this.cartService.createCart(cartData);
-      res.status(201).json(ResponseMapper.cartCreated(cart));
-    } catch (error: any) {
-      console.error("Create cart error:", error);
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
   }
 
   /**
@@ -177,16 +161,11 @@ export class CartController {
    */
   async clearCart(req: Request, res: Response): Promise<void> {
     try {
-      const { sessionId } = req.query;
+      const clearData = CartMapper.cartClearDTOToServiceData(
+        req.body as CartClearDTO
+      );
 
-      if (!sessionId) {
-        res
-          .status(400)
-          .json(ResponseMapper.validationError("sessionId is required"));
-        return;
-      }
-
-      const cart = await this.cartService.clearCart(sessionId as string);
+      const cart = await this.cartService.clearCart(clearData.sessionId);
 
       res.status(200).json(ResponseMapper.cartCleared(cart));
     } catch (error: any) {

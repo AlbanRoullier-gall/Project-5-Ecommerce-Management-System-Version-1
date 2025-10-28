@@ -41,14 +41,6 @@ export interface CartItemPublicDTO {
 // ===== TYPES BASÉS SUR CartData =====
 
 /**
- * DTO pour créer un panier
- * Basé sur CartData avec session
- */
-export interface CartCreateDTO {
-  sessionId: string;
-}
-
-/**
  * DTO public pour un panier
  * Basé sur CartData avec articles
  */
@@ -65,13 +57,6 @@ export interface CartPublicDTO {
 }
 
 // ===== TYPES SPÉCIFIQUES =====
-
-/**
- * DTO pour les options de récupération de panier
- */
-export interface CartGetOptionsDTO {
-  sessionId: string;
-}
 
 /**
  * DTO pour vider le panier

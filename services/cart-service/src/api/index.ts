@@ -38,11 +38,6 @@ export class ApiRouter {
    */
   private setupValidationSchemas() {
     return {
-      // Schéma de création de panier
-      cartCreateSchema: Joi.object({
-        sessionId: Joi.string().required(),
-      }),
-
       // Schéma de création d'article de panier
       cartItemCreateSchema: Joi.object({
         productId: Joi.number().positive().required(),
@@ -54,6 +49,11 @@ export class ApiRouter {
       // Schéma de mise à jour d'article de panier
       cartItemUpdateSchema: Joi.object({
         quantity: Joi.number().positive().required(),
+      }),
+
+      // Schéma de vidage de panier
+      cartClearSchema: Joi.object({
+        sessionId: Joi.string().required(),
       }),
     };
   }
@@ -95,15 +95,6 @@ export class ApiRouter {
     });
 
     // ===== ROUTES DE PANIER =====
-    // Créer un panier
-    app.post(
-      "/api/cart",
-      this.validateRequest(schemas.cartCreateSchema),
-      (req: Request, res: Response) => {
-        this.cartController.createCart(req, res);
-      }
-    );
-
     // Récupérer un panier
     app.get("/api/cart", (req: Request, res: Response) => {
       this.cartController.getCart(req, res);
@@ -133,9 +124,13 @@ export class ApiRouter {
     });
 
     // Vider le panier
-    app.delete("/api/cart", (req: Request, res: Response) => {
-      this.cartController.clearCart(req, res);
-    });
+    app.delete(
+      "/api/cart",
+      this.validateRequest(schemas.cartClearSchema),
+      (req: Request, res: Response) => {
+        this.cartController.clearCart(req, res);
+      }
+    );
 
     // ===== GESTION DES ERREURS =====
     app.use((req: Request, res: Response) => {

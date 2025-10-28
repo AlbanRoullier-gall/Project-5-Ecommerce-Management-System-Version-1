@@ -5,7 +5,12 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { CartPublicDTO } from "../dto";
+import {
+  CartPublicDTO,
+  CartItemCreateDTO,
+  CartItemUpdateDTO,
+  CartClearDTO,
+} from "../dto";
 
 /**
  * URL de l'API depuis les variables d'environnement
@@ -215,17 +220,20 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       const url = `${API_URL}/api/cart/items?sessionId=${sessionId}`;
       console.log(`📡 POST ${url}`);
 
+      // Créer le DTO pour l'ajout d'article
+      const itemData: CartItemCreateDTO = {
+        productId,
+        quantity,
+        price: priceTTC,
+        vatRate,
+      };
+
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          productId,
-          quantity,
-          price: priceTTC,
-          vatRate,
-        }),
+        body: JSON.stringify(itemData),
       });
 
       if (!response.ok) {
@@ -268,6 +276,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setError(null);
 
     try {
+      // Créer le DTO pour la mise à jour d'article
+      const updateData: CartItemUpdateDTO = {
+        quantity,
+      };
+
       const response = await fetch(
         `${API_URL}/api/cart/items/${productId}?sessionId=${sessionId}`,
         {
@@ -275,7 +288,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ quantity }),
+          body: JSON.stringify(updateData),
         }
       );
 
@@ -340,12 +353,18 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setError(null);
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/cart?sessionId=${sessionId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      // Créer le DTO pour le vidage de panier
+      const clearData: CartClearDTO = {
+        sessionId: sessionId,
+      };
+
+      const response = await fetch(`${API_URL}/api/cart`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(clearData),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();

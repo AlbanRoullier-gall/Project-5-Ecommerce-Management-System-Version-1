@@ -29,15 +29,6 @@ export class CartMapper {
   }
 
   /**
-   * Convertir CartCreateDTO en données de service
-   */
-  static cartCreateDTOToServiceData(dto: DTO.CartCreateDTO): any {
-    return {
-      sessionId: dto.sessionId,
-    };
-  }
-
-  /**
    * Convertir le modèle Cart en CartPublicDTO
    */
   static cartToPublicDTO(cart: Cart): DTO.CartPublicDTO {
@@ -87,6 +78,15 @@ export class CartMapper {
   static cartItemUpdateDTOToServiceData(dto: DTO.CartItemUpdateDTO): any {
     return {
       quantity: dto.quantity,
+    };
+  }
+
+  /**
+   * Convertir CartClearDTO en données de service
+   */
+  static cartClearDTOToServiceData(dto: DTO.CartClearDTO): any {
+    return {
+      sessionId: dto.sessionId,
     };
   }
 }
