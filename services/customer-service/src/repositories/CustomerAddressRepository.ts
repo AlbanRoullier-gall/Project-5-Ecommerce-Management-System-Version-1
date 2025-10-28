@@ -88,7 +88,6 @@ class CustomerAddressRepository {
     }
   }
 
-
   /**
    * Lister les adresses par client
    * @param {number} customerId ID du client

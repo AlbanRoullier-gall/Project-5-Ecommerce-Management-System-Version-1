@@ -43,7 +43,10 @@ class CustomerService {
     try {
       return await repositoryMethod(id);
     } catch (error) {
-      console.error(`Error getting ${entityName} by ID:`, error);
+      console.error(
+        `Erreur lors de la récupération de ${entityName} par ID:`,
+        error
+      );
       throw error;
     }
   }
@@ -89,7 +92,7 @@ class CustomerService {
 
       // Créer l'entité client avec des données temporaires pour l'insertion
       const customerData: CustomerData = {
-        customerId: 0, // Sera remplacé par la DB
+        customerId: 0, // Sera remplacé par la base de données
         civilityId: civilityIdToUse!,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -109,15 +112,15 @@ class CustomerService {
       // Retourner le client
       return savedCustomer;
     } catch (error) {
-      console.error("Error creating customer:", error);
+      console.error("Erreur lors de la création du client:", error);
       throw error;
     }
   }
 
   /**
-   * Get customer by ID
-   * @param {number} id Customer ID
-   * @returns {Promise<Customer|null>} Customer or null if not found
+   * Récupérer un client par ID
+   * @param {number} id ID du client
+   * @returns {Promise<Customer|null>} Client ou null si non trouvé
    */
   async getCustomerById(id: number): Promise<Customer | null> {
     return this.getEntityById(
@@ -128,15 +131,18 @@ class CustomerService {
   }
 
   /**
-   * Get customer by email
-   * @param {string} email Customer email
-   * @returns {Promise<Customer|null>} Customer or null if not found
+   * Récupérer un client par email
+   * @param {string} email Email du client
+   * @returns {Promise<Customer|null>} Client ou null si non trouvé
    */
   async getCustomerByEmail(email: string): Promise<Customer | null> {
     try {
       return await this.customerRepository.getByEmail(email);
     } catch (error) {
-      console.error("Error getting customer by email:", error);
+      console.error(
+        "Erreur lors de la récupération du client par email:",
+        error
+      );
       throw error;
     }
   }
@@ -153,7 +159,7 @@ class CustomerService {
     try {
       const customer = await this.customerRepository.getById(id);
       if (!customer) {
-        throw new Error("Customer not found");
+        throw new Error("Client non trouvé");
       }
 
       // Vérifier si l'email est mis à jour et s'il y a conflit
@@ -163,7 +169,7 @@ class CustomerService {
           id
         );
         if (emailExists) {
-          throw new Error("Email already exists");
+          throw new Error("Email déjà existant");
         }
       }
 
@@ -174,26 +180,26 @@ class CustomerService {
       );
       return await this.customerRepository.update(updatedCustomer);
     } catch (error) {
-      console.error("Error updating customer:", error);
+      console.error("Erreur lors de la mise à jour du client:", error);
       throw error;
     }
   }
 
   /**
-   * Delete customer
-   * @param {number} id Customer ID
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Supprimer un client
+   * @param {number} id ID du client
+   * @returns {Promise<boolean>} True si supprimé avec succès
    */
   async deleteCustomer(id: number): Promise<boolean> {
     try {
       const customer = await this.customerRepository.getById(id);
       if (!customer) {
-        throw new Error("Customer not found");
+        throw new Error("Client non trouvé");
       }
 
       return await this.customerRepository.delete(customer);
     } catch (error) {
-      console.error("Error deleting customer:", error);
+      console.error("Erreur lors de la suppression du client:", error);
       throw error;
     }
   }
@@ -205,9 +211,9 @@ class CustomerService {
   // ===== LISTES ET RECHERCHES =====
 
   /**
-   * List customers with pagination and search
-   * @param {Object} options Pagination and search options
-   * @returns {Promise<Object>} Customers and pagination info
+   * Lister les clients avec pagination et recherche
+   * @param {Object} options Options de pagination et recherche
+   * @returns {Promise<Object>} Clients et informations de pagination
    */
   async listCustomers(
     options: {
@@ -223,16 +229,16 @@ class CustomerService {
     try {
       return await this.customerRepository.listAll(options);
     } catch (error) {
-      console.error("Error listing customers:", error);
+      console.error("Erreur lors de la liste des clients:", error);
       throw error;
     }
   }
 
   /**
-   * Add address to customer
-   * @param {number} customerId Customer ID
-   * @param {Object} addressData Address data
-   * @returns {Promise<CustomerAddress>} Created address
+   * Ajouter une adresse à un client
+   * @param {number} customerId ID du client
+   * @param {Object} addressData Données de l'adresse
+   * @returns {Promise<CustomerAddress>} Adresse créée
    */
   async addAddress(
     customerId: number,
@@ -242,7 +248,7 @@ class CustomerService {
       // Vérifier que le client existe
       const customer = await this.customerRepository.getById(customerId);
       if (!customer) {
-        throw new Error("Customer not found");
+        throw new Error("Client non trouvé");
       }
 
       // Vérifier les adresses en double avant de modifier les valeurs par défaut
@@ -254,7 +260,7 @@ class CustomerService {
         countryId: addressData.countryId,
       });
       if (duplicateExists) {
-        throw new Error("Address already exists");
+        throw new Error("Adresse déjà existante");
       }
 
       // Si ceci est défini comme par défaut, désactiver les autres adresses par défaut pour le client
@@ -270,16 +276,16 @@ class CustomerService {
 
       return await this.addressRepository.save(address);
     } catch (error) {
-      console.error("Error adding address:", error);
+      console.error("Erreur lors de l'ajout de l'adresse:", error);
       throw error;
     }
   }
 
   /**
-   * Update address
-   * @param {number} addressId Address ID
-   * @param {Object} addressData Address data
-   * @returns {Promise<CustomerAddress>} Updated address
+   * Mettre à jour une adresse
+   * @param {number} addressId ID de l'adresse
+   * @param {Object} addressData Données de l'adresse
+   * @returns {Promise<CustomerAddress>} Adresse mise à jour
    */
   async updateAddress(
     addressId: number,
@@ -288,7 +294,7 @@ class CustomerService {
     try {
       const address = await this.addressRepository.getById(addressId);
       if (!address) {
-        throw new Error("Address not found");
+        throw new Error("Adresse non trouvée");
       }
 
       // Si ceci est défini comme par défaut, désactiver les autres adresses par défaut pour le client
@@ -305,48 +311,48 @@ class CustomerService {
 
       return await this.addressRepository.update(address);
     } catch (error) {
-      console.error("Error updating address:", error);
+      console.error("Erreur lors de la mise à jour de l'adresse:", error);
       throw error;
     }
   }
 
   /**
-   * Delete address
-   * @param {number} addressId Address ID
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Supprimer une adresse
+   * @param {number} addressId ID de l'adresse
+   * @returns {Promise<boolean>} True si supprimée avec succès
    */
   async deleteAddress(addressId: number): Promise<boolean> {
     try {
       const address = await this.addressRepository.getById(addressId);
       if (!address) {
-        throw new Error("Address not found");
+        throw new Error("Adresse non trouvée");
       }
 
       return await this.addressRepository.delete(address);
     } catch (error) {
-      console.error("Error deleting address:", error);
+      console.error("Erreur lors de la suppression de l'adresse:", error);
       throw error;
     }
   }
 
   /**
-   * List customer addresses
-   * @param {number} customerId Customer ID
-   * @returns {Promise<CustomerAddress[]>} Array of addresses
+   * Lister les adresses d'un client
+   * @param {number} customerId ID du client
+   * @returns {Promise<CustomerAddress[]>} Tableau d'adresses
    */
   async listCustomerAddresses(customerId: number): Promise<CustomerAddress[]> {
     try {
       return await this.addressRepository.listByCustomer(customerId);
     } catch (error) {
-      console.error("Error listing customer addresses:", error);
+      console.error("Erreur lors de la liste des adresses du client:", error);
       throw error;
     }
   }
 
   /**
-   * Get address by ID
-   * @param {number} addressId Address ID
-   * @returns {Promise<CustomerAddress|null>} Address or null if not found
+   * Récupérer une adresse par ID
+   * @param {number} addressId ID de l'adresse
+   * @returns {Promise<CustomerAddress|null>} Adresse ou null si non trouvée
    */
   async getAddressById(addressId: number): Promise<CustomerAddress | null> {
     return this.getEntityById(
@@ -356,13 +362,13 @@ class CustomerService {
     );
   }
 
-  // Méthodes de gestion des entreprises
+  // ===== GESTION DES ENTREPRISES =====
 
   /**
-   * Add company to customer
-   * @param {number} customerId Customer ID
-   * @param {Object} companyData Company data
-   * @returns {Promise<CustomerCompany>} Created company
+   * Ajouter une entreprise à un client
+   * @param {number} customerId ID du client
+   * @param {Object} companyData Données de l'entreprise
+   * @returns {Promise<CustomerCompany>} Entreprise créée
    */
   async addCompany(
     customerId: number,
@@ -372,7 +378,7 @@ class CustomerService {
       // Vérifier que le client existe
       const customer = await this.customerRepository.getById(customerId);
       if (!customer) {
-        throw new Error("Customer not found");
+        throw new Error("Client non trouvé");
       }
 
       // Vérifier si le SIRET existe déjà
@@ -381,7 +387,7 @@ class CustomerService {
           companyData.siretNumber
         );
         if (siretExists) {
-          throw new Error("SIRET number already exists");
+          throw new Error("Numéro SIRET déjà existant");
         }
       }
 
@@ -391,7 +397,7 @@ class CustomerService {
           companyData.vatNumber
         );
         if (vatExists) {
-          throw new Error("VAT number already exists");
+          throw new Error("Numéro de TVA déjà existant");
         }
       }
 
@@ -403,16 +409,16 @@ class CustomerService {
 
       return await this.companyRepository.save(company);
     } catch (error) {
-      console.error("Error adding company:", error);
+      console.error("Erreur lors de l'ajout de l'entreprise:", error);
       throw error;
     }
   }
 
   /**
-   * Update company
-   * @param {number} companyId Company ID
-   * @param {Object} companyData Company data
-   * @returns {Promise<CustomerCompany>} Updated company
+   * Mettre à jour une entreprise
+   * @param {number} companyId ID de l'entreprise
+   * @param {Object} companyData Données de l'entreprise
+   * @returns {Promise<CustomerCompany>} Entreprise mise à jour
    */
   async updateCompany(
     companyId: number,
@@ -421,7 +427,7 @@ class CustomerService {
     try {
       const company = await this.companyRepository.getById(companyId);
       if (!company) {
-        throw new Error("Company not found");
+        throw new Error("Entreprise non trouvée");
       }
 
       // Vérifier si le SIRET est mis à jour et s'il y a conflit
@@ -434,7 +440,7 @@ class CustomerService {
           companyId
         );
         if (siretExists) {
-          throw new Error("SIRET number already exists");
+          throw new Error("Numéro SIRET déjà existant");
         }
       }
 
@@ -448,7 +454,7 @@ class CustomerService {
           companyId
         );
         if (vatExists) {
-          throw new Error("VAT number already exists");
+          throw new Error("Numéro de TVA déjà existant");
         }
       }
 
@@ -458,48 +464,51 @@ class CustomerService {
 
       return await this.companyRepository.update(company);
     } catch (error) {
-      console.error("Error updating company:", error);
+      console.error("Erreur lors de la mise à jour de l'entreprise:", error);
       throw error;
     }
   }
 
   /**
-   * Delete company
-   * @param {number} companyId Company ID
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Supprimer une entreprise
+   * @param {number} companyId ID de l'entreprise
+   * @returns {Promise<boolean>} True si supprimée avec succès
    */
   async deleteCompany(companyId: number): Promise<boolean> {
     try {
       const company = await this.companyRepository.getById(companyId);
       if (!company) {
-        throw new Error("Company not found");
+        throw new Error("Entreprise non trouvée");
       }
 
       return await this.companyRepository.delete(company);
     } catch (error) {
-      console.error("Error deleting company:", error);
+      console.error("Erreur lors de la suppression de l'entreprise:", error);
       throw error;
     }
   }
 
   /**
-   * List customer companies
-   * @param {number} customerId Customer ID
-   * @returns {Promise<CustomerCompany[]>} Array of companies
+   * Lister les entreprises d'un client
+   * @param {number} customerId ID du client
+   * @returns {Promise<CustomerCompany[]>} Tableau d'entreprises
    */
   async listCustomerCompanies(customerId: number): Promise<CustomerCompany[]> {
     try {
       return await this.companyRepository.listByCustomer(customerId);
     } catch (error) {
-      console.error("Error listing customer companies:", error);
+      console.error(
+        "Erreur lors de la liste des entreprises du client:",
+        error
+      );
       throw error;
     }
   }
 
   /**
-   * Get company by ID
-   * @param {number} companyId Company ID
-   * @returns {Promise<CustomerCompany|null>} Company or null if not found
+   * Récupérer une entreprise par ID
+   * @param {number} companyId ID de l'entreprise
+   * @returns {Promise<CustomerCompany|null>} Entreprise ou null si non trouvée
    */
   async getCompanyById(companyId: number): Promise<CustomerCompany | null> {
     return this.getEntityById(
@@ -513,7 +522,7 @@ class CustomerService {
 
   /**
    * Récupérer toutes les civilités
-   * @returns {Promise<any[]>} List of civilities
+   * @returns {Promise<any[]>} Liste des civilités
    */
   async getCivilities(): Promise<any[]> {
     try {
@@ -525,14 +534,14 @@ class CustomerService {
         abbreviation: row.abbreviation,
       }));
     } catch (error) {
-      console.error("Error getting civilities:", error);
+      console.error("Erreur lors de la récupération des civilités:", error);
       throw error;
     }
   }
 
   /**
    * Récupérer toutes les catégories socio-professionnelles
-   * @returns {Promise<any[]>} List of categories
+   * @returns {Promise<any[]>} Liste des catégories
    */
   async getCategories(): Promise<any[]> {
     try {
@@ -544,14 +553,14 @@ class CustomerService {
         categoryName: row.category_name,
       }));
     } catch (error) {
-      console.error("Error getting categories:", error);
+      console.error("Erreur lors de la récupération des catégories:", error);
       throw error;
     }
   }
 
   /**
    * Récupérer tous les pays
-   * @returns {Promise<any[]>} List of countries
+   * @returns {Promise<any[]>} Liste des pays
    */
   async getCountries(): Promise<any[]> {
     try {
@@ -563,7 +572,7 @@ class CustomerService {
         countryName: row.country_name,
       }));
     } catch (error) {
-      console.error("Error getting countries:", error);
+      console.error("Erreur lors de la récupération des pays:", error);
       throw error;
     }
   }
