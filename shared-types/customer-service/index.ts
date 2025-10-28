@@ -51,15 +51,6 @@ export interface CustomerPublicDTO {
 // ===== TYPES SPÉCIFIQUES =====
 
 /**
- * DTO pour les options de recherche de clients
- */
-export interface CustomerSearchDTO {
-  page?: number;
-  limit?: number;
-  search?: string;
-}
-
-/**
  * DTO pour la réponse de liste de clients
  */
 export interface CustomerListDTO {
