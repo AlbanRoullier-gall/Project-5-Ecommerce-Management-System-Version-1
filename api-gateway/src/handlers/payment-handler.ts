@@ -14,6 +14,7 @@ const StripeLib: any = require("stripe");
 
 // Mémoire volatile dans le Gateway (peut être remplacée par Redis central si besoin)
 const csidToSessionInMemory = new Map<string, string>();
+export const checkoutSnapshots = new Map<string, any>();
 
 export const handleCreatePayment = async (req: Request, res: Response) => {
   try {
@@ -25,27 +26,8 @@ export const handleCreatePayment = async (req: Request, res: Response) => {
       return;
     }
 
-    // 1) Attacher le snapshot au panier (enrichi avec items normalisés)
-    let enrichedSnapshot = snapshot;
-    try {
-      const cartResp = await axios.get(`${SERVICES.cart}/api/cart`, {
-        params: { sessionId: cartSessionId },
-      });
-      const cart = cartResp.data?.cart;
-      if (cart && Array.isArray(cart.items)) {
-        const normalizedItems = (cart.items || []).map((it: any) => ({
-          productId: Number(it.productId ?? it.product_id),
-          quantity: Number(it.quantity) || 0,
-          price: Number(it.price) || 0,
-          vatRate: Number(it.vatRate ?? it.vat_rate) || 0,
-        }));
-        enrichedSnapshot = { ...snapshot, items: normalizedItems };
-      }
-    } catch {}
-    await axios.patch(`${SERVICES.cart}/api/cart/checkout`, enrichedSnapshot, {
-      params: { sessionId: cartSessionId },
-      headers: { "Content-Type": "application/json" },
-    });
+    // 1) Stocker le snapshot dans l'API Gateway
+    checkoutSnapshots.set(cartSessionId, snapshot);
 
     // 2) Créer la session Stripe via payment-service
     // Forcer l'ajout du placeholder csid dans les URLs de redirection
@@ -137,17 +119,12 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
       }
 
       // 2) Récupérer cart et snapshot
-      const [cartResp, snapshotResp] = await Promise.all([
-        axios.get(`${SERVICES.cart}/api/cart`, {
-          params: { sessionId: cartSessionId },
-        }),
-        axios.get(`${SERVICES.cart}/api/cart/checkout`, {
-          params: { sessionId: cartSessionId },
-        }),
-      ]);
+      const cartResp = await axios.get(`${SERVICES.cart}/api/cart`, {
+        params: { sessionId: cartSessionId },
+      });
 
       const cart = cartResp.data?.cart;
-      const snapshot = snapshotResp.data?.snapshot;
+      const snapshot = checkoutSnapshots.get(cartSessionId);
 
       // Choisir la source des items: snapshot.items prioritaire, sinon cart.items
       const sourceItems: any[] = Array.isArray(snapshot?.items)
@@ -399,16 +376,11 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     }
 
     // Récupérer cart et snapshot
-    const [cartResp, snapshotResp] = await Promise.all([
-      axios.get(`${SERVICES.cart}/api/cart`, {
-        params: { sessionId: cartSessionId },
-      }),
-      axios.get(`${SERVICES.cart}/api/cart/checkout`, {
-        params: { sessionId: cartSessionId },
-      }),
-    ]);
+    const cartResp = await axios.get(`${SERVICES.cart}/api/cart`, {
+      params: { sessionId: cartSessionId },
+    });
     const cart = cartResp.data?.cart;
-    const snapshot = snapshotResp.data?.snapshot;
+    const snapshot = checkoutSnapshots.get(cartSessionId);
     if (!cart || !snapshot) {
       res.status(404).json({ error: "Cart or snapshot not found" });
       return;

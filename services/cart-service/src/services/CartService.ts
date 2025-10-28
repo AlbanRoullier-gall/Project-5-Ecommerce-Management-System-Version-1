@@ -130,43 +130,6 @@ export default class CartService {
   }
 
   /**
-   * Valider un panier
-   */
-  async validateCart(sessionId: string): Promise<any> {
-    const cart = await this.getCart(sessionId);
-    if (!cart) {
-      return { isValid: false, errors: ["Panier non trouvé"] };
-    }
-
-    const errors: string[] = [];
-
-    if (cart.isEmpty()) {
-      errors.push("Le panier est vide");
-    }
-
-    if (cart.isExpired()) {
-      errors.push("Le panier a expiré");
-    }
-
-    if (!cart.isValid()) {
-      errors.push("Le panier contient des données invalides");
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-      cart: cart,
-    };
-  }
-
-  /**
-   * Obtenir les statistiques des paniers
-   */
-  async getCartStats(): Promise<any> {
-    return await this.cartRepository.getCartStats();
-  }
-
-  /**
    * Nettoyer les paniers expirés
    */
   async cleanupExpiredCarts(): Promise<number> {
@@ -184,19 +147,4 @@ export default class CartService {
       redisPort: process.env.REDIS_PORT || "6379",
     };
   }
-
-  // ===== CHECKOUT SNAPSHOT & CHECKOUT SESSION MAPPING =====
-
-  async attachCheckoutSnapshot(
-    sessionId: string,
-    snapshot: any
-  ): Promise<void> {
-    await this.cartRepository.setCheckoutSnapshot(sessionId, snapshot);
-  }
-
-  async getCheckoutSnapshot(sessionId: string): Promise<any | null> {
-    return await this.cartRepository.getCheckoutSnapshot(sessionId);
-  }
-
-  // REMOVED: any Stripe-specific mapping. The cart-service stays Stripe-agnostic.
 }

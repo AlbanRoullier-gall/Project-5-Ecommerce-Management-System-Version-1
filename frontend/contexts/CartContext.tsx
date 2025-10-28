@@ -25,9 +25,17 @@ const API_URL = (() => {
   return url;
 })();
 
+interface CartTotals {
+  totalHT: number;
+  totalTTC: number;
+  vatAmount: number;
+  breakdown: { rate: number; amount: number }[];
+}
+
 interface CartContextType {
   cart: CartPublicDTO | null;
   itemCount: number;
+  totals: CartTotals;
   isLoading: boolean;
   error: string | null;
   addToCart: (
@@ -68,6 +76,46 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+
+  /**
+   * Calcule les totaux du panier
+   */
+  const calculateTotals = (cart: CartPublicDTO | null): CartTotals => {
+    if (!cart || !cart.items || cart.items.length === 0) {
+      return {
+        totalHT: 0,
+        totalTTC: cart?.total || 0,
+        vatAmount: 0,
+        breakdown: [],
+      };
+    }
+
+    // Utiliser les totaux déjà calculés par le cart-service
+    const totalHT = cart.subtotal || 0;
+    const totalTTC = cart.total || 0;
+    const vatAmount = cart.tax || 0;
+
+    // Calculer le breakdown par taux de TVA pour l'affichage détaillé
+    const vatByRate = new Map<number, number>();
+    for (const item of cart.items) {
+      const rate = item.vatRate ?? 0;
+      const multiplier = 1 + rate / 100;
+      const lineTotalTTC = item.price * item.quantity;
+      const lineTotalHT = lineTotalTTC / multiplier;
+      const vat = lineTotalTTC - lineTotalHT;
+
+      vatByRate.set(rate, (vatByRate.get(rate) || 0) + vat);
+    }
+
+    const breakdown = Array.from(vatByRate.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([rate, amount]) => ({ rate, amount }));
+
+    return { totalHT, totalTTC, vatAmount, breakdown };
+  };
+
+  // Calculer les totaux à chaque changement de panier
+  const totals = calculateTotals(cart);
 
   /**
    * Génère ou récupère l'ID de session depuis localStorage
@@ -319,6 +367,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const value: CartContextType = {
     cart,
     itemCount,
+    totals,
     isLoading,
     error,
     addToCart,

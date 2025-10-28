@@ -1,5 +1,5 @@
 /**
- * Cart Mapper - Version simplifiée
+ * Mapper de Panier - Version simplifiée
  * Mapper pour les conversions DTO ↔ Service
  */
 
@@ -8,11 +8,11 @@ import { Cart } from "../../models/Cart";
 import { CartItem } from "../../models/CartItem";
 
 /**
- * Cart Mapper class
+ * Classe Mapper de Panier
  */
 export class CartMapper {
   /**
-   * Convert CartItemCreateDTO to CartItem
+   * Convertir CartItemCreateDTO en CartItem
    */
   static cartItemCreateDTOToCartItem(
     dto: DTO.CartItemCreateDTO,
@@ -29,7 +29,7 @@ export class CartMapper {
   }
 
   /**
-   * Convert CartCreateDTO to service data
+   * Convertir CartCreateDTO en données de service
    */
   static cartCreateDTOToServiceData(dto: DTO.CartCreateDTO): any {
     return {
@@ -38,7 +38,7 @@ export class CartMapper {
   }
 
   /**
-   * Convert Cart model to CartPublicDTO
+   * Convertir le modèle Cart en CartPublicDTO
    */
   static cartToPublicDTO(cart: Cart): DTO.CartPublicDTO {
     return {
@@ -55,7 +55,7 @@ export class CartMapper {
   }
 
   /**
-   * Convert CartItem model to CartItemPublicDTO
+   * Convertir le modèle CartItem en CartItemPublicDTO
    */
   static cartItemToPublicDTO(item: CartItem): DTO.CartItemPublicDTO {
     return {
@@ -70,7 +70,7 @@ export class CartMapper {
   }
 
   /**
-   * Convert CartItemCreateDTO to service data
+   * Convertir CartItemCreateDTO en données de service
    */
   static cartItemCreateDTOToServiceData(dto: DTO.CartItemCreateDTO): any {
     return {
@@ -82,7 +82,7 @@ export class CartMapper {
   }
 
   /**
-   * Convert CartItemUpdateDTO to service data
+   * Convertir CartItemUpdateDTO en données de service
    */
   static cartItemUpdateDTOToServiceData(dto: DTO.CartItemUpdateDTO): any {
     return {

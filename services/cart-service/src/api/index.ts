@@ -1,5 +1,5 @@
 /**
- * API Router - Version simplifiée pour Redis Cart
+ * Routeur API - Version simplifiée pour Panier Redis
  * Configuration centralisée des routes pour cart-service
  */
 
@@ -23,7 +23,7 @@ export class ApiRouter {
   }
 
   /**
-   * Setup middlewares
+   * Configuration des middlewares
    */
   private setupMiddlewares(app: express.Application): void {
     app.use(helmet());
@@ -34,16 +34,16 @@ export class ApiRouter {
   }
 
   /**
-   * Setup validation schemas
+   * Configuration des schémas de validation
    */
   private setupValidationSchemas() {
     return {
-      // Cart create schema
+      // Schéma de création de panier
       cartCreateSchema: Joi.object({
         sessionId: Joi.string().required(),
       }),
 
-      // Cart item create schema
+      // Schéma de création d'article de panier
       cartItemCreateSchema: Joi.object({
         productId: Joi.number().positive().required(),
         quantity: Joi.number().positive().required(),
@@ -51,15 +51,10 @@ export class ApiRouter {
         vatRate: Joi.number().min(0).max(100).required(),
       }),
 
-      // Cart item update schema
+      // Schéma de mise à jour d'article de panier
       cartItemUpdateSchema: Joi.object({
         quantity: Joi.number().positive().required(),
       }),
-
-      // Checkout snapshot schema (loosely validated)
-      checkoutSnapshotSchema: Joi.object({}).unknown(true),
-
-      // Checkout session mapping schema (removed to keep service Stripe-agnostic)
     };
   }
 
@@ -74,7 +69,7 @@ export class ApiRouter {
           .status(400)
           .json(
             ResponseMapper.validationError(
-              error.details[0]?.message || "Validation error"
+              error.details[0]?.message || "Erreur de validation"
             )
           );
         return;
@@ -142,39 +137,13 @@ export class ApiRouter {
       this.cartController.clearCart(req, res);
     });
 
-    // Valider un panier
-    app.get("/api/cart/validate", (req: Request, res: Response) => {
-      this.cartController.validateCart(req, res);
-    });
-
-    // Attacher un snapshot de checkout au panier
-    app.patch(
-      "/api/cart/checkout",
-      this.validateRequest(schemas.checkoutSnapshotSchema),
-      (req: Request, res: Response) => {
-        this.cartController.attachCheckoutSnapshot(req, res);
-      }
-    );
-
-    // Récupérer le snapshot de checkout
-    app.get("/api/cart/checkout", (req: Request, res: Response) => {
-      this.cartController.getCheckoutSnapshot(req, res);
-    });
-
-    // Removed csid mapping and retrieval routes to keep Stripe-agnostic.
-
-    // Statistiques des paniers
-    app.get("/api/cart/stats", (req: Request, res: Response) => {
-      this.cartController.getCartStats(req, res);
-    });
-
     // ===== GESTION DES ERREURS =====
     app.use((req: Request, res: Response) => {
       res.status(404).json(ResponseMapper.notFoundError("Route"));
     });
 
     app.use((error: any, req: Request, res: Response, next: NextFunction) => {
-      console.error("Unhandled error:", error);
+      console.error("Erreur non gérée:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     });
   }

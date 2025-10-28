@@ -192,38 +192,9 @@ export class CartRepository {
   }
 
   /**
-   * Enregistrer le snapshot de checkout pour un panier (stocké séparément du panier)
-   */
-  async setCheckoutSnapshot(sessionId: string, snapshot: any): Promise<void> {
-    const key = this.getCheckoutSnapshotKey(sessionId);
-    await this.redis.setex(key, this.ttl, JSON.stringify(snapshot));
-  }
-
-  /**
-   * Récupérer le snapshot de checkout pour un panier
-   */
-  async getCheckoutSnapshot(sessionId: string): Promise<any | null> {
-    const key = this.getCheckoutSnapshotKey(sessionId);
-    const data = await this.redis.get(key);
-    if (!data) return null;
-    try {
-      return JSON.parse(data);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /**
    * Obtenir la clé Redis pour un panier
    */
   private getCartKey(sessionId: string): string {
     return `cart:session:${sessionId}`;
-  }
-
-  /**
-   * Obtenir la clé du snapshot de checkout
-   */
-  private getCheckoutSnapshotKey(sessionId: string): string {
-    return `cart:checkout:snapshot:${sessionId}`;
   }
 }

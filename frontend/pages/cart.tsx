@@ -25,27 +25,9 @@ export default function CartPage() {
       };
     }
 
-    let totalHT = 0;
-    const vatByRate = new Map<number, number>();
-
-    for (const item of cart.items) {
-      const rate = item.vatRate ?? 0;
-      const multiplier = 1 + rate / 100;
-      const lineTotalTTC = item.price * item.quantity;
-      const lineTotalHT = lineTotalTTC / multiplier;
-      const vat = lineTotalTTC - lineTotalHT;
-
-      totalHT += lineTotalHT;
-      vatByRate.set(rate, (vatByRate.get(rate) || 0) + vat);
-    }
-
-    const totalTTC = cart.total;
-    const vatAmount = totalTTC - totalHT;
-    const breakdown = Array.from(vatByRate.entries())
-      .sort((a, b) => a[0] - b[0])
-      .map(([rate, amount]) => ({ rate, amount }));
-
-    return { totalHT, totalTTC, vatAmount, breakdown };
+    // Utiliser les totaux calculés par le CartContext
+    const { totals } = useCart();
+    return totals;
   }, [cart]);
 
   return (

@@ -128,6 +128,52 @@ export const setupRoutes = (app: any): void => {
   // Webhook Stripe (raw body + signature vérifiée en handler)
   app.post("/api/webhooks/stripe", handleStripeWebhook);
 
+  // ===== GESTION DES SNAPSHOTS CHECKOUT =====
+
+  // Attacher un snapshot de checkout
+  app.patch("/api/cart/checkout", async (req: Request, res: Response) => {
+    try {
+      const { sessionId } = req.query;
+      if (!sessionId) {
+        res.status(400).json({ error: "sessionId is required" });
+        return;
+      }
+
+      // Stocker le snapshot dans l'API Gateway
+      const { checkoutSnapshots } = require("./handlers/payment-handler");
+      checkoutSnapshots.set(sessionId as string, req.body);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Attach checkout snapshot error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Récupérer un snapshot de checkout
+  app.get("/api/cart/checkout", async (req: Request, res: Response) => {
+    try {
+      const { sessionId } = req.query;
+      if (!sessionId) {
+        res.status(400).json({ error: "sessionId is required" });
+        return;
+      }
+
+      // Récupérer le snapshot depuis l'API Gateway
+      const { checkoutSnapshots } = require("./handlers/payment-handler");
+      const snapshot = checkoutSnapshots.get(sessionId as string);
+
+      if (!snapshot) {
+        res.status(404).json({ error: "Checkout snapshot not found" });
+        return;
+      }
+
+      res.status(200).json({ snapshot });
+    } catch (error) {
+      console.error("Get checkout snapshot error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // ===== ROUTES D'EXPORT =====
 
   // Export des commandes par année
