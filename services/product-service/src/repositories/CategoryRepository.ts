@@ -1,11 +1,11 @@
 /**
- * Category Repository
- * Database operations for categories
+ * Repository Catégorie
+ * Opérations de base de données pour les catégories
  *
- * Architecture : Repository pattern
- * - Data access abstraction
- * - Database operations
- * - Type safety
+ * Architecture : Pattern Repository
+ * - Abstraction d'accès aux données
+ * - Opérations de base de données
+ * - Sécurité des types
  */
 
 import { Pool } from "pg";
@@ -19,9 +19,9 @@ export class CategoryRepository {
   }
 
   /**
-   * Create a new category
-   * @param {CategoryData} categoryData Category data
-   * @returns {Promise<Category>} Created category
+   * Créer une nouvelle catégorie
+   * @param {CategoryData} categoryData Données de la catégorie
+   * @returns {Promise<Category>} Catégorie créée
    */
   async createCategory(categoryData: CategoryData): Promise<Category> {
     try {
@@ -36,15 +36,15 @@ export class CategoryRepository {
       const result = await this.pool.query(query, values);
       return new Category(result.rows[0] as CategoryData);
     } catch (error) {
-      console.error("Error creating category:", error);
+      console.error("Erreur lors de la création de la catégorie:", error);
       throw error;
     }
   }
 
   /**
-   * Get category by ID
-   * @param {number} id Category ID
-   * @returns {Promise<Category|null>} Category or null if not found
+   * Obtenir une catégorie par ID
+   * @param {number} id ID de la catégorie
+   * @returns {Promise<Category|null>} Catégorie ou null si non trouvée
    */
   async getCategoryById(id: number): Promise<Category | null> {
     try {
@@ -62,16 +62,19 @@ export class CategoryRepository {
 
       return new Category(result.rows[0] as CategoryData);
     } catch (error) {
-      console.error("Error getting category by ID:", error);
+      console.error(
+        "Erreur lors de la récupération de la catégorie par ID:",
+        error
+      );
       throw error;
     }
   }
 
   /**
-   * Update category
-   * @param {number} id Category ID
-   * @param {Partial<CategoryData>} categoryData Category data to update
-   * @returns {Promise<Category|null>} Updated category or null if not found
+   * Mettre à jour une catégorie
+   * @param {number} id ID de la catégorie
+   * @param {Partial<CategoryData>} categoryData Données de la catégorie à mettre à jour
+   * @returns {Promise<Category|null>} Catégorie mise à jour ou null si non trouvée
    */
   async updateCategory(
     id: number,
@@ -92,7 +95,7 @@ export class CategoryRepository {
       }
 
       if (setClause.length === 0) {
-        throw new Error("No fields to update");
+        throw new Error("Aucun champ à mettre à jour");
       }
 
       values.push(id);
@@ -112,40 +115,42 @@ export class CategoryRepository {
 
       return new Category(result.rows[0] as CategoryData);
     } catch (error) {
-      console.error("Error updating category:", error);
+      console.error("Erreur lors de la mise à jour de la catégorie:", error);
       throw error;
     }
   }
 
   /**
-   * Delete category
-   * @param {number} id Category ID
-   * @returns {Promise<boolean>} True if deleted, false if not found
+   * Supprimer une catégorie
+   * @param {number} id ID de la catégorie
+   * @returns {Promise<boolean>} True si supprimée, false si non trouvée
    */
   async deleteCategory(id: number): Promise<boolean> {
     try {
-      // Check if category has products
+      // Vérifier si la catégorie a des produits
       const checkQuery =
         "SELECT COUNT(*) as count FROM products WHERE category_id = $1";
       const checkResult = await this.pool.query(checkQuery, [id]);
       const productCount = parseInt(checkResult.rows[0].count);
 
       if (productCount > 0) {
-        throw new Error("Impossible de supprimer cette catégorie car elle contient des produits");
+        throw new Error(
+          "Impossible de supprimer cette catégorie car elle contient des produits"
+        );
       }
 
       const query = "DELETE FROM categories WHERE id = $1";
       const result = await this.pool.query(query, [id]);
       return result.rowCount! > 0;
     } catch (error) {
-      console.error("Error deleting category:", error);
+      console.error("Erreur lors de la suppression de la catégorie:", error);
       throw error;
     }
   }
 
   /**
-   * List all categories
-   * @returns {Promise<Category[]>} List of categories
+   * Lister toutes les catégories
+   * @returns {Promise<Category[]>} Liste des catégories
    */
   async listCategories(): Promise<Category[]> {
     try {
@@ -158,16 +163,16 @@ export class CategoryRepository {
       const result = await this.pool.query(query);
       return result.rows.map((row) => new Category(row as CategoryData));
     } catch (error) {
-      console.error("Error listing categories:", error);
+      console.error("Erreur lors de la liste des catégories:", error);
       throw error;
     }
   }
 
   /**
-   * Check if category name exists
-   * @param {string} name Category name
-   * @param {number} excludeId Category ID to exclude from check
-   * @returns {Promise<boolean>} True if name exists
+   * Vérifier si le nom de catégorie existe
+   * @param {string} name Nom de la catégorie
+   * @param {number} excludeId ID de catégorie à exclure de la vérification
+   * @returns {Promise<boolean>} True si le nom existe
    */
   async categoryNameExists(name: string, excludeId?: number): Promise<boolean> {
     try {
@@ -182,7 +187,10 @@ export class CategoryRepository {
       const result = await this.pool.query(query, values);
       return parseInt(result.rows[0].count) > 0;
     } catch (error) {
-      console.error("Error checking category name:", error);
+      console.error(
+        "Erreur lors de la vérification du nom de catégorie:",
+        error
+      );
       throw error;
     }
   }

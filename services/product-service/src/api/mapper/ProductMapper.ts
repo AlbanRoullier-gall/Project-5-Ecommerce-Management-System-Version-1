@@ -1,11 +1,11 @@
 /**
- * Product Mapper
- * DTO to Model and Model to DTO conversions
+ * Mapper Produit
+ * Conversions DTO vers Modèle et Modèle vers DTO
  *
- * Architecture : Mapper pattern
- * - Data transformation
- * - Type safety
- * - Separation of concerns
+ * Architecture : Pattern Mapper
+ * - Transformation des données
+ * - Sécurité des types
+ * - Séparation des préoccupations
  */
 
 import {
@@ -24,13 +24,13 @@ import { CategoryData } from "../../models/Category";
 import { ProductImageData } from "../../models/ProductImage";
 
 /**
- * Product Mapper class
+ * Classe Mapper Produit
  */
 export class ProductMapper {
-  // ===== PRODUCT MAPPERS =====
+  // ===== MAPPERS PRODUIT =====
 
   /**
-   * Convert ProductCreateDTO to ProductData
+   * Convertir ProductCreateDTO vers ProductData
    */
   static productCreateDTOToProductData(
     dto: ProductCreateDTO
@@ -46,7 +46,7 @@ export class ProductMapper {
   }
 
   /**
-   * Convert ProductUpdateDTO to ProductData
+   * Convertir ProductUpdateDTO vers ProductData
    */
   static productUpdateDTOToProductData(
     dto: ProductUpdateDTO
@@ -62,7 +62,7 @@ export class ProductMapper {
   }
 
   /**
-   * Convert Product model to ProductPublicDTO
+   * Convertir le modèle Product vers ProductPublicDTO
    */
   static productToPublicDTO(product: any): ProductPublicDTO {
     return {
@@ -80,10 +80,10 @@ export class ProductMapper {
     };
   }
 
-  // ===== CATEGORY MAPPERS =====
+  // ===== MAPPERS CATÉGORIE =====
 
   /**
-   * Convert CategoryCreateDTO to CategoryData
+   * Convertir CategoryCreateDTO vers CategoryData
    */
   static categoryCreateDTOToCategoryData(
     dto: CategoryCreateDTO
@@ -95,7 +95,7 @@ export class ProductMapper {
   }
 
   /**
-   * Convert CategoryUpdateDTO to CategoryData
+   * Convertir CategoryUpdateDTO vers CategoryData
    */
   static categoryUpdateDTOToCategoryData(
     dto: CategoryUpdateDTO
@@ -107,7 +107,7 @@ export class ProductMapper {
   }
 
   /**
-   * Convert Category model to CategoryPublicDTO
+   * Convertir le modèle Category vers CategoryPublicDTO
    */
   static categoryToPublicDTO(category: any): CategoryPublicDTO {
     return {
@@ -120,10 +120,10 @@ export class ProductMapper {
     };
   }
 
-  // ===== PRODUCT IMAGE MAPPERS =====
+  // ===== MAPPERS IMAGE DE PRODUIT =====
 
   /**
-   * Convert ProductImageCreateDTO to ProductImageData
+   * Convertir ProductImageCreateDTO vers ProductImageData
    */
   static productImageCreateDTOToProductImageData(
     dto: ProductImageCreateDTO
@@ -137,7 +137,7 @@ export class ProductMapper {
   }
 
   /**
-   * Convert ProductImageUpdateDTO to ProductImageData
+   * Convertir ProductImageUpdateDTO vers ProductImageData
    */
   static productImageUpdateDTOToProductImageData(
     dto: ProductImageUpdateDTO
@@ -150,7 +150,7 @@ export class ProductMapper {
   }
 
   /**
-   * Convert ProductImage model to ProductImagePublicDTO
+   * Convertir le modèle ProductImage vers ProductImagePublicDTO
    */
   static productImageToPublicDTO(image: any): ProductImagePublicDTO {
     return {

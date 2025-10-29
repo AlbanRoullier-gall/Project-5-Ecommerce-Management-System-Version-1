@@ -1,11 +1,11 @@
 /**
- * Category Controller
- * Category management endpoints
+ * Contrôleur Catégorie
+ * Points de terminaison de gestion des catégories
  *
- * Architecture : Controller pattern
- * - HTTP request handling
- * - Service orchestration
- * - Response formatting
+ * Architecture : Pattern Contrôleur
+ * - Gestion des requêtes HTTP
+ * - Orchestration des services
+ * - Formatage des réponses
  */
 
 import { Request, Response } from "express";
@@ -21,7 +21,7 @@ export class CategoryController {
   }
 
   /**
-   * Create category
+   * Créer une catégorie
    */
   async createCategory(req: Request, res: Response): Promise<void> {
     try {
@@ -37,7 +37,7 @@ export class CategoryController {
           )
         );
     } catch (error: any) {
-      console.error("Create category error:", error);
+      console.error("Erreur lors de la création de la catégorie:", error);
       if (error.message === "Category with this name already exists") {
         res.status(409).json(ResponseMapper.conflictError(error.message));
         return;
@@ -47,7 +47,7 @@ export class CategoryController {
   }
 
   /**
-   * Get category by ID
+   * Obtenir une catégorie par ID
    */
   async getCategoryById(req: Request, res: Response): Promise<void> {
     try {
@@ -65,13 +65,13 @@ export class CategoryController {
         )
       );
     } catch (error: any) {
-      console.error("Get category error:", error);
+      console.error("Erreur lors de la récupération de la catégorie:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
   /**
-   * Update category
+   * Mettre à jour une catégorie
    */
   async updateCategory(req: Request, res: Response): Promise<void> {
     try {
@@ -95,7 +95,7 @@ export class CategoryController {
         )
       );
     } catch (error: any) {
-      console.error("Update category error:", error);
+      console.error("Erreur lors de la mise à jour de la catégorie:", error);
       if (error.message === "Category not found") {
         res.status(404).json(ResponseMapper.notFoundError("Category"));
         return;
@@ -109,7 +109,7 @@ export class CategoryController {
   }
 
   /**
-   * Delete category
+   * Supprimer une catégorie
    */
   async deleteCategory(req: Request, res: Response): Promise<void> {
     try {
@@ -123,7 +123,7 @@ export class CategoryController {
 
       res.json(ResponseMapper.categoryDeleted());
     } catch (error: any) {
-      console.error("Delete category error:", error);
+      console.error("Erreur lors de la suppression de la catégorie:", error);
       if (
         error.message.includes("supprimer cette catégorie") ||
         error.message.includes("existing products")
@@ -142,7 +142,7 @@ export class CategoryController {
   }
 
   /**
-   * List categories
+   * Lister les catégories
    */
   async listCategories(req: Request, res: Response): Promise<void> {
     try {
@@ -152,7 +152,7 @@ export class CategoryController {
       );
       res.json(ResponseMapper.categoryListed(categoriesDTO));
     } catch (error: any) {
-      console.error("List categories error:", error);
+      console.error("Erreur lors de la liste des catégories:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }

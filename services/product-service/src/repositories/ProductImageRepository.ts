@@ -1,11 +1,11 @@
 /**
- * ProductImage Repository
- * Database operations for product images
+ * Repository Image de Produit
+ * Opérations de base de données pour les images de produit
  *
- * Architecture : Repository pattern
- * - Data access abstraction
- * - Database operations
- * - Type safety
+ * Architecture : Pattern Repository
+ * - Abstraction d'accès aux données
+ * - Opérations de base de données
+ * - Sécurité des types
  */
 
 import { Pool } from "pg";
@@ -19,9 +19,9 @@ export class ProductImageRepository {
   }
 
   /**
-   * Create a new product image
-   * @param {ProductImageData} imageData Image data
-   * @returns {Promise<ProductImage>} Created image
+   * Créer une nouvelle image de produit
+   * @param {ProductImageData} imageData Données de l'image
+   * @returns {Promise<ProductImage>} Image créée
    */
   async createImage(imageData: ProductImageData): Promise<ProductImage> {
     try {
@@ -41,15 +41,15 @@ export class ProductImageRepository {
       const result = await this.pool.query(query, values);
       return new ProductImage(result.rows[0] as ProductImageData);
     } catch (error) {
-      console.error("Error creating product image:", error);
+      console.error("Erreur lors de la création de l'image de produit:", error);
       throw error;
     }
   }
 
   /**
-   * Get image by ID
-   * @param {number} id Image ID
-   * @returns {Promise<ProductImage|null>} Image or null if not found
+   * Obtenir une image par ID
+   * @param {number} id ID de l'image
+   * @returns {Promise<ProductImage|null>} Image ou null si non trouvée
    */
   async getImageById(id: number): Promise<ProductImage | null> {
     try {
@@ -67,16 +67,16 @@ export class ProductImageRepository {
 
       return new ProductImage(result.rows[0] as ProductImageData);
     } catch (error) {
-      console.error("Error getting image by ID:", error);
+      console.error("Erreur lors de la récupération de l'image par ID:", error);
       throw error;
     }
   }
 
   /**
-   * Update image
-   * @param {number} id Image ID
-   * @param {Partial<ProductImageData>} imageData Image data to update
-   * @returns {Promise<ProductImage|null>} Updated image or null if not found
+   * Mettre à jour une image
+   * @param {number} id ID de l'image
+   * @param {Partial<ProductImageData>} imageData Données de l'image à mettre à jour
+   * @returns {Promise<ProductImage|null>} Image mise à jour ou null si non trouvée
    */
   async updateImage(
     id: number,
@@ -101,7 +101,7 @@ export class ProductImageRepository {
       }
 
       if (setClause.length === 0) {
-        throw new Error("No fields to update");
+        throw new Error("Aucun champ à mettre à jour");
       }
 
       values.push(id);
@@ -121,15 +121,15 @@ export class ProductImageRepository {
 
       return new ProductImage(result.rows[0] as ProductImageData);
     } catch (error) {
-      console.error("Error updating image:", error);
+      console.error("Erreur lors de la mise à jour de l'image:", error);
       throw error;
     }
   }
 
   /**
-   * Delete image
-   * @param {number} id Image ID
-   * @returns {Promise<boolean>} True if deleted, false if not found
+   * Supprimer une image
+   * @param {number} id ID de l'image
+   * @returns {Promise<boolean>} True si supprimée, false si non trouvée
    */
   async deleteImage(id: number): Promise<boolean> {
     try {
@@ -137,15 +137,15 @@ export class ProductImageRepository {
       const result = await this.pool.query(query, [id]);
       return result.rowCount! > 0;
     } catch (error) {
-      console.error("Error deleting image:", error);
+      console.error("Erreur lors de la suppression de l'image:", error);
       throw error;
     }
   }
 
   /**
-   * List images for a product
-   * @param {number} productId Product ID
-   * @returns {Promise<ProductImage[]>} List of images
+   * Lister les images d'un produit
+   * @param {number} productId ID du produit
+   * @returns {Promise<ProductImage[]>} Liste des images
    */
   async listImagesByProduct(productId: number): Promise<ProductImage[]> {
     try {
@@ -161,16 +161,16 @@ export class ProductImageRepository {
         (row) => new ProductImage(row as ProductImageData)
       );
     } catch (error) {
-      console.error("Error listing images by product:", error);
+      console.error("Erreur lors de la liste des images par produit:", error);
       throw error;
     }
   }
 
   /**
-   * Delete image by product and image ID
-   * @param {number} productId Product ID
-   * @param {number} imageId Image ID
-   * @returns {Promise<boolean>} True if deleted, false if not found
+   * Supprimer une image par produit et ID d'image
+   * @param {number} productId ID du produit
+   * @param {number} imageId ID de l'image
+   * @returns {Promise<boolean>} True si supprimée, false si non trouvée
    */
   async deleteImageByProductAndId(
     productId: number,
@@ -182,7 +182,10 @@ export class ProductImageRepository {
       const result = await this.pool.query(query, [productId, imageId]);
       return result.rowCount! > 0;
     } catch (error) {
-      console.error("Error deleting image by product and ID:", error);
+      console.error(
+        "Erreur lors de la suppression de l'image par produit et ID:",
+        error
+      );
       throw error;
     }
   }

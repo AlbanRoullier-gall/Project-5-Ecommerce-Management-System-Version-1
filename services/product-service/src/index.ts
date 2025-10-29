@@ -1,12 +1,12 @@
 /**
- * Product Service - Entry Point
- * Main application entry point for product-service
+ * Service Produit - Point d'entrée
+ * Point d'entrée principal de l'application pour le service produit
  *
- * Architecture : Microservice pattern
- * - Express.js server
- * - Database connection
- * - Automatic migrations
- * - Health checks
+ * Architecture : Pattern Microservice
+ * - Serveur Express.js
+ * - Connexion à la base de données
+ * - Migrations automatiques
+ * - Vérifications de santé
  */
 
 import express from "express";
@@ -15,7 +15,7 @@ import dotenv from "dotenv";
 import { ApiRouter } from "./api";
 import runMigrations from "./migrations/migrate";
 
-// Load environment variables
+// Charger les variables d'environnement
 dotenv.config();
 
 // Configuration
@@ -38,17 +38,17 @@ const pool = new Pool({
  */
 async function startService(): Promise<void> {
   try {
-    console.log("🚀 Starting Product Service...");
+    console.log("🚀 Démarrage du Service Produit...");
 
     // Test de connexion à la base de données
-    console.log("📊 Testing database connection...");
+    console.log("📊 Test de connexion à la base de données...");
     await pool.query("SELECT 1");
-    console.log("✅ Database connection successful");
+    console.log("✅ Connexion à la base de données réussie");
 
     // Exécution des migrations automatiques
-    console.log("🔄 Running database migrations...");
+    console.log("🔄 Exécution des migrations de base de données...");
     await runMigrations();
-    console.log("✅ Database migrations completed");
+    console.log("✅ Migrations de base de données terminées");
 
     // Configuration de l'application Express
     const app = express();
@@ -59,27 +59,33 @@ async function startService(): Promise<void> {
 
     // Démarrage du serveur
     const server = app.listen(PORT, () => {
-      console.log(`🎉 Product Service running on port ${PORT}`);
-      console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
       console.log(
-        `📚 API documentation: http://localhost:${PORT}/api/health/detailed`
+        `🎉 Service Produit en cours d'exécution sur le port ${PORT}`
+      );
+      console.log(
+        `📡 Vérification de santé: http://localhost:${PORT}/api/health`
+      );
+      console.log(
+        `📚 Documentation API: http://localhost:${PORT}/api/health/detailed`
       );
     });
 
     // Gestion gracieuse de l'arrêt
     const gracefulShutdown = async (signal: string): Promise<void> => {
-      console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
+      console.log(
+        `\n🛑 Signal ${signal} reçu. Démarrage de l'arrêt gracieux...`
+      );
 
       server.close(async () => {
-        console.log("🔌 HTTP server closed");
+        console.log("🔌 Serveur HTTP fermé");
 
         try {
           await pool.end();
-          console.log("🔌 Database connection closed");
-          console.log("✅ Graceful shutdown completed");
+          console.log("🔌 Connexion à la base de données fermée");
+          console.log("✅ Arrêt gracieux terminé");
           process.exit(0);
         } catch (error) {
-          console.error("❌ Error during shutdown:", error);
+          console.error("❌ Erreur lors de l'arrêt:", error);
           process.exit(1);
         }
       });
@@ -89,7 +95,7 @@ async function startService(): Promise<void> {
     process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
     process.on("SIGINT", () => gracefulShutdown("SIGINT"));
   } catch (error) {
-    console.error("❌ Failed to start Product Service:", error);
+    console.error("❌ Échec du démarrage du Service Produit:", error);
     process.exit(1);
   }
 }

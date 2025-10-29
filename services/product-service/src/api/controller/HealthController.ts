@@ -1,11 +1,11 @@
 /**
- * Health Controller
- * Health check endpoints
+ * Contrôleur Santé
+ * Points de terminaison de vérification de santé
  *
- * Architecture : Controller pattern
- * - HTTP request handling
- * - Service orchestration
- * - Response formatting
+ * Architecture : Pattern Contrôleur
+ * - Gestion des requêtes HTTP
+ * - Orchestration des services
+ * - Formatage des réponses
  */
 
 import { Request, Response } from "express";
@@ -20,23 +20,23 @@ export class HealthController {
   }
 
   /**
-   * Basic health check
+   * Vérification de santé basique
    */
   healthCheck(req: Request, res: Response): void {
     res.json(ResponseMapper.healthSuccess());
   }
 
   /**
-   * Detailed health check with database connection
+   * Vérification de santé détaillée avec connexion à la base de données
    */
   async detailedHealthCheck(req: Request, res: Response): Promise<void> {
     try {
-      // Test database connection
+      // Tester la connexion à la base de données
       await this.pool.query("SELECT 1");
 
       res.json(ResponseMapper.healthSuccess());
     } catch (error) {
-      console.error("Health check error:", error);
+      console.error("Erreur lors de la vérification de santé:", error);
       res.status(500).json(ResponseMapper.healthError());
     }
   }

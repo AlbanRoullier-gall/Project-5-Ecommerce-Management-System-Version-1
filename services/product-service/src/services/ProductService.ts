@@ -1,11 +1,11 @@
 /**
  * ProductService
- * Business logic layer for product management
+ * Couche de logique métier pour la gestion des produits
  *
- * Architecture : Service pattern
- * - Business logic orchestration
- * - Repository coordination
- * - Data validation
+ * Architecture : Pattern Service
+ * - Orchestration de la logique métier
+ * - Coordination des repositories
+ * - Validation des données
  */
 
 import { Pool } from "pg";
@@ -27,37 +27,37 @@ export default class ProductService {
     this.imageRepository = new ProductImageRepository(pool);
   }
 
-  // ===== PRODUCT METHODS =====
+  // ===== MÉTHODES PRODUIT =====
 
   /**
-   * Create a new product
-   * @param {Partial<ProductData>} productData Product data
-   * @returns {Promise<Product>} Created product
+   * Créer un nouveau produit
+   * @param {Partial<ProductData>} productData Données du produit
+   * @returns {Promise<Product>} Produit créé
    */
   async createProduct(productData: Partial<ProductData>): Promise<Product> {
-    // Validate required fields
+    // Valider les champs requis
     if (!productData.name) {
-      throw new Error("Product name is required");
+      throw new Error("Le nom du produit est requis");
     }
     if (!productData.price || productData.price <= 0) {
-      throw new Error("Product price must be greater than 0");
+      throw new Error("Le prix du produit doit être supérieur à 0");
     }
     if (!productData.category_id) {
-      throw new Error("Category ID is required");
+      throw new Error("L'ID de catégorie est requis");
     }
 
-    // Check if category exists
+    // Vérifier si la catégorie existe
     const category = await this.categoryRepository.getCategoryById(
       productData.category_id
     );
     if (!category) {
-      throw new Error("Category not found");
+      throw new Error("Catégorie non trouvée");
     }
 
-    // Check if product name already exists
-    const existingProduct = await this.productRepository.getProductById(0); // This will be updated with proper name check
+    // Vérifier si le nom du produit existe déjà
+    const existingProduct = await this.productRepository.getProductById(0); // Ceci sera mis à jour avec une vérification de nom appropriée
     if (existingProduct && existingProduct.name === productData.name) {
-      throw new Error("Product with this name already exists");
+      throw new Error("Un produit avec ce nom existe déjà");
     }
 
     return await this.productRepository.createProduct(
@@ -66,31 +66,31 @@ export default class ProductService {
   }
 
   /**
-   * Get product by ID
-   * @param {number} id Product ID
-   * @returns {Promise<Product|null>} Product or null if not found
+   * Obtenir un produit par ID
+   * @param {number} id ID du produit
+   * @returns {Promise<Product|null>} Produit ou null si non trouvé
    */
   async getProductById(id: number): Promise<Product | null> {
     return await this.productRepository.getProductById(id);
   }
 
   /**
-   * Update product
-   * @param {number} id Product ID
-   * @param {Partial<ProductData>} productData Product data to update
-   * @returns {Promise<Product|null>} Updated product or null if not found
+   * Mettre à jour un produit
+   * @param {number} id ID du produit
+   * @param {Partial<ProductData>} productData Données du produit à mettre à jour
+   * @returns {Promise<Product|null>} Produit mis à jour ou null si non trouvé
    */
   async updateProduct(
     id: number,
     productData: Partial<ProductData>
   ): Promise<Product | null> {
-    // Check if product exists
+    // Vérifier si le produit existe
     const existingProduct = await this.productRepository.getProductById(id);
     if (!existingProduct) {
-      throw new Error("Product not found");
+      throw new Error("Produit non trouvé");
     }
 
-    // If category is being changed, check if new category exists
+    // Si la catégorie est modifiée, vérifier si la nouvelle catégorie existe
     if (
       productData.category_id &&
       productData.category_id !== existingProduct.categoryId
@@ -99,32 +99,32 @@ export default class ProductService {
         productData.category_id
       );
       if (!category) {
-        throw new Error("Category not found");
+        throw new Error("Catégorie non trouvée");
       }
     }
 
-    // If name is being changed, check if new name already exists
+    // Si le nom est modifié, vérifier si le nouveau nom existe déjà
     if (productData.name && productData.name !== existingProduct.name) {
-      // This would need a proper name uniqueness check in the repository
-      // For now, we'll skip this validation
+      // Ceci nécessiterait une vérification d'unicité du nom appropriée dans le repository
+      // Pour l'instant, nous ignorons cette validation
     }
 
     return await this.productRepository.updateProduct(id, productData);
   }
 
   /**
-   * Delete product
-   * @param {number} id Product ID
-   * @returns {Promise<boolean>} True if deleted, false if not found
+   * Supprimer un produit
+   * @param {number} id ID du produit
+   * @returns {Promise<boolean>} True si supprimé, false si non trouvé
    */
   async deleteProduct(id: number): Promise<boolean> {
     return await this.productRepository.deleteProduct(id);
   }
 
   /**
-   * List products with pagination and filtering
-   * @param {Object} options List options
-   * @returns {Promise<Object>} Products with pagination info
+   * Lister les produits avec pagination et filtrage
+   * @param {Object} options Options de liste
+   * @returns {Promise<Object>} Produits avec informations de pagination
    */
   async listProducts(options: {
     page: number;
@@ -147,51 +147,42 @@ export default class ProductService {
   }
 
   /**
-   * Toggle product status
-   * @param {number} id Product ID
-   * @returns {Promise<Product|null>} Updated product or null if not found
-   */
-  async toggleProductStatus(id: number): Promise<Product | null> {
-    return await this.productRepository.toggleProductStatus(id);
-  }
-
-  /**
-   * Activate product
-   * @param {number} id Product ID
-   * @returns {Promise<Product|null>} Updated product or null if not found
+   * Activer un produit
+   * @param {number} id ID du produit
+   * @returns {Promise<Product|null>} Produit mis à jour ou null si non trouvé
    */
   async activateProduct(id: number): Promise<Product | null> {
     return await this.updateProduct(id, { is_active: true });
   }
 
   /**
-   * Deactivate product
-   * @param {number} id Product ID
-   * @returns {Promise<Product|null>} Updated product or null if not found
+   * Désactiver un produit
+   * @param {number} id ID du produit
+   * @returns {Promise<Product|null>} Produit mis à jour ou null si non trouvé
    */
   async deactivateProduct(id: number): Promise<Product | null> {
     return await this.updateProduct(id, { is_active: false });
   }
 
-  // ===== CATEGORY METHODS =====
+  // ===== MÉTHODES CATÉGORIE =====
 
   /**
-   * Create a new category
-   * @param {Partial<CategoryData>} categoryData Category data
-   * @returns {Promise<Category>} Created category
+   * Créer une nouvelle catégorie
+   * @param {Partial<CategoryData>} categoryData Données de la catégorie
+   * @returns {Promise<Category>} Catégorie créée
    */
   async createCategory(categoryData: Partial<CategoryData>): Promise<Category> {
-    // Validate required fields
+    // Valider les champs requis
     if (!categoryData.name) {
-      throw new Error("Category name is required");
+      throw new Error("Le nom de la catégorie est requis");
     }
 
-    // Check if category name already exists
+    // Vérifier si le nom de la catégorie existe déjà
     const nameExists = await this.categoryRepository.categoryNameExists(
       categoryData.name
     );
     if (nameExists) {
-      throw new Error("Category with this name already exists");
+      throw new Error("Une catégorie avec ce nom existe déjà");
     }
 
     return await this.categoryRepository.createCategory(
@@ -200,38 +191,38 @@ export default class ProductService {
   }
 
   /**
-   * Get category by ID
-   * @param {number} id Category ID
-   * @returns {Promise<Category|null>} Category or null if not found
+   * Obtenir une catégorie par ID
+   * @param {number} id ID de la catégorie
+   * @returns {Promise<Category|null>} Catégorie ou null si non trouvée
    */
   async getCategoryById(id: number): Promise<Category | null> {
     return await this.categoryRepository.getCategoryById(id);
   }
 
   /**
-   * Update category
-   * @param {number} id Category ID
-   * @param {Partial<CategoryData>} categoryData Category data to update
-   * @returns {Promise<Category|null>} Updated category or null if not found
+   * Mettre à jour une catégorie
+   * @param {number} id ID de la catégorie
+   * @param {Partial<CategoryData>} categoryData Données de la catégorie à mettre à jour
+   * @returns {Promise<Category|null>} Catégorie mise à jour ou null si non trouvée
    */
   async updateCategory(
     id: number,
     categoryData: Partial<CategoryData>
   ): Promise<Category | null> {
-    // Check if category exists
+    // Vérifier si la catégorie existe
     const existingCategory = await this.categoryRepository.getCategoryById(id);
     if (!existingCategory) {
-      throw new Error("Category not found");
+      throw new Error("Catégorie non trouvée");
     }
 
-    // If name is being changed, check if new name already exists
+    // Si le nom est modifié, vérifier si le nouveau nom existe déjà
     if (categoryData.name && categoryData.name !== existingCategory.name) {
       const nameExists = await this.categoryRepository.categoryNameExists(
         categoryData.name,
         id
       );
       if (nameExists) {
-        throw new Error("Category name already exists");
+        throw new Error("Le nom de la catégorie existe déjà");
       }
     }
 
@@ -239,49 +230,49 @@ export default class ProductService {
   }
 
   /**
-   * Delete category
-   * @param {number} id Category ID
-   * @returns {Promise<boolean>} True if deleted, false if not found
+   * Supprimer une catégorie
+   * @param {number} id ID de la catégorie
+   * @returns {Promise<boolean>} True si supprimée, false si non trouvée
    */
   async deleteCategory(id: number): Promise<boolean> {
     return await this.categoryRepository.deleteCategory(id);
   }
 
   /**
-   * List all categories
-   * @returns {Promise<Category[]>} List of categories
+   * Lister toutes les catégories
+   * @returns {Promise<Category[]>} Liste des catégories
    */
   async listCategories(): Promise<Category[]> {
     return await this.categoryRepository.listCategories();
   }
 
-  // ===== PRODUCT IMAGE METHODS =====
+  // ===== MÉTHODES IMAGE DE PRODUIT =====
 
   /**
-   * Create a new product image
-   * @param {Partial<ProductImageData>} imageData Image data
-   * @returns {Promise<ProductImage>} Created image
+   * Créer une nouvelle image de produit
+   * @param {Partial<ProductImageData>} imageData Données de l'image
+   * @returns {Promise<ProductImage>} Image créée
    */
   async createImage(
     imageData: Partial<ProductImageData>
   ): Promise<ProductImage> {
-    // Validate required fields
+    // Valider les champs requis
     if (!imageData.product_id) {
-      throw new Error("Product ID is required");
+      throw new Error("L'ID du produit est requis");
     }
     if (!imageData.filename) {
-      throw new Error("Filename is required");
+      throw new Error("Le nom de fichier est requis");
     }
     if (!imageData.file_path) {
-      throw new Error("File path is required");
+      throw new Error("Le chemin du fichier est requis");
     }
 
-    // Check if product exists
+    // Vérifier si le produit existe
     const product = await this.productRepository.getProductById(
       imageData.product_id
     );
     if (!product) {
-      throw new Error("Product not found");
+      throw new Error("Produit non trouvé");
     }
 
     return await this.imageRepository.createImage(
@@ -290,19 +281,19 @@ export default class ProductService {
   }
 
   /**
-   * Get image by ID
-   * @param {number} id Image ID
-   * @returns {Promise<ProductImage|null>} Image or null if not found
+   * Obtenir une image par ID
+   * @param {number} id ID de l'image
+   * @returns {Promise<ProductImage|null>} Image ou null si non trouvée
    */
   async getImageById(id: number): Promise<ProductImage | null> {
     return await this.imageRepository.getImageById(id);
   }
 
   /**
-   * Update image
-   * @param {number} id Image ID
-   * @param {Partial<ProductImageData>} imageData Image data to update
-   * @returns {Promise<ProductImage|null>} Updated image or null if not found
+   * Mettre à jour une image
+   * @param {number} id ID de l'image
+   * @param {Partial<ProductImageData>} imageData Données de l'image à mettre à jour
+   * @returns {Promise<ProductImage|null>} Image mise à jour ou null si non trouvée
    */
   async updateImage(
     id: number,
@@ -312,10 +303,10 @@ export default class ProductService {
   }
 
   /**
-   * Delete image
-   * @param {number} productId Product ID
-   * @param {number} imageId Image ID
-   * @returns {Promise<boolean>} True if deleted, false if not found
+   * Supprimer une image
+   * @param {number} productId ID du produit
+   * @param {number} imageId ID de l'image
+   * @returns {Promise<boolean>} True si supprimée, false si non trouvée
    */
   async deleteImage(productId: number, imageId: number): Promise<boolean> {
     return await this.imageRepository.deleteImageByProductAndId(
@@ -325,9 +316,9 @@ export default class ProductService {
   }
 
   /**
-   * List images for a product
-   * @param {number} productId Product ID
-   * @returns {Promise<ProductImage[]>} List of images
+   * Lister les images d'un produit
+   * @param {number} productId ID du produit
+   * @returns {Promise<ProductImage[]>} Liste des images
    */
   async listImages(productId: number): Promise<ProductImage[]> {
     return await this.imageRepository.listImagesByProduct(productId);

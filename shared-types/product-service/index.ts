@@ -198,17 +198,6 @@ export interface ProductImageUploadResponseDTO {
 }
 
 /**
- * DTO pour les variantes d'image
- */
-export interface ProductImageVariantDTO {
-  id: string;
-  width: number;
-  height: number;
-  url: string;
-  format: string;
-}
-
-/**
  * DTO pour les options de filtrage avancé
  */
 export interface ProductFilterDTO {

@@ -1,6 +1,6 @@
 /**
- * Category ORM Entity
- * Represents a product category
+ * Entité ORM Catégorie
+ * Représente une catégorie de produit
  */
 
 /**
@@ -52,11 +52,11 @@ class Category {
     const errors: string[] = [];
 
     if (!this.name || this.name.trim().length === 0) {
-      errors.push("Category name is required");
+      errors.push("Le nom de la catégorie est requis");
     }
 
     if (this.name && this.name.length > 100) {
-      errors.push("Category name must be less than 100 characters");
+      errors.push("Le nom de la catégorie doit faire moins de 100 caractères");
     }
 
     return {

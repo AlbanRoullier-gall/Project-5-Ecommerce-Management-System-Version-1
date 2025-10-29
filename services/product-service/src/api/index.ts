@@ -1,11 +1,11 @@
 /**
- * API Router
- * Centralized route configuration for product-service
+ * Routeur API
+ * Configuration centralisée des routes pour le service produit
  *
- * Architecture : Router pattern
- * - Centralized route management
- * - Middleware integration
- * - Request validation
+ * Architecture : Pattern Routeur
+ * - Gestion centralisée des routes
+ * - Intégration des middlewares
+ * - Validation des requêtes
  */
 
 import express, { Request, Response, NextFunction } from "express";
@@ -44,7 +44,7 @@ export class ApiRouter {
   }
 
   /**
-   * Setup middlewares
+   * Configuration des middlewares
    */
   private setupMiddlewares(app: express.Application): void {
     app.use(helmet());
@@ -53,17 +53,17 @@ export class ApiRouter {
     app.use(express.json({ limit: "50mb" }));
     app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-    // Serve static files (product images)
+    // Servir les fichiers statiques (images de produits)
     app.use("/uploads", express.static("uploads"));
     app.use("/uploads/products", express.static("uploads/products"));
   }
 
   /**
-   * Setup validation schemas
+   * Configuration des schémas de validation
    */
   private setupValidationSchemas() {
     return {
-      // Product schemas
+      // Schémas de produit
       productCreateSchema: Joi.object({
         name: Joi.string().max(255).required(),
         description: Joi.string().optional(),
@@ -81,7 +81,7 @@ export class ApiRouter {
         isActive: Joi.boolean().optional(),
       }),
 
-      // Category schemas
+      // Schémas de catégorie
       categoryCreateSchema: Joi.object({
         name: Joi.string().max(100).required(),
         description: Joi.string().optional(),
@@ -91,7 +91,7 @@ export class ApiRouter {
         description: Joi.string().optional(),
       }),
 
-      // ProductImage schemas
+      // Schémas d'image de produit
       productImageCreateSchema: Joi.object({
         productId: Joi.number().integer().positive().required(),
         filename: Joi.string().max(255).required(),
@@ -107,10 +107,10 @@ export class ApiRouter {
   }
 
   /**
-   * Setup file upload configuration
+   * Configuration du téléchargement de fichiers
    */
   private setupFileUpload() {
-    // Create uploads directory if it doesn't exist
+    // Créer le répertoire uploads s'il n'existe pas
     const uploadDir = "uploads/products";
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
@@ -139,7 +139,7 @@ export class ApiRouter {
 
     return multer({
       storage: storage,
-      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+      limits: { fileSize: 10 * 1024 * 1024 }, // Limite de 10MB
       fileFilter: (
         req: Request,
         file: Express.Multer.File,
@@ -148,7 +148,7 @@ export class ApiRouter {
         if (file.mimetype.startsWith("image/")) {
           cb(null, true);
         } else {
-          cb(new Error("Only image files are allowed"));
+          cb(new Error("Seuls les fichiers image sont autorisés"));
         }
       },
     });
@@ -293,15 +293,6 @@ export class ApiRouter {
       this.requireAuth,
       (req: Request, res: Response) => {
         this.productController.deleteProduct(req, res);
-      }
-    );
-
-    // Activer/désactiver un produit (admin)
-    app.patch(
-      "/api/admin/products/:id/toggle",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.productController.toggleProductStatus(req, res);
       }
     );
 

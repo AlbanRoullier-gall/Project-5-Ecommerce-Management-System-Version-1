@@ -16,7 +16,6 @@ export const PRODUCT_ROUTES: Record<string, ServiceName> = {
   // Routes admin
   "/admin/products": "product", // GET: Liste produits, POST: Créer produit
   "/admin/products/:id": "product", // GET: Récupérer produit, PUT: Modifier produit, DELETE: Supprimer produit
-  "/admin/products/:id/toggle": "product", // PATCH: Activer/désactiver produit
   "/admin/products/:id/activate": "product", // POST: Activer produit
   "/admin/products/:id/deactivate": "product", // POST: Désactiver produit
   "/admin/products/with-images": "product", // POST: Créer produit avec images

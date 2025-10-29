@@ -1,6 +1,6 @@
 /**
- * ProductImage ORM Entity
- * Represents a product image
+ * Entité ORM Image de Produit
+ * Représente une image de produit
  */
 
 /**
@@ -54,23 +54,23 @@ class ProductImage {
     const errors: string[] = [];
 
     if (!this.filename || this.filename.trim().length === 0) {
-      errors.push("Filename is required");
+      errors.push("Le nom de fichier est requis");
     }
 
     if (!this.filePath || this.filePath.trim().length === 0) {
-      errors.push("File path is required");
+      errors.push("Le chemin du fichier est requis");
     }
 
     if (!this.productId || this.productId <= 0) {
-      errors.push("Product ID is required and must be positive");
+      errors.push("L'ID du produit est requis et doit être positif");
     }
 
     if (this.filename && this.filename.length > 255) {
-      errors.push("Filename must be less than 255 characters");
+      errors.push("Le nom de fichier doit faire moins de 255 caractères");
     }
 
     if (this.filePath && this.filePath.length > 500) {
-      errors.push("File path must be less than 500 characters");
+      errors.push("Le chemin du fichier doit faire moins de 500 caractères");
     }
 
     return {

@@ -1,10 +1,10 @@
 /**
- * Enums for Product Service
- * Constrained values for type safety and consistency
+ * Énumérations pour le Service Produit
+ * Valeurs contraintes pour la sécurité des types et la cohérence
  */
 
 /**
- * Product status values
+ * Valeurs de statut de produit
  */
 export enum ProductStatus {
   ACTIVE = "active",
@@ -13,7 +13,7 @@ export enum ProductStatus {
 }
 
 /**
- * Product sort options
+ * Options de tri de produit
  */
 export enum ProductSortBy {
   NAME = "name",
@@ -23,7 +23,7 @@ export enum ProductSortBy {
 }
 
 /**
- * Sort order options
+ * Options d'ordre de tri
  */
 export enum SortOrder {
   ASC = "asc",
@@ -31,7 +31,7 @@ export enum SortOrder {
 }
 
 /**
- * Image order options
+ * Options d'ordre d'image
  */
 export enum ImageOrderBy {
   ORDER_INDEX = "order_index",

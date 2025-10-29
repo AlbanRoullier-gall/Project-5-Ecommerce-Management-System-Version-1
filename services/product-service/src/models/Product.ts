@@ -1,6 +1,6 @@
 /**
- * Product ORM Entity
- * Represents a product with pricing and category information
+ * Entité ORM Produit
+ * Représente un produit avec informations de prix et de catégorie
  */
 
 /**
@@ -70,23 +70,23 @@ class Product {
     const errors: string[] = [];
 
     if (!this.name || this.name.trim().length === 0) {
-      errors.push("Product name is required");
+      errors.push("Le nom du produit est requis");
     }
 
     if (this.price <= 0) {
-      errors.push("Product price must be greater than 0");
+      errors.push("Le prix du produit doit être supérieur à 0");
     }
 
     if (this.vatRate < 0 || this.vatRate > 100) {
-      errors.push("VAT rate must be between 0 and 100");
+      errors.push("Le taux de TVA doit être entre 0 et 100");
     }
 
     if (!this.categoryId || this.categoryId <= 0) {
-      errors.push("Category ID is required and must be positive");
+      errors.push("L'ID de catégorie est requis et doit être positif");
     }
 
     if (this.name && this.name.length > 255) {
-      errors.push("Product name must be less than 255 characters");
+      errors.push("Le nom du produit doit faire moins de 255 caractères");
     }
 
     return {

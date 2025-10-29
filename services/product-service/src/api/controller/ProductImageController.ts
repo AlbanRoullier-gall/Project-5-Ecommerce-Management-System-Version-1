@@ -1,11 +1,11 @@
 /**
- * ProductImage Controller
- * Product image management endpoints
+ * Contrôleur Image de Produit
+ * Points de terminaison de gestion des images de produit
  *
- * Architecture : Controller pattern
- * - HTTP request handling
- * - Service orchestration
- * - Response formatting
+ * Architecture : Pattern Contrôleur
+ * - Gestion des requêtes HTTP
+ * - Orchestration des services
+ * - Formatage des réponses
  */
 
 import { Request, Response } from "express";
@@ -21,7 +21,7 @@ export class ProductImageController {
   }
 
   /**
-   * Create product image
+   * Créer une image de produit
    */
   async createProductImage(req: Request, res: Response): Promise<void> {
     try {
@@ -37,7 +37,7 @@ export class ProductImageController {
           )
         );
     } catch (error: any) {
-      console.error("Create product image error:", error);
+      console.error("Erreur lors de la création de l'image de produit:", error);
       if (error.message === "Product not found") {
         res.status(404).json(ResponseMapper.notFoundError("Product"));
         return;
@@ -47,7 +47,7 @@ export class ProductImageController {
   }
 
   /**
-   * Get product image by ID
+   * Obtenir une image de produit par ID
    */
   async getProductImageById(req: Request, res: Response): Promise<void> {
     try {
@@ -65,13 +65,16 @@ export class ProductImageController {
         )
       );
     } catch (error: any) {
-      console.error("Get product image error:", error);
+      console.error(
+        "Erreur lors de la récupération de l'image de produit:",
+        error
+      );
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
   /**
-   * Update product image
+   * Mettre à jour une image de produit
    */
   async updateProductImage(req: Request, res: Response): Promise<void> {
     try {
@@ -95,13 +98,16 @@ export class ProductImageController {
         )
       );
     } catch (error: any) {
-      console.error("Update product image error:", error);
+      console.error(
+        "Erreur lors de la mise à jour de l'image de produit:",
+        error
+      );
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
   /**
-   * Delete product image
+   * Supprimer une image de produit
    */
   async deleteProductImage(req: Request, res: Response): Promise<void> {
     try {
@@ -118,13 +124,16 @@ export class ProductImageController {
 
       res.json(ResponseMapper.imageDeleted());
     } catch (error: any) {
-      console.error("Delete product image error:", error);
+      console.error(
+        "Erreur lors de la suppression de l'image de produit:",
+        error
+      );
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
   /**
-   * List product images
+   * Lister les images de produit
    */
   async listProductImages(req: Request, res: Response): Promise<void> {
     try {
@@ -135,14 +144,14 @@ export class ProductImageController {
       );
       res.json(ResponseMapper.imageListed(imagesDTO));
     } catch (error: any) {
-      console.error("List product images error:", error);
+      console.error("Erreur lors de la liste des images de produit:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
   /**
-   * Serve product image file (public)
-   * Serves the actual image file instead of JSON metadata
+   * Servir le fichier image de produit (public)
+   * Sert le fichier image réel au lieu des métadonnées JSON
    */
   async serveProductImageFile(req: Request, res: Response): Promise<void> {
     try {
@@ -183,7 +192,7 @@ export class ProductImageController {
       res.setHeader("Cache-Control", "public, max-age=31536000"); // Cache 1 an
       res.sendFile(imagePath);
     } catch (error: any) {
-      console.error("Error serving image file:", error);
+      console.error("Erreur lors du service du fichier image:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }

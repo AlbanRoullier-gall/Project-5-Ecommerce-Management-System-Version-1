@@ -1,11 +1,11 @@
 /**
- * Product Repository
- * Database operations for products
+ * Repository Produit
+ * Opérations de base de données pour les produits
  *
- * Architecture : Repository pattern
- * - Data access abstraction
- * - Database operations
- * - Type safety
+ * Architecture : Pattern Repository
+ * - Abstraction d'accès aux données
+ * - Opérations de base de données
+ * - Sécurité des types
  */
 
 import { Pool } from "pg";
@@ -19,9 +19,9 @@ export class ProductRepository {
   }
 
   /**
-   * Create a new product
-   * @param {ProductData} productData Product data
-   * @returns {Promise<Product>} Created product
+   * Créer un nouveau produit
+   * @param {ProductData} productData Données du produit
+   * @returns {Promise<Product>} Produit créé
    */
   async createProduct(productData: ProductData): Promise<Product> {
     try {
@@ -43,15 +43,15 @@ export class ProductRepository {
       const result = await this.pool.query(query, values);
       return new Product(result.rows[0] as ProductData);
     } catch (error) {
-      console.error("Error creating product:", error);
+      console.error("Erreur lors de la création du produit:", error);
       throw error;
     }
   }
 
   /**
-   * Get product by ID
-   * @param {number} id Product ID
-   * @returns {Promise<Product|null>} Product or null if not found
+   * Obtenir un produit par ID
+   * @param {number} id ID du produit
+   * @returns {Promise<Product|null>} Produit ou null si non trouvé
    */
   async getProductById(id: number): Promise<Product | null> {
     try {
@@ -69,15 +69,15 @@ export class ProductRepository {
 
       return new Product(result.rows[0] as ProductData);
     } catch (error) {
-      console.error("Error getting product by ID:", error);
+      console.error("Erreur lors de la récupération du produit par ID:", error);
       throw error;
     }
   }
 
   /**
-   * Get product by ID with category information
-   * @param {number} id Product ID
-   * @returns {Promise<Product|null>} Product with category or null if not found
+   * Obtenir un produit par ID avec informations de catégorie
+   * @param {number} id ID du produit
+   * @returns {Promise<Product|null>} Produit avec catégorie ou null si non trouvé
    */
   async getProductByIdWithCategory(id: number): Promise<Product | null> {
     try {
@@ -99,16 +99,19 @@ export class ProductRepository {
       (product as any).categoryName = result.rows[0].category_name;
       return product;
     } catch (error) {
-      console.error("Error getting product with category:", error);
+      console.error(
+        "Erreur lors de la récupération du produit avec catégorie:",
+        error
+      );
       throw error;
     }
   }
 
   /**
-   * Update product
-   * @param {number} id Product ID
-   * @param {Partial<ProductData>} productData Product data to update
-   * @returns {Promise<Product|null>} Updated product or null if not found
+   * Mettre à jour un produit
+   * @param {number} id ID du produit
+   * @param {Partial<ProductData>} productData Données du produit à mettre à jour
+   * @returns {Promise<Product|null>} Produit mis à jour ou null si non trouvé
    */
   async updateProduct(
     id: number,
@@ -145,7 +148,7 @@ export class ProductRepository {
       }
 
       if (setClause.length === 0) {
-        throw new Error("No fields to update");
+        throw new Error("Aucun champ à mettre à jour");
       }
 
       values.push(id);
@@ -165,15 +168,15 @@ export class ProductRepository {
 
       return new Product(result.rows[0] as ProductData);
     } catch (error) {
-      console.error("Error updating product:", error);
+      console.error("Erreur lors de la mise à jour du produit:", error);
       throw error;
     }
   }
 
   /**
-   * Delete product
-   * @param {number} id Product ID
-   * @returns {Promise<boolean>} True if deleted, false if not found
+   * Supprimer un produit
+   * @param {number} id ID du produit
+   * @returns {Promise<boolean>} True si supprimé, false si non trouvé
    */
   async deleteProduct(id: number): Promise<boolean> {
     try {
@@ -181,15 +184,15 @@ export class ProductRepository {
       const result = await this.pool.query(query, [id]);
       return result.rowCount! > 0;
     } catch (error) {
-      console.error("Error deleting product:", error);
+      console.error("Erreur lors de la suppression du produit:", error);
       throw error;
     }
   }
 
   /**
-   * List products with pagination and filtering
-   * @param {Object} options List options
-   * @returns {Promise<Object>} Products with pagination info
+   * Lister les produits avec pagination et filtrage
+   * @param {Object} options Options de liste
+   * @returns {Promise<Object>} Produits avec informations de pagination
    */
   async listProducts(options: {
     page: number;
@@ -237,7 +240,7 @@ export class ProductRepository {
           ? `WHERE ${whereConditions.join(" AND ")}`
           : "";
 
-      // Count total products
+      // Compter le total des produits
       const countQuery = `
         SELECT COUNT(*) as total
         FROM products p
@@ -246,7 +249,7 @@ export class ProductRepository {
       const countResult = await this.pool.query(countQuery, values);
       const total = parseInt(countResult.rows[0].total);
 
-      // Get products
+      // Obtenir les produits
       const sortBy = options.sortBy || "created_at";
       const sortOrder = options.sortOrder || "desc";
       const orderClause = `ORDER BY p.${sortBy} ${sortOrder.toUpperCase()}`;
@@ -280,34 +283,7 @@ export class ProductRepository {
         },
       };
     } catch (error) {
-      console.error("Error listing products:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Toggle product status
-   * @param {number} id Product ID
-   * @returns {Promise<Product|null>} Updated product or null if not found
-   */
-  async toggleProductStatus(id: number): Promise<Product | null> {
-    try {
-      const query = `
-        UPDATE products 
-        SET is_active = NOT is_active
-        WHERE id = $1
-        RETURNING id, name, description, price, vat_rate, category_id, is_active, created_at, updated_at
-      `;
-
-      const result = await this.pool.query(query, [id]);
-
-      if (result.rows.length === 0) {
-        return null;
-      }
-
-      return new Product(result.rows[0] as ProductData);
-    } catch (error) {
-      console.error("Error toggling product status:", error);
+      console.error("Erreur lors de la liste des produits:", error);
       throw error;
     }
   }

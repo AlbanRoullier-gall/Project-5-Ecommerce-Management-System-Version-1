@@ -1,11 +1,11 @@
 /**
- * Product Controller
- * Product management endpoints
+ * Contrôleur Produit
+ * Points de terminaison de gestion des produits
  *
- * Architecture : Controller pattern
- * - HTTP request handling
- * - Service orchestration
- * - Response formatting
+ * Architecture : Pattern Contrôleur
+ * - Gestion des requêtes HTTP
+ * - Orchestration des services
+ * - Formatage des réponses
  */
 
 import { Request, Response } from "express";
@@ -21,7 +21,7 @@ export class ProductController {
   }
 
   /**
-   * Create product
+   * Créer un produit
    */
   async createProduct(req: Request, res: Response): Promise<void> {
     try {
@@ -37,7 +37,7 @@ export class ProductController {
           )
         );
     } catch (error: any) {
-      console.error("Create product error:", error);
+      console.error("Erreur lors de la création du produit:", error);
       if (error.message === "Product with this name already exists") {
         res.status(409).json(ResponseMapper.conflictError(error.message));
         return;
@@ -51,7 +51,7 @@ export class ProductController {
   }
 
   /**
-   * Get product by ID
+   * Obtenir un produit par ID
    */
   async getProductById(req: Request, res: Response): Promise<void> {
     try {
@@ -63,7 +63,7 @@ export class ProductController {
         return;
       }
 
-      // Get product images
+      // Obtenir les images du produit
       const images = await this.productService.listImages(parseInt(id));
       const productWithImages = {
         ...ProductMapper.productToPublicDTO(product),
@@ -74,13 +74,13 @@ export class ProductController {
 
       res.json(ResponseMapper.productRetrieved(productWithImages));
     } catch (error: any) {
-      console.error("Get product error:", error);
+      console.error("Erreur lors de la récupération du produit:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
   /**
-   * Update product
+   * Mettre à jour un produit
    */
   async updateProduct(req: Request, res: Response): Promise<void> {
     try {
@@ -102,7 +102,7 @@ export class ProductController {
         ResponseMapper.productUpdated(ProductMapper.productToPublicDTO(product))
       );
     } catch (error: any) {
-      console.error("Update product error:", error);
+      console.error("Erreur lors de la mise à jour du produit:", error);
       if (error.message === "Product not found") {
         res.status(404).json(ResponseMapper.notFoundError("Product"));
         return;
@@ -120,7 +120,7 @@ export class ProductController {
   }
 
   /**
-   * Delete product
+   * Supprimer un produit
    */
   async deleteProduct(req: Request, res: Response): Promise<void> {
     try {
@@ -134,13 +134,13 @@ export class ProductController {
 
       res.json(ResponseMapper.productDeleted());
     } catch (error: any) {
-      console.error("Delete product error:", error);
+      console.error("Erreur lors de la suppression du produit:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
   /**
-   * List products
+   * Lister les produits
    */
   async listProducts(req: Request, res: Response): Promise<void> {
     try {
@@ -158,7 +158,7 @@ export class ProductController {
 
       const result = await this.productService.listProducts(options);
 
-      // Add images to each product
+      // Ajouter les images à chaque produit
       if (result.products) {
         for (let product of result.products) {
           const images = await this.productService.listImages(product.id!);
@@ -170,37 +170,13 @@ export class ProductController {
 
       res.json(ResponseMapper.productListed(result));
     } catch (error: any) {
-      console.error("List products error:", error);
+      console.error("Erreur lors de la liste des produits:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
   /**
-   * Toggle product status
-   */
-  async toggleProductStatus(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const product = await this.productService.toggleProductStatus(
-        parseInt(id)
-      );
-
-      if (!product) {
-        res.status(404).json(ResponseMapper.notFoundError("Product"));
-        return;
-      }
-
-      res.json(
-        ResponseMapper.productUpdated(ProductMapper.productToPublicDTO(product))
-      );
-    } catch (error: any) {
-      console.error("Toggle product status error:", error);
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Activate product
+   * Activer un produit
    */
   async activateProduct(req: Request, res: Response): Promise<void> {
     try {
@@ -216,13 +192,13 @@ export class ProductController {
         ResponseMapper.productUpdated(ProductMapper.productToPublicDTO(product))
       );
     } catch (error: any) {
-      console.error("Activate product error:", error);
+      console.error("Erreur lors de l'activation du produit:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 
   /**
-   * Deactivate product
+   * Désactiver un produit
    */
   async deactivateProduct(req: Request, res: Response): Promise<void> {
     try {
@@ -238,7 +214,7 @@ export class ProductController {
         ResponseMapper.productUpdated(ProductMapper.productToPublicDTO(product))
       );
     } catch (error: any) {
-      console.error("Deactivate product error:", error);
+      console.error("Erreur lors de la désactivation du produit:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
