@@ -10,6 +10,7 @@ import { CART_ROUTES } from "./cart-routes";
 import { CUSTOMER_ROUTES } from "./customer-routes";
 import { PAYMENT_ROUTES } from "./payment-routes";
 import { EMAIL_ROUTES } from "./email-routes";
+import { PDF_EXPORT_ROUTES } from "./pdf-export-routes";
 
 /**
  * Combine toutes les routes en un seul objet
@@ -22,4 +23,5 @@ export const ROUTES: Record<string, ServiceName> = {
   ...CUSTOMER_ROUTES,
   ...PAYMENT_ROUTES,
   ...EMAIL_ROUTES,
+  ...PDF_EXPORT_ROUTES,
 };

@@ -1,18 +1,18 @@
 /**
- * Payment Service - Entry Point
- * Main application entry point for payment-service
+ * Service de Paiement - Point d'entrée
+ * Point d'entrée principal de l'application pour payment-service
  *
- * Architecture : Microservice pattern
- * - Express.js server
- * - Stripe payment processing
- * - Health checks
+ * Architecture : Pattern microservice
+ * - Serveur Express.js
+ * - Traitement des paiements Stripe
+ * - Vérifications de santé
  */
 
 import express from "express";
 import dotenv from "dotenv";
 import { ApiRouter } from "./api";
 
-// Load environment variables
+// Chargement des variables d'environnement
 dotenv.config();
 
 // Configuration
@@ -28,7 +28,7 @@ async function startService(): Promise<void> {
     // Configuration de l'application Express
     const app = express();
 
-    // Configuration de l'API Router
+    // Configuration du routeur API
     const apiRouter = new ApiRouter();
     apiRouter.setupRoutes(app);
 

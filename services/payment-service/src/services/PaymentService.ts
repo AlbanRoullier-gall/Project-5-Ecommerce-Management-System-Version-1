@@ -23,12 +23,12 @@ export default class PaymentService {
 
   /**
    * Créer un paiement
-   * @param {Object} paymentData Payment data
-   * @returns {Promise<Object>} Payment result
+   * @param {Object} paymentData Données de paiement
+   * @returns {Promise<Object>} Résultat du paiement
    */
   async createPayment(paymentData: any): Promise<any> {
     try {
-      // Créer les line items pour Stripe Checkout
+      // Créer les éléments de ligne pour Stripe Checkout
       const line_items = paymentData.items.map((item: any) => {
         const product_data: any = { name: item.name };
         if (item.description && String(item.description).trim().length > 0) {
@@ -80,8 +80,8 @@ export default class PaymentService {
 
   /**
    * Confirmer un paiement
-   * @param {string} paymentIntentId Payment Intent ID
-   * @returns {Promise<Object>} Payment result
+   * @param {string} paymentIntentId Identifiant de l'intention de paiement
+   * @returns {Promise<Object>} Résultat du paiement
    */
   async confirmPayment(paymentIntentId: string): Promise<any> {
     try {
@@ -139,163 +139,8 @@ export default class PaymentService {
   }
 
   /**
-   * Rembourser un paiement
-   * @param {string} paymentIntentId Payment Intent ID
-   * @param {number} amount Amount to refund (in cents)
-   * @param {string} reason Reason for refund
-   * @returns {Promise<Object>} Refund result
-   */
-  async refundPayment(
-    paymentIntentId: string,
-    amount?: number,
-    reason: string = "requested_by_customer"
-  ): Promise<any> {
-    try {
-      // Récupérer le PaymentIntent pour obtenir les charges
-      const paymentIntent = await this.stripe.paymentIntents.retrieve(
-        paymentIntentId
-      );
-
-      if (paymentIntent.status !== "succeeded") {
-        // Pour les tests, on simule un remboursement même si le paiement n'est pas confirmé
-        console.log(
-          `⚠️ Paiement non confirmé (${paymentIntent.status}), simulation du remboursement pour les tests`
-        );
-        return {
-          id: `re_${paymentIntentId}_test`,
-          amount: amount || paymentIntent.amount,
-          status: "succeeded",
-          reason: reason,
-          paymentIntentId: paymentIntentId,
-          createdAt: new Date(),
-        };
-      }
-
-      // Récupérer la charge associée
-      const charges = await this.stripe.charges.list({
-        payment_intent: paymentIntentId,
-        limit: 1,
-      });
-
-      if (charges.data.length === 0) {
-        throw new Error("Aucune charge trouvée pour ce paiement");
-      }
-
-      const charge = charges.data[0];
-
-      // Créer le remboursement
-      const refundParams: any = {
-        charge: charge.id,
-      };
-      if (amount) {
-        refundParams.amount = amount;
-      }
-      const refund = await this.stripe.refunds.create(refundParams);
-
-      return {
-        id: refund.id,
-        status: "refunded",
-        amount: refund.amount,
-        currency: refund.currency,
-        customerEmail: paymentIntent.receipt_email || "",
-        createdAt: new Date(refund.created * 1000),
-      };
-    } catch (error: any) {
-      console.error("Error refunding payment:", error);
-      throw new Error(`Erreur lors du remboursement: ${error.message}`);
-    }
-  }
-
-  /**
-   * Récupérer un paiement par ID
-   * @param {string} paymentIntentId Payment Intent ID
-   * @returns {Promise<Object>} Payment result
-   */
-  async getPayment(paymentIntentId: string): Promise<any> {
-    try {
-      const paymentIntent = await this.stripe.paymentIntents.retrieve(
-        paymentIntentId
-      );
-
-      return {
-        id: paymentIntent.id,
-        status: paymentIntent.status,
-        amount: paymentIntent.amount,
-        currency: paymentIntent.currency,
-        customerEmail: paymentIntent.receipt_email || "",
-        createdAt: new Date(paymentIntent.created * 1000),
-        clientSecret: paymentIntent.client_secret,
-      };
-    } catch (error: any) {
-      console.error("Error retrieving payment:", error);
-      throw new Error(
-        `Erreur lors de la récupération du paiement: ${error.message}`
-      );
-    }
-  }
-
-  /**
-   * Récupérer les statistiques de paiement
-   * @param {string} period Period for statistics (day, week, month)
-   * @returns {Promise<Object>} Payment statistics
-   */
-  async getPaymentStats(period: string = "month"): Promise<any> {
-    try {
-      const now = new Date();
-      let startDate: Date;
-
-      switch (period) {
-        case "day":
-          startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-          break;
-        case "week":
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          break;
-        case "month":
-        default:
-          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          break;
-      }
-
-      // Récupérer les paiements réussis
-      const successfulPayments = await this.stripe.paymentIntents.list({
-        created: {
-          gte: Math.floor(startDate.getTime() / 1000),
-        },
-        limit: 100,
-      });
-
-      const succeeded = successfulPayments.data.filter(
-        (p) => p.status === "succeeded"
-      );
-      const failed = successfulPayments.data.filter(
-        (p) => p.status === "requires_payment_method"
-      );
-
-      const totalAmount = succeeded.reduce(
-        (sum, payment) => sum + payment.amount,
-        0
-      );
-
-      return {
-        totalPayments: successfulPayments.data.length,
-        successfulPayments: succeeded.length,
-        failedPayments: failed.length,
-        totalAmount: totalAmount,
-        currency: "eur",
-        period: period,
-      };
-    } catch (error: any) {
-      console.error("Error getting payment stats:", error);
-      throw new Error(
-        `Erreur lors de la récupération des statistiques: ${error.message}`
-      );
-    }
-  }
-
-  /**
    * Vérifier la configuration Stripe
-   * @returns {Object} Configuration status
+   * @returns {Object} État de la configuration
    */
   getConfigurationStatus(): any {
     return {

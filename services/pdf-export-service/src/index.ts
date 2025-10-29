@@ -1,45 +1,65 @@
-import express from "express";
-import cors from "cors";
-import helmet from "helmet";
-import morgan from "morgan";
-import dotenv from "dotenv";
-import { exportRoutes } from "./routes/export";
+/**
+ * Service PDF Export - Point d'entrée
+ * Point d'entrée principal de l'application pour pdf-export-service
+ *
+ * Architecture : Pattern microservice
+ * - Serveur Express.js
+ * - Génération d'exports PDF/HTML
+ * - Vérifications de santé
+ */
 
+import express from "express";
+import dotenv from "dotenv";
+import { ApiRouter } from "./api";
+
+// Chargement des variables d'environnement
 dotenv.config();
 
-const app = express();
+// Configuration
 const PORT = process.env.PORT || 3040;
 
-// Middleware
-app.use(helmet());
-app.use(cors());
-app.use(morgan("combined"));
-app.use(express.json({ limit: "50mb" }));
+/**
+ * Fonction principale pour démarrer le service
+ */
+async function startService(): Promise<void> {
+  try {
+    console.log("🚀 Starting PDF Export Service...");
 
-// Routes
-app.use("/api", exportRoutes);
+    // Configuration de l'application Express
+    const app = express();
 
-// Health check
-app.get("/health", (req, res) => {
-  res.json({ status: "OK", service: "pdf-export-service" });
-});
+    // Configuration du routeur API
+    const apiRouter = new ApiRouter();
+    apiRouter.setupRoutes(app);
 
-// Error handling middleware
-app.use(
-  (
-    err: any,
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) => {
-    console.error("Error:", err);
-    res.status(500).json({
-      error: "Internal server error",
-      message: err.message,
+    // Démarrage du serveur
+    const server = app.listen(PORT, () => {
+      console.log(`🎉 PDF Export Service running on port ${PORT}`);
+      console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
+      console.log(
+        `📚 API documentation: http://localhost:${PORT}/api/health/detailed`
+      );
     });
-  }
-);
 
-app.listen(PORT, () => {
-  console.log(`PDF Export Service running on port ${PORT}`);
-});
+    // Gestion gracieuse de l'arrêt
+    const gracefulShutdown = async (signal: string): Promise<void> => {
+      console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
+
+      server.close(async () => {
+        console.log("🔌 HTTP server closed");
+        console.log("✅ Graceful shutdown completed");
+        process.exit(0);
+      });
+    };
+
+    // Écoute des signaux d'arrêt
+    process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+    process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+  } catch (error) {
+    console.error("❌ Failed to start PDF Export Service:", error);
+    process.exit(1);
+  }
+}
+
+// Démarrage du service
+startService();

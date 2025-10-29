@@ -1,29 +1,9 @@
 /**
- * Mapper de Réponse - Version simplifiée pour Stripe
+ * Mapper de Réponse - Service PDF Export
  * Mapper pour créer les réponses standardisées
  */
 
 export class ResponseMapper {
-  /**
-   * Réponse de paiement créé
-   */
-  static paymentCreated(payment: any) {
-    return {
-      message: "Paiement créé avec succès",
-      payment,
-    };
-  }
-
-  /**
-   * Réponse de paiement confirmé
-   */
-  static paymentConfirmed(payment: any) {
-    return {
-      message: "Paiement confirmé avec succès",
-      payment,
-    };
-  }
-
   /**
    * Réponse de santé du service
    */
@@ -31,7 +11,7 @@ export class ResponseMapper {
     return {
       status: "healthy",
       timestamp: new Date().toISOString(),
-      service: "payment-service",
+      service: "pdf-export-service",
     };
   }
 
@@ -61,14 +41,14 @@ export class ResponseMapper {
   }
 
   /**
-   * Réponse d'erreur de paiement
+   * Réponse d'erreur d'export
    */
-  static paymentError(message: string) {
+  static exportError(message: string) {
     return {
-      error: "Erreur de paiement",
+      error: "Erreur d'export",
       message,
       timestamp: new Date().toISOString(),
-      status: 402,
+      status: 500,
     };
   }
 
@@ -103,7 +83,7 @@ export class ResponseMapper {
     return {
       status: "unhealthy",
       timestamp: new Date().toISOString(),
-      service: "payment-service",
+      service: "pdf-export-service",
       error: "Service indisponible",
     };
   }

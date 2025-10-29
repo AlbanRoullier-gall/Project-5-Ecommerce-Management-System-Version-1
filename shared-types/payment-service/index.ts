@@ -99,17 +99,6 @@ export interface PaymentConfirmDTO {
   paymentIntentId: string;
 }
 
-// ===== TYPES BASÉS SUR PaymentRefundDTO =====
-
-/**
- * DTO pour rembourser un paiement
- */
-export interface PaymentRefundDTO {
-  paymentIntentId: string;
-  amount?: number; // en centimes, si non spécifié = remboursement total
-  reason?: string;
-}
-
 // ===== TYPES BASÉS SUR PaymentPublicDTO =====
 
 /**
@@ -122,7 +111,6 @@ export interface PaymentPublicDTO {
     | "succeeded"
     | "failed"
     | "canceled"
-    | "refunded"
     | "requires_payment_method"
     | "unpaid";
   amount: number;
@@ -133,31 +121,6 @@ export interface PaymentPublicDTO {
   url?: string; // URL de redirection vers Stripe Checkout
   error?: string;
   message?: string;
-}
-
-/**
- * DTO pour la liste des paiements
- */
-export interface PaymentListDTO {
-  payments: PaymentPublicDTO[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-// ===== TYPES BASÉS SUR PaymentStatsDTO =====
-
-/**
- * DTO pour les statistiques de paiement
- */
-export interface PaymentStatsDTO {
-  totalPayments: number;
-  successfulPayments: number;
-  failedPayments: number;
-  totalAmount: number;
-  currency: string;
-  period: string;
 }
 
 // ===== TYPES SPÉCIFIQUES =====

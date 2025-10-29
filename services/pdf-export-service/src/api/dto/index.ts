@@ -4,4 +4,4 @@
  */
 
 // Réexport des DTOs depuis shared-types
-export * from "../../../../../shared-types/payment-service";
+export * from "../../../../../shared-types/pdf-export-service";

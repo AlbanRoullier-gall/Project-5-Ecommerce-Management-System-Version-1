@@ -1,6 +1,6 @@
 /**
- * Routeur API - Version simplifiée pour Stripe
- * Configuration centralisée des routes pour payment-service
+ * Routeur API - Service PDF Export
+ * Configuration centralisée des routes pour pdf-export-service
  */
 
 import express, { Request, Response, NextFunction } from "express";
@@ -8,18 +8,16 @@ import cors from "cors";
 import helmet from "helmet";
 import Joi from "joi";
 import morgan from "morgan";
-import PaymentService from "../services/PaymentService";
-import { HealthController, PaymentController } from "./controller";
-import { ResponseMapper } from "./mapper";
+import { HealthController, ExportController } from "./controller/index";
+import { ResponseMapper } from "./mapper/index";
 
 export class ApiRouter {
   private healthController: HealthController;
-  private paymentController: PaymentController;
+  private exportController: ExportController;
 
   constructor() {
-    const paymentService = new PaymentService();
     this.healthController = new HealthController();
-    this.paymentController = new PaymentController(paymentService);
+    this.exportController = new ExportController();
   }
 
   /**
@@ -29,8 +27,8 @@ export class ApiRouter {
     app.use(helmet());
     app.use(cors());
     app.use(morgan("combined"));
-    app.use(express.json({ limit: "10mb" }));
-    app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+    app.use(express.json({ limit: "50mb" }));
+    app.use(express.urlencoded({ extended: true, limit: "50mb" }));
   }
 
   /**
@@ -38,35 +36,11 @@ export class ApiRouter {
    */
   private setupValidationSchemas() {
     return {
-      // Schéma de création de paiement
-      paymentCreateSchema: Joi.object({
-        customer: Joi.object({
-          email: Joi.string().email().required(),
-          name: Joi.string().max(100).optional(),
-          phone: Joi.string().max(20).allow("").optional(),
-        }).required(),
-        items: Joi.array()
-          .items(
-            Joi.object({
-              name: Joi.string().max(100).required(),
-              description: Joi.string().allow("").max(255).optional(),
-              price: Joi.number().positive().required(),
-              quantity: Joi.number().positive().required(),
-              currency: Joi.string().length(3).required(),
-            })
-          )
-          .min(1)
-          .required(),
-        // Accepter les placeholders Stripe {CHECKOUT_SESSION_ID}
-        // Joi.uri() rejette les accolades, on assouplit donc la validation
-        successUrl: Joi.string().required(),
-        cancelUrl: Joi.string().required(),
-        metadata: Joi.object().optional(),
-      }),
-
-      // Schéma de confirmation de paiement
-      paymentConfirmSchema: Joi.object({
-        paymentIntentId: Joi.string().required(),
+      // Schéma d'export d'année (simplifié)
+      yearExportSchema: Joi.object({
+        year: Joi.number().integer().min(2000).max(2100).required(),
+        orders: Joi.array().items(Joi.object()).required(),
+        creditNotes: Joi.array().items(Joi.object()).required(),
       }),
     };
   }
@@ -136,22 +110,14 @@ export class ApiRouter {
       this.healthController.detailedHealthCheck(req, res);
     });
 
-    // ===== ROUTES DE PAIEMENT =====
-    // Créer un paiement
+    // ===== ROUTES D'EXPORT =====
+    // Export des commandes par année (ROUTE ADMIN)
     app.post(
-      "/api/payment/create",
-      this.validateRequest(schemas.paymentCreateSchema),
+      "/api/admin/export/orders-year",
+      this.requireAuth,
+      this.validateRequest(schemas.yearExportSchema),
       (req: Request, res: Response) => {
-        this.paymentController.createPayment(req, res);
-      }
-    );
-
-    // Confirmer un paiement
-    app.post(
-      "/api/payment/confirm",
-      this.validateRequest(schemas.paymentConfirmSchema),
-      (req: Request, res: Response) => {
-        this.paymentController.confirmPayment(req, res);
+        this.exportController.generateOrdersYearExport(req, res);
       }
     );
 

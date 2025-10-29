@@ -59,14 +59,105 @@ const OrderList: React.FC = () => {
         return;
       }
 
-      const response = await fetch(
-        `/api/admin/exports/orders-year/${yearFilter}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      // Récupérer les données des commandes et avoirs pour l'année sélectionnée
+      const ordersForYear = orders.filter((order) => {
+        const orderYear = new Date(order.createdAt).getFullYear();
+        return orderYear.toString() === yearFilter;
+      });
+
+      const creditNotesForYear = creditNotes.filter((creditNote) => {
+        const creditNoteYear = new Date(creditNote.createdAt).getFullYear();
+        return creditNoteYear.toString() === yearFilter;
+      });
+
+      console.log(`Export pour l'année ${yearFilter}:`, {
+        ordersCount: ordersForYear.length,
+        creditNotesCount: creditNotesForYear.length,
+      });
+
+      // Récupérer les données complètes (items et adresses) pour chaque commande
+      const ordersWithDetails = await Promise.all(
+        ordersForYear.map(async (order) => {
+          try {
+            // Récupérer les items de la commande
+            const itemsRes = await fetch(
+              `${API_URL}/api/admin/orders/${order.id}/items`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            const items = itemsRes.ok ? await itemsRes.json() : [];
+
+            console.log(`Items pour commande ${order.id}:`, {
+              status: itemsRes.status,
+              ok: itemsRes.ok,
+              data: items,
+              dataKeys: Object.keys(items),
+              dataLength: Array.isArray(items) ? items.length : "not array",
+              dataContent: items.data,
+              dataDataKeys: items.data ? Object.keys(items.data) : "no data",
+              dataDataLength: Array.isArray(items.data)
+                ? items.data.length
+                : "not array",
+            });
+
+            // Récupérer les adresses de la commande
+            const addressesRes = await fetch(
+              `${API_URL}/api/admin/orders/${order.id}/addresses`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            const addresses = addressesRes.ok ? await addressesRes.json() : [];
+
+            console.log(`Adresses pour commande ${order.id}:`, {
+              status: addressesRes.status,
+              ok: addressesRes.ok,
+              data: addresses,
+              dataKeys: Object.keys(addresses),
+              dataLength: Array.isArray(addresses)
+                ? addresses.length
+                : "not array",
+              dataContent: addresses.data,
+              dataDataKeys: addresses.data
+                ? Object.keys(addresses.data)
+                : "no data",
+              dataDataLength: Array.isArray(addresses.data)
+                ? addresses.data.length
+                : "not array",
+            });
+
+            return {
+              ...order,
+              items: items.data?.orderItems || [],
+              addresses: addresses.data?.orderAddresses || [],
+            };
+          } catch (error) {
+            console.error(
+              `Erreur récupération détails commande ${order.id}:`,
+              error
+            );
+            return {
+              ...order,
+              items: [],
+              addresses: [],
+            };
+          }
+        })
       );
+
+      const response = await fetch(`${API_URL}/api/admin/export/orders-year`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          year: parseInt(yearFilter),
+          orders: ordersWithDetails,
+          creditNotes: creditNotesForYear,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error("Erreur lors de l'export");

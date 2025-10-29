@@ -1,7 +1,7 @@
-import { YearExportRequest } from "../types";
+import { YearExportRequestDTO } from "../api/dto";
 
 export class PDFGenerator {
-  async generateOrdersYearExport(data: YearExportRequest): Promise<Buffer> {
+  async generateOrdersYearExport(data: YearExportRequestDTO): Promise<Buffer> {
     const html = this.generateHTML(data);
 
     // Pour l'instant, retournons du HTML au lieu d'un PDF
@@ -9,7 +9,7 @@ export class PDFGenerator {
     return Buffer.from(html, "utf-8");
   }
 
-  private generateHTML(data: YearExportRequest): string {
+  private generateHTML(data: YearExportRequestDTO): string {
     const { year, orders, creditNotes } = data;
 
     // Generate detailed orders HTML
@@ -272,25 +272,33 @@ export class PDFGenerator {
     const addressesHTML =
       order.addresses && order.addresses.length > 0
         ? order.addresses
-            .map(
-              (address: any) => `
+            .map((address: any) => {
+              // Gérer les deux structures possibles
+              const addressData = address.addressSnapshot || address;
+              const addressType = address.addressType || address.type;
+
+              return `
           <div class="address-block">
             <h4>${
-              address.type === "billing"
+              addressType === "billing"
                 ? "Adresse de facturation"
                 : "Adresse de livraison"
             }</h4>
-            <p>${address.firstName} ${address.lastName}</p>
-            ${address.company ? `<p>${address.company}</p>` : ""}
-            <p>${address.addressLine1}</p>
-            ${address.addressLine2 ? `<p>${address.addressLine2}</p>` : ""}
-            <p>${address.postalCode} ${address.city}</p>
-            <p>${address.country}</p>
-            ${address.phone ? `<p>Tél: ${address.phone}</p>` : ""}
-            ${address.email ? `<p>Email: ${address.email}</p>` : ""}
+            <p>${addressData.firstName} ${addressData.lastName}</p>
+            ${addressData.company ? `<p>${addressData.company}</p>` : ""}
+            <p>${addressData.address || addressData.addressLine1}</p>
+            ${
+              addressData.addressLine2
+                ? `<p>${addressData.addressLine2}</p>`
+                : ""
+            }
+            <p>${addressData.postalCode} ${addressData.city}</p>
+            <p>${addressData.country}</p>
+            ${addressData.phone ? `<p>Tél: ${addressData.phone}</p>` : ""}
+            ${addressData.email ? `<p>Email: ${addressData.email}</p>` : ""}
           </div>
-        `
-            )
+        `;
+            })
             .join("")
         : "<p>Aucune adresse</p>";
 

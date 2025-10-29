@@ -67,7 +67,7 @@ export class ExportHandler {
       // Step 2: Generate PDF using PDF export service
       console.log(`Generating PDF for year ${yearNumber}...`);
       const pdfServiceResponse = await fetch(
-        `${SERVICES.pdfExport}/api/generate/orders-year-export`,
+        `${SERVICES["pdf-export"]}/api/admin/export/orders-year`,
         {
           method: "POST",
           headers: {

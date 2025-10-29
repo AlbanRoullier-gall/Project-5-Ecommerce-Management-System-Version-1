@@ -1,21 +1,16 @@
 /**
- * Payment Mapper - Version simplifiée pour Stripe
+ * Mapper de Paiement - Version simplifiée pour Stripe
  * Mapper pour les conversions DTO ↔ Service
  */
 
-import {
-  PaymentCreateDTO,
-  PaymentConfirmDTO,
-  PaymentRefundDTO,
-  PaymentPublicDTO,
-} from "../dto";
+import { PaymentCreateDTO, PaymentConfirmDTO, PaymentPublicDTO } from "../dto";
 
 /**
- * Payment Mapper class
+ * Classe Mapper de Paiement
  */
 export class PaymentMapper {
   /**
-   * Convert PaymentCreateDTO to Stripe payment intent data
+   * Convertir PaymentCreateDTO en données d'intention de paiement Stripe
    */
   static paymentCreateDTOToStripeData(dto: PaymentCreateDTO): any {
     const totalAmount = dto.items.reduce(
@@ -39,7 +34,7 @@ export class PaymentMapper {
   }
 
   /**
-   * Convert PaymentConfirmDTO to Stripe confirmation data
+   * Convertir PaymentConfirmDTO en données de confirmation Stripe
    */
   static paymentConfirmDTOToStripeData(dto: PaymentConfirmDTO): any {
     return {
@@ -48,18 +43,7 @@ export class PaymentMapper {
   }
 
   /**
-   * Convert PaymentRefundDTO to Stripe refund data
-   */
-  static paymentRefundDTOToStripeData(dto: PaymentRefundDTO): any {
-    return {
-      paymentIntentId: dto.paymentIntentId,
-      amount: dto.amount,
-      reason: dto.reason || "requested_by_customer",
-    };
-  }
-
-  /**
-   * Convert Stripe PaymentIntent or Checkout Session to PaymentPublicDTO
+   * Convertir l'intention de paiement Stripe ou la session de checkout en PaymentPublicDTO
    */
   static stripePaymentIntentToPublicDTO(paymentIntent: any): PaymentPublicDTO {
     return {
@@ -80,25 +64,6 @@ export class PaymentMapper {
       clientSecret: paymentIntent.client_secret,
       url: paymentIntent.url, // URL pour Stripe Checkout
       error: paymentIntent.last_payment_error?.message,
-    };
-  }
-
-  /**
-   * Convert Stripe refund to PaymentPublicDTO
-   */
-  static stripeRefundToPublicDTO(
-    refund: any,
-    originalPayment: any
-  ): PaymentPublicDTO {
-    return {
-      id: refund.id,
-      status: "refunded",
-      amount: refund.amount,
-      currency: refund.currency,
-      customerEmail:
-        originalPayment.receipt_email || originalPayment.customer?.email || "",
-      createdAt: new Date(refund.created * 1000),
-      error: refund.failure_reason,
     };
   }
 }
