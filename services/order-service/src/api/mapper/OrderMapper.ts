@@ -1,11 +1,11 @@
 /**
- * Order Mapper
- * Data transformation between DTOs and models
+ * Mapper des Commandes
+ * Transformation de données entre DTOs et modèles
  *
- * Architecture : Mapper pattern
- * - DTO to Model conversion
- * - Model to DTO conversion
- * - Type safety and validation
+ * Architecture : Pattern Mapper
+ * - Conversion DTO vers Modèle
+ * - Conversion Modèle vers DTO
+ * - Sécurité des types et validation
  */
 
 import {
@@ -34,11 +34,11 @@ import { CreditNoteItemData } from "../../models/CreditNoteItem";
 import { OrderAddressData } from "../../models/OrderAddress";
 
 /**
- * Order Mapper for data transformation
+ * Mapper des Commandes pour la transformation de données
  */
 export class OrderMapper {
   /**
-   * Convert OrderCreateDTO to OrderData
+   * Convertir OrderCreateDTO en OrderData
    */
   static orderCreateDTOToOrderData(dto: OrderCreateDTO): Partial<OrderData> {
     return {
@@ -52,7 +52,7 @@ export class OrderMapper {
   }
 
   /**
-   * Convert OrderUpdateDTO to OrderData
+   * Convertir OrderUpdateDTO en OrderData
    */
   static orderUpdateDTOToOrderData(dto: OrderUpdateDTO): Partial<OrderData> {
     const data: Partial<OrderData> = {};
@@ -69,7 +69,7 @@ export class OrderMapper {
   }
 
   /**
-   * Convert Order model to OrderPublicDTO
+   * Convertir le modèle Order en OrderPublicDTO
    */
   static orderToPublicDTO(order: any): OrderPublicDTO {
     return {
@@ -88,16 +88,16 @@ export class OrderMapper {
     };
   }
 
-  // ===== ORDER ITEM MAPPERS =====
+  // ===== MAPPERS DES ARTICLES DE COMMANDE =====
 
   /**
-   * Convert OrderItemCreateDTO to OrderItemData
+   * Convertir OrderItemCreateDTO en OrderItemData
    */
   static orderItemCreateDTOToOrderItemData(
     dto: OrderItemCreateDTO
   ): OrderItemData {
     return {
-      id: 0, // Will be set by the database
+      id: 0, // Sera défini par la base de données
       order_id: dto.orderId,
       product_id: dto.productId,
       product_name: dto.productName,
@@ -113,7 +113,7 @@ export class OrderMapper {
   }
 
   /**
-   * Convert OrderItemUpdateDTO to OrderItemData
+   * Convertir OrderItemUpdateDTO en OrderItemData
    */
   static orderItemUpdateDTOToOrderItemData(
     dto: OrderItemUpdateDTO
@@ -132,7 +132,7 @@ export class OrderMapper {
   }
 
   /**
-   * Convert OrderItem model to OrderItemPublicDTO
+   * Convertir le modèle OrderItem en OrderItemPublicDTO
    */
   static orderItemToPublicDTO(orderItem: any): OrderItemPublicDTO {
     return {
@@ -151,10 +151,10 @@ export class OrderMapper {
     };
   }
 
-  // ===== CREDIT NOTE MAPPERS =====
+  // ===== MAPPERS DES AVOIRS =====
 
   /**
-   * Convert CreditNoteCreateDTO to CreditNoteData
+   * Convertir CreditNoteCreateDTO en CreditNoteData
    */
   static creditNoteCreateDTOToCreditNoteData(
     dto: CreditNoteCreateDTO
@@ -173,7 +173,7 @@ export class OrderMapper {
   }
 
   /**
-   * Convert CreditNoteUpdateDTO to CreditNoteData
+   * Convertir CreditNoteUpdateDTO en CreditNoteData
    */
   static creditNoteUpdateDTOToCreditNoteData(
     dto: CreditNoteUpdateDTO
@@ -194,7 +194,7 @@ export class OrderMapper {
   }
 
   /**
-   * Convert CreditNote model to CreditNotePublicDTO
+   * Convertir le modèle CreditNote en CreditNotePublicDTO
    */
   static creditNoteToPublicDTO(creditNote: any): CreditNotePublicDTO {
     return {
@@ -214,10 +214,10 @@ export class OrderMapper {
     };
   }
 
-  // ===== CREDIT NOTE ITEM MAPPERS =====
+  // ===== MAPPERS DES ARTICLES D'AVOIR =====
 
   /**
-   * Convert CreditNoteItemCreateDTO to CreditNoteItemData
+   * Convertir CreditNoteItemCreateDTO en CreditNoteItemData
    */
   static creditNoteItemCreateDTOToCreditNoteItemData(
     dto: CreditNoteItemCreateDTO
@@ -236,7 +236,7 @@ export class OrderMapper {
   }
 
   /**
-   * Convert CreditNoteItemUpdateDTO to CreditNoteItemData
+   * Convertir CreditNoteItemUpdateDTO en CreditNoteItemData
    */
   static creditNoteItemUpdateDTOToCreditNoteItemData(
     dto: CreditNoteItemUpdateDTO
@@ -253,7 +253,7 @@ export class OrderMapper {
   }
 
   /**
-   * Convert CreditNoteItem model to CreditNoteItemPublicDTO
+   * Convertir le modèle CreditNoteItem en CreditNoteItemPublicDTO
    */
   static creditNoteItemToPublicDTO(
     creditNoteItem: any
@@ -274,10 +274,10 @@ export class OrderMapper {
     };
   }
 
-  // ===== ORDER ADDRESS MAPPERS =====
+  // ===== MAPPERS DES ADRESSES DE COMMANDE =====
 
   /**
-   * Convert OrderAddressCreateDTO to OrderAddressData
+   * Convertir OrderAddressCreateDTO en OrderAddressData
    */
   static orderAddressCreateDTOToOrderAddressData(
     dto: OrderAddressCreateDTO
@@ -290,7 +290,7 @@ export class OrderMapper {
   }
 
   /**
-   * Convert OrderAddressUpdateDTO to OrderAddressData
+   * Convertir OrderAddressUpdateDTO en OrderAddressData
    */
   static orderAddressUpdateDTOToOrderAddressData(
     dto: OrderAddressUpdateDTO
@@ -303,7 +303,7 @@ export class OrderMapper {
   }
 
   /**
-   * Convert OrderAddress model to OrderAddressPublicDTO
+   * Convertir le modèle OrderAddress en OrderAddressPublicDTO
    */
   static orderAddressToPublicDTO(orderAddress: any): OrderAddressPublicDTO {
     return {

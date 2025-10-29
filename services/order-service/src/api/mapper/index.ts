@@ -1,11 +1,11 @@
 /**
- * Mappers Index
- * Central export for all mappers
+ * Index des Mappers
+ * Export centralisé pour tous les mappers
  *
- * Architecture : Barrel export pattern
- * - Centralized imports
- * - Clean module structure
- * - Easy maintenance
+ * Architecture : Pattern Barrel export
+ * - Imports centralisés
+ * - Structure de module propre
+ * - Maintenance facile
  */
 
 export * from "./ResponseMapper";

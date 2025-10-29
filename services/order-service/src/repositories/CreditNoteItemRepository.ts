@@ -9,9 +9,9 @@ export default class CreditNoteItemRepository {
   }
 
   /**
-   * Save credit note item to database
-   * @param {CreditNoteItem} item Credit note item entity
-   * @returns {Promise<CreditNoteItem>} Saved credit note item
+   * Sauvegarder un article d'avoir en base de données
+   * @param {CreditNoteItem} item Entité article d'avoir
+   * @returns {Promise<CreditNoteItem>} Article d'avoir sauvegardé
    */
   async save(item: CreditNoteItem): Promise<CreditNoteItem> {
     const query = `
@@ -42,9 +42,9 @@ export default class CreditNoteItemRepository {
   }
 
   /**
-   * Update credit note item in database
-   * @param {CreditNoteItem} item Credit note item entity
-   * @returns {Promise<CreditNoteItem>} Updated credit note item
+   * Mettre à jour un article d'avoir en base de données
+   * @param {CreditNoteItem} item Entité article d'avoir
+   * @returns {Promise<CreditNoteItem>} Article d'avoir mis à jour
    */
   async update(item: CreditNoteItem): Promise<CreditNoteItem> {
     const query = `
@@ -76,9 +76,9 @@ export default class CreditNoteItemRepository {
   }
 
   /**
-   * Delete credit note item from database
-   * @param {CreditNoteItem} item Credit note item entity
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Supprimer un article d'avoir de la base de données
+   * @param {CreditNoteItem} item Entité article d'avoir
+   * @returns {Promise<boolean>} True si supprimé avec succès
    */
   async delete(item: CreditNoteItem): Promise<boolean> {
     const query = "DELETE FROM credit_note_items WHERE id = $1";
@@ -87,9 +87,9 @@ export default class CreditNoteItemRepository {
   }
 
   /**
-   * Get credit note item by ID
-   * @param {number} id Credit note item ID
-   * @returns {Promise<CreditNoteItem|null>} Credit note item or null if not found
+   * Obtenir un article d'avoir par ID
+   * @param {number} id ID de l'article d'avoir
+   * @returns {Promise<CreditNoteItem|null>} Article d'avoir ou null si non trouvé
    */
   async getById(id: number): Promise<CreditNoteItem | null> {
     const query = `
@@ -105,9 +105,9 @@ export default class CreditNoteItemRepository {
   }
 
   /**
-   * List credit note items by credit note
-   * @param {number} creditNoteId Credit note ID
-   * @returns {Promise<CreditNoteItem[]>} Array of credit note items
+   * Lister les articles d'avoir par avoir
+   * @param {number} creditNoteId ID de l'avoir
+   * @returns {Promise<CreditNoteItem[]>} Tableau des articles d'avoir
    */
   async listByCreditNote(creditNoteId: number): Promise<CreditNoteItem[]> {
     const query = `
@@ -124,9 +124,9 @@ export default class CreditNoteItemRepository {
   }
 
   /**
-   * Delete all credit note items by credit note
-   * @param {number} creditNoteId Credit note ID
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Supprimer tous les articles d'avoir par avoir
+   * @param {number} creditNoteId ID de l'avoir
+   * @returns {Promise<boolean>} True si supprimés avec succès
    */
   async deleteAllByCreditNote(creditNoteId: number): Promise<boolean> {
     const query = "DELETE FROM credit_note_items WHERE credit_note_id = $1";
@@ -135,9 +135,9 @@ export default class CreditNoteItemRepository {
   }
 
   /**
-   * Get credit note totals
-   * @param {number} creditNoteId Credit note ID
-   * @returns {Promise<Object>} Credit note totals
+   * Obtenir les totaux d'un avoir
+   * @param {number} creditNoteId ID de l'avoir
+   * @returns {Promise<Object>} Totaux de l'avoir
    */
   async getCreditNoteTotals(creditNoteId: number): Promise<any> {
     const query = `
@@ -160,7 +160,7 @@ export default class CreditNoteItemRepository {
   }
 
   /**
-   * Create credit note item
+   * Créer un article d'avoir
    */
   async createCreditNoteItem(
     creditNoteItemData: CreditNoteItemData
@@ -176,7 +176,7 @@ export default class CreditNoteItemRepository {
     const values = [
       creditNoteItemData.credit_note_id,
       creditNoteItemData.product_id,
-      // product_name is optional in model; default to null
+      // product_name est optionnel dans le modèle ; par défaut null
       (creditNoteItemData as any).product_name ?? null,
       creditNoteItemData.quantity,
       creditNoteItemData.unit_price_ht,
@@ -191,7 +191,7 @@ export default class CreditNoteItemRepository {
   }
 
   /**
-   * Get credit note item by ID
+   * Obtenir un article d'avoir par ID
    */
   async getCreditNoteItemById(id: number): Promise<CreditNoteItem | null> {
     const query = `SELECT * FROM credit_note_items WHERE id = $1`;
@@ -205,7 +205,7 @@ export default class CreditNoteItemRepository {
   }
 
   /**
-   * Update credit note item
+   * Mettre à jour un article d'avoir
    */
   async updateCreditNoteItem(
     id: number,
@@ -266,7 +266,7 @@ export default class CreditNoteItemRepository {
   }
 
   /**
-   * Delete credit note item
+   * Supprimer un article d'avoir
    */
   async deleteCreditNoteItem(id: number): Promise<boolean> {
     const query = `DELETE FROM credit_note_items WHERE id = $1`;
@@ -275,7 +275,7 @@ export default class CreditNoteItemRepository {
   }
 
   /**
-   * Get credit note items by credit note ID
+   * Obtenir les articles d'avoir par ID d'avoir
    */
   async getCreditNoteItemsByCreditNoteId(
     creditNoteId: number

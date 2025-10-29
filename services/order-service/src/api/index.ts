@@ -285,20 +285,6 @@ export class ApiRouter {
       this.orderStatisticsController.getOrderStatistics(req, res);
     });
 
-    app.get(
-      "/api/customers/:customerId/statistics/orders",
-      (req: Request, res: Response) => {
-        this.orderStatisticsController.getOrderStatisticsByCustomer(req, res);
-      }
-    );
-
-    app.get(
-      "/api/statistics/orders/date-range/:startDate/:endDate",
-      (req: Request, res: Response) => {
-        this.orderStatisticsController.getOrderStatisticsByDateRange(req, res);
-      }
-    );
-
     // ===== ROUTES ADMIN (AVEC AUTHENTIFICATION) =====
 
     // Routes admin pour les commandes
@@ -524,14 +510,6 @@ export class ApiRouter {
       this.requireAuth,
       (req: Request, res: Response) => {
         this.orderStatisticsController.getOrderStatistics(req, res);
-      }
-    );
-
-    app.get(
-      "/api/admin/customers/:customerId/statistics/orders",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.orderStatisticsController.getOrderStatisticsByCustomer(req, res);
       }
     );
 

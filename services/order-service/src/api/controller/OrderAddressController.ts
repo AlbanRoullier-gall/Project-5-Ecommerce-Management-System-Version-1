@@ -1,11 +1,11 @@
 /**
- * OrderAddress Controller
- * HTTP request handling for order address operations
+ * Contrôleur des Adresses de Commande
+ * Gestion des requêtes HTTP pour les opérations d'adresses de commande
  *
- * Architecture : Controller pattern
- * - HTTP request/response handling
- * - Service orchestration
- * - DTO conversion
+ * Architecture : Pattern Contrôleur
+ * - Gestion des requêtes/réponses HTTP
+ * - Orchestration des services
+ * - Conversion des DTO
  */
 
 import { Request, Response } from "express";
@@ -22,13 +22,13 @@ export class OrderAddressController {
   }
 
   /**
-   * Create a new order address
+   * Créer une nouvelle adresse de commande
    */
   async createOrderAddress(req: Request, res: Response): Promise<void> {
     try {
       const orderAddressCreateDTO: OrderAddressCreateDTO = req.body;
 
-      // Convert DTO to OrderAddressData
+      // Convertir le DTO en OrderAddressData
       const orderAddressData =
         OrderMapper.orderAddressCreateDTOToOrderAddressData(
           orderAddressCreateDTO
@@ -51,7 +51,7 @@ export class OrderAddressController {
   }
 
   /**
-   * Get order address by ID
+   * Obtenir une adresse de commande par son ID
    */
   async getOrderAddressById(req: Request, res: Response): Promise<void> {
     try {
@@ -74,14 +74,14 @@ export class OrderAddressController {
   }
 
   /**
-   * Update order address
+   * Mettre à jour une adresse de commande
    */
   async updateOrderAddress(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const orderAddressUpdateDTO: OrderAddressUpdateDTO = req.body;
 
-      // Convert DTO to OrderAddressData
+      // Convertir le DTO en OrderAddressData
       const orderAddressData =
         OrderMapper.orderAddressUpdateDTOToOrderAddressData(
           orderAddressUpdateDTO
@@ -105,7 +105,7 @@ export class OrderAddressController {
   }
 
   /**
-   * Delete order address
+   * Supprimer une adresse de commande
    */
   async deleteOrderAddress(req: Request, res: Response): Promise<void> {
     try {
@@ -125,7 +125,7 @@ export class OrderAddressController {
   }
 
   /**
-   * Get order addresses by order ID
+   * Obtenir les adresses de commande par ID de commande
    */
   async getOrderAddressesByOrderId(req: Request, res: Response): Promise<void> {
     try {

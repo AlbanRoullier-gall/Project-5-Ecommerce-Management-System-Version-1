@@ -366,7 +366,7 @@ export default class OrderRepository {
 
       const result = await this.pool.query(query, params);
       const row = result.rows[0];
-      // pg returns DECIMAL as string → parseFloat safely
+      // pg retourne DECIMAL comme string → parseFloat en sécurité
       return parseFloat(row.total_ht);
     } catch (error) {
       console.error("Error getting orders total HT:", error);

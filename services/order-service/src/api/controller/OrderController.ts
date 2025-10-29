@@ -1,11 +1,11 @@
 /**
- * Order Controller
- * HTTP request handling for order operations
+ * Contrôleur des Commandes
+ * Gestion des requêtes HTTP pour les opérations de commandes
  *
- * Architecture : Controller pattern
- * - HTTP request/response handling
- * - Service orchestration
- * - DTO conversion
+ * Architecture : Pattern Contrôleur
+ * - Gestion des requêtes/réponses HTTP
+ * - Orchestration des services
+ * - Conversion des DTO
  */
 
 import { Request, Response } from "express";
@@ -21,13 +21,13 @@ export class OrderController {
   }
 
   /**
-   * Create a new order
+   * Créer une nouvelle commande
    */
   async createOrder(req: Request, res: Response): Promise<void> {
     try {
       const orderCreateDTO: OrderCreateDTO = req.body;
 
-      // Convert DTO to OrderData
+      // Convertir le DTO en OrderData
       const orderData = OrderMapper.orderCreateDTOToOrderData(orderCreateDTO);
       if ((orderCreateDTO as any).paymentIntentId) {
         (orderData as any).payment_intent_id = (
@@ -50,7 +50,7 @@ export class OrderController {
   }
 
   /**
-   * Get order by ID
+   * Obtenir une commande par son ID
    */
   async getOrderById(req: Request, res: Response): Promise<void> {
     try {
@@ -82,7 +82,7 @@ export class OrderController {
           totalAmountTTC = Number(sumTTC.toFixed(2));
         }
       } catch (e) {
-        // En cas d'erreur sur le chargement des items, on garde les totaux d'origine
+        // En cas d'erreur sur le chargement des articles, on garde les totaux d'origine
       }
 
       const orderDTO = OrderMapper.orderToPublicDTO(order);
@@ -97,14 +97,14 @@ export class OrderController {
   }
 
   /**
-   * Update order
+   * Mettre à jour une commande
    */
   async updateOrder(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const orderUpdateDTO: OrderUpdateDTO = req.body;
 
-      // Convert DTO to OrderData
+      // Convertir le DTO en OrderData
       const orderData = OrderMapper.orderUpdateDTOToOrderData(orderUpdateDTO);
 
       const order = await this.orderService.updateOrder(
@@ -129,7 +129,7 @@ export class OrderController {
   }
 
   /**
-   * Delete order
+   * Supprimer une commande
    */
   async deleteOrder(req: Request, res: Response): Promise<void> {
     try {
@@ -149,7 +149,7 @@ export class OrderController {
   }
 
   /**
-   * List orders with pagination
+   * Lister les commandes avec pagination
    */
   async listOrders(req: Request, res: Response): Promise<void> {
     try {
@@ -174,7 +174,7 @@ export class OrderController {
   }
 
   /**
-   * Update delivery status of an order
+   * Mettre à jour le statut de livraison d'une commande
    */
   async updateDeliveryStatus(req: Request, res: Response): Promise<void> {
     try {
@@ -207,7 +207,7 @@ export class OrderController {
   }
 
   /**
-   * Update credit note status
+   * Mettre à jour le statut d'un avoir
    */
   async updateCreditNoteStatus(req: Request, res: Response): Promise<void> {
     try {
@@ -242,7 +242,7 @@ export class OrderController {
   }
 
   /**
-   * Get year export data (orders and credit notes)
+   * Obtenir les données d'export d'une année (commandes et avoirs)
    */
   async getYearExportData(req: Request, res: Response): Promise<void> {
     try {

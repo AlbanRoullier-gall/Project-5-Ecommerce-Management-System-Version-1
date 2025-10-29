@@ -1,11 +1,11 @@
 /**
- * CreditNoteItem Controller
- * HTTP request handling for credit note item operations
+ * Contrôleur des Articles d'Avoir
+ * Gestion des requêtes HTTP pour les opérations d'articles d'avoir
  *
- * Architecture : Controller pattern
- * - HTTP request/response handling
- * - Service orchestration
- * - DTO conversion
+ * Architecture : Pattern Contrôleur
+ * - Gestion des requêtes/réponses HTTP
+ * - Orchestration des services
+ * - Conversion des DTO
  */
 
 import { Request, Response } from "express";
@@ -22,13 +22,13 @@ export class CreditNoteItemController {
   }
 
   /**
-   * Create a new credit note item
+   * Créer un nouvel article d'avoir
    */
   async createCreditNoteItem(req: Request, res: Response): Promise<void> {
     try {
       const creditNoteItemCreateDTO: CreditNoteItemCreateDTO = req.body;
 
-      // Convert DTO to CreditNoteItemData
+      // Convertir le DTO en CreditNoteItemData
       const creditNoteItemData =
         OrderMapper.creditNoteItemCreateDTOToCreditNoteItemData(
           creditNoteItemCreateDTO
@@ -54,7 +54,7 @@ export class CreditNoteItemController {
   }
 
   /**
-   * Get credit note item by ID
+   * Obtenir un article d'avoir par son ID
    */
   async getCreditNoteItemById(req: Request, res: Response): Promise<void> {
     try {
@@ -78,14 +78,14 @@ export class CreditNoteItemController {
   }
 
   /**
-   * Update credit note item
+   * Mettre à jour un article d'avoir
    */
   async updateCreditNoteItem(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const creditNoteItemUpdateDTO: CreditNoteItemUpdateDTO = req.body;
 
-      // Convert DTO to CreditNoteItemData
+      // Convertir le DTO en CreditNoteItemData
       const creditNoteItemData =
         OrderMapper.creditNoteItemUpdateDTOToCreditNoteItemData(
           creditNoteItemUpdateDTO
@@ -110,7 +110,7 @@ export class CreditNoteItemController {
   }
 
   /**
-   * Delete credit note item
+   * Supprimer un article d'avoir
    */
   async deleteCreditNoteItem(req: Request, res: Response): Promise<void> {
     try {
@@ -132,7 +132,7 @@ export class CreditNoteItemController {
   }
 
   /**
-   * Get credit note items by credit note ID
+   * Obtenir les articles d'avoir par ID d'avoir
    */
   async getCreditNoteItemsByCreditNoteId(
     req: Request,

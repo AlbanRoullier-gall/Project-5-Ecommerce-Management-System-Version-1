@@ -10,9 +10,9 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * Save credit note to database
-   * @param {CreditNote} creditNote Credit note entity
-   * @returns {Promise<CreditNote>} Saved credit note
+   * Sauvegarder un avoir en base de données
+   * @param {CreditNote} creditNote Entité avoir
+   * @returns {Promise<CreditNote>} Avoir sauvegardé
    */
   async save(creditNote: CreditNote): Promise<CreditNote> {
     const query = `
@@ -41,9 +41,9 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * Update credit note in database
-   * @param {CreditNote} creditNote Credit note entity
-   * @returns {Promise<CreditNote>} Updated credit note
+   * Mettre à jour un avoir en base de données
+   * @param {CreditNote} creditNote Entité avoir
+   * @returns {Promise<CreditNote>} Avoir mis à jour
    */
   async update(creditNote: CreditNote): Promise<CreditNote> {
     const query = `
@@ -73,9 +73,9 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * Delete credit note from database
-   * @param {CreditNote} creditNote Credit note entity
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Supprimer un avoir de la base de données
+   * @param {CreditNote} creditNote Entité avoir
+   * @returns {Promise<boolean>} True si supprimé avec succès
    */
   async delete(creditNote: CreditNote): Promise<boolean> {
     const query = "DELETE FROM credit_notes WHERE id = $1";
@@ -84,9 +84,9 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * Get credit note by ID
-   * @param {number} id Credit note ID
-   * @returns {Promise<CreditNote|null>} Credit note or null if not found
+   * Obtenir un avoir par ID
+   * @param {number} id ID de l'avoir
+   * @returns {Promise<CreditNote|null>} Avoir ou null si non trouvé
    */
   async getById(id: number): Promise<CreditNote | null> {
     const query = `
@@ -101,9 +101,9 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * List all credit notes with pagination and search
-   * @param {Object} options Pagination and search options
-   * @returns {Promise<Object>} Credit notes and pagination info
+   * Lister tous les avoirs avec pagination et recherche
+   * @param {Object} options Options de pagination et recherche
+   * @returns {Promise<Object>} Avoirs et informations de pagination
    */
   async listAll(options: OrderListOptions = {}): Promise<any> {
     const {
@@ -152,7 +152,7 @@ export default class CreditNoteRepository {
     params.push(limit, offset);
     const result = await this.pool.query(query, params);
 
-    // Get total count
+    // Obtenir le nombre total
     let countQuery = "SELECT COUNT(*) FROM credit_notes";
     if (conditions.length > 0) {
       countQuery += ` WHERE ${conditions.join(" AND ")}`;
@@ -171,9 +171,9 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * List credit notes by customer
-   * @param {number} customerId Customer ID
-   * @returns {Promise<CreditNote[]>} Array of credit notes
+   * Lister les avoirs par client
+   * @param {number} customerId ID du client
+   * @returns {Promise<CreditNote[]>} Tableau des avoirs
    */
   async listByCustomer(customerId: number): Promise<CreditNote[]> {
     const query = `
@@ -189,9 +189,9 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * List credit notes by order
-   * @param {number} orderId Order ID
-   * @returns {Promise<CreditNote[]>} Array of credit notes
+   * Lister les avoirs par commande
+   * @param {number} orderId ID de la commande
+   * @returns {Promise<CreditNote[]>} Tableau des avoirs
    */
   async listByOrder(orderId: number): Promise<CreditNote[]> {
     const query = `
@@ -207,9 +207,9 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * Get credit note statistics
-   * @param {Object} options Statistics options
-   * @returns {Promise<Object>} Credit note statistics
+   * Obtenir les statistiques des avoirs
+   * @param {Object} options Options de statistiques
+   * @returns {Promise<Object>} Statistiques des avoirs
    */
   async getStatistics(options: OrderListOptions = {}): Promise<any> {
     const { startDate, endDate, customerId } = options;
@@ -308,7 +308,7 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * Create credit note
+   * Créer un avoir
    */
   async createCreditNote(creditNoteData: CreditNoteData): Promise<CreditNote> {
     const query = `
@@ -335,7 +335,7 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * Get credit note by ID
+   * Obtenir un avoir par ID
    */
   async getCreditNoteById(id: number): Promise<CreditNote | null> {
     const query = `SELECT * FROM credit_notes WHERE id = $1`;
@@ -349,7 +349,7 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * Update credit note
+   * Mettre à jour un avoir
    */
   async updateCreditNote(
     id: number,
@@ -414,9 +414,9 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * Update credit note status
-   * @param {number} id Credit note ID
-   * @param {string} status New status
+   * Mettre à jour le statut d'un avoir
+   * @param {number} id ID de l'avoir
+   * @param {string} status Nouveau statut
    */
   async updateStatus(id: number, status: string): Promise<CreditNote> {
     const query = `
@@ -434,7 +434,7 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * Delete credit note
+   * Supprimer un avoir
    */
   async deleteCreditNote(id: number): Promise<boolean> {
     const query = `DELETE FROM credit_notes WHERE id = $1`;
@@ -443,7 +443,7 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * Get credit notes by customer ID
+   * Obtenir les avoirs par ID client
    */
   async getCreditNotesByCustomerId(customerId: number): Promise<CreditNote[]> {
     const query = `

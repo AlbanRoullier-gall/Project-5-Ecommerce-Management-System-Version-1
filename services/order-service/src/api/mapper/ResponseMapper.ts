@@ -1,19 +1,19 @@
 /**
- * Response Mapper
- * Standardized API response formatting
+ * Mapper de Réponse
+ * Formatage standardisé des réponses API
  *
- * Architecture : Mapper pattern
- * - Consistent response structure
- * - Error handling
- * - Timestamp and status inclusion
+ * Architecture : Pattern Mapper
+ * - Structure de réponse cohérente
+ * - Gestion des erreurs
+ * - Inclusion du timestamp et du statut
  */
 
 /**
- * Response Mapper for standardized API responses
+ * Mapper de Réponse pour les réponses API standardisées
  */
 export class ResponseMapper {
   /**
-   * Success response
+   * Réponse de succès
    */
   static success<T>(data: T, message: string = "Success") {
     return {
@@ -25,7 +25,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Created response
+   * Réponse de création
    */
   static created<T>(data: T, message: string = "Created successfully") {
     return {
@@ -37,7 +37,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Order created response
+   * Réponse de commande créée
    */
   static orderCreated(order: any) {
     return {
@@ -49,7 +49,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Order retrieved response
+   * Réponse de commande récupérée
    */
   static orderRetrieved(order: any) {
     return {
@@ -61,7 +61,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Order updated response
+   * Réponse de commande mise à jour
    */
   static orderUpdated(order: any) {
     return {
@@ -73,7 +73,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Order deleted response
+   * Réponse de commande supprimée
    */
   static orderDeleted() {
     return {
@@ -84,7 +84,7 @@ export class ResponseMapper {
   }
 
   /**
-   * OrderItem created response
+   * Réponse d'article de commande créé
    */
   static orderItemCreated(orderItem: any) {
     return {
@@ -96,7 +96,7 @@ export class ResponseMapper {
   }
 
   /**
-   * OrderItem retrieved response
+   * Réponse d'article de commande récupéré
    */
   static orderItemRetrieved(orderItem: any) {
     return {
@@ -108,7 +108,7 @@ export class ResponseMapper {
   }
 
   /**
-   * OrderItem updated response
+   * Réponse d'article de commande mis à jour
    */
   static orderItemUpdated(orderItem: any) {
     return {
@@ -120,7 +120,7 @@ export class ResponseMapper {
   }
 
   /**
-   * OrderItem deleted response
+   * Réponse d'article de commande supprimé
    */
   static orderItemDeleted() {
     return {
@@ -131,7 +131,7 @@ export class ResponseMapper {
   }
 
   /**
-   * CreditNote created response
+   * Réponse d'avoir créé
    */
   static creditNoteCreated(creditNote: any) {
     return {
@@ -143,7 +143,7 @@ export class ResponseMapper {
   }
 
   /**
-   * CreditNote retrieved response
+   * Réponse d'avoir récupéré
    */
   static creditNoteRetrieved(creditNote: any) {
     return {
@@ -155,7 +155,7 @@ export class ResponseMapper {
   }
 
   /**
-   * CreditNote updated response
+   * Réponse d'avoir mis à jour
    */
   static creditNoteUpdated(creditNote: any) {
     return {
@@ -167,7 +167,7 @@ export class ResponseMapper {
   }
 
   /**
-   * CreditNote deleted response
+   * Réponse d'avoir supprimé
    */
   static creditNoteDeleted() {
     return {
@@ -178,7 +178,7 @@ export class ResponseMapper {
   }
 
   /**
-   * CreditNoteItem created response
+   * Réponse d'article d'avoir créé
    */
   static creditNoteItemCreated(creditNoteItem: any) {
     return {
@@ -190,7 +190,7 @@ export class ResponseMapper {
   }
 
   /**
-   * CreditNoteItem retrieved response
+   * Réponse d'article d'avoir récupéré
    */
   static creditNoteItemRetrieved(creditNoteItem: any) {
     return {
@@ -202,7 +202,7 @@ export class ResponseMapper {
   }
 
   /**
-   * CreditNoteItem updated response
+   * Réponse d'article d'avoir mis à jour
    */
   static creditNoteItemUpdated(creditNoteItem: any) {
     return {
@@ -214,7 +214,7 @@ export class ResponseMapper {
   }
 
   /**
-   * CreditNoteItem deleted response
+   * Réponse d'article d'avoir supprimé
    */
   static creditNoteItemDeleted() {
     return {
@@ -225,7 +225,7 @@ export class ResponseMapper {
   }
 
   /**
-   * OrderAddress created response
+   * Réponse d'adresse de commande créée
    */
   static orderAddressCreated(address: any) {
     return {
@@ -237,7 +237,7 @@ export class ResponseMapper {
   }
 
   /**
-   * OrderAddress retrieved response
+   * Réponse d'adresse de commande récupérée
    */
   static orderAddressRetrieved(address: any) {
     return {
@@ -249,7 +249,7 @@ export class ResponseMapper {
   }
 
   /**
-   * OrderAddress updated response
+   * Réponse d'adresse de commande mise à jour
    */
   static orderAddressUpdated(address: any) {
     return {
@@ -261,7 +261,7 @@ export class ResponseMapper {
   }
 
   /**
-   * OrderAddress deleted response
+   * Réponse d'adresse de commande supprimée
    */
   static orderAddressDeleted() {
     return {
@@ -272,7 +272,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Order statistics retrieved response
+   * Réponse de statistiques de commandes récupérées
    */
   static orderStatisticsRetrieved(statistics: any) {
     return {
@@ -284,7 +284,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Validation error response
+   * Réponse d'erreur de validation
    */
   static validationError(message: string) {
     return {
@@ -295,7 +295,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Not found error response
+   * Réponse d'erreur non trouvé
    */
   static notFoundError(resource: string) {
     return {
@@ -306,7 +306,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Conflict error response
+   * Réponse d'erreur de conflit
    */
   static conflictError(message: string) {
     return {
@@ -317,7 +317,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Internal server error response
+   * Réponse d'erreur serveur interne
    */
   static internalServerError() {
     return {
@@ -328,7 +328,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Unauthorized error response
+   * Réponse d'erreur non autorisé
    */
   static unauthorizedError(message: string = "Unauthorized") {
     return {
@@ -339,7 +339,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Forbidden error response
+   * Réponse d'erreur interdit
    */
   static forbiddenError(message: string = "Forbidden") {
     return {
@@ -350,7 +350,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Bad request error response
+   * Réponse d'erreur de mauvaise requête
    */
   static badRequestError(message: string = "Bad request") {
     return {
@@ -361,7 +361,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Method not allowed error response
+   * Réponse d'erreur méthode non autorisée
    */
   static methodNotAllowedError(message: string = "Method not allowed") {
     return {
@@ -372,7 +372,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Request timeout error response
+   * Réponse d'erreur de timeout de requête
    */
   static timeoutError(message: string = "Request timeout") {
     return {
@@ -383,7 +383,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Service unavailable error response
+   * Réponse d'erreur service indisponible
    */
   static serviceUnavailableError(message: string = "Service unavailable") {
     return {
@@ -394,7 +394,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Gateway timeout error response
+   * Réponse d'erreur de timeout de passerelle
    */
   static gatewayTimeoutError(message: string = "Gateway timeout") {
     return {
@@ -405,7 +405,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Health check success response
+   * Réponse de succès de contrôle de santé
    */
   static healthSuccess() {
     return {
@@ -416,7 +416,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Health check error response
+   * Réponse d'erreur de contrôle de santé
    */
   static healthError() {
     return {
@@ -428,7 +428,7 @@ export class ResponseMapper {
   }
 
   /**
-   * Generic error response
+   * Réponse d'erreur générique
    */
   static error(message: string, status: number = 500) {
     return {

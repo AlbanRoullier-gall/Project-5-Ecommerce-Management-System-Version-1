@@ -75,14 +75,14 @@ export default class OrderService {
 
       // Créer la commande
       const order = await this.orderRepository.createOrder({
-        id: 0, // Will be set by the database
+        id: 0, // Sera défini par la base de données
         customer_id: orderData.customer_id,
         customer_snapshot: orderData.customer_snapshot || null,
         total_amount_ht: orderData.total_amount_ht,
         total_amount_ttc: orderData.total_amount_ttc,
         payment_method: orderData.payment_method,
         notes: orderData.notes || "",
-        // @ts-ignore - extended field allowed to pass through repo to support idempotence on payment
+        // @ts-ignore - champ étendu autorisé à passer par le repo pour supporter l'idempotence sur le paiement
         payment_intent_id: (orderData as any).payment_intent_id || null,
         created_at: new Date(),
         updated_at: new Date(),
@@ -239,14 +239,14 @@ export default class OrderService {
    */
   async getOrderStatistics(options: OrderListOptions = {}): Promise<any> {
     try {
-      // Retrieve gross totals from orders (HT/TTC)
+      // Récupérer les totaux bruts des commandes (HT/TTC)
       const ordersTotals = await this.orderRepository.getOrdersTotals(options);
 
-      // Retrieve totals from credit notes (HT/TTC)
+      // Récupérer les totaux des avoirs (HT/TTC)
       const creditNotesTotals =
         await this.creditNoteRepository.getCreditNotesTotals(options);
 
-      // Net revenue = Orders - CreditNotes
+      // Revenus nets = Commandes - Avoirs
       const totalAmountHT = Math.max(
         0,
         Number((ordersTotals.totalHT - creditNotesTotals.totalHT).toFixed(2))
@@ -517,17 +517,17 @@ export default class OrderService {
   }
 
   /**
-   * Get orders and credit notes for year export
+   * Obtenir les commandes et avoirs pour l'export d'année
    */
   async getYearExportData(year: number): Promise<{
     orders: any[];
     creditNotes: any[];
   }> {
     try {
-      // Get orders for the year using repository
+      // Obtenir les commandes de l'année en utilisant le repository
       const orders = await this.orderRepository.getOrdersByYear(year);
 
-      // Get order items and addresses for each order using repositories
+      // Obtenir les articles et adresses pour chaque commande en utilisant les repositories
       for (const order of orders) {
         order.items = await this.orderItemRepository.getItemsByOrderId(
           order.id
@@ -536,12 +536,12 @@ export default class OrderService {
           await this.orderAddressRepository.getAddressesByOrderId(order.id);
       }
 
-      // Get credit notes for the year using repository
+      // Obtenir les avoirs de l'année en utilisant le repository
       const creditNotes = await this.creditNoteRepository.getCreditNotesByYear(
         year
       );
 
-      // Get credit note items for each credit note using repository
+      // Obtenir les articles d'avoir pour chaque avoir en utilisant le repository
       for (const creditNote of creditNotes) {
         creditNote.items =
           await this.creditNoteItemRepository.getItemsByCreditNoteId(

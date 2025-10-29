@@ -1,11 +1,11 @@
 /**
- * CreditNote Controller
- * HTTP request handling for credit note operations
+ * Contrôleur des Avoirs
+ * Gestion des requêtes HTTP pour les opérations d'avoirs
  *
- * Architecture : Controller pattern
- * - HTTP request/response handling
- * - Service orchestration
- * - DTO conversion
+ * Architecture : Pattern Contrôleur
+ * - Gestion des requêtes/réponses HTTP
+ * - Orchestration des services
+ * - Conversion des DTO
  */
 
 import { Request, Response } from "express";
@@ -22,13 +22,13 @@ export class CreditNoteController {
   }
 
   /**
-   * Create a new credit note
+   * Créer un nouvel avoir
    */
   async createCreditNote(req: Request, res: Response): Promise<void> {
     try {
       const creditNoteCreateDTO: CreditNoteCreateDTO = req.body;
 
-      // Convert DTO to CreditNoteData
+      // Convertir le DTO en CreditNoteData
       const creditNoteData =
         OrderMapper.creditNoteCreateDTOToCreditNoteData(creditNoteCreateDTO);
 
@@ -49,7 +49,7 @@ export class CreditNoteController {
   }
 
   /**
-   * Get credit note by ID
+   * Obtenir un avoir par son ID
    */
   async getCreditNoteById(req: Request, res: Response): Promise<void> {
     try {
@@ -72,14 +72,14 @@ export class CreditNoteController {
   }
 
   /**
-   * Update credit note
+   * Mettre à jour un avoir
    */
   async updateCreditNote(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const creditNoteUpdateDTO: CreditNoteUpdateDTO = req.body;
 
-      // Convert DTO to CreditNoteData
+      // Convertir le DTO en CreditNoteData
       const creditNoteData =
         OrderMapper.creditNoteUpdateDTOToCreditNoteData(creditNoteUpdateDTO);
 
@@ -101,7 +101,7 @@ export class CreditNoteController {
   }
 
   /**
-   * Delete credit note
+   * Supprimer un avoir
    */
   async deleteCreditNote(req: Request, res: Response): Promise<void> {
     try {
@@ -121,7 +121,7 @@ export class CreditNoteController {
   }
 
   /**
-   * Get credit notes by customer ID
+   * Obtenir les avoirs par ID client
    */
   async getCreditNotesByCustomerId(req: Request, res: Response): Promise<void> {
     try {
@@ -153,7 +153,7 @@ export class CreditNoteController {
   }
 
   /**
-   * List all credit notes (admin)
+   * Lister tous les avoirs (admin)
    */
   async listCreditNotes(req: Request, res: Response): Promise<void> {
     try {

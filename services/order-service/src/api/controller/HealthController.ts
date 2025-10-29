@@ -1,11 +1,11 @@
 /**
- * Health Controller
- * Health check endpoints for order-service
+ * Contrôleur de Santé
+ * Points de contrôle de santé pour le service de commandes
  *
- * Architecture : Controller pattern
- * - Health monitoring
- * - Service status
- * - Database connectivity
+ * Architecture : Pattern Contrôleur
+ * - Surveillance de la santé
+ * - Statut du service
+ * - Connectivité à la base de données
  */
 
 import { Request, Response } from "express";
@@ -20,7 +20,7 @@ export class HealthController {
   }
 
   /**
-   * Basic health check
+   * Contrôle de santé basique
    */
   async healthCheck(req: Request, res: Response): Promise<void> {
     try {
@@ -38,11 +38,11 @@ export class HealthController {
   }
 
   /**
-   * Detailed health check with database connectivity
+   * Contrôle de santé détaillé avec connectivité à la base de données
    */
   async detailedHealthCheck(req: Request, res: Response): Promise<void> {
     try {
-      // Test database connection
+      // Tester la connexion à la base de données
       const dbResult = await this.pool.query("SELECT 1 as test");
       const dbHealthy = dbResult.rows.length > 0;
 

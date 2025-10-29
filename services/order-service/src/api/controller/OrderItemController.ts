@@ -1,11 +1,11 @@
 /**
- * OrderItem Controller
- * HTTP request handling for order item operations
+ * Contrôleur des Articles de Commande
+ * Gestion des requêtes HTTP pour les opérations d'articles de commande
  *
- * Architecture : Controller pattern
- * - HTTP request/response handling
- * - Service orchestration
- * - DTO conversion
+ * Architecture : Pattern Contrôleur
+ * - Gestion des requêtes/réponses HTTP
+ * - Orchestration des services
+ * - Conversion des DTO
  */
 
 import { Request, Response } from "express";
@@ -21,13 +21,13 @@ export class OrderItemController {
   }
 
   /**
-   * Create a new order item
+   * Créer un nouvel article de commande
    */
   async createOrderItem(req: Request, res: Response): Promise<void> {
     try {
       const orderItemCreateDTO: OrderItemCreateDTO = req.body;
 
-      // Convert DTO to OrderItemData
+      // Convertir le DTO en OrderItemData
       const orderItemData =
         OrderMapper.orderItemCreateDTOToOrderItemData(orderItemCreateDTO);
 
@@ -46,7 +46,7 @@ export class OrderItemController {
   }
 
   /**
-   * Get order item by ID
+   * Obtenir un article de commande par son ID
    */
   async getOrderItemById(req: Request, res: Response): Promise<void> {
     try {
@@ -67,14 +67,14 @@ export class OrderItemController {
   }
 
   /**
-   * Update order item
+   * Mettre à jour un article de commande
    */
   async updateOrderItem(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const orderItemUpdateDTO: OrderItemUpdateDTO = req.body;
 
-      // Convert DTO to OrderItemData
+      // Convertir le DTO en OrderItemData
       const orderItemData =
         OrderMapper.orderItemUpdateDTOToOrderItemData(orderItemUpdateDTO);
 
@@ -96,7 +96,7 @@ export class OrderItemController {
   }
 
   /**
-   * Delete order item
+   * Supprimer un article de commande
    */
   async deleteOrderItem(req: Request, res: Response): Promise<void> {
     try {
@@ -116,7 +116,7 @@ export class OrderItemController {
   }
 
   /**
-   * Get order items by order ID
+   * Obtenir les articles de commande par ID de commande
    */
   async getOrderItemsByOrderId(req: Request, res: Response): Promise<void> {
     try {

@@ -11,9 +11,7 @@ export const ORDER_ROUTES: Record<string, ServiceName> = {
   "/orders/:orderId/items": "order", // GET: Récupérer articles d'une commande
   "/orders/:orderId/addresses": "order", // GET: Récupérer adresses d'une commande
   "/customers/:customerId/credit-notes": "order", // GET: Récupérer avoirs d'un client
-  "/customers/:customerId/statistics/orders": "order", // GET: Statistiques d'un client
   "/statistics/orders": "order", // GET: Statistiques générales des commandes
-  "/statistics/orders/date-range/:startDate/:endDate": "order", // GET: Statistiques par période
 
   // Routes admin
   "/admin/orders": "order", // GET: Liste toutes les commandes, PUT: Modifier commande, DELETE: Supprimer commande
@@ -32,6 +30,5 @@ export const ORDER_ROUTES: Record<string, ServiceName> = {
   "/admin/order-addresses": "order", // POST: Créer adresse de commande
   "/admin/order-addresses/:id": "order", // GET: Voir adresse, PUT: Modifier adresse, DELETE: Supprimer adresse
   "/admin/statistics/orders": "order", // GET: Statistiques admin des commandes
-  "/admin/customers/:customerId/statistics/orders": "order", // GET: Statistiques commandes d'un client
   "/admin/orders/year/:year/export-data": "order", // GET: Données d'export par année
 };

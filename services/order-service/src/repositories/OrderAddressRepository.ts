@@ -9,9 +9,9 @@ export default class OrderAddressRepository {
   }
 
   /**
-   * Save order address to database
-   * @param {OrderAddress} address Order address entity
-   * @returns {Promise<OrderAddress>} Saved order address
+   * Sauvegarder une adresse de commande en base de données
+   * @param {OrderAddress} address Entité adresse de commande
+   * @returns {Promise<OrderAddress>} Adresse de commande sauvegardée
    */
   async save(address: OrderAddress): Promise<OrderAddress> {
     const query = `
@@ -31,9 +31,9 @@ export default class OrderAddressRepository {
   }
 
   /**
-   * Update order address in database
-   * @param {OrderAddress} address Order address entity
-   * @returns {Promise<OrderAddress>} Updated order address
+   * Mettre à jour une adresse de commande en base de données
+   * @param {OrderAddress} address Entité adresse de commande
+   * @returns {Promise<OrderAddress>} Adresse de commande mise à jour
    */
   async update(address: OrderAddress): Promise<OrderAddress> {
     const query = `
@@ -55,9 +55,9 @@ export default class OrderAddressRepository {
   }
 
   /**
-   * Delete order address from database
-   * @param {OrderAddress} address Order address entity
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Supprimer une adresse de commande de la base de données
+   * @param {OrderAddress} address Entité adresse de commande
+   * @returns {Promise<boolean>} True si supprimée avec succès
    */
   async delete(address: OrderAddress): Promise<boolean> {
     const query = "DELETE FROM order_addresses WHERE id = $1";
@@ -66,9 +66,9 @@ export default class OrderAddressRepository {
   }
 
   /**
-   * Get order address by ID
-   * @param {number} id Order address ID
-   * @returns {Promise<OrderAddress|null>} Order address or null if not found
+   * Obtenir une adresse de commande par ID
+   * @param {number} id ID de l'adresse de commande
+   * @returns {Promise<OrderAddress|null>} Adresse de commande ou null si non trouvée
    */
   async getById(id: number): Promise<OrderAddress | null> {
     const query = `
@@ -82,9 +82,9 @@ export default class OrderAddressRepository {
   }
 
   /**
-   * List order addresses by order
-   * @param {number} orderId Order ID
-   * @returns {Promise<OrderAddress[]>} Array of order addresses
+   * Lister les adresses de commande par commande
+   * @param {number} orderId ID de la commande
+   * @returns {Promise<OrderAddress[]>} Tableau des adresses de commande
    */
   async listByOrder(orderId: number): Promise<OrderAddress[]> {
     const query = `
@@ -99,10 +99,10 @@ export default class OrderAddressRepository {
   }
 
   /**
-   * Get order address by order and addressType
-   * @param {number} orderId Order ID
-   * @param {string} addressType Address addressType ('shipping' or 'billing')
-   * @returns {Promise<OrderAddress|null>} Order address or null if not found
+   * Obtenir une adresse de commande par commande et type d'adresse
+   * @param {number} orderId ID de la commande
+   * @param {string} addressType Type d'adresse ('shipping' ou 'billing')
+   * @returns {Promise<OrderAddress|null>} Adresse de commande ou null si non trouvée
    */
   async getByOrderAndType(
     orderId: number,
@@ -119,9 +119,9 @@ export default class OrderAddressRepository {
   }
 
   /**
-   * Delete all order addresses by order
-   * @param {number} orderId Order ID
-   * @returns {Promise<boolean>} True if deleted successfully
+   * Supprimer toutes les adresses de commande par commande
+   * @param {number} orderId ID de la commande
+   * @returns {Promise<boolean>} True si supprimées avec succès
    */
   async deleteAllByOrder(orderId: number): Promise<boolean> {
     const query = "DELETE FROM order_addresses WHERE order_id = $1";
@@ -130,7 +130,7 @@ export default class OrderAddressRepository {
   }
 
   /**
-   * Create order address
+   * Créer une adresse de commande
    */
   async createOrderAddress(
     orderAddressData: OrderAddressData
@@ -153,7 +153,7 @@ export default class OrderAddressRepository {
   }
 
   /**
-   * Get order address by ID
+   * Obtenir une adresse de commande par ID
    */
   async getOrderAddressById(id: number): Promise<OrderAddress | null> {
     const query = `SELECT id, order_id, type AS address_type, address_snapshot, created_at, updated_at FROM order_addresses WHERE id = $1`;
@@ -167,7 +167,7 @@ export default class OrderAddressRepository {
   }
 
   /**
-   * Update order address
+   * Mettre à jour une adresse de commande
    */
   async updateOrderAddress(
     id: number,
@@ -212,7 +212,7 @@ export default class OrderAddressRepository {
   }
 
   /**
-   * Delete order address
+   * Supprimer une adresse de commande
    */
   async deleteOrderAddress(id: number): Promise<boolean> {
     const query = `DELETE FROM order_addresses WHERE id = $1`;
@@ -221,7 +221,7 @@ export default class OrderAddressRepository {
   }
 
   /**
-   * Get order addresses by order ID
+   * Obtenir les adresses de commande par ID de commande
    */
   async getOrderAddressesByOrderId(orderId: number): Promise<OrderAddress[]> {
     const query = `
@@ -251,7 +251,7 @@ export default class OrderAddressRepository {
       `;
 
       const result = await this.pool.query(query, [orderId]);
-      // Parse the address_snapshot JSON for each address
+      // Analyser le JSON address_snapshot pour chaque adresse
       return result.rows.map((row) => ({
         id: row.id,
         type: row.type,
