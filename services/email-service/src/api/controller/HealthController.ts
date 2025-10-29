@@ -15,14 +15,14 @@ export class HealthController {
   }
 
   /**
-   * Basic health check
+   * Vérification de santé basique
    */
   healthCheck(req: Request, res: Response): void {
     res.json(ResponseMapper.healthSuccess());
   }
 
   /**
-   * Detailed health check with Gmail configuration status
+   * Vérification de santé détaillée avec l'état de la configuration Gmail
    */
   async detailedHealthCheck(req: Request, res: Response): Promise<void> {
     try {

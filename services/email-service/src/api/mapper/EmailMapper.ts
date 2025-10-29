@@ -6,11 +6,11 @@
 import { EmailSendDTO, EmailConfirmationDTO, EmailPublicDTO } from "../dto";
 
 /**
- * Email Mapper class
+ * Classe de mapping des e-mails
  */
 export class EmailMapper {
   /**
-   * Convert EmailSendDTO to email service data
+   * Convertir EmailSendDTO en données pour le service d'e-mail
    */
   static emailSendDTOToServiceData(dto: EmailSendDTO): any {
     return {
@@ -23,7 +23,7 @@ export class EmailMapper {
   }
 
   /**
-   * Convert EmailConfirmationDTO to email service data
+   * Convertir EmailConfirmationDTO en données pour le service d'e-mail
    */
   static emailConfirmationDTOToServiceData(dto: EmailConfirmationDTO): any {
     return {
@@ -36,7 +36,7 @@ export class EmailMapper {
   }
 
   /**
-   * Convert email service result to EmailPublicDTO
+   * Convertir le résultat du service d'e-mail en EmailPublicDTO
    */
   static emailServiceResultToPublicDTO(result: any): EmailPublicDTO {
     return {

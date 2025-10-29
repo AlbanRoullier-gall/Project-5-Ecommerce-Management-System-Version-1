@@ -15,7 +15,7 @@ export default class EmailService {
   }
 
   /**
-   * Initialize Gmail transporter
+   * Initialiser le transporteur Gmail
    */
   private initializeGmailTransporter(): void {
     if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
@@ -41,8 +41,8 @@ export default class EmailService {
 
   /**
    * Envoyer un email au client
-   * @param {Object} emailData Email data
-   * @returns {Promise<Object>} Send result
+   * @param {Object} emailData Données de l'e-mail
+   * @returns {Promise<Object>} Résultat d'envoi
    */
   async sendClientEmail(emailData: any): Promise<any> {
     if (!this.transporter) {
@@ -113,8 +113,8 @@ export default class EmailService {
 
   /**
    * Envoyer une confirmation d'envoi à l'admin
-   * @param {Object} confirmationData Confirmation data
-   * @returns {Promise<Object>} Send result
+   * @param {Object} confirmationData Données de confirmation
+   * @returns {Promise<Object>} Résultat d'envoi
    */
   async sendConfirmationEmail(confirmationData: any): Promise<any> {
     if (!this.transporter) {
@@ -377,6 +377,100 @@ export default class EmailService {
   }
 
   /**
+   * Envoyer un email de réinitialisation de mot de passe
+   */
+  async sendResetPasswordEmail(data: {
+    email: string;
+    token: string;
+    userName: string;
+    resetUrl: string;
+  }): Promise<any> {
+    if (!this.transporter) {
+      console.error("Gmail transporter not configured");
+      throw new Error("Gmail transporter not configured");
+    }
+
+    try {
+      const subject =
+        "Réinitialisation de votre mot de passe - Nature de Pierre";
+      const message = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #13686a;">Réinitialisation de votre mot de passe</h2>
+          <p>Bonjour ${data.userName},</p>
+          <p>Vous avez demandé la réinitialisation de votre mot de passe pour votre compte Nature de Pierre.</p>
+          <p>Pour réinitialiser votre mot de passe, cliquez sur le lien ci-dessous :</p>
+          <p style="text-align: center; margin: 30px 0;">
+            <a href="${data.resetUrl}?token=${data.token}" 
+               style="background-color: #13686a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+              Réinitialiser mon mot de passe
+            </a>
+          </p>
+          <p><strong>Ce lien est valide pendant 15 minutes.</strong></p>
+          <p>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+          <p style="color: #666; font-size: 12px;">
+            Nature de Pierre - Interface d'administration<br>
+            Cet email a été envoyé automatiquement, merci de ne pas y répondre.
+          </p>
+        </div>
+      `;
+
+      const emailData = {
+        to: { email: data.email, name: data.userName },
+        subject,
+        message,
+        clientName: "Nature de Pierre",
+        clientEmail: "admin@naturedepierre.com",
+      };
+
+      const result = await this.sendClientEmail(emailData);
+
+      return {
+        messageId: result.messageId,
+        status: "sent",
+        recipient: data.email,
+        subject: subject,
+        sentAt: new Date(),
+      };
+    } catch (error) {
+      console.error("Error sending reset password email:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Valider les données de confirmation de commande
+   */
+  private validateOrderConfirmationData(data: any): void {
+    if (
+      !data.customerEmail ||
+      !data.customerName ||
+      !data.orderId ||
+      !data.items ||
+      !data.shippingAddress
+    ) {
+      throw new Error(
+        "Données manquantes pour l'envoi de l'email de confirmation"
+      );
+    }
+
+    if (!Array.isArray(data.items) || data.items.length === 0) {
+      throw new Error("La liste des articles ne peut pas être vide");
+    }
+
+    if (
+      !data.shippingAddress.firstName ||
+      !data.shippingAddress.lastName ||
+      !data.shippingAddress.address ||
+      !data.shippingAddress.city ||
+      !data.shippingAddress.postalCode ||
+      !data.shippingAddress.country
+    ) {
+      throw new Error("L'adresse de livraison est incomplète");
+    }
+  }
+
+  /**
    * Envoyer un email de confirmation de commande
    */
   async sendOrderConfirmationEmail(data: {
@@ -407,6 +501,9 @@ export default class EmailService {
       console.error("Gmail transporter not configured");
       throw new Error("Gmail transporter not configured");
     }
+
+    // Valider les données
+    this.validateOrderConfirmationData(data);
 
     try {
       // Générer les lignes HTML pour les articles (affichage HT/TVA/TTC)
@@ -632,7 +729,7 @@ export default class EmailService {
 
   /**
    * Vérifier la configuration Gmail
-   * @returns {Object} Configuration status
+   * @returns {Object} État de la configuration
    */
   getConfigurationStatus(): any {
     return {
