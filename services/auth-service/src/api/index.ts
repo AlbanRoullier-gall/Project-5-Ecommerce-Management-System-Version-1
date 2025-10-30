@@ -90,12 +90,6 @@ export class ApiRouter {
         password: Joi.string().min(8).required(),
       }),
 
-      updateProfileSchema: Joi.object({
-        firstName: Joi.string().max(100).optional(),
-        lastName: Joi.string().max(100).optional(),
-        email: Joi.string().email().optional(),
-      }),
-
       changePasswordSchema: Joi.object({
         currentPassword: Joi.string().required(),
         newPassword: Joi.string().min(8).required(),
@@ -199,23 +193,6 @@ export class ApiRouter {
     });
 
     // ===== ROUTES ADMIN (AVEC AUTHENTIFICATION) =====
-    app.get(
-      "/api/admin/auth/profile",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.authController.getProfile(req, res);
-      }
-    );
-
-    app.put(
-      "/api/admin/auth/profile",
-      this.requireAuth,
-      this.validateRequest(schemas.updateProfileSchema),
-      (req: Request, res: Response) => {
-        this.authController.updateProfile(req, res);
-      }
-    );
-
     app.put(
       "/api/admin/auth/change-password",
       this.requireAuth,

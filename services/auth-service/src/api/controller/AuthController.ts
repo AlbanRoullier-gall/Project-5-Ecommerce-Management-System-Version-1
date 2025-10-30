@@ -9,12 +9,7 @@
  */
 import { Request, Response } from "express";
 import { AuthService } from "../../services/AuthService";
-import {
-  UserCreateDTO,
-  UserLoginDTO,
-  UserUpdateDTO,
-  PasswordChangeDTO,
-} from "../dto";
+import { UserCreateDTO, UserLoginDTO, PasswordChangeDTO } from "../dto";
 import { UserMapper, ResponseMapper } from "../mapper";
 
 export class AuthController {
@@ -105,75 +100,6 @@ export class AuthController {
         res.status(403).json(ResponseMapper.authenticationError(error.message));
         return;
       }
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Récupérer le profil de l'utilisateur connecté
-   */
-  async getProfile(req: Request, res: Response): Promise<void> {
-    try {
-      // Récupérer l'ID utilisateur depuis les headers envoyés par l'API Gateway
-      const userId = req.headers["x-user-id"];
-      if (!userId) {
-        res.status(401).json({
-          error: "Erreur d'authentification",
-          message: "Informations utilisateur manquantes",
-          timestamp: new Date().toISOString(),
-          status: 401,
-        });
-        return;
-      }
-
-      const userProfile = await this.authService.getUserProfile(Number(userId));
-
-      // Convertir en DTO de réponse
-      const userPublicDTO = UserMapper.userToPublicDTO(userProfile);
-      const response = ResponseMapper.profileUpdateSuccess(userPublicDTO);
-
-      res.json(response);
-    } catch (error: any) {
-      console.error("Get profile error:", error);
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Mettre à jour le profil de l'utilisateur connecté
-   */
-  async updateProfile(req: Request, res: Response): Promise<void> {
-    try {
-      const userUpdateDTO: UserUpdateDTO = req.body;
-
-      // Récupérer l'ID utilisateur depuis les headers envoyés par l'API Gateway
-      const userId = req.headers["x-user-id"];
-      if (!userId) {
-        res.status(401).json({
-          error: "Erreur d'authentification",
-          message: "Informations utilisateur manquantes",
-          timestamp: new Date().toISOString(),
-          status: 401,
-        });
-        return;
-      }
-
-      // Convertir DTO en données de mise à jour
-      const updateData = UserMapper.userUpdateDTOToUserData(userUpdateDTO);
-
-      // Mettre à jour l'utilisateur
-      const updatedUser = await this.authService.updateUser(
-        Number(userId),
-        updateData
-      );
-
-      // Convertir en DTO de réponse
-      const userPublicDTO = UserMapper.userToPublicDTO(updatedUser);
-      const response = ResponseMapper.profileUpdateSuccess(userPublicDTO);
-
-      res.json(response);
-    } catch (error: any) {
-      console.error("Update profile error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }

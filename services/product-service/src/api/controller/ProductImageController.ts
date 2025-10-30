@@ -11,7 +11,7 @@
 import { Request, Response } from "express";
 import ProductService from "../../services/ProductService";
 import { ProductMapper, ResponseMapper } from "../mapper";
-import { ProductImageCreateDTO, ProductImageUpdateDTO } from "../dto";
+import { ProductImageCreateDTO } from "../dto";
 
 export class ProductImageController {
   private productService: ProductService;
@@ -46,65 +46,7 @@ export class ProductImageController {
     }
   }
 
-  /**
-   * Obtenir une image de produit par ID
-   */
-  async getProductImageById(req: Request, res: Response): Promise<void> {
-    try {
-      const { imageId } = req.params;
-      const image = await this.productService.getImageById(parseInt(imageId));
-
-      if (!image) {
-        res.status(404).json(ResponseMapper.notFoundError("Product image"));
-        return;
-      }
-
-      res.json(
-        ResponseMapper.imageRetrieved(
-          ProductMapper.productImageToPublicDTO(image)
-        )
-      );
-    } catch (error: any) {
-      console.error(
-        "Erreur lors de la récupération de l'image de produit:",
-        error
-      );
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Mettre à jour une image de produit
-   */
-  async updateProductImage(req: Request, res: Response): Promise<void> {
-    try {
-      const { imageId } = req.params;
-      const imageData = ProductMapper.productImageUpdateDTOToProductImageData(
-        req.body as ProductImageUpdateDTO
-      );
-      const image = await this.productService.updateImage(
-        parseInt(imageId),
-        imageData
-      );
-
-      if (!image) {
-        res.status(404).json(ResponseMapper.notFoundError("Product image"));
-        return;
-      }
-
-      res.json(
-        ResponseMapper.imageUpdated(
-          ProductMapper.productImageToPublicDTO(image)
-        )
-      );
-    } catch (error: any) {
-      console.error(
-        "Erreur lors de la mise à jour de l'image de produit:",
-        error
-      );
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
+  // (Handlers admin pour récupérer/mettre à jour une image supprimés)
 
   /**
    * Supprimer une image de produit

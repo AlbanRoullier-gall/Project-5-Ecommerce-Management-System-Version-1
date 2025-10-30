@@ -46,33 +46,6 @@ export class AddressController {
   }
 
   /**
-   * Récupérer une adresse par ID
-   */
-  async getAddressById(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-
-      if (!id) {
-        res.status(400).json({ error: "Address ID is required" });
-        return;
-      }
-
-      const address = await this.customerService.getAddressById(parseInt(id));
-
-      if (!address) {
-        res.status(404).json(ResponseMapper.notFoundError("Address"));
-        return;
-      }
-
-      const addressDTO = CustomerMapper.addressToPublicDTO(address);
-      res.json(ResponseMapper.addressRetrieved(addressDTO));
-    } catch (error: any) {
-      console.error("Get address by ID error:", error);
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
    * Créer une nouvelle adresse
    */
   async createAddress(req: Request, res: Response): Promise<void> {

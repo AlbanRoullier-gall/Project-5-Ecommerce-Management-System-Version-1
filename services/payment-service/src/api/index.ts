@@ -63,11 +63,6 @@ export class ApiRouter {
         cancelUrl: Joi.string().required(),
         metadata: Joi.object().optional(),
       }),
-
-      // Schéma de confirmation de paiement
-      paymentConfirmSchema: Joi.object({
-        paymentIntentId: Joi.string().required(),
-      }),
     };
   }
 
@@ -146,14 +141,7 @@ export class ApiRouter {
       }
     );
 
-    // Confirmer un paiement
-    app.post(
-      "/api/payment/confirm",
-      this.validateRequest(schemas.paymentConfirmSchema),
-      (req: Request, res: Response) => {
-        this.paymentController.confirmPayment(req, res);
-      }
-    );
+    // (Route de confirmation supprimée)
 
     // ===== GESTION DES ERREURS =====
     app.use((req: Request, res: Response) => {

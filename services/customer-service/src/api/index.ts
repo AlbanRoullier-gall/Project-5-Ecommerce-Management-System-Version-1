@@ -20,7 +20,6 @@ import {
   HealthController,
   CustomerController,
   AddressController,
-  CompanyController,
 } from "./controller";
 import { ResponseMapper } from "./mapper";
 // Les routes sont maintenant définies directement dans la méthode setupRoutes
@@ -29,14 +28,12 @@ export class ApiRouter {
   private healthController: HealthController;
   private customerController: CustomerController;
   private addressController: AddressController;
-  private companyController: CompanyController;
 
   constructor(pool: Pool) {
     const customerService = new CustomerService(pool);
     this.healthController = new HealthController(pool);
     this.customerController = new CustomerController(customerService);
     this.addressController = new AddressController(customerService);
-    this.companyController = new CompanyController(customerService);
   }
 
   /**
@@ -89,30 +86,6 @@ export class ApiRouter {
         city: Joi.string().max(100).optional(),
         countryId: Joi.number().integer().optional(),
         isDefault: Joi.boolean().optional(),
-      }),
-
-      companyCreateSchema: Joi.object({
-        companyName: Joi.string().max(255).required(),
-        siretNumber: Joi.string().max(20).optional(),
-        vatNumber: Joi.string().max(20).optional(),
-        address: Joi.string().optional(),
-        postalCode: Joi.string().max(10).optional(),
-        city: Joi.string().max(100).optional(),
-        countryId: Joi.number().integer().optional(),
-        phoneNumber: Joi.string().max(20).optional(),
-        email: Joi.string().email().max(255).optional(),
-      }),
-
-      companyUpdateSchema: Joi.object({
-        companyName: Joi.string().max(255).optional(),
-        siretNumber: Joi.string().max(20).optional(),
-        vatNumber: Joi.string().max(20).optional(),
-        address: Joi.string().optional(),
-        postalCode: Joi.string().max(10).optional(),
-        city: Joi.string().max(100).optional(),
-        countryId: Joi.number().integer().optional(),
-        phoneNumber: Joi.string().max(20).optional(),
-        email: Joi.string().email().max(255).optional(),
       }),
     };
   }
@@ -233,15 +206,6 @@ export class ApiRouter {
       this.customerController.getCustomerByEmail(req, res);
     });
 
-    // Données de référence publiques (civilités, catégories, pays)
-    app.get("/api/customers/civilities", (req: Request, res: Response) => {
-      this.customerController.getCivilities(req, res);
-    });
-
-    app.get("/api/customers/categories", (req: Request, res: Response) => {
-      this.customerController.getCategories(req, res);
-    });
-
     app.get("/api/customers/countries", (req: Request, res: Response) => {
       this.customerController.getCountries(req, res);
     });
@@ -252,25 +216,9 @@ export class ApiRouter {
     });
 
     // ===== ROUTES DE RÉFÉRENCE ADMIN =====
-    // Routes admin pour obtenir les données de référence (civilités, catégories, pays)
+    // Routes admin pour obtenir les données de référence (pays)
     // Utilisées dans le backoffice
     // IMPORTANT: Ces routes doivent être définies AVANT les routes avec paramètres
-    app.get(
-      "/api/admin/customers/civilities",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.customerController.getCivilities(req, res);
-      }
-    );
-
-    app.get(
-      "/api/admin/customers/categories",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.customerController.getCategories(req, res);
-      }
-    );
-
     app.get(
       "/api/admin/customers/countries",
       this.requireAuth,
@@ -291,7 +239,6 @@ export class ApiRouter {
         this.customerController.listCustomers(req, res);
       }
     );
-
 
     // ===== ROUTES ADMIN DE CLIENTS =====
     app.get(
@@ -346,14 +293,6 @@ export class ApiRouter {
       }
     );
 
-    // Récupérer une adresse spécifique (publique)
-    app.get(
-      "/api/customers/:customerId/addresses/:id",
-      (req: Request, res: Response) => {
-        this.addressController.getAddressById(req, res);
-      }
-    );
-
     // ===== ROUTES ADMIN D'ADRESSES =====
     app.post(
       "/api/admin/customers/:customerId/addresses",
@@ -386,50 +325,6 @@ export class ApiRouter {
       this.requireAuth,
       (req: Request, res: Response) => {
         this.addressController.deleteAddress(req, res);
-      }
-    );
-
-    // ===== ROUTES PUBLIQUES D'ENTREPRISES =====
-    // Ajout d'entreprise (publique pour les clients)
-    app.post(
-      "/api/customers/:customerId/companies",
-      this.validateRequest(schemas.companyCreateSchema),
-      (req: Request, res: Response) => {
-        this.companyController.createCompany(req, res);
-      }
-    );
-
-    // Récupérer une entreprise spécifique (publique)
-    app.get(
-      "/api/customers/:customerId/companies/:id",
-      (req: Request, res: Response) => {
-        this.companyController.getCompanyById(req, res);
-      }
-    );
-
-    // ===== ROUTES ADMIN D'ENTREPRISES =====
-    app.get(
-      "/api/admin/customers/:customerId/companies",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.companyController.getCustomerCompanies(req, res);
-      }
-    );
-
-    app.put(
-      "/api/admin/customers/:customerId/companies/:id",
-      this.requireAuth,
-      this.validateRequest(schemas.companyUpdateSchema),
-      (req: Request, res: Response) => {
-        this.companyController.updateCompany(req, res);
-      }
-    );
-
-    app.delete(
-      "/api/admin/customers/:customerId/companies/:id",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.companyController.deleteCompany(req, res);
       }
     );
 

@@ -530,24 +530,7 @@ export class ApiRouter {
       }
     );
 
-    // Récupérer une image spécifique (admin)
-    app.get(
-      "/api/admin/images/:imageId",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.productImageController.getProductImageById(req, res);
-      }
-    );
-
-    // Modifier une image (admin)
-    app.put(
-      "/api/admin/images/:imageId",
-      this.requireAuth,
-      this.validateRequest(schemas.productImageUpdateSchema),
-      (req: Request, res: Response) => {
-        this.productImageController.updateProductImage(req, res);
-      }
-    );
+    // (Routes admin /api/admin/images/:imageId supprimées)
 
     // Supprimer une image d'un produit (admin)
     app.delete(

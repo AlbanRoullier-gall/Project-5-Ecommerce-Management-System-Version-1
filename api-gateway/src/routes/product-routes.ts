@@ -9,8 +9,6 @@ export const PRODUCT_ROUTES: Record<string, ServiceName> = {
   "/products": "product", // GET: Liste des produits
   "/products/:id": "product", // GET: Récupérer un produit spécifique
   "/categories": "product", // GET: Liste des catégories
-  "/categories/:id": "product", // GET: Récupérer une catégorie spécifique
-  "/products/:id/images": "product", // GET: Lister les images d'un produit
   "/images/:imageId": "product", // GET: Récupérer une image spécifique
 
   // Routes admin
@@ -23,5 +21,4 @@ export const PRODUCT_ROUTES: Record<string, ServiceName> = {
   "/admin/categories/:id": "product", // GET: Récupérer catégorie, PUT: Modifier catégorie, DELETE: Supprimer catégorie
   "/admin/products/:id/images": "product", // GET: Lister images, POST: Ajouter images à un produit
   "/admin/products/:id/images/:imageId": "product", // DELETE: Supprimer une image
-  "/admin/images/:imageId": "product", // GET: Récupérer image, PUT: Modifier image
 };

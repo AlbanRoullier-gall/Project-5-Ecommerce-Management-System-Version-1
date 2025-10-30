@@ -3,7 +3,7 @@
  * Mapper pour les conversions DTO ↔ Service
  */
 
-import { PaymentCreateDTO, PaymentConfirmDTO, PaymentPublicDTO } from "../dto";
+import { PaymentCreateDTO, PaymentPublicDTO } from "../dto";
 
 /**
  * Classe Mapper de Paiement
@@ -33,14 +33,7 @@ export class PaymentMapper {
     };
   }
 
-  /**
-   * Convertir PaymentConfirmDTO en données de confirmation Stripe
-   */
-  static paymentConfirmDTOToStripeData(dto: PaymentConfirmDTO): any {
-    return {
-      paymentIntentId: dto.paymentIntentId,
-    };
-  }
+  // (Mapping de confirmation supprimé)
 
   /**
    * Convertir l'intention de paiement Stripe ou la session de checkout en PaymentPublicDTO

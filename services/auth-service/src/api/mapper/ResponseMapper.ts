@@ -43,16 +43,6 @@ export class ResponseMapper {
   }
 
   /**
-   * Réponse de profil mis à jour
-   */
-  static profileUpdateSuccess(user: UserPublicDTO) {
-    return {
-      message: "Profil mis à jour avec succès",
-      user,
-    };
-  }
-
-  /**
    * Réponse de changement de mot de passe
    */
   static passwordChangeSuccess() {

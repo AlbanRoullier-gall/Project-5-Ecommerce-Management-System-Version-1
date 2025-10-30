@@ -14,7 +14,7 @@ export default class PaymentService {
       process.env.STRIPE_SECRET_KEY ||
         "sk_test_51RtjchLi6vN59MNetUhP86QSndKeI5GfJCMseKO8dSq4D93k0td4AZyJ5d4SiKTveQh9pThKaj9d9MyzpTEuoFdU00ZW6qtK90",
       {
-        apiVersion: "2023-08-16",
+        apiVersion: "2023-10-16",
       }
     );
     this.webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
@@ -78,65 +78,7 @@ export default class PaymentService {
     }
   }
 
-  /**
-   * Confirmer un paiement
-   * @param {string} paymentIntentId Identifiant de l'intention de paiement
-   * @returns {Promise<Object>} Résultat du paiement
-   */
-  async confirmPayment(paymentIntentId: string): Promise<any> {
-    try {
-      const paymentIntent = await this.stripe.paymentIntents.retrieve(
-        paymentIntentId
-      );
-
-      if (paymentIntent.status === "succeeded") {
-        return {
-          id: paymentIntent.id,
-          status: paymentIntent.status,
-          amount: paymentIntent.amount,
-          currency: paymentIntent.currency,
-          customerEmail: paymentIntent.receipt_email || "",
-          createdAt: new Date(paymentIntent.created * 1000),
-        };
-      }
-
-      // Si le paiement nécessite une méthode de paiement, on retourne les informations nécessaires
-      if (paymentIntent.status === "requires_payment_method") {
-        return {
-          id: paymentIntent.id,
-          status: paymentIntent.status,
-          amount: paymentIntent.amount,
-          currency: paymentIntent.currency,
-          customerEmail: paymentIntent.receipt_email || "",
-          createdAt: new Date(paymentIntent.created * 1000),
-          clientSecret: paymentIntent.client_secret,
-          message:
-            "Paiement créé avec succès. Utilisez le client_secret pour compléter le paiement côté frontend.",
-        };
-      }
-
-      const confirmedPayment = await this.stripe.paymentIntents.confirm(
-        paymentIntentId,
-        {
-          payment_method: "pm_card_visa", // Méthode de test Stripe
-        }
-      );
-
-      return {
-        id: confirmedPayment.id,
-        status: confirmedPayment.status,
-        amount: confirmedPayment.amount,
-        currency: confirmedPayment.currency,
-        customerEmail: confirmedPayment.receipt_email || "",
-        createdAt: new Date(confirmedPayment.created * 1000),
-      };
-    } catch (error: any) {
-      console.error("Error confirming payment:", error);
-      throw new Error(
-        `Erreur lors de la confirmation du paiement: ${error.message}`
-      );
-    }
-  }
+  // (Méthode de confirmation supprimée)
 
   /**
    * Vérifier la configuration Stripe

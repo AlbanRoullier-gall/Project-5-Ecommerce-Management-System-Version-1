@@ -14,7 +14,6 @@ export const AUTH_ROUTES: Record<string, ServiceName> = {
   "/auth/validate-password": "auth", // POST: Valider mot de passe
 
   // Routes admin (avec authentification)
-  "/admin/auth/profile": "auth", // GET: Profil utilisateur, PUT: Modifier profil
   "/admin/auth/change-password": "auth", // PUT: Changer mot de passe
   "/admin/auth/logout": "auth", // POST: Déconnexion
 };

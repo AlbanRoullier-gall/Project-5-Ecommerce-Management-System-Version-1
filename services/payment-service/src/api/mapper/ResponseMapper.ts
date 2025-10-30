@@ -14,15 +14,7 @@ export class ResponseMapper {
     };
   }
 
-  /**
-   * Réponse de paiement confirmé
-   */
-  static paymentConfirmed(payment: any) {
-    return {
-      message: "Paiement confirmé avec succès",
-      payment,
-    };
-  }
+  // (Réponse de paiement confirmé supprimée)
 
   /**
    * Réponse de santé du service

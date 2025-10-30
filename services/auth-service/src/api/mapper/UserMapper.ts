@@ -7,7 +7,7 @@
  * - Séparation claire des responsabilités
  */
 import { User, UserData } from "../../models/User";
-import { UserPublicDTO, UserCreateDTO, UserUpdateDTO } from "../dto";
+import { UserPublicDTO, UserCreateDTO } from "../dto";
 
 export class UserMapper {
   /**
@@ -21,30 +21,6 @@ export class UserMapper {
       first_name: userCreateDTO.firstName,
       last_name: userCreateDTO.lastName,
     };
-  }
-
-  /**
-   * Convertir un UserUpdateDTO en UserData
-   */
-  static userUpdateDTOToUserData(
-    userUpdateDTO: UserUpdateDTO
-  ): Partial<UserData> {
-    const updateData: Partial<UserData> = {};
-
-    if (userUpdateDTO.firstName !== undefined) {
-      updateData.first_name = userUpdateDTO.firstName;
-    }
-    if (userUpdateDTO.lastName !== undefined) {
-      updateData.last_name = userUpdateDTO.lastName;
-    }
-    if (userUpdateDTO.email !== undefined) {
-      updateData.email = userUpdateDTO.email;
-    }
-    if (userUpdateDTO.isActive !== undefined) {
-      updateData.is_active = userUpdateDTO.isActive;
-    }
-
-    return updateData;
   }
 
   /**

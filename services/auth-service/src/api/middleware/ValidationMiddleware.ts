@@ -41,12 +41,6 @@ export class ValidationMiddleware {
         password: Joi.string().required(),
       }),
 
-      updateProfileSchema: Joi.object({
-        firstName: Joi.string().max(100).optional(),
-        lastName: Joi.string().max(100).optional(),
-        email: Joi.string().email().optional(),
-      }),
-
       changePasswordSchema: Joi.object({
         currentPassword: Joi.string().required(),
         newPassword: Joi.string().min(8).required(),

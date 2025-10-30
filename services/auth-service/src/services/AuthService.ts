@@ -177,39 +177,7 @@ export class AuthService {
     }
   }
 
-  // ===== GESTION DU PROFIL =====
-
-  /**
-   * Récupérer le profil utilisateur
-   */
-  async getUserProfile(userId: number): Promise<User> {
-    try {
-      return await this.getUserById(userId);
-    } catch (error) {
-      console.error("Error getting user profile:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Mettre à jour le profil utilisateur
-   */
-  async updateUser(
-    userId: number,
-    updateData: Partial<UserData>
-  ): Promise<User> {
-    try {
-      const user = await this.getUserById(userId);
-      const updatedUser = this.userRepository.createUserWithMerge(
-        user,
-        updateData
-      );
-      return await this.userRepository.update(updatedUser);
-    } catch (error) {
-      console.error("Error updating user:", error);
-      throw error;
-    }
-  }
+  // ===== GESTION DU MOT DE PASSE =====
 
   /**
    * Changer le mot de passe
