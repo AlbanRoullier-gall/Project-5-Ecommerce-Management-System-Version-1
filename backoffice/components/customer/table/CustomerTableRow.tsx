@@ -1,6 +1,7 @@
 import React from "react";
 import { CustomerPublicDTO } from "../../../dto";
 import ActionButtons from "./ActionButtons";
+import { TableRow, TableCell } from "../../ui/TableLayout";
 
 /**
  * Props du composant CustomerTableRow
@@ -27,21 +28,9 @@ const CustomerTableRow: React.FC<CustomerTableRowProps> = ({
   onManageAddresses,
 }) => {
   return (
-    <tr
-      style={{
-        borderBottom: "1px solid #e1e5e9",
-        transition: "all 0.2s ease",
-      }}
-      onMouseOver={(e) => {
-        e.currentTarget.style.background =
-          "linear-gradient(90deg, rgba(19, 104, 106, 0.05) 0%, rgba(13, 211, 209, 0.05) 100%)";
-      }}
-      onMouseOut={(e) => {
-        e.currentTarget.style.background = "white";
-      }}
-    >
+    <TableRow>
       {/* Client (nom complet) */}
-      <td style={{ padding: "1.5rem 1.25rem" }}>
+      <TableCell>
         <div>
           <div
             style={{
@@ -53,32 +42,34 @@ const CustomerTableRow: React.FC<CustomerTableRowProps> = ({
             {customer.fullName}
           </div>
         </div>
-      </td>
+      </TableCell>
 
       {/* Email */}
-      <td style={{ padding: "1.5rem 1.25rem" }}>
+      <TableCell>
         <span style={{ color: "#6b7280", fontSize: "1rem" }}>
           {customer.email}
         </span>
-      </td>
+      </TableCell>
 
       {/* Téléphone */}
-      <td className="mobile-hide" style={{ padding: "1.5rem 1.25rem" }}>
+      <TableCell className="mobile-hide">
         <span style={{ color: "#6b7280", fontSize: "1rem" }}>
           {customer.phoneNumber || "-"}
         </span>
-      </td>
+      </TableCell>
 
       {/* Actions */}
-      <td style={{ padding: "1.5rem 1.25rem" }}>
-        <ActionButtons
-          customer={customer}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onManageAddresses={onManageAddresses}
-        />
-      </td>
-    </tr>
+      <TableCell width="160px">
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <ActionButtons
+            customer={customer}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onManageAddresses={onManageAddresses}
+          />
+        </div>
+      </TableCell>
+    </TableRow>
   );
 };
 

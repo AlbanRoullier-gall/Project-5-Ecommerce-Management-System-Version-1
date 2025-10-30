@@ -1,6 +1,11 @@
 import React from "react";
 import { CategoryPublicDTO } from "../../../dto";
 import CategoryTableRow from "./CategoryTableRow";
+import TableLayout, {
+  TableHeader,
+  TableRow,
+  TableCell,
+} from "../../ui/TableLayout";
 
 /**
  * Props du composant CategoryTable
@@ -41,127 +46,39 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
     }).format(new Date(date));
   };
 
-  if (categories.length === 0) {
-    return (
-      <div
-        style={{
-          background: "#f8f9fa",
-          padding: "3rem 2rem",
-          borderRadius: "12px",
-          textAlign: "center",
-          border: "2px dashed #d1d5db",
-        }}
-      >
-        <i
-          className="fas fa-tags"
-          style={{
-            fontSize: "3rem",
-            color: "#d1d5db",
-            marginBottom: "1rem",
-          }}
-        ></i>
-        <p style={{ fontSize: "1.1rem", color: "#6b7280" }}>
-          Aucune catégorie créée
-        </p>
-      </div>
-    );
-  }
+  // Empty state handled below inside TableLayout for consistency
+
+  const headers: TableHeader[] = [
+    { label: "Nom" },
+    { label: "Description", className: "mobile-hide" },
+    { label: "Date création", className: "mobile-hide" },
+    { label: "Actions", align: "right", width: "160px" },
+  ];
 
   return (
-    <div className="table-responsive" style={{ overflowX: "auto" }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "separate",
-          borderSpacing: 0,
-          fontSize: "1rem",
-          minWidth: "600px",
-        }}
-      >
-        <thead
-          style={{
-            background: "linear-gradient(135deg, #d9b970 0%, #f4d03f 100%)",
-            color: "#13686a",
-          }}
-        >
-          <tr>
-            <th
-              style={{
-                padding: "1.25rem 1.5rem",
-                textAlign: "left",
-                fontSize: "1rem",
-                fontWeight: "700",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
-              Nom
-            </th>
-            <th
-              className="mobile-hide"
-              style={{
-                padding: "1.25rem 1.5rem",
-                textAlign: "left",
-                fontSize: "1rem",
-                fontWeight: "700",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
-              Description
-            </th>
-            <th
-              style={{
-                padding: "1.25rem 1.5rem",
-                textAlign: "left",
-                fontSize: "1rem",
-                fontWeight: "700",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
-              Produits
-            </th>
-            <th
-              className="mobile-hide"
-              style={{
-                padding: "1.25rem 1.5rem",
-                textAlign: "left",
-                fontSize: "1rem",
-                fontWeight: "700",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
-              Date création
-            </th>
-            <th
-              style={{
-                padding: "1.25rem 1.5rem",
-                textAlign: "left",
-                fontSize: "1rem",
-                fontWeight: "700",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {categories.map((category) => (
-            <CategoryTableRow
-              key={category.id}
-              category={category}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              formatDate={formatDate}
-            />
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <TableLayout headers={headers} minWidth="600px" headerGradient="gold">
+      {categories.length === 0 && (
+        <TableRow>
+          <TableCell
+            colSpan={4}
+            align="center"
+            style={{ color: "#6b7280", padding: "1rem" }}
+          >
+            Aucune catégorie créée
+          </TableCell>
+        </TableRow>
+      )}
+      {categories.map((category, index) => (
+        <CategoryTableRow
+          key={category.id}
+          category={category}
+          rowIndex={index}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          formatDate={formatDate}
+        />
+      ))}
+    </TableLayout>
   );
 };
 

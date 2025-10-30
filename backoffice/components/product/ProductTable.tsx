@@ -1,6 +1,11 @@
 import React from "react";
 import { ProductPublicDTO } from "../../dto";
 import ProductTableRow from "./table/ProductTableRow";
+import TableLayout, {
+  TableHeader,
+  TableRow,
+  TableCell,
+} from "../ui/TableLayout";
 
 /**
  * Props du composant ProductTable
@@ -68,160 +73,43 @@ const ProductTable: React.FC<ProductTableProps> = ({
     }).format(new Date(date));
   };
 
-  if (products.length === 0) {
-    return (
-      <div
-        style={{
-          background: "white",
-          padding: "4rem 2rem",
-          borderRadius: "16px",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-          textAlign: "center",
-          border: "2px solid rgba(19, 104, 106, 0.1)",
-        }}
-      >
-        <i
-          className="fas fa-inbox"
-          style={{ fontSize: "4rem", color: "#d1d5db", marginBottom: "1rem" }}
-        ></i>
-        <p style={{ fontSize: "1.2rem", color: "#6b7280" }}>
-          Aucun produit trouvé
-        </p>
-      </div>
-    );
-  }
+  // Empty state handled below inside TableLayout for consistency
+
+  const headers: TableHeader[] = [
+    { label: "Produit" },
+    { label: "Catégorie" },
+    { label: "Prix" },
+    { label: "TVA", className: "mobile-hide" },
+    { label: "Statut" },
+    { label: "Date création", className: "mobile-hide" },
+    { label: "Actions", align: "right", width: "160px" },
+  ];
 
   return (
-    <div
-      style={{
-        background: "white",
-        borderRadius: "16px",
-        overflow: "hidden",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-        border: "2px solid rgba(19, 104, 106, 0.1)",
-      }}
-    >
-      <div className="table-responsive" style={{ overflowX: "auto" }}>
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "separate",
-            borderSpacing: 0,
-            fontSize: "1rem",
-            minWidth: "800px",
-          }}
-        >
-          <thead
-            style={{
-              background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-              color: "white",
-            }}
+    <TableLayout headers={headers} minWidth="800px" headerGradient="teal">
+      {products.length === 0 && (
+        <TableRow>
+          <TableCell
+            colSpan={7}
+            align="center"
+            style={{ color: "#6b7280", padding: "1rem" }}
           >
-            <tr>
-              <th
-                style={{
-                  padding: "1.5rem 1.25rem",
-                  textAlign: "left",
-                  fontSize: "1rem",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Produit
-              </th>
-              <th
-                style={{
-                  padding: "1.5rem 1.25rem",
-                  textAlign: "left",
-                  fontSize: "1rem",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Catégorie
-              </th>
-              <th
-                style={{
-                  padding: "1.5rem 1.25rem",
-                  textAlign: "left",
-                  fontSize: "1rem",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Prix
-              </th>
-              <th
-                className="mobile-hide"
-                style={{
-                  padding: "1.5rem 1.25rem",
-                  textAlign: "left",
-                  fontSize: "1rem",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                TVA
-              </th>
-              <th
-                style={{
-                  padding: "1.5rem 1.25rem",
-                  textAlign: "left",
-                  fontSize: "1rem",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Statut
-              </th>
-              <th
-                className="mobile-hide"
-                style={{
-                  padding: "1.5rem 1.25rem",
-                  textAlign: "left",
-                  fontSize: "1rem",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Date création
-              </th>
-              <th
-                style={{
-                  padding: "1.5rem 1.25rem",
-                  textAlign: "left",
-                  fontSize: "1rem",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((product) => (
-              <ProductTableRow
-                key={product.id}
-                product={product}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onToggleStatus={onToggleStatus}
-                formatPrice={formatPrice}
-                formatDate={formatDate}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+            Aucun produit trouvé
+          </TableCell>
+        </TableRow>
+      )}
+      {products.map((product) => (
+        <ProductTableRow
+          key={product.id}
+          product={product}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onToggleStatus={onToggleStatus}
+          formatPrice={formatPrice}
+          formatDate={formatDate}
+        />
+      ))}
+    </TableLayout>
   );
 };
 

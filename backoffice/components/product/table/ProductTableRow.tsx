@@ -2,6 +2,7 @@ import React from "react";
 import { ProductPublicDTO } from "../../../dto";
 import StatusBadge from "./StatusBadge";
 import ActionButtons from "./ActionButtons";
+import { TableRow, TableCell } from "../../ui/TableLayout";
 
 /**
  * Props du composant ProductTableRow
@@ -43,20 +44,8 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
   formatDate,
 }) => {
   return (
-    <tr
-      style={{
-        borderBottom: "1px solid #e1e5e9",
-        transition: "all 0.2s ease",
-      }}
-      onMouseOver={(e) => {
-        e.currentTarget.style.background =
-          "linear-gradient(90deg, rgba(19, 104, 106, 0.05) 0%, rgba(13, 211, 209, 0.05) 100%)";
-      }}
-      onMouseOut={(e) => {
-        e.currentTarget.style.background = "white";
-      }}
-    >
-      <td style={{ padding: "1.5rem 1.25rem" }}>
+    <TableRow>
+      <TableCell>
         <div style={{ display: "flex", alignItems: "center" }}>
           <div
             style={{
@@ -130,13 +119,13 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
             )}
           </div>
         </div>
-      </td>
-      <td style={{ padding: "1.5rem 1.25rem" }}>
+      </TableCell>
+      <TableCell>
         <span style={{ fontSize: "1rem", color: "#111827" }}>
           {product.categoryName || "-"}
         </span>
-      </td>
-      <td style={{ padding: "1.5rem 1.25rem" }}>
+      </TableCell>
+      <TableCell>
         <span
           style={{
             fontSize: "1rem",
@@ -146,43 +135,41 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         >
           {formatPrice(product.price)}
         </span>
-      </td>
-      <td className="mobile-hide" style={{ padding: "1.5rem 1.25rem" }}>
+      </TableCell>
+      <TableCell className="mobile-hide">
         <span style={{ fontSize: "1rem", color: "#111827" }}>
           {product.vatRate}%
         </span>
-      </td>
-      <td style={{ padding: "1.5rem 1.25rem" }}>
+      </TableCell>
+      <TableCell>
         <StatusBadge
           isActive={product.isActive}
           onClick={() => onToggleStatus(product.id, product.isActive)}
         />
-      </td>
-      <td
+      </TableCell>
+      <TableCell
         className="mobile-hide"
-        style={{
-          padding: "1.5rem 1.25rem",
-          fontSize: "1rem",
-          color: "#6b7280",
-        }}
+        style={{ fontSize: "1rem", color: "#6b7280" }}
       >
         {formatDate(product.createdAt)}
-      </td>
-      <td style={{ padding: "1.5rem 1.25rem" }}>
-        <ActionButtons
-          onEdit={() => onEdit(product)}
-          onDelete={() => {
-            if (
-              window.confirm(
-                `Êtes-vous sûr de vouloir supprimer le produit "${product.name}" ?`
-              )
-            ) {
-              onDelete(product.id);
-            }
-          }}
-        />
-      </td>
-    </tr>
+      </TableCell>
+      <TableCell width="160px">
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <ActionButtons
+            onEdit={() => onEdit(product)}
+            onDelete={() => {
+              if (
+                window.confirm(
+                  `Êtes-vous sûr de vouloir supprimer le produit "${product.name}" ?`
+                )
+              ) {
+                onDelete(product.id);
+              }
+            }}
+          />
+        </div>
+      </TableCell>
+    </TableRow>
   );
 };
 

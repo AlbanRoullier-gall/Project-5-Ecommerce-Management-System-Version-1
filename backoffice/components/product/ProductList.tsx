@@ -565,6 +565,7 @@ const ProductList: React.FC = () => {
           onUpdateCategory={handleUpdateCategory}
           onDeleteCategory={handleDeleteCategory}
           isLoading={isLoading}
+          onClose={() => setShowCategoryManagement(false)}
         />
       )}
 

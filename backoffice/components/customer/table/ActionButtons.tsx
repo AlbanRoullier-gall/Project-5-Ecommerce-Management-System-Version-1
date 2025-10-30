@@ -1,5 +1,6 @@
 import React from "react";
 import { CustomerPublicDTO } from "../../../dto";
+import { ActionButtonsContainer, ActionButton } from "../../ui/ActionButton";
 
 /**
  * Props du composant ActionButtons
@@ -18,7 +19,6 @@ interface ActionButtonsProps {
 /**
  * Composant des boutons d'action pour un client
  * Affiche les boutons : Gérer adresses, Éditer, Supprimer
- * Style similaire aux boutons d'action des produits
  */
 const ActionButtons: React.FC<ActionButtonsProps> = ({
   customer,
@@ -27,85 +27,26 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   onManageAddresses,
 }) => {
   return (
-    <div style={{ display: "flex", gap: "0.75rem" }}>
-      {/* Bouton Gérer adresses */}
-      <button
-        onClick={() => onManageAddresses(customer)}
+    <ActionButtonsContainer>
+      <ActionButton
+        icon="fas fa-map-marker-alt"
+        color="#d9b970"
         title="Gérer les adresses"
-        style={{
-          padding: "0.75rem",
-          border: "none",
-          background: "none",
-          cursor: "pointer",
-          color: "#d9b970",
-          transition: "all 0.2s ease",
-          borderRadius: "8px",
-          fontSize: "1.2rem",
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.background = "rgba(217, 185, 112, 0.1)";
-          e.currentTarget.style.transform = "scale(1.1)";
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.background = "none";
-          e.currentTarget.style.transform = "scale(1)";
-        }}
-      >
-        <i className="fas fa-map-marker-alt"></i>
-      </button>
-
-      {/* Bouton Modifier */}
-      <button
-        onClick={() => onEdit(customer)}
+        onClick={() => onManageAddresses(customer)}
+      />
+      <ActionButton
+        icon="fas fa-edit"
+        color="#3b82f6"
         title="Modifier"
-        style={{
-          padding: "0.75rem",
-          border: "none",
-          background: "none",
-          cursor: "pointer",
-          color: "#3b82f6",
-          transition: "all 0.2s ease",
-          borderRadius: "8px",
-          fontSize: "1.2rem",
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
-          e.currentTarget.style.transform = "scale(1.1)";
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.background = "none";
-          e.currentTarget.style.transform = "scale(1)";
-        }}
-      >
-        <i className="fas fa-edit"></i>
-      </button>
-
-      {/* Bouton Supprimer */}
-      <button
-        onClick={() => onDelete(customer.customerId)}
+        onClick={() => onEdit(customer)}
+      />
+      <ActionButton
+        icon="fas fa-trash"
+        color="#ef4444"
         title="Supprimer"
-        style={{
-          padding: "0.75rem",
-          border: "none",
-          background: "none",
-          cursor: "pointer",
-          color: "#ef4444",
-          transition: "all 0.2s ease",
-          borderRadius: "8px",
-          fontSize: "1.2rem",
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
-          e.currentTarget.style.transform = "scale(1.1)";
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.background = "none";
-          e.currentTarget.style.transform = "scale(1)";
-        }}
-      >
-        <i className="fas fa-trash"></i>
-      </button>
-    </div>
+        onClick={() => onDelete(customer.customerId)}
+      />
+    </ActionButtonsContainer>
   );
 };
 

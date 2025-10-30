@@ -1,4 +1,5 @@
 import React from "react";
+import { ActionButtonsContainer, ActionButton } from "../../ui/ActionButton";
 
 /**
  * Props du composant ActionButtons
@@ -22,74 +23,20 @@ interface ActionButtonsProps {
  */
 const ActionButtons: React.FC<ActionButtonsProps> = ({ onEdit, onDelete }) => {
   return (
-    <div
-      className="action-buttons"
-      style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
-    >
-      {/* Bouton Modifier */}
-      <button
-        onClick={onEdit}
+    <ActionButtonsContainer>
+      <ActionButton
+        icon="fas fa-edit"
+        color="#3b82f6"
         title="Modifier"
-        className="action-btn action-btn-edit"
-        style={{
-          padding: "0.75rem",
-          border: "none",
-          background: "none",
-          cursor: "pointer",
-          color: "#3b82f6",
-          transition: "all 0.2s ease",
-          borderRadius: "8px",
-          fontSize: "1.2rem",
-          minWidth: "44px",
-          minHeight: "44px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
-          e.currentTarget.style.transform = "scale(1.1)";
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.background = "none";
-          e.currentTarget.style.transform = "scale(1)";
-        }}
-      >
-        <i className="fas fa-edit"></i>
-      </button>
-
-      {/* Bouton Supprimer */}
-      <button
-        onClick={onDelete}
+        onClick={onEdit}
+      />
+      <ActionButton
+        icon="fas fa-trash"
+        color="#ef4444"
         title="Supprimer"
-        className="action-btn action-btn-delete"
-        style={{
-          padding: "0.75rem",
-          border: "none",
-          background: "none",
-          cursor: "pointer",
-          color: "#ef4444",
-          transition: "all 0.2s ease",
-          borderRadius: "8px",
-          fontSize: "1.2rem",
-          minWidth: "44px",
-          minHeight: "44px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
-          e.currentTarget.style.transform = "scale(1.1)";
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.background = "none";
-          e.currentTarget.style.transform = "scale(1)";
-        }}
-      >
-        <i className="fas fa-trash"></i>
-      </button>
-    </div>
+        onClick={onDelete}
+      />
+    </ActionButtonsContainer>
   );
 };
 

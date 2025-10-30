@@ -22,6 +22,8 @@ interface CategoryManagementProps {
   onDeleteCategory: (id: number) => void;
   /** Indique si une action est en cours */
   isLoading?: boolean;
+  /** Fermer la gestion des catégories */
+  onClose?: () => void;
 }
 
 /**
@@ -49,6 +51,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
   onUpdateCategory,
   onDeleteCategory,
   isLoading = false,
+  onClose,
 }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] =
@@ -168,15 +171,22 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
         >
           🏷️ Catégories
         </h2>
-        {!isFormOpen && (
-          <Button
-            onClick={() => setIsFormOpen(true)}
-            variant="primary"
-            icon="fas fa-plus"
-          >
-            Nouvelle catégorie
-          </Button>
-        )}
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          {!isFormOpen && (
+            <Button
+              onClick={() => setIsFormOpen(true)}
+              variant="primary"
+              icon="fas fa-plus"
+            >
+              Nouvelle catégorie
+            </Button>
+          )}
+          {onClose && (
+            <Button onClick={onClose} variant="gold" icon="fas fa-times">
+              Fermer
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Formulaire */}
