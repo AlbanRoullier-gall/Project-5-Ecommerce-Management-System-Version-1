@@ -6,53 +6,12 @@ import { Request, Response } from "express";
 import axios from "axios";
 import FormData from "form-data";
 import { SERVICES, ServiceName } from "./config";
-import {
-  isProtectedRoute,
-  verifyToken,
-  extractToken,
-  AuthenticatedUser,
-} from "./auth";
+import { AuthenticatedUser } from "./auth";
 
 // ===== HELPERS PRIVÉS =====
 
-/**
- * Vérifie l'authentification et ajoute l'utilisateur à la requête
- */
-const handleAuthentication = (
-  req: Request,
-  res: Response,
-  route: string
-): boolean => {
-  if (!isProtectedRoute(route)) return true;
-
-  const token = extractToken(req.headers["authorization"]);
-
-  if (!token) {
-    console.log("❌ Token manquant pour route admin");
-    res.status(401).json({
-      error: "Token d'accès requis",
-      message:
-        "Vous devez fournir un token d'authentification pour accéder aux routes admin",
-      code: "MISSING_TOKEN",
-    });
-    return false;
-  }
-
-  const user = verifyToken(token);
-  if (!user) {
-    console.log("❌ Token invalide pour route admin");
-    res.status(401).json({
-      error: "Token invalide",
-      message: "Le token d'authentification est invalide ou expiré",
-      code: "INVALID_TOKEN",
-    });
-    return false;
-  }
-
-  console.log(`🔐 Admin authentifié: ${user.email} (${user.userId})`);
-  (req as any).user = user;
-  return true;
-};
+// L'authentification est désormais gérée au moment de l'enregistrement des routes
+// via le middleware requireAuth. Le proxy se contente de relayer la requête.
 
 /**
  * Construit les headers de base pour la requête proxy
@@ -159,25 +118,20 @@ const getTargetPath = (req: Request): string => {
 export const handleProxyRequest = async (
   req: Request,
   res: Response,
-  route: string,
+  _route: string,
   service: ServiceName
 ): Promise<void> => {
   console.log(`🚀 Route appelée: ${req.path} -> Service: ${service}`);
 
   try {
-    // 1. Vérifier l'authentification
-    if (!handleAuthentication(req, res, route)) {
-      return;
-    }
-
-    // 2. Préparer l'URL cible
+    // 1. Préparer l'URL cible
     const serviceUrl = SERVICES[service];
     const targetPath = getTargetPath(req);
     const targetUrl = `${serviceUrl}${targetPath}`;
 
     console.log(`📤 Envoi vers: ${targetUrl}`);
 
-    // 3. Préparer les headers et données
+    // 2. Préparer les headers et données
     const baseHeaders = buildBaseHeaders(req);
     const hasFile = !!(req as any).file;
     const hasFiles = !!(req as any).files;
@@ -202,7 +156,7 @@ export const handleProxyRequest = async (
       };
     }
 
-    // 4. Faire la requête vers le service
+    // 3. Faire la requête vers le service
     const expectBinaryResponse =
       req.path.startsWith("/api/images/") || req.path.startsWith("/uploads/");
 
@@ -218,7 +172,7 @@ export const handleProxyRequest = async (
       responseType: expectBinaryResponse ? "arraybuffer" : "json",
     });
 
-    // 5. Retourner la réponse
+    // 4. Retourner la réponse
     console.log(
       `✅ ${req.method} ${req.path} → ${service} (${response.status})`
     );

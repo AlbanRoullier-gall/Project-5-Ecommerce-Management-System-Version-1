@@ -20,6 +20,7 @@ import {
   handleStripeWebhook,
 } from "./handlers/payment-handler";
 import { ExportHandler } from "./handlers/export-handler";
+import { requireAuth, isProtectedRoute } from "./auth";
 
 // ===== CONFIGURATION =====
 
@@ -180,33 +181,9 @@ export const setupRoutes = (app: any): void => {
   const exportHandler = new ExportHandler();
   app.get(
     "/api/admin/exports/orders-year/:year",
+    requireAuth,
     async (req: Request, res: Response) => {
-      // Vérifier l'authentification avant de traiter la requête
-      const token = req.headers["authorization"]?.replace("Bearer ", "");
-      if (!token) {
-        res.status(401).json({ error: "Token d'authentification requis" });
-        return;
-      }
-
-      try {
-        // Vérifier le token JWT
-        const jwt = require("jsonwebtoken");
-        const decoded = jwt.verify(
-          token,
-          process.env["JWT_SECRET"] || "your-jwt-secret"
-        );
-
-        // Ajouter les informations utilisateur à la requête
-        (req as any).user = {
-          userId: decoded.userId,
-          email: decoded.email,
-        };
-
-        await exportHandler.exportOrdersYear(req, res);
-      } catch (error) {
-        res.status(401).json({ error: "Token d'authentification invalide" });
-        return;
-      }
+      await exportHandler.exportOrdersYear(req, res);
     }
   );
 
@@ -226,35 +203,42 @@ export const setupRoutes = (app: any): void => {
     console.log(`📝 Route enregistrée: ${fullRoute} -> ${service}`);
 
     const uploadType = getUploadHandler(route);
+    const needsAuth = isProtectedRoute(fullRoute);
 
     if (uploadType === "multiple") {
       // Upload multiple (ex: créer produit avec images)
-      app.post(
-        fullRoute,
-        upload.array("images", 10),
-        async (req: Request, res: Response) => {
-          await handleProxyRequest(req, res, route, service);
-        }
-      );
+      const middlewares: any[] = [];
+      if (needsAuth) middlewares.push(requireAuth);
+      middlewares.push(upload.array("images", 10));
+      middlewares.push(async (req: Request, res: Response) => {
+        await handleProxyRequest(req, res, route, service);
+      });
+      app.post(fullRoute, ...middlewares);
     } else if (uploadType === "single") {
       // Upload simple (ex: ajouter images à un produit)
-      app.post(
-        fullRoute,
-        upload.array("images", 5),
-        async (req: Request, res: Response) => {
-          await handleProxyRequest(req, res, route, service);
-        }
-      );
+      const postMiddlewares: any[] = [];
+      if (needsAuth) postMiddlewares.push(requireAuth);
+      postMiddlewares.push(upload.array("images", 5));
+      postMiddlewares.push(async (req: Request, res: Response) => {
+        await handleProxyRequest(req, res, route, service);
+      });
+      app.post(fullRoute, ...postMiddlewares);
       // Autres méthodes HTTP (GET, DELETE, etc.) sans upload
-      app.all(fullRoute, async (req: Request, res: Response) => {
+      const allMiddlewares: any[] = [];
+      if (needsAuth) allMiddlewares.push(requireAuth);
+      allMiddlewares.push(async (req: Request, res: Response) => {
         if (req.method === "POST") return; // Skip POST, déjà géré ci-dessus
         await handleProxyRequest(req, res, route, service);
       });
+      app.all(fullRoute, ...allMiddlewares);
     } else {
       // Routes standards sans upload
-      app.all(fullRoute, async (req: Request, res: Response) => {
+      const middlewares: any[] = [];
+      if (needsAuth) middlewares.push(requireAuth);
+      middlewares.push(async (req: Request, res: Response) => {
         await handleProxyRequest(req, res, route, service);
       });
+      app.all(fullRoute, ...middlewares);
     }
   });
 };

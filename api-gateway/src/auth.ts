@@ -18,7 +18,7 @@ export interface AuthenticatedUser {
 
 /**
  * Vérifie si une route nécessite une authentification
- * Routes protégées : /admin/* et /api/customers
+ * Routes protégées : /admin/* et /api/customers (GET uniquement, car redirigé vers admin)
  */
 export const isProtectedRoute = (path: string): boolean => {
   return path.includes("/admin/") || path === "/api/customers";
@@ -46,4 +46,35 @@ export const extractToken = (authHeader: string | undefined): string | null => {
   if (!authHeader) return null;
   const parts = authHeader.split(" ");
   return parts.length === 2 && parts[0] === "Bearer" ? parts[1] || null : null;
+};
+
+/**
+ * Middleware Express pour vérifier l'authentification JWT
+ * Ajoute req.user si le token est valide, sinon retourne 401
+ */
+export const requireAuth = (req: any, res: any, next: any): void => {
+  const token = extractToken(req.headers["authorization"]);
+
+  if (!token) {
+    res.status(401).json({
+      error: "Token d'accès requis",
+      message:
+        "Vous devez fournir un token d'authentification pour accéder à cette ressource",
+      code: "MISSING_TOKEN",
+    });
+    return;
+  }
+
+  const user = verifyToken(token);
+  if (!user) {
+    res.status(401).json({
+      error: "Token invalide",
+      message: "Le token d'authentification est invalide ou expiré",
+      code: "INVALID_TOKEN",
+    });
+    return;
+  }
+
+  req.user = user;
+  next();
 };
