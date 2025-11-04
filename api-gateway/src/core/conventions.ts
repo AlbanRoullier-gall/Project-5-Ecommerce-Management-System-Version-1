@@ -44,11 +44,3 @@ export const getUploadConfig = (
 
   return undefined;
 };
-
-/**
- * Détermine si un chemin doit être utilisé tel quel (sans préfixe /api)
- * Convention: chemins commençant par /uploads ou /api sont déjà complets
- */
-export const shouldSkipApiPrefix = (path: string): boolean => {
-  return path.startsWith("/uploads") || path.startsWith("/api");
-};

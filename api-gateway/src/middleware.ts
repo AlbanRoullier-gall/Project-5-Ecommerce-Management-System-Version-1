@@ -37,10 +37,16 @@ const shouldSkipBodyParsing = (req: express.Request): boolean => {
  * Vérifie si une route est multipart (upload de fichiers)
  */
 const isMultipartRoute = (req: express.Request): boolean => {
-  return (
+  const isMultipart =
     (req.path.includes("/images") && req.method === "POST") ||
-    req.path.includes("/with-images")
-  );
+    req.path.includes("/with-images");
+
+  if (isMultipart) {
+    console.log(`📦 Multipart route detected: ${req.method} ${req.path}`);
+    console.log(`   Content-Type: ${req.headers["content-type"] || "not set"}`);
+  }
+
+  return isMultipart;
 };
 
 /**
@@ -96,7 +102,12 @@ export const setupGlobalMiddlewares = (app: express.Application): void => {
       origin: true, // Accepte toutes les origines en développement
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Accept",
+      ],
     })
   );
 

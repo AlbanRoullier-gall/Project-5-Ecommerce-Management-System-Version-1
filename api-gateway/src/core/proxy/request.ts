@@ -30,6 +30,35 @@ export const prepareMultipartData = (req: Request): FormData => {
   const hasFile = !!(req as any).file;
   const hasFiles = !!(req as any).files;
 
+  console.log("📦 Preparing multipart data:");
+  console.log(`   - Has file: ${hasFile}`);
+  console.log(`   - Has files: ${hasFiles}`);
+  console.log(
+    `   - Body keys: ${req.body ? Object.keys(req.body).join(", ") : "none"}`
+  );
+
+  // Données du body (doit être AVANT les fichiers pour certains services)
+  if (req.body) {
+    Object.keys(req.body).forEach((key) => {
+      const value = req.body[key];
+      // Si la valeur est déjà une string (comme pour "product" qui est JSON stringifié)
+      // on l'ajoute telle quelle, sinon on stringifie les objets
+      if (typeof value === "string") {
+        formData.append(key, value);
+        console.log(
+          `   - Added body field: ${key} (string, length: ${value.length})`
+        );
+      } else if (typeof value === "object" && value !== null) {
+        const stringified = JSON.stringify(value);
+        formData.append(key, stringified);
+        console.log(`   - Added body field: ${key} (object, stringified)`);
+      } else {
+        formData.append(key, String(value));
+        console.log(`   - Added body field: ${key} (other: ${typeof value})`);
+      }
+    });
+  }
+
   // Fichier unique
   if (hasFile) {
     const file = (req as any).file;
@@ -37,26 +66,22 @@ export const prepareMultipartData = (req: Request): FormData => {
       filename: file.originalname,
       contentType: file.mimetype,
     });
+    console.log(`   - Added file: ${file.originalname} (${file.size} bytes)`);
   }
 
   // Fichiers multiples
   if (hasFiles) {
     const files = (req as any).files as Express.Multer.File[];
-    files.forEach((file) => {
+    console.log(`   - Adding ${files.length} files to field "images"`);
+    files.forEach((file, index) => {
       formData.append("images", file.buffer, {
         filename: file.originalname,
         contentType: file.mimetype,
       });
-    });
-  }
-
-  // Données du body
-  if (req.body) {
-    Object.keys(req.body).forEach((key) => {
-      const value = req.body[key];
-      formData.append(
-        key,
-        typeof value === "object" ? JSON.stringify(value) : value
+      console.log(
+        `   - Added file ${index + 1}: ${file.originalname} (${
+          file.size
+        } bytes)`
       );
     });
   }
@@ -87,9 +112,43 @@ export const buildProxyRequest = (
   let requestHeaders: Record<string, string>;
 
   if (hasFile || hasFiles) {
+    // Validation : vérifier que les données essentielles sont présentes
+    if (!req.body || Object.keys(req.body).length === 0) {
+      console.error("❌ Error: req.body is empty after multer processing");
+      console.error(
+        "   This might indicate multer didn't parse the form data correctly"
+      );
+      console.error("   Headers:", req.headers);
+      console.error("   Content-Type:", req.headers["content-type"]);
+    } else {
+      // Vérifier spécifiquement pour with-images
+      if (req.path.includes("/with-images") && !req.body.product) {
+        console.error(
+          "❌ Error: req.body.product is missing for /with-images route"
+        );
+        console.error("   Available body keys:", Object.keys(req.body));
+      }
+    }
+
     const formData = prepareMultipartData(req);
+
     requestData = formData;
-    requestHeaders = { ...baseHeaders, ...formData.getHeaders() };
+    // getHeaders() retourne les headers avec le boundary correct pour multipart/form-data
+    const formDataHeaders = formData.getHeaders();
+    requestHeaders = {
+      ...baseHeaders,
+      ...formDataHeaders,
+    };
+
+    console.log("📤 Sending multipart request to service:");
+    console.log(`   URL: ${targetUrl}`);
+    console.log(`   Headers: ${Object.keys(requestHeaders).join(", ")}`);
+    console.log(
+      `   Content-Type: ${formDataHeaders["content-type"] || "not set"}`
+    );
+
+    // Ne pas définir Content-Length explicitement pour FormData
+    // axios le calculera automatiquement depuis le stream
   } else {
     requestData = req.body;
     requestHeaders = { ...baseHeaders, "Content-Type": "application/json" };
