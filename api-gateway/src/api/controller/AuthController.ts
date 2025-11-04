@@ -4,14 +4,14 @@
  */
 
 import { Request, Response } from "express";
-import { proxyRequest } from "../../core/proxy";
+import { proxyRequest } from "../proxy";
 import {
   handlePasswordReset,
   handlePasswordResetConfirm,
   handleRegister,
   handleApproveBackofficeAccess,
   handleRejectBackofficeAccess,
-} from "../../handlers/auth-handler";
+} from "../handlers/auth-handler";
 
 export class AuthController {
   /**
@@ -21,32 +21,45 @@ export class AuthController {
     await proxyRequest(req, res, "auth");
   }
 
-  /**
-   * Wrapper pour les handlers orchestrés
-   */
-  private wrapHandler(
-    handler: (req: Request, res: Response) => Promise<any> | any
-  ) {
-    return async (req: Request, res: Response): Promise<void> => {
-      await handler(req, res);
-    };
-  }
-
   // ===== ROUTES PUBLIQUES PROXY =====
 
-  login = this.wrapHandler(this.proxyToAuth);
-  validatePassword = this.wrapHandler(this.proxyToAuth);
+  login = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToAuth(req, res);
+  };
+
+  validatePassword = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToAuth(req, res);
+  };
 
   // ===== ROUTES ORCHESTRÉES =====
 
-  register = this.wrapHandler(handleRegister);
-  resetPassword = this.wrapHandler(handlePasswordReset);
-  resetPasswordConfirm = this.wrapHandler(handlePasswordResetConfirm);
-  approveBackoffice = this.wrapHandler(handleApproveBackofficeAccess);
-  rejectBackoffice = this.wrapHandler(handleRejectBackofficeAccess);
+  register = async (req: Request, res: Response): Promise<void> => {
+    await handleRegister(req, res);
+  };
+
+  resetPassword = async (req: Request, res: Response): Promise<void> => {
+    await handlePasswordReset(req, res);
+  };
+
+  resetPasswordConfirm = async (req: Request, res: Response): Promise<void> => {
+    await handlePasswordResetConfirm(req, res);
+  };
+
+  approveBackoffice = async (req: Request, res: Response): Promise<void> => {
+    await handleApproveBackofficeAccess(req, res);
+  };
+
+  rejectBackoffice = async (req: Request, res: Response): Promise<void> => {
+    await handleRejectBackofficeAccess(req, res);
+  };
 
   // ===== ROUTES ADMIN PROXY =====
 
-  changePassword = this.wrapHandler(this.proxyToAuth);
-  logout = this.wrapHandler(this.proxyToAuth);
+  changePassword = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToAuth(req, res);
+  };
+
+  logout = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToAuth(req, res);
+  };
 }

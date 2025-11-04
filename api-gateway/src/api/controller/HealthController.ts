@@ -4,14 +4,18 @@
  */
 
 import { Request, Response } from "express";
-import { ResponseMapper } from "../mapper/ResponseMapper";
 
 export class HealthController {
   /**
    * Vérification de santé basique
    */
   healthCheck(_req: Request, res: Response): void {
-    res.json(ResponseMapper.healthSuccess("API Gateway"));
+    res.json({
+      status: "OK",
+      service: "API Gateway",
+      timestamp: new Date().toISOString(),
+      version: "3.0.0",
+    });
   }
 
   /**
@@ -19,7 +23,10 @@ export class HealthController {
    */
   detailedHealthCheck(_req: Request, res: Response): void {
     res.json({
-      ...ResponseMapper.healthSuccess("API Gateway"),
+      status: "OK",
+      service: "API Gateway",
+      timestamp: new Date().toISOString(),
+      version: "3.0.0",
       services: {
         status: "checking",
         timestamp: new Date().toISOString(),

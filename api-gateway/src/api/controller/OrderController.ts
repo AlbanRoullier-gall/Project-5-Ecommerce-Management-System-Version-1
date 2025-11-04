@@ -4,7 +4,7 @@
  */
 
 import { Request, Response } from "express";
-import { proxyRequest } from "../../core/proxy";
+import { proxyRequest } from "../proxy";
 
 export class OrderController {
   /**
@@ -14,47 +14,150 @@ export class OrderController {
     await proxyRequest(req, res, "order");
   }
 
-  /**
-   * Wrapper pour les handlers
-   */
-  private wrapHandler(handler: (req: Request, res: Response) => Promise<void>) {
-    return async (req: Request, res: Response): Promise<void> => {
-      await handler(req, res);
-    };
-  }
-
   // ===== ROUTES PUBLIQUES PROXY =====
 
-  listOrders = this.wrapHandler(this.proxyToOrder);
-  getOrder = this.wrapHandler(this.proxyToOrder);
-  createOrder = this.wrapHandler(this.proxyToOrder);
-  getOrderItems = this.wrapHandler(this.proxyToOrder);
-  createOrderItem = this.wrapHandler(this.proxyToOrder);
-  getOrderAddresses = this.wrapHandler(this.proxyToOrder);
-  createOrderAddress = this.wrapHandler(this.proxyToOrder);
-  getCustomerCreditNotes = this.wrapHandler(this.proxyToOrder);
-  getOrderStatistics = this.wrapHandler(this.proxyToOrder);
+  listOrders = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  getOrder = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  createOrder = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  getOrderItems = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  createOrderItem = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  getOrderAddresses = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  createOrderAddress = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  getCustomerCreditNotes = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  getOrderStatistics = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
 
   // ===== ROUTES ADMIN PROXY =====
 
-  adminListOrders = this.wrapHandler(this.proxyToOrder);
-  adminGetOrder = this.wrapHandler(this.proxyToOrder);
-  adminUpdateOrder = this.wrapHandler(this.proxyToOrder);
-  adminListOrderItems = this.wrapHandler(this.proxyToOrder);
-  adminGetOrderItem = this.wrapHandler(this.proxyToOrder);
-  adminUpdateOrderItem = this.wrapHandler(this.proxyToOrder);
-  adminListCreditNotes = this.wrapHandler(this.proxyToOrder);
-  adminGetCreditNote = this.wrapHandler(this.proxyToOrder);
-  adminUpdateCreditNote = this.wrapHandler(this.proxyToOrder);
-  adminListCreditNoteItems = this.wrapHandler(this.proxyToOrder);
-  adminGetCreditNoteItem = this.wrapHandler(this.proxyToOrder);
-  adminUpdateCreditNoteItem = this.wrapHandler(this.proxyToOrder);
-  adminListOrderAddresses = this.wrapHandler(this.proxyToOrder);
-  adminGetOrderAddress = this.wrapHandler(this.proxyToOrder);
-  adminUpdateOrderAddress = this.wrapHandler(this.proxyToOrder);
-  updateDeliveryStatus = this.wrapHandler(this.proxyToOrder);
-  updateCreditNoteStatus = this.wrapHandler(this.proxyToOrder);
-  getCreditNoteItems = this.wrapHandler(this.proxyToOrder);
-  adminGetOrderStatistics = this.wrapHandler(this.proxyToOrder);
-  exportOrdersYear = this.wrapHandler(this.proxyToOrder);
+  adminListOrders = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminGetOrder = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminUpdateOrder = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminListOrderItems = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminGetOrderItem = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminUpdateOrderItem = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminListCreditNotes = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminGetCreditNote = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminUpdateCreditNote = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminListCreditNoteItems = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminGetCreditNoteItem = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminUpdateCreditNoteItem = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminListOrderAddresses = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminGetOrderAddress = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminUpdateOrderAddress = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  updateDeliveryStatus = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  updateCreditNoteStatus = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  getCreditNoteItems = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  adminGetOrderStatistics = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
+
+  exportOrdersYear = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToOrder(req, res);
+  };
 }

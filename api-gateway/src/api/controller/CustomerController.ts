@@ -4,7 +4,7 @@
  */
 
 import { Request, Response } from "express";
-import { proxyRequest } from "../../core/proxy";
+import { proxyRequest } from "../proxy";
 
 export class CustomerController {
   /**
@@ -14,33 +14,67 @@ export class CustomerController {
     await proxyRequest(req, res, "customer");
   }
 
-  /**
-   * Wrapper pour les handlers
-   */
-  private wrapHandler(handler: (req: Request, res: Response) => Promise<void>) {
-    return async (req: Request, res: Response): Promise<void> => {
-      await handler(req, res);
-    };
-  }
-
   // ===== ROUTES PUBLIQUES PROXY =====
 
-  createCustomer = this.wrapHandler(this.proxyToCustomer);
-  getCustomerByEmail = this.wrapHandler(this.proxyToCustomer);
-  getCountries = this.wrapHandler(this.proxyToCustomer);
-  getCustomer = this.wrapHandler(this.proxyToCustomer);
-  createAddress = this.wrapHandler(this.proxyToCustomer);
+  createCustomer = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
+
+  getCustomerByEmail = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
+
+  getCountries = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
+
+  getCustomer = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
+
+  createAddress = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
 
   // ===== ROUTES ADMIN PROXY =====
 
-  adminListCustomers = this.wrapHandler(this.proxyToCustomer);
-  adminGetCustomer = this.wrapHandler(this.proxyToCustomer);
-  adminUpdateCustomer = this.wrapHandler(this.proxyToCustomer);
-  adminDeleteCustomer = this.wrapHandler(this.proxyToCustomer);
-  adminSearchCustomers = this.wrapHandler(this.proxyToCustomer);
-  adminGetCountries = this.wrapHandler(this.proxyToCustomer);
-  adminListAddresses = this.wrapHandler(this.proxyToCustomer);
-  adminGetAddress = this.wrapHandler(this.proxyToCustomer);
-  adminUpdateAddress = this.wrapHandler(this.proxyToCustomer);
-  adminDeleteAddress = this.wrapHandler(this.proxyToCustomer);
+  adminListCustomers = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
+
+  adminGetCustomer = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
+
+  adminUpdateCustomer = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
+
+  adminDeleteCustomer = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
+
+  adminSearchCustomers = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
+
+  adminGetCountries = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
+
+  adminListAddresses = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
+
+  adminGetAddress = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
+
+  adminUpdateAddress = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
+
+  adminDeleteAddress = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCustomer(req, res);
+  };
 }

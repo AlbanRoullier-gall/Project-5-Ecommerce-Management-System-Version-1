@@ -4,7 +4,7 @@
  */
 
 import { Request, Response } from "express";
-import { proxyRequest } from "../../core/proxy";
+import { proxyRequest } from "../proxy";
 import axios from "axios";
 import { SERVICES } from "../../config";
 
@@ -16,44 +16,94 @@ export class ProductController {
     await proxyRequest(req, res, "product");
   }
 
-  /**
-   * Wrapper pour les handlers
-   */
-  private wrapHandler(handler: (req: Request, res: Response) => Promise<void>) {
-    return async (req: Request, res: Response): Promise<void> => {
-      await handler(req, res);
-    };
-  }
-
   // ===== ROUTES PUBLIQUES PROXY =====
 
-  listProducts = this.wrapHandler(this.proxyToProduct);
-  getProduct = this.wrapHandler(this.proxyToProduct);
-  listCategories = this.wrapHandler(this.proxyToProduct);
-  getImage = this.wrapHandler(this.proxyToProduct);
+  listProducts = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  getProduct = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  listCategories = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  getImage = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
 
   // ===== ROUTES ADMIN PROXY =====
 
-  adminListProducts = this.wrapHandler(this.proxyToProduct);
-  adminGetProduct = this.wrapHandler(this.proxyToProduct);
-  adminUpdateProduct = this.wrapHandler(this.proxyToProduct);
-  adminDeleteProduct = this.wrapHandler(this.proxyToProduct);
-  adminCreateProduct = this.wrapHandler(this.proxyToProduct);
-  adminListCategories = this.wrapHandler(this.proxyToProduct);
-  adminGetCategory = this.wrapHandler(this.proxyToProduct);
-  adminUpdateCategory = this.wrapHandler(this.proxyToProduct);
-  adminDeleteCategory = this.wrapHandler(this.proxyToProduct);
-  activateProduct = this.wrapHandler(this.proxyToProduct);
-  deactivateProduct = this.wrapHandler(this.proxyToProduct);
-  createProductWithImages = this.wrapHandler(this.proxyToProduct);
-  uploadProductImages = this.wrapHandler(this.proxyToProduct);
-  listProductImages = this.wrapHandler(this.proxyToProduct);
-  deleteProductImage = this.wrapHandler(this.proxyToProduct);
+  adminListProducts = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  adminGetProduct = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  adminUpdateProduct = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  adminDeleteProduct = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  adminCreateProduct = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  adminListCategories = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  adminGetCategory = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  adminUpdateCategory = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  adminDeleteCategory = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  activateProduct = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  deactivateProduct = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  createProductWithImages = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  uploadProductImages = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  listProductImages = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
+
+  deleteProductImage = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToProduct(req, res);
+  };
 
   // ===== ROUTE STATIQUE =====
 
   /**
    * Handler pour servir les images statiques via proxy
+   * Gère spécifiquement les images avec headers de cache optimisés
    */
   serveStaticImage = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -63,7 +113,7 @@ export class ProductController {
       console.log(`🖼️  Image request: ${req.path} -> ${imageUrl}`);
 
       const response = await axios.get(imageUrl, {
-        responseType: "stream",
+        responseType: "arraybuffer",
         validateStatus: () => true,
       });
 
@@ -73,13 +123,14 @@ export class ProductController {
         return;
       }
 
+      // Headers spécifiques aux images statiques
       if (response.headers["content-type"]) {
         res.set("Content-Type", response.headers["content-type"]);
       }
       res.set("Cache-Control", "public, max-age=31536000");
       res.set("Cross-Origin-Resource-Policy", "cross-origin");
 
-      response.data.pipe(res);
+      res.status(response.status).send(response.data);
     } catch (error: any) {
       console.error("Erreur chargement image:", error.message || error);
       res.status(404).json({ error: "Image non trouvée" });

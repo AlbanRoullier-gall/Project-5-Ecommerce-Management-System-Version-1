@@ -4,7 +4,7 @@
  */
 
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "./config";
+import { JWT_SECRET } from "../../config";
 
 // ===== TYPES =====
 
@@ -13,16 +13,6 @@ export interface AuthenticatedUser {
   email: string;
   [key: string]: any;
 }
-
-// ===== VÉRIFICATION DES ROUTES =====
-
-/**
- * Vérifie si une route nécessite une authentification
- * Routes protégées : /admin/*
- */
-export const isProtectedRoute = (path: string): boolean => {
-  return path.includes("/admin/");
-};
 
 // ===== GESTION DES TOKENS JWT =====
 

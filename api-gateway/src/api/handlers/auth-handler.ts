@@ -4,7 +4,7 @@
  */
 
 import { Request, Response } from "express";
-import { SERVICES } from "../config";
+import { SERVICES } from "../../config";
 
 /**
  * Handler pour la réinitialisation de mot de passe

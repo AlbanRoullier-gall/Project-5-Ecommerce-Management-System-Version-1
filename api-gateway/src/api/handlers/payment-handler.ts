@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Request, Response } from "express";
-import { SERVICES } from "../config";
+import { SERVICES } from "../../config";
 // Use dynamic require to avoid type dependency at compile time
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const StripeLib: any = require("stripe");

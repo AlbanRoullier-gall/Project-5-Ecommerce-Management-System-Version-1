@@ -1,0 +1,50 @@
+/**
+ * Middlewares de gestion d'erreurs
+ */
+
+import { Request, Response, NextFunction } from "express";
+
+/**
+ * Middleware pour gérer les routes non trouvées (404)
+ * Doit être placé en dernier, après toutes les routes
+ */
+export const notFoundHandler = (
+  req: Request,
+  res: Response,
+  _next: NextFunction
+): void => {
+  res.status(404).json({
+    error: "Not Found",
+    message: "Route non trouvée",
+    path: req.path,
+  });
+};
+
+/**
+ * Middleware de gestion d'erreurs globale
+ * Capture toutes les erreurs non gérées et retourne une réponse 500
+ * Doit être placé après toutes les routes et le middleware 404
+ */
+export const errorHandler = (
+  err: Error,
+  _req: Request,
+  res: Response,
+  _next: NextFunction
+): void => {
+  console.error("❌ Unhandled error:", err);
+
+  // Si la réponse a déjà été envoyée, déléguer au gestionnaire d'erreurs par défaut d'Express
+  if (res.headersSent) {
+    return _next(err);
+  }
+
+  // Retourner une réponse d'erreur standardisée
+  res.status(500).json({
+    error: "Internal Server Error",
+    message: "Une erreur interne est survenue",
+    ...(process.env["NODE_ENV"] === "development" && {
+      details: err.message,
+      stack: err.stack,
+    }),
+  });
+};

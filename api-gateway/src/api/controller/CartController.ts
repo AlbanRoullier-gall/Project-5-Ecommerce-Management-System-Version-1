@@ -4,8 +4,8 @@
  */
 
 import { Request, Response } from "express";
-import { proxyRequest } from "../../core/proxy";
-import { checkoutSnapshots } from "../../handlers/payment-handler";
+import { proxyRequest } from "../proxy";
+import { checkoutSnapshots } from "../handlers/payment-handler";
 
 export class CartController {
   /**
@@ -15,23 +15,31 @@ export class CartController {
     await proxyRequest(req, res, "cart");
   }
 
-  /**
-   * Wrapper pour les handlers
-   */
-  private wrapHandler(handler: (req: Request, res: Response) => Promise<void>) {
-    return async (req: Request, res: Response): Promise<void> => {
-      await handler(req, res);
-    };
-  }
-
   // ===== ROUTES PUBLIQUES PROXY =====
 
-  getCart = this.wrapHandler(this.proxyToCart);
-  updateCart = this.wrapHandler(this.proxyToCart);
-  addItem = this.wrapHandler(this.proxyToCart);
-  updateItem = this.wrapHandler(this.proxyToCart);
-  removeItem = this.wrapHandler(this.proxyToCart);
-  clearCart = this.wrapHandler(this.proxyToCart);
+  getCart = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCart(req, res);
+  };
+
+  updateCart = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCart(req, res);
+  };
+
+  addItem = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCart(req, res);
+  };
+
+  updateItem = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCart(req, res);
+  };
+
+  removeItem = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCart(req, res);
+  };
+
+  clearCart = async (req: Request, res: Response): Promise<void> => {
+    await this.proxyToCart(req, res);
+  };
 
   // ===== ROUTES DE SNAPSHOT CHECKOUT =====
 

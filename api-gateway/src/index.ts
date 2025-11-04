@@ -13,8 +13,7 @@ dotenv.config();
 
 import express from "express";
 import { PORT, isDevelopment, SERVICES } from "./config";
-import { setupGlobalMiddlewares, setupErrorHandling } from "./middleware";
-import { ApiRouter } from "./api/router/ApiRouter";
+import { ApiRouter } from "./api";
 
 // ===== INITIALISATION =====
 
@@ -22,15 +21,9 @@ const app = express();
 
 // ===== CONFIGURATION =====
 
-// 1. Middlewares globaux (CORS, Helmet, body parsers)
-setupGlobalMiddlewares(app);
-
-// 2. Routes (via ApiRouter avec controllers)
+// Routes (via ApiRouter - les middlewares sont gérés dans ApiRouter)
 const apiRouter = new ApiRouter();
 apiRouter.setupRoutes(app);
-
-// 3. Gestion des erreurs (404, 500)
-setupErrorHandling(app);
 
 // ===== DÉMARRAGE =====
 
