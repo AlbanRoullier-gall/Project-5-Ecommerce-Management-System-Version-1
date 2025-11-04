@@ -1,4 +1,4 @@
-# API Gateway - Architecture Modulaire
+# API Gateway - Architecture Modulaire v2.0
 
 ## 📁 Structure du Projet
 
@@ -7,26 +7,35 @@ src/
 ├── index.ts              # Point d'entrée principal
 ├── config.ts             # Configuration centralisée
 ├── auth.ts               # Module d'authentification
-├── proxy.ts              # Module de proxy vers les services
 ├── middleware.ts         # Middlewares globaux
-├── routes-handler.ts     # Gestionnaire de routes
-└── routes/                    # Routes organisées par service
-    ├── index.ts               # Index des routes
-    ├── auth-routes.ts         # Routes d'authentification
-    ├── product-routes.ts      # Routes des produits
-    ├── order-routes.ts        # Routes des commandes
-    ├── cart-routes.ts         # Routes du panier
-    ├── customer-routes.ts      # Routes des clients
-    ├── payment-routes.ts      # Routes des paiements
-    ├── email-routes.ts         # Routes des emails
-    └── website-content-routes.ts # Routes du contenu du site
+├── core/                 # Cœur du système
+│   ├── types.ts          # Types TypeScript pour la configuration
+│   ├── proxy.ts          # Proxy générique simplifié
+│   └── router.ts         # Router principal avec pipeline clair
+├── routes/              # Configuration déclarative des routes
+│   ├── simple/          # Routes proxy simples
+│   │   └── index.ts    # Conversion automatique des anciennes routes
+│   ├── orchestrated/    # Routes avec orchestration
+│   │   └── index.ts    # Handlers custom (auth, payment, export)
+│   ├── static/         # Routes statiques
+│   │   └── index.ts    # Images, fichiers statiques
+│   ├── index.ts        # Collection complète de toutes les routes
+│   └── *.ts            # Définitions de routes par service (legacy)
+├── handlers/            # Handlers spécialisés
+│   ├── auth-handler.ts
+│   ├── payment-handler.ts
+│   └── export-handler.ts
 ```
 
 ## 🚀 Fonctionnalités
 
-- **Architecture modulaire** : Code organisé en modules séparés
-- **Proxy intelligent** : Routage automatique vers les microservices
-- **Authentification JWT** : Gestion des tokens pour les routes admin
+- **Architecture modulaire v2.0** : Configuration déclarative avec séparation claire des responsabilités
+- **Router intelligent** : Pipeline clair et prévisible (Request → Middlewares → Handler)
+- **Proxy générique** : Forwarding simplifié vers les microservices
+- **Routes déclaratives** : Configuration TypeScript type-safe
+- **Authentification JWT** : Gestion automatique des tokens pour les routes admin
+- **Support upload** : Gestion automatique des uploads multipart/form-data
+- **Routes orchestrées** : Handlers custom pour logique métier complexe
 - **Gestion d'erreurs** : Retour d'erreurs appropriées
 - **Configuration flexible** : Support développement/Docker
 

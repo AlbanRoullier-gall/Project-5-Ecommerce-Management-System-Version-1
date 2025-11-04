@@ -1,20 +1,50 @@
 /**
- * Routes pour le service email
+ * Routes pour le service email - Configuration déclarative
  */
 
-import { ServiceName } from "../config";
+import { SimpleRoute } from "../core/types";
 
-export const EMAIL_ROUTES: Record<string, ServiceName> = {
-  // Routes publiques (sans authentification)
-  "/email/send": "email", // POST: Envoyer email générique
-  "/email/send-reset-email": "email", // POST: Envoyer email de réinitialisation
-  "/email/confirmation": "email", // POST: Envoyer confirmation
+export const EMAIL_ROUTES: SimpleRoute[] = [
+  // Routes publiques
+  { path: "/email/send", method: "POST", service: "email", auth: false },
+  {
+    path: "/email/send-reset-email",
+    method: "POST",
+    service: "email",
+    auth: false,
+  },
+  {
+    path: "/email/confirmation",
+    method: "POST",
+    service: "email",
+    auth: false,
+  },
 
   // Routes backoffice
-  "/email/backoffice-approval-request": "email", // POST: Demande d'approbation backoffice
-  "/email/backoffice-approval-confirmation": "email", // POST: Confirmation d'approbation backoffice
-  "/email/backoffice-rejection-notification": "email", // POST: Notification de rejet backoffice
+  {
+    path: "/email/backoffice-approval-request",
+    method: "POST",
+    service: "email",
+    auth: false,
+  },
+  {
+    path: "/email/backoffice-approval-confirmation",
+    method: "POST",
+    service: "email",
+    auth: false,
+  },
+  {
+    path: "/email/backoffice-rejection-notification",
+    method: "POST",
+    service: "email",
+    auth: false,
+  },
 
   // Routes commandes
-  "/email/order-confirmation": "email", // POST: Envoyer email de confirmation de commande
-};
+  {
+    path: "/email/order-confirmation",
+    method: "POST",
+    service: "email",
+    auth: false,
+  },
+];

@@ -1,10 +1,11 @@
 /**
- * Routes du service paiement
+ * Routes du service paiement - Configuration déclarative
  */
 
-import { ServiceName } from "../config";
+import { SimpleRoute } from "../core/types";
 
-export const PAYMENT_ROUTES: Record<string, ServiceName> = {
+export const PAYMENT_ROUTES: SimpleRoute[] = [
   // Routes publiques
-  "/payment/create": "payment", // POST: Créer un paiement Stripe
-};
+  // NOTE: /payment/create est géré par routes orchestrées
+  // Les autres routes de paiement sont gérées directement par le service
+];

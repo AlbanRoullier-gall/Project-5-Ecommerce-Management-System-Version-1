@@ -1,10 +1,15 @@
 /**
- * Routes du service PDF Export
+ * Routes du service PDF Export - Configuration déclarative
  */
 
-import { ServiceName } from "../config";
+import { SimpleRoute } from "../core/types";
 
-export const PDF_EXPORT_ROUTES: Record<string, ServiceName> = {
+export const PDF_EXPORT_ROUTES: SimpleRoute[] = [
   // Routes admin
-  "/admin/export/orders-year": "pdf-export", // POST: Export des commandes par année
-};
+  {
+    path: "/admin/export/orders-year",
+    method: "POST",
+    service: "pdf-export",
+    auth: true,
+  },
+];

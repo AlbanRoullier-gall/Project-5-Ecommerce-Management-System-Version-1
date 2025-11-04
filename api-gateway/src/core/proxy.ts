@@ -1,17 +1,12 @@
 /**
- * Module de proxy pour l'API Gateway
+ * Proxy générique pour les requêtes vers les microservices
  */
 
 import { Request, Response } from "express";
 import axios from "axios";
 import FormData from "form-data";
-import { SERVICES, ServiceName } from "./config";
-import { AuthenticatedUser } from "./auth";
-
-// ===== HELPERS PRIVÉS =====
-
-// L'authentification est désormais gérée au moment de l'enregistrement des routes
-// via le middleware requireAuth. Le proxy se contente de relayer la requête.
+import { SERVICES, ServiceName } from "../config";
+import { AuthenticatedUser } from "../auth";
 
 /**
  * Construit les headers de base pour la requête proxy
@@ -71,54 +66,11 @@ const prepareMultipartData = (req: Request): FormData => {
 };
 
 /**
- * Détermine le chemin cible pour la requête
- */
-const getTargetPath = (req: Request): string => {
-  // Redirection spéciale pour /customers GET vers /admin/customers
-  if (req.path === "/api/customers" && req.method === "GET") {
-    return "/api/admin/customers";
-  }
-  // Redirection admin -> public pour récupérer les items d'une commande
-  // Expose /api/admin/orders/:orderId/items en proxy vers /api/orders/:orderId/items (service)
-  if (
-    req.path.startsWith("/api/admin/orders/") &&
-    req.path.endsWith("/items") &&
-    req.method === "GET"
-  ) {
-    const parts = req.path.split("/api/admin/orders/");
-    const tail = parts.length > 1 ? parts[1] : "";
-    const orderId = tail ? tail.replace("/items", "") : "";
-    if (!orderId) {
-      return req.path;
-    }
-    return `/api/orders/${orderId}/items`;
-  }
-  // Admin → public pour les adresses d'une commande
-  if (
-    req.path.startsWith("/api/admin/orders/") &&
-    req.path.endsWith("/addresses") &&
-    req.method === "GET"
-  ) {
-    const parts = req.path.split("/api/admin/orders/");
-    const tail = parts.length > 1 ? parts[1] : "";
-    const orderId = tail ? tail.replace("/addresses", "") : "";
-    if (!orderId) {
-      return req.path;
-    }
-    return `/api/orders/${orderId}/addresses`;
-  }
-  return req.path;
-};
-
-// ===== FONCTION PRINCIPALE =====
-
-/**
  * Gère le proxy des requêtes vers les services
  */
-export const handleProxyRequest = async (
+export const proxyRequest = async (
   req: Request,
   res: Response,
-  _route: string,
   service: ServiceName
 ): Promise<void> => {
   console.log(`🚀 Route appelée: ${req.path} -> Service: ${service}`);
@@ -126,8 +78,7 @@ export const handleProxyRequest = async (
   try {
     // 1. Préparer l'URL cible
     const serviceUrl = SERVICES[service];
-    const targetPath = getTargetPath(req);
-    const targetUrl = `${serviceUrl}${targetPath}`;
+    const targetUrl = `${serviceUrl}${req.path}`;
 
     console.log(`📤 Envoi vers: ${targetUrl}`);
 

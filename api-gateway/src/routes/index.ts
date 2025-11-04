@@ -1,27 +1,17 @@
 /**
- * Index des routes - Combine toutes les routes par service
+ * Index des routes - Combine toutes les routes par type
  */
 
-import { ServiceName } from "../config";
-import { AUTH_ROUTES } from "./auth-routes";
-import { PRODUCT_ROUTES } from "./product-routes";
-import { ORDER_ROUTES } from "./order-routes";
-import { CART_ROUTES } from "./cart-routes";
-import { CUSTOMER_ROUTES } from "./customer-routes";
-import { PAYMENT_ROUTES } from "./payment-routes";
-import { EMAIL_ROUTES } from "./email-routes";
-import { PDF_EXPORT_ROUTES } from "./pdf-export-routes";
+import { RouteCollection } from "../core/types";
+import { SIMPLE_ROUTES } from "./simple";
+import { ORCHESTRATED_ROUTES } from "./orchestrated";
+import { STATIC_ROUTES } from "./static";
 
 /**
- * Combine toutes les routes en un seul objet
+ * Collection complète de toutes les routes
  */
-export const ROUTES: Record<string, ServiceName> = {
-  ...AUTH_ROUTES,
-  ...PRODUCT_ROUTES,
-  ...ORDER_ROUTES,
-  ...CART_ROUTES,
-  ...CUSTOMER_ROUTES,
-  ...PAYMENT_ROUTES,
-  ...EMAIL_ROUTES,
-  ...PDF_EXPORT_ROUTES,
+export const ROUTES: RouteCollection = {
+  simple: SIMPLE_ROUTES,
+  orchestrated: ORCHESTRATED_ROUTES,
+  static: STATIC_ROUTES,
 };

@@ -1,24 +1,67 @@
 /**
- * Routes des produits
+ * Routes des produits - Configuration déclarative
  */
 
-import { ServiceName } from "../config";
+import { SimpleRoute } from "../core/types";
 
-export const PRODUCT_ROUTES: Record<string, ServiceName> = {
+export const PRODUCT_ROUTES: SimpleRoute[] = [
   // Routes publiques
-  "/products": "product", // GET: Liste des produits
-  "/products/:id": "product", // GET: Récupérer un produit spécifique
-  "/categories": "product", // GET: Liste des catégories
-  "/images/:imageId": "product", // GET: Récupérer une image spécifique
+  { path: "/products", method: "ALL", service: "product", auth: false },
+  { path: "/products/:id", method: "ALL", service: "product", auth: false },
+  { path: "/categories", method: "ALL", service: "product", auth: false },
+  { path: "/images/:imageId", method: "ALL", service: "product", auth: false },
 
   // Routes admin
-  "/admin/products": "product", // GET: Liste produits, POST: Créer produit
-  "/admin/products/:id": "product", // GET: Récupérer produit, PUT: Modifier produit, DELETE: Supprimer produit
-  "/admin/products/:id/activate": "product", // POST: Activer produit
-  "/admin/products/:id/deactivate": "product", // POST: Désactiver produit
-  "/admin/products/with-images": "product", // POST: Créer produit avec images
-  "/admin/categories": "product", // GET: Liste catégories, POST: Créer catégorie
-  "/admin/categories/:id": "product", // GET: Récupérer catégorie, PUT: Modifier catégorie, DELETE: Supprimer catégorie
-  "/admin/products/:id/images": "product", // GET: Lister images, POST: Ajouter images à un produit
-  "/admin/products/:id/images/:imageId": "product", // DELETE: Supprimer une image
-};
+  { path: "/admin/products", method: "ALL", service: "product", auth: true },
+  {
+    path: "/admin/products/:id",
+    method: "ALL",
+    service: "product",
+    auth: true,
+  },
+  {
+    path: "/admin/products/:id/activate",
+    method: "POST",
+    service: "product",
+    auth: true,
+  },
+  {
+    path: "/admin/products/:id/deactivate",
+    method: "POST",
+    service: "product",
+    auth: true,
+  },
+  {
+    path: "/admin/products/with-images",
+    method: "POST",
+    service: "product",
+    auth: true,
+    upload: { type: "multiple", field: "images", maxFiles: 10 },
+  },
+  { path: "/admin/categories", method: "ALL", service: "product", auth: true },
+  {
+    path: "/admin/categories/:id",
+    method: "ALL",
+    service: "product",
+    auth: true,
+  },
+  {
+    path: "/admin/products/:id/images",
+    method: "POST",
+    service: "product",
+    auth: true,
+    upload: { type: "multiple", field: "images", maxFiles: 5 },
+  },
+  {
+    path: "/admin/products/:id/images",
+    method: "GET",
+    service: "product",
+    auth: true,
+  },
+  {
+    path: "/admin/products/:id/images/:imageId",
+    method: "DELETE",
+    service: "product",
+    auth: true,
+  },
+];

@@ -24,9 +24,6 @@ export const PORT = parseInt(process.env["PORT"] || "3020", 10);
  */
 export const JWT_SECRET = process.env["JWT_SECRET"] || "your-jwt-secret-key";
 
-// Log pour debug (à retirer en production)
-console.log("🔐 JWT_SECRET chargé:", JWT_SECRET.substring(0, 10) + "...");
-
 // ===== CONFIGURATION DES SERVICES =====
 
 /**

@@ -1,19 +1,29 @@
 /**
- * Routes d'authentification
+ * Routes d'authentification - Configuration déclarative
  */
 
-import { ServiceName } from "../config";
+import { SimpleRoute } from "../core/types";
 
-export const AUTH_ROUTES: Record<string, ServiceName> = {
-  // Routes publiques (sans authentification)
-  // Note: /auth/register, /auth/reset-password, /auth/reset-password/confirm,
+export const AUTH_ROUTES: SimpleRoute[] = [
+  // Routes publiques
+  // NOTE: /auth/register, /auth/reset-password, /auth/reset-password/confirm,
   // /auth/approve-backoffice et /auth/reject-backoffice sont gérées par des handlers
-  // personnalisés dans routes-handler.ts car elles nécessitent une orchestration
+  // personnalisés dans routes/orchestrated/index.ts car elles nécessitent une orchestration
   // entre auth-service et email-service
-  "/auth/login": "auth", // POST: Connexion utilisateur
-  "/auth/validate-password": "auth", // POST: Valider mot de passe
+  { path: "/auth/login", method: "POST", service: "auth", auth: false },
+  {
+    path: "/auth/validate-password",
+    method: "POST",
+    service: "auth",
+    auth: false,
+  },
 
   // Routes admin (avec authentification)
-  "/admin/auth/change-password": "auth", // PUT: Changer mot de passe
-  "/admin/auth/logout": "auth", // POST: Déconnexion
-};
+  {
+    path: "/admin/auth/change-password",
+    method: "PUT",
+    service: "auth",
+    auth: true,
+  },
+  { path: "/admin/auth/logout", method: "POST", service: "auth", auth: true },
+];

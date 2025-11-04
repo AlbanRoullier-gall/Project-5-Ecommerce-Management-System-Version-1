@@ -18,10 +18,10 @@ export interface AuthenticatedUser {
 
 /**
  * Vérifie si une route nécessite une authentification
- * Routes protégées : /admin/* et /api/customers (GET uniquement, car redirigé vers admin)
+ * Routes protégées : /admin/*
  */
 export const isProtectedRoute = (path: string): boolean => {
-  return path.includes("/admin/") || path === "/api/customers";
+  return path.includes("/admin/");
 };
 
 // ===== GESTION DES TOKENS JWT =====

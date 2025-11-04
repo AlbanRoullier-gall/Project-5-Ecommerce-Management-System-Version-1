@@ -313,6 +313,33 @@ export class ApiRouter {
       }
     );
 
+    // Routes admin pour récupérer les items et adresses d'une commande
+    // IMPORTANT: Ces routes doivent être AVANT /api/admin/orders/:id pour éviter les conflits
+    // Express matche les routes dans l'ordre, donc les routes spécifiques doivent être en premier
+    app.get(
+      "/api/admin/orders/:orderId/items",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderItemController.getOrderItemsByOrderId(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/orders/:orderId/addresses",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderAddressController.getOrderAddressesByOrderId(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/orders/year/:year/export-data",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderController.getYearExportData(req, res);
+      }
+    );
+
     app.get(
       "/api/admin/orders/:id",
       this.requireAuth,
@@ -326,14 +353,6 @@ export class ApiRouter {
       this.requireAuth,
       (req: Request, res: Response) => {
         this.orderController.updateDeliveryStatus(req, res);
-      }
-    );
-
-    app.get(
-      "/api/admin/orders/year/:year/export-data",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.orderController.getYearExportData(req, res);
       }
     );
 

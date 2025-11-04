@@ -1,11 +1,13 @@
 /**
  * API GATEWAY - POINT D'ENTRÉE PRINCIPAL
  *
- * Architecture:
+ * Architecture v2.0:
+ * - Router modulaire avec configuration déclarative
  * - Proxy transparent vers les microservices
  * - Gestion centralisée de l'authentification JWT
  * - Support multipart/form-data pour uploads
  * - Proxy des fichiers statiques
+ * - Routes orchestrées pour logique métier complexe
  */
 
 import dotenv from "dotenv";
@@ -14,7 +16,8 @@ dotenv.config();
 import express from "express";
 import { PORT, isDevelopment, SERVICES } from "./config";
 import { setupGlobalMiddlewares, setupErrorHandling } from "./middleware";
-import { setupRoutes } from "./routes-handler";
+import { setupRoutes } from "./core/router";
+import { ROUTES } from "./routes";
 
 // ===== INITIALISATION =====
 
@@ -25,8 +28,8 @@ const app = express();
 // 1. Middlewares globaux (CORS, Helmet, body parsers)
 setupGlobalMiddlewares(app);
 
-// 2. Routes (health, statiques, spécialisées, auto-générées)
-setupRoutes(app);
+// 2. Routes (configuration déclarative)
+setupRoutes(app, ROUTES);
 
 // 3. Gestion des erreurs (404, 500)
 setupErrorHandling(app);
