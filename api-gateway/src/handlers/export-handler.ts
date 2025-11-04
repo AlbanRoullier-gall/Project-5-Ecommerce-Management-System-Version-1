@@ -13,12 +13,6 @@ export class ExportHandler {
   async exportOrdersYear(req: Request, res: Response): Promise<void> {
     try {
       const { year } = req.params;
-      const authToken = req.headers.authorization;
-
-      if (!authToken) {
-        res.status(401).json({ error: "Token d'authentification requis" });
-        return;
-      }
 
       const yearNumber = parseInt(year || "");
       if (isNaN(yearNumber) || yearNumber < 2025) {
@@ -31,9 +25,11 @@ export class ExportHandler {
       // Step 1: Get data from order service
       console.log(`Fetching export data for year ${yearNumber}...`);
 
-      // Extract user info from the request (set by the API Gateway middleware)
+      // Extract user info from the request (set by requireAuth middleware)
+      // requireAuth middleware already verified the token, so req.user is guaranteed to exist
       const user = (req as any).user;
       if (!user) {
+        // This should never happen if requireAuth middleware is properly applied
         res.status(401).json({ error: "Utilisateur non authentifié" });
         return;
       }
