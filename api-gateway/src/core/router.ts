@@ -34,11 +34,14 @@ const createUploadMiddleware = (
  */
 const registerRoute = (
   app: Application,
-  route: SimpleRoute | OrchestratedRoute
+  route: SimpleRoute | OrchestratedRoute,
+  skipApiPrefix: boolean = false
 ): void => {
-  const fullPath = route.path.startsWith("/api")
-    ? route.path
-    : `/api${route.path}`;
+  // Les routes statiques (comme /uploads/*) ne doivent pas avoir le préfixe /api
+  const fullPath =
+    skipApiPrefix || route.path.startsWith("/api")
+      ? route.path
+      : `/api${route.path}`;
   const middlewares: any[] = [];
 
   // 1. Middlewares personnalisés (pour routes orchestrées)
@@ -118,6 +121,7 @@ export const setupRoutes = (
 
   // ===== ROUTES STATIQUES =====
   // Routes statiques sont traitées comme des routes orchestrées avec handler
+  // IMPORTANT: Les routes statiques ne doivent PAS avoir le préfixe /api
   routes.static.forEach((route) => {
     const staticRoute: OrchestratedRoute = {
       path: route.path,
@@ -125,7 +129,7 @@ export const setupRoutes = (
       handler: route.handler,
       auth: false,
     };
-    registerRoute(app, staticRoute);
+    registerRoute(app, staticRoute, true); // skipApiPrefix = true
   });
 
   // ===== ROUTES SIMPLES =====
