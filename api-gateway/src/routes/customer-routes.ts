@@ -1,62 +1,29 @@
 /**
- * Routes du service client - Configuration déclarative
+ * Routes du service client - Configuration avec conventions automatiques
  */
 
-import { SimpleRoute } from "../core/types";
+import { Route } from "../core/types";
+import { createAdminRoutes, createProxyRoute } from "./helpers";
 
-export const CUSTOMER_ROUTES: SimpleRoute[] = [
+export const CUSTOMER_ROUTES: Route[] = [
   // Routes publiques
-  { path: "/customers", method: "POST", service: "customer", auth: false },
-  {
-    path: "/customers/by-email/:email",
-    method: "GET",
-    service: "customer",
-    auth: false,
-  },
-  {
-    path: "/customers/countries",
-    method: "GET",
-    service: "customer",
-    auth: false,
-  },
-  { path: "/customers/:id", method: "GET", service: "customer", auth: false },
-  {
-    path: "/customers/:customerId/addresses",
-    method: "POST",
-    service: "customer",
-    auth: false,
-  },
+  createProxyRoute("/customers", "POST", "customer"),
+  createProxyRoute("/customers/by-email/:email", "GET", "customer"),
+  createProxyRoute("/customers/countries", "GET", "customer"),
+  createProxyRoute("/customers/:id", "GET", "customer"),
+  createProxyRoute("/customers/:customerId/addresses", "POST", "customer"),
 
-  // Routes admin
-  { path: "/admin/customers", method: "ALL", service: "customer", auth: true },
-  {
-    path: "/admin/customers/search",
-    method: "GET",
-    service: "customer",
-    auth: true,
-  },
-  {
-    path: "/admin/customers/countries",
-    method: "GET",
-    service: "customer",
-    auth: true,
-  },
-  {
-    path: "/admin/customers/:id",
-    method: "ALL",
-    service: "customer",
-    auth: true,
-  },
-  {
-    path: "/admin/customers/:customerId/addresses",
-    method: "ALL",
-    service: "customer",
-    auth: true,
-  },
-  {
-    path: "/admin/customers/:customerId/addresses/:id",
-    method: "ALL",
-    service: "customer",
-    auth: true,
-  },
+  // Routes admin (auth automatique via convention /admin/*)
+  ...createAdminRoutes("customer", [
+    "/admin/customers",
+    "/admin/customers/:id",
+    "/admin/customers/:customerId/addresses",
+  ]),
+  createProxyRoute("/admin/customers/search", "GET", "customer"),
+  createProxyRoute("/admin/customers/countries", "GET", "customer"),
+  createProxyRoute(
+    "/admin/customers/:customerId/addresses/:id",
+    "ALL",
+    "customer"
+  ),
 ];

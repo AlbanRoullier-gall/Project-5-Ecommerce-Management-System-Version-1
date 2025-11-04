@@ -1,11 +1,10 @@
 /**
- * Routes du service paiement - Configuration déclarative
+ * Routes du service paiement - Configuration avec conventions automatiques
  */
 
-import { SimpleRoute } from "../core/types";
+import { Route } from "../core/types";
 
-export const PAYMENT_ROUTES: SimpleRoute[] = [
-  // Routes publiques
+export const PAYMENT_ROUTES: Route[] = [
   // NOTE: /payment/create est géré par routes orchestrées
   // Les autres routes de paiement sont gérées directement par le service
 ];

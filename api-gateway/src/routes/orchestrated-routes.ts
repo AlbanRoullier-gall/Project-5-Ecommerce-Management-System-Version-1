@@ -2,20 +2,21 @@
  * Configuration des routes orchestrées (handlers custom)
  */
 
-import { OrchestratedRoute } from "../../core/types";
+import { Route } from "../core/types";
+import { createOrchestratedRoute } from "./helpers";
 import {
   handlePasswordReset,
   handlePasswordResetConfirm,
   handleRegister,
   handleApproveBackofficeAccess,
   handleRejectBackofficeAccess,
-} from "../../handlers/auth-handler";
+} from "../handlers/auth-handler";
 import {
   handleCreatePayment,
   handleStripeWebhook,
   handleFinalizePayment,
-} from "../../handlers/payment-handler";
-import { ExportHandler } from "../../handlers/export-handler";
+} from "../handlers/payment-handler";
+import { ExportHandler } from "../handlers/export-handler";
 import { Request, Response } from "express";
 
 const exportHandler = new ExportHandler();
@@ -34,7 +35,7 @@ const handleCheckoutSnapshot = async (
       return;
     }
 
-    const { checkoutSnapshots } = require("../../handlers/payment-handler");
+    const { checkoutSnapshots } = require("../handlers/payment-handler");
     checkoutSnapshots.set(sessionId as string, req.body);
     res.status(204).send();
   } catch (error) {
@@ -57,7 +58,7 @@ const handleGetCheckoutSnapshot = async (
       return;
     }
 
-    const { checkoutSnapshots } = require("../../handlers/payment-handler");
+    const { checkoutSnapshots } = require("../handlers/payment-handler");
     const snapshot = checkoutSnapshots.get(sessionId as string);
 
     if (!snapshot) {
@@ -86,78 +87,59 @@ const wrapHandler = (
 /**
  * Configuration complète des routes orchestrées
  */
-export const ORCHESTRATED_ROUTES: OrchestratedRoute[] = [
+export const ORCHESTRATED_ROUTES: Route[] = [
   // Routes d'authentification avec orchestration
-  {
-    path: "/auth/register",
-    method: "POST",
-    handler: wrapHandler(handleRegister),
-    auth: false,
-  },
-  {
-    path: "/auth/reset-password",
-    method: "POST",
-    handler: wrapHandler(handlePasswordReset),
-    auth: false,
-  },
-  {
-    path: "/auth/reset-password/confirm",
-    method: "POST",
-    handler: wrapHandler(handlePasswordResetConfirm),
-    auth: false,
-  },
-  {
-    path: "/auth/approve-backoffice",
-    method: "GET",
-    handler: wrapHandler(handleApproveBackofficeAccess),
-    auth: false,
-  },
-  {
-    path: "/auth/reject-backoffice",
-    method: "GET",
-    handler: wrapHandler(handleRejectBackofficeAccess),
-    auth: false,
-  },
+  createOrchestratedRoute(
+    "/auth/register",
+    "POST",
+    wrapHandler(handleRegister)
+  ),
+  createOrchestratedRoute(
+    "/auth/reset-password",
+    "POST",
+    wrapHandler(handlePasswordReset)
+  ),
+  createOrchestratedRoute(
+    "/auth/reset-password/confirm",
+    "POST",
+    wrapHandler(handlePasswordResetConfirm)
+  ),
+  createOrchestratedRoute(
+    "/auth/approve-backoffice",
+    "GET",
+    wrapHandler(handleApproveBackofficeAccess)
+  ),
+  createOrchestratedRoute(
+    "/auth/reject-backoffice",
+    "GET",
+    wrapHandler(handleRejectBackofficeAccess)
+  ),
 
   // Routes de paiement avec orchestration
-  {
-    path: "/payment/create",
-    method: "POST",
-    handler: wrapHandler(handleCreatePayment),
-    auth: false,
-  },
-  {
-    path: "/webhooks/stripe",
-    method: "POST",
-    handler: wrapHandler(handleStripeWebhook),
-    auth: false,
-  },
-  {
-    path: "/payment/finalize",
-    method: "POST",
-    handler: wrapHandler(handleFinalizePayment),
-    auth: false,
-  },
+  createOrchestratedRoute(
+    "/payment/create",
+    "POST",
+    wrapHandler(handleCreatePayment)
+  ),
+  createOrchestratedRoute(
+    "/webhooks/stripe",
+    "POST",
+    wrapHandler(handleStripeWebhook)
+  ),
+  createOrchestratedRoute(
+    "/payment/finalize",
+    "POST",
+    wrapHandler(handleFinalizePayment)
+  ),
 
   // Routes de snapshot checkout
-  {
-    path: "/cart/checkout",
-    method: "PATCH",
-    handler: handleCheckoutSnapshot,
-    auth: false,
-  },
-  {
-    path: "/cart/checkout",
-    method: "GET",
-    handler: handleGetCheckoutSnapshot,
-    auth: false,
-  },
+  createOrchestratedRoute("/cart/checkout", "PATCH", handleCheckoutSnapshot),
+  createOrchestratedRoute("/cart/checkout", "GET", handleGetCheckoutSnapshot),
 
-  // Routes d'export
-  {
-    path: "/admin/exports/orders-year/:year",
-    method: "GET",
-    handler: wrapHandler(exportHandler.exportOrdersYear.bind(exportHandler)),
-    auth: true,
-  },
+  // Routes d'export (auth automatique via convention /admin/*)
+  createOrchestratedRoute(
+    "/admin/exports/orders-year/:year",
+    "GET",
+    wrapHandler(exportHandler.exportOrdersYear.bind(exportHandler))
+  ),
 ];

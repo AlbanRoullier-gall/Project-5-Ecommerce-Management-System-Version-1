@@ -1,13 +1,14 @@
 /**
  * API GATEWAY - POINT D'ENTRÉE PRINCIPAL
  *
- * Architecture v2.0:
- * - Router modulaire avec configuration déclarative
- * - Proxy transparent vers les microservices
- * - Gestion centralisée de l'authentification JWT
- * - Support multipart/form-data pour uploads
- * - Proxy des fichiers statiques
- * - Routes orchestrées pour logique métier complexe
+ * Architecture v2.2 - Refactorisée et modulaire:
+ * - Structure modulaire claire (types, conventions, proxy, uploads)
+ * - Router simplifié (enregistrement uniquement)
+ * - Proxy séparé (request/response)
+ * - Configuration déclarative avec conventions automatiques
+ * - Un seul type Route pour tous les types de routes
+ * - Conventions: /admin/* = auth auto, /with-images = upload auto
+ * - Une seule boucle pour toutes les routes
  */
 
 import dotenv from "dotenv";
@@ -38,7 +39,7 @@ setupErrorHandling(app);
 
 app.listen(PORT, () => {
   console.log("╔════════════════════════════════════════╗");
-  console.log("║   🚀 API GATEWAY - MODULAIRE v2.0      ║");
+  console.log("║   🚀 API GATEWAY - MODULAIRE v2.2      ║");
   console.log("╚════════════════════════════════════════╝");
   console.log("");
   console.log(`📍 Port: ${PORT}`);

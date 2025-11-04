@@ -1,29 +1,17 @@
 /**
- * Routes d'authentification - Configuration déclarative
+ * Routes d'authentification - Configuration avec conventions automatiques
  */
 
-import { SimpleRoute } from "../core/types";
+import { Route } from "../core/types";
+import { createProxyRoute } from "./helpers";
 
-export const AUTH_ROUTES: SimpleRoute[] = [
+export const AUTH_ROUTES: Route[] = [
   // Routes publiques
-  // NOTE: /auth/register, /auth/reset-password, /auth/reset-password/confirm,
-  // /auth/approve-backoffice et /auth/reject-backoffice sont gérées par des handlers
-  // personnalisés dans routes/orchestrated/index.ts car elles nécessitent une orchestration
-  // entre auth-service et email-service
-  { path: "/auth/login", method: "POST", service: "auth", auth: false },
-  {
-    path: "/auth/validate-password",
-    method: "POST",
-    service: "auth",
-    auth: false,
-  },
+  // NOTE: /auth/register, /auth/reset-password, etc. sont gérées par routes orchestrées
+  createProxyRoute("/auth/login", "POST", "auth"),
+  createProxyRoute("/auth/validate-password", "POST", "auth"),
 
-  // Routes admin (avec authentification)
-  {
-    path: "/admin/auth/change-password",
-    method: "PUT",
-    service: "auth",
-    auth: true,
-  },
-  { path: "/admin/auth/logout", method: "POST", service: "auth", auth: true },
+  // Routes admin (auth automatique via convention /admin/*)
+  createProxyRoute("/admin/auth/change-password", "PUT", "auth"),
+  createProxyRoute("/admin/auth/logout", "POST", "auth"),
 ];

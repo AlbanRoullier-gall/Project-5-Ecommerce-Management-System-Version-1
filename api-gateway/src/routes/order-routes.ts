@@ -1,114 +1,45 @@
 /**
- * Routes des commandes - Configuration déclarative
+ * Routes des commandes - Configuration avec conventions automatiques
  */
 
-import { SimpleRoute } from "../core/types";
+import { Route } from "../core/types";
+import {
+  createServiceRoutes,
+  createAdminRoutes,
+  createProxyRoute,
+} from "./helpers";
 
-export const ORDER_ROUTES: SimpleRoute[] = [
+export const ORDER_ROUTES: Route[] = [
   // Routes publiques
-  { path: "/orders", method: "ALL", service: "order", auth: false },
-  { path: "/orders/:id", method: "ALL", service: "order", auth: false },
-  {
-    path: "/orders/:orderId/items",
-    method: "ALL",
-    service: "order",
-    auth: false,
-  },
-  {
-    path: "/orders/:orderId/addresses",
-    method: "ALL",
-    service: "order",
-    auth: false,
-  },
-  {
-    path: "/customers/:customerId/credit-notes",
-    method: "GET",
-    service: "order",
-    auth: false,
-  },
-  { path: "/statistics/orders", method: "GET", service: "order", auth: false },
+  ...createServiceRoutes("order", [
+    "/orders",
+    "/orders/:id",
+    "/orders/:orderId/items",
+    "/orders/:orderId/addresses",
+  ]),
+  createProxyRoute("/customers/:customerId/credit-notes", "GET", "order"),
+  createProxyRoute("/statistics/orders", "GET", "order"),
 
-  // Routes admin
-  { path: "/admin/orders", method: "ALL", service: "order", auth: true },
-  { path: "/admin/orders/:id", method: "ALL", service: "order", auth: true },
-  {
-    path: "/admin/orders/:id/delivery-status",
-    method: "PATCH",
-    service: "order",
-    auth: true,
-  },
-  {
-    path: "/admin/orders/:orderId/items",
-    method: "GET",
-    service: "order",
-    auth: true,
-  },
-  {
-    path: "/admin/orders/:orderId/addresses",
-    method: "GET",
-    service: "order",
-    auth: true,
-  },
-  { path: "/admin/order-items", method: "ALL", service: "order", auth: true },
-  {
-    path: "/admin/order-items/:id",
-    method: "ALL",
-    service: "order",
-    auth: true,
-  },
-  { path: "/admin/credit-notes", method: "ALL", service: "order", auth: true },
-  {
-    path: "/admin/credit-notes/:id",
-    method: "ALL",
-    service: "order",
-    auth: true,
-  },
-  {
-    path: "/admin/credit-notes/:id/status",
-    method: "PATCH",
-    service: "order",
-    auth: true,
-  },
-  {
-    path: "/admin/credit-note-items",
-    method: "ALL",
-    service: "order",
-    auth: true,
-  },
-  {
-    path: "/admin/credit-note-items/:id",
-    method: "ALL",
-    service: "order",
-    auth: true,
-  },
-  {
-    path: "/admin/credit-notes/:creditNoteId/items",
-    method: "GET",
-    service: "order",
-    auth: true,
-  },
-  {
-    path: "/admin/order-addresses",
-    method: "ALL",
-    service: "order",
-    auth: true,
-  },
-  {
-    path: "/admin/order-addresses/:id",
-    method: "ALL",
-    service: "order",
-    auth: true,
-  },
-  {
-    path: "/admin/statistics/orders",
-    method: "GET",
-    service: "order",
-    auth: true,
-  },
-  {
-    path: "/admin/orders/year/:year/export-data",
-    method: "GET",
-    service: "order",
-    auth: true,
-  },
+  // Routes admin (auth automatique via convention /admin/*)
+  ...createAdminRoutes("order", [
+    "/admin/orders",
+    "/admin/orders/:id",
+    "/admin/order-items",
+    "/admin/order-items/:id",
+    "/admin/credit-notes",
+    "/admin/credit-notes/:id",
+    "/admin/credit-note-items",
+    "/admin/credit-note-items/:id",
+    "/admin/order-addresses",
+    "/admin/order-addresses/:id",
+  ]),
+
+  // Routes admin avec méthodes spécifiques
+  createProxyRoute("/admin/orders/:id/delivery-status", "PATCH", "order"),
+  createProxyRoute("/admin/orders/:orderId/items", "GET", "order"),
+  createProxyRoute("/admin/orders/:orderId/addresses", "GET", "order"),
+  createProxyRoute("/admin/credit-notes/:id/status", "PATCH", "order"),
+  createProxyRoute("/admin/credit-notes/:creditNoteId/items", "GET", "order"),
+  createProxyRoute("/admin/statistics/orders", "GET", "order"),
+  createProxyRoute("/admin/orders/year/:year/export-data", "GET", "order"),
 ];

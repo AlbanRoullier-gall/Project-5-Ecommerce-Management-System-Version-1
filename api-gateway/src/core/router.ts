@@ -1,140 +1,95 @@
 /**
- * Router principal pour l'API Gateway
- * Gère le routing avec un pipeline clair et prévisible
+ * Router simplifié pour l'API Gateway
+ * Gère uniquement l'enregistrement des routes
  */
 
 import { Application, Request, Response } from "express";
-import multer from "multer";
 import { requireAuth } from "../auth";
+import { Route } from "./types";
+import { needsAuth, getUploadConfig, shouldSkipApiPrefix } from "./conventions";
+import { createUploadMiddleware } from "./uploads";
 import { proxyRequest } from "./proxy";
-import { RouteCollection, SimpleRoute, OrchestratedRoute } from "./types";
 
 /**
- * Configuration de multer pour gérer les uploads
+ * Enregistre une route avec conventions automatiques
+ * Une seule fonction pour tous les types de routes
  */
-const createUploadMiddleware = (
-  type: "single" | "multiple",
-  field: string,
-  maxFiles?: number
-) => {
-  const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-  });
+const registerRoute = (app: Application, route: Route): void => {
+  // Construire le chemin complet (convention automatique)
+  const fullPath = shouldSkipApiPrefix(route.path)
+    ? route.path
+    : `/api${route.path}`;
 
-  if (type === "multiple") {
-    return upload.array(field, maxFiles || 10);
-  }
-  return upload.single(field);
-};
+  // Détecter automatiquement auth et upload via conventions
+  const auth = needsAuth(route.path, route.auth);
+  const upload = getUploadConfig(route.path, route.method, route.upload);
 
-/**
- * Enregistre une route (simple, orchestrée ou statique)
- * Fonction unifiée pour tous les types de routes
- */
-const registerRoute = (
-  app: Application,
-  route: SimpleRoute | OrchestratedRoute,
-  skipApiPrefix: boolean = false
-): void => {
-  // Les routes statiques (comme /uploads/*) ne doivent pas avoir le préfixe /api
-  const fullPath =
-    skipApiPrefix || route.path.startsWith("/api")
-      ? route.path
-      : `/api${route.path}`;
+  // Construire les middlewares dans l'ordre
   const middlewares: any[] = [];
 
-  // 1. Middlewares personnalisés (pour routes orchestrées)
-  if ("middlewares" in route && route.middlewares) {
-    middlewares.push(...route.middlewares);
-  }
-
-  // 2. Authentification si nécessaire
-  if (route.auth) {
+  // 1. Authentification (convention ou explicite)
+  if (auth) {
     middlewares.push(requireAuth);
   }
 
-  // 3. Upload si nécessaire (pour routes simples)
-  if ("upload" in route && route.upload) {
+  // 2. Upload (convention ou explicite)
+  if (upload) {
     middlewares.push(
-      createUploadMiddleware(
-        route.upload.type,
-        route.upload.field,
-        route.upload.maxFiles
-      )
+      createUploadMiddleware(upload.type, upload.field, upload.maxFiles)
     );
   }
 
-  // 4. Handler
-  if ("handler" in route) {
+  // 3. Handler (orchestrée ou proxy)
+  if (route.handler) {
     // Route orchestrée avec handler custom
     middlewares.push(async (req: Request, res: Response) => {
-      await route.handler(req, res);
+      await route.handler!(req, res);
     });
-  } else {
+  } else if (route.service) {
     // Route simple avec proxy
     middlewares.push(async (req: Request, res: Response) => {
-      await proxyRequest(req, res, route.service);
+      await proxyRequest(req, res, route.service!);
     });
+  } else {
+    throw new Error(`Route ${route.path} doit avoir soit handler soit service`);
   }
 
-  // Enregistrer la route selon la méthode
+  // Enregistrer la route
   if (route.method === "ALL") {
     app.all(fullPath, ...middlewares);
   } else {
     (app as any)[route.method.toLowerCase()](fullPath, ...middlewares);
   }
 
-  const routeType = "handler" in route ? "orchestrée" : "simple";
+  const routeType = route.handler ? "orchestrée" : "simple";
   console.log(`📝 Route ${routeType}: ${route.method} ${fullPath}`);
 };
 
 /**
  * Configure toutes les routes de l'API Gateway
+ * Une seule boucle pour toutes les routes
  */
-export const setupRoutes = (
-  app: Application,
-  routes: RouteCollection
-): void => {
-  // ===== ROUTES DE BASE =====
+export const setupRoutes = (app: Application, routes: Route[]): void => {
+  // Routes de base
   app.get("/api/health", (_req: Request, res: Response) => {
     res.json({
       status: "OK",
       service: "API Gateway",
       timestamp: new Date().toISOString(),
-      version: "2.0.0",
+      version: "2.2.0",
     });
   });
 
   app.get("/", (_req: Request, res: Response) => {
     res.json({
       message: "API Gateway - E-commerce Platform",
-      version: "2.0.0",
+      version: "2.2.0",
       health: "/api/health",
     });
   });
 
-  // ===== ROUTES ORCHESTRÉES =====
-  // Routes avec orchestration (doivent être enregistrées avant les routes simples
-  // pour éviter les conflits de matching)
-  routes.orchestrated.forEach((route) => registerRoute(app, route));
-
-  // ===== ROUTES STATIQUES =====
-  // Routes statiques sont traitées comme des routes orchestrées avec handler
-  // IMPORTANT: Les routes statiques ne doivent PAS avoir le préfixe /api
-  routes.static.forEach((route) => {
-    const staticRoute: OrchestratedRoute = {
-      path: route.path,
-      method: "GET",
-      handler: route.handler,
-      auth: false,
-    };
-    registerRoute(app, staticRoute, true); // skipApiPrefix = true
-  });
-
-  // ===== ROUTES SIMPLES =====
-  // Trier les routes simples par spécificité (sans paramètres avant avec paramètres)
-  const sortedSimpleRoutes = [...routes.simple].sort((a, b) => {
+  // Trier les routes par spécificité (sans paramètres avant avec paramètres)
+  const sortedRoutes = [...routes].sort((a, b) => {
     const hasParamA = a.path.includes(":");
     const hasParamB = b.path.includes(":");
     if (!hasParamA && hasParamB) return -1;
@@ -142,7 +97,8 @@ export const setupRoutes = (
     return 0;
   });
 
-  sortedSimpleRoutes.forEach((route) => registerRoute(app, route));
+  // Une seule boucle pour toutes les routes
+  sortedRoutes.forEach((route) => registerRoute(app, route));
 
   console.log("\n✅ Toutes les routes ont été enregistrées\n");
 };

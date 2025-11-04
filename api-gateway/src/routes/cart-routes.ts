@@ -1,18 +1,14 @@
 /**
- * Routes du service panier - Configuration déclarative
+ * Routes du service panier - Configuration avec conventions automatiques
  */
 
-import { SimpleRoute } from "../core/types";
+import { Route } from "../core/types";
+import { createProxyRoute } from "./helpers";
 
-export const CART_ROUTES: SimpleRoute[] = [
+export const CART_ROUTES: Route[] = [
   // Routes publiques
-  { path: "/cart", method: "ALL", service: "cart", auth: false },
-  { path: "/cart/items", method: "POST", service: "cart", auth: false },
-  {
-    path: "/cart/items/:productId",
-    method: "ALL",
-    service: "cart",
-    auth: false,
-  },
+  createProxyRoute("/cart", "ALL", "cart"),
+  createProxyRoute("/cart/items", "POST", "cart"),
+  createProxyRoute("/cart/items/:productId", "ALL", "cart"),
   // NOTE: /cart/checkout géré directement par l'API Gateway dans routes orchestrées
 ];

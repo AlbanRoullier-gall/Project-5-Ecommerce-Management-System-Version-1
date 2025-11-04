@@ -1,5 +1,5 @@
 /**
- * Types pour la configuration des routes
+ * Types pour le système de routing de l'API Gateway
  */
 
 import { Request, Response } from "express";
@@ -11,50 +11,19 @@ import { ServiceName } from "../config";
 export interface UploadConfig {
   type: "single" | "multiple";
   field: string;
-  maxFiles?: number | undefined;
-  maxSize?: number | undefined; // en bytes
+  maxFiles?: number;
 }
 
 /**
- * Route simple - Proxy direct vers un service
+ * Route unifiée - Un seul type pour toutes les routes
  */
-export interface SimpleRoute {
+export interface Route {
   path: string;
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "ALL";
-  service: ServiceName;
-  auth?: boolean; // true si nécessite authentification, false par défaut
-  upload?: UploadConfig;
-}
-
-/**
- * Route orchestrée - Utilise un handler custom
- */
-export interface OrchestratedRoute {
-  path: string;
-  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "ALL";
-  handler: (req: Request, res: Response) => Promise<void> | void;
-  auth?: boolean;
-  middlewares?: Array<(req: Request, res: Response, next: () => void) => void>;
-}
-
-/**
- * Route statique - Pour les fichiers statiques
- */
-export interface StaticRoute {
-  path: string;
-  handler: (req: Request, res: Response) => Promise<void> | void;
-}
-
-/**
- * Union type pour toutes les routes
- */
-export type RouteConfig = SimpleRoute | OrchestratedRoute | StaticRoute;
-
-/**
- * Collection de routes par type
- */
-export interface RouteCollection {
-  simple: SimpleRoute[];
-  orchestrated: OrchestratedRoute[];
-  static: StaticRoute[];
+  // Si handler présent = route orchestrée, sinon = proxy vers service
+  handler?: (req: Request, res: Response) => Promise<void> | void;
+  service?: ServiceName; // Nécessaire si pas de handler
+  // Options (par défaut basées sur conventions)
+  auth?: boolean; // Si non défini, détecté automatiquement depuis path
+  upload?: UploadConfig; // Si non défini, détecté automatiquement depuis path
 }

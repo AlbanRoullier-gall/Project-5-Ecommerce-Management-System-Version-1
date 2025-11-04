@@ -1,50 +1,23 @@
 /**
- * Routes pour le service email - Configuration déclarative
+ * Routes pour le service email - Configuration avec conventions automatiques
  */
 
-import { SimpleRoute } from "../core/types";
+import { Route } from "../core/types";
+import { createServiceRoutes } from "./helpers";
 
-export const EMAIL_ROUTES: SimpleRoute[] = [
-  // Routes publiques
-  { path: "/email/send", method: "POST", service: "email", auth: false },
-  {
-    path: "/email/send-reset-email",
-    method: "POST",
-    service: "email",
-    auth: false,
-  },
-  {
-    path: "/email/confirmation",
-    method: "POST",
-    service: "email",
-    auth: false,
-  },
-
-  // Routes backoffice
-  {
-    path: "/email/backoffice-approval-request",
-    method: "POST",
-    service: "email",
-    auth: false,
-  },
-  {
-    path: "/email/backoffice-approval-confirmation",
-    method: "POST",
-    service: "email",
-    auth: false,
-  },
-  {
-    path: "/email/backoffice-rejection-notification",
-    method: "POST",
-    service: "email",
-    auth: false,
-  },
-
-  // Routes commandes
-  {
-    path: "/email/order-confirmation",
-    method: "POST",
-    service: "email",
-    auth: false,
-  },
+export const EMAIL_ROUTES: Route[] = [
+  // Routes publiques (toutes en POST)
+  ...createServiceRoutes(
+    "email",
+    [
+      "/email/send",
+      "/email/send-reset-email",
+      "/email/confirmation",
+      "/email/backoffice-approval-request",
+      "/email/backoffice-approval-confirmation",
+      "/email/backoffice-rejection-notification",
+      "/email/order-confirmation",
+    ],
+    "POST"
+  ),
 ];

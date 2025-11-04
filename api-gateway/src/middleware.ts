@@ -24,15 +24,38 @@ import helmet from "helmet";
  * Routes concernées:
  * - POST /api/.../images (upload d'images)
  * - POST /api/.../with-images (création avec images)
+ * - /api/webhooks/stripe (nécessite raw body pour vérifier la signature)
  *
  * @param req - La requête Express
  * @returns true si la route doit skip le parsing du body
+ */
+const shouldSkipBodyParsing = (req: express.Request): boolean => {
+  return isMultipartRoute(req) || req.path === "/api/webhooks/stripe";
+};
+
+/**
+ * Vérifie si une route est multipart (upload de fichiers)
  */
 const isMultipartRoute = (req: express.Request): boolean => {
   return (
     (req.path.includes("/images") && req.method === "POST") ||
     req.path.includes("/with-images")
   );
+};
+
+/**
+ * Crée un middleware conditionnel qui applique le parser seulement si nécessaire
+ */
+const createConditionalParser = (
+  parser: express.RequestHandler
+): express.RequestHandler => {
+  return (req, res, next) => {
+    if (shouldSkipBodyParsing(req)) {
+      next(); // Skip le parsing
+    } else {
+      parser(req, res, next); // Applique le parser
+    }
+  };
 };
 
 // ===== CONFIGURATION DES MIDDLEWARES =====
@@ -111,13 +134,7 @@ export const setupGlobalMiddlewares = (app: express.Application): void => {
    * - Routes multipart (détectées par isMultipartRoute)
    * - /api/webhooks/stripe (nécessite raw body)
    */
-  app.use((req, res, next) => {
-    if (isMultipartRoute(req) || req.path === "/api/webhooks/stripe") {
-      next(); // Skip le parsing pour multipart et webhooks Stripe
-    } else {
-      express.json({ limit: "10mb" })(req, res, next);
-    }
-  });
+  app.use(createConditionalParser(express.json({ limit: "10mb" })));
 
   /**
    * Middleware de parsing URL-encoded conditionnel
@@ -131,13 +148,7 @@ export const setupGlobalMiddlewares = (app: express.Application): void => {
    *
    * extended: true → Utilise qs library pour parser les objets complexes/nested
    */
-  app.use((req, res, next) => {
-    if (isMultipartRoute(req) || req.path === "/api/webhooks/stripe") {
-      next(); // Skip le parsing pour multipart et webhooks Stripe
-    } else {
-      express.urlencoded({ extended: true })(req, res, next);
-    }
-  });
+  app.use(createConditionalParser(express.urlencoded({ extended: true })));
 
   /**
    * Middleware spécifique pour les webhooks Stripe
