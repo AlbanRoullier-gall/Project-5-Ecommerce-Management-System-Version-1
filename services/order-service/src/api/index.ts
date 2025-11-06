@@ -188,6 +188,40 @@ export class ApiRouter {
         addressType: Joi.string().optional(),
         addressSnapshot: Joi.object().optional(),
       }),
+
+      // Order from checkout schema
+      orderFromCheckoutSchema: Joi.object({
+        customerId: Joi.number().integer().positive().optional(),
+        customerSnapshot: Joi.object().optional(),
+        totalAmountHT: Joi.number().positive().required(),
+        totalAmountTTC: Joi.number().positive().required(),
+        paymentMethod: Joi.string().required(),
+        paymentIntentId: Joi.string().optional(),
+        notes: Joi.string().optional(),
+        items: Joi.array()
+          .items(
+            Joi.object({
+              productId: Joi.number().integer().positive().required(),
+              productName: Joi.string().required(),
+              quantity: Joi.number().integer().positive().required(),
+              unitPriceHT: Joi.number().positive().required(),
+              unitPriceTTC: Joi.number().positive().required(),
+              vatRate: Joi.number().positive().required(),
+              totalPriceHT: Joi.number().positive().required(),
+              totalPriceTTC: Joi.number().positive().required(),
+            })
+          )
+          .min(1)
+          .required(),
+        addresses: Joi.array()
+          .items(
+            Joi.object({
+              addressType: Joi.string().valid("shipping", "billing").required(),
+              addressSnapshot: Joi.object().required(),
+            })
+          )
+          .optional(),
+      }),
     };
   }
 
@@ -235,6 +269,14 @@ export class ApiRouter {
       this.validateRequest(schemas.orderCreateSchema),
       (req: Request, res: Response) => {
         this.orderController.createOrder(req, res);
+      }
+    );
+
+    app.post(
+      "/api/orders/from-checkout",
+      this.validateRequest(schemas.orderFromCheckoutSchema),
+      (req: Request, res: Response) => {
+        this.orderController.createOrderFromCheckout(req, res);
       }
     );
 

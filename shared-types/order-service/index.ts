@@ -279,3 +279,34 @@ export interface OrderStatisticsDTO {
   ordersByStatus: Record<string, number>;
   revenueByMonth: Record<string, number>;
 }
+
+/**
+ * DTO pour créer une commande complète depuis un checkout
+ * Inclut la commande, les items et les adresses en une seule transaction
+ */
+export interface OrderFromCheckoutDTO {
+  // Données de la commande
+  customerId?: number; // Optionnel, peut être résolu depuis customerSnapshot
+  customerSnapshot?: any;
+  totalAmountHT: number;
+  totalAmountTTC: number;
+  paymentMethod: string;
+  paymentIntentId?: string;
+  notes?: string;
+  // Items de la commande (avec toutes les infos nécessaires)
+  items: Array<{
+    productId: number;
+    productName: string;
+    quantity: number;
+    unitPriceHT: number;
+    unitPriceTTC: number;
+    vatRate: number;
+    totalPriceHT: number;
+    totalPriceTTC: number;
+  }>;
+  // Adresses (optionnelles)
+  addresses?: Array<{
+    addressType: "shipping" | "billing";
+    addressSnapshot: any;
+  }>;
+}

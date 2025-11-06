@@ -20,6 +20,7 @@ import OrderItemRepository from "../repositories/OrderItemRepository";
 import CreditNoteRepository from "../repositories/CreditNoteRepository";
 import CreditNoteItemRepository from "../repositories/CreditNoteItemRepository";
 import OrderAddressRepository from "../repositories/OrderAddressRepository";
+import { OrderFromCheckoutDTO } from "../api/dto/index";
 
 export default class OrderService {
   private pool: Pool;
@@ -92,6 +93,93 @@ export default class OrderService {
     } catch (error: any) {
       console.error("Error creating order:", error);
       throw new Error(`Failed to create order: ${error.message}`);
+    }
+  }
+
+  /**
+   * Créer une commande complète depuis un checkout (order + items + addresses)
+   * Utilise une transaction PostgreSQL pour garantir l'atomicité
+   * Réutilise la logique des repositories mais avec un client de transaction
+   */
+  async createOrderFromCheckout(
+    checkoutData: OrderFromCheckoutDTO
+  ): Promise<Order> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      // Validation
+      if (!checkoutData.customerId && !checkoutData.customerSnapshot) {
+        throw new Error("Customer ID or customer snapshot is required");
+      }
+
+      // Créer la commande (réutilise la logique du repository mais avec le client de transaction)
+      const orderQuery = `
+        INSERT INTO orders (customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+                           payment_method, notes, payment_intent_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        ON CONFLICT (payment_intent_id) WHERE payment_intent_id IS NOT NULL DO UPDATE SET updated_at = NOW()
+        RETURNING id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+                  payment_method, notes, created_at, updated_at
+      `;
+      const orderValues = [
+        checkoutData.customerId || null,
+        checkoutData.customerSnapshot || null,
+        checkoutData.totalAmountHT,
+        checkoutData.totalAmountTTC,
+        checkoutData.paymentMethod,
+        checkoutData.notes || "",
+        checkoutData.paymentIntentId || null,
+      ];
+      const orderResult = await client.query(orderQuery, orderValues);
+      const order = new Order(orderResult.rows[0] as OrderData);
+
+      // Créer les items (réutilise la logique du repository)
+      for (const item of checkoutData.items || []) {
+        const itemQuery = `
+          INSERT INTO order_items (order_id, product_id, product_name, quantity, 
+                                  unit_price_ht, unit_price_ttc, vat_rate, 
+                                  total_price_ht, total_price_ttc, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+          RETURNING id, order_id, product_id, product_name, quantity, 
+                    unit_price_ht, unit_price_ttc, vat_rate, 
+                    total_price_ht, total_price_ttc, created_at, updated_at
+        `;
+        await client.query(itemQuery, [
+          order.id,
+          item.productId,
+          item.productName,
+          item.quantity,
+          item.unitPriceHT,
+          item.unitPriceTTC,
+          item.vatRate,
+          item.totalPriceHT,
+          item.totalPriceTTC,
+        ]);
+      }
+
+      // Créer les adresses (réutilise la logique du repository)
+      for (const address of checkoutData.addresses || []) {
+        const addressQuery = `
+          INSERT INTO order_addresses (order_id, type, address_snapshot, created_at, updated_at)
+          VALUES ($1, $2, $3, NOW(), NOW())
+          RETURNING id, order_id, type AS address_type, address_snapshot, created_at, updated_at
+        `;
+        await client.query(addressQuery, [
+          order.id,
+          address.addressType,
+          address.addressSnapshot, // PostgreSQL gère automatiquement la conversion JSONB
+        ]);
+      }
+
+      await client.query("COMMIT");
+      return order;
+    } catch (error: any) {
+      await client.query("ROLLBACK");
+      console.error("Error creating order from checkout:", error);
+      throw new Error(`Failed to create order from checkout: ${error.message}`);
+    } finally {
+      client.release();
     }
   }
 

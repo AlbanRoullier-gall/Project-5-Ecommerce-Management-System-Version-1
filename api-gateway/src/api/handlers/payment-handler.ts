@@ -122,68 +122,8 @@ function calculateItemPrices(item: OrderItem, vatRate: number) {
   };
 }
 
-/**
- * Crée un item de commande
- */
-async function createOrderItem(
-  orderId: number,
-  item: OrderItem,
-  productInfo: Map<number, ProductInfo>
-): Promise<void> {
-  const productId = Number(item.productId ?? item.product_id);
-  if (!Number.isFinite(productId) || productId <= 0) return;
-
-  const pInfo = productInfo.get(productId);
-  const rawVat = pInfo?.vatRate ?? item.vatRate ?? item.vat_rate;
-  const parsedVat = Number(rawVat);
-  const vatRate = Number.isFinite(parsedVat) && parsedVat >= 0 ? parsedVat : 0;
-
-  const prices = calculateItemPrices(item, vatRate);
-  const productName = (
-    pInfo?.name ||
-    item.product_name ||
-    "Produit"
-  ).toString();
-
-  await axios.post(
-    `${SERVICES.order}/api/orders/${orderId}/items`,
-    {
-      orderId,
-      productId,
-      productName,
-      ...prices,
-    },
-    { headers: { "Content-Type": "application/json" } }
-  );
-}
-
-/**
- * Crée les adresses de livraison et facturation
- */
-async function createOrderAddresses(
-  orderId: number,
-  snapshot: any
-): Promise<void> {
-  const createAddress = async (addressType: string, address: any) => {
-    if (!address) return;
-    await axios.post(
-      `${SERVICES.order}/api/orders/${orderId}/addresses`,
-      { orderId, addressType, addressSnapshot: address },
-      { headers: { "Content-Type": "application/json" } }
-    );
-  };
-
-  await Promise.allSettled([
-    createAddress(
-      "shipping",
-      snapshot.shippingAddress || snapshot.shipping_address
-    ),
-    createAddress(
-      "billing",
-      snapshot.billingAddress || snapshot.billing_address
-    ),
-  ]);
-}
+// Note: Les fonctions createOrderItem et createOrderAddresses ont été supprimées
+// car elles ne sont plus nécessaires - tout est créé en une transaction via /api/orders/from-checkout
 
 /**
  * Envoie l'email de confirmation de commande
@@ -246,6 +186,7 @@ async function sendOrderConfirmationEmail(
 
 /**
  * Traite la création complète d'une commande (ordre + items + adresses + email)
+ * Utilise le nouvel endpoint /api/orders/from-checkout pour créer tout en une transaction atomique
  */
 async function processOrderCreation(
   cart: any,
@@ -254,27 +195,6 @@ async function processOrderCreation(
 ): Promise<number> {
   // Résoudre customerId
   const customerId = await resolveCustomerId(snapshot);
-
-  // Créer l'ordre
-  const orderPayload: any = {
-    customerId,
-    customerSnapshot:
-      snapshot.customer || snapshot.customerSnapshot || snapshot,
-    totalAmountHT: cart.subtotal,
-    totalAmountTTC: cart.total,
-    paymentMethod: "stripe",
-    notes: snapshot.notes || undefined,
-  };
-  if (paymentIntentId) {
-    orderPayload.paymentIntentId = paymentIntentId;
-  }
-
-  const orderResponse = await axios.post(
-    `${SERVICES.order}/api/orders`,
-    orderPayload,
-    { headers: { "Content-Type": "application/json" } }
-  );
-  const orderId = orderResponse.data?.order?.id;
 
   // Charger les infos produits
   const sourceItems: OrderItem[] = Array.isArray(snapshot?.items)
@@ -285,13 +205,74 @@ async function processOrderCreation(
     .filter((id) => Number.isFinite(id) && id > 0);
   const productInfo = await loadProductInfo(productIds);
 
-  // Créer les items (non-bloquant)
-  await Promise.allSettled(
-    sourceItems.map((item) => createOrderItem(orderId, item, productInfo))
-  );
+  // Préparer les items avec les prix calculés
+  const orderItems = sourceItems.map((item) => {
+    const productId = Number(item.productId ?? item.product_id);
+    const pInfo = productInfo.get(productId);
+    const rawVat = pInfo?.vatRate ?? item.vatRate ?? item.vat_rate;
+    const parsedVat = Number(rawVat);
+    const vatRate =
+      Number.isFinite(parsedVat) && parsedVat >= 0 ? parsedVat : 0;
 
-  // Créer les adresses (non-bloquant)
-  await createOrderAddresses(orderId, snapshot);
+    const prices = calculateItemPrices(item, vatRate);
+    const productName = (
+      pInfo?.name ||
+      item.product_name ||
+      "Produit"
+    ).toString();
+
+    return {
+      productId,
+      productName,
+      quantity: prices.quantity,
+      unitPriceHT: prices.unitPriceHT,
+      unitPriceTTC: prices.unitPriceTTC,
+      vatRate: prices.vatRate,
+      totalPriceHT: prices.totalPriceHT,
+      totalPriceTTC: prices.totalPriceTTC,
+    };
+  });
+
+  // Préparer les adresses
+  const addresses = [];
+  const shippingAddress = snapshot.shippingAddress || snapshot.shipping_address;
+  const billingAddress = snapshot.billingAddress || snapshot.billing_address;
+
+  if (shippingAddress) {
+    addresses.push({
+      addressType: "shipping",
+      addressSnapshot: shippingAddress,
+    });
+  }
+  if (billingAddress) {
+    addresses.push({
+      addressType: "billing",
+      addressSnapshot: billingAddress,
+    });
+  }
+
+  // Créer la commande complète en une seule transaction atomique
+  const checkoutPayload: any = {
+    customerId,
+    customerSnapshot:
+      snapshot.customer || snapshot.customerSnapshot || snapshot,
+    totalAmountHT: cart.subtotal,
+    totalAmountTTC: cart.total,
+    paymentMethod: "stripe",
+    notes: snapshot.notes || undefined,
+    items: orderItems,
+    addresses: addresses.length > 0 ? addresses : undefined,
+  };
+  if (paymentIntentId) {
+    checkoutPayload.paymentIntentId = paymentIntentId;
+  }
+
+  const orderResponse = await axios.post(
+    `${SERVICES.order}/api/orders/from-checkout`,
+    checkoutPayload,
+    { headers: { "Content-Type": "application/json" } }
+  );
+  const orderId = orderResponse.data?.order?.id;
 
   // Envoyer l'email (non-bloquant)
   try {
