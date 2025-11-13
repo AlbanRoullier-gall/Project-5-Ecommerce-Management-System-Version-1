@@ -15,7 +15,6 @@ import {
   requireAuth,
   corsMiddleware,
   helmetMiddleware,
-  stripeWebhookBody,
   jsonParser,
   urlencodedParser,
   notFoundHandler,
@@ -72,8 +71,6 @@ export class ApiRouter {
     app.use(helmetMiddleware);
 
     // ===== PARSING DU BODY =====
-    // Middleware spécifique pour les webhooks Stripe (besoin du raw body)
-    app.use("/api/webhooks/stripe", stripeWebhookBody);
     // Parsers conditionnels basés sur Content-Type
     app.use(jsonParser);
     app.use(urlencodedParser);
@@ -365,7 +362,6 @@ export class ApiRouter {
 
     // Routes orchestrées
     app.post("/api/payment/create", this.paymentController.createPayment);
-    app.post("/api/webhooks/stripe", this.paymentController.stripeWebhook);
     app.post("/api/payment/finalize", this.paymentController.finalizePayment);
 
     // ===== ROUTES EMAIL =====

@@ -141,8 +141,6 @@ export class ApiRouter {
       }
     );
 
-    // (Route de confirmation supprimée)
-
     // ===== GESTION DES ERREURS =====
     app.use((req: Request, res: Response) => {
       res.status(404).json(ResponseMapper.notFoundError("Route"));

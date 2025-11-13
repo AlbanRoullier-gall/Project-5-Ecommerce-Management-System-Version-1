@@ -7,7 +7,6 @@ import Stripe from "stripe";
 
 export default class PaymentService {
   private stripe: Stripe;
-  private webhookSecret: string;
 
   constructor() {
     this.stripe = new Stripe(
@@ -17,7 +16,6 @@ export default class PaymentService {
         apiVersion: "2023-10-16",
       }
     );
-    this.webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
     console.log("✅ Stripe service initialized");
   }
 
@@ -78,8 +76,6 @@ export default class PaymentService {
     }
   }
 
-  // (Méthode de confirmation supprimée)
-
   /**
    * Vérifier la configuration Stripe
    * @returns {Object} État de la configuration
@@ -87,7 +83,6 @@ export default class PaymentService {
   getConfigurationStatus(): any {
     return {
       stripeConfigured: !!this.stripe,
-      webhookConfigured: !!this.webhookSecret,
       publicKey: process.env.STRIPE_PUBLIC_KEY
         ? "configured"
         : "not configured",

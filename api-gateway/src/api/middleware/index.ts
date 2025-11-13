@@ -14,7 +14,7 @@ export {
 export { corsMiddleware, helmetMiddleware } from "./security";
 
 // Middlewares de parsing du body
-export { stripeWebhookBody, jsonParser, urlencodedParser } from "./body-parser";
+export { jsonParser, urlencodedParser } from "./body-parser";
 
 // Middlewares de gestion d'erreurs
 export { notFoundHandler, errorHandler } from "./error-handler";

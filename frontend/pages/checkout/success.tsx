@@ -3,7 +3,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { useCart } from "../../contexts/CartContext";
@@ -18,32 +18,75 @@ export default function CheckoutSuccessPage() {
   const { csid } = router.query;
   const { clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
+  const hasFinalized = useRef(false);
 
-  // Vider le panier et tenter une finalisation manuelle (fallback si webhook indisponible)
+  // Finaliser le paiement : créer la commande, envoyer l'email de confirmation et vider le panier
+  // Cette finalisation se fait depuis cette page après la redirection Stripe
   useEffect(() => {
-    if (csid && !isProcessing) {
-      setIsProcessing(true);
-      const cartSessionId =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem("cart_session_id")
-          : null;
-      const finalize = async () => {
-        try {
-          await fetch(`${API_URL}/api/payment/finalize`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ csid, cartSessionId }),
-          });
-        } catch (e) {
-          // non-bloquant
-        }
-      };
-      Promise.resolve()
-        .then(finalize)
-        .then(() => clearCart())
-        .finally(() => setIsProcessing(false));
+    // Stripe ajoute session_id dans les query params, pas csid
+    const sessionId =
+      (router.query.session_id as string) || (router.query.csid as string);
+
+    // Éviter les appels multiples
+    if (!sessionId || isProcessing || hasFinalized.current) {
+      return;
     }
-  }, [csid]);
+
+    setIsProcessing(true);
+    hasFinalized.current = true;
+
+    const cartSessionId =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("cart_session_id")
+        : null;
+
+    if (!cartSessionId) {
+      console.error("No cart session ID found");
+      setIsProcessing(false);
+      return;
+    }
+
+    const finalize = async () => {
+      try {
+        console.log("Finalizing payment with:", {
+          csid: sessionId,
+          cartSessionId,
+        });
+        const response = await fetch(`${API_URL}/api/payment/finalize`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ csid: sessionId, cartSessionId }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("Finalize payment error:", errorData);
+          throw new Error(errorData.message || "Failed to finalize payment");
+        }
+
+        const result = await response.json();
+        console.log("Payment finalized successfully:", result);
+        return result;
+      } catch (e) {
+        console.error("Finalize payment exception:", e);
+        // Réinitialiser hasFinalized en cas d'erreur pour permettre un retry
+        hasFinalized.current = false;
+        throw e;
+      }
+    };
+
+    Promise.resolve()
+      .then(finalize)
+      .then(() => {
+        console.log("Clearing cart after successful payment");
+        clearCart();
+      })
+      .catch((error) => {
+        console.error("Failed to finalize payment:", error);
+        // Ne pas vider le panier si la finalisation échoue
+      })
+      .finally(() => setIsProcessing(false));
+  }, [router.query.session_id, router.query.csid, clearCart]);
 
   return (
     <>

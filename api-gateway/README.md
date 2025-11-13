@@ -23,7 +23,7 @@ src/
 │   └── *.ts            # Définitions de routes par service (legacy)
 ├── handlers/            # Handlers spécialisés
 │   ├── auth-handler.ts
-│   ├── payment-handler.ts
+│   ├── payment-handler.ts  # Orchestration création commande après paiement
 │   └── export-handler.ts
 ```
 

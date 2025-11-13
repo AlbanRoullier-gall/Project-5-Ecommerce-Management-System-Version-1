@@ -1,46 +1,97 @@
 import axios from "axios";
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
+import { checkoutSnapshots } from "../controller/CartController";
 // Use dynamic require to avoid type dependency at compile time
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const StripeLib: any = require("stripe");
 
 /**
- * Orchestration pour la création de paiement:
- * - Attache le snapshot checkout au cart-service (Stripe-agnostique)
- * - Crée la session Stripe via payment-service
- * - Enregistre le mapping csid → sessionId dans le Gateway (mémoire) pour le webhook
+ * Handler pour finaliser un paiement après succès Stripe
+ *
+ * Rôle : Orchestration uniquement
+ * - Récupère les données nécessaires (cart, snapshot, Stripe session)
+ * - Délègue la transformation des données aux services appropriés
+ * - Coordonne les appels aux services indépendants
  */
 
-// Mémoire volatile dans le Gateway (peut être remplacée par Redis central si besoin)
-const csidToSessionInMemory = new Map<string, string>();
-export const checkoutSnapshots = new Map<string, any>();
-
-// Types utilitaires
-interface ProductInfo {
-  name: string;
-  vatRate: number;
+/**
+ * Extrait le payment intent ID depuis une session Stripe
+ */
+function extractPaymentIntentId(session: any): string {
+  if (typeof session.payment_intent === "string") {
+    return session.payment_intent;
+  }
+  return session.payment_intent?.id || "";
 }
-
-interface OrderItem {
-  productId?: number;
-  product_id?: number;
-  quantity: number;
-  price: number;
-  vatRate?: number;
-  vat_rate?: number;
-  product_name?: string;
-}
-
-// ===== FONCTIONS UTILITAIRES =====
 
 /**
- * Charge les informations produits depuis le product-service
+ * Récupère la session Stripe et extrait les informations nécessaires
+ */
+async function getStripeSessionInfo(csid: string): Promise<{
+  session: any;
+  paymentIntentId: string | undefined;
+  cartSessionId: string | undefined;
+}> {
+  const stripeKey = process.env["STRIPE_SECRET_KEY"];
+  if (!stripeKey) {
+    throw new Error("STRIPE_SECRET_KEY not configured");
+  }
+
+  const stripe = new StripeLib(stripeKey, { apiVersion: "2023-08-16" });
+  const session = await stripe.checkout.sessions.retrieve(csid);
+  const paymentIntentId = extractPaymentIntentId(session) || undefined;
+  const cartSessionId = session.metadata?.cartSessionId || undefined;
+
+  return { session, paymentIntentId, cartSessionId };
+}
+
+/**
+ * Récupère le cartSessionId depuis différentes sources
+ */
+function resolveCartSessionId(
+  providedCartSessionId: string | undefined,
+  csid: string,
+  stripeSessionToCartSession?: Map<string, string>,
+  stripeSession?: any
+): string | null {
+  // 1. Utiliser celui fourni directement
+  if (providedCartSessionId) {
+    return providedCartSessionId;
+  }
+
+  // 2. Essayer depuis le mapping en mémoire
+  if (stripeSessionToCartSession) {
+    const mapped = stripeSessionToCartSession.get(csid);
+    if (mapped) return mapped;
+  }
+
+  // 3. Essayer depuis les métadonnées Stripe
+  if (stripeSession?.metadata?.cartSessionId) {
+    return stripeSession.metadata.cartSessionId;
+  }
+
+  return null;
+}
+
+/**
+ * Récupère le panier depuis cart-service
+ */
+async function fetchCart(cartSessionId: string): Promise<any> {
+  const response = await axios.get(`${SERVICES.cart}/api/cart`, {
+    params: { sessionId: cartSessionId },
+  });
+  return response.data?.cart;
+}
+
+/**
+ * Charge les informations produits depuis product-service
+ * Le Gateway orchestre cet appel pour enrichir les données
  */
 async function loadProductInfo(
   productIds: number[]
-): Promise<Map<number, ProductInfo>> {
-  const productIdToInfo = new Map<number, ProductInfo>();
+): Promise<Map<number, { name: string; vatRate: number }>> {
+  const productIdToInfo = new Map<number, { name: string; vatRate: number }>();
   const uniqueIds = Array.from(
     new Set(productIds.filter((id) => Number.isFinite(id) && id > 0))
   );
@@ -70,7 +121,8 @@ async function loadProductInfo(
 }
 
 /**
- * Résout le customerId depuis l'email si nécessaire
+ * Résout le customerId depuis customer-service si nécessaire
+ * Le Gateway orchestre cet appel pour résoudre l'ID client
  */
 async function resolveCustomerId(snapshot: any): Promise<number | undefined> {
   let customerId = snapshot.customer?.customerId || snapshot.customerId;
@@ -92,148 +144,56 @@ async function resolveCustomerId(snapshot: any): Promise<number | undefined> {
 }
 
 /**
- * Extrait le payment intent ID depuis une session Stripe
+ * Prépare le payload pour order-service à partir du cart et snapshot
+ * Cette transformation est minimale et nécessaire pour adapter les formats
  */
-function extractPaymentIntentId(session: any): string {
-  if (typeof session.payment_intent === "string") {
-    return session.payment_intent;
-  }
-  return session.payment_intent?.id || "";
-}
-
-/**
- * Calcule les prix HT et TTC pour un item
- */
-function calculateItemPrices(item: OrderItem, vatRate: number) {
-  const quantity = Number(item.quantity) || 0;
-  const unitPriceTTC = Number(item.price) || 0;
-  const vatMultiplier = 1 + vatRate / 100;
-  const unitPriceHT = unitPriceTTC / vatMultiplier;
-  const totalPriceTTC = unitPriceTTC * quantity;
-  const totalPriceHT = totalPriceTTC / vatMultiplier;
-
-  return {
-    quantity,
-    unitPriceHT,
-    unitPriceTTC,
-    totalPriceHT,
-    totalPriceTTC,
-    vatRate,
-  };
-}
-
-// Note: Les fonctions createOrderItem et createOrderAddresses ont été supprimées
-// car elles ne sont plus nécessaires - tout est créé en une transaction via /api/orders/from-checkout
-
-/**
- * Envoie l'email de confirmation de commande
- */
-async function sendOrderConfirmationEmail(
-  orderId: number,
-  cart: any,
-  snapshot: any,
-  items: OrderItem[],
-  productInfo: Map<number, ProductInfo>
-): Promise<void> {
-  const shipping = snapshot.shippingAddress || snapshot.shipping_address || {};
-  const customerFirstName =
-    snapshot.customer?.firstName || shipping.firstName || "";
-  const customerLastName =
-    snapshot.customer?.lastName || shipping.lastName || "";
-
-  const emailItems = items.map((item) => {
-    const productId = Number(item.productId ?? item.product_id);
-    const pInfo = productInfo.get(productId);
-    const rawVat = pInfo?.vatRate ?? item.vatRate ?? item.vat_rate;
-    const parsedVat = Number(rawVat);
-    const vatRate =
-      Number.isFinite(parsedVat) && parsedVat >= 0 ? parsedVat : 21;
-
-    return {
-      name: (pInfo?.name || item.product_name || "Produit").toString(),
-      quantity: Number(item.quantity),
-      unitPrice: Number(item.price),
-      totalPrice: Number(item.price) * Number(item.quantity),
-      vatRate,
-    };
-  });
-
-  const emailPayload = {
-    customerEmail: snapshot.customer?.email || snapshot.email || "",
-    customerName: `${customerFirstName} ${customerLastName}`.trim(),
-    orderId,
-    orderDate: new Date().toISOString(),
-    items: emailItems,
-    subtotal: Number(cart.subtotal || 0),
-    tax: Number((cart as any).tax ?? Math.max(cart.total - cart.subtotal, 0)),
-    total: Number(cart.total || 0),
-    shippingAddress: {
-      firstName: shipping.firstName || customerFirstName || "",
-      lastName: shipping.lastName || customerLastName || "",
-      address: shipping.address || "",
-      city: shipping.city || "",
-      postalCode: shipping.postalCode || "",
-      country: shipping.country || "",
-    },
-  };
-
-  await axios.post(
-    `${SERVICES.email}/api/email/order-confirmation`,
-    emailPayload,
-    { headers: { "Content-Type": "application/json" } }
-  );
-}
-
-/**
- * Traite la création complète d'une commande (ordre + items + adresses + email)
- * Utilise le nouvel endpoint /api/orders/from-checkout pour créer tout en une transaction atomique
- */
-async function processOrderCreation(
+async function prepareOrderPayload(
   cart: any,
   snapshot: any,
   paymentIntentId?: string
-): Promise<number> {
-  // Résoudre customerId
-  const customerId = await resolveCustomerId(snapshot);
-
-  // Charger les infos produits
-  const sourceItems: OrderItem[] = Array.isArray(snapshot?.items)
+): Promise<any> {
+  // Extraire les items depuis snapshot ou cart
+  const sourceItems = Array.isArray(snapshot?.items)
     ? snapshot.items
     : cart.items || [];
+
+  // Charger les infos produits depuis product-service
   const productIds = sourceItems
-    .map((item) => Number(item.productId ?? item.product_id))
-    .filter((id) => Number.isFinite(id) && id > 0);
+    .map((item: any) => Number(item.productId ?? item.product_id))
+    .filter((id: number) => Number.isFinite(id) && id > 0);
   const productInfo = await loadProductInfo(productIds);
 
-  // Préparer les items avec les prix calculés
-  const orderItems = sourceItems.map((item) => {
+  // Transformer les items pour order-service
+  // Note: order-service attend un format spécifique avec calculs HT/TTC
+  const items = sourceItems.map((item: any) => {
     const productId = Number(item.productId ?? item.product_id);
     const pInfo = productInfo.get(productId);
-    const rawVat = pInfo?.vatRate ?? item.vatRate ?? item.vat_rate;
-    const parsedVat = Number(rawVat);
-    const vatRate =
-      Number.isFinite(parsedVat) && parsedVat >= 0 ? parsedVat : 0;
-
-    const prices = calculateItemPrices(item, vatRate);
-    const productName = (
-      pInfo?.name ||
-      item.product_name ||
-      "Produit"
-    ).toString();
+    const quantity = Number(item.quantity) || 0;
+    const unitPriceTTC = Number(item.price) || 0;
+    const vatRate = Number(
+      pInfo?.vatRate ?? item.vatRate ?? item.vat_rate ?? 0
+    );
+    const vatMultiplier = 1 + vatRate / 100;
+    const unitPriceHT = unitPriceTTC / vatMultiplier;
+    const totalPriceTTC = unitPriceTTC * quantity;
+    const totalPriceHT = totalPriceTTC / vatMultiplier;
 
     return {
       productId,
-      productName,
-      quantity: prices.quantity,
-      unitPriceHT: prices.unitPriceHT,
-      unitPriceTTC: prices.unitPriceTTC,
-      vatRate: prices.vatRate,
-      totalPriceHT: prices.totalPriceHT,
-      totalPriceTTC: prices.totalPriceTTC,
+      productName: (pInfo?.name || item.product_name || "Produit").toString(),
+      quantity,
+      unitPriceHT,
+      unitPriceTTC,
+      vatRate,
+      totalPriceHT,
+      totalPriceTTC,
     };
   });
 
-  // Préparer les adresses
+  // Résoudre customerId si nécessaire
+  const customerId = await resolveCustomerId(snapshot);
+
+  // Extraire les adresses
   const addresses = [];
   const shippingAddress = snapshot.shippingAddress || snapshot.shipping_address;
   const billingAddress = snapshot.billingAddress || snapshot.billing_address;
@@ -251,223 +211,194 @@ async function processOrderCreation(
     });
   }
 
-  // Créer la commande complète en une seule transaction atomique
-  const checkoutPayload: any = {
-    customerId,
-    customerSnapshot:
-      snapshot.customer || snapshot.customerSnapshot || snapshot,
-    totalAmountHT: cart.subtotal,
-    totalAmountTTC: cart.total,
+  // Construire le payload pour order-service
+  const payload: any = {
+    totalAmountHT: cart.subtotal || 0,
+    totalAmountTTC: cart.total || 0,
     paymentMethod: "stripe",
     notes: snapshot.notes || undefined,
-    items: orderItems,
+    items,
     addresses: addresses.length > 0 ? addresses : undefined,
   };
+
+  // Ajouter customerId si disponible (order-service l'exige)
+  if (customerId) {
+    payload.customerId = customerId;
+  }
+
+  // Ajouter customerSnapshot (order-service l'accepte si customerId n'est pas disponible)
+  const customerSnapshot =
+    snapshot.customer || snapshot.customerSnapshot || snapshot;
+  if (customerSnapshot) {
+    payload.customerSnapshot = customerSnapshot;
+  }
+
+  // Ajouter paymentIntentId pour l'idempotence
   if (paymentIntentId) {
-    checkoutPayload.paymentIntentId = paymentIntentId;
+    payload.paymentIntentId = paymentIntentId;
   }
 
-  const orderResponse = await axios.post(
-    `${SERVICES.order}/api/orders/from-checkout`,
-    checkoutPayload,
-    { headers: { "Content-Type": "application/json" } }
-  );
-  const orderId = orderResponse.data?.order?.id;
-
-  // Envoyer l'email (non-bloquant)
-  try {
-    await sendOrderConfirmationEmail(
-      orderId,
-      cart,
-      snapshot,
-      sourceItems,
-      productInfo
-    );
-  } catch (error) {
-    console.warn("Email send failed (non-blocking):", (error as any)?.message);
-  }
-
-  return orderId;
+  return payload;
 }
 
-// ===== HANDLERS =====
-
-export const handleCreatePayment = async (req: Request, res: Response) => {
-  try {
-    const { cartSessionId, snapshot, payment } = req.body || {};
-    if (!cartSessionId || !snapshot || !payment) {
-      return res
-        .status(400)
-        .json({ error: "cartSessionId, snapshot, payment are required" });
-    }
-
-    // Stocker le snapshot dans l'API Gateway
-    checkoutSnapshots.set(cartSessionId, snapshot);
-
-    // Forcer l'ajout du placeholder csid dans les URLs de redirection
-    const ensureCsid = (url: string) =>
-      url.includes("{CHECKOUT_SESSION_ID}")
-        ? url
-        : url + (url.includes("?") ? "&" : "?") + "csid={CHECKOUT_SESSION_ID}";
-
-    // Créer la session Stripe via payment-service
-    const paymentPayload = {
-      ...payment,
-      successUrl: ensureCsid(payment.successUrl),
-      cancelUrl: ensureCsid(payment.cancelUrl),
-      metadata: { ...(payment.metadata || {}), cartSessionId },
-    };
-
-    const paymentResp = await axios.post(
-      `${SERVICES.payment}/api/payment/create`,
-      paymentPayload,
-      { headers: { "Content-Type": "application/json" } }
-    );
-
-    const { id: checkoutSessionId, url } =
-      paymentResp.data.payment || paymentResp.data || {};
-    if (checkoutSessionId) {
-      csidToSessionInMemory.set(checkoutSessionId, cartSessionId);
-    }
-
-    return res.status(201).json({ url, checkoutSessionId });
-  } catch (error: any) {
-    console.error(
-      "handleCreatePayment error:",
-      error?.response?.data || error?.message
-    );
-    return res.status(500).json({ error: "Payment creation failed" });
-  }
-};
-
-export const getSessionIdForCsid = (csid: string): string | undefined => {
-  return csidToSessionInMemory.get(csid);
-};
-
-export const deleteCsidMapping = (csid: string): void => {
-  csidToSessionInMemory.delete(csid);
-};
+/**
+ * Crée la commande via order-service
+ */
+async function createOrder(payload: any): Promise<number> {
+  const response = await axios.post(
+    `${SERVICES.order}/api/orders/from-checkout`,
+    payload,
+    { headers: { "Content-Type": "application/json" } }
+  );
+  return response.data?.order?.id;
+}
 
 /**
- * Webhook Stripe (orchestration côté Gateway)
- * - Vérifie la signature
- * - Sur checkout.session.completed : récupère snapshot/cart, crée la commande, envoie l'email
+ * Prépare le payload pour email-service à partir du cart et snapshot
  */
-export const handleStripeWebhook = async (req: Request, res: Response) => {
-  const stripe = new StripeLib(process.env["STRIPE_SECRET_KEY"] || "", {
-    apiVersion: "2023-08-16",
+function prepareEmailPayload(orderId: number, cart: any, snapshot: any): any {
+  const customer = snapshot.customer || {};
+  const shipping = snapshot.shippingAddress || snapshot.shipping_address || {};
+  const sourceItems = Array.isArray(snapshot?.items)
+    ? snapshot.items
+    : cart.items || [];
+
+  // Transformer les items pour email-service
+  const items = sourceItems.map((item: any) => ({
+    name: item.product_name || "Produit",
+    quantity: Number(item.quantity) || 0,
+    unitPrice: Number(item.price) || 0,
+    totalPrice: Number(item.price) * (Number(item.quantity) || 0),
+    vatRate: Number(item.vatRate ?? item.vat_rate ?? 21),
+  }));
+
+  return {
+    customerEmail: customer.email || snapshot.email || "",
+    customerName: `${customer.firstName || shipping.firstName || ""} ${
+      customer.lastName || shipping.lastName || ""
+    }`.trim(),
+    orderId,
+    orderDate: new Date().toISOString(),
+    items,
+    subtotal: Number(cart.subtotal || 0),
+    tax: Number((cart as any).tax ?? Math.max(cart.total - cart.subtotal, 0)),
+    total: Number(cart.total || 0),
+    shippingAddress: {
+      firstName: shipping.firstName || customer.firstName || "",
+      lastName: shipping.lastName || customer.lastName || "",
+      address: shipping.address || "",
+      city: shipping.city || "",
+      postalCode: shipping.postalCode || "",
+      country: shipping.country || "",
+    },
+  };
+}
+
+/**
+ * Envoie l'email de confirmation via email-service
+ */
+async function sendOrderConfirmationEmail(payload: any): Promise<void> {
+  await axios.post(`${SERVICES.email}/api/email/order-confirmation`, payload, {
+    headers: { "Content-Type": "application/json" },
   });
-  const webhookSecret = process.env["STRIPE_WEBHOOK_SECRET"] || "";
-
-  // Vérifier la signature
-  const sig = req.headers["stripe-signature"] as string;
-  let event: any;
-  try {
-    event = stripe.webhooks.constructEvent(
-      (req as any).rawBody,
-      sig,
-      webhookSecret
-    );
-  } catch (err: any) {
-    console.error("⚠️  Webhook signature verification failed.", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  try {
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object as any;
-      const csid = session.id;
-      const paymentIntentId = extractPaymentIntentId(session);
-
-      // Retrouver le cartSessionId depuis notre mémoire côté Gateway
-      const cartSessionId = getSessionIdForCsid(csid);
-      if (!cartSessionId) {
-        console.warn("No cartSessionId mapping found for csid:", csid);
-        return res.json({ received: true });
-      }
-
-      // Récupérer cart et snapshot
-      const cartResp = await axios.get(`${SERVICES.cart}/api/cart`, {
-        params: { sessionId: cartSessionId },
-      });
-      const cart = cartResp.data?.cart;
-      const snapshot = checkoutSnapshots.get(cartSessionId);
-
-      if (!cart || !snapshot) {
-        console.error("Missing cart or snapshot for session:", cartSessionId);
-        return res.json({ received: true });
-      }
-
-      // Traiter la création de commande
-      await processOrderCreation(cart, snapshot, paymentIntentId);
-
-      // Nettoyer le mapping
-      deleteCsidMapping(csid);
-    }
-
-    return res.json({ received: true });
-  } catch (error: any) {
-    console.error(
-      "handleStripeWebhook error:",
-      error?.response?.data || error?.message
-    );
-    return res.status(500).json({ error: "Webhook handling failed" });
-  }
-};
+}
 
 /**
- * Finaliser manuellement une commande si le webhook n'a pas tourné (dev/recovery)
- * Body: { csid: string, cartSessionId?: string }
+ * Finaliser un paiement après succès Stripe
+ *
+ * Orchestration simple :
+ * 1. Récupère les données (Stripe session, cart, snapshot)
+ * 2. Prépare les payloads pour les services
+ * 3. Appelle order-service pour créer la commande
+ * 4. Appelle email-service pour envoyer l'email
  */
-export const handleFinalizePayment = async (req: Request, res: Response) => {
+export const handleFinalizePayment = async (
+  req: Request,
+  res: Response,
+  stripeSessionToCartSession?: Map<string, string>
+) => {
   try {
-    const { csid } = req.body || {};
+    let { csid, cartSessionId } = req.body || {};
+    console.log(
+      `[handleFinalizePayment] Received: csid=${csid}, cartSessionId=${cartSessionId}`
+    );
+
+    // Validation
     if (!csid) {
       return res.status(400).json({ error: "csid is required" });
     }
 
-    // Retrouver le cartSessionId
-    let cartSessionId = getSessionIdForCsid(csid) || req.body?.cartSessionId;
-    if (!cartSessionId) {
-      return res
-        .status(404)
-        .json({ error: "No session mapping found for csid" });
-    }
-
-    // Récupérer cart et snapshot
-    const cartResp = await axios.get(`${SERVICES.cart}/api/cart`, {
-      params: { sessionId: cartSessionId },
-    });
-    const cart = cartResp.data?.cart;
-    const snapshot = checkoutSnapshots.get(cartSessionId);
-    if (!cart || !snapshot) {
-      return res.status(404).json({ error: "Cart or snapshot not found" });
-    }
-
-    // Tenter de récupérer le payment_intent via Stripe (fallback si indispo)
-    let paymentIntentId: string | undefined;
+    // 1. Récupérer la session Stripe
+    let stripeSessionInfo;
     try {
-      const stripeKey = process.env["STRIPE_SECRET_KEY"];
-      if (stripeKey) {
-        const stripe = new StripeLib(stripeKey, { apiVersion: "2023-08-16" });
-        const session = await stripe.checkout.sessions.retrieve(csid);
-        paymentIntentId = extractPaymentIntentId(session) || undefined;
-      }
+      stripeSessionInfo = await getStripeSessionInfo(csid);
     } catch (e) {
       console.warn(
-        "Finalize: unable to fetch payment_intent from Stripe, proceeding without it"
+        "[handleFinalizePayment] Unable to fetch Stripe session:",
+        (e as any)?.message
+      );
+      // Continue sans paymentIntentId si nécessaire
+      stripeSessionInfo = { session: null, paymentIntentId: undefined };
+    }
+
+    // 2. Résoudre le cartSessionId
+    const resolvedCartSessionId = resolveCartSessionId(
+      cartSessionId,
+      csid,
+      stripeSessionToCartSession,
+      stripeSessionInfo.session
+    );
+
+    if (!resolvedCartSessionId) {
+      return res.status(400).json({
+        error: "cartSessionId is required (provide it or ensure csid is valid)",
+      });
+    }
+
+    // 3. Récupérer le snapshot et le cart
+    const snapshot = checkoutSnapshots.get(resolvedCartSessionId);
+    if (!snapshot) {
+      return res.status(404).json({ error: "Checkout snapshot not found" });
+    }
+
+    const cart = await fetchCart(resolvedCartSessionId);
+    if (!cart) {
+      return res.status(404).json({ error: "Cart not found" });
+    }
+
+    // 4. Créer la commande via order-service
+    console.log(`[handleFinalizePayment] Creating order...`);
+    const orderPayload = await prepareOrderPayload(
+      cart,
+      snapshot,
+      stripeSessionInfo.paymentIntentId
+    );
+    const orderId = await createOrder(orderPayload);
+    console.log(
+      `[handleFinalizePayment] Order created successfully: ${orderId}`
+    );
+
+    // 5. Envoyer l'email via email-service (non-bloquant)
+    try {
+      const emailPayload = prepareEmailPayload(orderId, cart, snapshot);
+      await sendOrderConfirmationEmail(emailPayload);
+      console.log(`[handleFinalizePayment] Email sent successfully`);
+    } catch (error) {
+      console.warn(
+        "Email send failed (non-blocking):",
+        (error as any)?.message
       );
     }
 
-    // Traiter la création de commande
-    const orderId = await processOrderCreation(cart, snapshot, paymentIntentId);
-
-    return res.status(200).json({ orderId });
+    return res.status(200).json({ orderId, success: true });
   } catch (error: any) {
     console.error(
       "handleFinalizePayment error:",
       error?.response?.data || error?.message
     );
-    return res.status(500).json({ error: "Finalize failed" });
+    return res.status(500).json({
+      error: "Finalize failed",
+      message: error?.message || "Internal server error",
+    });
   }
 };

@@ -5,7 +5,9 @@
 
 import { Request, Response } from "express";
 import { proxyRequest } from "../proxy";
-import { checkoutSnapshots } from "../handlers/payment-handler";
+
+// Stockage local des snapshots checkout (peut être remplacé par Redis si nécessaire)
+export const checkoutSnapshots = new Map<string, any>();
 
 export class CartController {
   /**

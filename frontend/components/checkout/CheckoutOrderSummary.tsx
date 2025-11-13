@@ -296,7 +296,7 @@ export default function CheckoutOrderSummary({
             phone: customerData.phoneNumber,
           },
           items: paymentItems,
-          successUrl: `${window.location.origin}/checkout/success`,
+          successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/checkout/cancel`,
           metadata: {
             customerId: customerId.toString(),
