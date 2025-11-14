@@ -21,6 +21,7 @@ export class CartMapper {
     return new CartItem({
       id,
       product_id: dto.productId,
+      product_name: dto.productName,
       quantity: dto.quantity,
       price: dto.price,
       vat_rate: dto.vatRate,
@@ -52,6 +53,7 @@ export class CartMapper {
     return {
       id: item.id,
       productId: item.productId,
+      productName: item.productName,
       quantity: item.quantity,
       price: item.price,
       vatRate: item.vatRate,
@@ -66,6 +68,7 @@ export class CartMapper {
   static cartItemCreateDTOToServiceData(dto: DTO.CartItemCreateDTO): any {
     return {
       productId: dto.productId,
+      productName: dto.productName,
       quantity: dto.quantity,
       price: dto.price,
       vatRate: dto.vatRate,

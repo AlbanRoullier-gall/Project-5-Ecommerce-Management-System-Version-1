@@ -47,7 +47,8 @@ interface CartContextType {
     productId: number,
     quantity: number,
     priceTTC: number,
-    vatRate: number
+    vatRate: number,
+    productName?: string
   ) => Promise<void>;
   updateQuantity: (productId: number, quantity: number) => Promise<void>;
   removeFromCart: (productId: number) => Promise<void>;
@@ -203,7 +204,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     productId: number,
     quantity: number,
     priceTTC: number,
-    vatRate: number
+    vatRate: number,
+    productName?: string
   ) => {
     if (!sessionId) {
       console.log("⚠️ Pas de sessionId, impossible d'ajouter au panier");
@@ -223,6 +225,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       // Créer le DTO pour l'ajout d'article
       const itemData: CartItemCreateDTO = {
         productId,
+        productName,
         quantity,
         price: priceTTC,
         vatRate,

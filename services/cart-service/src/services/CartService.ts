@@ -65,14 +65,26 @@ export default class CartService {
       cart = await this.createCart(sessionId);
     }
 
-    const cartItem = new CartItem({
+    const itemDataForCartItem: {
+      id: string;
+      product_id: number;
+      product_name?: string;
+      quantity: number;
+      price: number;
+      vat_rate: number;
+      added_at: Date;
+    } = {
       id: uuidv4(),
       product_id: itemData.productId,
       quantity: itemData.quantity,
       price: itemData.price,
       vat_rate: (itemData as any).vatRate ?? 0,
       added_at: new Date(),
-    });
+    };
+    if (itemData.productName) {
+      itemDataForCartItem.product_name = itemData.productName;
+    }
+    const cartItem = new CartItem(itemDataForCartItem);
 
     const updatedCart = cart.addItem(cartItem);
     await this.cartRepository.updateCart(updatedCart);

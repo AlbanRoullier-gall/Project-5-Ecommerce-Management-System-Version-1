@@ -11,6 +11,7 @@
  */
 export interface CartItemCreateDTO {
   productId: number;
+  productName?: string; // Nom du produit (optionnel pour rétrocompatibilité)
   quantity: number;
   price: number;
   vatRate: number; // taux de TVA du produit (en %)
@@ -31,6 +32,7 @@ export interface CartItemUpdateDTO {
 export interface CartItemPublicDTO {
   id: string;
   productId: number;
+  productName?: string; // Nom du produit (snapshot au moment de l'ajout)
   quantity: number;
   price: number;
   vatRate: number;

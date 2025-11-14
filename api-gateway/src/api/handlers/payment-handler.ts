@@ -81,39 +81,21 @@ async function fetchCart(cartSessionId: string): Promise<any> {
   const response = await axios.get(`${SERVICES.cart}/api/cart`, {
     params: { sessionId: cartSessionId },
   });
-  return response.data?.cart;
-}
+  const cart = response.data?.cart;
 
-/**
- * Charge les noms de produits depuis product-service
- * Le cart contient déjà vatRate et price, on a juste besoin des noms
- */
-async function loadProductNames(
-  productIds: number[]
-): Promise<Map<number, string>> {
-  const productIdToName = new Map<number, string>();
-  const uniqueIds = Array.from(
-    new Set(productIds.filter((id) => Number.isFinite(id) && id > 0))
-  );
+  // Debug: vérifier si productName est présent dans les items
+  if (cart?.items) {
+    console.log(
+      "[fetchCart] Cart items:",
+      cart.items.map((item: any) => ({
+        productId: item.productId,
+        productName: item.productName,
+        hasProductName: !!item.productName,
+      }))
+    );
+  }
 
-  await Promise.all(
-    uniqueIds.map(async (pid) => {
-      try {
-        const response = await axios.get(
-          `${SERVICES.product}/api/products/${pid}`
-        );
-        const product = response.data?.product || response.data;
-        if (product) {
-          const name = product.name || product.product?.name || "Produit";
-          productIdToName.set(pid, name);
-        }
-      } catch (error) {
-        // Ignore individual product fetch errors, utiliser "Produit" par défaut
-      }
-    })
-  );
-
-  return productIdToName;
+  return cart;
 }
 
 /**
@@ -151,7 +133,7 @@ async function resolveCustomerId(
 
 /**
  * Prépare le payload pour order-service à partir du cart et snapshot
- * Utilise directement les données du cart (vatRate, price) et du snapshot (adresses, client)
+ * Utilise directement les données du cart (vatRate, price, productName) et du snapshot (adresses, client)
  */
 async function prepareOrderPayload(
   cart: any,
@@ -159,14 +141,19 @@ async function prepareOrderPayload(
   paymentIntentId?: string,
   stripeMetadata?: any
 ): Promise<any> {
-  // Utiliser directement les items du cart (ils contiennent déjà vatRate et price)
+  // Utiliser directement les items du cart (ils contiennent déjà vatRate, price et productName)
+  // productName est toujours présent car envoyé par le frontend lors de l'ajout au panier
   const cartItems = cart.items || [];
 
-  // Charger uniquement les noms de produits depuis product-service
-  const productIds = cartItems
-    .map((item: any) => Number(item.productId ?? item.product_id))
-    .filter((id: number) => Number.isFinite(id) && id > 0);
-  const productNames = await loadProductNames(productIds);
+  // Debug: vérifier les productName dans les items
+  console.log(
+    "[prepareOrderPayload] Cart items with productName:",
+    cartItems.map((item: any) => ({
+      productId: item.productId ?? item.product_id,
+      productName: item.productName,
+      hasProductName: !!item.productName,
+    }))
+  );
 
   // Transformer les items en utilisant directement les données du cart
   const items = cartItems.map((item: any) => {
@@ -179,9 +166,16 @@ async function prepareOrderPayload(
     const totalPriceTTC = unitPriceTTC * quantity; // Total TTC
     const totalPriceHT = totalPriceTTC / vatMultiplier; // Total HT
 
+    // Utiliser productName stocké dans le cart (toujours présent car envoyé par le frontend)
+    const productName = item.productName || `Produit #${productId}`;
+
+    console.log(
+      `[prepareOrderPayload] Item ${productId}: productName="${productName}"`
+    );
+
     return {
       productId,
-      productName: productNames.get(productId) || "Produit",
+      productName,
       quantity,
       unitPriceHT,
       unitPriceTTC,
@@ -266,24 +260,24 @@ async function prepareEmailPayload(
   const customer = snapshot.customer || {};
   const shipping = snapshot.shippingAddress || snapshot.shipping_address || {};
 
-  // Utiliser directement les items du cart
+  // Utiliser directement les items du cart (ils contiennent déjà productName, price et vatRate)
+  // productName est toujours présent car envoyé par le frontend lors de l'ajout au panier
   const cartItems = cart.items || [];
 
-  // Charger les noms de produits pour l'email
-  const productIds = cartItems
-    .map((item: any) => Number(item.productId ?? item.product_id))
-    .filter((id: number) => Number.isFinite(id) && id > 0);
-  const productNames = await loadProductNames(productIds);
-
   // Transformer les items pour email-service en utilisant les données du cart
-  const items = cartItems.map((item: any) => ({
-    name:
-      productNames.get(Number(item.productId ?? item.product_id)) || "Produit",
-    quantity: Number(item.quantity) || 0,
-    unitPrice: Number(item.price) || 0, // Prix TTC unitaire depuis le cart
-    totalPrice: Number(item.price) * (Number(item.quantity) || 0), // Total TTC
-    vatRate: Number(item.vatRate ?? item.vat_rate ?? 21), // TVA depuis le cart
-  }));
+  const items = cartItems.map((item: any) => {
+    const productId = Number(item.productId ?? item.product_id);
+    // Utiliser productName stocké dans le cart (toujours présent car envoyé par le frontend)
+    const productName = item.productName || `Produit #${productId}`;
+
+    return {
+      name: productName,
+      quantity: Number(item.quantity) || 0,
+      unitPrice: Number(item.price) || 0, // Prix TTC unitaire depuis le cart
+      totalPrice: Number(item.price) * (Number(item.quantity) || 0), // Total TTC
+      vatRate: Number(item.vatRate ?? item.vat_rate ?? 21), // TVA depuis le cart
+    };
+  });
 
   return {
     customerEmail: customer.email || snapshot.email || "",

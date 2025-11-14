@@ -49,6 +49,7 @@ export class CartRepository {
         items: cart.items.map((item) => ({
           id: item.id,
           product_id: item.productId,
+          product_name: item.productName,
           quantity: item.quantity,
           price: item.price,
           vat_rate: item.vatRate,
@@ -98,6 +99,7 @@ export class CartRepository {
         items: cart.items.map((item) => ({
           id: item.id,
           product_id: item.productId,
+          product_name: item.productName,
           quantity: item.quantity,
           price: item.price,
           vat_rate: item.vatRate,

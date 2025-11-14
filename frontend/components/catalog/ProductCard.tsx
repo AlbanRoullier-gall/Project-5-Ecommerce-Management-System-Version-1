@@ -81,7 +81,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
    */
   const handleAddToCart = async () => {
     try {
-      await addToCart(product.id, 1, getPriceWithVat(), product.vatRate);
+      await addToCart(product.id, 1, getPriceWithVat(), product.vatRate, product.name);
     } catch (error) {
       console.error("Erreur lors de l'ajout au panier:", error);
     }
