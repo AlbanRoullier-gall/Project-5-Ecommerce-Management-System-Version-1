@@ -85,13 +85,13 @@ async function fetchCart(cartSessionId: string): Promise<any> {
 }
 
 /**
- * Charge les informations produits depuis product-service
- * Le Gateway orchestre cet appel pour enrichir les données
+ * Charge les noms de produits depuis product-service
+ * Le cart contient déjà vatRate et price, on a juste besoin des noms
  */
-async function loadProductInfo(
+async function loadProductNames(
   productIds: number[]
-): Promise<Map<number, { name: string; vatRate: number }>> {
-  const productIdToInfo = new Map<number, { name: string; vatRate: number }>();
+): Promise<Map<number, string>> {
+  const productIdToName = new Map<number, string>();
   const uniqueIds = Array.from(
     new Set(productIds.filter((id) => Number.isFinite(id) && id > 0))
   );
@@ -105,29 +105,35 @@ async function loadProductInfo(
         const product = response.data?.product || response.data;
         if (product) {
           const name = product.name || product.product?.name || "Produit";
-          const rawVat = product.vatRate ?? product.product?.vatRate;
-          const parsedVat = Number(rawVat);
-          const vatRate =
-            Number.isFinite(parsedVat) && parsedVat >= 0 ? parsedVat : 0;
-          productIdToInfo.set(pid, { name, vatRate });
+          productIdToName.set(pid, name);
         }
       } catch (error) {
-        // Ignore individual product fetch errors
+        // Ignore individual product fetch errors, utiliser "Produit" par défaut
       }
     })
   );
 
-  return productIdToInfo;
+  return productIdToName;
 }
 
 /**
- * Résout le customerId depuis customer-service si nécessaire
- * Le Gateway orchestre cet appel pour résoudre l'ID client
+ * Résout le customerId depuis customer-service ou les metadata Stripe
+ * Le snapshot ne contient pas toujours le customerId, on le résout depuis l'email
  */
-async function resolveCustomerId(snapshot: any): Promise<number | undefined> {
+async function resolveCustomerId(
+  snapshot: any,
+  stripeMetadata?: any
+): Promise<number | undefined> {
+  // 1. Essayer depuis le snapshot
   let customerId = snapshot.customer?.customerId || snapshot.customerId;
-  if (customerId) return customerId;
+  if (customerId) return Number(customerId);
 
+  // 2. Essayer depuis les metadata Stripe (le frontend l'y met)
+  if (stripeMetadata?.customerId) {
+    return Number(stripeMetadata.customerId);
+  }
+
+  // 3. Résoudre depuis l'email via customer-service
   const customerEmail = snapshot.customer?.email || snapshot.email;
   if (!customerEmail) return undefined;
 
@@ -145,42 +151,37 @@ async function resolveCustomerId(snapshot: any): Promise<number | undefined> {
 
 /**
  * Prépare le payload pour order-service à partir du cart et snapshot
- * Cette transformation est minimale et nécessaire pour adapter les formats
+ * Utilise directement les données du cart (vatRate, price) et du snapshot (adresses, client)
  */
 async function prepareOrderPayload(
   cart: any,
   snapshot: any,
-  paymentIntentId?: string
+  paymentIntentId?: string,
+  stripeMetadata?: any
 ): Promise<any> {
-  // Extraire les items depuis snapshot ou cart
-  const sourceItems = Array.isArray(snapshot?.items)
-    ? snapshot.items
-    : cart.items || [];
+  // Utiliser directement les items du cart (ils contiennent déjà vatRate et price)
+  const cartItems = cart.items || [];
 
-  // Charger les infos produits depuis product-service
-  const productIds = sourceItems
+  // Charger uniquement les noms de produits depuis product-service
+  const productIds = cartItems
     .map((item: any) => Number(item.productId ?? item.product_id))
     .filter((id: number) => Number.isFinite(id) && id > 0);
-  const productInfo = await loadProductInfo(productIds);
+  const productNames = await loadProductNames(productIds);
 
-  // Transformer les items pour order-service
-  // Note: order-service attend un format spécifique avec calculs HT/TTC
-  const items = sourceItems.map((item: any) => {
+  // Transformer les items en utilisant directement les données du cart
+  const items = cartItems.map((item: any) => {
     const productId = Number(item.productId ?? item.product_id);
-    const pInfo = productInfo.get(productId);
     const quantity = Number(item.quantity) || 0;
-    const unitPriceTTC = Number(item.price) || 0;
-    const vatRate = Number(
-      pInfo?.vatRate ?? item.vatRate ?? item.vat_rate ?? 0
-    );
+    const unitPriceTTC = Number(item.price) || 0; // Prix TTC unitaire depuis le cart
+    const vatRate = Number(item.vatRate ?? item.vat_rate ?? 0); // TVA depuis le cart
     const vatMultiplier = 1 + vatRate / 100;
-    const unitPriceHT = unitPriceTTC / vatMultiplier;
-    const totalPriceTTC = unitPriceTTC * quantity;
-    const totalPriceHT = totalPriceTTC / vatMultiplier;
+    const unitPriceHT = unitPriceTTC / vatMultiplier; // Calcul HT
+    const totalPriceTTC = unitPriceTTC * quantity; // Total TTC
+    const totalPriceHT = totalPriceTTC / vatMultiplier; // Total HT
 
     return {
       productId,
-      productName: (pInfo?.name || item.product_name || "Produit").toString(),
+      productName: productNames.get(productId) || "Produit",
       quantity,
       unitPriceHT,
       unitPriceTTC,
@@ -190,10 +191,10 @@ async function prepareOrderPayload(
     };
   });
 
-  // Résoudre customerId si nécessaire
-  const customerId = await resolveCustomerId(snapshot);
+  // Résoudre customerId depuis snapshot ou metadata Stripe
+  const customerId = await resolveCustomerId(snapshot, stripeMetadata);
 
-  // Extraire les adresses
+  // Extraire les adresses directement depuis le snapshot
   const addresses = [];
   const shippingAddress = snapshot.shippingAddress || snapshot.shipping_address;
   const billingAddress = snapshot.billingAddress || snapshot.billing_address;
@@ -213,15 +214,15 @@ async function prepareOrderPayload(
 
   // Construire le payload pour order-service
   const payload: any = {
-    totalAmountHT: cart.subtotal || 0,
-    totalAmountTTC: cart.total || 0,
+    totalAmountHT: cart.subtotal || 0, // Utiliser directement le subtotal du cart
+    totalAmountTTC: cart.total || 0, // Utiliser directement le total du cart
     paymentMethod: "stripe",
     notes: snapshot.notes || undefined,
     items,
     addresses: addresses.length > 0 ? addresses : undefined,
   };
 
-  // Ajouter customerId si disponible (order-service l'exige)
+  // Ajouter customerId si disponible
   if (customerId) {
     payload.customerId = customerId;
   }
@@ -255,21 +256,33 @@ async function createOrder(payload: any): Promise<number> {
 
 /**
  * Prépare le payload pour email-service à partir du cart et snapshot
+ * Utilise directement les données du cart et du snapshot
  */
-function prepareEmailPayload(orderId: number, cart: any, snapshot: any): any {
+async function prepareEmailPayload(
+  orderId: number,
+  cart: any,
+  snapshot: any
+): Promise<any> {
   const customer = snapshot.customer || {};
   const shipping = snapshot.shippingAddress || snapshot.shipping_address || {};
-  const sourceItems = Array.isArray(snapshot?.items)
-    ? snapshot.items
-    : cart.items || [];
 
-  // Transformer les items pour email-service
-  const items = sourceItems.map((item: any) => ({
-    name: item.product_name || "Produit",
+  // Utiliser directement les items du cart
+  const cartItems = cart.items || [];
+
+  // Charger les noms de produits pour l'email
+  const productIds = cartItems
+    .map((item: any) => Number(item.productId ?? item.product_id))
+    .filter((id: number) => Number.isFinite(id) && id > 0);
+  const productNames = await loadProductNames(productIds);
+
+  // Transformer les items pour email-service en utilisant les données du cart
+  const items = cartItems.map((item: any) => ({
+    name:
+      productNames.get(Number(item.productId ?? item.product_id)) || "Produit",
     quantity: Number(item.quantity) || 0,
-    unitPrice: Number(item.price) || 0,
-    totalPrice: Number(item.price) * (Number(item.quantity) || 0),
-    vatRate: Number(item.vatRate ?? item.vat_rate ?? 21),
+    unitPrice: Number(item.price) || 0, // Prix TTC unitaire depuis le cart
+    totalPrice: Number(item.price) * (Number(item.quantity) || 0), // Total TTC
+    vatRate: Number(item.vatRate ?? item.vat_rate ?? 21), // TVA depuis le cart
   }));
 
   return {
@@ -280,9 +293,9 @@ function prepareEmailPayload(orderId: number, cart: any, snapshot: any): any {
     orderId,
     orderDate: new Date().toISOString(),
     items,
-    subtotal: Number(cart.subtotal || 0),
-    tax: Number((cart as any).tax ?? Math.max(cart.total - cart.subtotal, 0)),
-    total: Number(cart.total || 0),
+    subtotal: Number(cart.subtotal || 0), // Utiliser directement le subtotal du cart
+    tax: Number((cart as any).tax ?? Math.max(cart.total - cart.subtotal, 0)), // Taxe depuis le cart
+    total: Number(cart.total || 0), // Utiliser directement le total du cart
     shippingAddress: {
       firstName: shipping.firstName || customer.firstName || "",
       lastName: shipping.lastName || customer.lastName || "",
@@ -371,7 +384,8 @@ export const handleFinalizePayment = async (
     const orderPayload = await prepareOrderPayload(
       cart,
       snapshot,
-      stripeSessionInfo.paymentIntentId
+      stripeSessionInfo.paymentIntentId,
+      stripeSessionInfo.session?.metadata
     );
     const orderId = await createOrder(orderPayload);
     console.log(
@@ -380,7 +394,7 @@ export const handleFinalizePayment = async (
 
     // 5. Envoyer l'email via email-service (non-bloquant)
     try {
-      const emailPayload = prepareEmailPayload(orderId, cart, snapshot);
+      const emailPayload = await prepareEmailPayload(orderId, cart, snapshot);
       await sendOrderConfirmationEmail(emailPayload);
       console.log(`[handleFinalizePayment] Email sent successfully`);
     } catch (error) {
