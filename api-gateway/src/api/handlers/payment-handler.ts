@@ -7,18 +7,40 @@ import { checkoutSnapshots } from "../controller/CartController";
 const StripeLib: any = require("stripe");
 
 /**
- * Handler pour finaliser un paiement après succès Stripe
+ * ============================================================================
+ * PAYMENT HANDLER - Finalisation de paiement après succès Stripe
+ * ============================================================================
  *
- * Rôle : Orchestration uniquement
- * - Récupère les données nécessaires (cart, snapshot, Stripe session)
- * - Délègue la transformation des données aux services appropriés
- * - Coordonne les appels aux services indépendants
+ * Rôle : Orchestration de la finalisation du paiement
+ * - Récupère les données nécessaires (session Stripe, panier, snapshot checkout)
+ * - Transforme et valide les données
+ * - Coordonne les appels aux services (order-service, email-service)
+ * - Gère les erreurs et l'idempotence
+ *
+ * Flux principal :
+ * 1. Récupération session Stripe → paymentIntentId (pour idempotence) + métadonnées
+ * 2. Résolution cartSessionId → identifier le panier et le snapshot
+ * 3. Récupération données → snapshot (customer, adresses) + cart (items, totaux)
+ * 4. Transformation données → format attendu par order-service
+ * 5. Création commande → appel order-service
+ * 6. Envoi email → appel email-service (non-bloquant)
  */
+
+// ============================================================================
+// SECTION 1 : UTILITIES STRIPE
+// ============================================================================
 
 /**
  * Extrait le payment intent ID depuis une session Stripe
+ *
+ * Le paymentIntentId est utilisé pour l'idempotence : si une commande avec
+ * le même paymentIntentId existe déjà, elle n'est pas dupliquée.
+ *
+ * @param session - Session Stripe récupérée via l'API
+ * @returns Le payment intent ID (string) ou chaîne vide si absent
  */
 function extractPaymentIntentId(session: any): string {
+  // Stripe peut retourner payment_intent comme string ou comme objet
   if (typeof session.payment_intent === "string") {
     return session.payment_intent;
   }
@@ -26,12 +48,19 @@ function extractPaymentIntentId(session: any): string {
 }
 
 /**
- * Récupère la session Stripe et extrait les informations nécessaires
+ * Récupère la session Stripe complète depuis l'API Stripe
+ *
+ * Cette fonction est nécessaire pour :
+ * - Extraire le paymentIntentId (idempotence)
+ * - Accéder aux métadonnées Stripe (notamment customerId mis par le frontend)
+ *
+ * @param csid - Checkout Session ID (retourné par Stripe après paiement)
+ * @returns Session Stripe complète + paymentIntentId extrait
+ * @throws Error si STRIPE_SECRET_KEY n'est pas configuré
  */
 async function getStripeSessionInfo(csid: string): Promise<{
   session: any;
   paymentIntentId: string | undefined;
-  cartSessionId: string | undefined;
 }> {
   const stripeKey = process.env["STRIPE_SECRET_KEY"];
   if (!stripeKey) {
@@ -41,13 +70,29 @@ async function getStripeSessionInfo(csid: string): Promise<{
   const stripe = new StripeLib(stripeKey, { apiVersion: "2023-08-16" });
   const session = await stripe.checkout.sessions.retrieve(csid);
   const paymentIntentId = extractPaymentIntentId(session) || undefined;
-  const cartSessionId = session.metadata?.cartSessionId || undefined;
 
-  return { session, paymentIntentId, cartSessionId };
+  return { session, paymentIntentId };
 }
 
+// ============================================================================
+// SECTION 2 : RÉCUPÉRATION ET TRANSFORMATION DU PANIER
+// ============================================================================
+
 /**
- * Récupère le cartSessionId depuis différentes sources
+ * Résout le cartSessionId depuis différentes sources (avec sources de secours)
+ *
+ * Le cartSessionId est nécessaire pour :
+ * - Récupérer le panier depuis cart-service
+ * - Récupérer le snapshot checkout depuis la Map en mémoire
+ *
+ * Note : En pratique, le cartSessionId est toujours fourni directement par le frontend.
+ * Les sources de secours sont conservées pour robustesse.
+ *
+ * @param providedCartSessionId - cartSessionId fourni dans le body de la requête
+ * @param csid - Checkout Session ID Stripe
+ * @param stripeSessionToCartSession - Map en mémoire (csid → cartSessionId) - source de secours
+ * @param stripeSession - Session Stripe (pour accéder aux métadonnées) - source de secours
+ * @returns cartSessionId résolu ou null si aucune source ne fonctionne
  */
 function resolveCartSessionId(
   providedCartSessionId: string | undefined,
@@ -55,18 +100,17 @@ function resolveCartSessionId(
   stripeSessionToCartSession?: Map<string, string>,
   stripeSession?: any
 ): string | null {
-  // 1. Utiliser celui fourni directement
+  // Source principale : celui fourni directement (toujours présent en pratique)
   if (providedCartSessionId) {
     return providedCartSessionId;
   }
 
-  // 2. Essayer depuis le mapping en mémoire
+  // Sources de secours (au cas où le frontend oublierait de l'envoyer)
   if (stripeSessionToCartSession) {
     const mapped = stripeSessionToCartSession.get(csid);
     if (mapped) return mapped;
   }
 
-  // 3. Essayer depuis les métadonnées Stripe
   if (stripeSession?.metadata?.cartSessionId) {
     return stripeSession.metadata.cartSessionId;
   }
@@ -76,6 +120,13 @@ function resolveCartSessionId(
 
 /**
  * Récupère le panier depuis cart-service
+ *
+ * Le panier contient :
+ * - Les items avec leurs quantités, prix, TVA
+ * - Les totaux (subtotal, tax, total)
+ *
+ * @param cartSessionId - Identifiant de session du panier
+ * @returns Le panier complet ou null si introuvable
  */
 async function fetchCart(cartSessionId: string): Promise<any> {
   const response = await axios.get(`${SERVICES.cart}/api/cart`, {
@@ -99,23 +150,99 @@ async function fetchCart(cartSessionId: string): Promise<any> {
 }
 
 /**
- * Résout le customerId depuis customer-service ou les metadata Stripe
- * Le snapshot ne contient pas toujours le customerId, on le résout depuis l'email
+ * Normalise un item du panier en format standardisé
+ *
+ * Gère les différents formats de propriétés possibles (snake_case vs camelCase)
+ * et fournit des valeurs par défaut si manquantes.
+ *
+ * @param item - Item du panier (format variable selon la source)
+ * @returns Item normalisé avec propriétés garanties
+ */
+function normalizeCartItem(item: any): {
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitPriceTTC: number;
+  vatRate: number;
+} {
+  const productId = Number(item.productId ?? item.product_id);
+  const quantity = Number(item.quantity) || 0;
+  const unitPriceTTC = Number(item.price) || 0;
+  const vatRate = Number(item.vatRate ?? item.vat_rate ?? 0);
+  const productName = item.productName || `Produit #${productId}`;
+
+  return {
+    productId,
+    productName,
+    quantity,
+    unitPriceTTC,
+    vatRate,
+  };
+}
+
+/**
+ * Transforme un item du panier avec calculs HT/TTC complets
+ *
+ * Calcule les prix HT à partir des prix TTC et ajoute les totaux par item.
+ * Utilisé pour préparer le payload de commande.
+ *
+ * @param item - Item du panier (format variable)
+ * @returns Item transformé avec tous les calculs (HT, TTC, totaux)
+ */
+function transformCartItem(item: any): {
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitPriceTTC: number;
+  vatRate: number;
+  unitPriceHT: number;
+  totalPriceTTC: number;
+  totalPriceHT: number;
+} {
+  const normalized = normalizeCartItem(item);
+  const vatMultiplier = 1 + normalized.vatRate / 100;
+  const unitPriceHT = normalized.unitPriceTTC / vatMultiplier;
+  const totalPriceTTC = normalized.unitPriceTTC * normalized.quantity;
+  const totalPriceHT = totalPriceTTC / vatMultiplier;
+
+  return {
+    ...normalized,
+    unitPriceHT,
+    totalPriceTTC,
+    totalPriceHT,
+  };
+}
+
+// ============================================================================
+// SECTION 3 : EXTRACTION DES DONNÉES DU SNAPSHOT
+// ============================================================================
+
+// Note: extractCustomerInfo et extractAddresses sont des fonctions très simples
+// qui sont inlinées directement dans prepareOrderPayload et prepareEmailPayload
+// pour éviter des appels de fonctions inutiles
+
+/**
+ * Résout le customerId depuis les métadonnées Stripe ou l'email
+ *
+ * Le customerId est nécessaire pour lier la commande au client dans la base.
+ * Sources (par ordre de priorité) :
+ * 1. Métadonnées Stripe (le frontend y met customerId lors de la création du paiement)
+ * 2. Résolution par email via customer-service (si customerId absent des métadonnées)
+ *
+ * @param snapshot - Snapshot checkout contenant l'email du client
+ * @param stripeMetadata - Métadonnées de la session Stripe
+ * @returns customerId résolu ou undefined si impossible
  */
 async function resolveCustomerId(
   snapshot: any,
   stripeMetadata?: any
 ): Promise<number | undefined> {
-  // 1. Essayer depuis le snapshot
-  let customerId = snapshot.customer?.customerId || snapshot.customerId;
-  if (customerId) return Number(customerId);
-
-  // 2. Essayer depuis les metadata Stripe (le frontend l'y met)
+  // Source principale : metadata Stripe (le frontend l'y met lors de la création du paiement)
   if (stripeMetadata?.customerId) {
     return Number(stripeMetadata.customerId);
   }
 
-  // 3. Résoudre depuis l'email via customer-service
+  // Source de secours : résoudre depuis l'email via customer-service
   const customerEmail = snapshot.customer?.email || snapshot.email;
   if (!customerEmail) return undefined;
 
@@ -131,9 +258,29 @@ async function resolveCustomerId(
   }
 }
 
+// ============================================================================
+// SECTION 4 : PRÉPARATION ET CRÉATION DE COMMANDE
+// ============================================================================
+
 /**
  * Prépare le payload pour order-service à partir du cart et snapshot
- * Utilise directement les données du cart (vatRate, price, productName) et du snapshot (adresses, client)
+ *
+ * Combine les données du panier (items, totaux) et du snapshot (customer, adresses)
+ * pour créer un payload complet pour order-service.
+ *
+ * Structure du payload :
+ * - Totaux (HT/TTC) depuis le cart
+ * - Items transformés avec calculs HT/TTC
+ * - Adresses depuis le snapshot
+ * - customerId résolu
+ * - customerSnapshot (fallback si customerId absent)
+ * - paymentIntentId (pour idempotence)
+ *
+ * @param cart - Panier complet avec items et totaux
+ * @param snapshot - Snapshot checkout avec customer et adresses
+ * @param paymentIntentId - ID du payment intent Stripe (pour idempotence)
+ * @param stripeMetadata - Métadonnées Stripe (contient customerId)
+ * @returns Payload formaté pour order-service
  */
 async function prepareOrderPayload(
   cart: any,
@@ -141,8 +288,6 @@ async function prepareOrderPayload(
   paymentIntentId?: string,
   stripeMetadata?: any
 ): Promise<any> {
-  // Utiliser directement les items du cart (ils contiennent déjà vatRate, price et productName)
-  // productName est toujours présent car envoyé par le frontend lors de l'ajout au panier
   const cartItems = cart.items || [];
 
   // Debug: vérifier les productName dans les items
@@ -155,44 +300,22 @@ async function prepareOrderPayload(
     }))
   );
 
-  // Transformer les items en utilisant directement les données du cart
+  // Transformer les items : normaliser + calculer HT/TTC
   const items = cartItems.map((item: any) => {
-    const productId = Number(item.productId ?? item.product_id);
-    const quantity = Number(item.quantity) || 0;
-    const unitPriceTTC = Number(item.price) || 0; // Prix TTC unitaire depuis le cart
-    const vatRate = Number(item.vatRate ?? item.vat_rate ?? 0); // TVA depuis le cart
-    const vatMultiplier = 1 + vatRate / 100;
-    const unitPriceHT = unitPriceTTC / vatMultiplier; // Calcul HT
-    const totalPriceTTC = unitPriceTTC * quantity; // Total TTC
-    const totalPriceHT = totalPriceTTC / vatMultiplier; // Total HT
-
-    // Utiliser productName stocké dans le cart (toujours présent car envoyé par le frontend)
-    const productName = item.productName || `Produit #${productId}`;
-
+    const transformed = transformCartItem(item);
     console.log(
-      `[prepareOrderPayload] Item ${productId}: productName="${productName}"`
+      `[prepareOrderPayload] Item ${transformed.productId}: productName="${transformed.productName}"`
     );
-
-    return {
-      productId,
-      productName,
-      quantity,
-      unitPriceHT,
-      unitPriceTTC,
-      vatRate,
-      totalPriceHT,
-      totalPriceTTC,
-    };
+    return transformed;
   });
 
-  // Résoudre customerId depuis snapshot ou metadata Stripe
+  // Résoudre customerId depuis métadonnées Stripe ou email
   const customerId = await resolveCustomerId(snapshot, stripeMetadata);
 
-  // Extraire les adresses directement depuis le snapshot
-  const addresses = [];
+  // Extraire les adresses depuis le snapshot (gère camelCase et snake_case)
   const shippingAddress = snapshot.shippingAddress || snapshot.shipping_address;
   const billingAddress = snapshot.billingAddress || snapshot.billing_address;
-
+  const addresses = [];
   if (shippingAddress) {
     addresses.push({
       addressType: "shipping",
@@ -208,27 +331,27 @@ async function prepareOrderPayload(
 
   // Construire le payload pour order-service
   const payload: any = {
-    totalAmountHT: cart.subtotal || 0, // Utiliser directement le subtotal du cart
-    totalAmountTTC: cart.total || 0, // Utiliser directement le total du cart
+    totalAmountHT: cart.subtotal || 0,
+    totalAmountTTC: cart.total || 0,
     paymentMethod: "stripe",
     notes: snapshot.notes || undefined,
     items,
     addresses: addresses.length > 0 ? addresses : undefined,
   };
 
-  // Ajouter customerId si disponible
+  // Ajouter customerId si disponible (priorité)
   if (customerId) {
     payload.customerId = customerId;
   }
 
-  // Ajouter customerSnapshot (order-service l'accepte si customerId n'est pas disponible)
+  // Ajouter customerSnapshot (fallback si customerId absent - order-service l'accepte)
   const customerSnapshot =
     snapshot.customer || snapshot.customerSnapshot || snapshot;
   if (customerSnapshot) {
     payload.customerSnapshot = customerSnapshot;
   }
 
-  // Ajouter paymentIntentId pour l'idempotence
+  // Ajouter paymentIntentId pour l'idempotence (évite les doublons en cas de retry)
   if (paymentIntentId) {
     payload.paymentIntentId = paymentIntentId;
   }
@@ -238,6 +361,14 @@ async function prepareOrderPayload(
 
 /**
  * Crée la commande via order-service
+ *
+ * Envoie le payload préparé à order-service qui :
+ * - Crée la commande dans la base de données
+ * - Utilise paymentIntentId pour l'idempotence (si même paymentIntentId, pas de doublon)
+ * - Retourne l'ID de la commande créée
+ *
+ * @param payload - Payload formaté pour order-service
+ * @returns ID de la commande créée
  */
 async function createOrder(payload: any): Promise<number> {
   const response = await axios.post(
@@ -248,61 +379,73 @@ async function createOrder(payload: any): Promise<number> {
   return response.data?.order?.id;
 }
 
+// ============================================================================
+// SECTION 5 : PRÉPARATION ET ENVOI D'EMAIL
+// ============================================================================
+
 /**
  * Prépare le payload pour email-service à partir du cart et snapshot
- * Utilise directement les données du cart et du snapshot
+ *
+ * Format les données pour l'email de confirmation de commande.
+ * Utilise les données normalisées (pas besoin des calculs HT complets pour l'email).
+ *
+ * @param orderId - ID de la commande créée
+ * @param cart - Panier avec items et totaux
+ * @param snapshot - Snapshot avec customer et adresses
+ * @returns Payload formaté pour email-service
  */
 async function prepareEmailPayload(
   orderId: number,
   cart: any,
   snapshot: any
 ): Promise<any> {
+  // Extraire les informations customer et adresses directement depuis le snapshot
   const customer = snapshot.customer || {};
-  const shipping = snapshot.shippingAddress || snapshot.shipping_address || {};
+  const email = customer.email || snapshot.email || "";
+  const shipping = snapshot.shippingAddress || snapshot.shipping_address;
 
-  // Utiliser directement les items du cart (ils contiennent déjà productName, price et vatRate)
-  // productName est toujours présent car envoyé par le frontend lors de l'ajout au panier
+  // Normaliser les items (pas besoin des calculs HT pour l'email)
   const cartItems = cart.items || [];
-
-  // Transformer les items pour email-service en utilisant les données du cart
   const items = cartItems.map((item: any) => {
-    const productId = Number(item.productId ?? item.product_id);
-    // Utiliser productName stocké dans le cart (toujours présent car envoyé par le frontend)
-    const productName = item.productName || `Produit #${productId}`;
-
+    const normalized = normalizeCartItem(item);
     return {
-      name: productName,
-      quantity: Number(item.quantity) || 0,
-      unitPrice: Number(item.price) || 0, // Prix TTC unitaire depuis le cart
-      totalPrice: Number(item.price) * (Number(item.quantity) || 0), // Total TTC
-      vatRate: Number(item.vatRate ?? item.vat_rate ?? 21), // TVA depuis le cart
+      name: normalized.productName,
+      quantity: normalized.quantity,
+      unitPrice: normalized.unitPriceTTC,
+      totalPrice: normalized.unitPriceTTC * normalized.quantity,
+      vatRate: normalized.vatRate,
     };
   });
 
   return {
-    customerEmail: customer.email || snapshot.email || "",
-    customerName: `${customer.firstName || shipping.firstName || ""} ${
-      customer.lastName || shipping.lastName || ""
+    customerEmail: email,
+    customerName: `${customer.firstName || shipping?.firstName || ""} ${
+      customer.lastName || shipping?.lastName || ""
     }`.trim(),
     orderId,
     orderDate: new Date().toISOString(),
     items,
-    subtotal: Number(cart.subtotal || 0), // Utiliser directement le subtotal du cart
-    tax: Number((cart as any).tax ?? Math.max(cart.total - cart.subtotal, 0)), // Taxe depuis le cart
-    total: Number(cart.total || 0), // Utiliser directement le total du cart
+    subtotal: Number(cart.subtotal || 0),
+    tax: Number((cart as any).tax ?? Math.max(cart.total - cart.subtotal, 0)),
+    total: Number(cart.total || 0),
     shippingAddress: {
-      firstName: shipping.firstName || customer.firstName || "",
-      lastName: shipping.lastName || customer.lastName || "",
-      address: shipping.address || "",
-      city: shipping.city || "",
-      postalCode: shipping.postalCode || "",
-      country: shipping.country || "",
+      firstName: shipping?.firstName || customer.firstName || "",
+      lastName: shipping?.lastName || customer.lastName || "",
+      address: shipping?.address || "",
+      city: shipping?.city || "",
+      postalCode: shipping?.postalCode || "",
+      country: shipping?.country || "",
     },
   };
 }
 
 /**
  * Envoie l'email de confirmation via email-service
+ *
+ * Cette opération est non-bloquante : si elle échoue, la commande reste créée.
+ * L'erreur est loggée mais n'empêche pas la finalisation du paiement.
+ *
+ * @param payload - Payload formaté pour email-service
  */
 async function sendOrderConfirmationEmail(payload: any): Promise<void> {
   await axios.post(`${SERVICES.email}/api/email/order-confirmation`, payload, {
@@ -310,14 +453,31 @@ async function sendOrderConfirmationEmail(payload: any): Promise<void> {
   });
 }
 
+// ============================================================================
+// SECTION 6 : HANDLER PRINCIPAL - ORCHESTRATION
+// ============================================================================
+
 /**
- * Finaliser un paiement après succès Stripe
+ * Handler principal : Finalise un paiement après succès Stripe
  *
- * Orchestration simple :
- * 1. Récupère les données (Stripe session, cart, snapshot)
- * 2. Prépare les payloads pour les services
- * 3. Appelle order-service pour créer la commande
- * 4. Appelle email-service pour envoyer l'email
+ * Orchestration complète du processus de finalisation :
+ * 1. Récupère la session Stripe (paymentIntentId + métadonnées)
+ * 2. Résout le cartSessionId (identifie panier et snapshot)
+ * 3. Récupère le snapshot (customer, adresses) et le cart (items, totaux)
+ * 4. Prépare le payload pour order-service
+ * 5. Crée la commande via order-service
+ * 6. Envoie l'email de confirmation (non-bloquant)
+ *
+ * Gestion d'erreurs :
+ * - Si récupération Stripe échoue → continue sans paymentIntentId (perte d'idempotence)
+ * - Si snapshot/cart introuvable → erreur 404
+ * - Si création commande échoue → erreur 500
+ * - Si envoi email échoue → loggée mais non-bloquante
+ *
+ * @param req - Requête Express avec body { csid, cartSessionId }
+ * @param res - Réponse Express
+ * @param stripeSessionToCartSession - Map optionnelle (csid → cartSessionId) pour sources de secours
+ * @returns Réponse JSON avec { orderId, success: true } ou erreur
  */
 export const handleFinalizePayment = async (
   req: Request,
@@ -325,17 +485,18 @@ export const handleFinalizePayment = async (
   stripeSessionToCartSession?: Map<string, string>
 ) => {
   try {
-    let { csid, cartSessionId } = req.body || {};
+    const { csid, cartSessionId } = req.body || {};
     console.log(
       `[handleFinalizePayment] Received: csid=${csid}, cartSessionId=${cartSessionId}`
     );
 
-    // Validation
+    // Validation des paramètres requis
     if (!csid) {
       return res.status(400).json({ error: "csid is required" });
     }
 
-    // 1. Récupérer la session Stripe
+    // ===== ÉTAPE 1 : Récupérer la session Stripe =====
+    // Nécessaire pour paymentIntentId (idempotence) et métadonnées (customerId)
     let stripeSessionInfo;
     try {
       stripeSessionInfo = await getStripeSessionInfo(csid);
@@ -344,11 +505,12 @@ export const handleFinalizePayment = async (
         "[handleFinalizePayment] Unable to fetch Stripe session:",
         (e as any)?.message
       );
-      // Continue sans paymentIntentId si nécessaire
+      // Continue sans paymentIntentId si nécessaire (perte d'idempotence mais processus continue)
       stripeSessionInfo = { session: null, paymentIntentId: undefined };
     }
 
-    // 2. Résoudre le cartSessionId
+    // ===== ÉTAPE 2 : Résoudre le cartSessionId =====
+    // Identifie le panier et le snapshot à utiliser
     const resolvedCartSessionId = resolveCartSessionId(
       cartSessionId,
       csid,
@@ -362,18 +524,20 @@ export const handleFinalizePayment = async (
       });
     }
 
-    // 3. Récupérer le snapshot et le cart
+    // ===== ÉTAPE 3 : Récupérer le snapshot et le cart =====
+    // Snapshot : données checkout (customer, adresses) stockées en mémoire
     const snapshot = checkoutSnapshots.get(resolvedCartSessionId);
     if (!snapshot) {
       return res.status(404).json({ error: "Checkout snapshot not found" });
     }
 
+    // Cart : panier avec items et totaux depuis cart-service
     const cart = await fetchCart(resolvedCartSessionId);
     if (!cart) {
       return res.status(404).json({ error: "Cart not found" });
     }
 
-    // 4. Créer la commande via order-service
+    // ===== ÉTAPE 4 : Créer la commande via order-service =====
     console.log(`[handleFinalizePayment] Creating order...`);
     const orderPayload = await prepareOrderPayload(
       cart,
@@ -386,7 +550,8 @@ export const handleFinalizePayment = async (
       `[handleFinalizePayment] Order created successfully: ${orderId}`
     );
 
-    // 5. Envoyer l'email via email-service (non-bloquant)
+    // ===== ÉTAPE 5 : Envoyer l'email via email-service (non-bloquant) =====
+    // L'échec de l'email ne doit pas empêcher la finalisation du paiement
     try {
       const emailPayload = await prepareEmailPayload(orderId, cart, snapshot);
       await sendOrderConfirmationEmail(emailPayload);
@@ -398,6 +563,7 @@ export const handleFinalizePayment = async (
       );
     }
 
+    // ===== SUCCÈS : Retourner l'ID de la commande =====
     return res.status(200).json({ orderId, success: true });
   } catch (error: any) {
     console.error(
