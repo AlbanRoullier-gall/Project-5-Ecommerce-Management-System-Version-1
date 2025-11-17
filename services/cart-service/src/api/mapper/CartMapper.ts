@@ -18,15 +18,18 @@ export class CartMapper {
     dto: DTO.CartItemCreateDTO,
     id: string
   ): CartItem {
-    return new CartItem({
+    const itemData: any = {
       id,
       product_id: dto.productId,
-      product_name: dto.productName,
       quantity: dto.quantity,
       price: dto.price,
       vat_rate: dto.vatRate,
       added_at: new Date(),
-    });
+    };
+    if (dto.productName !== undefined) {
+      itemData.product_name = dto.productName;
+    }
+    return new CartItem(itemData);
   }
 
   /**
@@ -48,18 +51,27 @@ export class CartMapper {
 
   /**
    * Convertir le modèle CartItem en CartItemPublicDTO
+   * Inclut maintenant tous les calculs HT/TTC pour éviter les transformations dans l'API Gateway
    */
   static cartItemToPublicDTO(item: CartItem): DTO.CartItemPublicDTO {
-    return {
+    const dto: any = {
       id: item.id,
       productId: item.productId,
-      productName: item.productName,
       quantity: item.quantity,
-      price: item.price,
+      price: item.price, // Prix unitaire TTC (conservé pour rétrocompatibilité)
       vatRate: item.vatRate,
-      total: item.getTotal(),
+      total: item.getTotal(), // Total TTC (conservé pour rétrocompatibilité)
+      // Nouveaux champs avec calculs HT/TTC complets
+      unitPriceHT: item.getUnitPriceHT(),
+      unitPriceTTC: item.getUnitPriceTTC(),
+      totalPriceHT: item.getTotalHT(),
+      totalPriceTTC: item.getTotalTTC(),
       addedAt: item.addedAt,
     };
+    if (item.productName !== undefined) {
+      dto.productName = item.productName;
+    }
+    return dto;
   }
 
   /**

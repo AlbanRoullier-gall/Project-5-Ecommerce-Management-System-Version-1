@@ -45,12 +45,33 @@ export class CartItem {
   }
 
   /**
+   * Prix unitaire HT (en supposant que price est TTC unitaire)
+   */
+  getUnitPriceHT(): number {
+    const multiplier = 1 + (this.vatRate || 0) / 100;
+    if (multiplier <= 0) return this.price;
+    return this.price / multiplier;
+  }
+
+  /**
+   * Prix unitaire TTC (alias pour price pour cohérence)
+   */
+  getUnitPriceTTC(): number {
+    return this.price;
+  }
+
+  /**
    * Total HT (en supposant que price est TTC unitaire)
    */
   getTotalHT(): number {
-    const multiplier = 1 + (this.vatRate || 0) / 100;
-    if (multiplier <= 0) return this.getTotal();
-    return this.getTotal() / multiplier;
+    return this.getUnitPriceHT() * this.quantity;
+  }
+
+  /**
+   * Total TTC (alias pour getTotal() pour cohérence)
+   */
+  getTotalTTC(): number {
+    return this.getTotal();
   }
 
   /**
