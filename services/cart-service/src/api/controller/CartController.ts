@@ -7,6 +7,7 @@ import { Request, Response } from "express";
 import CartService from "../../services/CartService";
 import { CartMapper, ResponseMapper } from "../mapper";
 import { CartItemCreateDTO, CartItemUpdateDTO, CartClearDTO } from "../dto";
+import * as DTO from "@tfe/shared-types/cart-service";
 
 export class CartController {
   private cartService: CartService;
@@ -174,6 +175,48 @@ export class CartController {
         res.status(404).json(ResponseMapper.notFoundError("Panier"));
         return;
       }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Résoudre un cartSessionId depuis différentes sources
+   *
+   * Permet de résoudre le cartSessionId depuis :
+   * - Le cartSessionId fourni directement (source principale)
+   * - Les métadonnées Stripe (source de secours)
+   *
+   * Vérifie également que le panier existe avant de retourner le résultat.
+   */
+  async resolveSession(req: Request, res: Response): Promise<void> {
+    try {
+      const resolveData = req.body as DTO.CartSessionResolveDTO;
+
+      const result = await this.cartService.resolveCartSessionId(
+        resolveData.cartSessionId,
+        resolveData.stripeSessionMetadata
+      );
+
+      if (!result.resolved) {
+        res.status(404).json({
+          error: "Cart session not found",
+          message:
+            "Unable to resolve cartSessionId from provided sources or cart does not exist",
+          cartSessionId: null,
+          resolved: false,
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        cartSessionId: result.cartSessionId,
+        resolved: result.resolved,
+        source: result.source,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Resolve session error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }

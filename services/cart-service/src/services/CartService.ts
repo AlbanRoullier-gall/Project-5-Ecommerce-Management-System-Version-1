@@ -150,6 +150,66 @@ export default class CartService {
   }
 
   /**
+   * Résout le cartSessionId depuis différentes sources
+   *
+   * Le cartSessionId est nécessaire pour :
+   * - Récupérer le panier depuis cart-service
+   * - Identifier le snapshot checkout depuis la Map en mémoire (gérée côté gateway)
+   *
+   * Sources (par ordre de priorité) :
+   * 1. cartSessionId fourni directement (source principale)
+   * 2. Métadonnées Stripe (source de secours)
+   *
+   * Note : La Map stripeSessionToCartSession est gérée côté gateway et n'est pas accessible ici.
+   * Elle peut être utilisée côté gateway comme source de secours supplémentaire.
+   *
+   * @param providedCartSessionId - cartSessionId fourni directement
+   * @param stripeSessionMetadata - Métadonnées Stripe (peut contenir cartSessionId)
+   * @returns Résultat de la résolution avec cartSessionId et source utilisée
+   */
+  async resolveCartSessionId(
+    providedCartSessionId?: string,
+    stripeSessionMetadata?: any
+  ): Promise<{
+    cartSessionId: string | null;
+    resolved: boolean;
+    source?: "provided" | "stripe_metadata";
+  }> {
+    // Source principale : celui fourni directement (toujours présent en pratique)
+    if (providedCartSessionId) {
+      // Vérifier que le panier existe
+      const cart = await this.getCart(providedCartSessionId);
+      if (cart) {
+        return {
+          cartSessionId: providedCartSessionId,
+          resolved: true,
+          source: "provided",
+        };
+      }
+    }
+
+    // Source de secours : métadonnées Stripe
+    if (stripeSessionMetadata?.cartSessionId) {
+      const cartSessionId = stripeSessionMetadata.cartSessionId;
+      // Vérifier que le panier existe
+      const cart = await this.getCart(cartSessionId);
+      if (cart) {
+        return {
+          cartSessionId,
+          resolved: true,
+          source: "stripe_metadata",
+        };
+      }
+    }
+
+    // Aucune source valide trouvée
+    return {
+      cartSessionId: null,
+      resolved: false,
+    };
+  }
+
+  /**
    * Vérifier la configuration Redis
    */
   getConfigurationStatus(): any {

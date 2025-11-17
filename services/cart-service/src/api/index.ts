@@ -56,6 +56,16 @@ export class ApiRouter {
       cartClearSchema: Joi.object({
         sessionId: Joi.string().required(),
       }),
+
+      // Schéma de résolution de session
+      cartSessionResolveSchema: Joi.object({
+        cartSessionId: Joi.string().optional(),
+        stripeSessionMetadata: Joi.object({
+          cartSessionId: Joi.string().optional(),
+        })
+          .unknown(true)
+          .optional(),
+      }),
     };
   }
 
@@ -130,6 +140,15 @@ export class ApiRouter {
       this.validateRequest(schemas.cartClearSchema),
       (req: Request, res: Response) => {
         this.cartController.clearCart(req, res);
+      }
+    );
+
+    // Résoudre un cartSessionId depuis différentes sources
+    app.post(
+      "/api/cart/resolve-session",
+      this.validateRequest(schemas.cartSessionResolveSchema),
+      (req: Request, res: Response) => {
+        this.cartController.resolveSession(req, res);
       }
     );
 

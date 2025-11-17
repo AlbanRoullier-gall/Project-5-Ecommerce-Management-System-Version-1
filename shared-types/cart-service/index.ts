@@ -71,3 +71,24 @@ export interface CartPublicDTO {
 export interface CartClearDTO {
   sessionId: string;
 }
+
+/**
+ * DTO pour résoudre un cartSessionId depuis différentes sources
+ */
+export interface CartSessionResolveDTO {
+  cartSessionId?: string; // Source principale : cartSessionId fourni directement
+  stripeSessionMetadata?: {
+    // Source de secours : métadonnées Stripe contenant cartSessionId
+    cartSessionId?: string;
+    [key: string]: any;
+  };
+}
+
+/**
+ * DTO de réponse pour la résolution de session
+ */
+export interface CartSessionResolveResponseDTO {
+  cartSessionId: string | null;
+  resolved: boolean;
+  source?: "provided" | "stripe_metadata";
+}
