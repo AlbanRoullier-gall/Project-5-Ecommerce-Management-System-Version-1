@@ -73,15 +73,10 @@ export interface CartClearDTO {
 }
 
 /**
- * DTO pour résoudre un cartSessionId depuis différentes sources
+ * DTO pour résoudre un cartSessionId
  */
 export interface CartSessionResolveDTO {
-  cartSessionId?: string; // Source principale : cartSessionId fourni directement
-  stripeSessionMetadata?: {
-    // Source de secours : métadonnées Stripe contenant cartSessionId
-    cartSessionId?: string;
-    [key: string]: any;
-  };
+  cartSessionId?: string; // cartSessionId à vérifier
 }
 
 /**
@@ -90,5 +85,4 @@ export interface CartSessionResolveDTO {
 export interface CartSessionResolveResponseDTO {
   cartSessionId: string | null;
   resolved: boolean;
-  source?: "provided" | "stripe_metadata";
 }

@@ -28,107 +28,9 @@ import { checkoutSnapshots } from "../controller/CartController";
 
 /**
  * Service pour les opérations sur le panier
- * Gère la récupération, la normalisation et la transformation des items
+ * Wrapper simple pour les appels au cart-service
  */
 class CartService {
-  /**
-   * Résout le cartSessionId depuis différentes sources
-   *
-   * Le cartSessionId est nécessaire pour :
-   * - Récupérer le panier depuis cart-service
-   * - Récupérer le snapshot checkout depuis la Map en mémoire
-   *
-   * Sources (par ordre de priorité) :
-   * 1. cartSessionId fourni directement (source principale)
-   * 2. Map en mémoire stripeSessionToCartSession (source de secours côté gateway)
-   * 3. Métadonnées Stripe via cart-service (source de secours)
-   *
-   * Note : La Map stripeSessionToCartSession est gérée côté gateway et est utilisée
-   * comme source de secours avant d'appeler cart-service.
-   *
-   * @param providedCartSessionId - cartSessionId fourni dans le body de la requête
-   * @param csid - Checkout Session ID Stripe
-   * @param stripeSessionToCartSession - Map en mémoire (csid → cartSessionId) - source de secours
-   * @param stripeSession - Session Stripe (pour accéder aux métadonnées) - source de secours
-   * @returns cartSessionId résolu ou null si aucune source ne fonctionne
-   */
-  static async resolveCartSessionId(
-    providedCartSessionId: string | undefined,
-    csid: string,
-    stripeSessionToCartSession?: Map<string, string>,
-    stripeSession?: any
-  ): Promise<string | null> {
-    // Source principale : celui fourni directement (toujours présent en pratique)
-    if (providedCartSessionId) {
-      // Vérifier que le panier existe via cart-service
-      try {
-        const response = await axios.post(
-          `${SERVICES.cart}/api/cart/resolve-session`,
-          {
-            cartSessionId: providedCartSessionId,
-          }
-        );
-        if (response.data?.resolved && response.data?.cartSessionId) {
-          return response.data.cartSessionId;
-        }
-      } catch (error) {
-        // Si l'appel échoue, on continue avec les sources de secours
-        console.warn(
-          "[CartService] Failed to resolve cartSessionId via cart-service:",
-          (error as any)?.message
-        );
-      }
-    }
-
-    // Source de secours 1 : Map en mémoire (spécifique au gateway)
-    if (stripeSessionToCartSession) {
-      const mapped = stripeSessionToCartSession.get(csid);
-      if (mapped) {
-        // Vérifier que le panier existe via cart-service
-        try {
-          const response = await axios.post(
-            `${SERVICES.cart}/api/cart/resolve-session`,
-            {
-              cartSessionId: mapped,
-            }
-          );
-          if (response.data?.resolved && response.data?.cartSessionId) {
-            return response.data.cartSessionId;
-          }
-        } catch (error) {
-          // Si l'appel échoue, on continue avec la source suivante
-          console.warn(
-            "[CartService] Failed to resolve mapped cartSessionId via cart-service:",
-            (error as any)?.message
-          );
-        }
-      }
-    }
-
-    // Source de secours 2 : Métadonnées Stripe via cart-service
-    if (stripeSession?.metadata) {
-      try {
-        const response = await axios.post(
-          `${SERVICES.cart}/api/cart/resolve-session`,
-          {
-            stripeSessionMetadata: stripeSession.metadata,
-          }
-        );
-        if (response.data?.resolved && response.data?.cartSessionId) {
-          return response.data.cartSessionId;
-        }
-      } catch (error) {
-        // Si toutes les sources échouent, retourner null
-        console.warn(
-          "[CartService] Failed to resolve cartSessionId from Stripe metadata via cart-service:",
-          (error as any)?.message
-        );
-      }
-    }
-
-    return null;
-  }
-
   /**
    * Récupère le panier depuis cart-service
    *
@@ -144,18 +46,6 @@ class CartService {
       params: { sessionId: cartSessionId },
     });
     const cart = response.data?.cart;
-
-    // Debug: vérifier si productName est présent dans les items
-    if (cart?.items) {
-      console.log(
-        "[CartService] Cart items:",
-        cart.items.map((item: any) => ({
-          productId: item.productId,
-          productName: item.productName,
-          hasProductName: !!item.productName,
-        }))
-      );
-    }
 
     return cart;
   }
@@ -525,12 +415,11 @@ export const handleFinalizePayment = async (
 
     // ===== ÉTAPE 2 : Résoudre le cartSessionId =====
     // Identifie le panier et le snapshot à utiliser
-    const resolvedCartSessionId = await CartService.resolveCartSessionId(
-      cartSessionId,
-      csid,
-      stripeSessionToCartSession,
-      stripeSessionInfo.session
-    );
+    // Priorité : cartSessionId fourni > Map en mémoire
+    let resolvedCartSessionId = cartSessionId;
+    if (!resolvedCartSessionId && stripeSessionToCartSession) {
+      resolvedCartSessionId = stripeSessionToCartSession.get(csid) || undefined;
+    }
 
     if (!resolvedCartSessionId) {
       return res.status(400).json({

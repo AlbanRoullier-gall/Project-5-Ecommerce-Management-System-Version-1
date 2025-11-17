@@ -180,28 +180,22 @@ export class CartController {
   }
 
   /**
-   * Résoudre un cartSessionId depuis différentes sources
+   * Résoudre un cartSessionId et vérifier que le panier existe
    *
-   * Permet de résoudre le cartSessionId depuis :
-   * - Le cartSessionId fourni directement (source principale)
-   * - Les métadonnées Stripe (source de secours)
-   *
-   * Vérifie également que le panier existe avant de retourner le résultat.
+   * Vérifie que le cartSessionId fourni correspond à un panier existant.
    */
   async resolveSession(req: Request, res: Response): Promise<void> {
     try {
       const resolveData = req.body as DTO.CartSessionResolveDTO;
 
       const result = await this.cartService.resolveCartSessionId(
-        resolveData.cartSessionId,
-        resolveData.stripeSessionMetadata
+        resolveData.cartSessionId
       );
 
       if (!result.resolved) {
         res.status(404).json({
           error: "Cart session not found",
-          message:
-            "Unable to resolve cartSessionId from provided sources or cart does not exist",
+          message: "Cart session does not exist",
           cartSessionId: null,
           resolved: false,
         });
@@ -212,7 +206,6 @@ export class CartController {
         success: true,
         cartSessionId: result.cartSessionId,
         resolved: result.resolved,
-        source: result.source,
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {

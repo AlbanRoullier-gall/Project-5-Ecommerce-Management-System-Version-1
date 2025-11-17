@@ -60,11 +60,6 @@ export class ApiRouter {
       // Schéma de résolution de session
       cartSessionResolveSchema: Joi.object({
         cartSessionId: Joi.string().optional(),
-        stripeSessionMetadata: Joi.object({
-          cartSessionId: Joi.string().optional(),
-        })
-          .unknown(true)
-          .optional(),
       }),
     };
   }
