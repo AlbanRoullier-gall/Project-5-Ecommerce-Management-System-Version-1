@@ -23,60 +23,7 @@ import { checkoutSnapshots } from "../controller/CartController";
  */
 
 // ============================================================================
-// SECTION 1 : STRIPE SERVICE (via payment-service)
-// ============================================================================
-
-/**
- * Service pour les opérations Stripe via payment-service
- * Gère la récupération de session et l'extraction d'informations via HTTP
- */
-class StripeService {
-  /**
-   * Récupère la session Stripe complète depuis payment-service
-   *
-   * Cette fonction est nécessaire pour :
-   * - Extraire le paymentIntentId (idempotence)
-   * - Accéder aux métadonnées Stripe (notamment customerId mis par le frontend)
-   *
-   * @param csid - Checkout Session ID (retourné par Stripe après paiement)
-   * @returns Session Stripe complète + paymentIntentId extrait
-   * @throws Error si payment-service n'est pas accessible
-   */
-  static async getSessionInfo(csid: string): Promise<{
-    session: any;
-    paymentIntentId: string | undefined;
-  }> {
-    try {
-      const response = await axios.get(
-        `${SERVICES.payment}/api/payment/session/${csid}`
-      );
-
-      const { session, paymentIntentId } = response.data;
-
-      return { session, paymentIntentId };
-    } catch (error: any) {
-      // Si c'est une erreur 404, la session n'existe pas
-      if (error.response?.status === 404) {
-        throw new Error(`Session Stripe non trouvée: ${csid}`);
-      }
-      // Si c'est une erreur de connexion au service
-      if (error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT") {
-        throw new Error(
-          `Impossible de se connecter à payment-service: ${error.message}`
-        );
-      }
-      // Autres erreurs
-      throw new Error(
-        `Erreur lors de la récupération de la session Stripe: ${
-          error.response?.data?.message || error.message
-        }`
-      );
-    }
-  }
-}
-
-// ============================================================================
-// SECTION 2 : CART SERVICE
+// SECTION 1 : CART SERVICE
 // ============================================================================
 
 /**
@@ -157,7 +104,7 @@ class CartService {
 }
 
 // ============================================================================
-// SECTION 3 : SNAPSHOT SERVICE
+// SECTION 2 : SNAPSHOT SERVICE
 // ============================================================================
 
 /**
@@ -237,7 +184,7 @@ class SnapshotService {
 }
 
 // ============================================================================
-// SECTION 4 : ORDER SERVICE
+// SECTION 3 : ORDER SERVICE
 // ============================================================================
 
 /**
@@ -376,7 +323,7 @@ class OrderService {
 }
 
 // ============================================================================
-// SECTION 5 : EMAIL SERVICE
+// SECTION 4 : EMAIL SERVICE
 // ============================================================================
 
 /**
@@ -454,7 +401,7 @@ class EmailService {
 }
 
 // ============================================================================
-// SECTION 6 : HANDLER PRINCIPAL - ORCHESTRATION
+// SECTION 5 : HANDLER PRINCIPAL - ORCHESTRATION
 // ============================================================================
 
 /**
@@ -497,13 +444,22 @@ export const handleFinalizePayment = async (
 
     // ===== ÉTAPE 1 : Récupérer la session Stripe via payment-service =====
     // Nécessaire pour paymentIntentId (idempotence) et métadonnées (customerId)
-    let stripeSessionInfo;
+    let stripeSessionInfo: {
+      session: any;
+      paymentIntentId: string | undefined;
+    };
     try {
-      stripeSessionInfo = await StripeService.getSessionInfo(csid);
-    } catch (e) {
+      const response = await axios.get(
+        `${SERVICES.payment}/api/payment/session/${csid}`
+      );
+      stripeSessionInfo = {
+        session: response.data.session,
+        paymentIntentId: response.data.paymentIntentId,
+      };
+    } catch (e: any) {
       console.warn(
         "[handleFinalizePayment] Unable to fetch Stripe session from payment-service:",
-        (e as any)?.message
+        e?.message
       );
       // Continue sans paymentIntentId si nécessaire (perte d'idempotence mais processus continue)
       stripeSessionInfo = { session: null, paymentIntentId: undefined };
