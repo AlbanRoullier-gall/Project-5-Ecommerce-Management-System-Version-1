@@ -40,4 +40,35 @@ export class PaymentController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Récupérer les informations d'une session Stripe
+   * Retourne la session complète et le paymentIntentId extrait
+   */
+  async getSessionInfo(req: Request, res: Response): Promise<void> {
+    try {
+      const { csid } = req.params;
+
+      if (!csid) {
+        res.status(400).json(
+          ResponseMapper.validationError("csid (Checkout Session ID) est requis")
+        );
+        return;
+      }
+
+      const { session, paymentIntentId } =
+        await this.paymentService.getSessionInfo(csid);
+
+      res.status(200).json(
+        ResponseMapper.sessionRetrieved(session, paymentIntentId)
+      );
+    } catch (error: any) {
+      console.error("Get session info error:", error);
+      if (error.message.includes("non trouvée")) {
+        res.status(404).json(ResponseMapper.notFoundError("Session Stripe"));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

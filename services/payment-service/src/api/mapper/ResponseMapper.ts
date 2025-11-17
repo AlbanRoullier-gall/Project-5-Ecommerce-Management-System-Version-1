@@ -99,4 +99,16 @@ export class ResponseMapper {
       error: "Service indisponible",
     };
   }
+
+  /**
+   * Réponse de session Stripe récupérée
+   */
+  static sessionRetrieved(session: any, paymentIntentId?: string) {
+    return {
+      success: true,
+      session,
+      paymentIntentId,
+      timestamp: new Date().toISOString(),
+    };
+  }
 }

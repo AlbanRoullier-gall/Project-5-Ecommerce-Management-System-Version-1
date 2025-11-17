@@ -141,6 +141,11 @@ export class ApiRouter {
       }
     );
 
+    // Récupérer les informations d'une session Stripe
+    app.get("/api/payment/session/:csid", (req: Request, res: Response) => {
+      this.paymentController.getSessionInfo(req, res);
+    });
+
     // ===== GESTION DES ERREURS =====
     app.use((req: Request, res: Response) => {
       res.status(404).json(ResponseMapper.notFoundError("Route"));

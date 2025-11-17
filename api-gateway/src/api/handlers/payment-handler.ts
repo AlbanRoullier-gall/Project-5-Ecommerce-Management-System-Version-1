@@ -2,9 +2,6 @@ import axios from "axios";
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
 import { checkoutSnapshots } from "../controller/CartController";
-// Use dynamic require to avoid type dependency at compile time
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const StripeLib: any = require("stripe");
 
 /**
  * ============================================================================
@@ -26,33 +23,16 @@ const StripeLib: any = require("stripe");
  */
 
 // ============================================================================
-// SECTION 1 : STRIPE SERVICE
+// SECTION 1 : STRIPE SERVICE (via payment-service)
 // ============================================================================
 
 /**
- * Service pour les opérations Stripe
- * Gère la récupération de session et l'extraction d'informations
+ * Service pour les opérations Stripe via payment-service
+ * Gère la récupération de session et l'extraction d'informations via HTTP
  */
 class StripeService {
   /**
-   * Extrait le payment intent ID depuis une session Stripe
-   *
-   * Le paymentIntentId est utilisé pour l'idempotence : si une commande avec
-   * le même paymentIntentId existe déjà, elle n'est pas dupliquée.
-   *
-   * @param session - Session Stripe récupérée via l'API
-   * @returns Le payment intent ID (string) ou chaîne vide si absent
-   */
-  static extractPaymentIntentId(session: any): string {
-    // Stripe peut retourner payment_intent comme string ou comme objet
-    if (typeof session.payment_intent === "string") {
-      return session.payment_intent;
-    }
-    return session.payment_intent?.id || "";
-  }
-
-  /**
-   * Récupère la session Stripe complète depuis l'API Stripe
+   * Récupère la session Stripe complète depuis payment-service
    *
    * Cette fonction est nécessaire pour :
    * - Extraire le paymentIntentId (idempotence)
@@ -60,22 +40,38 @@ class StripeService {
    *
    * @param csid - Checkout Session ID (retourné par Stripe après paiement)
    * @returns Session Stripe complète + paymentIntentId extrait
-   * @throws Error si STRIPE_SECRET_KEY n'est pas configuré
+   * @throws Error si payment-service n'est pas accessible
    */
   static async getSessionInfo(csid: string): Promise<{
     session: any;
     paymentIntentId: string | undefined;
   }> {
-    const stripeKey = process.env["STRIPE_SECRET_KEY"];
-    if (!stripeKey) {
-      throw new Error("STRIPE_SECRET_KEY not configured");
+    try {
+      const response = await axios.get(
+        `${SERVICES.payment}/api/payment/session/${csid}`
+      );
+
+      const { session, paymentIntentId } = response.data;
+
+      return { session, paymentIntentId };
+    } catch (error: any) {
+      // Si c'est une erreur 404, la session n'existe pas
+      if (error.response?.status === 404) {
+        throw new Error(`Session Stripe non trouvée: ${csid}`);
+      }
+      // Si c'est une erreur de connexion au service
+      if (error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT") {
+        throw new Error(
+          `Impossible de se connecter à payment-service: ${error.message}`
+        );
+      }
+      // Autres erreurs
+      throw new Error(
+        `Erreur lors de la récupération de la session Stripe: ${
+          error.response?.data?.message || error.message
+        }`
+      );
     }
-
-    const stripe = new StripeLib(stripeKey, { apiVersion: "2023-08-16" });
-    const session = await stripe.checkout.sessions.retrieve(csid);
-    const paymentIntentId = this.extractPaymentIntentId(session) || undefined;
-
-    return { session, paymentIntentId };
   }
 }
 
@@ -473,7 +469,7 @@ class EmailService {
  * 6. Envoie l'email de confirmation (non-bloquant)
  *
  * Gestion d'erreurs :
- * - Si récupération Stripe échoue → continue sans paymentIntentId (perte d'idempotence)
+ * - Si récupération Stripe via payment-service échoue → continue sans paymentIntentId (perte d'idempotence)
  * - Si snapshot/cart introuvable → erreur 404
  * - Si création commande échoue → erreur 500
  * - Si envoi email échoue → loggée mais non-bloquante
@@ -499,14 +495,14 @@ export const handleFinalizePayment = async (
       return res.status(400).json({ error: "csid is required" });
     }
 
-    // ===== ÉTAPE 1 : Récupérer la session Stripe =====
+    // ===== ÉTAPE 1 : Récupérer la session Stripe via payment-service =====
     // Nécessaire pour paymentIntentId (idempotence) et métadonnées (customerId)
     let stripeSessionInfo;
     try {
       stripeSessionInfo = await StripeService.getSessionInfo(csid);
     } catch (e) {
       console.warn(
-        "[handleFinalizePayment] Unable to fetch Stripe session:",
+        "[handleFinalizePayment] Unable to fetch Stripe session from payment-service:",
         (e as any)?.message
       );
       // Continue sans paymentIntentId si nécessaire (perte d'idempotence mais processus continue)

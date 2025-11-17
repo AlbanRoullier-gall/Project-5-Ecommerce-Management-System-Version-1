@@ -77,6 +77,56 @@ export default class PaymentService {
   }
 
   /**
+   * Extrait le payment intent ID depuis une session Stripe
+   *
+   * Le paymentIntentId est utilisé pour l'idempotence : si une commande avec
+   * le même paymentIntentId existe déjà, elle n'est pas dupliquée.
+   *
+   * @param session - Session Stripe récupérée via l'API
+   * @returns Le payment intent ID (string) ou undefined si absent
+   */
+  private extractPaymentIntentId(
+    session: Stripe.Checkout.Session
+  ): string | undefined {
+    // Stripe peut retourner payment_intent comme string ou comme objet
+    if (typeof session.payment_intent === "string") {
+      return session.payment_intent;
+    }
+    return (session.payment_intent as Stripe.PaymentIntent)?.id || undefined;
+  }
+
+  /**
+   * Récupère la session Stripe complète depuis l'API Stripe
+   *
+   * Cette fonction est nécessaire pour :
+   * - Extraire le paymentIntentId (idempotence)
+   * - Accéder aux métadonnées Stripe (notamment customerId mis par le frontend)
+   *
+   * @param csid - Checkout Session ID (retourné par Stripe après paiement)
+   * @returns Session Stripe complète + paymentIntentId extrait
+   * @throws Error si STRIPE_SECRET_KEY n'est pas configuré ou si la session n'existe pas
+   */
+  async getSessionInfo(csid: string): Promise<{
+    session: Stripe.Checkout.Session;
+    paymentIntentId: string | undefined;
+  }> {
+    try {
+      const session = await this.stripe.checkout.sessions.retrieve(csid);
+      const paymentIntentId = this.extractPaymentIntentId(session);
+
+      return { session, paymentIntentId };
+    } catch (error: any) {
+      console.error("Error retrieving Stripe session:", error);
+      if (error.type === "StripeInvalidRequestError") {
+        throw new Error(`Session Stripe non trouvée: ${csid}`);
+      }
+      throw new Error(
+        `Erreur lors de la récupération de la session Stripe: ${error.message}`
+      );
+    }
+  }
+
+  /**
    * Vérifier la configuration Stripe
    * @returns {Object} État de la configuration
    */
