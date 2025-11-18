@@ -138,11 +138,15 @@ class OrderService {
    *
    * Structure du payload :
    * - Totaux (HT/TTC) depuis le cart
-   * - Items transformés avec calculs HT/TTC
+   * - Items du cart (déjà au bon format avec calculs HT/TTC)
    * - Adresses depuis le snapshot
    * - customerId résolu depuis l'email
    * - customerSnapshot (fallback si customerId absent)
    * - paymentIntentId (pour idempotence)
+   *
+   * Note : Les items du cart sont déjà au format attendu par order-service
+   * (unitPriceHT, unitPriceTTC, totalPriceHT, totalPriceTTC) grâce au cart-service.
+   * On utilise directement ces items sans transformation.
    *
    * @param cart - Panier complet avec items et totaux
    * @param snapshot - Snapshot checkout avec customer et adresses
@@ -156,33 +160,18 @@ class OrderService {
   ): Promise<any> {
     const cartItems = cart.items || [];
 
-    // Debug: vérifier les productName dans les items
-    console.log(
-      "[OrderService] Cart items with productName:",
-      cartItems.map((item: any) => ({
-        productId: item.productId,
-        productName: item.productName,
-        hasProductName: !!item.productName,
-      }))
-    );
-
-    // Utiliser directement les items du cart (déjà avec tous les calculs HT/TTC)
-    // Le cart-service retourne maintenant unitPriceHT, unitPriceTTC, totalPriceHT, totalPriceTTC
-    const items = cartItems.map((item: any) => {
-      console.log(
-        `[OrderService] Item ${item.productId}: productName="${item.productName}"`
-      );
-      return {
-        productId: item.productId,
-        productName: item.productName || `Produit #${item.productId}`,
-        quantity: item.quantity,
-        unitPriceHT: item.unitPriceHT,
-        unitPriceTTC: item.unitPriceTTC,
-        vatRate: item.vatRate,
-        totalPriceHT: item.totalPriceHT,
-        totalPriceTTC: item.totalPriceTTC,
-      };
-    });
+    // Les items du cart sont déjà au bon format (unitPriceHT, unitPriceTTC, etc.)
+    // On s'assure juste que productName existe (fallback si absent)
+    const items = cartItems.map((item: any) => ({
+      productId: item.productId,
+      productName: item.productName || `Produit #${item.productId}`,
+      quantity: item.quantity,
+      unitPriceHT: item.unitPriceHT,
+      unitPriceTTC: item.unitPriceTTC,
+      vatRate: item.vatRate,
+      totalPriceHT: item.totalPriceHT,
+      totalPriceTTC: item.totalPriceTTC,
+    }));
 
     // Résoudre customerId depuis l'email
     const customerId = await SnapshotService.resolveCustomerId(snapshot);
