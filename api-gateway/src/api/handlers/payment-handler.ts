@@ -94,27 +94,17 @@ class SnapshotService {
   }
 
   /**
-   * Résout le customerId depuis les métadonnées Stripe ou l'email
+   * Résout le customerId depuis l'email via customer-service
    *
    * Le customerId est nécessaire pour lier la commande au client dans la base.
-   * Sources (par ordre de priorité) :
-   * 1. Métadonnées Stripe (le frontend y met customerId lors de la création du paiement)
-   * 2. Résolution par email via customer-service (si customerId absent des métadonnées)
+   * La résolution se fait en recherchant un client existant avec l'email fourni
+   * dans le snapshot checkout.
    *
    * @param snapshot - Snapshot checkout contenant l'email du client
-   * @param stripeMetadata - Métadonnées de la session Stripe
    * @returns customerId résolu ou undefined si impossible
    */
-  static async resolveCustomerId(
-    snapshot: any,
-    stripeMetadata?: any
-  ): Promise<number | undefined> {
-    // Source principale : metadata Stripe (le frontend l'y met lors de la création du paiement)
-    if (stripeMetadata?.customerId) {
-      return Number(stripeMetadata.customerId);
-    }
-
-    // Source de secours : résoudre depuis l'email via customer-service
+  static async resolveCustomerId(snapshot: any): Promise<number | undefined> {
+    // Résoudre depuis l'email via customer-service
     const customerEmail = snapshot.customer?.email || snapshot.email;
     if (!customerEmail) return undefined;
 
@@ -150,21 +140,19 @@ class OrderService {
    * - Totaux (HT/TTC) depuis le cart
    * - Items transformés avec calculs HT/TTC
    * - Adresses depuis le snapshot
-   * - customerId résolu
+   * - customerId résolu depuis l'email
    * - customerSnapshot (fallback si customerId absent)
    * - paymentIntentId (pour idempotence)
    *
    * @param cart - Panier complet avec items et totaux
    * @param snapshot - Snapshot checkout avec customer et adresses
    * @param paymentIntentId - ID du payment intent Stripe (pour idempotence)
-   * @param stripeMetadata - Métadonnées Stripe (contient customerId)
    * @returns Payload formaté pour order-service
    */
   static async preparePayload(
     cart: any,
     snapshot: any,
-    paymentIntentId?: string,
-    stripeMetadata?: any
+    paymentIntentId?: string
   ): Promise<any> {
     const cartItems = cart.items || [];
 
@@ -196,11 +184,8 @@ class OrderService {
       };
     });
 
-    // Résoudre customerId depuis métadonnées Stripe ou email
-    const customerId = await SnapshotService.resolveCustomerId(
-      snapshot,
-      stripeMetadata
-    );
+    // Résoudre customerId depuis l'email
+    const customerId = await SnapshotService.resolveCustomerId(snapshot);
 
     // Extraire les adresses depuis le snapshot
     const { shippingAddress, billingAddress } =
@@ -445,8 +430,7 @@ export const handleFinalizePayment = async (
     const orderPayload = await OrderService.preparePayload(
       cart,
       snapshot,
-      stripeSessionInfo.paymentIntentId,
-      stripeSessionInfo.session?.metadata
+      stripeSessionInfo.paymentIntentId
     );
     const orderId = await OrderService.create(orderPayload);
     console.log(
