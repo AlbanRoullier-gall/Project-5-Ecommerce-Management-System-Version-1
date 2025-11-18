@@ -104,7 +104,7 @@ class SnapshotService {
    * @returns customerId résolu ou undefined si impossible
    */
   static async resolveCustomerId(snapshot: any): Promise<number | undefined> {
-    // Résoudre depuis l'email via customer-service
+    // Résoudre depuis l'email via customer-service (route optimisée)
     const customerEmail = snapshot.customer?.email || snapshot.email;
     if (!customerEmail) return undefined;
 
@@ -112,9 +112,9 @@ class SnapshotService {
       const response = await axios.get(
         `${SERVICES.customer}/api/customers/by-email/${encodeURIComponent(
           customerEmail
-        )}`
+        )}/id`
       );
-      return response.data?.customer?.customerId;
+      return response.data?.customerId;
     } catch (error) {
       return undefined;
     }

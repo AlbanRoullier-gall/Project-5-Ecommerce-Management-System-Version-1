@@ -71,6 +71,39 @@ export class CustomerController {
   }
 
   /**
+   * Récupérer uniquement le customerId par email (route optimisée)
+   * Retourne seulement l'ID du client pour réduire le transfert de données
+   */
+  async getCustomerIdByEmail(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.params;
+
+      if (!email) {
+        res.status(400).json(ResponseMapper.validationError("Email requis"));
+        return;
+      }
+
+      const customer = await this.customerService.getCustomerByEmail(
+        decodeURIComponent(email)
+      );
+
+      if (!customer) {
+        res.status(404).json(ResponseMapper.notFoundError("Client"));
+        return;
+      }
+
+      // Retourner seulement le customerId
+      res.json({
+        success: true,
+        customerId: customer.customerId,
+      });
+    } catch (error: any) {
+      console.error("Get customer ID by email error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
    * Créer un nouveau client
    */
   async createCustomer(req: Request, res: Response): Promise<void> {

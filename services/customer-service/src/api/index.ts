@@ -201,6 +201,14 @@ export class ApiRouter {
       }
     );
 
+    // Récupérer uniquement le customerId par email (route optimisée - doit être avant la route générale)
+    app.get(
+      "/api/customers/by-email/:email/id",
+      (req: Request, res: Response) => {
+        this.customerController.getCustomerIdByEmail(req, res);
+      }
+    );
+
     // Récupérer un client par email (publique)
     app.get("/api/customers/by-email/:email", (req: Request, res: Response) => {
       this.customerController.getCustomerByEmail(req, res);
