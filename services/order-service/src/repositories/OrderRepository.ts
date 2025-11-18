@@ -487,6 +487,87 @@ export default class OrderRepository {
    */
   async getOrdersByYear(year: number): Promise<any[]> {
     try {
+      // D'abord, compter le total de commandes dans la base
+      const countQuery = `SELECT COUNT(*) as total FROM orders`;
+      const countResult = await this.pool.query(countQuery);
+      const totalOrders = parseInt(countResult.rows[0].total);
+
+      // Vérifier s'il y a des commandes avec des dates NULL ou invalides
+      const nullDateQuery = `
+        SELECT id, created_at, EXTRACT(YEAR FROM created_at) as year
+        FROM orders
+        WHERE created_at IS NULL OR EXTRACT(YEAR FROM created_at) IS NULL
+        ORDER BY id
+      `;
+      const nullDateResult = await this.pool.query(nullDateQuery);
+      if (nullDateResult.rows.length > 0) {
+        console.log(
+          `⚠️ Commandes avec dates NULL ou invalides:`,
+          nullDateResult.rows
+        );
+      }
+
+      // Voir la distribution par année (y compris NULL)
+      const yearDistributionQuery = `
+        SELECT 
+          COALESCE(EXTRACT(YEAR FROM created_at)::text, 'NULL') as year,
+          COUNT(*) as count,
+          ARRAY_AGG(id ORDER BY id) as ids
+        FROM orders
+        GROUP BY EXTRACT(YEAR FROM created_at)
+        ORDER BY year DESC NULLS LAST
+      `;
+      const yearDistributionResult = await this.pool.query(
+        yearDistributionQuery
+      );
+      console.log(
+        `📊 Distribution des commandes par année:`,
+        yearDistributionResult.rows
+      );
+
+      // Compter les commandes de l'année
+      const yearCountQuery = `
+        SELECT COUNT(*) as total 
+        FROM orders o
+        WHERE EXTRACT(YEAR FROM o.created_at) = $1
+      `;
+      const yearCountResult = await this.pool.query(yearCountQuery, [year]);
+      const yearOrders = parseInt(yearCountResult.rows[0].total);
+
+      // Vérifier aussi avec une comparaison de dates pour être sûr
+      const yearRangeStart = `${year}-01-01 00:00:00`;
+      const yearRangeEnd = `${year + 1}-01-01 00:00:00`;
+      const yearRangeQuery = `
+        SELECT COUNT(*) as total 
+        FROM orders o
+        WHERE o.created_at >= $1::timestamp 
+          AND o.created_at < $2::timestamp
+      `;
+      const yearRangeResult = await this.pool.query(yearRangeQuery, [
+        yearRangeStart,
+        yearRangeEnd,
+      ]);
+      const yearRangeOrders = parseInt(yearRangeResult.rows[0].total);
+
+      console.log(
+        `📊 Base de données: ${totalOrders} commandes au total, ${yearOrders} commandes pour l'année ${year} (EXTRACT), ${yearRangeOrders} commandes (date range)`
+      );
+
+      // Lister toutes les commandes pour debug
+      const allOrdersQuery = `
+        SELECT id, created_at, EXTRACT(YEAR FROM created_at) as year
+        FROM orders
+        ORDER BY id
+      `;
+      const allOrdersResult = await this.pool.query(allOrdersQuery);
+      console.log(
+        `📊 Total de commandes listées: ${allOrdersResult.rows.length}`
+      );
+
+      // Récupérer toutes les commandes de l'année
+      // Utiliser une comparaison de dates pour être plus robuste avec les timezones
+      const startOfYear = `${year}-01-01 00:00:00`;
+      const endOfYear = `${year + 1}-01-01 00:00:00`;
       const query = `
         SELECT 
           o.id, o.customer_id as "customerId", o.customer_snapshot as "customerSnapshot",
@@ -494,11 +575,34 @@ export default class OrderRepository {
           o.payment_method as "paymentMethod", o.notes, o.delivered,
           o.created_at as "createdAt", o.updated_at as "updatedAt"
         FROM orders o
-        WHERE EXTRACT(YEAR FROM o.created_at) = $1
+        WHERE o.created_at >= $1::timestamp 
+          AND o.created_at < $2::timestamp
         ORDER BY o.created_at DESC
       `;
 
-      const result = await this.pool.query(query, [year]);
+      const result = await this.pool.query(query, [startOfYear, endOfYear]);
+      console.log(
+        `📊 Requête exécutée: ${result.rows.length} commandes retournées pour l'année ${year} (date range: ${startOfYear} à ${endOfYear})`
+      );
+
+      // Vérifier aussi avec EXTRACT pour comparer
+      const extractQuery = `
+        SELECT COUNT(*) as count
+        FROM orders o
+        WHERE EXTRACT(YEAR FROM o.created_at) = $1
+      `;
+      const extractResult = await this.pool.query(extractQuery, [year]);
+      const extractCount = parseInt(extractResult.rows[0].count);
+      console.log(
+        `📊 Comparaison EXTRACT: ${extractCount} commandes pour l'année ${year}`
+      );
+
+      if (result.rows.length !== extractCount) {
+        console.warn(
+          `⚠️ Différence entre date range (${result.rows.length}) et EXTRACT (${extractCount})`
+        );
+      }
+
       return result.rows;
     } catch (error) {
       console.error("Error getting orders by year:", error);

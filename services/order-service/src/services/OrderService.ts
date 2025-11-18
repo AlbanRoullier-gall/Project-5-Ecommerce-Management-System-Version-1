@@ -615,32 +615,209 @@ export default class OrderService {
       // Obtenir les commandes de l'année en utilisant le repository
       const orders = await this.orderRepository.getOrdersByYear(year);
 
+      console.log(
+        `📊 Export pour l'année ${year}: ${orders.length} commandes trouvées`
+      );
+
       // Obtenir les articles et adresses pour chaque commande en utilisant les repositories
-      for (const order of orders) {
-        order.items = await this.orderItemRepository.getItemsByOrderId(
-          order.id
-        );
-        order.addresses =
-          await this.orderAddressRepository.getAddressesByOrderId(order.id);
-      }
+      // Recalculer les totaux à partir des items pour garantir l'exactitude
+      // Créer de nouveaux objets pour s'assurer que toutes les propriétés sont bien sérialisées
+      console.log(`🔄 Traitement de ${orders.length} commandes...`);
+      const ordersWithDetails = await Promise.all(
+        orders.map(async (order) => {
+          try {
+            const items = await this.orderItemRepository.getItemsByOrderId(
+              order.id
+            );
+            const addresses =
+              await this.orderAddressRepository.getAddressesByOrderId(order.id);
+
+            // Recalculer les totaux à partir des items pour garantir l'exactitude
+            let totalHT = parseFloat(String(order.totalAmountHT || 0));
+            let totalTTC = parseFloat(String(order.totalAmountTTC || 0));
+            if (items && items.length > 0) {
+              totalHT = items.reduce(
+                (sum: number, item: any) =>
+                  sum + parseFloat(String(item.totalPriceHT || 0)),
+                0
+              );
+              totalTTC = items.reduce(
+                (sum: number, item: any) =>
+                  sum + parseFloat(String(item.totalPriceTTC || 0)),
+                0
+              );
+            }
+
+            // S'assurer que les totaux sont des nombres
+            totalHT = isNaN(totalHT) ? 0 : Number(totalHT);
+            totalTTC = isNaN(totalTTC) ? 0 : Number(totalTTC);
+
+            // Créer un nouvel objet avec toutes les propriétés explicitement
+            return {
+              id: order.id,
+              customerId: order.customerId,
+              customerSnapshot: order.customerSnapshot,
+              totalAmountHT: parseFloat(totalHT.toFixed(2)),
+              totalAmountTTC: parseFloat(totalTTC.toFixed(2)),
+              paymentMethod: order.paymentMethod,
+              notes: order.notes,
+              delivered: order.delivered,
+              createdAt: order.createdAt,
+              updatedAt: order.updatedAt,
+              items: items
+                ? items.map((item: any) => ({
+                    id: item.id,
+                    orderId: item.orderId,
+                    productId: item.productId,
+                    productName: item.productName,
+                    quantity: item.quantity,
+                    unitPriceHT: item.unitPriceHT,
+                    unitPriceTTC: item.unitPriceTTC,
+                    vatRate: item.vatRate,
+                    totalPriceHT: item.totalPriceHT,
+                    totalPriceTTC: item.totalPriceTTC,
+                  }))
+                : [],
+              addresses: addresses
+                ? addresses.map((address: any) => ({
+                    id: address.id,
+                    orderId: address.orderId,
+                    addressType: address.addressType || address.type,
+                    addressSnapshot: address.addressSnapshot || address,
+                  }))
+                : [],
+            };
+          } catch (error) {
+            console.error(
+              `❌ Erreur lors du traitement de la commande ${order.id}:`,
+              error
+            );
+            // Retourner la commande sans items/adresses en cas d'erreur
+            return {
+              id: order.id,
+              customerId: order.customerId,
+              customerSnapshot: order.customerSnapshot,
+              totalAmountHT: order.totalAmountHT || 0,
+              totalAmountTTC: order.totalAmountTTC || 0,
+              paymentMethod: order.paymentMethod,
+              notes: order.notes,
+              delivered: order.delivered,
+              createdAt: order.createdAt,
+              updatedAt: order.updatedAt,
+              items: [],
+              addresses: [],
+            };
+          }
+        })
+      );
+
+      console.log(
+        `✅ ${ordersWithDetails.length} commandes traitées avec succès`
+      );
 
       // Obtenir les avoirs de l'année en utilisant le repository
       const creditNotes = await this.creditNoteRepository.getCreditNotesByYear(
         year
       );
 
+      console.log(
+        `📊 Export pour l'année ${year}: ${creditNotes.length} avoirs trouvés`
+      );
+
       // Obtenir les articles d'avoir pour chaque avoir en utilisant le repository
-      for (const creditNote of creditNotes) {
-        creditNote.items =
-          await this.creditNoteItemRepository.getItemsByCreditNoteId(
-            creditNote.id
-          );
+      // Créer de nouveaux objets pour s'assurer que les items sont bien sérialisés
+      const creditNotesWithItems = await Promise.all(
+        creditNotes.map(async (creditNote) => {
+          const items =
+            await this.creditNoteItemRepository.getItemsByCreditNoteId(
+              creditNote.id
+            );
+          // Debug log
+          console.log(`📋 Credit Note #${creditNote.id} items:`, {
+            itemsCount: items?.length || 0,
+            items: items,
+          });
+          // Recalculer les totaux à partir des items pour garantir l'exactitude
+          let totalHT = parseFloat(String(creditNote.totalAmountHT || 0));
+          let totalTTC = parseFloat(String(creditNote.totalAmountTTC || 0));
+          if (items && items.length > 0) {
+            totalHT = items.reduce(
+              (sum: number, item: any) =>
+                sum + parseFloat(String(item.totalPriceHT || 0)),
+              0
+            );
+            totalTTC = items.reduce(
+              (sum: number, item: any) =>
+                sum + parseFloat(String(item.totalPriceTTC || 0)),
+              0
+            );
+          }
+
+          // S'assurer que les totaux sont des nombres
+          totalHT = isNaN(totalHT) ? 0 : Number(totalHT);
+          totalTTC = isNaN(totalTTC) ? 0 : Number(totalTTC);
+
+          // Créer un nouvel objet avec toutes les propriétés explicitement pour garantir la sérialisation
+          // Les objets PostgreSQL peuvent avoir des propriétés non-énumérables
+          return {
+            id: creditNote.id,
+            customerId: creditNote.customerId,
+            orderId: creditNote.orderId,
+            reason: creditNote.reason,
+            description: creditNote.description,
+            issueDate: creditNote.issueDate,
+            paymentMethod: creditNote.paymentMethod,
+            totalAmountHT: parseFloat(totalHT.toFixed(2)),
+            totalAmountTTC: parseFloat(totalTTC.toFixed(2)),
+            notes: creditNote.notes,
+            createdAt: creditNote.createdAt,
+            updatedAt: creditNote.updatedAt,
+            items: items
+              ? items.map((item: any) => ({
+                  id: item.id,
+                  productId: item.productId,
+                  productName: item.productName,
+                  quantity: item.quantity,
+                  unitPriceHT: item.unitPriceHT,
+                  unitPriceTTC: item.unitPriceTTC,
+                  totalPriceHT: item.totalPriceHT,
+                  totalPriceTTC: item.totalPriceTTC,
+                }))
+              : [],
+          };
+        })
+      );
+
+      // Vérifier avant sérialisation
+      console.log(
+        `📦 Avant sérialisation: ${ordersWithDetails.length} commandes, ${creditNotesWithItems.length} avoirs`
+      );
+
+      // Forcer la sérialisation JSON pour garantir que tous les objets sont bien sérialisables
+      const dataToSerialize = {
+        orders: ordersWithDetails,
+        creditNotes: creditNotesWithItems,
+      };
+
+      const jsonString = JSON.stringify(dataToSerialize);
+      console.log(
+        `📏 Taille JSON: ${(jsonString.length / 1024 / 1024).toFixed(2)} MB`
+      );
+
+      const serializedData = JSON.parse(jsonString);
+
+      console.log(
+        `✅ Export sérialisé: ${serializedData.orders.length} commandes, ${serializedData.creditNotes.length} avoirs`
+      );
+
+      // Vérification finale
+      if (serializedData.orders.length !== ordersWithDetails.length) {
+        console.error(
+          `❌ ERREUR: Perte de données lors de la sérialisation! ${ordersWithDetails.length} -> ${serializedData.orders.length}`
+        );
       }
 
-      return {
-        orders,
-        creditNotes,
-      };
+      return serializedData;
     } catch (error) {
       console.error("Error getting year export data:", error);
       throw error;

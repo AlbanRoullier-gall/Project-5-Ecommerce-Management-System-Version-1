@@ -60,25 +60,64 @@ export class ExportHandler {
         return;
       }
 
+      // Debug: Log orders data before sending to PDF service
+      console.log("📦 Orders from order service:", {
+        ordersCount: orderData.data?.orders?.length || 0,
+        creditNotesCount: orderData.data?.creditNotes?.length || 0,
+      });
+
+      // Debug: Log credit notes data before sending to PDF service
+      console.log("📦 Credit Notes from order service:", {
+        creditNotesCount: orderData.data?.creditNotes?.length || 0,
+        firstCreditNote: orderData.data?.creditNotes?.[0]
+          ? {
+              id: orderData.data.creditNotes[0].id,
+              hasItems: !!orderData.data.creditNotes[0].items,
+              itemsCount: orderData.data.creditNotes[0].items?.length || 0,
+              items: orderData.data.creditNotes[0].items,
+              allProperties: Object.keys(orderData.data.creditNotes[0]),
+            }
+          : null,
+      });
+
       // Step 2: Generate PDF using PDF export service
       console.log(`Generating PDF for year ${yearNumber}...`);
+
+      const requestBody = {
+        year: yearNumber,
+        orders: orderData.data.orders,
+        creditNotes: orderData.data.creditNotes,
+      };
+
+      const jsonBody = JSON.stringify(requestBody);
+      const bodySizeMB = (jsonBody.length / 1024 / 1024).toFixed(2);
+      console.log(
+        `📦 Envoi au service pdf-export: ${orderData.data.orders.length} commandes, ${orderData.data.creditNotes.length} avoirs, taille: ${bodySizeMB} MB`
+      );
+
       const pdfServiceResponse = await fetch(
         `${SERVICES["pdf-export"]}/api/admin/export/orders-year`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "x-user-id": String(user.userId),
+            "x-user-email": user.email,
           },
-          body: JSON.stringify({
-            year: yearNumber,
-            orders: orderData.data.orders,
-            creditNotes: orderData.data.creditNotes,
-          }),
+          body: jsonBody,
         }
       );
 
       if (!pdfServiceResponse.ok) {
-        res.status(500).json({ error: "Erreur lors de la génération du PDF" });
+        const errorText = await pdfServiceResponse.text();
+        console.error(
+          `❌ Erreur du service pdf-export (${pdfServiceResponse.status}):`,
+          errorText
+        );
+        res.status(500).json({
+          error: "Erreur lors de la génération du PDF",
+          details: errorText.substring(0, 500), // Limiter la taille de l'erreur
+        });
         return;
       }
 

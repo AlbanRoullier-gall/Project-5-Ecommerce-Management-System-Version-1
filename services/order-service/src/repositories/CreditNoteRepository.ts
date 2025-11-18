@@ -110,6 +110,7 @@ export default class CreditNoteRepository {
       page = 1,
       limit = 10,
       customerId,
+      year,
       startDate,
       endDate,
       sort = "created_at DESC",
@@ -123,6 +124,11 @@ export default class CreditNoteRepository {
     if (customerId) {
       conditions.push(`customer_id = $${++paramCount}`);
       params.push(customerId);
+    }
+
+    if (year) {
+      conditions.push(`EXTRACT(YEAR FROM created_at) = $${++paramCount}`);
+      params.push(year);
     }
 
     if (startDate) {
@@ -463,6 +469,9 @@ export default class CreditNoteRepository {
    */
   async getCreditNotesByYear(year: number): Promise<any[]> {
     try {
+      // Utiliser une comparaison de dates pour être plus robuste avec les timezones
+      const startOfYear = `${year}-01-01 00:00:00`;
+      const endOfYear = `${year + 1}-01-01 00:00:00`;
       const query = `
         SELECT 
           cn.id, cn.customer_id as "customerId", cn.order_id as "orderId",
@@ -471,11 +480,15 @@ export default class CreditNoteRepository {
           cn.total_amount_ttc as "totalAmountTTC", cn.notes,
           cn.created_at as "createdAt", cn.updated_at as "updatedAt"
         FROM credit_notes cn
-        WHERE EXTRACT(YEAR FROM cn.created_at) = $1
+        WHERE cn.created_at >= $1::timestamp 
+          AND cn.created_at < $2::timestamp
         ORDER BY cn.created_at DESC
       `;
 
-      const result = await this.pool.query(query, [year]);
+      const result = await this.pool.query(query, [startOfYear, endOfYear]);
+      console.log(
+        `📊 Avoirs récupérés: ${result.rows.length} avoirs pour l'année ${year}`
+      );
       return result.rows;
     } catch (error) {
       console.error("Error getting credit notes by year:", error);

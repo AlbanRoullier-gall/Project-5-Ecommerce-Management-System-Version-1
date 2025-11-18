@@ -163,6 +163,9 @@ export class CreditNoteController {
         ...(req.query.customerId && {
           customerId: parseInt(req.query.customerId as string),
         }),
+        ...(req.query.year && {
+          year: parseInt(req.query.year as string),
+        }),
         startDate: (req.query.startDate as string) || undefined,
         endDate: (req.query.endDate as string) || undefined,
       } as any;

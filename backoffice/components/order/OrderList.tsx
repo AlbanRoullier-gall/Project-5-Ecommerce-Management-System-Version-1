@@ -24,6 +24,7 @@ const OrderList: React.FC = () => {
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const [hasMore, setHasMore] = useState(true);
+  const [totalOrders, setTotalOrders] = useState<number | null>(null);
 
   // États pour la pagination des avoirs
   const [creditNotesPage, setCreditNotesPage] = useState(1);
@@ -59,105 +60,16 @@ const OrderList: React.FC = () => {
         return;
       }
 
-      // Récupérer les données des commandes et avoirs pour l'année sélectionnée
-      const ordersForYear = orders.filter((order) => {
-        const orderYear = new Date(order.createdAt).getFullYear();
-        return orderYear.toString() === yearFilter;
-      });
-
-      const creditNotesForYear = creditNotes.filter((creditNote) => {
-        const creditNoteYear = new Date(creditNote.createdAt).getFullYear();
-        return creditNoteYear.toString() === yearFilter;
-      });
-
-      console.log(`Export pour l'année ${yearFilter}:`, {
-        ordersCount: ordersForYear.length,
-        creditNotesCount: creditNotesForYear.length,
-      });
-
-      // Récupérer les données complètes (items et adresses) pour chaque commande
-      const ordersWithDetails = await Promise.all(
-        ordersForYear.map(async (order) => {
-          try {
-            // Récupérer les items de la commande
-            const itemsRes = await fetch(
-              `${API_URL}/api/admin/orders/${order.id}/items`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            );
-            const items = itemsRes.ok ? await itemsRes.json() : [];
-
-            console.log(`Items pour commande ${order.id}:`, {
-              status: itemsRes.status,
-              ok: itemsRes.ok,
-              data: items,
-              dataKeys: Object.keys(items),
-              dataLength: Array.isArray(items) ? items.length : "not array",
-              dataContent: items.data,
-              dataDataKeys: items.data ? Object.keys(items.data) : "no data",
-              dataDataLength: Array.isArray(items.data)
-                ? items.data.length
-                : "not array",
-            });
-
-            // Récupérer les adresses de la commande
-            const addressesRes = await fetch(
-              `${API_URL}/api/admin/orders/${order.id}/addresses`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            );
-            const addresses = addressesRes.ok ? await addressesRes.json() : [];
-
-            console.log(`Adresses pour commande ${order.id}:`, {
-              status: addressesRes.status,
-              ok: addressesRes.ok,
-              data: addresses,
-              dataKeys: Object.keys(addresses),
-              dataLength: Array.isArray(addresses)
-                ? addresses.length
-                : "not array",
-              dataContent: addresses.data,
-              dataDataKeys: addresses.data
-                ? Object.keys(addresses.data)
-                : "no data",
-              dataDataLength: Array.isArray(addresses.data)
-                ? addresses.data.length
-                : "not array",
-            });
-
-            return {
-              ...order,
-              items: items.data?.orderItems || [],
-              addresses: addresses.data?.orderAddresses || [],
-            };
-          } catch (error) {
-            console.error(
-              `Erreur récupération détails commande ${order.id}:`,
-              error
-            );
-            return {
-              ...order,
-              items: [],
-              addresses: [],
-            };
-          }
-        })
+      // Appeler directement l'endpoint d'export qui récupère TOUTES les commandes de l'année
+      const response = await fetch(
+        `${API_URL}/api/admin/exports/orders-year/${yearFilter}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-
-      const response = await fetch(`${API_URL}/api/admin/export/orders-year`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          year: parseInt(yearFilter),
-          orders: ordersWithDetails,
-          creditNotes: creditNotesForYear,
-        }),
-      });
 
       if (!response.ok) {
         throw new Error("Erreur lors de l'export");
@@ -189,22 +101,16 @@ const OrderList: React.FC = () => {
     url.searchParams.set("page", String(targetPage));
     url.searchParams.set("limit", String(limit));
     if (search) url.searchParams.set("search", search);
+    // Envoyer le filtre par année au serveur pour un filtrage côté serveur
+    if (yearFilter) url.searchParams.set("year", yearFilter);
 
     const res = await fetch(url.toString(), {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error("Erreur chargement commandes");
     const json = await res.json();
-    let ordersList: OrderPublicDTO[] =
+    const ordersList: OrderPublicDTO[] =
       json?.data?.orders ?? json?.orders ?? (Array.isArray(json) ? json : []);
-
-    // Appliquer le filtre par année côté client
-    if (yearFilter) {
-      ordersList = ordersList.filter((order) => {
-        const orderYear = new Date(order.createdAt).getFullYear();
-        return orderYear.toString() === yearFilter;
-      });
-    }
 
     const pagination = json?.data?.pagination ?? json?.pagination ?? null;
 
@@ -219,9 +125,17 @@ const OrderList: React.FC = () => {
     if (pagination) {
       const hasNext = targetPage < (pagination.pages ?? targetPage);
       setHasMore(hasNext);
+      // Stocker le total de la pagination
+      if (pagination.total !== undefined) {
+        setTotalOrders(pagination.total);
+      }
     } else {
       // If no pagination info, assume no more when we received empty page
       setHasMore(ordersList.length > 0);
+      // Si pas de pagination, utiliser le nombre de commandes chargées
+      if (!append) {
+        setTotalOrders(ordersList.length);
+      }
     }
 
     setPage(targetPage);
@@ -234,24 +148,18 @@ const OrderList: React.FC = () => {
     const url = new URL(`${API_URL}/api/admin/credit-notes`);
     url.searchParams.set("page", String(targetPage));
     url.searchParams.set("limit", String(limit));
+    // Envoyer le filtre par année au serveur pour un filtrage côté serveur
+    if (yearFilter) url.searchParams.set("year", yearFilter);
 
     const res = await fetch(url.toString(), {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error("Erreur chargement avoirs");
     const json = await res.json();
-    let creditNotesList: CreditNotePublicDTO[] =
+    const creditNotesList: CreditNotePublicDTO[] =
       json?.data?.creditNotes ??
       json?.creditNotes ??
       (Array.isArray(json) ? json : []);
-
-    // Appliquer le filtre par année côté client
-    if (yearFilter) {
-      creditNotesList = creditNotesList.filter((creditNote) => {
-        const creditNoteYear = new Date(creditNote.createdAt).getFullYear();
-        return creditNoteYear.toString() === yearFilter;
-      });
-    }
 
     const pagination = json?.data?.pagination ?? json?.pagination ?? null;
 
@@ -295,6 +203,7 @@ const OrderList: React.FC = () => {
     const timer = setTimeout(() => {
       setHasMore(true);
       setPage(1);
+      setTotalOrders(null); // Réinitialiser le total
       setHasMoreCreditNotes(true);
       setCreditNotesPage(1);
       loadInitial();
@@ -307,6 +216,7 @@ const OrderList: React.FC = () => {
   useEffect(() => {
     setHasMore(true);
     setPage(1);
+    setTotalOrders(null); // Réinitialiser le total
     setHasMoreCreditNotes(true);
     setCreditNotesPage(1);
     loadInitial();
@@ -317,6 +227,7 @@ const OrderList: React.FC = () => {
   useEffect(() => {
     setHasMore(true);
     setPage(1);
+    setTotalOrders(null); // Réinitialiser le total
     setHasMoreCreditNotes(true);
     setCreditNotesPage(1);
     loadInitial();
@@ -346,7 +257,7 @@ const OrderList: React.FC = () => {
       observer.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMore, isLoading, isLoadingMore, page, search]);
+  }, [hasMore, isLoading, isLoadingMore, page, search, yearFilter]);
 
   // Infinite scroll observer for credit notes
   useEffect(() => {
@@ -381,6 +292,7 @@ const OrderList: React.FC = () => {
     isLoadingMoreCreditNotes,
     creditNotesPage,
     search,
+    yearFilter,
   ]);
 
   const toggleDeliveryStatus = async (orderId: number, delivered: boolean) => {
@@ -521,9 +433,17 @@ const OrderList: React.FC = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
             <i className="fas fa-filter" style={{ fontSize: "1.2rem" }}></i>
             <span style={{ fontWeight: "600" }}>
-              {filteredOrders.length} commande
-              {filteredOrders.length !== 1 ? "s" : ""} trouvée
-              {filteredOrders.length !== 1 ? "s" : ""}
+              {totalOrders !== null ? totalOrders : filteredOrders.length}{" "}
+              commande
+              {(totalOrders !== null ? totalOrders : filteredOrders.length) !==
+              1
+                ? "s"
+                : ""}{" "}
+              trouvée
+              {(totalOrders !== null ? totalOrders : filteredOrders.length) !==
+              1
+                ? "s"
+                : ""}
               {deliveryFilter && (
                 <span style={{ marginLeft: "0.5rem", opacity: 0.9 }}>
                   • {deliveryFilter === "delivered" ? "Livrées" : "En attente"}

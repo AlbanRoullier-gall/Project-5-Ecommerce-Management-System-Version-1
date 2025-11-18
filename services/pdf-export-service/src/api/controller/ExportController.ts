@@ -20,6 +20,7 @@ export class ExportController {
    */
   async generateOrdersYearExport(req: Request, res: Response): Promise<void> {
     try {
+      console.log("📥 Réception de la requête d'export...");
       const exportData = req.body as YearExportRequestDTO;
 
       // Log des données reçues pour debug
@@ -37,10 +38,23 @@ export class ExportController {
               properties: Object.keys(exportData.orders[0]),
             }
           : null,
+        firstCreditNote: exportData.creditNotes?.[0]
+          ? {
+              id: exportData.creditNotes[0].id,
+              hasItems: !!exportData.creditNotes[0].items,
+              itemsCount: exportData.creditNotes[0].items?.length || 0,
+              items: exportData.creditNotes[0].items,
+              properties: Object.keys(exportData.creditNotes[0]),
+            }
+          : null,
       });
 
+      console.log("🔄 Génération du HTML...");
       const htmlBuffer = await this.pdfGenerator.generateOrdersYearExport(
         exportData
+      );
+      console.log(
+        `✅ HTML généré: ${(htmlBuffer.length / 1024 / 1024).toFixed(2)} MB`
       );
 
       res.setHeader("Content-Type", "text/html");
@@ -48,10 +62,13 @@ export class ExportController {
         "Content-Disposition",
         `attachment; filename="export-commandes-${exportData.year}.html"`
       );
+      console.log("📤 Envoi de la réponse...");
       res.send(htmlBuffer);
+      console.log("✅ Réponse envoyée avec succès");
     } catch (error: any) {
-      console.error("Export generation error:", error);
-      res.status(500).json(ResponseMapper.internalServerError(error.message));
+      console.error("❌ Export generation error:", error);
+      console.error("❌ Stack trace:", error.stack);
+      res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 }

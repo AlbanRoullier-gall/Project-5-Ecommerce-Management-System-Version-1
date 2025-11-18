@@ -12,6 +12,10 @@ export class PDFGenerator {
   private generateHTML(data: YearExportRequestDTO): string {
     const { year, orders, creditNotes } = data;
 
+    console.log(
+      `📄 Génération HTML: ${orders.length} commandes, ${creditNotes.length} avoirs reçus`
+    );
+
     // Generate detailed orders HTML
     const ordersHTML = orders
       .map((order) => this.generateOrderDetailsHTML(order))
@@ -30,6 +34,12 @@ export class PDFGenerator {
       (sum, creditNote) =>
         sum + parseFloat(String(creditNote.totalAmountTTC || 0)),
       0
+    );
+
+    console.log(
+      `💰 Totaux calculés: ${totalOrdersAmount.toFixed(
+        2
+      )} € commandes, ${totalCreditNotesAmount.toFixed(2)} € avoirs`
     );
 
     return `
@@ -365,6 +375,16 @@ export class PDFGenerator {
   }
 
   private generateCreditNoteDetailsHTML(creditNote: any): string {
+    // Debug: Log credit note data
+    console.log(`🔍 Credit Note #${creditNote.id}:`, {
+      hasItems: !!creditNote.items,
+      itemsType: typeof creditNote.items,
+      itemsIsArray: Array.isArray(creditNote.items),
+      itemsLength: creditNote.items?.length,
+      items: creditNote.items,
+      allProperties: Object.keys(creditNote),
+    });
+
     // Generate credit note items HTML
     const creditNoteItemsHTML =
       creditNote.items && creditNote.items.length > 0
@@ -402,11 +422,6 @@ export class PDFGenerator {
             }</td></tr>
             <tr><td><strong>Description:</strong></td><td>${
               creditNote.description || "N/A"
-            }</td></tr>
-            <tr><td><strong>Date d'émission:</strong></td><td>${
-              creditNote.issueDate
-                ? new Date(creditNote.issueDate).toLocaleDateString("fr-FR")
-                : "N/A"
             }</td></tr>
             <tr><td><strong>Méthode de paiement:</strong></td><td>${
               creditNote.paymentMethod || "N/A"
