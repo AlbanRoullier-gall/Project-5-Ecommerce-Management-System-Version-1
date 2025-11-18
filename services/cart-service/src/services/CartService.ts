@@ -10,15 +10,18 @@
 
 import { v4 as uuidv4 } from "uuid";
 import { CartRepository } from "../repositories/CartRepository";
+import { CheckoutSnapshotRepository } from "../repositories/CheckoutSnapshotRepository";
 import { Cart } from "../models/Cart";
 import { CartItem } from "../models/CartItem";
 import * as DTO from "@tfe/shared-types/cart-service";
 
 export default class CartService {
   private cartRepository: CartRepository;
+  private snapshotRepository: CheckoutSnapshotRepository;
 
   constructor() {
     this.cartRepository = new CartRepository();
+    this.snapshotRepository = new CheckoutSnapshotRepository();
   }
 
   /**
@@ -187,6 +190,30 @@ export default class CartService {
       cartSessionId: null,
       resolved: false,
     };
+  }
+
+  /**
+   * Sauvegarder un snapshot checkout
+   */
+  async saveCheckoutSnapshot(
+    cartSessionId: string,
+    snapshot: any
+  ): Promise<void> {
+    await this.snapshotRepository.saveSnapshot(cartSessionId, snapshot);
+  }
+
+  /**
+   * Récupérer un snapshot checkout
+   */
+  async getCheckoutSnapshot(cartSessionId: string): Promise<any | null> {
+    return await this.snapshotRepository.getSnapshot(cartSessionId);
+  }
+
+  /**
+   * Supprimer un snapshot checkout
+   */
+  async deleteCheckoutSnapshot(cartSessionId: string): Promise<void> {
+    await this.snapshotRepository.deleteSnapshot(cartSessionId);
   }
 
   /**

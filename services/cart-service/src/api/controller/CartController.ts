@@ -213,4 +213,81 @@ export class CartController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Sauvegarder un snapshot checkout
+   */
+  async saveCheckoutSnapshot(req: Request, res: Response): Promise<void> {
+    try {
+      const { cartSessionId } = req.params;
+      if (!cartSessionId) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("cartSessionId is required"));
+        return;
+      }
+
+      await this.cartService.saveCheckoutSnapshot(cartSessionId, req.body);
+
+      res.status(204).send();
+    } catch (error: any) {
+      console.error("Save checkout snapshot error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Récupérer un snapshot checkout
+   */
+  async getCheckoutSnapshot(req: Request, res: Response): Promise<void> {
+    try {
+      const { cartSessionId } = req.params;
+      if (!cartSessionId) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("cartSessionId is required"));
+        return;
+      }
+
+      const snapshot = await this.cartService.getCheckoutSnapshot(
+        cartSessionId
+      );
+
+      if (!snapshot) {
+        res.status(404).json(ResponseMapper.notFoundError("Checkout snapshot"));
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        snapshot,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Get checkout snapshot error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Supprimer un snapshot checkout
+   */
+  async deleteCheckoutSnapshot(req: Request, res: Response): Promise<void> {
+    try {
+      const { cartSessionId } = req.params;
+      if (!cartSessionId) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("cartSessionId is required"));
+        return;
+      }
+
+      await this.cartService.deleteCheckoutSnapshot(cartSessionId);
+
+      res.status(204).send();
+    } catch (error: any) {
+      console.error("Delete checkout snapshot error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

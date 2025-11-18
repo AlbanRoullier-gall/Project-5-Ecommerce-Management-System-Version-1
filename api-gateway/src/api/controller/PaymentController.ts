@@ -4,7 +4,8 @@
  */
 
 import { Request, Response } from "express";
-import { checkoutSnapshots } from "./CartController";
+import axios from "axios";
+import { SERVICES } from "../../config";
 
 // Mapping Stripe session_id → cartSessionId
 const stripeSessionToCartSession = new Map<string, string>();
@@ -19,17 +20,24 @@ export class PaymentController {
     const body = req.body as any;
     const originalBody = { ...body };
 
-    if (body.payment && body.cartSessionId) {
-      // Stocker le snapshot dans CartController
-      checkoutSnapshots.set(body.cartSessionId, body.snapshot);
-      console.log(
-        `[PaymentController] Snapshot stored for cartSessionId: ${body.cartSessionId}`
-      );
-      console.log(
-        `[PaymentController] Snapshot keys: ${Array.from(
-          checkoutSnapshots.keys()
-        ).join(", ")}`
-      );
+    if (body.payment && body.cartSessionId && body.snapshot) {
+      // Stocker le snapshot dans cart-service via l'API
+      try {
+        await axios.post(
+          `${SERVICES.cart}/api/cart/checkout-snapshot/${body.cartSessionId}`,
+          body.snapshot,
+          { headers: { "Content-Type": "application/json" } }
+        );
+        console.log(
+          `[PaymentController] Snapshot stored in cart-service for cartSessionId: ${body.cartSessionId}`
+        );
+      } catch (error: any) {
+        console.error(
+          `[PaymentController] Failed to store snapshot in cart-service:`,
+          error?.message
+        );
+        // Continue même si le stockage échoue (non-bloquant pour le paiement)
+      }
 
       // Ajouter cartSessionId dans les métadonnées Stripe pour pouvoir le récupérer plus tard
       if (!body.payment.metadata) {
@@ -42,9 +50,6 @@ export class PaymentController {
     }
 
     // Faire l'appel manuellement pour intercepter la réponse
-    const { SERVICES } = await import("../../config");
-    const axios = (await import("axios")).default;
-
     try {
       const targetUrl = `${SERVICES.payment}${req.path}`;
       const response = await axios({

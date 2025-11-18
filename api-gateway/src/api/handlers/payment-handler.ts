@@ -1,7 +1,6 @@
 import axios from "axios";
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
-import { checkoutSnapshots } from "../controller/CartController";
 
 /**
  * ============================================================================
@@ -402,8 +401,20 @@ export const handleFinalizePayment = async (
     }
 
     // ===== ÉTAPE 3 : Récupérer le snapshot et le cart =====
-    // Snapshot : données checkout (customer, adresses) stockées en mémoire
-    const snapshot = checkoutSnapshots.get(resolvedCartSessionId);
+    // Snapshot : données checkout (customer, adresses) stockées dans cart-service
+    let snapshot: any;
+    try {
+      const snapshotResponse = await axios.get(
+        `${SERVICES.cart}/api/cart/checkout-snapshot/${resolvedCartSessionId}`
+      );
+      snapshot = snapshotResponse.data?.snapshot;
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        return res.status(404).json({ error: "Checkout snapshot not found" });
+      }
+      throw error;
+    }
+
     if (!snapshot) {
       return res.status(404).json({ error: "Checkout snapshot not found" });
     }

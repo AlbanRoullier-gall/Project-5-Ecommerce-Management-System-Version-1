@@ -147,6 +147,31 @@ export class ApiRouter {
       }
     );
 
+    // ===== ROUTES DE SNAPSHOT CHECKOUT =====
+    // Sauvegarder un snapshot checkout
+    app.post(
+      "/api/cart/checkout-snapshot/:cartSessionId",
+      (req: Request, res: Response) => {
+        this.cartController.saveCheckoutSnapshot(req, res);
+      }
+    );
+
+    // Récupérer un snapshot checkout
+    app.get(
+      "/api/cart/checkout-snapshot/:cartSessionId",
+      (req: Request, res: Response) => {
+        this.cartController.getCheckoutSnapshot(req, res);
+      }
+    );
+
+    // Supprimer un snapshot checkout
+    app.delete(
+      "/api/cart/checkout-snapshot/:cartSessionId",
+      (req: Request, res: Response) => {
+        this.cartController.deleteCheckoutSnapshot(req, res);
+      }
+    );
+
     // ===== GESTION DES ERREURS =====
     app.use((req: Request, res: Response) => {
       res.status(404).json(ResponseMapper.notFoundError("Route"));

@@ -306,10 +306,8 @@ export class ApiRouter {
     app.all("/api/cart", this.cartController.getCart);
     app.post("/api/cart/items", this.cartController.addItem);
     app.all("/api/cart/items/:productId", this.cartController.updateItem);
-
-    // Routes de snapshot checkout
-    app.patch("/api/cart/checkout", this.cartController.saveCheckoutSnapshot);
-    app.get("/api/cart/checkout", this.cartController.getCheckoutSnapshot);
+    // Note: Les routes de snapshot checkout sont gérées directement par cart-service
+    // et accessibles via le proxy automatique
 
     // ===== ROUTES CLIENTS =====
 
