@@ -21,10 +21,7 @@ export const handlePasswordReset = async (req: Request, res: Response) => {
       });
     }
 
-    console.log(`🔄 Demande de réinitialisation pour: ${email}`);
-
     // 1. Appel au Auth Service pour générer le token
-    console.log("📞 Appel au Auth Service...");
     let authData: any;
 
     try {
@@ -43,7 +40,7 @@ export const handlePasswordReset = async (req: Request, res: Response) => {
       authData = (await authResponse.json()) as any;
 
       if (!authResponse.ok) {
-        console.log(`❌ Auth Service error: ${authData.message}`);
+        console.error(`❌ Auth Service error: ${authData.message}`);
         throw new Error(`Auth Service error: ${authData.message}`);
       }
     } catch (error) {
@@ -55,10 +52,7 @@ export const handlePasswordReset = async (req: Request, res: Response) => {
       });
     }
 
-    console.log(`✅ Token généré: ${authData.token ? "Oui" : "Non"}`);
-
     // 2. Appel au Email Service pour envoyer l'email
-    console.log("📧 Appel au Email Service...");
     let emailData: any;
 
     try {
@@ -95,8 +89,6 @@ export const handlePasswordReset = async (req: Request, res: Response) => {
       });
     }
 
-    console.log(`✅ Email envoyé avec succès: ${emailData.messageId || "N/A"}`);
-
     // 3. Retourner succès au back-office
     return res.json({
       success: true,
@@ -131,13 +123,6 @@ export const handlePasswordResetConfirm = async (
       });
     }
 
-    console.log(
-      `🔄 Confirmation de réinitialisation pour token: ${token.substring(
-        0,
-        8
-      )}...`
-    );
-
     // Validation du mot de passe côté client
     if (newPassword.length < 6) {
       return res.status(400).json({
@@ -162,14 +147,12 @@ export const handlePasswordResetConfirm = async (
     const authData = (await authResponse.json()) as any;
 
     if (!authResponse.ok) {
-      console.log(`❌ Auth Service error: ${authData.message}`);
+      console.error(`❌ Auth Service error: ${authData.message}`);
       return res.status(400).json({
         error: "Erreur de réinitialisation",
         message: authData.message || "Token invalide ou expiré",
       });
     }
-
-    console.log(`✅ Mot de passe réinitialisé avec succès`);
 
     return res.json({
       success: true,
@@ -192,10 +175,7 @@ export const handlePasswordResetConfirm = async (
  */
 export const handleRegister = async (req: Request, res: Response) => {
   try {
-    console.log("🔄 Inscription d'un nouvel utilisateur...");
-
     // 1. Appel au Auth Service pour créer l'utilisateur
-    console.log("📞 Appel au Auth Service...");
     let authData: any;
 
     try {
@@ -211,7 +191,7 @@ export const handleRegister = async (req: Request, res: Response) => {
       authData = (await authResponse.json()) as any;
 
       if (!authResponse.ok) {
-        console.log(`❌ Auth Service error: ${authData.message}`);
+        console.error(`❌ Auth Service error: ${authData.message}`);
         return res.status(authResponse.status).json(authData);
       }
     } catch (error) {
@@ -223,8 +203,6 @@ export const handleRegister = async (req: Request, res: Response) => {
       });
     }
 
-    console.log(`✅ Utilisateur créé: ${authData.user?.email || "N/A"}`);
-
     // 2. Construire les URLs d'approbation/rejet
     // Les tokens ont été générés par l'auth-service
     const baseUrl = process.env["API_GATEWAY_URL"] || "http://localhost:3020";
@@ -232,8 +210,6 @@ export const handleRegister = async (req: Request, res: Response) => {
     const rejectionUrl = `${baseUrl}/api/auth/reject-backoffice?token=${authData.rejectionToken}`;
 
     // 3. Appel au Email Service pour envoyer l'email d'approbation
-    console.log("📧 Appel au Email Service...");
-
     try {
       const emailResponse = await fetch(
         `${SERVICES.email}/api/email/backoffice-approval-request`,
@@ -255,8 +231,6 @@ export const handleRegister = async (req: Request, res: Response) => {
       if (!emailResponse.ok) {
         console.error("⚠️ Email Service error - email non envoyé");
         // Ne pas faire échouer l'inscription si l'email échoue
-      } else {
-        console.log("✅ Email d'approbation envoyé");
       }
     } catch (error) {
       console.error("⚠️ Erreur lors de l'envoi de l'email:", error);
@@ -293,10 +267,7 @@ export const handleApproveBackofficeAccess = async (
       });
     }
 
-    console.log("🔄 Approbation d'accès backoffice...");
-
     // 1. Appel au Auth Service pour approuver
-    console.log("📞 Appel au Auth Service...");
     let authData: any;
 
     try {
@@ -313,7 +284,7 @@ export const handleApproveBackofficeAccess = async (
       authData = (await authResponse.json()) as any;
 
       if (!authResponse.ok) {
-        console.log(`❌ Auth Service error: ${authData.message}`);
+        console.error(`❌ Auth Service error: ${authData.message}`);
         return res.status(authResponse.status).json(authData);
       }
     } catch (error) {
@@ -325,11 +296,7 @@ export const handleApproveBackofficeAccess = async (
       });
     }
 
-    console.log(`✅ Accès approuvé pour: ${authData.user?.email || "N/A"}`);
-
     // 2. Appel au Email Service pour envoyer la confirmation
-    console.log("📧 Appel au Email Service...");
-
     try {
       const backofficeUrl =
         process.env["BACKOFFICE_URL"] || "http://localhost:3011";
@@ -352,8 +319,6 @@ export const handleApproveBackofficeAccess = async (
 
       if (!emailResponse.ok) {
         console.error("⚠️ Email Service error - email non envoyé");
-      } else {
-        console.log("✅ Email de confirmation envoyé");
       }
     } catch (error) {
       console.error("⚠️ Erreur lors de l'envoi de l'email:", error);
@@ -393,10 +358,7 @@ export const handleRejectBackofficeAccess = async (
       });
     }
 
-    console.log("🔄 Rejet d'accès backoffice...");
-
     // 1. Appel au Auth Service pour rejeter
-    console.log("📞 Appel au Auth Service...");
     let authData: any;
 
     try {
@@ -413,7 +375,7 @@ export const handleRejectBackofficeAccess = async (
       authData = (await authResponse.json()) as any;
 
       if (!authResponse.ok) {
-        console.log(`❌ Auth Service error: ${authData.message}`);
+        console.error(`❌ Auth Service error: ${authData.message}`);
         return res.status(authResponse.status).json(authData);
       }
     } catch (error) {
@@ -425,11 +387,7 @@ export const handleRejectBackofficeAccess = async (
       });
     }
 
-    console.log(`✅ Accès rejeté pour: ${authData.user?.email || "N/A"}`);
-
     // 2. Appel au Email Service pour envoyer la notification
-    console.log("📧 Appel au Email Service...");
-
     try {
       const emailResponse = await fetch(
         `${SERVICES.email}/api/email/backoffice-rejection-notification`,
@@ -448,8 +406,6 @@ export const handleRejectBackofficeAccess = async (
 
       if (!emailResponse.ok) {
         console.error("⚠️ Email Service error - email non envoyé");
-      } else {
-        console.log("✅ Email de rejet envoyé");
       }
     } catch (error) {
       console.error("⚠️ Erreur lors de l'envoi de l'email:", error);

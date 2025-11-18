@@ -9,9 +9,6 @@ import { SERVICES } from "../../config";
 export const handleFinalizePayment = async (req: Request, res: Response) => {
   try {
     const { csid, cartSessionId } = req.body || {};
-    console.log(
-      `🔄 Finalisation de paiement: csid=${csid}, cartSessionId=${cartSessionId}`
-    );
 
     if (!csid) {
       return res.status(400).json({
@@ -22,7 +19,6 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     }
 
     // 1. Appel au Payment Service pour récupérer le paymentIntentId
-    console.log("📞 Appel au Payment Service...");
     let paymentIntentId: string | undefined;
 
     try {
@@ -39,9 +35,6 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       if (paymentResponse.ok) {
         const paymentData = (await paymentResponse.json()) as any;
         paymentIntentId = paymentData.paymentIntentId;
-        console.log(
-          `✅ PaymentIntentId récupéré: ${paymentIntentId ? "Oui" : "Non"}`
-        );
       } else {
         console.warn("⚠️ Payment Service - session non trouvée");
       }
@@ -63,7 +56,6 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     }
 
     // 3. Appel au Cart Service pour récupérer les données préparées
-    console.log("📞 Appel au Cart Service...");
     let preparedData: any;
 
     try {
@@ -99,8 +91,6 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
           timestamp: new Date().toISOString(),
         });
       }
-
-      console.log("✅ Données du panier récupérées");
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Cart Service:", error);
       return res.status(500).json({
@@ -111,7 +101,6 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     }
 
     // 4. Appel au Customer Service pour résoudre le customerId
-    console.log("📞 Appel au Customer Service...");
     let customerId: number | undefined;
 
     if (preparedData.customerEmail) {
@@ -131,9 +120,6 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         if (customerResponse.ok) {
           const customerData = (await customerResponse.json()) as any;
           customerId = customerData.customerId;
-          console.log(
-            `✅ CustomerId résolu: ${customerId ? customerId : "Non trouvé"}`
-          );
         }
       } catch (error) {
         console.warn(
@@ -180,7 +166,6 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     }
 
     // 6. Appel au Order Service pour créer la commande
-    console.log("📞 Appel au Order Service...");
     let orderId: number;
 
     try {
@@ -212,8 +197,6 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       if (!orderId) {
         throw new Error("Order ID non retourné par le service");
       }
-
-      console.log(`✅ Commande créée avec succès: ${orderId}`);
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Order Service:", error);
       return res.status(500).json({
@@ -226,8 +209,6 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     }
 
     // 7. Appel au Email Service pour envoyer l'email de confirmation (non-bloquant)
-    console.log("📧 Appel au Email Service...");
-
     try {
       const customer = preparedData.customer || {};
       const customerEmail = preparedData.customerEmail || "";
@@ -282,8 +263,6 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
 
       if (!emailResponse.ok) {
         console.error("⚠️ Email Service error - email non envoyé");
-      } else {
-        console.log("✅ Email de confirmation envoyé");
       }
     } catch (error) {
       console.warn("⚠️ Erreur lors de l'envoi de l'email:", error);
