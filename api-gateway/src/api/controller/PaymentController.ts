@@ -7,9 +7,6 @@ import { Request, Response } from "express";
 import axios from "axios";
 import { SERVICES } from "../../config";
 
-// Mapping Stripe session_id → cartSessionId
-const stripeSessionToCartSession = new Map<string, string>();
-
 export class PaymentController {
   // ===== ROUTES PUBLIQUES PROXY =====
 
@@ -18,7 +15,6 @@ export class PaymentController {
     // Mais payment-service attend directement { customer, items, ... }
     // On doit extraire payment et stocker le snapshot
     const body = req.body as any;
-    const originalBody = { ...body };
 
     if (body.payment && body.cartSessionId && body.snapshot) {
       // Stocker le snapshot dans cart-service via l'API
@@ -70,17 +66,6 @@ export class PaymentController {
           ? response.data.toString("utf8")
           : String(response.data);
         responseData = JSON.parse(text);
-
-        // Stocker le mapping session_id → cartSessionId
-        if (responseData?.payment?.id && originalBody.cartSessionId) {
-          stripeSessionToCartSession.set(
-            responseData.payment.id,
-            originalBody.cartSessionId
-          );
-          console.log(
-            `[PaymentController] Mapped Stripe session ${responseData.payment.id} → cartSessionId ${originalBody.cartSessionId}`
-          );
-        }
       }
 
       // Envoyer la réponse au client
@@ -139,9 +124,6 @@ export class PaymentController {
     const { handleFinalizePayment } = await import(
       "../handlers/payment-handler"
     );
-    await handleFinalizePayment(req, res, stripeSessionToCartSession);
+    await handleFinalizePayment(req, res);
   };
 }
-
-// Export pour utilisation dans payment-handler
-export { stripeSessionToCartSession };

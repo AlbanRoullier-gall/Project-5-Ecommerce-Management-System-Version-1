@@ -1,121 +1,149 @@
-import axios from "axios";
+/**
+ * Handler pour la finalisation de paiement après succès Stripe
+ * Orchestre l'appel entre Payment Service, Cart Service, Customer Service, Order Service et Email Service
+ */
+
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
 
-/**
- * ============================================================================
- * PAYMENT HANDLER - Finalisation de paiement après succès Stripe
- * ============================================================================
- *
- * Rôle : Orchestration de la finalisation du paiement
- * - Utilise des services spécialisés pour chaque domaine
- * - Coordonne les appels aux services
- * - Gère les erreurs et l'idempotence
- *
- * Flux principal :
- * 1. Récupération session Stripe → paymentIntentId (pour idempotence) + métadonnées
- * 2. Résolution cartSessionId → identifier le panier et le snapshot
- * 3. Récupération données préparées → cart-service prépare les données pour order-service
- * 4. Résolution customerId → résolution depuis l'email via customer-service
- * 5. Création commande → appel order-service
- * 6. Envoi email → appel email-service (non-bloquant)
- */
-
-// ============================================================================
-// SECTION 1 : CART SERVICE
-// ============================================================================
-
-/**
- * Service pour les opérations sur le panier
- * Utilise les nouvelles routes optimisées de cart-service
- */
-class CartService {
-  /**
-   * Récupère les données préparées pour order-service depuis cart-service
-   *
-   * Utilise la nouvelle route qui encapsule :
-   * - Récupération du cart et snapshot
-   * - Extraction des items avec calculs HT/TTC
-   * - Extraction des adresses et informations customer
-   *
-   * @param cartSessionId - Identifiant de session du panier
-   * @returns Données formatées pour order-service ou null si introuvable
-   */
-  static async prepareOrderData(cartSessionId: string): Promise<any | null> {
-    try {
-      const response = await axios.post(
-        `${SERVICES.cart}/api/cart/prepare-order-data/${cartSessionId}`
-      );
-      return response.data?.data || null;
-    } catch (error: any) {
-      if (error?.response?.status === 404) {
-        return null;
-      }
-      throw error;
-    }
-  }
-}
-
-// ============================================================================
-// SECTION 2 : CUSTOMER SERVICE
-// ============================================================================
-
-/**
- * Service pour la résolution du customerId
- */
-class CustomerService {
-  /**
-   * Résout le customerId depuis l'email via customer-service
-   *
-   * @param email - Email du client
-   * @returns customerId résolu ou undefined si impossible
-   */
-  static async resolveCustomerId(email: string): Promise<number | undefined> {
-    if (!email) return undefined;
-
-    try {
-      const response = await axios.get(
-        `${SERVICES.customer}/api/customers/by-email/${encodeURIComponent(
-          email
-        )}/id`
-      );
-      return response.data?.customerId;
-    } catch (error) {
-      return undefined;
-    }
-  }
-}
-
-// ============================================================================
-// SECTION 3 : ORDER SERVICE
-// ============================================================================
-
-/**
- * Service pour la création de commandes
- */
-class OrderService {
-  /**
-   * Prépare le payload final pour order-service
-   *
-   * Ajoute les informations manquantes aux données préparées par cart-service :
-   * - customerId (résolu depuis l'email)
-   * - customerSnapshot (fallback si customerId absent)
-   * - paymentIntentId (pour idempotence)
-   *
-   * @param preparedData - Données préparées par cart-service
-   * @param paymentIntentId - ID du payment intent Stripe (pour idempotence)
-   * @returns Payload complet pour order-service
-   */
-  static async preparePayload(
-    preparedData: any,
-    paymentIntentId?: string
-  ): Promise<any> {
-    // Résoudre customerId depuis l'email
-    const customerId = await CustomerService.resolveCustomerId(
-      preparedData.customerEmail
+export const handleFinalizePayment = async (req: Request, res: Response) => {
+  try {
+    const { csid, cartSessionId } = req.body || {};
+    console.log(
+      `🔄 Finalisation de paiement: csid=${csid}, cartSessionId=${cartSessionId}`
     );
 
-    // Construire les adresses au format attendu par order-service
+    if (!csid) {
+      return res.status(400).json({
+        error: "csid requis",
+        message: "L'identifiant de session Stripe est obligatoire",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // 1. Appel au Payment Service pour récupérer le paymentIntentId
+    console.log("📞 Appel au Payment Service...");
+    let paymentIntentId: string | undefined;
+
+    try {
+      const paymentResponse = await fetch(
+        `${SERVICES.payment}/api/payment/session/${csid}`,
+        {
+          method: "GET",
+          headers: {
+            "X-Service-Request": "api-gateway",
+          },
+        }
+      );
+
+      if (paymentResponse.ok) {
+        const paymentData = (await paymentResponse.json()) as any;
+        paymentIntentId = paymentData.paymentIntentId;
+        console.log(
+          `✅ PaymentIntentId récupéré: ${paymentIntentId ? "Oui" : "Non"}`
+        );
+      } else {
+        console.warn("⚠️ Payment Service - session non trouvée");
+      }
+    } catch (error) {
+      console.warn(
+        "⚠️ Erreur lors de l'appel au Payment Service:",
+        (error as any)?.message
+      );
+      paymentIntentId = undefined;
+    }
+
+    // 2. Vérifier le cartSessionId
+    if (!cartSessionId) {
+      return res.status(400).json({
+        error: "cartSessionId requis",
+        message: "L'identifiant de session du panier est obligatoire",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // 3. Appel au Cart Service pour récupérer les données préparées
+    console.log("📞 Appel au Cart Service...");
+    let preparedData: any;
+
+    try {
+      const cartResponse = await fetch(
+        `${SERVICES.cart}/api/cart/prepare-order-data/${cartSessionId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Service-Request": "api-gateway",
+          },
+        }
+      );
+
+      if (!cartResponse.ok) {
+        if (cartResponse.status === 404) {
+          return res.status(404).json({
+            error: "Données de checkout introuvables",
+            message: "Panier ou snapshot non trouvé pour cette session",
+            timestamp: new Date().toISOString(),
+          });
+        }
+        throw new Error(`Cart Service error: ${cartResponse.statusText}`);
+      }
+
+      const cartData = (await cartResponse.json()) as any;
+      preparedData = cartData.data;
+
+      if (!preparedData) {
+        return res.status(404).json({
+          error: "Données de checkout introuvables",
+          message: "Panier ou snapshot non trouvé pour cette session",
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      console.log("✅ Données du panier récupérées");
+    } catch (error) {
+      console.error("❌ Erreur lors de l'appel au Cart Service:", error);
+      return res.status(500).json({
+        error: "Service de panier indisponible",
+        message: "Veuillez réessayer plus tard",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // 4. Appel au Customer Service pour résoudre le customerId
+    console.log("📞 Appel au Customer Service...");
+    let customerId: number | undefined;
+
+    if (preparedData.customerEmail) {
+      try {
+        const customerResponse = await fetch(
+          `${SERVICES.customer}/api/customers/by-email/${encodeURIComponent(
+            preparedData.customerEmail
+          )}/id`,
+          {
+            method: "GET",
+            headers: {
+              "X-Service-Request": "api-gateway",
+            },
+          }
+        );
+
+        if (customerResponse.ok) {
+          const customerData = (await customerResponse.json()) as any;
+          customerId = customerData.customerId;
+          console.log(
+            `✅ CustomerId résolu: ${customerId ? customerId : "Non trouvé"}`
+          );
+        }
+      } catch (error) {
+        console.warn(
+          "⚠️ Erreur lors de la résolution du customerId:",
+          (error as any)?.message
+        );
+      }
+    }
+
+    // 5. Construire le payload pour order-service
     const addresses = [];
     if (preparedData.shippingAddress) {
       addresses.push({
@@ -130,8 +158,7 @@ class OrderService {
       });
     }
 
-    // Construire le payload pour order-service
-    const payload: any = {
+    const orderPayload: any = {
       totalAmountHT: preparedData.totalAmountHT,
       totalAmountTTC: preparedData.totalAmountTTC,
       paymentMethod: "stripe",
@@ -140,240 +167,140 @@ class OrderService {
       addresses: addresses.length > 0 ? addresses : undefined,
     };
 
-    // Ajouter customerId si disponible (priorité)
     if (customerId) {
-      payload.customerId = customerId;
+      orderPayload.customerId = customerId;
     }
 
-    // Ajouter customerSnapshot (fallback si customerId absent)
     if (preparedData.customer) {
-      payload.customerSnapshot = preparedData.customer;
+      orderPayload.customerSnapshot = preparedData.customer;
     }
 
-    // Ajouter paymentIntentId pour l'idempotence
     if (paymentIntentId) {
-      payload.paymentIntentId = paymentIntentId;
+      orderPayload.paymentIntentId = paymentIntentId;
     }
 
-    return payload;
-  }
+    // 6. Appel au Order Service pour créer la commande
+    console.log("📞 Appel au Order Service...");
+    let orderId: number;
 
-  /**
-   * Crée la commande via order-service
-   *
-   * @param payload - Payload formaté pour order-service
-   * @returns ID de la commande créée
-   */
-  static async create(payload: any): Promise<number> {
-    const response = await axios.post(
-      `${SERVICES.order}/api/orders/from-checkout`,
-      payload,
-      { headers: { "Content-Type": "application/json" } }
-    );
-    return response.data?.order?.id;
-  }
-}
+    try {
+      const orderResponse = await fetch(
+        `${SERVICES.order}/api/orders/from-checkout`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Service-Request": "api-gateway",
+          },
+          body: JSON.stringify(orderPayload),
+        }
+      );
 
-// ============================================================================
-// SECTION 4 : EMAIL SERVICE
-// ============================================================================
-
-/**
- * Service pour la préparation et l'envoi d'emails
- * L'API Gateway récupère les données depuis cart-service et les transforme pour email-service
- */
-class EmailService {
-  /**
-   * Prépare le payload pour email-service à partir des données préparées par cart-service
-   *
-   * @param orderId - ID de la commande créée
-   * @param preparedData - Données préparées par cart-service (contient items, customer, adresses, totaux)
-   * @returns Payload formaté pour email-service
-   */
-  static preparePayload(orderId: number, preparedData: any): any {
-    const customer = preparedData.customer || {};
-    const customerEmail = preparedData.customerEmail || "";
-    const shipping = preparedData.shippingAddress || {};
-
-    // Transformer les items pour l'email (utiliser les données déjà calculées)
-    const items = (preparedData.items || []).map((item: any) => ({
-      name: item.productName || `Produit #${item.productId}`,
-      quantity: item.quantity,
-      unitPrice: item.unitPriceTTC,
-      totalPrice: item.totalPriceTTC,
-      vatRate: item.vatRate,
-    }));
-
-    // Construire le nom du client
-    const customerName = `${customer.firstName || shipping?.firstName || ""} ${
-      customer.lastName || shipping?.lastName || ""
-    }`.trim();
-
-    // Calculer les totaux
-    const subtotal = Number(preparedData.totalAmountHT || 0);
-    const total = Number(preparedData.totalAmountTTC || 0);
-    const tax = total - subtotal;
-
-    return {
-      customerEmail,
-      customerName,
-      orderId,
-      orderDate: new Date().toISOString(),
-      items,
-      subtotal,
-      tax,
-      total,
-      shippingAddress: {
-        firstName: shipping?.firstName || customer.firstName || "",
-        lastName: shipping?.lastName || customer.lastName || "",
-        address: shipping?.address || "",
-        city: shipping?.city || "",
-        postalCode: shipping?.postalCode || "",
-        country: shipping?.country || "",
-      },
-    };
-  }
-
-  /**
-   * Envoie l'email de confirmation via email-service (non-bloquant)
-   *
-   * @param payload - Payload formaté pour email-service
-   */
-  static async sendConfirmation(payload: any): Promise<void> {
-    await axios.post(
-      `${SERVICES.email}/api/email/order-confirmation`,
-      payload,
-      {
-        headers: { "Content-Type": "application/json" },
+      if (!orderResponse.ok) {
+        const orderError = (await orderResponse.json()) as any;
+        console.error(`❌ Order Service error: ${orderError.message}`);
+        throw new Error(
+          `Order Service error: ${
+            orderError.message || orderResponse.statusText
+          }`
+        );
       }
-    );
-  }
-}
 
-// ============================================================================
-// SECTION 5 : HANDLER PRINCIPAL - ORCHESTRATION
-// ============================================================================
+      const orderData = (await orderResponse.json()) as any;
+      orderId = orderData.order?.id;
 
-/**
- * Handler principal : Finalise un paiement après succès Stripe
- *
- * Orchestration complète du processus de finalisation :
- * 1. Récupère le paymentIntentId via payment-service (pour idempotence)
- * 2. Résout le cartSessionId (identifie panier et snapshot)
- * 3. Récupère les données préparées depuis cart-service (cart + snapshot formatés)
- * 4. Résout le customerId et construit le payload final pour order-service
- * 5. Crée la commande via order-service
- * 6. Transforme les données et envoie l'email via email-service (non-bloquant)
- *
- * Gestion d'erreurs :
- * - Si récupération Stripe via payment-service échoue → continue sans paymentIntentId (perte d'idempotence)
- * - Si snapshot/cart introuvable → erreur 404
- * - Si création commande échoue → erreur 500
- * - Si envoi email échoue → loggée mais non-bloquante
- *
- * @param req - Requête Express avec body { csid, cartSessionId }
- * @param res - Réponse Express
- * @param stripeSessionToCartSession - Map optionnelle (csid → cartSessionId) pour sources de secours
- * @returns Réponse JSON avec { orderId, success: true } ou erreur
- */
-export const handleFinalizePayment = async (
-  req: Request,
-  res: Response,
-  stripeSessionToCartSession?: Map<string, string>
-) => {
-  try {
-    const { csid, cartSessionId } = req.body || {};
-    console.log(
-      `[handleFinalizePayment] Received: csid=${csid}, cartSessionId=${cartSessionId}`
-    );
+      if (!orderId) {
+        throw new Error("Order ID non retourné par le service");
+      }
 
-    // Validation des paramètres requis
-    if (!csid) {
-      return res.status(400).json({ error: "csid is required" });
-    }
-
-    // ===== ÉTAPE 1 : Récupérer le paymentIntentId via payment-service =====
-    // Nécessaire pour l'idempotence lors de la création de commande
-    let paymentIntentId: string | undefined;
-    try {
-      const response = await axios.get(
-        `${SERVICES.payment}/api/payment/session/${csid}`
-      );
-      paymentIntentId = response.data.paymentIntentId;
-    } catch (e: any) {
-      console.warn(
-        "[handleFinalizePayment] Unable to fetch Stripe session from payment-service:",
-        e?.message
-      );
-      // Continue sans paymentIntentId si nécessaire (perte d'idempotence mais processus continue)
-      paymentIntentId = undefined;
-    }
-
-    // ===== ÉTAPE 2 : Résoudre le cartSessionId =====
-    // Identifie le panier et le snapshot à utiliser
-    // Priorité : cartSessionId fourni > Map en mémoire
-    let resolvedCartSessionId = cartSessionId;
-    if (!resolvedCartSessionId && stripeSessionToCartSession) {
-      resolvedCartSessionId = stripeSessionToCartSession.get(csid) || undefined;
-    }
-
-    if (!resolvedCartSessionId) {
-      return res.status(400).json({
-        error: "cartSessionId is required (provide it or ensure csid is valid)",
-      });
-    }
-
-    // ===== ÉTAPE 3 : Récupérer les données préparées depuis cart-service =====
-    // Utilise la nouvelle route qui encapsule cart + snapshot + transformation
-    console.log(
-      `[handleFinalizePayment] Fetching prepared order data from cart-service...`
-    );
-    const preparedData = await CartService.prepareOrderData(
-      resolvedCartSessionId
-    );
-
-    if (!preparedData) {
-      return res.status(404).json({
-        error: "Checkout data not found",
-        message: "Cart or snapshot not found for this session",
-      });
-    }
-
-    // ===== ÉTAPE 4 : Créer la commande via order-service =====
-    console.log(`[handleFinalizePayment] Creating order...`);
-    const orderPayload = await OrderService.preparePayload(
-      preparedData,
-      paymentIntentId
-    );
-    const orderId = await OrderService.create(orderPayload);
-    console.log(
-      `[handleFinalizePayment] Order created successfully: ${orderId}`
-    );
-
-    // ===== ÉTAPE 5 : Envoyer l'email via email-service (non-bloquant) =====
-    // L'échec de l'email ne doit pas empêcher la finalisation du paiement
-    // L'API Gateway transforme les données préparées pour email-service
-    try {
-      const emailPayload = EmailService.preparePayload(orderId, preparedData);
-      await EmailService.sendConfirmation(emailPayload);
-      console.log(`[handleFinalizePayment] Email sent successfully`);
+      console.log(`✅ Commande créée avec succès: ${orderId}`);
     } catch (error) {
-      console.warn(
-        "Email send failed (non-blocking):",
-        (error as any)?.message
-      );
+      console.error("❌ Erreur lors de l'appel au Order Service:", error);
+      return res.status(500).json({
+        error: "Service de commande indisponible",
+        message:
+          (error as any)?.message ||
+          "Erreur lors de la création de la commande",
+        timestamp: new Date().toISOString(),
+      });
     }
 
-    // ===== SUCCÈS : Retourner l'ID de la commande =====
-    return res.status(200).json({ orderId, success: true });
-  } catch (error: any) {
-    console.error(
-      "handleFinalizePayment error:",
-      error?.response?.data || error?.message
-    );
+    // 7. Appel au Email Service pour envoyer l'email de confirmation (non-bloquant)
+    console.log("📧 Appel au Email Service...");
+
+    try {
+      const customer = preparedData.customer || {};
+      const customerEmail = preparedData.customerEmail || "";
+      const shipping = preparedData.shippingAddress || {};
+
+      const items = (preparedData.items || []).map((item: any) => ({
+        name: item.productName || `Produit #${item.productId}`,
+        quantity: item.quantity,
+        unitPrice: item.unitPriceTTC,
+        totalPrice: item.totalPriceTTC,
+        vatRate: item.vatRate,
+      }));
+
+      const customerName = `${
+        customer.firstName || shipping?.firstName || ""
+      } ${customer.lastName || shipping?.lastName || ""}`.trim();
+
+      const subtotal = Number(preparedData.totalAmountHT || 0);
+      const total = Number(preparedData.totalAmountTTC || 0);
+      const tax = total - subtotal;
+
+      const emailPayload = {
+        customerEmail,
+        customerName,
+        orderId,
+        orderDate: new Date().toISOString(),
+        items,
+        subtotal,
+        tax,
+        total,
+        shippingAddress: {
+          firstName: shipping?.firstName || customer.firstName || "",
+          lastName: shipping?.lastName || customer.lastName || "",
+          address: shipping?.address || "",
+          city: shipping?.city || "",
+          postalCode: shipping?.postalCode || "",
+          country: shipping?.country || "",
+        },
+      };
+
+      const emailResponse = await fetch(
+        `${SERVICES.email}/api/email/order-confirmation`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Service-Request": "api-gateway",
+          },
+          body: JSON.stringify(emailPayload),
+        }
+      );
+
+      if (!emailResponse.ok) {
+        console.error("⚠️ Email Service error - email non envoyé");
+      } else {
+        console.log("✅ Email de confirmation envoyé");
+      }
+    } catch (error) {
+      console.warn("⚠️ Erreur lors de l'envoi de l'email:", error);
+    }
+
+    return res.status(200).json({
+      success: true,
+      orderId,
+      message: "Paiement finalisé avec succès",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("❌ Finalisation de paiement - erreur:", error);
     return res.status(500).json({
-      error: "Finalize failed",
-      message: error?.message || "Internal server error",
+      error: "Erreur interne du serveur",
+      message: "Veuillez réessayer plus tard",
+      timestamp: new Date().toISOString(),
     });
   }
 };
