@@ -54,32 +54,6 @@ class CartService {
       throw error;
     }
   }
-
-  /**
-   * Récupère le cart et snapshot ensemble (pour l'email)
-   *
-   * @param cartSessionId - Identifiant de session du panier
-   * @returns Cart et snapshot ou null si introuvable
-   */
-  static async getCheckoutData(cartSessionId: string): Promise<{
-    cart: any;
-    snapshot: any;
-  } | null> {
-    try {
-      const response = await axios.get(
-        `${SERVICES.cart}/api/cart/checkout-data/${cartSessionId}`
-      );
-      return {
-        cart: response.data?.cart,
-        snapshot: response.data?.snapshot,
-      };
-    } catch (error: any) {
-      if (error?.response?.status === 404) {
-        return null;
-      }
-      throw error;
-    }
-  }
 }
 
 // ============================================================================
@@ -206,24 +180,23 @@ class OrderService {
 
 /**
  * Service pour la préparation et l'envoi d'emails
+ * L'API Gateway récupère les données depuis cart-service et les transforme pour email-service
  */
 class EmailService {
   /**
-   * Prépare le payload pour email-service à partir du cart et snapshot
+   * Prépare le payload pour email-service à partir des données préparées par cart-service
    *
    * @param orderId - ID de la commande créée
-   * @param cart - Panier avec items et totaux
-   * @param snapshot - Snapshot avec customer et adresses
+   * @param preparedData - Données préparées par cart-service (contient items, customer, adresses, totaux)
    * @returns Payload formaté pour email-service
    */
-  static preparePayload(orderId: number, cart: any, snapshot: any): any {
-    const customer = snapshot.customer || {};
-    const email = customer.email || snapshot.email || "";
-    const shipping = snapshot.shippingAddress || snapshot.shipping_address;
+  static preparePayload(orderId: number, preparedData: any): any {
+    const customer = preparedData.customer || {};
+    const customerEmail = preparedData.customerEmail || "";
+    const shipping = preparedData.shippingAddress || {};
 
-    // Utiliser les items du cart (déjà avec tous les calculs HT/TTC)
-    const cartItems = cart.items || [];
-    const items = cartItems.map((item: any) => ({
+    // Transformer les items pour l'email (utiliser les données déjà calculées)
+    const items = (preparedData.items || []).map((item: any) => ({
       name: item.productName || `Produit #${item.productId}`,
       quantity: item.quantity,
       unitPrice: item.unitPriceTTC,
@@ -231,17 +204,25 @@ class EmailService {
       vatRate: item.vatRate,
     }));
 
+    // Construire le nom du client
+    const customerName = `${customer.firstName || shipping?.firstName || ""} ${
+      customer.lastName || shipping?.lastName || ""
+    }`.trim();
+
+    // Calculer les totaux
+    const subtotal = Number(preparedData.totalAmountHT || 0);
+    const total = Number(preparedData.totalAmountTTC || 0);
+    const tax = total - subtotal;
+
     return {
-      customerEmail: email,
-      customerName: `${customer.firstName || shipping?.firstName || ""} ${
-        customer.lastName || shipping?.lastName || ""
-      }`.trim(),
+      customerEmail,
+      customerName,
       orderId,
       orderDate: new Date().toISOString(),
       items,
-      subtotal: Number(cart.subtotal || 0),
-      tax: Number(cart.tax ?? Math.max(cart.total - cart.subtotal, 0)),
-      total: Number(cart.total || 0),
+      subtotal,
+      tax,
+      total,
       shippingAddress: {
         firstName: shipping?.firstName || customer.firstName || "",
         lastName: shipping?.lastName || customer.lastName || "",
@@ -277,12 +258,12 @@ class EmailService {
  * Handler principal : Finalise un paiement après succès Stripe
  *
  * Orchestration complète du processus de finalisation :
- * 1. Récupère la session Stripe (paymentIntentId + métadonnées)
+ * 1. Récupère le paymentIntentId via payment-service (pour idempotence)
  * 2. Résout le cartSessionId (identifie panier et snapshot)
  * 3. Récupère les données préparées depuis cart-service (cart + snapshot formatés)
  * 4. Résout le customerId et construit le payload final pour order-service
  * 5. Crée la commande via order-service
- * 6. Envoie l'email de confirmation (non-bloquant)
+ * 6. Transforme les données et envoie l'email via email-service (non-bloquant)
  *
  * Gestion d'erreurs :
  * - Si récupération Stripe via payment-service échoue → continue sans paymentIntentId (perte d'idempotence)
@@ -311,27 +292,21 @@ export const handleFinalizePayment = async (
       return res.status(400).json({ error: "csid is required" });
     }
 
-    // ===== ÉTAPE 1 : Récupérer la session Stripe via payment-service =====
-    // Nécessaire pour paymentIntentId (idempotence) et métadonnées (customerId)
-    let stripeSessionInfo: {
-      session: any;
-      paymentIntentId: string | undefined;
-    };
+    // ===== ÉTAPE 1 : Récupérer le paymentIntentId via payment-service =====
+    // Nécessaire pour l'idempotence lors de la création de commande
+    let paymentIntentId: string | undefined;
     try {
       const response = await axios.get(
         `${SERVICES.payment}/api/payment/session/${csid}`
       );
-      stripeSessionInfo = {
-        session: response.data.session,
-        paymentIntentId: response.data.paymentIntentId,
-      };
+      paymentIntentId = response.data.paymentIntentId;
     } catch (e: any) {
       console.warn(
         "[handleFinalizePayment] Unable to fetch Stripe session from payment-service:",
         e?.message
       );
       // Continue sans paymentIntentId si nécessaire (perte d'idempotence mais processus continue)
-      stripeSessionInfo = { session: null, paymentIntentId: undefined };
+      paymentIntentId = undefined;
     }
 
     // ===== ÉTAPE 2 : Résoudre le cartSessionId =====
@@ -368,7 +343,7 @@ export const handleFinalizePayment = async (
     console.log(`[handleFinalizePayment] Creating order...`);
     const orderPayload = await OrderService.preparePayload(
       preparedData,
-      stripeSessionInfo.paymentIntentId
+      paymentIntentId
     );
     const orderId = await OrderService.create(orderPayload);
     console.log(
@@ -377,20 +352,11 @@ export const handleFinalizePayment = async (
 
     // ===== ÉTAPE 5 : Envoyer l'email via email-service (non-bloquant) =====
     // L'échec de l'email ne doit pas empêcher la finalisation du paiement
+    // L'API Gateway transforme les données préparées pour email-service
     try {
-      // Récupérer cart + snapshot pour l'email (format différent)
-      const checkoutData = await CartService.getCheckoutData(
-        resolvedCartSessionId
-      );
-      if (checkoutData) {
-        const emailPayload = EmailService.preparePayload(
-          orderId,
-          checkoutData.cart,
-          checkoutData.snapshot
-        );
-        await EmailService.sendConfirmation(emailPayload);
-        console.log(`[handleFinalizePayment] Email sent successfully`);
-      }
+      const emailPayload = EmailService.preparePayload(orderId, preparedData);
+      await EmailService.sendConfirmation(emailPayload);
+      console.log(`[handleFinalizePayment] Email sent successfully`);
     } catch (error) {
       console.warn(
         "Email send failed (non-blocking):",
