@@ -290,4 +290,85 @@ export class CartController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Récupérer le panier et le snapshot checkout ensemble
+   */
+  async getCheckoutData(req: Request, res: Response): Promise<void> {
+    try {
+      const { cartSessionId } = req.params;
+      if (!cartSessionId) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("cartSessionId is required"));
+        return;
+      }
+
+      const checkoutData = await this.cartService.getCheckoutData(
+        cartSessionId
+      );
+
+      if (!checkoutData) {
+        res.status(404).json({
+          error: "Checkout data not found",
+          message: "Cart or snapshot not found for this session",
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Formater le cart en DTO
+      const cartDTO = CartMapper.cartToPublicDTO(checkoutData.cart);
+
+      res.status(200).json({
+        success: true,
+        cart: cartDTO,
+        snapshot: checkoutData.snapshot,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Get checkout data error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Préparer les données de commande à partir du cart et snapshot
+   *
+   * Retourne les données formatées pour order-service, incluant :
+   * - Items avec calculs HT/TTC
+   * - Totaux
+   * - Informations customer et adresses extraites du snapshot
+   */
+  async prepareOrderData(req: Request, res: Response): Promise<void> {
+    try {
+      const { cartSessionId } = req.params;
+      if (!cartSessionId) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("cartSessionId is required"));
+        return;
+      }
+
+      const orderData = await this.cartService.prepareOrderData(cartSessionId);
+
+      if (!orderData) {
+        res.status(404).json({
+          error: "Order data not found",
+          message: "Cart or snapshot not found for this session",
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: orderData,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Prepare order data error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

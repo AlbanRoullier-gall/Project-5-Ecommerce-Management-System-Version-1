@@ -172,6 +172,23 @@ export class ApiRouter {
       }
     );
 
+    // ===== ROUTES DE CHECKOUT DATA =====
+    // Récupérer cart + snapshot ensemble
+    app.get(
+      "/api/cart/checkout-data/:cartSessionId",
+      (req: Request, res: Response) => {
+        this.cartController.getCheckoutData(req, res);
+      }
+    );
+
+    // Préparer les données de commande (cart + snapshot formatés pour order-service)
+    app.post(
+      "/api/cart/prepare-order-data/:cartSessionId",
+      (req: Request, res: Response) => {
+        this.cartController.prepareOrderData(req, res);
+      }
+    );
+
     // ===== GESTION DES ERREURS =====
     app.use((req: Request, res: Response) => {
       res.status(404).json(ResponseMapper.notFoundError("Route"));

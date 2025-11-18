@@ -217,6 +217,100 @@ export default class CartService {
   }
 
   /**
+   * Récupérer le panier et le snapshot checkout ensemble
+   *
+   * @param cartSessionId - Identifiant de session du panier
+   * @returns Panier et snapshot formatés ensemble, ou null si l'un des deux est introuvable
+   */
+  async getCheckoutData(cartSessionId: string): Promise<{
+    cart: Cart;
+    snapshot: any;
+  } | null> {
+    const cart = await this.getCart(cartSessionId);
+    if (!cart) {
+      return null;
+    }
+
+    const snapshot = await this.getCheckoutSnapshot(cartSessionId);
+    if (!snapshot) {
+      return null;
+    }
+
+    return { cart, snapshot };
+  }
+
+  /**
+   * Préparer les données de commande à partir du cart et snapshot
+   *
+   * Extrait et formate les données nécessaires pour order-service :
+   * - Items du panier avec calculs HT/TTC
+   * - Adresses de livraison et facturation depuis le snapshot
+   * - Informations customer depuis le snapshot
+   *
+   * @param cartSessionId - Identifiant de session du panier
+   * @returns Données formatées pour order-service ou null si cart/snapshot introuvable
+   */
+  async prepareOrderData(cartSessionId: string): Promise<{
+    items: Array<{
+      productId: number;
+      productName: string;
+      quantity: number;
+      unitPriceHT: number;
+      unitPriceTTC: number;
+      vatRate: number;
+      totalPriceHT: number;
+      totalPriceTTC: number;
+    }>;
+    totalAmountHT: number;
+    totalAmountTTC: number;
+    customer: any;
+    customerEmail: string;
+    shippingAddress: any;
+    billingAddress: any;
+    notes?: string;
+  } | null> {
+    const checkoutData = await this.getCheckoutData(cartSessionId);
+    if (!checkoutData) {
+      return null;
+    }
+
+    const { cart, snapshot } = checkoutData;
+
+    // Extraire les items du panier avec tous les calculs HT/TTC
+    const items = cart.items.map((item) => ({
+      productId: item.productId,
+      productName: item.productName || `Produit #${item.productId}`,
+      quantity: item.quantity,
+      unitPriceHT: item.getUnitPriceHT(),
+      unitPriceTTC: item.getUnitPriceTTC(),
+      vatRate: item.vatRate,
+      totalPriceHT: item.getTotalHT(),
+      totalPriceTTC: item.getTotalTTC(),
+    }));
+
+    // Extraire les informations customer depuis le snapshot
+    const customer = snapshot.customer || {};
+    const customerEmail = customer.email || snapshot.email || "";
+
+    // Extraire les adresses (gère camelCase et snake_case)
+    const shippingAddress =
+      snapshot.shippingAddress || snapshot.shipping_address || null;
+    const billingAddress =
+      snapshot.billingAddress || snapshot.billing_address || null;
+
+    return {
+      items,
+      totalAmountHT: cart.subtotal,
+      totalAmountTTC: cart.total,
+      customer,
+      customerEmail,
+      shippingAddress,
+      billingAddress,
+      notes: snapshot.notes || undefined,
+    };
+  }
+
+  /**
    * Vérifier la configuration Redis
    */
   getConfigurationStatus(): any {

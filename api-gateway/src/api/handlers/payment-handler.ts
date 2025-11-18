@@ -15,8 +15,8 @@ import { SERVICES } from "../../config";
  * Flux principal :
  * 1. Récupération session Stripe → paymentIntentId (pour idempotence) + métadonnées
  * 2. Résolution cartSessionId → identifier le panier et le snapshot
- * 3. Récupération données → snapshot (customer, adresses) + cart (items, totaux)
- * 4. Transformation données → format attendu par order-service
+ * 3. Récupération données préparées → cart-service prépare les données pour order-service
+ * 4. Résolution customerId → résolution depuis l'email via customer-service
  * 5. Création commande → appel order-service
  * 6. Envoi email → appel email-service (non-bloquant)
  */
@@ -27,90 +27,82 @@ import { SERVICES } from "../../config";
 
 /**
  * Service pour les opérations sur le panier
- * Wrapper simple pour les appels au cart-service
+ * Utilise les nouvelles routes optimisées de cart-service
  */
 class CartService {
   /**
-   * Récupère le panier depuis cart-service
+   * Récupère les données préparées pour order-service depuis cart-service
    *
-   * Le panier contient :
-   * - Les items avec leurs quantités, prix, TVA
-   * - Les totaux (subtotal, tax, total)
+   * Utilise la nouvelle route qui encapsule :
+   * - Récupération du cart et snapshot
+   * - Extraction des items avec calculs HT/TTC
+   * - Extraction des adresses et informations customer
    *
    * @param cartSessionId - Identifiant de session du panier
-   * @returns Le panier complet ou null si introuvable
+   * @returns Données formatées pour order-service ou null si introuvable
    */
-  static async fetchCart(cartSessionId: string): Promise<any> {
-    const response = await axios.get(`${SERVICES.cart}/api/cart`, {
-      params: { sessionId: cartSessionId },
-    });
-    const cart = response.data?.cart;
+  static async prepareOrderData(cartSessionId: string): Promise<any | null> {
+    try {
+      const response = await axios.post(
+        `${SERVICES.cart}/api/cart/prepare-order-data/${cartSessionId}`
+      );
+      return response.data?.data || null;
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
 
-    return cart;
+  /**
+   * Récupère le cart et snapshot ensemble (pour l'email)
+   *
+   * @param cartSessionId - Identifiant de session du panier
+   * @returns Cart et snapshot ou null si introuvable
+   */
+  static async getCheckoutData(cartSessionId: string): Promise<{
+    cart: any;
+    snapshot: any;
+  } | null> {
+    try {
+      const response = await axios.get(
+        `${SERVICES.cart}/api/cart/checkout-data/${cartSessionId}`
+      );
+      return {
+        cart: response.data?.cart,
+        snapshot: response.data?.snapshot,
+      };
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
   }
 }
 
 // ============================================================================
-// SECTION 2 : SNAPSHOT SERVICE
+// SECTION 2 : CUSTOMER SERVICE
 // ============================================================================
 
 /**
- * Service pour l'extraction des données du snapshot checkout
- * Gère l'extraction de customer, adresses et résolution du customerId
+ * Service pour la résolution du customerId
  */
-class SnapshotService {
-  /**
-   * Extrait les informations customer depuis le snapshot checkout
-   *
-   * @param snapshot - Snapshot checkout (customer, adresses, notes)
-   * @returns Informations customer et email extraites
-   */
-  static extractCustomerInfo(snapshot: any): {
-    customer: any;
-    email: string;
-  } {
-    const customer = snapshot.customer || {};
-    const email = customer.email || snapshot.email || "";
-    return { customer, email };
-  }
-
-  /**
-   * Extrait les adresses de livraison et facturation depuis le snapshot
-   *
-   * Gère les différents formats possibles (camelCase vs snake_case).
-   *
-   * @param snapshot - Snapshot checkout
-   * @returns Adresses de livraison et facturation (billing peut être null)
-   */
-  static extractAddresses(snapshot: any): {
-    shippingAddress: any;
-    billingAddress: any;
-  } {
-    const shippingAddress =
-      snapshot.shippingAddress || snapshot.shipping_address;
-    const billingAddress = snapshot.billingAddress || snapshot.billing_address;
-    return { shippingAddress, billingAddress };
-  }
-
+class CustomerService {
   /**
    * Résout le customerId depuis l'email via customer-service
    *
-   * Le customerId est nécessaire pour lier la commande au client dans la base.
-   * La résolution se fait en recherchant un client existant avec l'email fourni
-   * dans le snapshot checkout.
-   *
-   * @param snapshot - Snapshot checkout contenant l'email du client
+   * @param email - Email du client
    * @returns customerId résolu ou undefined si impossible
    */
-  static async resolveCustomerId(snapshot: any): Promise<number | undefined> {
-    // Résoudre depuis l'email via customer-service (route optimisée)
-    const customerEmail = snapshot.customer?.email || snapshot.email;
-    if (!customerEmail) return undefined;
+  static async resolveCustomerId(email: string): Promise<number | undefined> {
+    if (!email) return undefined;
 
     try {
       const response = await axios.get(
         `${SERVICES.customer}/api/customers/by-email/${encodeURIComponent(
-          customerEmail
+          email
         )}/id`
       );
       return response.data?.customerId;
@@ -125,80 +117,52 @@ class SnapshotService {
 // ============================================================================
 
 /**
- * Service pour la préparation et création de commandes
- * Gère la transformation des données et l'appel à order-service
+ * Service pour la création de commandes
  */
 class OrderService {
   /**
-   * Prépare le payload pour order-service à partir du cart et snapshot
+   * Prépare le payload final pour order-service
    *
-   * Combine les données du panier (items, totaux) et du snapshot (customer, adresses)
-   * pour créer un payload complet pour order-service.
-   *
-   * Structure du payload :
-   * - Totaux (HT/TTC) depuis le cart
-   * - Items du cart (déjà au bon format avec calculs HT/TTC)
-   * - Adresses depuis le snapshot
-   * - customerId résolu depuis l'email
+   * Ajoute les informations manquantes aux données préparées par cart-service :
+   * - customerId (résolu depuis l'email)
    * - customerSnapshot (fallback si customerId absent)
    * - paymentIntentId (pour idempotence)
    *
-   * Note : Les items du cart sont déjà au format attendu par order-service
-   * (unitPriceHT, unitPriceTTC, totalPriceHT, totalPriceTTC) grâce au cart-service.
-   * On utilise directement ces items sans transformation.
-   *
-   * @param cart - Panier complet avec items et totaux
-   * @param snapshot - Snapshot checkout avec customer et adresses
+   * @param preparedData - Données préparées par cart-service
    * @param paymentIntentId - ID du payment intent Stripe (pour idempotence)
-   * @returns Payload formaté pour order-service
+   * @returns Payload complet pour order-service
    */
   static async preparePayload(
-    cart: any,
-    snapshot: any,
+    preparedData: any,
     paymentIntentId?: string
   ): Promise<any> {
-    const cartItems = cart.items || [];
-
-    // Les items du cart sont déjà au bon format (unitPriceHT, unitPriceTTC, etc.)
-    // On s'assure juste que productName existe (fallback si absent)
-    const items = cartItems.map((item: any) => ({
-      productId: item.productId,
-      productName: item.productName || `Produit #${item.productId}`,
-      quantity: item.quantity,
-      unitPriceHT: item.unitPriceHT,
-      unitPriceTTC: item.unitPriceTTC,
-      vatRate: item.vatRate,
-      totalPriceHT: item.totalPriceHT,
-      totalPriceTTC: item.totalPriceTTC,
-    }));
-
     // Résoudre customerId depuis l'email
-    const customerId = await SnapshotService.resolveCustomerId(snapshot);
+    const customerId = await CustomerService.resolveCustomerId(
+      preparedData.customerEmail
+    );
 
-    // Extraire les adresses depuis le snapshot
-    const { shippingAddress, billingAddress } =
-      SnapshotService.extractAddresses(snapshot);
+    // Construire les adresses au format attendu par order-service
     const addresses = [];
-    if (shippingAddress) {
+    if (preparedData.shippingAddress) {
       addresses.push({
         addressType: "shipping",
-        addressSnapshot: shippingAddress,
+        addressSnapshot: preparedData.shippingAddress,
       });
     }
-    if (billingAddress) {
+    if (preparedData.billingAddress) {
       addresses.push({
         addressType: "billing",
-        addressSnapshot: billingAddress,
+        addressSnapshot: preparedData.billingAddress,
       });
     }
 
     // Construire le payload pour order-service
     const payload: any = {
-      totalAmountHT: cart.subtotal || 0,
-      totalAmountTTC: cart.total || 0,
+      totalAmountHT: preparedData.totalAmountHT,
+      totalAmountTTC: preparedData.totalAmountTTC,
       paymentMethod: "stripe",
-      notes: snapshot.notes || undefined,
-      items,
+      notes: preparedData.notes,
+      items: preparedData.items,
       addresses: addresses.length > 0 ? addresses : undefined,
     };
 
@@ -207,14 +171,12 @@ class OrderService {
       payload.customerId = customerId;
     }
 
-    // Ajouter customerSnapshot (fallback si customerId absent - order-service l'accepte)
-    const customerSnapshot =
-      snapshot.customer || snapshot.customerSnapshot || snapshot;
-    if (customerSnapshot) {
-      payload.customerSnapshot = customerSnapshot;
+    // Ajouter customerSnapshot (fallback si customerId absent)
+    if (preparedData.customer) {
+      payload.customerSnapshot = preparedData.customer;
     }
 
-    // Ajouter paymentIntentId pour l'idempotence (évite les doublons en cas de retry)
+    // Ajouter paymentIntentId pour l'idempotence
     if (paymentIntentId) {
       payload.paymentIntentId = paymentIntentId;
     }
@@ -224,11 +186,6 @@ class OrderService {
 
   /**
    * Crée la commande via order-service
-   *
-   * Envoie le payload préparé à order-service qui :
-   * - Crée la commande dans la base de données
-   * - Utilise paymentIntentId pour l'idempotence (si même paymentIntentId, pas de doublon)
-   * - Retourne l'ID de la commande créée
    *
    * @param payload - Payload formaté pour order-service
    * @returns ID de la commande créée
@@ -249,14 +206,10 @@ class OrderService {
 
 /**
  * Service pour la préparation et l'envoi d'emails
- * Gère le formatage des données et l'appel à email-service
  */
 class EmailService {
   /**
    * Prépare le payload pour email-service à partir du cart et snapshot
-   *
-   * Format les données pour l'email de confirmation de commande.
-   * Utilise directement les données du cart (déjà avec tous les calculs HT/TTC).
    *
    * @param orderId - ID de la commande créée
    * @param cart - Panier avec items et totaux
@@ -264,19 +217,17 @@ class EmailService {
    * @returns Payload formaté pour email-service
    */
   static preparePayload(orderId: number, cart: any, snapshot: any): any {
-    // Extraire les informations customer et adresses
-    const { customer, email } = SnapshotService.extractCustomerInfo(snapshot);
-    const { shippingAddress: shipping } =
-      SnapshotService.extractAddresses(snapshot);
+    const customer = snapshot.customer || {};
+    const email = customer.email || snapshot.email || "";
+    const shipping = snapshot.shippingAddress || snapshot.shipping_address;
 
-    // Utiliser directement les items du cart (déjà avec tous les calculs)
-    // Le cart-service retourne maintenant unitPriceHT, unitPriceTTC, totalPriceHT, totalPriceTTC
+    // Utiliser les items du cart (déjà avec tous les calculs HT/TTC)
     const cartItems = cart.items || [];
     const items = cartItems.map((item: any) => ({
       name: item.productName || `Produit #${item.productId}`,
       quantity: item.quantity,
-      unitPrice: item.unitPriceTTC, // Prix unitaire TTC pour l'email
-      totalPrice: item.totalPriceTTC, // Total TTC pour l'email
+      unitPrice: item.unitPriceTTC,
+      totalPrice: item.totalPriceTTC,
       vatRate: item.vatRate,
     }));
 
@@ -289,7 +240,7 @@ class EmailService {
       orderDate: new Date().toISOString(),
       items,
       subtotal: Number(cart.subtotal || 0),
-      tax: Number((cart as any).tax ?? Math.max(cart.total - cart.subtotal, 0)),
+      tax: Number(cart.tax ?? Math.max(cart.total - cart.subtotal, 0)),
       total: Number(cart.total || 0),
       shippingAddress: {
         firstName: shipping?.firstName || customer.firstName || "",
@@ -303,10 +254,7 @@ class EmailService {
   }
 
   /**
-   * Envoie l'email de confirmation via email-service
-   *
-   * Cette opération est non-bloquante : si elle échoue, la commande reste créée.
-   * L'erreur est loggée mais n'empêche pas la finalisation du paiement.
+   * Envoie l'email de confirmation via email-service (non-bloquant)
    *
    * @param payload - Payload formaté pour email-service
    */
@@ -331,8 +279,8 @@ class EmailService {
  * Orchestration complète du processus de finalisation :
  * 1. Récupère la session Stripe (paymentIntentId + métadonnées)
  * 2. Résout le cartSessionId (identifie panier et snapshot)
- * 3. Récupère le snapshot (customer, adresses) et le cart (items, totaux)
- * 4. Prépare le payload pour order-service
+ * 3. Récupère les données préparées depuis cart-service (cart + snapshot formatés)
+ * 4. Résout le customerId et construit le payload final pour order-service
  * 5. Crée la commande via order-service
  * 6. Envoie l'email de confirmation (non-bloquant)
  *
@@ -400,36 +348,26 @@ export const handleFinalizePayment = async (
       });
     }
 
-    // ===== ÉTAPE 3 : Récupérer le snapshot et le cart =====
-    // Snapshot : données checkout (customer, adresses) stockées dans cart-service
-    let snapshot: any;
-    try {
-      const snapshotResponse = await axios.get(
-        `${SERVICES.cart}/api/cart/checkout-snapshot/${resolvedCartSessionId}`
-      );
-      snapshot = snapshotResponse.data?.snapshot;
-    } catch (error: any) {
-      if (error?.response?.status === 404) {
-        return res.status(404).json({ error: "Checkout snapshot not found" });
-      }
-      throw error;
-    }
+    // ===== ÉTAPE 3 : Récupérer les données préparées depuis cart-service =====
+    // Utilise la nouvelle route qui encapsule cart + snapshot + transformation
+    console.log(
+      `[handleFinalizePayment] Fetching prepared order data from cart-service...`
+    );
+    const preparedData = await CartService.prepareOrderData(
+      resolvedCartSessionId
+    );
 
-    if (!snapshot) {
-      return res.status(404).json({ error: "Checkout snapshot not found" });
-    }
-
-    // Cart : panier avec items et totaux depuis cart-service
-    const cart = await CartService.fetchCart(resolvedCartSessionId);
-    if (!cart) {
-      return res.status(404).json({ error: "Cart not found" });
+    if (!preparedData) {
+      return res.status(404).json({
+        error: "Checkout data not found",
+        message: "Cart or snapshot not found for this session",
+      });
     }
 
     // ===== ÉTAPE 4 : Créer la commande via order-service =====
     console.log(`[handleFinalizePayment] Creating order...`);
     const orderPayload = await OrderService.preparePayload(
-      cart,
-      snapshot,
+      preparedData,
       stripeSessionInfo.paymentIntentId
     );
     const orderId = await OrderService.create(orderPayload);
@@ -440,9 +378,19 @@ export const handleFinalizePayment = async (
     // ===== ÉTAPE 5 : Envoyer l'email via email-service (non-bloquant) =====
     // L'échec de l'email ne doit pas empêcher la finalisation du paiement
     try {
-      const emailPayload = EmailService.preparePayload(orderId, cart, snapshot);
-      await EmailService.sendConfirmation(emailPayload);
-      console.log(`[handleFinalizePayment] Email sent successfully`);
+      // Récupérer cart + snapshot pour l'email (format différent)
+      const checkoutData = await CartService.getCheckoutData(
+        resolvedCartSessionId
+      );
+      if (checkoutData) {
+        const emailPayload = EmailService.preparePayload(
+          orderId,
+          checkoutData.cart,
+          checkoutData.snapshot
+        );
+        await EmailService.sendConfirmation(emailPayload);
+        console.log(`[handleFinalizePayment] Email sent successfully`);
+      }
     } catch (error) {
       console.warn(
         "Email send failed (non-blocking):",
