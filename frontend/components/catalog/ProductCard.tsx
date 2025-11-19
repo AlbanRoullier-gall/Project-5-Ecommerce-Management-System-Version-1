@@ -133,6 +133,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         overflow: "hidden",
         width: "100%",
         position: "relative",
+        zIndex: 1,
         transform: isHovered ? "translateY(-4px)" : "translateY(0)",
         display: "flex",
         flexDirection: "column",
