@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ProductPublicDTO, CategoryPublicDTO } from "../../dto";
 import CategoryFilter from "./CategoryFilter";
-import CatalogHero from "./Hero";
 import ProductGrid from "./ProductGrid";
 
 /**
@@ -159,7 +158,6 @@ const ProductCatalog: React.FC = () => {
 
   return (
     <>
-      <CatalogHero />
       {error && (
         <div
           style={{

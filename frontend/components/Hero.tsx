@@ -1,6 +1,13 @@
 "use client";
 
-export default function PhilosophyHero() {
+import React from "react";
+
+interface HeroProps {
+  title: string;
+  subtitle: string;
+}
+
+const Hero: React.FC<HeroProps> = ({ title, subtitle }) => {
   return (
     <section
       style={{
@@ -20,7 +27,7 @@ export default function PhilosophyHero() {
             textShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)",
           }}
         >
-          NOTRE PHILOSOPHIE
+          {title}
         </h1>
         <p
           style={{
@@ -29,9 +36,11 @@ export default function PhilosophyHero() {
             lineHeight: 1.4,
           }}
         >
-          Une vision artisanale, durable et respectueuse de la nature.
+          {subtitle}
         </p>
       </div>
     </section>
   );
-}
+};
+
+export default Hero;

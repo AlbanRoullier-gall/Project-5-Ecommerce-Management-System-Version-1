@@ -3,7 +3,6 @@
 import Head from "next/head";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import PhilosophyHero from "../components/philosophy/Hero";
 import ValuesSection from "../components/philosophy/ValuesSection";
 import SustainabilitySection from "../components/philosophy/SustainabilitySection";
 import CraftSection from "../components/philosophy/CraftSection";
@@ -22,8 +21,6 @@ export default function PhilosophyPage() {
 
       <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
         <Header />
-
-        <PhilosophyHero />
 
         <main style={{ padding: "3.5rem 2rem 4rem" }}>
           <div style={{ maxWidth: "1000px", margin: "0 auto" }}>

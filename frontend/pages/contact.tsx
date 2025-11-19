@@ -3,7 +3,6 @@
 import Head from "next/head";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import ContactHero from "../components/contact/Hero";
 import ContactInfo from "../components/contact/ContactInfo";
 import ContactForm from "../components/contact/ContactForm";
 
@@ -21,8 +20,6 @@ export default function Contact() {
 
       <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
         <Header />
-
-        <ContactHero />
 
         <section style={{ padding: "4rem 2rem" }}>
           <div
