@@ -1,7 +1,13 @@
 "use client";
 
+/**
+ * Composant d'affichage des informations de contact
+ * Affiche l'adresse, le téléphone, l'email et les horaires d'ouverture
+ * dans une carte avec des icônes Font Awesome
+ */
 export default function ContactInfo() {
   return (
+    // Conteneur principal avec style de carte
     <div
       style={{
         background: "white",
@@ -13,6 +19,7 @@ export default function ContactInfo() {
         flexDirection: "column",
       }}
     >
+      {/* Titre de la section */}
       <h2
         style={{
           fontSize: "2rem",
@@ -24,8 +31,10 @@ export default function ContactInfo() {
       >
         Informations de Contact
       </h2>
+
+      {/* Conteneur des informations avec bordure supérieure */}
       <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-        {/* Adresse */}
+        {/* Section : Adresse */}
         <div
           style={{
             display: "flex",
@@ -34,6 +43,7 @@ export default function ContactInfo() {
             padding: "1.25rem 0",
           }}
         >
+          {/* Icône de localisation */}
           <i
             className="fas fa-map-marker-alt"
             style={{ fontSize: "1.6rem", color: "#13686a", minWidth: "1.6rem" }}
@@ -62,7 +72,7 @@ export default function ContactInfo() {
           </div>
         </div>
 
-        {/* Téléphone */}
+        {/* Section : Téléphone */}
         <div
           style={{
             display: "flex",
@@ -72,6 +82,7 @@ export default function ContactInfo() {
             borderTop: "1px solid rgba(0,0,0,0.06)",
           }}
         >
+          {/* Icône de téléphone */}
           <i
             className="fas fa-phone"
             style={{ fontSize: "1.6rem", color: "#13686a", minWidth: "1.6rem" }}
@@ -100,7 +111,7 @@ export default function ContactInfo() {
           </div>
         </div>
 
-        {/* Email */}
+        {/* Section : Email */}
         <div
           style={{
             display: "flex",
@@ -110,6 +121,7 @@ export default function ContactInfo() {
             borderTop: "1px solid rgba(0,0,0,0.06)",
           }}
         >
+          {/* Icône d'email */}
           <i
             className="fas fa-envelope"
             style={{ fontSize: "1.6rem", color: "#13686a", minWidth: "1.6rem" }}
@@ -138,7 +150,7 @@ export default function ContactInfo() {
           </div>
         </div>
 
-        {/* Horaires */}
+        {/* Section : Horaires d'ouverture */}
         <div
           style={{
             display: "flex",
@@ -148,6 +160,7 @@ export default function ContactInfo() {
             borderTop: "1px solid rgba(0,0,0,0.06)",
           }}
         >
+          {/* Icône d'horloge */}
           <i
             className="fas fa-clock"
             style={{ fontSize: "1.6rem", color: "#13686a", minWidth: "1.6rem" }}
@@ -163,6 +176,7 @@ export default function ContactInfo() {
             >
               Horaires
             </h3>
+            {/* Horaires semaine */}
             <p
               style={{
                 fontSize: "1.1rem",
@@ -173,6 +187,7 @@ export default function ContactInfo() {
             >
               Lun - Ven : 9h00 - 18h00
             </p>
+            {/* Horaires samedi */}
             <p
               style={{
                 fontSize: "1.1rem",

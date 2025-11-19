@@ -2,9 +2,16 @@
 
 import { useState } from "react";
 
+// URL de l'API pour l'envoi d'emails (depuis les variables d'environnement ou valeur par défaut)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
+/**
+ * Composant formulaire de contact
+ * Permet aux utilisateurs d'envoyer un message via le formulaire
+ * Gère l'état du formulaire, la soumission et l'affichage des messages de statut
+ */
 export default function ContactForm() {
+  // État du formulaire : stocke les valeurs des champs
   const [formData, setFormData] = useState({
     email: "",
     name: "",
@@ -12,18 +19,27 @@ export default function ContactForm() {
     message: "",
   });
 
+  // État de soumission : indique si le formulaire est en cours d'envoi
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // État du statut de soumission : message de succès ou d'erreur
   const [submitStatus, setSubmitStatus] = useState<{
     type: "success" | "error" | null;
     message: string;
   }>({ type: null, message: "" });
 
+  /**
+   * Gère la soumission du formulaire
+   * Envoie les données du formulaire à l'API d'envoi d'email
+   * Affiche un message de succès ou d'erreur selon le résultat
+   */
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus({ type: null, message: "" });
+    e.preventDefault(); // Empêche le rechargement de la page
+    setIsSubmitting(true); // Active l'état de chargement
+    setSubmitStatus({ type: null, message: "" }); // Réinitialise le statut
 
     try {
+      // Préparation des données à envoyer à l'API
       const emailData = {
         to: { email: "u4999410740@gmail.com", name: "Nature de Pierre" },
         subject: formData.subject || "Nouveau message de contact",
@@ -32,6 +48,7 @@ export default function ContactForm() {
         clientEmail: formData.email,
       };
 
+      // Envoi de la requête POST à l'API d'envoi d'email
       const response = await fetch(`${API_URL}/api/email/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -41,6 +58,7 @@ export default function ContactForm() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Erreur d'envoi");
 
+      // Succès : affichage du message de confirmation et réinitialisation du formulaire
       setSubmitStatus({
         type: "success",
         message:
@@ -48,6 +66,7 @@ export default function ContactForm() {
       });
       setFormData({ email: "", name: "", subject: "", message: "" });
     } catch (error: any) {
+      // Erreur : affichage du message d'erreur
       setSubmitStatus({
         type: "error",
         message:
@@ -55,10 +74,14 @@ export default function ContactForm() {
           "Une erreur s'est produite lors de l'envoi du message. Veuillez réessayer.",
       });
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false); // Désactive l'état de chargement
     }
   };
 
+  /**
+   * Gère les changements dans les champs du formulaire
+   * Met à jour l'état formData avec la nouvelle valeur du champ modifié
+   */
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -66,6 +89,7 @@ export default function ContactForm() {
   };
 
   return (
+    // Conteneur principal du formulaire avec style de carte
     <div
       style={{
         background: "white",
@@ -78,6 +102,7 @@ export default function ContactForm() {
         justifyContent: "center",
       }}
     >
+      {/* Titre du formulaire */}
       <h2
         style={{
           fontSize: "2rem",
@@ -90,6 +115,7 @@ export default function ContactForm() {
         Envoyez-nous un message
       </h2>
 
+      {/* Affichage conditionnel du message de statut (succès ou erreur) */}
       {submitStatus.type && (
         <div
           style={{
@@ -108,6 +134,7 @@ export default function ContactForm() {
         </div>
       )}
 
+      {/* Formulaire de contact */}
       <form
         onSubmit={handleSubmit}
         style={{
@@ -116,6 +143,7 @@ export default function ContactForm() {
           gap: "1.5rem",
         }}
       >
+        {/* Champ : Nom */}
         <div style={{ display: "flex", flexDirection: "column" }}>
           <label
             htmlFor="name"
@@ -151,6 +179,7 @@ export default function ContactForm() {
           />
         </div>
 
+        {/* Champ : Email (obligatoire) */}
         <div style={{ display: "flex", flexDirection: "column" }}>
           <label
             htmlFor="email"
@@ -187,6 +216,7 @@ export default function ContactForm() {
           />
         </div>
 
+        {/* Champ : Sujet */}
         <div style={{ display: "flex", flexDirection: "column" }}>
           <label
             htmlFor="subject"
@@ -222,6 +252,7 @@ export default function ContactForm() {
           />
         </div>
 
+        {/* Champ : Message (textarea) */}
         <div style={{ display: "flex", flexDirection: "column" }}>
           <label
             htmlFor="message"
@@ -259,6 +290,7 @@ export default function ContactForm() {
           />
         </div>
 
+        {/* Bouton de soumission avec état de chargement */}
         <button
           type="submit"
           disabled={isSubmitting}
@@ -277,11 +309,13 @@ export default function ContactForm() {
             opacity: isSubmitting ? 0.7 : 1,
           }}
           onMouseOver={(e) => {
+            // Effet de survol : légère élévation du bouton
             if (!isSubmitting) {
               e.currentTarget.style.transform = "translateY(-2px)";
             }
           }}
           onMouseOut={(e) => {
+            // Retour à la position normale
             e.currentTarget.style.transform = "translateY(0)";
           }}
         >
