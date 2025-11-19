@@ -97,7 +97,13 @@ export default function ProductPage() {
           await updateQuantity(product.id, quantity);
         } else {
           const priceWithVat = product.price * (1 + product.vatRate / 100);
-          await addToCart(product.id, quantity, priceWithVat, product.vatRate, product.name);
+          await addToCart(
+            product.id,
+            quantity,
+            priceWithVat,
+            product.vatRate,
+            product.name
+          );
         }
       } catch (e) {
         console.error("Auto-update cart failed:", e);
@@ -219,8 +225,6 @@ export default function ProductPage() {
       >
         <Header />
 
-        {/* Breadcrumb supprimé */}
-
         <div
           className="product-detail-container"
           style={{
@@ -334,10 +338,6 @@ export default function ProductPage() {
           .add-to-cart-button {
             padding: 1.5rem !important;
             font-size: 1.5rem !important;
-          }
-          .breadcrumb-container {
-            font-size: 1rem !important;
-            flex-wrap: wrap !important;
           }
           .product-detail-container {
             margin: 2rem auto !important;

@@ -40,8 +40,6 @@ export default function CartPage() {
       <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
         <Header />
 
-        {/* Breadcrumb supprimé */}
-
         {/* Main Content */}
         <div
           className="cart-container"

@@ -1,13 +1,25 @@
 import React from "react";
 import { ProductPublicDTO } from "../../dto";
 
+/**
+ * Props du composant ProductInfo
+ */
 interface ProductInfoProps {
+  /** Produit à afficher */
   product: ProductPublicDTO;
 }
 
+/**
+ * Composant d'affichage des informations du produit
+ * Affiche le nom, la catégorie et la description du produit
+ *
+ * @example
+ * <ProductInfo product={product} />
+ */
 const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
   return (
     <>
+      {/* Badge de catégorie - affiché uniquement si la catégorie existe */}
       {product.categoryName && (
         <div
           className="category-badge"
@@ -32,6 +44,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
         </div>
       )}
 
+      {/* Titre du produit */}
       <h1
         className="product-title"
         style={{
@@ -45,6 +58,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
         {product.name}
       </h1>
 
+      {/* Section description - affichée uniquement si la description existe */}
       {product.description && (
         <section
           className="product-description"
@@ -55,6 +69,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
             margin: 0,
           }}
         >
+          {/* En-tête de la section description */}
           <div
             style={{
               display: "flex",
@@ -70,6 +85,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product }) => {
             <i className="fas fa-info-circle"></i>
             <span>Description</span>
           </div>
+          {/* Contenu de la description */}
           <div
             style={{
               background: "#ffffff",

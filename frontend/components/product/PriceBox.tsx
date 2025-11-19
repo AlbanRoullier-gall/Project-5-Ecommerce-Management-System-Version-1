@@ -1,10 +1,17 @@
 import React from "react";
 import { ProductPublicDTO } from "../../dto";
 
+/**
+ * Props du composant PriceBox
+ */
 interface PriceBoxProps {
+  /** Produit dont on affiche le prix */
   product: ProductPublicDTO;
 }
 
+/**
+ * Formate un prix en euros (format belge)
+ */
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat("fr-BE", {
     style: "currency",
@@ -12,11 +19,24 @@ const formatPrice = (price: number) => {
   }).format(price);
 };
 
+/**
+ * Calcule le prix TTC à partir du prix HT et du taux de TVA
+ */
 const getPriceWithVat = (price: number, vatRate: number) => {
   return price * (1 + vatRate / 100);
 };
 
+/**
+ * Composant d'affichage du prix du produit
+ * Affiche le prix TTC en grand, ainsi que le prix HT et le taux de TVA
+ *
+ * @example
+ * <PriceBox product={product} />
+ */
 const PriceBox: React.FC<PriceBoxProps> = ({ product }) => {
+  /**
+   * Calcule le prix TTC du produit
+   */
   const priceWithVat = getPriceWithVat(product.price, product.vatRate);
   return (
     <section
@@ -25,6 +45,7 @@ const PriceBox: React.FC<PriceBoxProps> = ({ product }) => {
         rowGap: "0.5rem",
       }}
     >
+      {/* En-tête de la section prix */}
       <div
         style={{
           display: "flex",
@@ -40,6 +61,7 @@ const PriceBox: React.FC<PriceBoxProps> = ({ product }) => {
         <i className="fas fa-euro-sign"></i>
         <span>Prix</span>
       </div>
+      {/* Conteneur principal du prix */}
       <div
         style={{
           background: "#ffffff",
@@ -49,6 +71,7 @@ const PriceBox: React.FC<PriceBoxProps> = ({ product }) => {
           boxShadow: "0 10px 30px rgba(16,42,67,0.06)",
         }}
       >
+        {/* Élément décoratif en arrière-plan */}
         <div
           style={{
             position: "absolute",
@@ -62,6 +85,7 @@ const PriceBox: React.FC<PriceBoxProps> = ({ product }) => {
           }}
         />
 
+        {/* Section principale avec le prix TTC */}
         <div
           style={{
             display: "flex",
@@ -69,21 +93,7 @@ const PriceBox: React.FC<PriceBoxProps> = ({ product }) => {
             alignItems: "flex-end",
           }}
         >
-          <div
-            className="price-value"
-            style={{
-              fontSize: "3rem",
-              fontWeight: 900,
-              color: "#13686a",
-              marginBottom: "0.25rem",
-              lineHeight: 1,
-              letterSpacing: "-0.02em",
-              textAlign: "right",
-            }}
-          >
-            {formatPrice(priceWithVat)}
-          </div>
-
+          {/* Badge TTC */}
           <div
             style={{
               display: "inline-block",
@@ -98,8 +108,24 @@ const PriceBox: React.FC<PriceBoxProps> = ({ product }) => {
           >
             TTC
           </div>
+          {/* Prix TTC en grand */}
+          <div
+            className="price-value"
+            style={{
+              fontSize: "3rem",
+              fontWeight: 900,
+              color: "#13686a",
+              marginBottom: "0.25rem",
+              lineHeight: 1,
+              letterSpacing: "-0.02em",
+              textAlign: "right",
+            }}
+          >
+            {formatPrice(priceWithVat)}
+          </div>
         </div>
 
+        {/* Section détaillée avec prix HT et TVA */}
         <div
           style={{
             fontSize: "1rem",
@@ -110,6 +136,7 @@ const PriceBox: React.FC<PriceBoxProps> = ({ product }) => {
             borderTop: "1px solid #edf2f7",
           }}
         >
+          {/* Prix HT */}
           <span>
             <i
               className="fas fa-receipt"
@@ -117,6 +144,7 @@ const PriceBox: React.FC<PriceBoxProps> = ({ product }) => {
             ></i>
             HT : {formatPrice(product.price)}
           </span>
+          {/* Taux de TVA */}
           <span>
             <i
               className="fas fa-percentage"

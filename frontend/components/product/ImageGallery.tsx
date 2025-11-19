@@ -1,6 +1,14 @@
 import React from "react";
 import { ProductPublicDTO } from "../../dto";
 
+/**
+ * URL de l'API depuis les variables d'environnement
+ * OBLIGATOIRE : La variable NEXT_PUBLIC_API_URL doit être définie dans .env.local ou .env.production
+ *
+ * Exemples :
+ * - Développement : NEXT_PUBLIC_API_URL=http://localhost:3020
+ * - Production : NEXT_PUBLIC_API_URL=https://api.votre-domaine.com
+ */
 const API_URL = (() => {
   const url = process.env.NEXT_PUBLIC_API_URL;
   if (!url) {
@@ -11,19 +19,42 @@ const API_URL = (() => {
   return url;
 })();
 
+/**
+ * Props du composant ImageGallery
+ */
 interface ImageGalleryProps {
+  /** Produit dont on affiche les images */
   product: ProductPublicDTO;
+  /** Index de l'image actuellement sélectionnée */
   selectedImageIndex: number;
+  /** Callback appelé quand une nouvelle image est sélectionnée */
   setSelectedImageIndex: (index: number) => void;
 }
 
+/**
+ * Composant galerie d'images pour un produit
+ * Affiche une image principale et des miniatures cliquables
+ *
+ * @example
+ * <ImageGallery
+ *   product={product}
+ *   selectedImageIndex={0}
+ *   setSelectedImageIndex={setSelectedImageIndex}
+ * />
+ */
 const ImageGallery: React.FC<ImageGalleryProps> = ({
   product,
   selectedImageIndex,
   setSelectedImageIndex,
 }) => {
+  /**
+   * État pour gérer l'effet hover sur l'image principale
+   */
   const [imageHovered, setImageHovered] = React.useState(false);
 
+  /**
+   * Récupère l'URL complète d'une image à partir de son ID
+   */
   const getImageUrl = (imageId: number) => {
     const image = product?.images?.find((img) => img.id === imageId);
     if (image) {
@@ -42,6 +73,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         padding: "1rem 1.25rem",
       }}
     >
+      {/* Conteneur de l'image principale avec effet hover */}
       <div
         style={{
           background: "linear-gradient(180deg, #ffffff 0%, #fbfdfd 100%)",
@@ -58,6 +90,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         onMouseEnter={() => setImageHovered(true)}
         onMouseLeave={() => setImageHovered(false)}
       >
+        {/* Barre décorative en haut lors du hover */}
         {imageHovered && (
           <div
             style={{
@@ -71,6 +104,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             }}
           />
         )}
+        {/* Image principale - affichée si des images existent */}
         {product.images && product.images.length > 0 ? (
           <img
             className="main-product-image"
@@ -85,10 +119,12 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               transform: imageHovered ? "scale(1.02)" : "scale(1)",
             }}
             onError={(e) => {
+              // Si l'image ne charge pas, utiliser le placeholder
               (e.target as HTMLImageElement).src = "/images/placeholder.svg";
             }}
           />
         ) : (
+          // Image placeholder si aucune image n'est disponible
           <img
             className="main-product-image"
             src="/images/placeholder.svg"
@@ -103,6 +139,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         )}
       </div>
 
+      {/* Galerie de miniatures - affichée uniquement s'il y a plus d'une image */}
       {product.images && product.images.length > 1 && (
         <div
           style={{
@@ -136,16 +173,19 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                 position: "relative",
               }}
               onMouseEnter={(e) => {
+                // Effet hover sur les miniatures non sélectionnées
                 if (selectedImageIndex !== index) {
                   e.currentTarget.style.transform = "scale(1.05)";
                 }
               }}
               onMouseLeave={(e) => {
+                // Remet l'échelle par défaut si non sélectionnée
                 if (selectedImageIndex !== index) {
                   e.currentTarget.style.transform = "scale(1)";
                 }
               }}
             >
+              {/* Badge de sélection sur la miniature active */}
               {selectedImageIndex === index && (
                 <div
                   style={{
@@ -168,6 +208,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                   <i className="fas fa-check"></i>
                 </div>
               )}
+              {/* Image miniature */}
               <img
                 className="thumbnail-image"
                 src={getImageUrl(image.id)}
@@ -179,6 +220,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                   display: "block",
                 }}
                 onError={(e) => {
+                  // Si l'image ne charge pas, utiliser le placeholder
                   (e.target as HTMLImageElement).src =
                     "/images/placeholder.svg";
                 }}

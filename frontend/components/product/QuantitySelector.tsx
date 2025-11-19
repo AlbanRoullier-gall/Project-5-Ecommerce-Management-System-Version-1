@@ -1,11 +1,28 @@
 import React from "react";
 
+/**
+ * Props du composant QuantitySelector
+ */
 interface QuantitySelectorProps {
+  /** Quantité actuelle */
   quantity: number;
+  /** Callback appelé quand la quantité change */
   onChange: (newQuantity: number) => void;
+  /** Désactive les contrôles si true */
   disabled?: boolean;
 }
 
+/**
+ * Composant sélecteur de quantité
+ * Permet d'augmenter ou diminuer la quantité avec des boutons +/-
+ *
+ * @example
+ * <QuantitySelector
+ *   quantity={2}
+ *   onChange={setQuantity}
+ *   disabled={false}
+ * />
+ */
 const QuantitySelector: React.FC<QuantitySelectorProps> = ({
   quantity,
   onChange,
@@ -13,6 +30,7 @@ const QuantitySelector: React.FC<QuantitySelectorProps> = ({
 }) => {
   return (
     <section style={{ display: "grid", rowGap: "0.5rem" }}>
+      {/* En-tête du sélecteur avec icône */}
       <div
         style={{
           display: "flex",
@@ -28,6 +46,7 @@ const QuantitySelector: React.FC<QuantitySelectorProps> = ({
         <i className="fas fa-box"></i>
         <span>Quantité</span>
       </div>
+      {/* Conteneur principal du sélecteur */}
       <div
         style={{
           background: "#ffffff",
@@ -44,6 +63,7 @@ const QuantitySelector: React.FC<QuantitySelectorProps> = ({
             gap: "1.5rem",
           }}
         >
+          {/* Bouton de diminution - désactivé si quantité <= 1 */}
           <button
             className="quantity-button"
             onClick={() => onChange(quantity - 1)}
@@ -82,6 +102,7 @@ const QuantitySelector: React.FC<QuantitySelectorProps> = ({
             <i className="fas fa-minus"></i>
           </button>
 
+          {/* Affichage de la quantité actuelle */}
           <div
             className="quantity-display"
             style={{
@@ -100,6 +121,7 @@ const QuantitySelector: React.FC<QuantitySelectorProps> = ({
             {quantity}
           </div>
 
+          {/* Bouton d'augmentation */}
           <button
             className="quantity-button"
             onClick={() => onChange(quantity + 1)}
