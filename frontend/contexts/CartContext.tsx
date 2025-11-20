@@ -53,7 +53,6 @@ interface CartContextType {
   updateQuantity: (productId: number, quantity: number) => Promise<void>;
   removeFromCart: (productId: number) => Promise<void>;
   clearCart: () => Promise<void>;
-  refreshCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -396,7 +395,6 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     updateQuantity,
     removeFromCart,
     clearCart,
-    refreshCart,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

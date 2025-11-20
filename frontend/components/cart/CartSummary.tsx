@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { useCart } from "../../contexts/CartContext";
 import { useRouter } from "next/router";
 
@@ -8,7 +8,7 @@ import { useRouter } from "next/router";
  * Bouton pour passer à la commande
  */
 const CartSummary: React.FC = () => {
-  const { cart, isLoading } = useCart();
+  const { cart, isLoading, totals } = useCart();
   const router = useRouter();
 
   if (!cart || !cart.items || cart.items.length === 0) {
@@ -16,27 +16,13 @@ const CartSummary: React.FC = () => {
   }
 
   /**
-   * Passer à la commande (à implémenter)
+   * Passer à la commande
    */
   const handleCheckout = () => {
-    // TODO: Implémenter la page de commande
     router.push("/checkout");
   };
 
-  const totals = useMemo(() => {
-    if (!cart || !cart.items || cart.items.length === 0) {
-      return {
-        totalHT: 0,
-        totalTTC: cart?.total || 0,
-        vatAmount: 0,
-        breakdown: [] as { rate: number; amount: number }[],
-      };
-    }
-
-    // Utiliser les totaux calculés par le CartContext
-    const { totals } = useCart();
-    return totals;
-  }, [cart]);
+  // Les totaux proviennent directement du CartContext
 
   return (
     <div className="cart-summary">
