@@ -11,7 +11,6 @@ import {
   ProductImageGallery,
   ProductInfo,
   ProductPriceBox,
-  ProductQuantitySelector,
 } from "../components/product";
 
 const API_URL = (() => {
@@ -27,14 +26,18 @@ const API_URL = (() => {
 export default function ProductPage() {
   const router = useRouter();
   const { productId } = router.query;
-  const { cart, addToCart, updateQuantity, isLoading: cartLoading } = useCart();
+  const {
+    cart,
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    isLoading: cartLoading,
+  } = useCart();
 
   const [product, setProduct] = useState<ProductPublicDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [quantity, setQuantity] = useState(1);
-  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     if (productId) {
@@ -42,18 +45,7 @@ export default function ProductPage() {
     }
   }, [productId]);
 
-  useEffect(() => {
-    if (cart && productId) {
-      const cartItem = cart.items?.find(
-        (item) => item.productId === Number(productId)
-      );
-      if (cartItem) {
-        setQuantity(cartItem.quantity);
-      } else {
-        setQuantity(1);
-      }
-    }
-  }, [cart, productId]);
+  // Plus de synchronisation de quantité locale: on s'aligne sur le comportement du catalogue
 
   const loadProduct = async () => {
     setIsLoading(true);
@@ -81,48 +73,7 @@ export default function ProductPage() {
     }
   };
 
-  // Sync quantity change directly to cart (auto-update)
-  useEffect(() => {
-    const sync = async () => {
-      if (!product) return;
-      setSyncing(true);
-      try {
-        const cartItem = cart?.items?.find(
-          (item) => item.productId === product.id
-        );
-        if (quantity <= 0 && cartItem) {
-          // Quantity should never be <1 from UI, but guard just in case
-          await updateQuantity(product.id, 1);
-        } else if (cartItem) {
-          await updateQuantity(product.id, quantity);
-        } else {
-          const priceWithVat = product.price * (1 + product.vatRate / 100);
-          await addToCart(
-            product.id,
-            quantity,
-            priceWithVat,
-            product.vatRate,
-            product.name
-          );
-        }
-      } catch (e) {
-        console.error("Auto-update cart failed:", e);
-      } finally {
-        setSyncing(false);
-      }
-    };
-    // Only sync when we have a product and a valid quantity
-    if (product && quantity >= 1) {
-      sync();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quantity, product?.id]);
-
-  const handleQuantityChange = (newQuantity: number) => {
-    if (newQuantity >= 1) {
-      setQuantity(newQuantity);
-    }
-  };
+  // Suppression de l'auto-sync et de la quantité locale: tout passe par les contrôles +/- et le bouton
 
   if (isLoading) {
     return (
@@ -202,8 +153,7 @@ export default function ProductPage() {
     );
   }
 
-  const isInCart =
-    cart?.items?.some((item) => item.productId === product.id) || false;
+  // Indicateur panier (non utilisé directement, calculs inlined ci-dessous)
 
   return (
     <>
@@ -266,11 +216,182 @@ export default function ProductPage() {
               >
                 <ProductInfo product={product} />
                 <ProductPriceBox product={product} />
-                <ProductQuantitySelector
-                  quantity={quantity}
-                  onChange={handleQuantityChange}
-                  disabled={syncing || cartLoading}
-                />
+                <div
+                  style={{
+                    padding: "0 0 0.75rem 0",
+                    borderTop: "1px solid #eef2f7",
+                    marginTop: "0.25rem",
+                  }}
+                >
+                  {(cart?.items?.find((item) => item.productId === product.id)
+                    ?.quantity || 0) === 0 ? (
+                    <button
+                      style={{
+                        width: "100%",
+                        padding: "0.9rem 1.2rem",
+                        background:
+                          "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                        border: "none",
+                        borderRadius: "10px",
+                        color: "white",
+                        fontSize: "1.1rem",
+                        fontWeight: "600",
+                        cursor: cartLoading ? "not-allowed" : "pointer",
+                        transition: "all 0.3s ease",
+                        boxShadow: "0 2px 8px rgba(19, 104, 106, 0.2)",
+                        opacity: cartLoading ? 0.6 : 1,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!cartLoading) {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow =
+                            "0 4px 12px rgba(19, 104, 106, 0.3)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow =
+                          "0 2px 8px rgba(19, 104, 106, 0.2)";
+                      }}
+                      onClick={async () => {
+                        const priceWithVat =
+                          product.price * (1 + product.vatRate / 100);
+                        await addToCart(
+                          product.id,
+                          1,
+                          priceWithVat,
+                          product.vatRate,
+                          product.name
+                        );
+                      }}
+                      disabled={cartLoading}
+                    >
+                      <i
+                        className="fas fa-shopping-cart"
+                        style={{ marginRight: "0.5rem" }}
+                      ></i>
+                      {cartLoading ? "Ajout..." : "Ajouter au panier"}
+                    </button>
+                  ) : (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <button
+                        style={{
+                          flex: "0 0 auto",
+                          width: "38px",
+                          height: "38px",
+                          background:
+                            "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                          border: "none",
+                          borderRadius: "10px",
+                          color: "white",
+                          fontSize: "1.2rem",
+                          fontWeight: "600",
+                          cursor: cartLoading ? "not-allowed" : "pointer",
+                          transition: "all 0.3s ease",
+                          boxShadow: "0 2px 8px rgba(19, 104, 106, 0.2)",
+                          opacity: cartLoading ? 0.6 : 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                        onClick={async () => {
+                          const quantityInCart =
+                            cart?.items?.find(
+                              (item) => item.productId === product.id
+                            )?.quantity || 0;
+                          if (quantityInCart <= 1) {
+                            await removeFromCart(product.id);
+                          } else {
+                            await updateQuantity(
+                              product.id,
+                              quantityInCart - 1
+                            );
+                          }
+                        }}
+                        disabled={cartLoading}
+                        onMouseEnter={(e) => {
+                          if (!cartLoading) {
+                            e.currentTarget.style.transform = "scale(1.1)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "scale(1)";
+                        }}
+                      >
+                        <i className="fas fa-minus"></i>
+                      </button>
+
+                      <div
+                        style={{
+                          flex: "1",
+                          padding: "0.7rem 1rem",
+                          background: "#f3f4f6",
+                          borderRadius: "10px",
+                          fontSize: "1.1rem",
+                          fontWeight: "700",
+                          color: "#13686a",
+                          textAlign: "center",
+                        }}
+                      >
+                        {cart?.items?.find(
+                          (item) => item.productId === product.id
+                        )?.quantity || 0}{" "}
+                        {(cart?.items?.find(
+                          (item) => item.productId === product.id
+                        )?.quantity || 0) > 1
+                          ? "articles"
+                          : "article"}
+                      </div>
+
+                      <button
+                        style={{
+                          flex: "0 0 auto",
+                          width: "38px",
+                          height: "38px",
+                          background:
+                            "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                          border: "none",
+                          borderRadius: "10px",
+                          color: "white",
+                          fontSize: "1.2rem",
+                          fontWeight: "600",
+                          cursor: cartLoading ? "not-allowed" : "pointer",
+                          transition: "all 0.3s ease",
+                          boxShadow: "0 2px 8px rgba(19, 104, 106, 0.2)",
+                          opacity: cartLoading ? 0.6 : 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                        onClick={async () => {
+                          const quantityInCart =
+                            cart?.items?.find(
+                              (item) => item.productId === product.id
+                            )?.quantity || 0;
+                          await updateQuantity(product.id, quantityInCart + 1);
+                        }}
+                        disabled={cartLoading}
+                        onMouseEnter={(e) => {
+                          if (!cartLoading) {
+                            e.currentTarget.style.transform = "scale(1.1)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "scale(1)";
+                        }}
+                      >
+                        <i className="fas fa-plus"></i>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
