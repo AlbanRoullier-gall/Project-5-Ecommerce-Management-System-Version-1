@@ -73,8 +73,6 @@ export default function ProductPage() {
     }
   };
 
-  // Suppression de l'auto-sync et de la quantité locale: tout passe par les contrôles +/- et le bouton
-
   if (isLoading) {
     return (
       <>
