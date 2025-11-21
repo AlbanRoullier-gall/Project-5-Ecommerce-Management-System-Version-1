@@ -75,7 +75,7 @@ export class ApiRouter {
         address: Joi.string().required(),
         postalCode: Joi.string().max(10).required(),
         city: Joi.string().max(100).required(),
-        countryId: Joi.number().integer().required(),
+        countryName: Joi.string().optional(), // Optionnel car toujours "Belgique" par défaut
         isDefault: Joi.boolean().optional(),
       }),
 
@@ -84,7 +84,7 @@ export class ApiRouter {
         address: Joi.string().optional(),
         postalCode: Joi.string().max(10).optional(),
         city: Joi.string().max(100).optional(),
-        countryId: Joi.number().integer().optional(),
+        countryName: Joi.string().optional(), // Optionnel car toujours "Belgique"
         isDefault: Joi.boolean().optional(),
       }),
     };
@@ -214,26 +214,10 @@ export class ApiRouter {
       this.customerController.getCustomerByEmail(req, res);
     });
 
-    app.get("/api/customers/countries", (req: Request, res: Response) => {
-      this.customerController.getCountries(req, res);
-    });
-
     // Voir un client spécifique (publique) — doit être après les routes spécifiques ci-dessus
     app.get("/api/customers/:id", (req: Request, res: Response) => {
       this.customerController.getCustomerById(req, res);
     });
-
-    // ===== ROUTES DE RÉFÉRENCE ADMIN =====
-    // Routes admin pour obtenir les données de référence (pays)
-    // Utilisées dans le backoffice
-    // IMPORTANT: Ces routes doivent être définies AVANT les routes avec paramètres
-    app.get(
-      "/api/admin/customers/countries",
-      this.requireAuth,
-      (req: Request, res: Response) => {
-        this.customerController.getCountries(req, res);
-      }
-    );
 
     // Route de recherche de clients
     app.get(

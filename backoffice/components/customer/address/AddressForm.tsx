@@ -3,7 +3,6 @@ import {
   AddressPublicDTO,
   AddressCreateDTO,
   AddressUpdateDTO,
-  CountryDTO,
 } from "../../../dto";
 import FormInput from "../../product/form/FormInput";
 import FormCheckbox from "../../product/form/FormCheckbox";
@@ -15,8 +14,6 @@ import FormActions from "../../product/form/FormActions";
 interface AddressFormProps {
   /** Adresse à éditer (null si création) */
   address: AddressPublicDTO | null;
-  /** Liste des pays disponibles */
-  countries: CountryDTO[];
   /** Callback appelé lors de la soumission */
   onSubmit: (data: AddressCreateDTO | AddressUpdateDTO) => void;
   /** Callback appelé lors de l'annulation */
@@ -30,16 +27,15 @@ interface AddressFormProps {
  */
 const AddressForm: React.FC<AddressFormProps> = ({
   address,
-  countries = [],
   onSubmit,
   onCancel,
   isLoading,
 }) => {
-  const [formData, setFormData] = useState<AddressCreateDTO>({
+  const [formData, setFormData] = useState<Partial<AddressCreateDTO>>({
     address: "",
     postalCode: "",
     city: "",
-    countryId: 11, // Belgium by default
+    countryName: "", // Sera assigné par le backend
     isDefault: false,
   });
 
@@ -52,7 +48,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
         address: address.address,
         postalCode: address.postalCode,
         city: address.city,
-        countryId: address.countryId,
+        countryName: address.countryName,
         isDefault: address.isDefault,
       });
     }
@@ -69,12 +65,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
 
     setFormData((prev) => ({
       ...prev,
-      [name]:
-        type === "checkbox"
-          ? checked
-          : name === "countryId"
-          ? parseInt(value)
-          : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
 
     // Effacer l'erreur du champ modifié
@@ -93,20 +84,16 @@ const AddressForm: React.FC<AddressFormProps> = ({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.address.trim()) {
+    if (!formData.address?.trim()) {
       newErrors.address = "L'adresse est requise";
     }
 
-    if (!formData.postalCode.trim()) {
+    if (!formData.postalCode?.trim()) {
       newErrors.postalCode = "Le code postal est requis";
     }
 
-    if (!formData.city.trim()) {
+    if (!formData.city?.trim()) {
       newErrors.city = "La ville est requise";
-    }
-
-    if (formData.countryId === 0) {
-      newErrors.countryId = "Le pays est requis";
     }
 
     setErrors(newErrors);
@@ -135,17 +122,23 @@ const AddressForm: React.FC<AddressFormProps> = ({
       if (formData.city !== address.city) {
         updateData.city = formData.city;
       }
-      if (formData.countryId !== address.countryId) {
-        updateData.countryId = formData.countryId;
-      }
+      // countryName n'est jamais mis à jour car toujours "Belgique"
       if (formData.isDefault !== address.isDefault) {
         updateData.isDefault = formData.isDefault;
       }
 
       onSubmit(updateData);
     } else {
-      // Mode création
-      onSubmit(formData);
+      // Mode création - s'assurer que tous les champs requis sont présents
+      const createData: AddressCreateDTO = {
+        addressType: "shipping", // Par défaut shipping
+        address: formData.address || "",
+        postalCode: formData.postalCode || "",
+        city: formData.city || "",
+        countryName: formData.countryName,
+        isDefault: formData.isDefault || false,
+      };
+      onSubmit(createData);
     }
   };
 
@@ -184,7 +177,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
               id="address"
               label="Adresse"
               name="address"
-              value={formData.address}
+              value={formData.address || ""}
               onChange={handleChange}
               required
               error={errors.address}
@@ -196,7 +189,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
             id="postalCode"
             label="Code postal"
             name="postalCode"
-            value={formData.postalCode}
+            value={formData.postalCode || ""}
             onChange={handleChange}
             required
             error={errors.postalCode}
@@ -207,7 +200,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
             id="city"
             label="Ville"
             name="city"
-            value={formData.city}
+            value={formData.city || ""}
             onChange={handleChange}
             required
             error={errors.city}
@@ -221,7 +214,8 @@ const AddressForm: React.FC<AddressFormProps> = ({
             <input
               type="text"
               id="countryDisplay"
-              value="Belgique"
+              name="countryName"
+              value={formData.countryName || ""}
               readOnly
               className="form-input"
               style={{
@@ -231,7 +225,6 @@ const AddressForm: React.FC<AddressFormProps> = ({
                 border: "1px solid #e0e0e0",
               }}
             />
-            <input type="hidden" name="countryId" value={formData.countryId} />
           </div>
 
           {/* Adresse par défaut */}

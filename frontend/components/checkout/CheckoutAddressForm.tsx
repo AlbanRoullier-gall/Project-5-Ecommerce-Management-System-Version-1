@@ -2,12 +2,11 @@
  * Composant formulaire adresses de livraison et facturation
  *
  * Ce composant gère la saisie de l'adresse de livraison lors du processus de checkout.
- * Il charge la liste des pays disponibles depuis l'API et filtre pour ne garder que la Belgique.
- * Le formulaire valide que tous les champs obligatoires sont remplis avant de passer à l'étape suivante.
+ * L'application ne gère que la Belgique, donc le pays est toujours "Belgique".
  */
 
-import React, { useState, useEffect } from "react";
-import { AddressCreateDTO, CountryDTO } from "../../dto";
+import React, { useState } from "react";
+import { AddressCreateDTO } from "../../dto";
 import { useCheckout } from "../../contexts/CheckoutContext";
 
 // URL de l'API backend
@@ -20,77 +19,16 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 export default function CheckoutAddressForm() {
   const { addressData, updateAddressData, nextStep, goToCustomerStep } =
     useCheckout();
-  // État local du composant
-  const [countries, setCountries] = useState<CountryDTO[]>([]); // Liste des pays disponibles (filtrée pour la Belgique)
-  const [isLoading, setIsLoading] = useState(false); // Indicateur de chargement
-  const [error, setError] = useState<string | null>(null); // Message d'erreur éventuel
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   /**
-   * Effet pour charger la liste des pays au montage du composant
-   * Filtre automatiquement pour ne garder que la Belgique
-   * Définit la Belgique comme pays par défaut si aucune adresse n'est encore saisie
+   * Le countryName sera assigné par le backend lors de la création de l'adresse
+   * Pas besoin d'initialisation en dur, le backend garantit que countryName = "Belgique"
    */
-  useEffect(() => {
-    const loadCountries = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/customers/countries`);
-        if (response.ok) {
-          const data = await response.json();
-          const allCountries = data.countries || [];
-          // Filtrer pour ne garder que la Belgique
-          const belgiumOnly = allCountries.filter(
-            (country: any) =>
-              country.countryName === "Belgique" || country.countryId === 11
-          );
-          setCountries(belgiumOnly);
-
-          // Set Belgium as default for shipping address
-          if (!addressData.shipping.countryId && belgiumOnly.length > 0) {
-            updateAddressData({
-              shipping: {
-                ...addressData.shipping,
-                countryId: belgiumOnly[0].countryId,
-              },
-            });
-          }
-        } else {
-          // Fallback: définir la Belgique comme seul pays
-          const belgiumCountry = { countryId: 11, countryName: "Belgique" };
-          setCountries([belgiumCountry]);
-
-          if (!addressData.shipping.countryId) {
-            updateAddressData({
-              shipping: {
-                ...addressData.shipping,
-                countryId: belgiumCountry.countryId,
-              },
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error loading countries:", error);
-        // Fallback: définir la Belgique comme seul pays
-        const belgiumCountry = { countryId: 11, countryName: "Belgique" };
-        setCountries([belgiumCountry]);
-
-        if (!addressData.shipping.countryId) {
-          updateAddressData({
-            shipping: {
-              ...addressData.shipping,
-              countryId: belgiumCountry.countryId,
-            },
-          });
-        }
-      }
-    };
-
-    loadCountries();
-  }, [addressData, updateAddressData]);
 
   /**
    * Gère les changements dans les champs de l'adresse de livraison
-   * Met à jour le state local et notifie le composant parent via onChange
-   * @param e - Événement de changement sur un input ou select
    */
   const handleShippingChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -98,7 +36,7 @@ export default function CheckoutAddressForm() {
     const { name, value } = e.target;
     const updatedShipping = {
       ...addressData.shipping,
-      [name]: name === "countryId" ? parseInt(value) : value,
+      [name]: value,
     };
 
     updateAddressData({
@@ -108,18 +46,15 @@ export default function CheckoutAddressForm() {
 
   /**
    * Gère la soumission du formulaire
-   * Valide que tous les champs obligatoires sont remplis avant de passer à l'étape suivante
-   * @param e - Événement de soumission du formulaire
    */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation des champs obligatoires
+    // Validation des champs obligatoires (countryName est toujours "Belgique", pas besoin de le vérifier)
     if (
       !addressData.shipping.address ||
       !addressData.shipping.city ||
-      !addressData.shipping.postalCode ||
-      !addressData.shipping.countryId
+      !addressData.shipping.postalCode
     ) {
       alert(
         "Veuillez remplir tous les champs obligatoires de l'adresse de livraison"
@@ -133,10 +68,6 @@ export default function CheckoutAddressForm() {
 
   /**
    * Fonction utilitaire pour rendre les champs d'adresse
-   * Crée les inputs pour l'adresse complète, code postal, ville et pays
-   * @param data - Données de l'adresse à afficher
-   * @param handleChange - Handler pour gérer les changements
-   * @returns JSX contenant les champs du formulaire d'adresse
    */
   const renderAddressFields = (
     data: Partial<AddressCreateDTO>,
@@ -255,7 +186,8 @@ export default function CheckoutAddressForm() {
         </label>
         <input
           type="text"
-          value="Belgique"
+          name="countryName"
+          value={data.countryName || ""}
           readOnly
           style={{
             width: "100%",
@@ -268,7 +200,6 @@ export default function CheckoutAddressForm() {
             cursor: "not-allowed",
           }}
         />
-        <input type="hidden" name="countryId" value={data.countryId || 11} />
       </div>
     </>
   );

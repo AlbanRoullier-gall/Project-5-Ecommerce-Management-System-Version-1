@@ -16,12 +16,11 @@ interface AddressFormData {
 }
 
 /**
- * Structure des données checkout complètes stockées
+ * Structure des données checkout stockées (sans currentStep - toujours initialisé à 1)
  */
 interface CheckoutData {
   customerData: Partial<CustomerCreateDTO>;
   addressData: AddressFormData;
-  currentStep: number;
 }
 
 /**
@@ -105,6 +104,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
 
   /**
    * Charge les données checkout depuis sessionStorage au montage
+   * Note: currentStep n'est jamais restauré - on commence toujours à l'étape 1
    */
   useEffect(() => {
     if (typeof window === "undefined" || isInitialized) return;
@@ -120,9 +120,10 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         // Vérifier que la sessionId correspond à celle stockée
         const storedSessionId = localStorage.getItem("cart_session_id");
         if (parsed && storedSessionId === sessionId) {
+          // Restaurer uniquement les données, pas l'étape (toujours commencer à 1)
           setCustomerData(parsed.customerData || {});
           setAddressData(parsed.addressData || { shipping: {} });
-          setCurrentStepState(parsed.currentStep || 1);
+          // currentStep reste à 1 (valeur par défaut)
         } else if (storedSessionId !== sessionId) {
           // Si la sessionId a changé, nettoyer les données
           sessionStorage.removeItem(STORAGE_KEY);
@@ -232,16 +233,15 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
     setCurrentStepState(3);
   }, []);
 
-  // Sauvegarder automatiquement quand les données changent
+  // Sauvegarder automatiquement quand les données changent (sans currentStep)
   useEffect(() => {
     if (isInitialized) {
       saveToStorage({
         customerData,
         addressData,
-        currentStep,
       });
     }
-  }, [customerData, addressData, currentStep, isInitialized, saveToStorage]);
+  }, [customerData, addressData, isInitialized, saveToStorage]);
 
   const value: CheckoutContextType = {
     customerData,

@@ -71,7 +71,7 @@ export interface AddressCreateDTO {
   address: string;
   postalCode: string;
   city: string;
-  countryId: number;
+  countryName?: string; // Optionnel car toujours "Belgique" par défaut
   isDefault?: boolean;
 }
 
@@ -83,7 +83,7 @@ export interface AddressUpdateDTO {
   address?: string;
   postalCode?: string;
   city?: string;
-  countryId?: number;
+  countryName?: string; // Optionnel car toujours "Belgique"
   isDefault?: boolean;
 }
 
@@ -98,7 +98,7 @@ export interface AddressPublicDTO {
   address: string;
   postalCode: string;
   city: string;
-  countryId: number;
+  countryName: string;
   isDefault: boolean;
 }
 
@@ -163,10 +163,9 @@ export interface CivilityDTO {
 }
 
 /**
- * DTO pour les informations de pays
+ * DTO pour les informations de pays (uniquement la Belgique)
  */
 export interface CountryDTO {
-  countryId: number;
   countryName: string;
 }
 

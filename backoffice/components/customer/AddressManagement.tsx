@@ -4,7 +4,6 @@ import {
   AddressPublicDTO,
   AddressCreateDTO,
   AddressUpdateDTO,
-  CountryDTO,
 } from "../../dto";
 import AddressForm from "./address/AddressForm";
 import AddressTable from "./address/AddressTable";
@@ -20,8 +19,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 interface AddressManagementProps {
   /** Client dont on gère les adresses */
   customer: CustomerPublicDTO;
-  /** Liste des pays disponibles */
-  countries: CountryDTO[];
   /** Callback appelé pour fermer la gestion des adresses */
   onClose: () => void;
 }
@@ -32,7 +29,6 @@ interface AddressManagementProps {
  */
 const AddressManagement: React.FC<AddressManagementProps> = ({
   customer,
-  countries,
   onClose,
 }) => {
   const [addresses, setAddresses] = useState<AddressPublicDTO[]>([]);
@@ -99,7 +95,18 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
   /**
    * Crée une nouvelle adresse
    */
-  const handleCreateAddress = async (data: AddressCreateDTO) => {
+  const handleCreateAddress = async (
+    data: AddressCreateDTO | AddressUpdateDTO
+  ) => {
+    // S'assurer que les données sont de type AddressCreateDTO
+    const createData: AddressCreateDTO = {
+      addressType: (data as AddressCreateDTO).addressType || "shipping",
+      address: (data as AddressCreateDTO).address || "",
+      postalCode: (data as AddressCreateDTO).postalCode || "",
+      city: (data as AddressCreateDTO).city || "",
+      countryName: (data as AddressCreateDTO).countryName,
+      isDefault: (data as AddressCreateDTO).isDefault || false,
+    };
     setIsLoading(true);
     setError(null);
     try {
@@ -113,7 +120,7 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify(createData),
         }
       );
 
@@ -304,7 +311,6 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
       {showAddressForm && (
         <AddressForm
           address={editingAddress}
-          countries={countries}
           onSubmit={editingAddress ? handleUpdateAddress : handleCreateAddress}
           onCancel={handleCancelForm}
           isLoading={isLoading}
@@ -314,7 +320,6 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
       {!showAddressForm && (
         <AddressTable
           addresses={addresses}
-          countries={countries}
           onEdit={handleEditAddress}
           onDelete={handleDeleteAddress}
         />

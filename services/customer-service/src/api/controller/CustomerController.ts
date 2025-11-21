@@ -213,16 +213,4 @@ export class CustomerController {
     }
   }
 
-  /**
-   * Récupérer tous les pays
-   */
-  async getCountries(req: Request, res: Response): Promise<void> {
-    try {
-      const countries = await this.customerService.getCountries();
-      res.json({ message: "Countries retrieved", countries });
-    } catch (error: any) {
-      console.error("Get countries error:", error);
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
 }

@@ -43,7 +43,7 @@ export interface AddressCreateDTO {
   address: string;
   postalCode: string;
   city: string;
-  countryId: number;
+  countryName?: string;
   isDefault?: boolean;
 }
 export interface AddressUpdateDTO {
@@ -51,7 +51,7 @@ export interface AddressUpdateDTO {
   address?: string;
   postalCode?: string;
   city?: string;
-  countryId?: number;
+  countryName?: string;
   isDefault?: boolean;
 }
 export interface AddressPublicDTO {
@@ -61,7 +61,7 @@ export interface AddressPublicDTO {
   address: string;
   postalCode: string;
   city: string;
-  countryId: number;
+  countryName: string;
   isDefault: boolean;
 }
 export interface AddressListResponse {
@@ -96,9 +96,7 @@ export interface CivilityDTO {
   label: string;
 }
 export interface CountryDTO {
-  countryId: number;
-  name: string;
-  code: string;
+  countryName: string;
 }
 export interface SocioProfessionalCategoryDTO {
   categoryId: number;

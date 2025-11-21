@@ -10,7 +10,6 @@ import {
   CustomerPublicDTO,
   CustomerCreateDTO,
   CustomerUpdateDTO,
-  CountryDTO,
 } from "../../dto";
 
 /** URL de l'API depuis les variables d'environnement */
@@ -38,7 +37,7 @@ const CustomerList: React.FC = () => {
   const [filteredCustomers, setFilteredCustomers] = useState<
     CustomerPublicDTO[]
   >([]);
-  const [countries, setCountries] = useState<CountryDTO[]>([]);
+  // Plus besoin de charger les pays, la Belgique est automatiquement assignée par le service
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +55,6 @@ const CustomerList: React.FC = () => {
   // Charger les données au montage du composant
   useEffect(() => {
     loadCustomers();
-    loadCountries();
   }, []);
 
   /**
@@ -125,44 +123,6 @@ const CustomerList: React.FC = () => {
       console.error("Error loading customers:", err);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  /**
-   * Charge la liste des pays depuis l'API
-   */
-  const loadCountries = async () => {
-    try {
-      const token = getAuthToken();
-
-      if (!token) {
-        console.error("Token manquant pour chargement des pays");
-        // Fallback: définir la Belgique comme seul pays
-        setCountries([{ countryId: 11, countryName: "Belgique" }]);
-        return;
-      }
-
-      const response = await fetch(`${API_URL}/api/admin/customers/countries`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Erreur lors du chargement des pays");
-      }
-
-      const data = await response.json();
-      const allCountries = data.countries || data || [];
-      // Filtrer pour ne garder que la Belgique
-      const belgiumOnly = allCountries.filter((country: any) => 
-        country.countryName === "Belgique" || country.countryId === 11
-      );
-      setCountries(belgiumOnly.length > 0 ? belgiumOnly : [{ countryId: 11, countryName: "Belgique" }]);
-    } catch (err) {
-      console.error("Error loading countries:", err);
-      // Fallback: définir la Belgique comme seul pays
-      setCountries([{ countryId: 11, countryName: "Belgique" }]);
     }
   };
 
@@ -379,7 +339,6 @@ const CustomerList: React.FC = () => {
       {showAddressManagement && selectedCustomerForAddresses && (
         <AddressManagement
           customer={selectedCustomerForAddresses}
-          countries={countries}
           onClose={handleCloseAddressManagement}
         />
       )}

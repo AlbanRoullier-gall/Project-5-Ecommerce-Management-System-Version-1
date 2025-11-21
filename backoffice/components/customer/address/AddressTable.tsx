@@ -1,5 +1,5 @@
 import React from "react";
-import { AddressPublicDTO, CountryDTO } from "../../../dto";
+import { AddressPublicDTO } from "../../../dto";
 import AddressTableRow from "./AddressTableRow";
 
 /**
@@ -8,8 +8,6 @@ import AddressTableRow from "./AddressTableRow";
 interface AddressTableProps {
   /** Liste des adresses à afficher */
   addresses: AddressPublicDTO[];
-  /** Liste des pays pour afficher le nom */
-  countries: CountryDTO[];
   /** Callback appelé pour éditer une adresse */
   onEdit: (address: AddressPublicDTO) => void;
   /** Callback appelé pour supprimer une adresse */
@@ -22,7 +20,6 @@ interface AddressTableProps {
  */
 const AddressTable: React.FC<AddressTableProps> = ({
   addresses,
-  countries,
   onEdit,
   onDelete,
 }) => {
@@ -155,7 +152,6 @@ const AddressTable: React.FC<AddressTableProps> = ({
               <AddressTableRow
                 key={address.addressId}
                 address={address}
-                countries={countries}
                 onEdit={onEdit}
                 onDelete={onDelete}
               />

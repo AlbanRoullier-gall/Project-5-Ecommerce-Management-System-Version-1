@@ -24,10 +24,6 @@ export class CustomerController {
     await this.proxyToCustomer(req, res);
   };
 
-  getCountries = async (req: Request, res: Response): Promise<void> => {
-    await this.proxyToCustomer(req, res);
-  };
-
   getCustomer = async (req: Request, res: Response): Promise<void> => {
     await this.proxyToCustomer(req, res);
   };
@@ -55,10 +51,6 @@ export class CustomerController {
   };
 
   adminSearchCustomers = async (req: Request, res: Response): Promise<void> => {
-    await this.proxyToCustomer(req, res);
-  };
-
-  adminGetCountries = async (req: Request, res: Response): Promise<void> => {
     await this.proxyToCustomer(req, res);
   };
 

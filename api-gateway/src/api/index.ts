@@ -317,7 +317,6 @@ export class ApiRouter {
       "/api/customers/by-email/:email",
       this.customerController.getCustomerByEmail
     );
-    app.get("/api/customers/countries", this.customerController.getCountries);
     app.get("/api/customers/:id", this.customerController.getCustomer);
     app.post(
       "/api/customers/:customerId/addresses",
@@ -344,11 +343,6 @@ export class ApiRouter {
       "/api/admin/customers/search",
       requireAuth,
       this.customerController.adminSearchCustomers
-    );
-    app.get(
-      "/api/admin/customers/countries",
-      requireAuth,
-      this.customerController.adminGetCountries
     );
     app.all(
       "/api/admin/customers/:customerId/addresses/:id",

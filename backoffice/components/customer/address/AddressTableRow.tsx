@@ -1,5 +1,5 @@
 import React from "react";
-import { AddressPublicDTO, CountryDTO } from "../../../dto";
+import { AddressPublicDTO } from "../../../dto";
 
 /**
  * Props du composant AddressTableRow
@@ -7,8 +7,6 @@ import { AddressPublicDTO, CountryDTO } from "../../../dto";
 interface AddressTableRowProps {
   /** Adresse à afficher */
   address: AddressPublicDTO;
-  /** Liste des pays pour afficher le nom */
-  countries: CountryDTO[];
   /** Callback pour éditer l'adresse */
   onEdit: (address: AddressPublicDTO) => void;
   /** Callback pour supprimer l'adresse */
@@ -20,25 +18,9 @@ interface AddressTableRowProps {
  */
 const AddressTableRow: React.FC<AddressTableRowProps> = ({
   address,
-  countries,
   onEdit,
   onDelete,
 }) => {
-  const getCountryName = (countryId: number): string => {
-    const country = countries.find((c) => c.countryId === countryId);
-    if (country) {
-      return country.countryName;
-    }
-
-    // Fallback: si l'ID n'est pas trouvé, vérifier si c'est probablement la Belgique
-    // (parfois l'ID peut être différent selon la base de données)
-    if (countryId === 11) {
-      return "Belgique";
-    }
-
-    return `Pays ID: ${countryId}`;
-  };
-
   const buttonBaseStyle: React.CSSProperties = {
     padding: "0.75rem",
     border: "none",
@@ -92,7 +74,7 @@ const AddressTableRow: React.FC<AddressTableRowProps> = ({
       {/* Pays */}
       <td className="mobile-hide" style={{ padding: "0.75rem 1rem" }}>
         <span style={{ color: "#6b7280", fontSize: "1rem" }}>
-          {getCountryName(address.countryId)}
+          {address.countryName}
         </span>
       </td>
 

@@ -9,7 +9,7 @@ export interface CustomerAddressData {
   address: string;
   postalCode: string;
   city: string;
-  countryId: number;
+  countryName: string;
   isDefault: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -27,11 +27,10 @@ class CustomerAddress {
   public address: string;
   public postalCode: string;
   public city: string;
-  public countryId: number;
+  public countryName: string;
   public isDefault: boolean;
   public createdAt: Date;
   public updatedAt: Date;
-  public countryName?: string | undefined;
 
   constructor(data: CustomerAddressData) {
     this.addressId = data.addressId;
@@ -40,7 +39,7 @@ class CustomerAddress {
     this.address = data.address;
     this.postalCode = data.postalCode;
     this.city = data.city;
-    this.countryId = data.countryId;
+    this.countryName = data.countryName;
     this.isDefault = data.isDefault;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
@@ -84,8 +83,8 @@ class CustomerAddress {
       errors.push("City is required");
     }
 
-    if (!this.countryId) {
-      errors.push("Country ID is required");
+    if (!this.countryName || this.countryName.trim().length === 0) {
+      errors.push("Country name is required");
     }
 
     if (this.postalCode && !/^[\d\w\s\-]+$/.test(this.postalCode)) {

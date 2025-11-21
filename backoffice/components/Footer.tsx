@@ -14,18 +14,18 @@ const Footer: React.FC = () => {
   return (
     <footer>
       <div className="social-network-logos">
-        <Link href="#">
+        <a href="#" onClick={(e) => e.preventDefault()}>
           <i className="fab fa-facebook"></i>
-        </Link>
-        <Link href="#">
+        </a>
+        <a href="#" onClick={(e) => e.preventDefault()}>
           <i className="fab fa-instagram"></i>
-        </Link>
-        <Link href="#">
+        </a>
+        <a href="#" onClick={(e) => e.preventDefault()}>
           <i className="fab fa-linkedin"></i>
-        </Link>
-        <Link href="#">
+        </a>
+        <a href="#" onClick={(e) => e.preventDefault()}>
           <i className="fab fa-twitter"></i>
-        </Link>
+        </a>
       </div>
       <div className="textuel">
         <Link href="/mentions-legales">Mentions légales</Link> |

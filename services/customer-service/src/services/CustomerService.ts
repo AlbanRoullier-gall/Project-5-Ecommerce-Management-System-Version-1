@@ -13,6 +13,7 @@ import CustomerAddress from "../models/CustomerAddress";
 import CustomerRepository from "../repositories/CustomerRepository";
 import CustomerAddressRepository from "../repositories/CustomerAddressRepository";
 import CustomerCompanyRepository from "../repositories/CustomerCompanyRepository";
+import { BELGIUM_COUNTRY_NAME } from "../constants/CountryConstants";
 
 class CustomerService {
   private customerRepository: CustomerRepository;
@@ -250,26 +251,32 @@ class CustomerService {
         throw new Error("Client non trouvé");
       }
 
+      // Forcer le country_name à être toujours la Belgique
+      const addressWithBelgium = {
+        ...addressData,
+        countryName: BELGIUM_COUNTRY_NAME,
+      };
+
       // Vérifier les adresses en double avant de modifier les valeurs par défaut
       const duplicateExists = await this.addressRepository.existsForCustomer({
         customerId,
-        address: addressData.address,
-        postalCode: addressData.postalCode,
-        city: addressData.city,
-        countryId: addressData.countryId,
+        address: addressWithBelgium.address,
+        postalCode: addressWithBelgium.postalCode,
+        city: addressWithBelgium.city,
+        countryName: addressWithBelgium.countryName,
       });
       if (duplicateExists) {
         throw new Error("Adresse déjà existante");
       }
 
       // Si ceci est défini comme par défaut, désactiver les autres adresses par défaut pour le client
-      if (addressData.isDefault) {
+      if (addressWithBelgium.isDefault) {
         await this.addressRepository.unsetDefaultForCustomer(customerId);
       }
 
-      // Créer l'entité adresse
+      // Créer l'entité adresse (country_name toujours Belgique)
       const address = new CustomerAddress({
-        ...addressData,
+        ...addressWithBelgium,
         customerId,
       });
 
@@ -296,17 +303,24 @@ class CustomerService {
         throw new Error("Adresse non trouvée");
       }
 
+      // Forcer le country_name à être toujours la Belgique
+      const addressDataWithBelgium = {
+        ...addressData,
+        countryName: BELGIUM_COUNTRY_NAME,
+      };
+
       // Si ceci est défini comme par défaut, désactiver les autres adresses par défaut pour le client
-      if (addressData.isDefault && !address.isDefault) {
+      if (addressDataWithBelgium.isDefault && !address.isDefault) {
         await this.addressRepository.unsetDefaultForCustomer(
           address.customerId!,
           addressId
         );
       }
 
-      // Mettre à jour l'entité adresse
-      Object.assign(address, addressData);
+      // Mettre à jour l'entité adresse (country_name toujours Belgique)
+      Object.assign(address, addressDataWithBelgium);
       address.addressId = addressId; // S'assurer que l'ID est préservé
+      address.countryName = BELGIUM_COUNTRY_NAME; // Forcer country_name à Belgique
 
       return await this.addressRepository.update(address);
     } catch (error) {
@@ -344,27 +358,6 @@ class CustomerService {
       return await this.addressRepository.listByCustomer(customerId);
     } catch (error) {
       console.error("Erreur lors de la liste des adresses du client:", error);
-      throw error;
-    }
-  }
-
-  // ===== DONNÉES DE RÉFÉRENCE =====
-
-  /**
-   * Récupérer tous les pays
-   * @returns {Promise<any[]>} Liste des pays
-   */
-  async getCountries(): Promise<any[]> {
-    try {
-      const result = await this.customerRepository.pool.query(
-        "SELECT country_id, country_name FROM countries ORDER BY country_name"
-      );
-      return result.rows.map((row) => ({
-        countryId: row.country_id,
-        countryName: row.country_name,
-      }));
-    } catch (error) {
-      console.error("Erreur lors de la récupération des pays:", error);
       throw error;
     }
   }

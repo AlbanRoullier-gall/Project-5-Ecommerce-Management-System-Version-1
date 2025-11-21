@@ -15,12 +15,11 @@
  * 4. Redirige l'utilisateur vers la page de paiement Stripe
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   CartItemPublicDTO,
   CustomerPublicDTO,
   ProductPublicDTO,
-  CountryDTO,
 } from "../../dto";
 import { useCart } from "../../contexts/CartContext";
 import { useCheckout } from "../../contexts/CheckoutContext";
@@ -51,8 +50,6 @@ export default function CheckoutOrderSummary() {
   const [isProcessing, setIsProcessing] = useState(false); // Indicateur de traitement en cours
   const [error, setError] = useState<string | null>(null); // Message d'erreur éventuel
   const [products, setProducts] = useState<CartItemWithProduct[]>([]); // Liste des produits avec leurs détails
-  const [countries, setCountries] = useState<CountryDTO[]>([]); // Liste des pays (filtrée pour la Belgique)
-
   /**
    * Effet pour charger les détails des produits depuis l'API
    * Récupère les informations complètes de chaque produit dans le panier
@@ -82,49 +79,6 @@ export default function CheckoutOrderSummary() {
 
     loadProducts();
   }, [cart]);
-
-  /**
-   * Effet pour charger la liste des pays
-   * Filtre pour ne garder que la Belgique
-   */
-  useEffect(() => {
-    const loadCountries = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/customers/countries`);
-        if (response.ok) {
-          const data = await response.json();
-          const allCountries = data.countries || [];
-          // Filtrer pour ne garder que la Belgique
-          const belgiumOnly = allCountries.filter(
-            (country: any) =>
-              country.countryName === "Belgique" || country.countryId === 11
-          );
-          setCountries(belgiumOnly);
-        } else {
-          // Fallback: définir la Belgique comme seul pays
-          setCountries([{ countryId: 11, countryName: "Belgique" }]);
-        }
-      } catch (error) {
-        console.error("Error loading countries:", error);
-        // Fallback: définir la Belgique comme seul pays
-        setCountries([{ countryId: 11, countryName: "Belgique" }]);
-      }
-    };
-
-    loadCountries();
-  }, []);
-
-  /**
-   * Fonction mémorisée pour obtenir le nom d'un pays par son ID
-   * @returns Fonction qui prend un countryId et retourne le nom du pays
-   */
-  const countryNameById = useMemo(() => {
-    return (id?: number) => {
-      if (!id) return "Pays non spécifié";
-      const country = countries.find((c) => c.countryId === id);
-      return country ? country.countryName : `Pays ID: ${id}`;
-    };
-  }, [countries]);
 
   // Utiliser les totaux calculés par le CartContext (HT, TVA, TTC)
   const { totals } = useCart();
@@ -193,7 +147,7 @@ export default function CheckoutOrderSummary() {
             address: shippingAddress.address,
             postalCode: shippingAddress.postalCode,
             city: shippingAddress.city,
-            countryId: shippingAddress.countryId,
+            countryName: shippingAddress.countryName,
             isDefault: true, // Toujours définir l'adresse de livraison comme par défaut
           };
 
@@ -237,7 +191,7 @@ export default function CheckoutOrderSummary() {
             address: billingAddress.address,
             postalCode: billingAddress.postalCode,
             city: billingAddress.city,
-            countryId: billingAddress.countryId,
+            countryName: billingAddress.countryName,
             isDefault: false, // L'adresse de facturation n'est pas par défaut
           };
 
@@ -299,7 +253,7 @@ export default function CheckoutOrderSummary() {
           address: shippingAddress.address || "",
           city: shippingAddress.city || "",
           postalCode: shippingAddress.postalCode || "",
-          country: countryNameById(shippingAddress.countryId),
+          country: shippingAddress.countryName,
           phone: customerData.phoneNumber || "",
         },
         billingAddress:
@@ -311,7 +265,7 @@ export default function CheckoutOrderSummary() {
                 address: billingAddress.address || "",
                 city: billingAddress.city || "",
                 postalCode: billingAddress.postalCode || "",
-                country: countryNameById(billingAddress.countryId),
+                country: billingAddress.countryName,
                 phone: customerData.phoneNumber || "",
               }
             : null,
@@ -560,7 +514,7 @@ export default function CheckoutOrderSummary() {
               <p>
                 {shippingAddress.postalCode} {shippingAddress.city}
               </p>
-              <p>{countryNameById(shippingAddress.countryId)}</p>
+              <p>{shippingAddress.countryName}</p>
             </div>
           </div>
 
@@ -594,7 +548,7 @@ export default function CheckoutOrderSummary() {
                 <p>
                   {billingAddress.postalCode} {billingAddress.city}
                 </p>
-                <p>{countryNameById(billingAddress.countryId)}</p>
+                <p>{billingAddress.countryName}</p>
               </div>
             </div>
           )}

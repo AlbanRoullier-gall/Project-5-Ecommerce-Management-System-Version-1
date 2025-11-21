@@ -16,14 +16,14 @@ class CustomerAddressRepository {
 
   /**
    * Vérifier si une adresse existe déjà pour un client avec les mêmes champs
-   * Un doublon est défini par le même customer_id, address, postal_code, city, country_id
+   * Un doublon est défini par le même customer_id, address, postal_code, city, country_name
    */
   async existsForCustomer(params: {
     customerId: number;
     address: string;
     postalCode: string;
     city: string;
-    countryId: number;
+    countryName: string;
   }): Promise<boolean> {
     try {
       const result = await this.pool.query(
@@ -32,14 +32,14 @@ class CustomerAddressRepository {
            AND address = $2
            AND postal_code = $3
            AND city = $4
-           AND country_id = $5
+           AND country_name = $5
          LIMIT 1`,
         [
           params.customerId,
           params.address,
           params.postalCode,
           params.city,
-          params.countryId,
+          params.countryName,
         ]
       );
       return result.rows.length > 0;
@@ -58,7 +58,7 @@ class CustomerAddressRepository {
     try {
       const result = await this.pool.query(
         `SELECT address_id, customer_id, address_type, address, postal_code, city, 
-                country_id, is_default, created_at, updated_at
+                country_name, is_default, created_at, updated_at
          FROM customer_addresses
          WHERE address_id = $1`,
         [id]
@@ -76,7 +76,7 @@ class CustomerAddressRepository {
         address: row.address,
         postalCode: row.postal_code,
         city: row.city,
-        countryId: row.country_id,
+        countryName: row.country_name,
         isDefault: row.is_default,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
@@ -97,7 +97,7 @@ class CustomerAddressRepository {
     try {
       const result = await this.pool.query(
         `SELECT address_id, customer_id, address_type, address, postal_code, city, 
-                country_id, is_default, created_at, updated_at
+                country_name, is_default, created_at, updated_at
          FROM customer_addresses 
          WHERE customer_id = $1
          ORDER BY is_default DESC, created_at DESC`,
@@ -110,10 +110,11 @@ class CustomerAddressRepository {
           new CustomerAddress({
             addressId: row.address_id,
             customerId: row.customer_id,
+            addressType: row.address_type,
             address: row.address,
             postalCode: row.postal_code,
             city: row.city,
-            countryId: row.country_id,
+            countryName: row.country_name,
             isDefault: row.is_default,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
@@ -139,17 +140,17 @@ class CustomerAddressRepository {
 
       const result = await this.pool.query(
         `INSERT INTO customer_addresses (customer_id, address_type, address, postal_code, 
-                                       city, country_id, is_default, created_at, updated_at)
+                                       city, country_name, is_default, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
          RETURNING address_id, customer_id, address_type, address, postal_code, city, 
-                   country_id, is_default, created_at, updated_at`,
+                   country_name, is_default, created_at, updated_at`,
         [
           address.customerId,
           address.addressType,
           address.address,
           address.postalCode,
           address.city,
-          address.countryId,
+          address.countryName,
           address.isDefault,
         ]
       );
@@ -162,7 +163,7 @@ class CustomerAddressRepository {
         address: row.address,
         postalCode: row.postal_code,
         city: row.city,
-        countryId: row.country_id,
+        countryName: row.country_name,
         isDefault: row.is_default,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
@@ -189,17 +190,17 @@ class CustomerAddressRepository {
       const result = await this.pool.query(
         `UPDATE customer_addresses 
          SET customer_id = $1, address_type = $2, address = $3, postal_code = $4, 
-             city = $5, country_id = $6, is_default = $7
+             city = $5, country_name = $6, is_default = $7
          WHERE address_id = $8
          RETURNING address_id, customer_id, address_type, address, postal_code, city, 
-                   country_id, is_default, created_at, updated_at`,
+                   country_name, is_default, created_at, updated_at`,
         [
           address.customerId,
           address.addressType,
           address.address,
           address.postalCode,
           address.city,
-          address.countryId,
+          address.countryName,
           address.isDefault,
           address.addressId,
         ]
@@ -217,7 +218,7 @@ class CustomerAddressRepository {
         address: row.address,
         postalCode: row.postal_code,
         city: row.city,
-        countryId: row.country_id,
+        countryName: row.country_name,
         isDefault: row.is_default,
         createdAt: row.created_at,
         updatedAt: row.updated_at,

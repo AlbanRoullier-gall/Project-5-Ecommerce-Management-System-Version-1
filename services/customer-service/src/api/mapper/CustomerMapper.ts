@@ -13,6 +13,7 @@ import CustomerAddress, {
 import CustomerCompany, {
   CustomerCompanyData,
 } from "../../models/CustomerCompany";
+import { BELGIUM_COUNTRY_NAME } from "../../constants/CountryConstants";
 import {
   CustomerCreateDTO,
   CustomerUpdateDTO,
@@ -128,7 +129,7 @@ export class CustomerMapper {
       address: dto.address,
       postalCode: dto.postalCode,
       city: dto.city,
-      countryId: dto.countryId,
+      countryName: dto.countryName || BELGIUM_COUNTRY_NAME, // Le backend garantit toujours "Belgique"
       isDefault: dto.isDefault || false,
     };
   }
@@ -145,7 +146,7 @@ export class CustomerMapper {
     if (dto.address !== undefined) updateData.address = dto.address;
     if (dto.postalCode !== undefined) updateData.postalCode = dto.postalCode;
     if (dto.city !== undefined) updateData.city = dto.city;
-    if (dto.countryId !== undefined) updateData.countryId = dto.countryId;
+    // countryName n'est jamais mis à jour car toujours "Belgique"
     if (dto.isDefault !== undefined) updateData.isDefault = dto.isDefault;
 
     return updateData;
@@ -162,7 +163,7 @@ export class CustomerMapper {
       address: address.address,
       postalCode: address.postalCode,
       city: address.city,
-      countryId: address.countryId,
+      countryName: address.countryName,
       isDefault: address.isDefault,
     };
   }
