@@ -4,13 +4,10 @@
  */
 export interface CustomerData {
   customerId: number;
-  civilityId: number;
   firstName: string;
   lastName: string;
   email: string;
-  socioProfessionalCategoryId: number;
   phoneNumber: string | null;
-  birthday: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,27 +19,19 @@ export interface ValidationResult {
 
 class Customer {
   public customerId: number;
-  public civilityId: number;
   public firstName: string;
   public lastName: string;
   public email: string;
-  public socioProfessionalCategoryId: number;
   public phoneNumber: string | null;
-  public birthday: Date | null;
   public createdAt: Date;
   public updatedAt: Date;
-  public civility?: any;
-  public socioProfessionalCategory?: any;
 
   constructor(data: CustomerData) {
     this.customerId = data.customerId;
-    this.civilityId = data.civilityId;
     this.firstName = data.firstName;
     this.lastName = data.lastName;
     this.email = data.email;
-    this.socioProfessionalCategoryId = data.socioProfessionalCategoryId;
     this.phoneNumber = data.phoneNumber;
-    this.birthday = data.birthday;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
   }
@@ -76,20 +65,8 @@ class Customer {
       errors.push("Email format is invalid");
     }
 
-    if (!this.civilityId) {
-      errors.push("Civility ID is required");
-    }
-
-    if (!this.socioProfessionalCategoryId) {
-      errors.push("Socio-professional category ID is required");
-    }
-
     if (this.phoneNumber && !/^[\d\s\-\+\(\)]+$/.test(this.phoneNumber)) {
       errors.push("Phone number format is invalid");
-    }
-
-    if (this.birthday && new Date(this.birthday) > new Date()) {
-      errors.push("Birthday cannot be in the future");
     }
 
     return {

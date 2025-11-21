@@ -295,7 +295,6 @@ export class PDFGenerator {
                 : "Adresse de livraison"
             }</h4>
             <p>${addressData.firstName} ${addressData.lastName}</p>
-            ${addressData.company ? `<p>${addressData.company}</p>` : ""}
             <p>${addressData.address || addressData.addressLine1}</p>
             ${
               addressData.addressLine2

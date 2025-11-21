@@ -102,47 +102,6 @@ export class ResponseMapper {
   }
 
   /**
-   * Réponse d'entreprise créée
-   */
-  static companyCreated(company: any) {
-    return {
-      message: "Entreprise créée avec succès",
-      company,
-    };
-  }
-
-  /**
-   * Réponse d'entreprise mise à jour
-   */
-  static companyUpdated(company: any) {
-    return {
-      message: "Entreprise mise à jour avec succès",
-      company,
-    };
-  }
-
-  /**
-   * Réponse d'entreprise supprimée
-   */
-  static companyDeleted() {
-    return {
-      message: "Entreprise supprimée avec succès",
-    };
-  }
-
-  /**
-   * Réponse d'entreprise récupérée
-   */
-  static companyRetrieved(company: any) {
-    return {
-      message: "Entreprise récupérée avec succès",
-      company,
-      timestamp: new Date().toISOString(),
-      status: 200,
-    };
-  }
-
-  /**
    * Réponse d'erreur de validation
    */
   static validationError(message: string) {

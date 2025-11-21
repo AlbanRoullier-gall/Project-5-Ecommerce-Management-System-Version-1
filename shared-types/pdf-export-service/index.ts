@@ -42,7 +42,6 @@ export interface AddressExportData {
   type: "billing" | "shipping";
   firstName: string;
   lastName: string;
-  company?: string | null;
   addressLine1: string;
   addressLine2?: string | null;
   postalCode: string;

@@ -36,9 +36,8 @@ class CustomerRepository {
   async getById(id: number): Promise<Customer | null> {
     try {
       const result = await this.pool.query(
-        `SELECT customer_id, civility_id, first_name, last_name, email, 
-                socio_professional_category_id, phone_number, birthday, 
-                created_at, updated_at
+        `SELECT customer_id, first_name, last_name, email, 
+                phone_number, created_at, updated_at
          FROM customers 
          WHERE customer_id = $1`,
         [id]
@@ -51,13 +50,10 @@ class CustomerRepository {
       const row = result.rows[0];
       const customerData: CustomerData = {
         customerId: row.customer_id,
-        civilityId: row.civility_id,
         firstName: row.first_name,
         lastName: row.last_name,
         email: row.email,
-        socioProfessionalCategoryId: row.socio_professional_category_id,
         phoneNumber: row.phone_number,
-        birthday: row.birthday,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       };
@@ -76,9 +72,8 @@ class CustomerRepository {
   async getByEmail(email: string): Promise<Customer | null> {
     try {
       const result = await this.pool.query(
-        `SELECT customer_id, civility_id, first_name, last_name, email, 
-                socio_professional_category_id, phone_number, birthday, 
-                created_at, updated_at
+        `SELECT customer_id, first_name, last_name, email, 
+                phone_number, created_at, updated_at
          FROM customers 
          WHERE email = $1`,
         [email]
@@ -91,13 +86,10 @@ class CustomerRepository {
       const row = result.rows[0];
       const customerData: CustomerData = {
         customerId: row.customer_id,
-        civilityId: row.civility_id,
         firstName: row.first_name,
         lastName: row.last_name,
         email: row.email,
-        socioProfessionalCategoryId: row.socio_professional_category_id,
         phoneNumber: row.phone_number,
-        birthday: row.birthday,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       };
@@ -121,14 +113,9 @@ class CustomerRepository {
       const offset = (page - 1) * limit;
 
       let query = `
-        SELECT c.customer_id, c.civility_id, c.first_name, c.last_name, c.email, 
-               c.socio_professional_category_id, c.phone_number, c.birthday, 
-               c.created_at, c.updated_at,
-               civ.abbreviation as civility,
-               spc.category_name as socio_professional_category
+        SELECT c.customer_id, c.first_name, c.last_name, c.email, 
+               c.phone_number, c.created_at, c.updated_at
         FROM customers c
-        LEFT JOIN civilities civ ON c.civility_id = civ.civility_id
-        LEFT JOIN socio_professional_categories spc ON c.socio_professional_category_id = spc.category_id
       `;
 
       const params: any[] = [];
@@ -155,8 +142,6 @@ class CustomerRepository {
       let countQuery = `
         SELECT COUNT(*) 
         FROM customers c
-        LEFT JOIN civilities civ ON c.civility_id = civ.civility_id
-        LEFT JOIN socio_professional_categories spc ON c.socio_professional_category_id = spc.category_id
       `;
 
       if (conditions.length > 0) {
@@ -172,13 +157,10 @@ class CustomerRepository {
         customers: result.rows.map((row) => {
           const customerData: CustomerData = {
             customerId: row.customer_id,
-            civilityId: row.civility_id,
             firstName: row.first_name,
             lastName: row.last_name,
             email: row.email,
-            socioProfessionalCategoryId: row.socio_professional_category_id,
             phoneNumber: row.phone_number,
-            birthday: row.birthday,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
           };
@@ -210,33 +192,25 @@ class CustomerRepository {
       }
 
       const result = await this.pool.query(
-        `INSERT INTO customers (civility_id, first_name, last_name, email, 
-                               socio_professional_category_id, phone_number, birthday)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING customer_id, civility_id, first_name, last_name, email, 
-                   socio_professional_category_id, phone_number, birthday, 
+        `INSERT INTO customers (first_name, last_name, email, phone_number)
+         VALUES ($1, $2, $3, $4)
+         RETURNING customer_id, first_name, last_name, email, phone_number, 
                    created_at, updated_at`,
         [
-          customer.civilityId,
           customer.firstName,
           customer.lastName,
           customer.email,
-          customer.socioProfessionalCategoryId,
           customer.phoneNumber,
-          customer.birthday,
         ]
       );
 
       const row = result.rows[0];
       const customerData: CustomerData = {
         customerId: row.customer_id,
-        civilityId: row.civility_id,
         firstName: row.first_name,
         lastName: row.last_name,
         email: row.email,
-        socioProfessionalCategoryId: row.socio_professional_category_id,
         phoneNumber: row.phone_number,
-        birthday: row.birthday,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       };
@@ -261,20 +235,16 @@ class CustomerRepository {
 
       const result = await this.pool.query(
         `UPDATE customers 
-         SET civility_id = $1, first_name = $2, last_name = $3, email = $4, 
-             socio_professional_category_id = $5, phone_number = $6, birthday = $7
-         WHERE customer_id = $8
-         RETURNING customer_id, civility_id, first_name, last_name, email, 
-                   socio_professional_category_id, phone_number, birthday, 
+         SET first_name = $1, last_name = $2, email = $3, 
+             phone_number = $4
+         WHERE customer_id = $5
+         RETURNING customer_id, first_name, last_name, email, phone_number, 
                    created_at, updated_at`,
         [
-          customer.civilityId,
           customer.firstName,
           customer.lastName,
           customer.email,
-          customer.socioProfessionalCategoryId,
           customer.phoneNumber,
-          customer.birthday,
           customer.customerId,
         ]
       );
@@ -286,13 +256,10 @@ class CustomerRepository {
       const row = result.rows[0];
       const customerData: CustomerData = {
         customerId: row.customer_id,
-        civilityId: row.civility_id,
         firstName: row.first_name,
         lastName: row.last_name,
         email: row.email,
-        socioProfessionalCategoryId: row.socio_professional_category_id,
         phoneNumber: row.phone_number,
-        birthday: row.birthday,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       };
@@ -358,15 +325,10 @@ class CustomerRepository {
   ): Customer {
     return new Customer({
       customerId: existingCustomer.customerId,
-      civilityId: updateData.civilityId ?? existingCustomer.civilityId,
       firstName: updateData.firstName ?? existingCustomer.firstName,
       lastName: updateData.lastName ?? existingCustomer.lastName,
       email: updateData.email ?? existingCustomer.email,
-      socioProfessionalCategoryId:
-        updateData.socioProfessionalCategoryId ??
-        existingCustomer.socioProfessionalCategoryId,
       phoneNumber: updateData.phoneNumber ?? existingCustomer.phoneNumber,
-      birthday: updateData.birthday ?? existingCustomer.birthday,
       createdAt: existingCustomer.createdAt,
       updatedAt: new Date(),
     });

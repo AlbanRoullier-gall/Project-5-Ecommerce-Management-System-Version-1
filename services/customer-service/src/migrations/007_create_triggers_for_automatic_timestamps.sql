@@ -22,14 +22,7 @@ CREATE TRIGGER update_customer_addresses_updated_at
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
--- Créer le trigger pour la table customer_companies
-CREATE TRIGGER update_customer_companies_updated_at 
-    BEFORE UPDATE ON customer_companies 
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
 -- Ajouter des commentaires pour la documentation
 COMMENT ON FUNCTION update_updated_at_column() IS 'Function to automatically update updated_at timestamp';
 COMMENT ON TRIGGER update_customers_updated_at ON customers IS 'Automatically updates updated_at when customer is modified';
 COMMENT ON TRIGGER update_customer_addresses_updated_at ON customer_addresses IS 'Automatically updates updated_at when address is modified';
-COMMENT ON TRIGGER update_customer_companies_updated_at ON customer_companies IS 'Automatically updates updated_at when company is modified';

@@ -12,18 +12,15 @@ import Customer, { CustomerData } from "../models/Customer";
 import CustomerAddress from "../models/CustomerAddress";
 import CustomerRepository from "../repositories/CustomerRepository";
 import CustomerAddressRepository from "../repositories/CustomerAddressRepository";
-import CustomerCompanyRepository from "../repositories/CustomerCompanyRepository";
 import { BELGIUM_COUNTRY_NAME } from "../constants/CountryConstants";
 
 class CustomerService {
   private customerRepository: CustomerRepository;
   private addressRepository: CustomerAddressRepository;
-  private companyRepository: CustomerCompanyRepository;
 
   constructor(pool: Pool) {
     this.customerRepository = new CustomerRepository(pool);
     this.addressRepository = new CustomerAddressRepository(pool);
-    this.companyRepository = new CustomerCompanyRepository(pool);
   }
 
   // ===== MÉTHODES UTILITAIRES =====
@@ -67,39 +64,18 @@ class CustomerService {
         throw new Error("Un client avec cet email existe déjà");
       }
 
-      // Valider les champs obligatoires (civilité et catégorie optionnels)
+      // Valider les champs obligatoires
       if (!data.firstName || !data.lastName || !data.email) {
         throw new Error("Tous les champs obligatoires doivent être fournis");
-      }
-
-      // Déterminer la civilité (optionnel → par défaut la première civilité si non fournie)
-      let civilityIdToUse = data.civilityId || null;
-      if (!civilityIdToUse) {
-        const civilityRes = await this.customerRepository.pool.query(
-          "SELECT civility_id FROM civilities ORDER BY civility_id LIMIT 1"
-        );
-        civilityIdToUse = civilityRes.rows[0]?.civility_id || null;
-      }
-
-      // Déterminer la catégorie socio-professionnelle (optionnel → par défaut 'Autre' si présent, sinon la première)
-      let categoryIdToUse = data.socioProfessionalCategoryId || null;
-      if (!categoryIdToUse) {
-        const categoryRes = await this.customerRepository.pool.query(
-          "SELECT category_id FROM socio_professional_categories ORDER BY category_name = 'Other' DESC, category_id LIMIT 1"
-        );
-        categoryIdToUse = categoryRes.rows[0]?.category_id || null;
       }
 
       // Créer l'entité client avec des données temporaires pour l'insertion
       const customerData: CustomerData = {
         customerId: 0, // Sera remplacé par la base de données
-        civilityId: civilityIdToUse!,
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        socioProfessionalCategoryId: categoryIdToUse!,
         phoneNumber: data.phoneNumber || null,
-        birthday: data.birthday || null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -205,8 +181,6 @@ class CustomerService {
   }
 
   // ===== GESTION DES ADRESSES =====
-
-  // ===== GESTION DES ENTREPRISES =====
 
   // ===== LISTES ET RECHERCHES =====
 

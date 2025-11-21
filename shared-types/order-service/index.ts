@@ -107,7 +107,6 @@ export interface OrderAddressCreateDTO {
   addressType: "shipping" | "billing";
   firstName: string;
   lastName: string;
-  company?: string;
   address: string;
   city: string;
   postalCode: string;
@@ -121,7 +120,6 @@ export interface OrderAddressCreateDTO {
 export interface OrderAddressUpdateDTO {
   firstName?: string;
   lastName?: string;
-  company?: string;
   address?: string;
   city?: string;
   postalCode?: string;
@@ -139,7 +137,6 @@ export interface OrderAddressPublicDTO {
   addressSnapshot: {
     firstName: string;
     lastName: string;
-    company?: string;
     address: string;
     city: string;
     postalCode: string;

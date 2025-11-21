@@ -24,10 +24,9 @@ interface CustomerTableProps {
 /**
  * Composant tableau de clients
  * Affiche la liste des clients dans un tableau avec colonnes :
- * - Client (nom complet + civilité)
+ * - Client (nom complet)
  * - Email
  * - Téléphone
- * - Catégorie socio-professionnelle
  * - Actions (éditer/supprimer/gérer adresses)
  *
  * Affiche un message si aucun client n'est trouvé

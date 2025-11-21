@@ -250,7 +250,6 @@ export default function CheckoutOrderSummary() {
         shippingAddress: {
           firstName: customerData.firstName || "",
           lastName: customerData.lastName || "",
-          company: "",
           address: shippingAddress.address || "",
           city: shippingAddress.city || "",
           postalCode: shippingAddress.postalCode || "",
@@ -262,7 +261,6 @@ export default function CheckoutOrderSummary() {
             ? {
                 firstName: customerData.firstName || "",
                 lastName: customerData.lastName || "",
-                company: "",
                 address: billingAddress.address || "",
                 city: billingAddress.city || "",
                 postalCode: billingAddress.postalCode || "",
@@ -330,20 +328,6 @@ export default function CheckoutOrderSummary() {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
       setIsProcessing(false);
     }
-  };
-
-  /**
-   * Fonction utilitaire pour obtenir le label de civilité à partir de l'ID
-   * @param civilityId - ID de la civilité (1: M., 2: Mme, 3: Autre)
-   * @returns Label de la civilité
-   */
-  const getCivilityLabel = (civilityId: number): string => {
-    const civilities: Record<number, string> = {
-      1: "M.",
-      2: "Mme",
-      3: "Autre",
-    };
-    return civilities[civilityId] || "";
   };
 
   return (
@@ -463,9 +447,8 @@ export default function CheckoutOrderSummary() {
             >
               <p style={{ marginBottom: "0.5rem" }}>
                 <strong>
-                  {getCivilityLabel(customerData.civilityId || 1)}
-                </strong>{" "}
-                {customerData.firstName} {customerData.lastName}
+                  {customerData.firstName} {customerData.lastName}
+                </strong>
               </p>
               <p style={{ marginBottom: "0.5rem", color: "#666" }}>
                 <i
@@ -931,9 +914,8 @@ export default function CheckoutOrderSummary() {
           }
 
           .checkout-form-title {
-            font-size: 1.2rem !important;
-            line-height: 1.1 !important;
-            margin-bottom: 0.3rem !important;
+            font-size: 1.6rem !important;
+            line-height: 1.3 !important;
           }
 
           .checkout-form-actions {

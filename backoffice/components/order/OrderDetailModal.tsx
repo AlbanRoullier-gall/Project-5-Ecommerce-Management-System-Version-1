@@ -260,43 +260,6 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                         (order as any).customerSnapshot.phone}
                     </div>
                   )}
-                  {/* Entreprise (si présente dans le snapshot client) */}
-                  {(() => {
-                    const snap: any = (order as any)?.customerSnapshot || {};
-                    const company = snap.companyData || null;
-                    const hasCompany = !!(company?.companyName || snap.company);
-                    if (!hasCompany) return null;
-                    return (
-                      <div
-                        style={{
-                          marginTop: "0.75rem",
-                          paddingTop: "0.75rem",
-                          borderTop: "1px solid #e5e7eb",
-                        }}
-                      >
-                        <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                          Entreprise
-                        </div>
-                        <div style={{ fontSize: "1.0rem", color: "#111827" }}>
-                          {company?.companyName || snap.company}
-                        </div>
-                        {company?.siretNumber && (
-                          <div
-                            style={{ fontSize: "0.95rem", color: "#6b7280" }}
-                          >
-                            SIRET: {company.siretNumber}
-                          </div>
-                        )}
-                        {company?.vatNumber && (
-                          <div
-                            style={{ fontSize: "0.95rem", color: "#6b7280" }}
-                          >
-                            TVA: {company.vatNumber}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
                 </div>
 
                 <div
@@ -418,17 +381,6 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           {addr.addressSnapshot.firstName}{" "}
                           {addr.addressSnapshot.lastName}
                         </div>
-                        {addr.addressSnapshot.company && (
-                          <div
-                            style={{
-                              color: "#6b7280",
-                              marginBottom: "0.25rem",
-                              fontSize: "0.8rem",
-                            }}
-                          >
-                            {addr.addressSnapshot.company}
-                          </div>
-                        )}
                         <div
                           style={{
                             color: "#6b7280",

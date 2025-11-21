@@ -10,9 +10,6 @@ import Customer, { CustomerData } from "../../models/Customer";
 import CustomerAddress, {
   CustomerAddressData,
 } from "../../models/CustomerAddress";
-import CustomerCompany, {
-  CustomerCompanyData,
-} from "../../models/CustomerCompany";
 import { BELGIUM_COUNTRY_NAME } from "../../constants/CountryConstants";
 import {
   CustomerCreateDTO,
@@ -22,9 +19,6 @@ import {
   AddressCreateDTO,
   AddressUpdateDTO,
   AddressPublicDTO,
-  CompanyCreateDTO,
-  CompanyUpdateDTO,
-  CompanyPublicDTO,
 } from "../dto";
 
 export class CustomerMapper {
@@ -36,23 +30,12 @@ export class CustomerMapper {
   static customerCreateDTOToCustomerData(
     dto: CustomerCreateDTO
   ): Partial<CustomerData> {
-    const data: Partial<CustomerData> = {
+    return {
       firstName: dto.firstName,
       lastName: dto.lastName,
       email: dto.email,
       phoneNumber: dto.phoneNumber ?? null,
-      birthday: dto.birthday ? new Date(dto.birthday) : null,
     };
-
-    if (dto.civilityId !== undefined) {
-      data.civilityId = dto.civilityId;
-    }
-
-    if (dto.socioProfessionalCategoryId !== undefined) {
-      data.socioProfessionalCategoryId = dto.socioProfessionalCategoryId;
-    }
-
-    return data;
   }
 
   /**
@@ -66,12 +49,8 @@ export class CustomerMapper {
     if (dto.firstName !== undefined) updateData.firstName = dto.firstName;
     if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
     if (dto.email !== undefined) updateData.email = dto.email;
-    if (dto.socioProfessionalCategoryId !== undefined)
-      updateData.socioProfessionalCategoryId = dto.socioProfessionalCategoryId;
     if (dto.phoneNumber !== undefined)
       updateData.phoneNumber = dto.phoneNumber || null;
-    if (dto.birthday !== undefined)
-      updateData.birthday = dto.birthday ? new Date(dto.birthday) : null;
 
     return updateData;
   }
@@ -82,13 +61,10 @@ export class CustomerMapper {
   static customerToPublicDTO(customer: Customer): CustomerPublicDTO {
     return {
       customerId: customer.customerId,
-      civilityId: customer.civilityId,
       firstName: customer.firstName,
       lastName: customer.lastName,
       email: customer.email,
-      socioProfessionalCategoryId: customer.socioProfessionalCategoryId,
       phoneNumber: customer.phoneNumber,
-      birthday: customer.birthday,
       fullName: customer.fullName(),
     };
   }
@@ -175,69 +151,5 @@ export class CustomerMapper {
     addresses: CustomerAddress[]
   ): AddressPublicDTO[] {
     return addresses.map((address) => this.addressToPublicDTO(address));
-  }
-
-  // ===== COMPANY MAPPING =====
-
-  /**
-   * Convertir un CompanyCreateDTO en données Company
-   */
-  static companyCreateDTOToCompanyData(
-    dto: CompanyCreateDTO
-  ): Partial<CustomerCompanyData> {
-    const data: Partial<CustomerCompanyData> = {
-      companyName: dto.companyName,
-    };
-
-    if (dto.siretNumber !== undefined) {
-      data.siretNumber = dto.siretNumber;
-    }
-
-    if (dto.vatNumber !== undefined) {
-      data.vatNumber = dto.vatNumber;
-    }
-
-    return data;
-  }
-
-  /**
-   * Convertir un CompanyUpdateDTO en données Company
-   */
-  static companyUpdateDTOToCompanyData(
-    dto: CompanyUpdateDTO
-  ): Partial<CustomerCompanyData> {
-    const updateData: Partial<CustomerCompanyData> = {};
-
-    if (dto.companyName !== undefined) updateData.companyName = dto.companyName;
-    if (dto.siretNumber !== undefined)
-      updateData.siretNumber = dto.siretNumber ?? null;
-    if (dto.vatNumber !== undefined)
-      updateData.vatNumber = dto.vatNumber ?? null;
-
-    return updateData;
-  }
-
-  /**
-   * Convertir un CustomerCompany en CompanyPublicDTO
-   */
-  static companyToPublicDTO(company: CustomerCompany): CompanyPublicDTO {
-    return {
-      companyId: company.companyId,
-      customerId: company.customerId,
-      companyName: company.companyName,
-      siretNumber: company.siretNumber,
-      vatNumber: company.vatNumber,
-      createdAt: company.createdAt,
-      updatedAt: company.updatedAt,
-    };
-  }
-
-  /**
-   * Convertir un tableau de CustomerCompany en tableau de CompanyPublicDTO
-   */
-  static companiesToPublicDTOs(
-    companies: CustomerCompany[]
-  ): CompanyPublicDTO[] {
-    return companies.map((company) => this.companyToPublicDTO(company));
   }
 }

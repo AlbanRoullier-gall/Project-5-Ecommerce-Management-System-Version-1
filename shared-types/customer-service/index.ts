@@ -10,13 +10,10 @@
  * Basé sur CustomerData avec ajout de la validation
  */
 export interface CustomerCreateDTO {
-  civilityId?: number;
   firstName: string;
   lastName: string;
   email: string;
-  socioProfessionalCategoryId?: number;
   phoneNumber?: string;
-  birthday?: string; // ISO date string
 }
 
 /**
@@ -27,9 +24,7 @@ export interface CustomerUpdateDTO {
   firstName?: string;
   lastName?: string;
   email?: string;
-  socioProfessionalCategoryId?: number;
   phoneNumber?: string;
-  birthday?: string; // ISO date string
 }
 
 /**
@@ -38,14 +33,11 @@ export interface CustomerUpdateDTO {
  */
 export interface CustomerPublicDTO {
   customerId: number;
-  civilityId: number;
   firstName: string;
   lastName: string;
   fullName: string;
   email: string;
-  socioProfessionalCategoryId: number;
   phoneNumber: string | null;
-  birthday: Date | null;
 }
 
 // ===== TYPES SPÉCIFIQUES =====
@@ -110,69 +102,11 @@ export interface AddressListResponse {
   addresses: AddressPublicDTO[];
 }
 
-// ===== TYPES POUR LES ENTREPRISES =====
-
-/**
- * DTO pour la création d'une entreprise
- */
-export interface CompanyCreateDTO {
-  companyName: string;
-  siretNumber?: string;
-  vatNumber?: string;
-}
-
-/**
- * DTO pour la mise à jour d'une entreprise
- */
-export interface CompanyUpdateDTO {
-  companyName?: string;
-  siretNumber?: string;
-  vatNumber?: string;
-}
-
-/**
- * DTO public pour les informations d'entreprise
- * Types alignés exactement avec le modèle CustomerCompany
- */
-export interface CompanyPublicDTO {
-  companyId: number | null;
-  customerId: number | null;
-  companyName: string;
-  siretNumber: string | null; // Aligné avec la DB (nullable)
-  vatNumber: string | null; // Aligné avec la DB (nullable)
-  createdAt: Date | null;
-  updatedAt: Date | null;
-}
-
-/**
- * DTO de réponse pour la liste des entreprises
- */
-export interface CompanyListResponse {
-  message: string;
-  companies: CompanyPublicDTO[];
-}
-
 // ===== TYPES COMMUNS =====
-
-/**
- * DTO pour les informations de civilité
- */
-export interface CivilityDTO {
-  civilityId: number;
-  abbreviation: string;
-}
 
 /**
  * DTO pour les informations de pays (uniquement la Belgique)
  */
 export interface CountryDTO {
   countryName: string;
-}
-
-/**
- * DTO pour les informations de catégorie socio-professionnelle
- */
-export interface SocioProfessionalCategoryDTO {
-  categoryId: number;
-  categoryName: string;
 }

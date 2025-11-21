@@ -132,7 +132,6 @@ export default function CheckoutCustomerForm() {
         >
           {/* Civilité supprimée */}
 
-          {/* Catégorie socio-professionnelle supprimée */}
 
           {/* Champ prénom */}
           <div className="checkout-form-group">
