@@ -11,7 +11,7 @@
  * Le formulaire valide que tous les champs obligatoires sont remplis avant de passer à l'étape suivante.
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useCheckout } from "../../contexts/CheckoutContext";
 
@@ -24,16 +24,6 @@ export default function CheckoutCustomerForm() {
   const { customerData, updateCustomerData } = useCheckout();
   // État local du composant
   const [isLoading, setIsLoading] = useState(false); // Indicateur de chargement
-  const [error, setError] = useState<string | null>(null); // Message d'erreur éventuel
-
-  /**
-   * Effet au montage du composant
-   * Réinitialise les erreurs éventuelles
-   */
-  useEffect(() => {
-    // No reference data to load anymore
-    setError(null);
-  }, []);
 
   /**
    * Gère les changements dans les champs du formulaire
@@ -131,7 +121,6 @@ export default function CheckoutCustomerForm() {
           }}
         >
           {/* Civilité supprimée */}
-
 
           {/* Champ prénom */}
           <div className="checkout-form-group">
@@ -266,23 +255,6 @@ export default function CheckoutCustomerForm() {
 
           {/* Date de naissance supprimée */}
         </div>
-
-        {/* Affichage des erreurs éventuelles */}
-        {error && (
-          <div
-            style={{
-              background: "#fee",
-              border: "2px solid #fcc",
-              color: "#c33",
-              padding: "1rem",
-              borderRadius: "8px",
-              marginBottom: "1rem",
-              fontSize: "1.2rem",
-            }}
-          >
-            {error}
-          </div>
-        )}
 
         {/* Boutons de navigation */}
         <div

@@ -2,7 +2,6 @@
  * Composant formulaire adresses de livraison et facturation
  *
  * Ce composant gère la saisie de l'adresse de livraison lors du processus de checkout.
- * L'application ne gère que la Belgique, donc le pays est toujours "Belgique".
  */
 
 import React, { useState } from "react";
@@ -10,8 +9,128 @@ import { useRouter } from "next/router";
 import { AddressCreateDTO } from "../../dto";
 import { useCheckout } from "../../contexts/CheckoutContext";
 
-// URL de l'API backend
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+/**
+ * Styles partagés pour les champs de formulaire
+ */
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  marginBottom: "0.8rem",
+  fontSize: "1.3rem",
+  fontWeight: "600",
+  color: "#333",
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "1.2rem",
+  fontSize: "1.3rem",
+  border: "2px solid #ddd",
+  borderRadius: "8px",
+  transition: "border-color 0.3s ease",
+};
+
+const readonlyInputStyle: React.CSSProperties = {
+  ...inputStyle,
+  border: "2px solid #e0e0e0",
+  backgroundColor: "#f8f9fa",
+  color: "#666",
+  cursor: "not-allowed",
+};
+
+/**
+ * Props pour le composant AddressFields
+ */
+interface AddressFieldsProps {
+  address: Partial<AddressCreateDTO>;
+  onChange: (field: string, value: string) => void;
+}
+
+/**
+ * Composant réutilisable pour afficher les champs d'adresse
+ */
+const AddressFields: React.FC<AddressFieldsProps> = ({ address, onChange }) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    onChange(e.target.name, e.target.value);
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.borderColor = "#13686a";
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.borderColor = "#ddd";
+  };
+
+  return (
+    <>
+      <div className="checkout-form-group" style={{ gridColumn: "1 / -1" }}>
+        <label style={labelStyle}>
+          Adresse complète <span style={{ color: "#c33" }}>*</span>
+        </label>
+        <input
+          type="text"
+          name="address"
+          value={address.address || ""}
+          onChange={handleInputChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          required
+          placeholder="Numéro et nom de rue"
+          style={inputStyle}
+        />
+      </div>
+
+      <div className="checkout-form-group">
+        <label style={labelStyle}>
+          Code postal <span style={{ color: "#c33" }}>*</span>
+        </label>
+        <input
+          type="text"
+          name="postalCode"
+          value={address.postalCode || ""}
+          onChange={handleInputChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          required
+          placeholder="1000"
+          style={inputStyle}
+        />
+      </div>
+
+      <div className="checkout-form-group">
+        <label style={labelStyle}>
+          Ville <span style={{ color: "#c33" }}>*</span>
+        </label>
+        <input
+          type="text"
+          name="city"
+          value={address.city || ""}
+          onChange={handleInputChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          required
+          placeholder="Bruxelles"
+          style={inputStyle}
+        />
+      </div>
+
+      <div className="checkout-form-group" style={{ gridColumn: "1 / -1" }}>
+        <label style={labelStyle}>
+          Pays <span style={{ color: "#c33" }}>*</span>
+        </label>
+        <input
+          type="text"
+          name="countryName"
+          value={address.countryName || "Belgique"}
+          readOnly
+          style={readonlyInputStyle}
+        />
+      </div>
+    </>
+  );
+};
 
 /**
  * Composant formulaire adresses de livraison et facturation
@@ -19,52 +138,29 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
  */
 export default function CheckoutAddressForm() {
   const router = useRouter();
-  const { addressData, updateAddressData } = useCheckout();
+  const {
+    addressData,
+    updateShippingField,
+    updateBillingField,
+    setUseSameBillingAddress,
+    validateAddresses,
+  } = useCheckout();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   /**
-   * Gère les changements dans les champs de l'adresse de livraison
+   * Gère les changements dans les champs d'adresse
+   * @param addressType - "shipping" ou "billing"
    */
-  const handleShippingChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  const handleAddressChange = (
+    addressType: "shipping" | "billing",
+    field: string,
+    value: string
   ) => {
-    const { name, value } = e.target;
-    const updatedShipping = {
-      ...addressData.shipping,
-      [name]: value,
-      addressType: "shipping" as const,
-      countryName: addressData.shipping.countryName || "Belgique",
-    };
-
-    updateAddressData({
-      ...addressData,
-      shipping: updatedShipping,
-      // Si "même adresse", copier aussi dans billing
-      billing: addressData.useSameBillingAddress
-        ? { ...updatedShipping, addressType: "billing" as const }
-        : addressData.billing,
-    });
-  };
-
-  /**
-   * Gère les changements dans les champs de l'adresse de facturation
-   */
-  const handleBillingChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    const updatedBilling = {
-      ...addressData.billing,
-      [name]: value,
-      addressType: "billing" as const,
-      countryName: addressData.billing.countryName || "Belgique",
-    };
-
-    updateAddressData({
-      ...addressData,
-      billing: updatedBilling,
-    });
+    if (addressType === "shipping") {
+      updateShippingField(field, value);
+    } else {
+      updateBillingField(field, value);
+    }
   };
 
   /**
@@ -73,15 +169,7 @@ export default function CheckoutAddressForm() {
   const handleUseSameBillingAddressChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const useSame = e.target.checked;
-    updateAddressData({
-      ...addressData,
-      useSameBillingAddress: useSame,
-      // Si coché, copier l'adresse de livraison dans l'adresse de facturation
-      billing: useSame
-        ? { ...addressData.shipping, addressType: "billing" as const }
-        : addressData.billing,
-    });
+    setUseSameBillingAddress(e.target.checked);
   };
 
   /**
@@ -90,175 +178,14 @@ export default function CheckoutAddressForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation des champs obligatoires de l'adresse de livraison
-    if (
-      !addressData.shipping.address ||
-      !addressData.shipping.city ||
-      !addressData.shipping.postalCode
-    ) {
-      alert(
-        "Veuillez remplir tous les champs obligatoires de l'adresse de livraison"
-      );
-      return;
-    }
-
-    // Validation des champs obligatoires de l'adresse de facturation si elle est différente
-    if (
-      !addressData.useSameBillingAddress &&
-      (!addressData.billing.address ||
-        !addressData.billing.city ||
-        !addressData.billing.postalCode)
-    ) {
-      alert(
-        "Veuillez remplir tous les champs obligatoires de l'adresse de facturation"
-      );
+    const validation = validateAddresses();
+    if (!validation.isValid) {
+      alert(validation.error);
       return;
     }
 
     // Rediriger vers la page de récapitulatif si la validation réussit
     router.push("/checkout/summary");
-  };
-
-  /**
-   * Fonction utilitaire pour rendre les champs d'adresse
-   */
-  const renderAddressFields = (
-    data: Partial<AddressCreateDTO> | undefined,
-    handleChange: (
-      e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-    ) => void
-  ) => {
-    // S'assurer que data est défini, sinon utiliser un objet vide
-    const addressData = data || {};
-    return (
-      <>
-        <div className="checkout-form-group" style={{ gridColumn: "1 / -1" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.8rem",
-              fontSize: "1.3rem",
-              fontWeight: "600",
-              color: "#333",
-            }}
-          >
-            Adresse complète <span style={{ color: "#c33" }}>*</span>
-          </label>
-          <input
-            type="text"
-            name="address"
-            value={addressData.address || ""}
-            onChange={handleChange}
-            required
-            placeholder="Numéro et nom de rue"
-            style={{
-              width: "100%",
-              padding: "1.2rem",
-              fontSize: "1.3rem",
-              border: "2px solid #ddd",
-              borderRadius: "8px",
-              transition: "border-color 0.3s ease",
-            }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-          />
-        </div>
-
-        <div className="checkout-form-group">
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.8rem",
-              fontSize: "1.3rem",
-              fontWeight: "600",
-              color: "#333",
-            }}
-          >
-            Code postal <span style={{ color: "#c33" }}>*</span>
-          </label>
-          <input
-            type="text"
-            name="postalCode"
-            value={addressData.postalCode || ""}
-            onChange={handleChange}
-            required
-            placeholder="1000"
-            style={{
-              width: "100%",
-              padding: "1.2rem",
-              fontSize: "1.3rem",
-              border: "2px solid #ddd",
-              borderRadius: "8px",
-              transition: "border-color 0.3s ease",
-            }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-          />
-        </div>
-
-        <div className="checkout-form-group">
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.8rem",
-              fontSize: "1.3rem",
-              fontWeight: "600",
-              color: "#333",
-            }}
-          >
-            Ville <span style={{ color: "#c33" }}>*</span>
-          </label>
-          <input
-            type="text"
-            name="city"
-            value={addressData.city || ""}
-            onChange={handleChange}
-            required
-            placeholder="Bruxelles"
-            style={{
-              width: "100%",
-              padding: "1.2rem",
-              fontSize: "1.3rem",
-              border: "2px solid #ddd",
-              borderRadius: "8px",
-              transition: "border-color 0.3s ease",
-            }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-          />
-        </div>
-
-        <div className="checkout-form-group" style={{ gridColumn: "1 / -1" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.8rem",
-              fontSize: "1.3rem",
-              fontWeight: "600",
-              color: "#333",
-            }}
-          >
-            Pays <span style={{ color: "#c33" }}>*</span>
-          </label>
-          <input
-            type="text"
-            name="countryName"
-            value={addressData.countryName || "Belgique"}
-            readOnly
-            style={{
-              width: "100%",
-              padding: "1.2rem",
-              fontSize: "1.3rem",
-              border: "2px solid #e0e0e0",
-              borderRadius: "8px",
-              backgroundColor: "#f8f9fa",
-              color: "#666",
-              cursor: "not-allowed",
-            }}
-          />
-        </div>
-      </>
-    );
   };
 
   return (
@@ -334,10 +261,12 @@ export default function CheckoutAddressForm() {
               gap: "2rem",
             }}
           >
-            {renderAddressFields(
-              addressData?.shipping || {},
-              handleShippingChange
-            )}
+            <AddressFields
+              address={addressData?.shipping || {}}
+              onChange={(field, value) =>
+                handleAddressChange("shipping", field, value)
+              }
+            />
           </div>
         </div>
 
@@ -408,28 +337,13 @@ export default function CheckoutAddressForm() {
                 gap: "2rem",
               }}
             >
-              {renderAddressFields(
-                addressData?.billing || {},
-                handleBillingChange
-              )}
+              <AddressFields
+                address={addressData?.billing || {}}
+                onChange={(field, value) =>
+                  handleAddressChange("billing", field, value)
+                }
+              />
             </div>
-          </div>
-        )}
-
-        {/* Affichage des erreurs éventuelles */}
-        {error && (
-          <div
-            style={{
-              background: "#fee",
-              border: "2px solid #fcc",
-              color: "#c33",
-              padding: "1rem",
-              borderRadius: "8px",
-              marginBottom: "1rem",
-              fontSize: "1.2rem",
-            }}
-          >
-            {error}
           </div>
         )}
 
