@@ -8,38 +8,18 @@
 
 import React, { useState, useEffect } from "react";
 import { AddressCreateDTO, CountryDTO } from "../../dto";
-
-/**
- * Structure des données du formulaire d'adresse
- * Contient uniquement l'adresse de livraison (shipping)
- */
-interface AddressFormData {
-  shipping: Partial<AddressCreateDTO>;
-}
-
-/**
- * Props du composant CheckoutAddressForm
- * @param formData - Données actuelles du formulaire (adresse de livraison)
- * @param onChange - Callback appelé lors de la modification des données
- * @param onNext - Callback appelé pour passer à l'étape suivante
- * @param onBack - Callback appelé pour revenir à l'étape précédente
- */
-interface CheckoutAddressFormProps {
-  formData: AddressFormData;
-  onChange: (data: AddressFormData) => void;
-  onNext: () => void;
-  onBack: () => void;
-}
+import { useCheckout } from "../../contexts/CheckoutContext";
 
 // URL de l'API backend
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
-export default function CheckoutAddressForm({
-  formData,
-  onChange,
-  onNext,
-  onBack,
-}: CheckoutAddressFormProps) {
+/**
+ * Composant formulaire adresses de livraison et facturation
+ * Utilise CheckoutContext pour gérer l'état du formulaire
+ */
+export default function CheckoutAddressForm() {
+  const { addressData, updateAddressData, nextStep, goToCustomerStep } =
+    useCheckout();
   // État local du composant
   const [countries, setCountries] = useState<CountryDTO[]>([]); // Liste des pays disponibles (filtrée pour la Belgique)
   const [isLoading, setIsLoading] = useState(false); // Indicateur de chargement
@@ -65,10 +45,10 @@ export default function CheckoutAddressForm({
           setCountries(belgiumOnly);
 
           // Set Belgium as default for shipping address
-          if (!formData.shipping.countryId && belgiumOnly.length > 0) {
-            onChange({
+          if (!addressData.shipping.countryId && belgiumOnly.length > 0) {
+            updateAddressData({
               shipping: {
-                ...formData.shipping,
+                ...addressData.shipping,
                 countryId: belgiumOnly[0].countryId,
               },
             });
@@ -78,10 +58,10 @@ export default function CheckoutAddressForm({
           const belgiumCountry = { countryId: 11, countryName: "Belgique" };
           setCountries([belgiumCountry]);
 
-          if (!formData.shipping.countryId) {
-            onChange({
+          if (!addressData.shipping.countryId) {
+            updateAddressData({
               shipping: {
-                ...formData.shipping,
+                ...addressData.shipping,
                 countryId: belgiumCountry.countryId,
               },
             });
@@ -93,10 +73,10 @@ export default function CheckoutAddressForm({
         const belgiumCountry = { countryId: 11, countryName: "Belgique" };
         setCountries([belgiumCountry]);
 
-        if (!formData.shipping.countryId) {
-          onChange({
+        if (!addressData.shipping.countryId) {
+          updateAddressData({
             shipping: {
-              ...formData.shipping,
+              ...addressData.shipping,
               countryId: belgiumCountry.countryId,
             },
           });
@@ -105,7 +85,7 @@ export default function CheckoutAddressForm({
     };
 
     loadCountries();
-  }, []);
+  }, [addressData, updateAddressData]);
 
   /**
    * Gère les changements dans les champs de l'adresse de livraison
@@ -117,11 +97,11 @@ export default function CheckoutAddressForm({
   ) => {
     const { name, value } = e.target;
     const updatedShipping = {
-      ...formData.shipping,
+      ...addressData.shipping,
       [name]: name === "countryId" ? parseInt(value) : value,
     };
 
-    onChange({
+    updateAddressData({
       shipping: updatedShipping,
     });
   };
@@ -136,10 +116,10 @@ export default function CheckoutAddressForm({
 
     // Validation des champs obligatoires
     if (
-      !formData.shipping.address ||
-      !formData.shipping.city ||
-      !formData.shipping.postalCode ||
-      !formData.shipping.countryId
+      !addressData.shipping.address ||
+      !addressData.shipping.city ||
+      !addressData.shipping.postalCode ||
+      !addressData.shipping.countryId
     ) {
       alert(
         "Veuillez remplir tous les champs obligatoires de l'adresse de livraison"
@@ -148,7 +128,7 @@ export default function CheckoutAddressForm({
     }
 
     // Passer à l'étape suivante si la validation réussit
-    onNext();
+    nextStep();
   };
 
   /**
@@ -366,7 +346,7 @@ export default function CheckoutAddressForm({
               gap: "2rem",
             }}
           >
-            {renderAddressFields(formData.shipping, handleShippingChange)}
+            {renderAddressFields(addressData.shipping, handleShippingChange)}
           </div>
         </div>
 
@@ -401,7 +381,7 @@ export default function CheckoutAddressForm({
           {/* Bouton retour */}
           <button
             type="button"
-            onClick={onBack}
+            onClick={goToCustomerStep}
             style={{
               padding: "1.2rem 3rem",
               fontSize: "1.4rem",

@@ -1,13 +1,13 @@
 /**
  * Composant récapitulatif de commande et paiement
- * 
+ *
  * Ce composant représente la dernière étape du processus de checkout.
  * Il affiche :
  * - Un récapitulatif des informations client
  * - Les adresses de livraison et de facturation
  * - Le détail des produits commandés avec leurs prix
  * - Le calcul des totaux (HT, TVA, TTC)
- * 
+ *
  * Lors du clic sur "Procéder au paiement", le composant :
  * 1. Vérifie ou crée le client dans la base de données
  * 2. Sauvegarde les adresses dans le carnet d'adresses du client
@@ -17,15 +17,13 @@
 
 import { useState, useEffect, useMemo } from "react";
 import {
-  CartPublicDTO,
   CartItemPublicDTO,
-  CustomerCreateDTO,
   CustomerPublicDTO,
-  AddressCreateDTO,
   ProductPublicDTO,
   CountryDTO,
 } from "../../dto";
 import { useCart } from "../../contexts/CartContext";
+import { useCheckout } from "../../contexts/CheckoutContext";
 
 // URL de l'API backend
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
@@ -38,31 +36,17 @@ interface CartItemWithProduct extends CartItemPublicDTO {
 }
 
 /**
- * Props du composant CheckoutOrderSummary
- * @param cart - Panier contenant les articles à commander
- * @param customerData - Données du client
- * @param shippingAddress - Adresse de livraison
- * @param billingAddress - Adresse de facturation
- * @param onBack - Callback pour revenir à l'étape précédente
- * @param onSuccess - Callback appelé en cas de succès (non utilisé actuellement)
+ * Composant récapitulatif de commande et paiement
+ * Utilise CheckoutContext et CartContext pour gérer l'état
  */
-interface CheckoutOrderSummaryProps {
-  cart: CartPublicDTO | null;
-  customerData: Partial<CustomerCreateDTO>;
-  shippingAddress: Partial<AddressCreateDTO>;
-  billingAddress: Partial<AddressCreateDTO>;
-  onBack: () => void;
-  onSuccess: (orderId: number) => void;
-}
+export default function CheckoutOrderSummary() {
+  const { cart } = useCart();
+  const { customerData, addressData, goToAddressStep, resetCheckout } =
+    useCheckout();
 
-export default function CheckoutOrderSummary({
-  cart,
-  customerData,
-  shippingAddress,
-  billingAddress,
-  onBack,
-  onSuccess,
-}: CheckoutOrderSummaryProps) {
+  // Utiliser l'adresse de livraison pour les deux adresses pour l'instant
+  const shippingAddress = addressData.shipping;
+  const billingAddress = addressData.shipping;
   // État local du composant
   const [isProcessing, setIsProcessing] = useState(false); // Indicateur de traitement en cours
   const [error, setError] = useState<string | null>(null); // Message d'erreur éventuel
@@ -147,7 +131,7 @@ export default function CheckoutOrderSummary({
 
   /**
    * Fonction principale pour finaliser la commande
-   * 
+   *
    * Processus complet :
    * 1. Vérifie si le client existe déjà (par email), sinon le crée
    * 2. Sauvegarde les adresses dans le carnet d'adresses du client
@@ -823,7 +807,7 @@ export default function CheckoutOrderSummary({
         {/* Bouton retour */}
         <button
           type="button"
-          onClick={onBack}
+          onClick={goToAddressStep}
           disabled={isProcessing}
           style={{
             padding: "1.2rem 3rem",

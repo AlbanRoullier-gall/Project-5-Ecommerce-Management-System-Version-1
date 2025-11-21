@@ -1,39 +1,26 @@
 /**
  * Composant formulaire informations client
- * 
+ *
  * Ce composant gère la première étape du processus de checkout.
  * Il permet de saisir les informations personnelles du client :
  * - Prénom (obligatoire)
  * - Nom (obligatoire)
  * - Email (obligatoire)
  * - Téléphone (optionnel)
- * 
+ *
  * Le formulaire valide que tous les champs obligatoires sont remplis avant de passer à l'étape suivante.
  */
 
 import React, { useEffect, useState } from "react";
-import { CustomerCreateDTO } from "../../dto";
+import { useCheckout } from "../../contexts/CheckoutContext";
 
 /**
- * Props du composant CheckoutCustomerForm
- * @param formData - Données actuelles du formulaire client
- * @param onChange - Callback appelé lors de la modification des données
- * @param onNext - Callback appelé pour passer à l'étape suivante
- * @param onBack - Callback optionnel pour revenir à l'étape précédente
+ * Composant formulaire informations client
+ * Utilise CheckoutContext pour gérer l'état du formulaire
  */
-interface CheckoutCustomerFormProps {
-  formData: Partial<CustomerCreateDTO>;
-  onChange: (data: Partial<CustomerCreateDTO>) => void;
-  onNext: () => void;
-  onBack?: () => void;
-}
-
-export default function CheckoutCustomerForm({
-  formData,
-  onChange,
-  onNext,
-  onBack,
-}: CheckoutCustomerFormProps) {
+export default function CheckoutCustomerForm() {
+  const { customerData, updateCustomerData, nextStep, goToCustomerStep } =
+    useCheckout();
   // État local du composant
   const [isLoading, setIsLoading] = useState(false); // Indicateur de chargement
   const [error, setError] = useState<string | null>(null); // Message d'erreur éventuel
@@ -49,15 +36,15 @@ export default function CheckoutCustomerForm({
 
   /**
    * Gère les changements dans les champs du formulaire
-   * Met à jour le state local et notifie le composant parent via onChange
+   * Met à jour le contexte checkout
    * @param e - Événement de changement sur un input ou select
    */
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    onChange({
-      ...formData,
+    updateCustomerData({
+      ...customerData,
       [name]: value,
     });
   };
@@ -71,13 +58,17 @@ export default function CheckoutCustomerForm({
     e.preventDefault();
 
     // Validation des champs obligatoires
-    if (!formData.firstName || !formData.lastName || !formData.email) {
+    if (
+      !customerData.firstName ||
+      !customerData.lastName ||
+      !customerData.email
+    ) {
       alert("Veuillez remplir tous les champs obligatoires");
       return;
     }
 
     // Passer à l'étape suivante si la validation réussit
-    onNext();
+    nextStep();
   };
 
   return (
@@ -158,7 +149,7 @@ export default function CheckoutCustomerForm({
             <input
               type="text"
               name="firstName"
-              value={formData.firstName || ""}
+              value={customerData.firstName || ""}
               onChange={handleChange}
               required
               placeholder="Votre prénom"
@@ -191,7 +182,7 @@ export default function CheckoutCustomerForm({
             <input
               type="text"
               name="lastName"
-              value={formData.lastName || ""}
+              value={customerData.lastName || ""}
               onChange={handleChange}
               required
               placeholder="Votre nom"
@@ -224,7 +215,7 @@ export default function CheckoutCustomerForm({
             <input
               type="email"
               name="email"
-              value={formData.email || ""}
+              value={customerData.email || ""}
               onChange={handleChange}
               required
               placeholder="votre.email@exemple.com"
@@ -257,7 +248,7 @@ export default function CheckoutCustomerForm({
             <input
               type="tel"
               name="phoneNumber"
-              value={formData.phoneNumber || ""}
+              value={customerData.phoneNumber || ""}
               onChange={handleChange}
               placeholder="+32 123 45 67 89"
               style={{
@@ -304,11 +295,11 @@ export default function CheckoutCustomerForm({
             borderTop: "2px solid #e0e0e0",
           }}
         >
-          {/* Bouton retour (affiché uniquement si onBack est défini) */}
-          {onBack && (
+          {/* Bouton retour (caché sur la première étape) */}
+          {false && (
             <button
               type="button"
-              onClick={onBack}
+              onClick={goToCustomerStep}
               style={{
                 padding: "1.2rem 3rem",
                 fontSize: "1.4rem",

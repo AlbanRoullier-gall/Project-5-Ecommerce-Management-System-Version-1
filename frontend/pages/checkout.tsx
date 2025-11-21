@@ -1,38 +1,27 @@
 "use client";
 
 import Head from "next/head";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useCart } from "../contexts/CartContext";
+import { useCheckout } from "../contexts/CheckoutContext";
 import {
   CheckoutCustomerForm,
   CheckoutAddressForm,
   CheckoutOrderSummary,
 } from "../components/checkout";
-import { CustomerCreateDTO, AddressCreateDTO } from "../dto";
-
-interface AddressFormData {
-  shipping: Partial<AddressCreateDTO>;
-}
 
 /**
  * Page de passage de commande (checkout)
  * Processus en plusieurs étapes avec validation
+ * Utilise CheckoutContext pour gérer l'état du checkout
  */
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, isLoading } = useCart();
-  const [currentStep, setCurrentStep] = useState(1);
-
-  // États pour les données du formulaire
-  const [customerData, setCustomerData] = useState<Partial<CustomerCreateDTO>>(
-    {}
-  );
-  const [addressData, setAddressData] = useState<AddressFormData>({
-    shipping: {} as Partial<AddressCreateDTO>,
-  });
+  const { currentStep } = useCheckout();
 
   // Vérifier si le panier est vide
   useEffect(() => {
@@ -40,21 +29,6 @@ export default function CheckoutPage() {
       router.push("/cart");
     }
   }, [cart, isLoading, router]);
-
-  const handleCustomerNext = (data: Partial<CustomerCreateDTO>) => {
-    setCustomerData(data);
-    setCurrentStep(2);
-  };
-
-  const handleAddressNext = (data: AddressFormData) => {
-    setAddressData(data);
-    setCurrentStep(3);
-  };
-
-  const handleOrderSuccess = (orderId: number) => {
-    console.log("Commande créée avec succès:", orderId);
-    // Redirection gérée par Stripe
-  };
 
   // Indicateur de progression
   const steps = [
@@ -226,33 +200,9 @@ export default function CheckoutPage() {
 
           {/* Formulaires des étapes */}
           <div style={{ marginBottom: "4rem" }}>
-            {currentStep === 1 && (
-              <CheckoutCustomerForm
-                formData={customerData}
-                onChange={setCustomerData}
-                onNext={() => handleCustomerNext(customerData)}
-              />
-            )}
-
-            {currentStep === 2 && (
-              <CheckoutAddressForm
-                formData={addressData}
-                onChange={setAddressData}
-                onNext={() => handleAddressNext(addressData)}
-                onBack={() => setCurrentStep(1)}
-              />
-            )}
-
-            {currentStep === 3 && (
-              <CheckoutOrderSummary
-                cart={cart}
-                customerData={customerData}
-                shippingAddress={addressData.shipping}
-                billingAddress={addressData.shipping}
-                onBack={() => setCurrentStep(2)}
-                onSuccess={handleOrderSuccess}
-              />
-            )}
+            {currentStep === 1 && <CheckoutCustomerForm />}
+            {currentStep === 2 && <CheckoutAddressForm />}
+            {currentStep === 3 && <CheckoutOrderSummary />}
           </div>
 
           {/* Informations de sécurité */}
