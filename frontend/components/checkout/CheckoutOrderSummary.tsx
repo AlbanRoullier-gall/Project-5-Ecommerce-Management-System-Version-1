@@ -16,6 +16,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import {
   CartItemPublicDTO,
   CustomerPublicDTO,
@@ -39,9 +40,9 @@ interface CartItemWithProduct extends CartItemPublicDTO {
  * Utilise CheckoutContext et CartContext pour gérer l'état
  */
 export default function CheckoutOrderSummary() {
+  const router = useRouter();
   const { cart } = useCart();
-  const { customerData, addressData, goToAddressStep, resetCheckout } =
-    useCheckout();
+  const { customerData, addressData, resetCheckout } = useCheckout();
 
   // Utiliser l'adresse de livraison pour les deux adresses pour l'instant
   const shippingAddress = addressData.shipping;
@@ -379,7 +380,7 @@ export default function CheckoutOrderSummary() {
             fontWeight: "700",
           }}
         >
-          4
+          3
         </div>
         <h2
           className="checkout-form-title"
@@ -761,7 +762,7 @@ export default function CheckoutOrderSummary() {
         {/* Bouton retour */}
         <button
           type="button"
-          onClick={goToAddressStep}
+          onClick={() => router.push("/checkout/address")}
           disabled={isProcessing}
           style={{
             padding: "1.2rem 3rem",

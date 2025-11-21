@@ -25,25 +25,17 @@ interface CheckoutData {
 
 /**
  * Type du contexte Checkout
+ * Simplifié : plus de gestion d'étapes, uniquement les données
  */
 interface CheckoutContextType {
   // Données
   customerData: Partial<CustomerCreateDTO>;
   addressData: AddressFormData;
-  currentStep: number;
 
   // Actions
   updateCustomerData: (data: Partial<CustomerCreateDTO>) => void;
   updateAddressData: (data: AddressFormData) => void;
-  setCurrentStep: (step: number) => void;
-  nextStep: () => void;
-  previousStep: () => void;
   resetCheckout: () => void;
-
-  // Helpers
-  goToCustomerStep: () => void;
-  goToAddressStep: () => void;
-  goToPaymentStep: () => void;
 }
 
 const CheckoutContext = createContext<CheckoutContextType | undefined>(
@@ -89,7 +81,6 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   const [addressData, setAddressData] = useState<AddressFormData>({
     shipping: {} as Partial<AddressCreateDTO>,
   });
-  const [currentStep, setCurrentStepState] = useState<number>(1);
   const [isInitialized, setIsInitialized] = useState(false);
 
   /**
@@ -168,43 +159,11 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   }, []);
 
   /**
-   * Met à jour l'étape courante
-   */
-  const setCurrentStep = useCallback((step: number) => {
-    setCurrentStepState(step);
-  }, []);
-
-  /**
-   * Passe à l'étape suivante
-   */
-  const nextStep = useCallback(() => {
-    setCurrentStepState((prev) => {
-      if (prev < 3) {
-        return prev + 1;
-      }
-      return prev;
-    });
-  }, []);
-
-  /**
-   * Revient à l'étape précédente
-   */
-  const previousStep = useCallback(() => {
-    setCurrentStepState((prev) => {
-      if (prev > 1) {
-        return prev - 1;
-      }
-      return prev;
-    });
-  }, []);
-
-  /**
    * Réinitialise toutes les données checkout
    */
   const resetCheckout = useCallback(() => {
     setCustomerData({});
     setAddressData({ shipping: {} });
-    setCurrentStepState(1);
 
     if (typeof window !== "undefined") {
       try {
@@ -216,21 +175,6 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         );
       }
     }
-  }, []);
-
-  /**
-   * Helpers pour naviguer vers des étapes spécifiques
-   */
-  const goToCustomerStep = useCallback(() => {
-    setCurrentStepState(1);
-  }, []);
-
-  const goToAddressStep = useCallback(() => {
-    setCurrentStepState(2);
-  }, []);
-
-  const goToPaymentStep = useCallback(() => {
-    setCurrentStepState(3);
   }, []);
 
   // Sauvegarder automatiquement quand les données changent (sans currentStep)
@@ -246,16 +190,9 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   const value: CheckoutContextType = {
     customerData,
     addressData,
-    currentStep,
     updateCustomerData,
     updateAddressData,
-    setCurrentStep,
-    nextStep,
-    previousStep,
     resetCheckout,
-    goToCustomerStep,
-    goToAddressStep,
-    goToPaymentStep,
   };
 
   return (

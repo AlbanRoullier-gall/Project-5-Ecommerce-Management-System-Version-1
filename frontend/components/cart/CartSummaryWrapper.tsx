@@ -124,7 +124,7 @@ const CartSummaryWrapper: React.FC<CartSummaryWrapperProps> = () => {
         {/* Boutons d'action */}
         <div style={{ marginBottom: "2rem" }}>
           <Link
-            href="/checkout"
+            href="/checkout/information"
             className="cart-checkout-button"
             style={{
               width: "100%",

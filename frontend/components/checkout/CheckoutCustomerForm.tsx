@@ -12,6 +12,7 @@
  */
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { useCheckout } from "../../contexts/CheckoutContext";
 
 /**
@@ -19,8 +20,8 @@ import { useCheckout } from "../../contexts/CheckoutContext";
  * Utilise CheckoutContext pour gérer l'état du formulaire
  */
 export default function CheckoutCustomerForm() {
-  const { customerData, updateCustomerData, nextStep, goToCustomerStep } =
-    useCheckout();
+  const router = useRouter();
+  const { customerData, updateCustomerData } = useCheckout();
   // État local du composant
   const [isLoading, setIsLoading] = useState(false); // Indicateur de chargement
   const [error, setError] = useState<string | null>(null); // Message d'erreur éventuel
@@ -67,8 +68,8 @@ export default function CheckoutCustomerForm() {
       return;
     }
 
-    // Passer à l'étape suivante si la validation réussit
-    nextStep();
+    // Rediriger vers la page d'adresse si la validation réussit
+    router.push("/checkout/address");
   };
 
   return (
@@ -295,11 +296,11 @@ export default function CheckoutCustomerForm() {
             borderTop: "2px solid #e0e0e0",
           }}
         >
-          {/* Bouton retour (caché sur la première étape) */}
+          {/* Pas de bouton retour sur la première étape */}
           {false && (
             <button
               type="button"
-              onClick={goToCustomerStep}
+              onClick={() => router.push("/checkout/information")}
               style={{
                 padding: "1.2rem 3rem",
                 fontSize: "1.4rem",

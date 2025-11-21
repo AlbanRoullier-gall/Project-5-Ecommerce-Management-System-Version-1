@@ -183,7 +183,7 @@ export default function CheckoutCancelPage() {
             </Link>
 
             <Link
-              href="/checkout"
+              href="/checkout/information"
               style={{
                 display: "inline-flex",
                 alignItems: "center",

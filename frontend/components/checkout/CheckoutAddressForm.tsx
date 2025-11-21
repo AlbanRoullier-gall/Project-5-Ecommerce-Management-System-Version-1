@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from "react";
+import { useRouter } from "next/router";
 import { AddressCreateDTO } from "../../dto";
 import { useCheckout } from "../../contexts/CheckoutContext";
 
@@ -17,15 +18,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
  * Utilise CheckoutContext pour gérer l'état du formulaire
  */
 export default function CheckoutAddressForm() {
-  const { addressData, updateAddressData, nextStep, goToCustomerStep } =
-    useCheckout();
+  const router = useRouter();
+  const { addressData, updateAddressData } = useCheckout();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  /**
-   * Le countryName sera assigné par le backend lors de la création de l'adresse
-   * Pas besoin d'initialisation en dur, le backend garantit que countryName = "Belgique"
-   */
 
   /**
    * Gère les changements dans les champs de l'adresse de livraison
@@ -62,8 +58,8 @@ export default function CheckoutAddressForm() {
       return;
     }
 
-    // Passer à l'étape suivante si la validation réussit
-    nextStep();
+    // Rediriger vers la page de récapitulatif si la validation réussit
+    router.push("/checkout/summary");
   };
 
   /**
@@ -312,7 +308,7 @@ export default function CheckoutAddressForm() {
           {/* Bouton retour */}
           <button
             type="button"
-            onClick={goToCustomerStep}
+            onClick={() => router.push("/checkout/information")}
             style={{
               padding: "1.2rem 3rem",
               fontSize: "1.4rem",
