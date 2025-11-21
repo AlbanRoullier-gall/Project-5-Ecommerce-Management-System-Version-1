@@ -10,6 +10,8 @@ import {
   CartItemCreateDTO,
   CartItemUpdateDTO,
   CartClearDTO,
+  CartItemPublicDTO,
+  ProductPublicDTO,
 } from "../dto";
 
 /**
@@ -37,12 +39,20 @@ interface CartTotals {
   breakdown: { rate: number; amount: number }[];
 }
 
+/**
+ * Extension de CartItemPublicDTO avec les informations complètes du produit
+ */
+export interface CartItemWithProduct extends CartItemPublicDTO {
+  product?: ProductPublicDTO;
+}
+
 interface CartContextType {
   cart: CartPublicDTO | null;
   itemCount: number;
   totals: CartTotals;
   isLoading: boolean;
   error: string | null;
+  products: CartItemWithProduct[]; // Produits avec leurs détails complets
   addToCart: (
     productId: number,
     quantity: number,
@@ -81,6 +91,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [products, setProducts] = useState<CartItemWithProduct[]>([]);
 
   /**
    * Calcule les totaux du panier
@@ -151,6 +162,41 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       refreshCart();
     }
   }, [sessionId]);
+
+  /**
+   * Charge les détails des produits depuis l'API
+   * Récupère les informations complètes de chaque produit dans le panier
+   */
+  useEffect(() => {
+    const loadProducts = async () => {
+      if (!cart?.items || cart.items.length === 0) {
+        setProducts([]);
+        return;
+      }
+
+      try {
+        const productPromises = cart.items.map(async (item) => {
+          const response = await fetch(
+            `${API_URL}/api/products/${item.productId}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            return { ...item, product: data.product || data };
+          }
+          return item;
+        });
+
+        const productsData = await Promise.all(productPromises);
+        setProducts(productsData);
+      } catch (err) {
+        console.error("Error loading products:", err);
+        // En cas d'erreur, on garde les items sans les détails produits
+        setProducts(cart.items);
+      }
+    };
+
+    loadProducts();
+  }, [cart]);
 
   /**
    * Calcule le nombre total d'articles dans le panier
@@ -391,6 +437,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     totals,
     isLoading,
     error,
+    products,
     addToCart,
     updateQuantity,
     removeFromCart,

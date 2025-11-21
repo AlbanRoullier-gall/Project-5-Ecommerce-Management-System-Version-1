@@ -9,32 +9,17 @@
  * - Le calcul des totaux (HT, TVA, TTC)
  *
  * Lors du clic sur "Procéder au paiement", le composant :
- * 1. Vérifie ou crée le client dans la base de données
- * 2. Sauvegarde les adresses dans le carnet d'adresses du client
- * 3. Crée une session de paiement Stripe
- * 4. Redirige l'utilisateur vers la page de paiement Stripe
+ * - Appelle la fonction `completeOrder` du contexte CheckoutContext
+ *   qui gère toute la logique métier (création du client, sauvegarde
+ *   des adresses, création de la session Stripe)
+ * - Redirige l'utilisateur vers la page de paiement Stripe si succès
+ * - Affiche les erreurs éventuelles à l'utilisateur
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
-import {
-  CartItemPublicDTO,
-  CustomerPublicDTO,
-  ProductPublicDTO,
-  AddressCreateDTO,
-} from "../../dto";
 import { useCart } from "../../contexts/CartContext";
 import { useCheckout } from "../../contexts/CheckoutContext";
-
-// URL de l'API backend
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
-
-/**
- * Extension de CartItemPublicDTO avec les informations complètes du produit
- */
-interface CartItemWithProduct extends CartItemPublicDTO {
-  product?: ProductPublicDTO;
-}
 
 /**
  * Composant récapitulatif de commande et paiement
@@ -42,301 +27,37 @@ interface CartItemWithProduct extends CartItemPublicDTO {
  */
 export default function CheckoutOrderSummary() {
   const router = useRouter();
-  const { cart } = useCart();
-  const { customerData, addressData, resetCheckout } = useCheckout();
+
+  // Consolider les appels de hooks - une seule fois chacun
+  const { cart, totals, products } = useCart();
+  const { customerData, addressData, completeOrder } = useCheckout();
 
   // Utiliser les adresses depuis le contexte
   const shippingAddress = addressData.shipping;
   const billingAddress = addressData.useSameBillingAddress
     ? addressData.shipping
     : addressData.billing;
+
   // État local du composant
   const [isProcessing, setIsProcessing] = useState(false); // Indicateur de traitement en cours
   const [error, setError] = useState<string | null>(null); // Message d'erreur éventuel
-  const [products, setProducts] = useState<CartItemWithProduct[]>([]); // Liste des produits avec leurs détails
-  /**
-   * Effet pour charger les détails des produits depuis l'API
-   * Récupère les informations complètes de chaque produit dans le panier
-   */
-  useEffect(() => {
-    const loadProducts = async () => {
-      if (!cart?.items) return;
-
-      try {
-        const productPromises = cart.items.map(async (item) => {
-          const response = await fetch(
-            `${API_URL}/api/products/${item.productId}`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            return { ...item, product: data.product || data };
-          }
-          return item;
-        });
-
-        const productsData = await Promise.all(productPromises);
-        setProducts(productsData);
-      } catch (err) {
-        console.error("Error loading products:", err);
-      }
-    };
-
-    loadProducts();
-  }, [cart]);
-
-  // Utiliser les totaux calculés par le CartContext (HT, TVA, TTC)
-  const { totals } = useCart();
 
   /**
-   * Fonction principale pour finaliser la commande
-   *
-   * Processus complet :
-   * 1. Vérifie si le client existe déjà (par email), sinon le crée
-   * 2. Sauvegarde les adresses dans le carnet d'adresses du client
-   * 3. Prépare les données de paiement
-   * 4. Crée une session de paiement Stripe
-   * 5. Redirige vers la page de paiement Stripe
+   * Fonction pour finaliser la commande
+   * Utilise la fonction du contexte CheckoutContext
    */
   const handleCompleteOrder = async () => {
-    if (!cart) {
-      alert("Votre panier est vide");
-      return;
-    }
-
     setIsProcessing(true);
     setError(null);
 
-    try {
-      let customerId: number;
-      let customer: CustomerPublicDTO;
+    const result = await completeOrder(cart, products);
 
-      // Étape 1 : Vérifier si le client existe déjà (recherche par email)
-      const emailEncoded = encodeURIComponent(customerData.email || "");
-      const existingCustomerResponse = await fetch(
-        `${API_URL}/api/customers/by-email/${emailEncoded}`
-      );
-
-      if (existingCustomerResponse.ok) {
-        // Client existant : récupérer ses informations
-        const existingData = await existingCustomerResponse.json();
-        customer = existingData.customer;
-        customerId = customer.customerId;
-      } else {
-        // Client inexistant : créer un nouveau client
-        const customerResponse = await fetch(`${API_URL}/api/customers`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(customerData),
-        });
-
-        if (!customerResponse.ok) {
-          const errorData = await customerResponse.json();
-          throw new Error(
-            errorData.message || "Erreur lors de la création du client"
-          );
-        }
-
-        const customerResponseData = await customerResponse.json();
-        customer = customerResponseData.customer;
-        customerId = customer.customerId;
-      }
-
-      // Étape 2 : Sauvegarder les adresses dans le carnet d'adresses du client
-      // Cette étape est non-bloquante : si elle échoue, on continue quand même
-      try {
-        // Créer l'adresse de livraison (toujours définie comme adresse par défaut)
-        if (
-          shippingAddress &&
-          shippingAddress.address &&
-          shippingAddress.postalCode &&
-          shippingAddress.city
-        ) {
-          const shippingAddressDTO: AddressCreateDTO = {
-            addressType: "shipping",
-            address: shippingAddress.address,
-            postalCode: shippingAddress.postalCode,
-            city: shippingAddress.city,
-            countryName: shippingAddress.countryName || "Belgique",
-            isDefault: true, // Toujours définir l'adresse de livraison comme par défaut
-          };
-
-          const shippingResponse = await fetch(
-            `${API_URL}/api/customers/${customerId}/addresses`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(shippingAddressDTO),
-            }
-          );
-
-          if (!shippingResponse.ok) {
-            const errorData = await shippingResponse.json().catch(() => ({}));
-            if (
-              shippingResponse.status === 409 &&
-              errorData.message?.includes("already exists")
-            ) {
-              console.log(
-                "Shipping address already exists in customer address book"
-              );
-            } else {
-              console.warn(
-                "Failed to save shipping address to customer address book:",
-                errorData.message
-              );
-            }
-          } else {
-            console.log("Shipping address saved to customer address book");
-          }
-        }
-
-        // Créer l'adresse de facturation uniquement si elle est différente de l'adresse de livraison
-        if (
-          billingAddress &&
-          billingAddress.address &&
-          billingAddress.postalCode &&
-          billingAddress.city &&
-          !addressData.useSameBillingAddress &&
-          billingAddress.address !== shippingAddress?.address
-        ) {
-          const billingAddressDTO: AddressCreateDTO = {
-            addressType: "billing",
-            address: billingAddress.address,
-            postalCode: billingAddress.postalCode,
-            city: billingAddress.city,
-            countryName: billingAddress.countryName || "Belgique",
-            isDefault: false, // L'adresse de facturation n'est pas par défaut
-          };
-
-          const billingResponse = await fetch(
-            `${API_URL}/api/customers/${customerId}/addresses`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(billingAddressDTO),
-            }
-          );
-
-          if (!billingResponse.ok) {
-            const errorData = await billingResponse.json().catch(() => ({}));
-            if (
-              billingResponse.status === 409 &&
-              errorData.message?.includes("already exists")
-            ) {
-              console.log(
-                "Billing address already exists in customer address book"
-              );
-            } else {
-              console.warn(
-                "Failed to save billing address to customer address book:",
-                errorData.message
-              );
-            }
-          } else {
-            console.log("Billing address saved to customer address book");
-          }
-        }
-      } catch (addressError) {
-        // Erreur non-bloquante : on continue même si la sauvegarde des adresses échoue
-        console.error("Address book save error (non-blocking):", addressError);
-      }
-
-      // Étape 3 : Préparer les données de paiement pour Stripe
-      const paymentItems = cart.items.map((item) => {
-        const product = products.find((p) => p.productId === item.productId);
-        return {
-          name: product?.product?.name || "Produit",
-          description: product?.product?.description || "",
-          price: Math.round(item.price * 100),
-          quantity: item.quantity,
-          currency: "eur",
-        };
-      });
-
-      // Étape 4 : Construire le snapshot checkout à attacher au panier
-      // Le snapshot contient toutes les informations de la commande pour référence future
-      const snapshot = {
-        customer: {
-          ...customerData,
-        },
-        shippingAddress: {
-          firstName: customerData.firstName || "",
-          lastName: customerData.lastName || "",
-          address: shippingAddress.address || "",
-          city: shippingAddress.city || "",
-          postalCode: shippingAddress.postalCode || "",
-          country: shippingAddress.countryName,
-          phone: customerData.phoneNumber || "",
-        },
-        billingAddress:
-          billingAddress.address !== shippingAddress.address
-            ? {
-                firstName: customerData.firstName || "",
-                lastName: customerData.lastName || "",
-                address: billingAddress.address || "",
-                city: billingAddress.city || "",
-                postalCode: billingAddress.postalCode || "",
-                country: billingAddress.countryName,
-                phone: customerData.phoneNumber || "",
-              }
-            : null,
-        notes: undefined,
-      };
-
-      // Récupérer l'ID de session du panier depuis le localStorage
-      const cartSessionId =
-        (typeof window !== "undefined" &&
-          window.localStorage.getItem("cart_session_id")) ||
-        "";
-      if (!cartSessionId) {
-        throw new Error("Session panier introuvable");
-      }
-
-      // Étape 5 : Préparer le payload pour créer la session de paiement Stripe
-      const paymentCreatePayload = {
-        cartSessionId,
-        snapshot,
-        payment: {
-          customer: {
-            email: customerData.email || "",
-            name: `${customerData.firstName} ${customerData.lastName}`,
-            phone: customerData.phoneNumber,
-          },
-          items: paymentItems,
-          successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: `${window.location.origin}/checkout/cancel`,
-          metadata: {
-            customerId: customerId.toString(),
-          },
-        },
-      };
-
-      // Étape 6 : Créer la session de paiement Stripe
-      const paymentResponse = await fetch(`${API_URL}/api/payment/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(paymentCreatePayload),
-      });
-
-      if (!paymentResponse.ok) {
-        const errorData = await paymentResponse.json();
-        throw new Error(
-          errorData.message || "Erreur lors de la création du paiement"
-        );
-      }
-
-      const paymentResult = await paymentResponse.json();
-      const url = paymentResult.url || paymentResult.payment?.url;
-
-      // Étape 7 : Rediriger vers la page de paiement Stripe
-      if (url) {
-        window.location.href = url;
-      } else {
-        throw new Error("URL de paiement non reçue");
-      }
-    } catch (err) {
-      // Gestion des erreurs : afficher le message d'erreur à l'utilisateur
-      console.error("Error completing order:", err);
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+    if (result.success && result.paymentUrl) {
+      // Rediriger vers la page de paiement Stripe
+      window.location.href = result.paymentUrl;
+    } else {
+      // Afficher l'erreur
+      setError(result.error || "Une erreur est survenue");
       setIsProcessing(false);
     }
   };
@@ -886,16 +607,6 @@ export default function CheckoutOrderSummary() {
             gap: 1.5rem !important;
           }
 
-          /* Tableaux responsives */
-          table {
-            font-size: 1.1rem !important;
-          }
-
-          table th,
-          table td {
-            padding: 0.8rem 0.5rem !important;
-          }
-
           /* Cartes d'information */
           div[style*="background: #f0f9ff"] {
             padding: 1.5rem !important;
@@ -956,13 +667,6 @@ export default function CheckoutOrderSummary() {
             padding-bottom: 0.5rem !important;
           }
 
-          h4[style*="fontSize: 1.4rem"] {
-            font-size: 0.9rem !important;
-            margin-bottom: 0.5rem !important;
-            color: #13686a !important;
-            font-weight: 600 !important;
-          }
-
           /* Informations client - Design en carte */
           div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"] {
             display: block !important;
@@ -979,51 +683,6 @@ export default function CheckoutOrderSummary() {
             line-height: 1.3 !important;
             margin: 0.2rem 0 !important;
             color: #333 !important;
-          }
-
-          /* Tableau des produits - Design simplifié */
-          table {
-            font-size: 0.75rem !important;
-            width: 100% !important;
-            border-collapse: collapse !important;
-            margin: 0.5rem 0 !important;
-          }
-
-          table th {
-            background: #13686a !important;
-            color: white !important;
-            padding: 0.4rem 0.2rem !important;
-            font-size: 0.7rem !important;
-            text-align: center !important;
-          }
-
-          table td {
-            padding: 0.4rem 0.2rem !important;
-            border-bottom: 1px solid #e0e0e0 !important;
-            text-align: center !important;
-            vertical-align: top !important;
-          }
-
-          /* Colonnes du tableau */
-          table th:first-child,
-          table td:first-child {
-            width: 35% !important;
-            text-align: left !important;
-            font-weight: 600 !important;
-          }
-
-          table th:nth-child(2),
-          table td:nth-child(2) {
-            width: 25% !important;
-            font-size: 0.65rem !important;
-          }
-
-          table th:last-child,
-          table td:last-child {
-            width: 40% !important;
-            text-align: right !important;
-            font-weight: 600 !important;
-            color: #13686a !important;
           }
 
           /* Totaux - Design en carte */
@@ -1096,15 +755,6 @@ export default function CheckoutOrderSummary() {
           .checkout-form-actions button {
             padding: 0.7rem 1.2rem !important;
             font-size: 1.1rem !important;
-          }
-
-          table {
-            font-size: 0.9rem !important;
-          }
-
-          table th,
-          table td {
-            padding: 0.5rem 0.2rem !important;
           }
 
           div[style*="background: #f0f9ff"] {
