@@ -1,5 +1,18 @@
 /**
  * Composant récapitulatif de commande et paiement
+ * 
+ * Ce composant représente la dernière étape du processus de checkout.
+ * Il affiche :
+ * - Un récapitulatif des informations client
+ * - Les adresses de livraison et de facturation
+ * - Le détail des produits commandés avec leurs prix
+ * - Le calcul des totaux (HT, TVA, TTC)
+ * 
+ * Lors du clic sur "Procéder au paiement", le composant :
+ * 1. Vérifie ou crée le client dans la base de données
+ * 2. Sauvegarde les adresses dans le carnet d'adresses du client
+ * 3. Crée une session de paiement Stripe
+ * 4. Redirige l'utilisateur vers la page de paiement Stripe
  */
 
 import { useState, useEffect, useMemo } from "react";
@@ -14,12 +27,25 @@ import {
 } from "../../dto";
 import { useCart } from "../../contexts/CartContext";
 
+// URL de l'API backend
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
+/**
+ * Extension de CartItemPublicDTO avec les informations complètes du produit
+ */
 interface CartItemWithProduct extends CartItemPublicDTO {
   product?: ProductPublicDTO;
 }
 
+/**
+ * Props du composant CheckoutOrderSummary
+ * @param cart - Panier contenant les articles à commander
+ * @param customerData - Données du client
+ * @param shippingAddress - Adresse de livraison
+ * @param billingAddress - Adresse de facturation
+ * @param onBack - Callback pour revenir à l'étape précédente
+ * @param onSuccess - Callback appelé en cas de succès (non utilisé actuellement)
+ */
 interface CheckoutOrderSummaryProps {
   cart: CartPublicDTO | null;
   customerData: Partial<CustomerCreateDTO>;
@@ -37,11 +63,16 @@ export default function CheckoutOrderSummary({
   onBack,
   onSuccess,
 }: CheckoutOrderSummaryProps) {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [products, setProducts] = useState<CartItemWithProduct[]>([]);
-  const [countries, setCountries] = useState<CountryDTO[]>([]);
+  // État local du composant
+  const [isProcessing, setIsProcessing] = useState(false); // Indicateur de traitement en cours
+  const [error, setError] = useState<string | null>(null); // Message d'erreur éventuel
+  const [products, setProducts] = useState<CartItemWithProduct[]>([]); // Liste des produits avec leurs détails
+  const [countries, setCountries] = useState<CountryDTO[]>([]); // Liste des pays (filtrée pour la Belgique)
 
+  /**
+   * Effet pour charger les détails des produits depuis l'API
+   * Récupère les informations complètes de chaque produit dans le panier
+   */
   useEffect(() => {
     const loadProducts = async () => {
       if (!cart?.items) return;
@@ -68,6 +99,10 @@ export default function CheckoutOrderSummary({
     loadProducts();
   }, [cart]);
 
+  /**
+   * Effet pour charger la liste des pays
+   * Filtre pour ne garder que la Belgique
+   */
   useEffect(() => {
     const loadCountries = async () => {
       try {
@@ -95,6 +130,10 @@ export default function CheckoutOrderSummary({
     loadCountries();
   }, []);
 
+  /**
+   * Fonction mémorisée pour obtenir le nom d'un pays par son ID
+   * @returns Fonction qui prend un countryId et retourne le nom du pays
+   */
   const countryNameById = useMemo(() => {
     return (id?: number) => {
       if (!id) return "Pays non spécifié";
@@ -103,9 +142,19 @@ export default function CheckoutOrderSummary({
     };
   }, [countries]);
 
-  // Utiliser les totaux calculés par le CartContext
+  // Utiliser les totaux calculés par le CartContext (HT, TVA, TTC)
   const { totals } = useCart();
 
+  /**
+   * Fonction principale pour finaliser la commande
+   * 
+   * Processus complet :
+   * 1. Vérifie si le client existe déjà (par email), sinon le crée
+   * 2. Sauvegarde les adresses dans le carnet d'adresses du client
+   * 3. Prépare les données de paiement
+   * 4. Crée une session de paiement Stripe
+   * 5. Redirige vers la page de paiement Stripe
+   */
   const handleCompleteOrder = async () => {
     if (!cart) {
       alert("Votre panier est vide");
@@ -119,16 +168,19 @@ export default function CheckoutOrderSummary({
       let customerId: number;
       let customer: CustomerPublicDTO;
 
+      // Étape 1 : Vérifier si le client existe déjà (recherche par email)
       const emailEncoded = encodeURIComponent(customerData.email || "");
       const existingCustomerResponse = await fetch(
         `${API_URL}/api/customers/by-email/${emailEncoded}`
       );
 
       if (existingCustomerResponse.ok) {
+        // Client existant : récupérer ses informations
         const existingData = await existingCustomerResponse.json();
         customer = existingData.customer;
         customerId = customer.customerId;
       } else {
+        // Client inexistant : créer un nouveau client
         const customerResponse = await fetch(`${API_URL}/api/customers`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -147,9 +199,10 @@ export default function CheckoutOrderSummary({
         customerId = customer.customerId;
       }
 
-      // Sauvegarder les adresses dans le carnet d'adresses du client
+      // Étape 2 : Sauvegarder les adresses dans le carnet d'adresses du client
+      // Cette étape est non-bloquante : si elle échoue, on continue quand même
       try {
-        // Créer l'adresse de livraison (toujours par défaut)
+        // Créer l'adresse de livraison (toujours définie comme adresse par défaut)
         if (shippingAddress && shippingAddress.address) {
           const shippingAddressDTO = {
             addressType: "shipping",
@@ -189,7 +242,7 @@ export default function CheckoutOrderSummary({
           }
         }
 
-        // Créer l'adresse de facturation si elle est différente de l'adresse de livraison
+        // Créer l'adresse de facturation uniquement si elle est différente de l'adresse de livraison
         if (
           billingAddress &&
           billingAddress.address &&
@@ -233,9 +286,11 @@ export default function CheckoutOrderSummary({
           }
         }
       } catch (addressError) {
+        // Erreur non-bloquante : on continue même si la sauvegarde des adresses échoue
         console.error("Address book save error (non-blocking):", addressError);
       }
 
+      // Étape 3 : Préparer les données de paiement pour Stripe
       const paymentItems = cart.items.map((item) => {
         const product = products.find((p) => p.productId === item.productId);
         return {
@@ -247,7 +302,8 @@ export default function CheckoutOrderSummary({
         };
       });
 
-      // Construire le snapshot checkout à attacher au panier
+      // Étape 4 : Construire le snapshot checkout à attacher au panier
+      // Le snapshot contient toutes les informations de la commande pour référence future
       const snapshot = {
         customer: {
           ...customerData,
@@ -278,6 +334,7 @@ export default function CheckoutOrderSummary({
         notes: undefined,
       };
 
+      // Récupérer l'ID de session du panier depuis le localStorage
       const cartSessionId =
         (typeof window !== "undefined" &&
           window.localStorage.getItem("cart_session_id")) ||
@@ -286,6 +343,7 @@ export default function CheckoutOrderSummary({
         throw new Error("Session panier introuvable");
       }
 
+      // Étape 5 : Préparer le payload pour créer la session de paiement Stripe
       const paymentCreatePayload = {
         cartSessionId,
         snapshot,
@@ -304,6 +362,7 @@ export default function CheckoutOrderSummary({
         },
       };
 
+      // Étape 6 : Créer la session de paiement Stripe
       const paymentResponse = await fetch(`${API_URL}/api/payment/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -320,18 +379,25 @@ export default function CheckoutOrderSummary({
       const paymentResult = await paymentResponse.json();
       const url = paymentResult.url || paymentResult.payment?.url;
 
+      // Étape 7 : Rediriger vers la page de paiement Stripe
       if (url) {
         window.location.href = url;
       } else {
         throw new Error("URL de paiement non reçue");
       }
     } catch (err) {
+      // Gestion des erreurs : afficher le message d'erreur à l'utilisateur
       console.error("Error completing order:", err);
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
       setIsProcessing(false);
     }
   };
 
+  /**
+   * Fonction utilitaire pour obtenir le label de civilité à partir de l'ID
+   * @param civilityId - ID de la civilité (1: M., 2: Mme, 3: Autre)
+   * @returns Label de la civilité
+   */
   const getCivilityLabel = (civilityId: number): string => {
     const civilities: Record<number, string> = {
       1: "M.",
@@ -351,6 +417,7 @@ export default function CheckoutOrderSummary({
         boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
       }}
     >
+      {/* En-tête du formulaire avec numéro d'étape */}
       <div
         className="checkout-form-header"
         style={{
@@ -388,6 +455,7 @@ export default function CheckoutOrderSummary({
         </h2>
       </div>
 
+      {/* Affichage des erreurs éventuelles */}
       {error && (
         <div
           style={{
@@ -408,6 +476,7 @@ export default function CheckoutOrderSummary({
         </div>
       )}
 
+      {/* Grille principale : informations client à gauche, commande à droite */}
       <div
         style={{
           display: "grid",
@@ -416,6 +485,7 @@ export default function CheckoutOrderSummary({
           alignItems: "stretch",
         }}
       >
+        {/* Colonne gauche : Informations client et adresses */}
         <div
           style={{
             gridColumn: 1,
@@ -428,6 +498,7 @@ export default function CheckoutOrderSummary({
             flexDirection: "column",
           }}
         >
+          {/* Section informations client */}
           <div style={{ marginBottom: "2.5rem" }}>
             <h3
               style={{
@@ -476,6 +547,7 @@ export default function CheckoutOrderSummary({
             </div>
           </div>
 
+          {/* Section adresse de livraison */}
           <div style={{ marginBottom: "2.5rem" }}>
             <h3
               style={{
@@ -508,6 +580,7 @@ export default function CheckoutOrderSummary({
             </div>
           </div>
 
+          {/* Section adresse de facturation (affichée uniquement si différente de l'adresse de livraison) */}
           {billingAddress.address !== shippingAddress.address && (
             <div style={{ marginBottom: "2.5rem" }}>
               <h3
@@ -543,6 +616,7 @@ export default function CheckoutOrderSummary({
           )}
         </div>
 
+        {/* Colonne droite : Détail de la commande et totaux */}
         <div
           style={{
             gridColumn: 2,
@@ -571,6 +645,7 @@ export default function CheckoutOrderSummary({
             Votre commande
           </h3>
 
+          {/* Liste des produits commandés */}
           <div style={{ marginBottom: "2rem" }}>
             {products.map((item, index) => {
               const vatMultiplier = 1 + (item.vatRate || 0) / 100;
@@ -625,6 +700,7 @@ export default function CheckoutOrderSummary({
             })}
           </div>
 
+          {/* Section des totaux */}
           <div
             style={{
               padding: "2rem",
@@ -633,6 +709,7 @@ export default function CheckoutOrderSummary({
               border: "2px solid #e0e0e0",
             }}
           >
+            {/* Total HT */}
             <div
               style={{
                 display: "flex",
@@ -646,6 +723,7 @@ export default function CheckoutOrderSummary({
               <span>{totals.totalHT.toFixed(2)} €</span>
             </div>
 
+            {/* Détail de la TVA par taux */}
             {totals.breakdown.map((b) => (
               <div
                 key={b.rate}
@@ -662,7 +740,7 @@ export default function CheckoutOrderSummary({
               </div>
             ))}
 
-            {/* Total TVA (cumul) */}
+            {/* Total TVA (cumul de tous les taux) */}
             <div
               style={{
                 display: "flex",
@@ -677,6 +755,7 @@ export default function CheckoutOrderSummary({
               <span>{totals.vatAmount.toFixed(2)} €</span>
             </div>
 
+            {/* Total TTC (montant final à payer) */}
             <div
               style={{
                 display: "flex",
@@ -696,6 +775,7 @@ export default function CheckoutOrderSummary({
         </div>
       </div>
 
+      {/* Section d'information sur le paiement sécurisé */}
       <div
         style={{
           marginTop: "3rem",
@@ -728,6 +808,7 @@ export default function CheckoutOrderSummary({
         </p>
       </div>
 
+      {/* Boutons de navigation */}
       <div
         className="checkout-form-actions"
         style={{
@@ -739,6 +820,7 @@ export default function CheckoutOrderSummary({
           borderTop: "2px solid #e0e0e0",
         }}
       >
+        {/* Bouton retour */}
         <button
           type="button"
           onClick={onBack}
@@ -772,6 +854,7 @@ export default function CheckoutOrderSummary({
           ></i>
           Retour
         </button>
+        {/* Bouton procéder au paiement */}
         <button
           type="button"
           onClick={handleCompleteOrder}
@@ -816,6 +899,7 @@ export default function CheckoutOrderSummary({
         </button>
       </div>
 
+      {/* Styles CSS pour le responsive design */}
       <style jsx>{`
         /* Responsive Design pour CheckoutOrderSummary */
 

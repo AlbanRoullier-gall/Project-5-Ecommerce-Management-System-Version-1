@@ -1,34 +1,29 @@
+/**
+ * Page du panier
+ *
+ * Cette page affiche le contenu du panier de l'utilisateur.
+ * Elle utilise plusieurs composants modulaires pour une meilleure organisation :
+ * - CartHeader : En-tête avec titre et bouton retour
+ * - CartItem : Affichage de chaque article du panier
+ * - CartSummaryWrapper : Résumé avec totaux et bouton de commande
+ * - CartEmpty : Message lorsque le panier est vide
+ */
+
 "use client";
 
 import Head from "next/head";
-import Link from "next/link";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useCart } from "../contexts/CartContext";
-import CartItem from "../components/cart/CartItem";
-import { useMemo } from "react";
+import {
+  CartItem,
+  CartHeader,
+  CartSummaryWrapper,
+  CartEmpty,
+} from "../components/cart";
 
-/**
- * Page du panier
- * Design moderne avec styles inline
- */
 export default function CartPage() {
   const { cart, isLoading, error } = useCart();
-
-  const totals = useMemo(() => {
-    if (!cart || !cart.items || cart.items.length === 0) {
-      return {
-        totalHT: 0,
-        totalTTC: cart?.total || 0,
-        vatAmount: 0,
-        breakdown: [] as { rate: number; amount: number }[],
-      };
-    }
-
-    // Utiliser les totaux calculés par le CartContext
-    const { totals } = useCart();
-    return totals;
-  }, [cart]);
 
   return (
     <>
@@ -50,59 +45,8 @@ export default function CartPage() {
             minHeight: "60vh",
           }}
         >
-          {/* Header avec titre et bouton retour */}
-          <div
-            className="cart-header cart-header-flex"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "3rem",
-            }}
-          >
-            <h1
-              className="cart-title"
-              style={{
-                fontSize: "3rem",
-                color: "#333",
-                fontWeight: "700",
-                display: "flex",
-                alignItems: "center",
-                gap: "1rem",
-              }}
-            >
-              Votre Panier
-            </h1>
-
-            <Link
-              href="/#catalog"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.8rem",
-                padding: "1rem 2rem",
-                background: "white",
-                color: "#13686a",
-                textDecoration: "none",
-                borderRadius: "8px",
-                fontWeight: "600",
-                fontSize: "1.1rem",
-                border: "2px solid #13686a",
-                transition: "all 0.3s ease",
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = "#13686a";
-                e.currentTarget.style.color = "white";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = "white";
-                e.currentTarget.style.color = "#13686a";
-              }}
-            >
-              <i className="fas fa-arrow-left"></i>
-              Continuer mes achats
-            </Link>
-          </div>
+          {/* En-tête avec titre et bouton retour */}
+          <CartHeader />
 
           {/* Message d'erreur */}
           {error && (
@@ -149,73 +93,7 @@ export default function CartPage() {
 
           {/* Panier vide */}
           {!isLoading && (!cart || !cart.items || cart.items.length === 0) && (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "5rem 2rem",
-                background: "white",
-                borderRadius: "16px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              }}
-            >
-              <i
-                className="fas fa-shopping-cart cart-empty-icon"
-                style={{
-                  fontSize: "6rem",
-                  color: "#ddd",
-                  marginBottom: "2rem",
-                }}
-              ></i>
-              <h2
-                className="cart-empty-title"
-                style={{
-                  fontSize: "2.5rem",
-                  marginBottom: "1rem",
-                  color: "#333",
-                  fontWeight: "600",
-                }}
-              >
-                Votre panier est vide
-              </h2>
-              <p
-                className="cart-empty-text"
-                style={{
-                  fontSize: "1.3rem",
-                  color: "#666",
-                  marginBottom: "3rem",
-                }}
-              >
-                Découvrez nos produits et ajoutez-les à votre panier
-              </p>
-              <Link
-                href="/#catalog"
-                className="cart-empty-button"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "1rem",
-                  padding: "1.2rem 3rem",
-                  background:
-                    "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-                  color: "white",
-                  textDecoration: "none",
-                  borderRadius: "12px",
-                  fontSize: "1.3rem",
-                  fontWeight: "600",
-                  boxShadow: "0 4px 12px rgba(19, 104, 106, 0.3)",
-                  transition: "transform 0.2s ease",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
-              >
-                <i className="fas fa-store"></i>
-                Voir nos produits
-              </Link>
-            </div>
+            <CartEmpty />
           )}
 
           {/* Panier avec articles */}
@@ -235,196 +113,9 @@ export default function CartPage() {
                   <CartItem key={item.id} item={item} />
                 ))}
               </div>
+
               {/* Résumé du panier */}
-              <div
-                className="cart-summary-wrapper"
-                style={{ alignSelf: "center" }}
-              >
-                <div
-                  className="cart-summary"
-                  style={{
-                    background: "white",
-                    borderRadius: "16px",
-                    padding: "2.5rem",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                    position: "sticky",
-                    top: "2rem",
-                    border: "3px solid #13686a",
-                  }}
-                >
-                  <h2
-                    style={{
-                      fontSize: "2rem",
-                      marginBottom: "2rem",
-                      color: "#333",
-                      fontWeight: "700",
-                      paddingBottom: "1.5rem",
-                      borderBottom: "2px solid #e0e0e0",
-                      textAlign: "center",
-                    }}
-                  >
-                    Résumé du panier
-                  </h2>
-
-                  {/* Indication du pays avec transparence */}
-                  <div
-                    style={{
-                      fontSize: "0.95rem",
-                      color: "#64748b",
-                      opacity: 0.7,
-                      fontWeight: 600,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                      marginTop: "-1.2rem",
-                      marginBottom: "1.2rem",
-                    }}
-                  >
-                    Belgique
-                  </div>
-
-                  <div style={{ marginBottom: "2rem" }}>
-                    <div
-                      className="cart-summary-row"
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "0.6rem 0",
-                        fontSize: "1.4rem",
-                        color: "#555",
-                        fontWeight: 700,
-                      }}
-                    >
-                      <span>Total HT</span>
-                      <span>{totals.totalHT.toFixed(2)} €</span>
-                    </div>
-
-                    {/* Détail des taux de TVA par ligne supprimé sur demande */}
-
-                    {/* Total TVA (cumul) */}
-                    <div
-                      className="cart-summary-row"
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "0.8rem 0",
-                        fontSize: "1.5rem",
-                        color: "#333",
-                        fontWeight: 400,
-                      }}
-                    >
-                      <span>Total TVA</span>
-                      <span>{totals.vatAmount.toFixed(2)} €</span>
-                    </div>
-
-                    <div
-                      className="cart-summary-row cart-summary-total"
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "1.5rem 0",
-                        fontSize: "1.8rem",
-                        color: "#13686a",
-                        fontWeight: "700",
-                        borderTop: "2px solid #e0e0e0",
-                        marginTop: "1rem",
-                      }}
-                    >
-                      <span>Total TTC</span>
-                      <span>{cart.total.toFixed(2)} €</span>
-                    </div>
-                  </div>
-
-                  {/* Boutons d'action */}
-                  <div style={{ marginBottom: "2rem" }}>
-                    <Link
-                      href="/checkout"
-                      className="cart-checkout-button"
-                      style={{
-                        width: "100%",
-                        padding: "1.5rem",
-                        background: isLoading
-                          ? "#ccc"
-                          : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "12px",
-                        fontSize: "1.5rem",
-                        fontWeight: "700",
-                        cursor: isLoading ? "not-allowed" : "pointer",
-                        marginBottom: "1rem",
-                        boxShadow: "0 4px 12px rgba(19, 104, 106, 0.3)",
-                        transition: "transform 0.2s ease",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "1rem",
-                        textDecoration: "none",
-                        pointerEvents: isLoading ? "none" : "auto",
-                      }}
-                      onMouseOver={(e) => {
-                        if (!isLoading) {
-                          e.currentTarget.style.transform = "translateY(-2px)";
-                        }
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                      }}
-                    >
-                      <i className="fas fa-credit-card"></i>
-                      Passer la commande
-                    </Link>
-                  </div>
-
-                  {/* Informations supplémentaires */}
-                  <div
-                    style={{
-                      paddingTop: "2rem",
-                      borderTop: "2px solid #e0e0e0",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div
-                      className="cart-info-item"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "1rem",
-                        marginBottom: "1rem",
-                        fontSize: "1.2rem",
-                        color: "#666",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <i
-                        className="fas fa-lock"
-                        style={{ color: "#13686a", fontSize: "1.4rem" }}
-                      ></i>
-                      <span>Paiement sécurisé</span>
-                    </div>
-                    <div
-                      className="cart-info-item"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "1rem",
-                        fontSize: "1.2rem",
-                        color: "#666",
-                      }}
-                    ></div>
-
-                    <div
-                      className="cart-info-item"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "1rem",
-                        fontSize: "1.2rem",
-                        color: "#666",
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
+              <CartSummaryWrapper />
             </div>
           )}
         </div>

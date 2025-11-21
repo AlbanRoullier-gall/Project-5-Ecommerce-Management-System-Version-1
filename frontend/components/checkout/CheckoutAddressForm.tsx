@@ -1,14 +1,29 @@
 /**
  * Composant formulaire adresses de livraison et facturation
+ *
+ * Ce composant gère la saisie de l'adresse de livraison lors du processus de checkout.
+ * Il charge la liste des pays disponibles depuis l'API et filtre pour ne garder que la Belgique.
+ * Le formulaire valide que tous les champs obligatoires sont remplis avant de passer à l'étape suivante.
  */
 
 import React, { useState, useEffect } from "react";
 import { AddressCreateDTO, CountryDTO } from "../../dto";
 
+/**
+ * Structure des données du formulaire d'adresse
+ * Contient uniquement l'adresse de livraison (shipping)
+ */
 interface AddressFormData {
   shipping: Partial<AddressCreateDTO>;
 }
 
+/**
+ * Props du composant CheckoutAddressForm
+ * @param formData - Données actuelles du formulaire (adresse de livraison)
+ * @param onChange - Callback appelé lors de la modification des données
+ * @param onNext - Callback appelé pour passer à l'étape suivante
+ * @param onBack - Callback appelé pour revenir à l'étape précédente
+ */
 interface CheckoutAddressFormProps {
   formData: AddressFormData;
   onChange: (data: AddressFormData) => void;
@@ -16,6 +31,7 @@ interface CheckoutAddressFormProps {
   onBack: () => void;
 }
 
+// URL de l'API backend
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
 export default function CheckoutAddressForm({
@@ -24,10 +40,16 @@ export default function CheckoutAddressForm({
   onNext,
   onBack,
 }: CheckoutAddressFormProps) {
-  const [countries, setCountries] = useState<CountryDTO[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // État local du composant
+  const [countries, setCountries] = useState<CountryDTO[]>([]); // Liste des pays disponibles (filtrée pour la Belgique)
+  const [isLoading, setIsLoading] = useState(false); // Indicateur de chargement
+  const [error, setError] = useState<string | null>(null); // Message d'erreur éventuel
 
+  /**
+   * Effet pour charger la liste des pays au montage du composant
+   * Filtre automatiquement pour ne garder que la Belgique
+   * Définit la Belgique comme pays par défaut si aucune adresse n'est encore saisie
+   */
   useEffect(() => {
     const loadCountries = async () => {
       try {
@@ -85,6 +107,11 @@ export default function CheckoutAddressForm({
     loadCountries();
   }, []);
 
+  /**
+   * Gère les changements dans les champs de l'adresse de livraison
+   * Met à jour le state local et notifie le composant parent via onChange
+   * @param e - Événement de changement sur un input ou select
+   */
   const handleShippingChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -99,9 +126,15 @@ export default function CheckoutAddressForm({
     });
   };
 
+  /**
+   * Gère la soumission du formulaire
+   * Valide que tous les champs obligatoires sont remplis avant de passer à l'étape suivante
+   * @param e - Événement de soumission du formulaire
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validation des champs obligatoires
     if (
       !formData.shipping.address ||
       !formData.shipping.city ||
@@ -114,9 +147,17 @@ export default function CheckoutAddressForm({
       return;
     }
 
+    // Passer à l'étape suivante si la validation réussit
     onNext();
   };
 
+  /**
+   * Fonction utilitaire pour rendre les champs d'adresse
+   * Crée les inputs pour l'adresse complète, code postal, ville et pays
+   * @param data - Données de l'adresse à afficher
+   * @param handleChange - Handler pour gérer les changements
+   * @returns JSX contenant les champs du formulaire d'adresse
+   */
   const renderAddressFields = (
     data: Partial<AddressCreateDTO>,
     handleChange: (
@@ -262,6 +303,7 @@ export default function CheckoutAddressForm({
         boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
       }}
     >
+      {/* En-tête du formulaire avec numéro d'étape */}
       <div
         className="checkout-form-header"
         style={{
@@ -300,6 +342,7 @@ export default function CheckoutAddressForm({
       </div>
 
       <form onSubmit={handleSubmit}>
+        {/* Section adresse de livraison */}
         <div style={{ marginBottom: "3rem" }}>
           <h3
             style={{
@@ -327,6 +370,7 @@ export default function CheckoutAddressForm({
           </div>
         </div>
 
+        {/* Affichage des erreurs éventuelles */}
         {error && (
           <div
             style={{
@@ -343,6 +387,7 @@ export default function CheckoutAddressForm({
           </div>
         )}
 
+        {/* Boutons de navigation */}
         <div
           className="checkout-form-actions"
           style={{
@@ -353,6 +398,7 @@ export default function CheckoutAddressForm({
             borderTop: "2px solid #e0e0e0",
           }}
         >
+          {/* Bouton retour */}
           <button
             type="button"
             onClick={onBack}
@@ -382,6 +428,7 @@ export default function CheckoutAddressForm({
             ></i>
             Retour
           </button>
+          {/* Bouton continuer */}
           <button
             type="submit"
             style={{
@@ -413,6 +460,7 @@ export default function CheckoutAddressForm({
         </div>
       </form>
 
+      {/* Styles CSS pour le responsive design */}
       <style jsx>{`
         /* Responsive Design pour CheckoutAddressForm */
 

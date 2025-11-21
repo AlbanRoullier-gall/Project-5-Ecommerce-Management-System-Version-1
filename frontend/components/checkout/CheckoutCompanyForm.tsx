@@ -1,10 +1,21 @@
 /**
  * Composant formulaire informations entreprise (optionnel)
+ * 
+ * Ce composant permet au client de saisir des informations d'entreprise lors du checkout.
+ * L'achat en tant qu'entreprise est optionnel - le client peut cocher une case pour activer ce mode.
+ * Les champs incluent le nom de l'entreprise, le numéro SIRET et le numéro TVA.
  */
 
 import React, { useState } from "react";
 import { CompanyCreateDTO } from "../../dto";
 
+/**
+ * Props du composant CheckoutCompanyForm
+ * @param formData - Données actuelles du formulaire entreprise (null si non activé)
+ * @param onChange - Callback appelé lors de la modification des données
+ * @param onNext - Callback appelé pour passer à l'étape suivante
+ * @param onBack - Callback appelé pour revenir à l'étape précédente
+ */
 interface CheckoutCompanyFormProps {
   formData: Partial<CompanyCreateDTO> | null;
   onChange: (data: Partial<CompanyCreateDTO> | null) => void;
@@ -18,14 +29,25 @@ export default function CheckoutCompanyForm({
   onNext,
   onBack,
 }: CheckoutCompanyFormProps) {
+  // État local indiquant si l'achat est effectué en tant qu'entreprise
   const [isCompany, setIsCompany] = useState(!!formData);
 
+  /**
+   * Gère le changement de la case à cocher "achat entreprise"
+   * Active ou désactive le formulaire entreprise selon l'état de la case
+   * @param e - Événement de changement sur la checkbox
+   */
   const handleCompanyToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
     setIsCompany(checked);
     onChange(checked ? {} : null);
   };
 
+  /**
+   * Gère les changements dans les champs du formulaire entreprise
+   * Met à jour les données du formulaire via le callback onChange
+   * @param e - Événement de changement sur un input
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     onChange({
@@ -34,10 +56,15 @@ export default function CheckoutCompanyForm({
     });
   };
 
+  /**
+   * Gère la soumission du formulaire
+   * Valide que le nom de l'entreprise est rempli si l'achat est en mode entreprise
+   * @param e - Événement de soumission du formulaire
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Si achat en tant qu'entreprise, validation
+    // Validation : si achat en tant qu'entreprise, le nom est obligatoire
     if (isCompany && formData) {
       if (!formData.companyName) {
         alert("Veuillez remplir le nom de l'entreprise");
@@ -45,6 +72,7 @@ export default function CheckoutCompanyForm({
       }
     }
 
+    // Passer à l'étape suivante si la validation réussit
     onNext();
   };
 
@@ -93,7 +121,7 @@ export default function CheckoutCompanyForm({
       </div>
 
       <form onSubmit={handleSubmit}>
-        {/* Case à cocher pour achat entreprise */}
+        {/* Section case à cocher pour activer l'achat entreprise */}
         <div
           style={{
             marginBottom: "3rem",
@@ -141,7 +169,7 @@ export default function CheckoutCompanyForm({
           </label>
         </div>
 
-        {/* Formulaire entreprise */}
+        {/* Formulaire entreprise - affiché uniquement si la case est cochée */}
         {isCompany && (
           <div
             style={{
@@ -253,6 +281,7 @@ export default function CheckoutCompanyForm({
           </div>
         )}
 
+        {/* Message affiché si l'achat n'est pas en mode entreprise */}
         {!isCompany && (
           <div
             style={{
@@ -279,7 +308,7 @@ export default function CheckoutCompanyForm({
           </div>
         )}
 
-        {/* Boutons de navigation */}
+        {/* Boutons de navigation (retour et continuer) */}
         <div
           style={{
             display: "flex",

@@ -1,10 +1,26 @@
 /**
  * Composant formulaire informations client
+ * 
+ * Ce composant gère la première étape du processus de checkout.
+ * Il permet de saisir les informations personnelles du client :
+ * - Prénom (obligatoire)
+ * - Nom (obligatoire)
+ * - Email (obligatoire)
+ * - Téléphone (optionnel)
+ * 
+ * Le formulaire valide que tous les champs obligatoires sont remplis avant de passer à l'étape suivante.
  */
 
 import React, { useEffect, useState } from "react";
 import { CustomerCreateDTO } from "../../dto";
 
+/**
+ * Props du composant CheckoutCustomerForm
+ * @param formData - Données actuelles du formulaire client
+ * @param onChange - Callback appelé lors de la modification des données
+ * @param onNext - Callback appelé pour passer à l'étape suivante
+ * @param onBack - Callback optionnel pour revenir à l'étape précédente
+ */
 interface CheckoutCustomerFormProps {
   formData: Partial<CustomerCreateDTO>;
   onChange: (data: Partial<CustomerCreateDTO>) => void;
@@ -18,13 +34,24 @@ export default function CheckoutCustomerForm({
   onNext,
   onBack,
 }: CheckoutCustomerFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // État local du composant
+  const [isLoading, setIsLoading] = useState(false); // Indicateur de chargement
+  const [error, setError] = useState<string | null>(null); // Message d'erreur éventuel
+
+  /**
+   * Effet au montage du composant
+   * Réinitialise les erreurs éventuelles
+   */
   useEffect(() => {
     // No reference data to load anymore
     setError(null);
   }, []);
 
+  /**
+   * Gère les changements dans les champs du formulaire
+   * Met à jour le state local et notifie le composant parent via onChange
+   * @param e - Événement de changement sur un input ou select
+   */
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -35,14 +62,21 @@ export default function CheckoutCustomerForm({
     });
   };
 
+  /**
+   * Gère la soumission du formulaire
+   * Valide que tous les champs obligatoires (prénom, nom, email) sont remplis
+   * @param e - Événement de soumission du formulaire
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validation des champs obligatoires
     if (!formData.firstName || !formData.lastName || !formData.email) {
       alert("Veuillez remplir tous les champs obligatoires");
       return;
     }
 
+    // Passer à l'étape suivante si la validation réussit
     onNext();
   };
 
@@ -94,6 +128,7 @@ export default function CheckoutCustomerForm({
       </div>
 
       <form onSubmit={handleSubmit}>
+        {/* Grille de champs du formulaire */}
         <div
           className="checkout-form-grid"
           style={{
@@ -107,6 +142,7 @@ export default function CheckoutCustomerForm({
 
           {/* Catégorie socio-professionnelle supprimée */}
 
+          {/* Champ prénom */}
           <div className="checkout-form-group">
             <label
               style={{
@@ -139,6 +175,7 @@ export default function CheckoutCustomerForm({
             />
           </div>
 
+          {/* Champ nom */}
           <div className="checkout-form-group">
             <label
               style={{
@@ -171,6 +208,7 @@ export default function CheckoutCustomerForm({
             />
           </div>
 
+          {/* Champ email */}
           <div className="checkout-form-group">
             <label
               style={{
@@ -203,6 +241,7 @@ export default function CheckoutCustomerForm({
             />
           </div>
 
+          {/* Champ téléphone (optionnel) */}
           <div className="checkout-form-group">
             <label
               style={{
@@ -237,6 +276,7 @@ export default function CheckoutCustomerForm({
           {/* Date de naissance supprimée */}
         </div>
 
+        {/* Affichage des erreurs éventuelles */}
         {error && (
           <div
             style={{
@@ -253,6 +293,7 @@ export default function CheckoutCustomerForm({
           </div>
         )}
 
+        {/* Boutons de navigation */}
         <div
           className="checkout-form-actions"
           style={{
@@ -263,6 +304,7 @@ export default function CheckoutCustomerForm({
             borderTop: "2px solid #e0e0e0",
           }}
         >
+          {/* Bouton retour (affiché uniquement si onBack est défini) */}
           {onBack && (
             <button
               type="button"
@@ -294,6 +336,7 @@ export default function CheckoutCustomerForm({
               Retour
             </button>
           )}
+          {/* Bouton continuer */}
           <button
             type="submit"
             style={{
@@ -325,6 +368,7 @@ export default function CheckoutCustomerForm({
         </div>
       </form>
 
+      {/* Styles CSS pour le responsive design */}
       <style jsx>{`
         /* Responsive Design pour CheckoutCustomerForm */
 
