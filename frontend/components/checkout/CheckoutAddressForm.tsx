@@ -33,10 +33,54 @@ export default function CheckoutAddressForm() {
     const updatedShipping = {
       ...addressData.shipping,
       [name]: value,
+      addressType: "shipping" as const,
+      countryName: addressData.shipping.countryName || "Belgique",
     };
 
     updateAddressData({
+      ...addressData,
       shipping: updatedShipping,
+      // Si "même adresse", copier aussi dans billing
+      billing: addressData.useSameBillingAddress
+        ? { ...updatedShipping, addressType: "billing" as const }
+        : addressData.billing,
+    });
+  };
+
+  /**
+   * Gère les changements dans les champs de l'adresse de facturation
+   */
+  const handleBillingChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    const updatedBilling = {
+      ...addressData.billing,
+      [name]: value,
+      addressType: "billing" as const,
+      countryName: addressData.billing.countryName || "Belgique",
+    };
+
+    updateAddressData({
+      ...addressData,
+      billing: updatedBilling,
+    });
+  };
+
+  /**
+   * Gère le changement du checkbox "Même adresse de facturation"
+   */
+  const handleUseSameBillingAddressChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const useSame = e.target.checked;
+    updateAddressData({
+      ...addressData,
+      useSameBillingAddress: useSame,
+      // Si coché, copier l'adresse de livraison dans l'adresse de facturation
+      billing: useSame
+        ? { ...addressData.shipping, addressType: "billing" as const }
+        : addressData.billing,
     });
   };
 
@@ -46,7 +90,7 @@ export default function CheckoutAddressForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation des champs obligatoires (countryName est toujours "Belgique", pas besoin de le vérifier)
+    // Validation des champs obligatoires de l'adresse de livraison
     if (
       !addressData.shipping.address ||
       !addressData.shipping.city ||
@@ -54,6 +98,19 @@ export default function CheckoutAddressForm() {
     ) {
       alert(
         "Veuillez remplir tous les champs obligatoires de l'adresse de livraison"
+      );
+      return;
+    }
+
+    // Validation des champs obligatoires de l'adresse de facturation si elle est différente
+    if (
+      !addressData.useSameBillingAddress &&
+      (!addressData.billing.address ||
+        !addressData.billing.city ||
+        !addressData.billing.postalCode)
+    ) {
+      alert(
+        "Veuillez remplir tous les champs obligatoires de l'adresse de facturation"
       );
       return;
     }
@@ -66,139 +123,143 @@ export default function CheckoutAddressForm() {
    * Fonction utilitaire pour rendre les champs d'adresse
    */
   const renderAddressFields = (
-    data: Partial<AddressCreateDTO>,
+    data: Partial<AddressCreateDTO> | undefined,
     handleChange: (
       e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => void
-  ) => (
-    <>
-      <div className="checkout-form-group" style={{ gridColumn: "1 / -1" }}>
-        <label
-          style={{
-            display: "block",
-            marginBottom: "0.8rem",
-            fontSize: "1.3rem",
-            fontWeight: "600",
-            color: "#333",
-          }}
-        >
-          Adresse complète <span style={{ color: "#c33" }}>*</span>
-        </label>
-        <input
-          type="text"
-          name="address"
-          value={data.address || ""}
-          onChange={handleChange}
-          required
-          placeholder="Numéro et nom de rue"
-          style={{
-            width: "100%",
-            padding: "1.2rem",
-            fontSize: "1.3rem",
-            border: "2px solid #ddd",
-            borderRadius: "8px",
-            transition: "border-color 0.3s ease",
-          }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-          onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-        />
-      </div>
+  ) => {
+    // S'assurer que data est défini, sinon utiliser un objet vide
+    const addressData = data || {};
+    return (
+      <>
+        <div className="checkout-form-group" style={{ gridColumn: "1 / -1" }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "0.8rem",
+              fontSize: "1.3rem",
+              fontWeight: "600",
+              color: "#333",
+            }}
+          >
+            Adresse complète <span style={{ color: "#c33" }}>*</span>
+          </label>
+          <input
+            type="text"
+            name="address"
+            value={addressData.address || ""}
+            onChange={handleChange}
+            required
+            placeholder="Numéro et nom de rue"
+            style={{
+              width: "100%",
+              padding: "1.2rem",
+              fontSize: "1.3rem",
+              border: "2px solid #ddd",
+              borderRadius: "8px",
+              transition: "border-color 0.3s ease",
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
+          />
+        </div>
 
-      <div className="checkout-form-group">
-        <label
-          style={{
-            display: "block",
-            marginBottom: "0.8rem",
-            fontSize: "1.3rem",
-            fontWeight: "600",
-            color: "#333",
-          }}
-        >
-          Code postal <span style={{ color: "#c33" }}>*</span>
-        </label>
-        <input
-          type="text"
-          name="postalCode"
-          value={data.postalCode || ""}
-          onChange={handleChange}
-          required
-          placeholder="1000"
-          style={{
-            width: "100%",
-            padding: "1.2rem",
-            fontSize: "1.3rem",
-            border: "2px solid #ddd",
-            borderRadius: "8px",
-            transition: "border-color 0.3s ease",
-          }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-          onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-        />
-      </div>
+        <div className="checkout-form-group">
+          <label
+            style={{
+              display: "block",
+              marginBottom: "0.8rem",
+              fontSize: "1.3rem",
+              fontWeight: "600",
+              color: "#333",
+            }}
+          >
+            Code postal <span style={{ color: "#c33" }}>*</span>
+          </label>
+          <input
+            type="text"
+            name="postalCode"
+            value={addressData.postalCode || ""}
+            onChange={handleChange}
+            required
+            placeholder="1000"
+            style={{
+              width: "100%",
+              padding: "1.2rem",
+              fontSize: "1.3rem",
+              border: "2px solid #ddd",
+              borderRadius: "8px",
+              transition: "border-color 0.3s ease",
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
+          />
+        </div>
 
-      <div className="checkout-form-group">
-        <label
-          style={{
-            display: "block",
-            marginBottom: "0.8rem",
-            fontSize: "1.3rem",
-            fontWeight: "600",
-            color: "#333",
-          }}
-        >
-          Ville <span style={{ color: "#c33" }}>*</span>
-        </label>
-        <input
-          type="text"
-          name="city"
-          value={data.city || ""}
-          onChange={handleChange}
-          required
-          placeholder="Bruxelles"
-          style={{
-            width: "100%",
-            padding: "1.2rem",
-            fontSize: "1.3rem",
-            border: "2px solid #ddd",
-            borderRadius: "8px",
-            transition: "border-color 0.3s ease",
-          }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-          onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-        />
-      </div>
+        <div className="checkout-form-group">
+          <label
+            style={{
+              display: "block",
+              marginBottom: "0.8rem",
+              fontSize: "1.3rem",
+              fontWeight: "600",
+              color: "#333",
+            }}
+          >
+            Ville <span style={{ color: "#c33" }}>*</span>
+          </label>
+          <input
+            type="text"
+            name="city"
+            value={addressData.city || ""}
+            onChange={handleChange}
+            required
+            placeholder="Bruxelles"
+            style={{
+              width: "100%",
+              padding: "1.2rem",
+              fontSize: "1.3rem",
+              border: "2px solid #ddd",
+              borderRadius: "8px",
+              transition: "border-color 0.3s ease",
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
+          />
+        </div>
 
-      <div className="checkout-form-group" style={{ gridColumn: "1 / -1" }}>
-        <label
-          style={{
-            display: "block",
-            marginBottom: "0.8rem",
-            fontSize: "1.3rem",
-            fontWeight: "600",
-            color: "#333",
-          }}
-        >
-          Pays <span style={{ color: "#c33" }}>*</span>
-        </label>
-        <input
-          type="text"
-          name="countryName"
-          value={data.countryName || ""}
-          readOnly
-          style={{
-            width: "100%",
-            padding: "1.2rem",
-            fontSize: "1.3rem",
-            border: "2px solid #e0e0e0",
-            borderRadius: "8px",
-            backgroundColor: "#f8f9fa",
-            color: "#666",
-            cursor: "not-allowed",
-          }}
-        />
-      </div>
-    </>
-  );
+        <div className="checkout-form-group" style={{ gridColumn: "1 / -1" }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "0.8rem",
+              fontSize: "1.3rem",
+              fontWeight: "600",
+              color: "#333",
+            }}
+          >
+            Pays <span style={{ color: "#c33" }}>*</span>
+          </label>
+          <input
+            type="text"
+            name="countryName"
+            value={addressData.countryName || "Belgique"}
+            readOnly
+            style={{
+              width: "100%",
+              padding: "1.2rem",
+              fontSize: "1.3rem",
+              border: "2px solid #e0e0e0",
+              borderRadius: "8px",
+              backgroundColor: "#f8f9fa",
+              color: "#666",
+              cursor: "not-allowed",
+            }}
+          />
+        </div>
+      </>
+    );
+  };
 
   return (
     <div
@@ -273,9 +334,87 @@ export default function CheckoutAddressForm() {
               gap: "2rem",
             }}
           >
-            {renderAddressFields(addressData.shipping, handleShippingChange)}
+            {renderAddressFields(
+              addressData?.shipping || {},
+              handleShippingChange
+            )}
           </div>
         </div>
+
+        {/* Checkbox pour même adresse de facturation */}
+        <div
+          style={{
+            marginBottom: "3rem",
+            padding: "1.5rem",
+            background: "#f8f9fa",
+            borderRadius: "8px",
+            border: "2px solid #e0e0e0",
+          }}
+        >
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "1rem",
+              cursor: "pointer",
+              fontSize: "1.3rem",
+              fontWeight: "600",
+              color: "#333",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={addressData?.useSameBillingAddress ?? true}
+              onChange={handleUseSameBillingAddressChange}
+              style={{
+                width: "20px",
+                height: "20px",
+                cursor: "pointer",
+                accentColor: "#13686a",
+              }}
+            />
+            <span>
+              <i
+                className="fas fa-check-square"
+                style={{ marginRight: "0.5rem" }}
+              ></i>
+              Utiliser la même adresse pour la facturation
+            </span>
+          </label>
+        </div>
+
+        {/* Section adresse de facturation (affichée uniquement si différente) */}
+        {!(addressData?.useSameBillingAddress ?? true) && (
+          <div style={{ marginBottom: "3rem" }}>
+            <h3
+              style={{
+                fontSize: "1.8rem",
+                fontWeight: "600",
+                color: "#13686a",
+                marginBottom: "1.5rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.8rem",
+              }}
+            >
+              <i className="fas fa-file-invoice"></i>
+              Adresse de facturation
+            </h3>
+            <div
+              className="checkout-form-grid"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "2rem",
+              }}
+            >
+              {renderAddressFields(
+                addressData?.billing || {},
+                handleBillingChange
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Affichage des erreurs éventuelles */}
         {error && (

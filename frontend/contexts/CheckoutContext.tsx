@@ -13,6 +13,8 @@ import { CustomerCreateDTO, AddressCreateDTO } from "../dto";
  */
 interface AddressFormData {
   shipping: Partial<AddressCreateDTO>;
+  billing: Partial<AddressCreateDTO>;
+  useSameBillingAddress: boolean;
 }
 
 /**
@@ -80,6 +82,8 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   );
   const [addressData, setAddressData] = useState<AddressFormData>({
     shipping: {} as Partial<AddressCreateDTO>,
+    billing: {} as Partial<AddressCreateDTO>,
+    useSameBillingAddress: true,
   });
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -113,7 +117,13 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         if (parsed && storedSessionId === sessionId) {
           // Restaurer uniquement les données, pas l'étape (toujours commencer à 1)
           setCustomerData(parsed.customerData || {});
-          setAddressData(parsed.addressData || { shipping: {} });
+          setAddressData(
+            parsed.addressData || {
+              shipping: {},
+              billing: {},
+              useSameBillingAddress: true,
+            }
+          );
           // currentStep reste à 1 (valeur par défaut)
         } else if (storedSessionId !== sessionId) {
           // Si la sessionId a changé, nettoyer les données
@@ -163,7 +173,11 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
    */
   const resetCheckout = useCallback(() => {
     setCustomerData({});
-    setAddressData({ shipping: {} });
+    setAddressData({
+      shipping: {},
+      billing: {},
+      useSameBillingAddress: true,
+    });
 
     if (typeof window !== "undefined") {
       try {

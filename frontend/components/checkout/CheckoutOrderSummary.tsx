@@ -21,6 +21,7 @@ import {
   CartItemPublicDTO,
   CustomerPublicDTO,
   ProductPublicDTO,
+  AddressCreateDTO,
 } from "../../dto";
 import { useCart } from "../../contexts/CartContext";
 import { useCheckout } from "../../contexts/CheckoutContext";
@@ -44,9 +45,11 @@ export default function CheckoutOrderSummary() {
   const { cart } = useCart();
   const { customerData, addressData, resetCheckout } = useCheckout();
 
-  // Utiliser l'adresse de livraison pour les deux adresses pour l'instant
+  // Utiliser les adresses depuis le contexte
   const shippingAddress = addressData.shipping;
-  const billingAddress = addressData.shipping;
+  const billingAddress = addressData.useSameBillingAddress
+    ? addressData.shipping
+    : addressData.billing;
   // État local du composant
   const [isProcessing, setIsProcessing] = useState(false); // Indicateur de traitement en cours
   const [error, setError] = useState<string | null>(null); // Message d'erreur éventuel
@@ -142,13 +145,18 @@ export default function CheckoutOrderSummary() {
       // Cette étape est non-bloquante : si elle échoue, on continue quand même
       try {
         // Créer l'adresse de livraison (toujours définie comme adresse par défaut)
-        if (shippingAddress && shippingAddress.address) {
-          const shippingAddressDTO = {
+        if (
+          shippingAddress &&
+          shippingAddress.address &&
+          shippingAddress.postalCode &&
+          shippingAddress.city
+        ) {
+          const shippingAddressDTO: AddressCreateDTO = {
             addressType: "shipping",
             address: shippingAddress.address,
             postalCode: shippingAddress.postalCode,
             city: shippingAddress.city,
-            countryName: shippingAddress.countryName,
+            countryName: shippingAddress.countryName || "Belgique",
             isDefault: true, // Toujours définir l'adresse de livraison comme par défaut
           };
 
@@ -185,14 +193,17 @@ export default function CheckoutOrderSummary() {
         if (
           billingAddress &&
           billingAddress.address &&
+          billingAddress.postalCode &&
+          billingAddress.city &&
+          !addressData.useSameBillingAddress &&
           billingAddress.address !== shippingAddress?.address
         ) {
-          const billingAddressDTO = {
+          const billingAddressDTO: AddressCreateDTO = {
             addressType: "billing",
             address: billingAddress.address,
             postalCode: billingAddress.postalCode,
             city: billingAddress.city,
-            countryName: billingAddress.countryName,
+            countryName: billingAddress.countryName || "Belgique",
             isDefault: false, // L'adresse de facturation n'est pas par défaut
           };
 
@@ -503,39 +514,40 @@ export default function CheckoutOrderSummary() {
           </div>
 
           {/* Section adresse de facturation (affichée uniquement si différente de l'adresse de livraison) */}
-          {billingAddress.address !== shippingAddress.address && (
-            <div style={{ marginBottom: "2.5rem" }}>
-              <h3
-                style={{
-                  fontSize: "1.6rem",
-                  fontWeight: "600",
-                  color: "#13686a",
-                  marginBottom: "1.5rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.8rem",
-                }}
-              >
-                <i className="fas fa-file-invoice"></i>
-                Adresse de facturation
-              </h3>
-              <div
-                style={{
-                  padding: "1.5rem",
-                  background: "#f8f9fa",
-                  borderRadius: "8px",
-                  fontSize: "1.3rem",
-                  color: "#666",
-                }}
-              >
-                <p>{billingAddress.address}</p>
-                <p>
-                  {billingAddress.postalCode} {billingAddress.city}
-                </p>
-                <p>{billingAddress.countryName}</p>
+          {!addressData.useSameBillingAddress &&
+            billingAddress.address !== shippingAddress.address && (
+              <div style={{ marginBottom: "2.5rem" }}>
+                <h3
+                  style={{
+                    fontSize: "1.6rem",
+                    fontWeight: "600",
+                    color: "#13686a",
+                    marginBottom: "1.5rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.8rem",
+                  }}
+                >
+                  <i className="fas fa-file-invoice"></i>
+                  Adresse de facturation
+                </h3>
+                <div
+                  style={{
+                    padding: "1.5rem",
+                    background: "#f8f9fa",
+                    borderRadius: "8px",
+                    fontSize: "1.3rem",
+                    color: "#666",
+                  }}
+                >
+                  <p>{billingAddress.address}</p>
+                  <p>
+                    {billingAddress.postalCode} {billingAddress.city}
+                  </p>
+                  <p>{billingAddress.countryName}</p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         {/* Colonne droite : Détail de la commande et totaux */}
