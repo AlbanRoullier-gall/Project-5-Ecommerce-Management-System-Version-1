@@ -1,7 +1,7 @@
 /**
  * Handler pour la finalisation de paiement après succès Stripe
  * Orchestre l'appel entre Payment Service, Cart Service, Customer Service, Order Service et Email Service
- * Note: L'enrichissement des items avec les noms de produits est fait côté frontend
+ * Note: Les items sont enrichis avec productName lors de l'ajout au panier côté frontend
  */
 
 import { Request, Response } from "express";
@@ -9,7 +9,7 @@ import { SERVICES } from "../../config";
 
 export const handleFinalizePayment = async (req: Request, res: Response) => {
   try {
-    const { csid, cartSessionId, items: frontendItems } = req.body || {};
+    const { csid, cartSessionId } = req.body || {};
 
     if (!csid) {
       return res.status(400).json({
@@ -93,15 +93,8 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         });
       }
 
-      // Utiliser les items enrichis du frontend s'ils sont fournis
-      // Sinon, utiliser ceux du cart service
-      if (
-        frontendItems &&
-        Array.isArray(frontendItems) &&
-        frontendItems.length > 0
-      ) {
-        preparedData.items = frontendItems;
-      }
+      // Les items sont déjà enrichis avec productName depuis le cart-service
+      // (enregistré lors de l'ajout au panier côté frontend)
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Cart Service:", error);
       return res.status(500).json({

@@ -42,17 +42,9 @@ export default function CheckoutSuccessPage() {
       return;
     }
 
-    // Attendre que le cart soit chargé et que les items soient enrichis
+    // Attendre que le cart soit chargé
     if (!cart || !cart.items || cart.items.length === 0) {
       // Le cart n'est pas encore chargé, on attend
-      return;
-    }
-
-    // Vérifier que les items ont des productName (enrichis)
-    const itemsEnriched = cart.items.every((item) => item.product?.name);
-
-    if (!itemsEnriched) {
-      // Les items ne sont pas encore enrichis, on attend
       return;
     }
 
@@ -61,22 +53,9 @@ export default function CheckoutSuccessPage() {
 
     const finalize = async () => {
       try {
-        // Préparer les items enrichis avec productName depuis le cart
-        const enrichedItems = cart.items.map((item) => ({
-          productId: item.productId,
-          productName: item.product?.name || "",
-          quantity: item.quantity,
-          unitPriceHT: item.unitPriceHT,
-          unitPriceTTC: item.unitPriceTTC,
-          vatRate: item.vatRate,
-          totalPriceHT: item.totalPriceHT,
-          totalPriceTTC: item.totalPriceTTC,
-        }));
-
         console.log("Finalizing payment with:", {
           csid: sessionId,
           cartSessionId,
-          itemsCount: enrichedItems.length,
         });
         const response = await fetch(`${API_URL}/api/payment/finalize`, {
           method: "POST",
@@ -84,7 +63,6 @@ export default function CheckoutSuccessPage() {
           body: JSON.stringify({
             csid: sessionId,
             cartSessionId,
-            items: enrichedItems,
           }),
         });
 

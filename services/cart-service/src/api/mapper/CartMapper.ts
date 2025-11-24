@@ -18,14 +18,18 @@ export class CartMapper {
     dto: DTO.CartItemCreateDTO,
     id: string
   ): CartItem {
-    return new CartItem({
+    const itemData: any = {
       id,
       product_id: dto.productId,
       quantity: dto.quantity,
       price: dto.price,
       vat_rate: dto.vatRate,
       added_at: new Date(),
-    });
+    };
+    if (dto.productName !== undefined) {
+      itemData.product_name = dto.productName;
+    }
+    return new CartItem(itemData);
   }
 
   /**

@@ -258,7 +258,8 @@ export default function ProductPage() {
                           product.id,
                           1,
                           priceWithVat,
-                          product.vatRate
+                          product.vatRate,
+                          product.name
                         );
                       }}
                       disabled={cartLoading}

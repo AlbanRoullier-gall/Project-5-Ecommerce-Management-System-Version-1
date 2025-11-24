@@ -12,6 +12,7 @@ import { ProductPublicDTO } from "../product-service";
  */
 export interface CartItemCreateDTO {
   productId: number;
+  productName?: string; // Nom du produit (snapshot au moment de l'ajout)
   quantity: number;
   price: number;
   vatRate: number;
