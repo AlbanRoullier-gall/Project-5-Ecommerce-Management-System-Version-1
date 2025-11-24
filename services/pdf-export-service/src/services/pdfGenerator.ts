@@ -263,20 +263,26 @@ export class PDFGenerator {
     const orderItemsHTML =
       order.items && order.items.length > 0
         ? order.items
-            .map(
-              (item: any) => `
+            .map((item: any) => {
+              const vatRate = parseFloat(item.vatRate || 0);
+              const totalVAT =
+                parseFloat(item.totalPriceTTC || 0) -
+                parseFloat(item.totalPriceHT || 0);
+              return `
           <tr>
             <td>${item.productName || "N/A"}</td>
             <td>${item.quantity}</td>
             <td>${parseFloat(item.unitPriceHT || 0).toFixed(2)} €</td>
+            <td>${vatRate.toFixed(2)} %</td>
+            <td>${totalVAT.toFixed(2)} €</td>
             <td>${parseFloat(item.unitPriceTTC || 0).toFixed(2)} €</td>
             <td>${parseFloat(item.totalPriceHT || 0).toFixed(2)} €</td>
             <td>${parseFloat(item.totalPriceTTC || 0).toFixed(2)} €</td>
           </tr>
-        `
-            )
+        `;
+            })
             .join("")
-        : '<tr><td colspan="6">Aucun article</td></tr>';
+        : '<tr><td colspan="8">Aucun article</td></tr>';
 
     // Generate addresses HTML
     const addressesHTML =
@@ -352,6 +358,8 @@ export class PDFGenerator {
                 <th>Produit</th>
                 <th>Quantité</th>
                 <th>Prix unitaire HT</th>
+                <th>TVA (%)</th>
+                <th>Montant TVA</th>
                 <th>Prix unitaire TTC</th>
                 <th>Total HT</th>
                 <th>Total TTC</th>
@@ -388,20 +396,26 @@ export class PDFGenerator {
     const creditNoteItemsHTML =
       creditNote.items && creditNote.items.length > 0
         ? creditNote.items
-            .map(
-              (item: any) => `
+            .map((item: any) => {
+              const vatRate = parseFloat(item.vatRate || 0);
+              const totalVAT =
+                parseFloat(item.totalPriceTTC || 0) -
+                parseFloat(item.totalPriceHT || 0);
+              return `
           <tr>
             <td>${item.productName || "N/A"}</td>
             <td>${item.quantity}</td>
             <td>${parseFloat(item.unitPriceHT || 0).toFixed(2)} €</td>
+            <td>${vatRate.toFixed(2)} %</td>
+            <td>${totalVAT.toFixed(2)} €</td>
             <td>${parseFloat(item.unitPriceTTC || 0).toFixed(2)} €</td>
             <td>${parseFloat(item.totalPriceHT || 0).toFixed(2)} €</td>
             <td>${parseFloat(item.totalPriceTTC || 0).toFixed(2)} €</td>
           </tr>
-        `
-            )
+        `;
+            })
             .join("")
-        : '<tr><td colspan="6">Aucun article</td></tr>';
+        : '<tr><td colspan="8">Aucun article</td></tr>';
 
     return `
       <div class="credit-note-details">
@@ -450,6 +464,8 @@ export class PDFGenerator {
                 <th>Produit</th>
                 <th>Quantité</th>
                 <th>Prix unitaire HT</th>
+                <th>TVA (%)</th>
+                <th>Montant TVA</th>
                 <th>Prix unitaire TTC</th>
                 <th>Total HT</th>
                 <th>Total TTC</th>

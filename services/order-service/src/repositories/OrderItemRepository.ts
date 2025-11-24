@@ -222,7 +222,7 @@ export default class OrderItemRepository {
         SELECT 
           oi.id, oi.product_id as "productId", oi.product_name as "productName",
           oi.quantity, oi.unit_price_ht as "unitPriceHT", oi.unit_price_ttc as "unitPriceTTC",
-          oi.total_price_ht as "totalPriceHT", oi.total_price_ttc as "totalPriceTTC"
+          oi.vat_rate as "vatRate", oi.total_price_ht as "totalPriceHT", oi.total_price_ttc as "totalPriceTTC"
         FROM order_items oi
         WHERE oi.order_id = $1
         ORDER BY oi.id

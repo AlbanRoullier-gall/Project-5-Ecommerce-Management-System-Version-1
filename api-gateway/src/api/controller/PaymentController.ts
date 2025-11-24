@@ -13,33 +13,19 @@ export class PaymentController {
   createPayment = async (req: Request, res: Response): Promise<void> => {
     // Le frontend envoie { cartSessionId, snapshot, payment }
     // Mais payment-service attend directement { customer, items, ... }
-    // On doit extraire payment et stocker le snapshot
+    // On doit extraire payment et passer le snapshot dans les metadata Stripe
     const body = req.body as any;
 
     if (body.payment && body.cartSessionId && body.snapshot) {
-      // Stocker le snapshot dans cart-service via l'API
-      try {
-        await axios.post(
-          `${SERVICES.cart}/api/cart/checkout-snapshot/${body.cartSessionId}`,
-          body.snapshot,
-          { headers: { "Content-Type": "application/json" } }
-        );
-        console.log(
-          `[PaymentController] Snapshot stored in cart-service for cartSessionId: ${body.cartSessionId}`
-        );
-      } catch (error: any) {
-        console.error(
-          `[PaymentController] Failed to store snapshot in cart-service:`,
-          error?.message
-        );
-        // Continue même si le stockage échoue (non-bloquant pour le paiement)
-      }
-
-      // Ajouter cartSessionId dans les métadonnées Stripe pour pouvoir le récupérer plus tard
+      // Encoder le snapshot en JSON pour le passer dans les metadata Stripe
+      // Les metadata Stripe ont une limite de 500 caractères par clé, donc on encode tout en une seule clé
       if (!body.payment.metadata) {
         body.payment.metadata = {};
       }
+
+      // Passer cartSessionId et snapshot encodé dans les metadata
       body.payment.metadata.cartSessionId = body.cartSessionId;
+      body.payment.metadata.checkoutSnapshot = JSON.stringify(body.snapshot);
 
       // Modifier le body pour ne contenir que payment
       req.body = body.payment;

@@ -301,7 +301,7 @@ export default class CreditNoteItemRepository {
         SELECT 
           cni.id, cni.product_id as "productId", cni.product_name as "productName",
           cni.quantity, cni.unit_price_ht as "unitPriceHT", cni.unit_price_ttc as "unitPriceTTC",
-          cni.total_price_ht as "totalPriceHT", cni.total_price_ttc as "totalPriceTTC"
+          cni.vat_rate as "vatRate", cni.total_price_ht as "totalPriceHT", cni.total_price_ttc as "totalPriceTTC"
         FROM credit_note_items cni
         WHERE cni.credit_note_id = $1
         ORDER BY cni.id

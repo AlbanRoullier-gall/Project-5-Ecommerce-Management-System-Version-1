@@ -780,6 +780,7 @@ export default class OrderService {
                   quantity: item.quantity,
                   unitPriceHT: item.unitPriceHT,
                   unitPriceTTC: item.unitPriceTTC,
+                  vatRate: item.vatRate,
                   totalPriceHT: item.totalPriceHT,
                   totalPriceTTC: item.totalPriceTTC,
                 }))

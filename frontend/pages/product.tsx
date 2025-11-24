@@ -151,7 +151,9 @@ export default function ProductPage() {
     );
   }
 
-  // Indicateur panier (non utilisé directement, calculs inlined ci-dessous)
+  // Récupérer la quantité du produit dans le panier
+  const quantityInCart =
+    cart?.items?.find((item) => item.productId === product.id)?.quantity || 0;
 
   return (
     <>
@@ -221,8 +223,7 @@ export default function ProductPage() {
                     marginTop: "0.25rem",
                   }}
                 >
-                  {(cart?.items?.find((item) => item.productId === product.id)
-                    ?.quantity || 0) === 0 ? (
+                  {quantityInCart === 0 ? (
                     <button
                       style={{
                         width: "100%",
@@ -306,10 +307,6 @@ export default function ProductPage() {
                           justifyContent: "center",
                         }}
                         onClick={async () => {
-                          const quantityInCart =
-                            cart?.items?.find(
-                              (item) => item.productId === product.id
-                            )?.quantity || 0;
                           if (quantityInCart <= 1) {
                             await removeFromCart(product.id);
                           } else {
@@ -344,14 +341,8 @@ export default function ProductPage() {
                           textAlign: "center",
                         }}
                       >
-                        {cart?.items?.find(
-                          (item) => item.productId === product.id
-                        )?.quantity || 0}{" "}
-                        {(cart?.items?.find(
-                          (item) => item.productId === product.id
-                        )?.quantity || 0) > 1
-                          ? "articles"
-                          : "article"}
+                        {quantityInCart}{" "}
+                        {quantityInCart > 1 ? "articles" : "article"}
                       </div>
 
                       <button
@@ -375,10 +366,6 @@ export default function ProductPage() {
                           justifyContent: "center",
                         }}
                         onClick={async () => {
-                          const quantityInCart =
-                            cart?.items?.find(
-                              (item) => item.productId === product.id
-                            )?.quantity || 0;
                           await updateQuantity(product.id, quantityInCart + 1);
                         }}
                         disabled={cartLoading}

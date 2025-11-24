@@ -21,7 +21,16 @@ import {
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, isLoading } = useCart();
-  const { currentStep } = useCheckout();
+  const { customerData, addressData } = useCheckout();
+
+  // Déterminer l'étape courante selon la route
+  const currentPath = router.pathname;
+  let currentStep = 1;
+  if (currentPath.includes("/checkout/address")) {
+    currentStep = 2;
+  } else if (currentPath.includes("/checkout/summary")) {
+    currentStep = 3;
+  }
 
   // Vérifier si le panier est vide
   useEffect(() => {

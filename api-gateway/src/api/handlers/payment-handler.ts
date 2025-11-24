@@ -7,20 +7,68 @@
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
 
+/**
+ * Helper pour créer une réponse d'erreur standardisée
+ */
+const createErrorResponse = (error: string, message: string) => ({
+  error,
+  message,
+  timestamp: new Date().toISOString(),
+});
+
+/**
+ * Helper pour transformer les items du panier en format order-service
+ */
+const transformItemsForOrder = (cartItems: any[]) => {
+  return cartItems.map((item: any) => {
+    const itemData: any = {
+      productId: item.productId,
+      quantity: item.quantity,
+      unitPriceHT: item.unitPriceHT,
+      unitPriceTTC: item.unitPriceTTC,
+      vatRate: item.vatRate,
+      totalPriceHT: item.totalPriceHT,
+      totalPriceTTC: item.totalPriceTTC,
+    };
+    if (item.productName !== undefined) {
+      itemData.productName = item.productName;
+    }
+    return itemData;
+  });
+};
+
+/**
+ * Helper pour transformer les items en format email-service
+ */
+const transformItemsForEmail = (items: any[]) => {
+  return items.map((item: any) => ({
+    name: item.productName,
+    quantity: item.quantity,
+    unitPrice: item.unitPriceTTC,
+    totalPrice: item.totalPriceTTC,
+    vatRate: item.vatRate,
+  }));
+};
+
 export const handleFinalizePayment = async (req: Request, res: Response) => {
   try {
     const { csid, cartSessionId } = req.body || {};
 
     if (!csid) {
-      return res.status(400).json({
-        error: "csid requis",
-        message: "L'identifiant de session Stripe est obligatoire",
-        timestamp: new Date().toISOString(),
-      });
+      return res
+        .status(400)
+        .json(
+          createErrorResponse(
+            "csid requis",
+            "L'identifiant de session Stripe est obligatoire"
+          )
+        );
     }
 
-    // 1. Appel au Payment Service pour récupérer le paymentIntentId
+    // 1. Appel au Payment Service pour récupérer la session Stripe complète avec metadata
     let paymentIntentId: string | undefined;
+    let snapshot: any = null;
+    let cartSessionIdFromStripe: string | undefined;
 
     try {
       const paymentResponse = await fetch(
@@ -36,6 +84,24 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       if (paymentResponse.ok) {
         const paymentData = (await paymentResponse.json()) as any;
         paymentIntentId = paymentData.paymentIntentId;
+
+        // Récupérer le cartSessionId et le snapshot depuis les metadata Stripe
+        if (paymentData.session?.metadata) {
+          cartSessionIdFromStripe = paymentData.session.metadata.cartSessionId;
+
+          if (paymentData.session.metadata.checkoutSnapshot) {
+            try {
+              snapshot = JSON.parse(
+                paymentData.session.metadata.checkoutSnapshot
+              );
+            } catch (parseError) {
+              console.warn(
+                "⚠️ Erreur lors du parsing du snapshot depuis Stripe:",
+                parseError
+              );
+            }
+          }
+        }
       } else {
         console.warn("⚠️ Payment Service - session non trouvée");
       }
@@ -47,22 +113,38 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       paymentIntentId = undefined;
     }
 
-    // 2. Vérifier le cartSessionId
-    if (!cartSessionId) {
-      return res.status(400).json({
-        error: "cartSessionId requis",
-        message: "L'identifiant de session du panier est obligatoire",
-        timestamp: new Date().toISOString(),
-      });
+    // 2. Récupérer le cartSessionId depuis les metadata Stripe ou le body
+    const cartSessionIdToUse = cartSessionIdFromStripe || cartSessionId;
+
+    if (!cartSessionIdToUse) {
+      return res
+        .status(400)
+        .json(
+          createErrorResponse(
+            "cartSessionId requis",
+            "L'identifiant de session du panier est obligatoire"
+          )
+        );
     }
 
-    // 3. Appel au Cart Service pour récupérer cart et snapshot
+    // 3. Vérifier que le snapshot a été récupéré depuis Stripe
+    if (!snapshot) {
+      return res
+        .status(404)
+        .json(
+          createErrorResponse(
+            "Snapshot introuvable",
+            "Les données de checkout n'ont pas pu être récupérées depuis Stripe"
+          )
+        );
+    }
+
+    // 4. Appel au Cart Service pour récupérer uniquement le panier
     let cart: any;
-    let snapshot: any;
 
     try {
-      const checkoutResponse = await fetch(
-        `${SERVICES.cart}/api/cart/checkout-data/${cartSessionId}`,
+      const cartResponse = await fetch(
+        `${SERVICES.cart}/api/cart?sessionId=${cartSessionIdToUse}`,
         {
           method: "GET",
           headers: {
@@ -71,54 +153,48 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         }
       );
 
-      if (!checkoutResponse.ok) {
-        if (checkoutResponse.status === 404) {
-          return res.status(404).json({
-            error: "Données de checkout introuvables",
-            message: "Panier ou snapshot non trouvé pour cette session",
-            timestamp: new Date().toISOString(),
-          });
+      if (!cartResponse.ok) {
+        if (cartResponse.status === 404) {
+          return res
+            .status(404)
+            .json(
+              createErrorResponse(
+                "Panier introuvable",
+                "Le panier n'existe pas pour cette session"
+              )
+            );
         }
-        throw new Error(`Cart Service error: ${checkoutResponse.statusText}`);
+        throw new Error(`Cart Service error: ${cartResponse.statusText}`);
       }
 
-      const checkoutData = (await checkoutResponse.json()) as any;
-      cart = checkoutData.cart;
-      snapshot = checkoutData.snapshot;
+      const cartData = (await cartResponse.json()) as any;
+      cart = cartData.cart;
 
-      if (!cart || !snapshot) {
-        return res.status(404).json({
-          error: "Données de checkout introuvables",
-          message: "Panier ou snapshot non trouvé pour cette session",
-          timestamp: new Date().toISOString(),
-        });
+      if (!cart) {
+        return res
+          .status(404)
+          .json(
+            createErrorResponse(
+              "Panier introuvable",
+              "Le panier n'existe pas pour cette session"
+            )
+          );
       }
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Cart Service:", error);
-      return res.status(500).json({
-        error: "Service de panier indisponible",
-        message: "Veuillez réessayer plus tard",
-        timestamp: new Date().toISOString(),
-      });
+      return res
+        .status(500)
+        .json(
+          createErrorResponse(
+            "Service de panier indisponible",
+            "Veuillez réessayer plus tard"
+          )
+        );
     }
 
-    // 3.1. Transformer les données pour order-service
-    // Extraire les items du panier
-    const items = (cart.items || []).map((item: any) => {
-      const itemData: any = {
-        productId: item.productId,
-        quantity: item.quantity,
-        unitPriceHT: item.unitPriceHT,
-        unitPriceTTC: item.unitPriceTTC,
-        vatRate: item.vatRate,
-        totalPriceHT: item.totalPriceHT,
-        totalPriceTTC: item.totalPriceTTC,
-      };
-      if (item.productName !== undefined) {
-        itemData.productName = item.productName;
-      }
-      return itemData;
-    });
+    // 3.1. Extraire et transformer les données pour order-service
+    // Transformer les items du panier
+    const items = transformItemsForOrder(cart.items || []);
 
     // Extraire les informations customer depuis le snapshot
     const customer = snapshot.customer || {};
@@ -130,26 +206,14 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     const billingAddress =
       snapshot.billingAddress || snapshot.billing_address || null;
 
-    // Préparer les données formatées
-    const preparedData = {
-      items,
-      totalAmountHT: cart.subtotal,
-      totalAmountTTC: cart.total,
-      customer,
-      customerEmail,
-      shippingAddress,
-      billingAddress,
-      notes: snapshot.notes || undefined,
-    };
-
     // 4. Appel au Customer Service pour résoudre le customerId
     let customerId: number | undefined;
 
-    if (preparedData.customerEmail) {
+    if (customerEmail) {
       try {
         const customerResponse = await fetch(
           `${SERVICES.customer}/api/customers/by-email/${encodeURIComponent(
-            preparedData.customerEmail
+            customerEmail
           )}/id`,
           {
             method: "GET",
@@ -173,25 +237,25 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
 
     // 5. Construire le payload pour order-service
     const addresses = [];
-    if (preparedData.shippingAddress) {
+    if (shippingAddress) {
       addresses.push({
         addressType: "shipping",
-        addressSnapshot: preparedData.shippingAddress,
+        addressSnapshot: shippingAddress,
       });
     }
-    if (preparedData.billingAddress) {
+    if (billingAddress) {
       addresses.push({
         addressType: "billing",
-        addressSnapshot: preparedData.billingAddress,
+        addressSnapshot: billingAddress,
       });
     }
 
     const orderPayload: any = {
-      totalAmountHT: preparedData.totalAmountHT,
-      totalAmountTTC: preparedData.totalAmountTTC,
+      totalAmountHT: cart.subtotal,
+      totalAmountTTC: cart.total,
       paymentMethod: "stripe",
-      notes: preparedData.notes,
-      items: preparedData.items,
+      notes: snapshot.notes || undefined,
+      items,
       addresses: addresses.length > 0 ? addresses : undefined,
     };
 
@@ -199,8 +263,8 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       orderPayload.customerId = customerId;
     }
 
-    if (preparedData.customer) {
-      orderPayload.customerSnapshot = preparedData.customer;
+    if (customer && Object.keys(customer).length > 0) {
+      orderPayload.customerSnapshot = customer;
     }
 
     if (paymentIntentId) {
@@ -241,35 +305,27 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       }
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Order Service:", error);
-      return res.status(500).json({
-        error: "Service de commande indisponible",
-        message:
-          (error as any)?.message ||
-          "Erreur lors de la création de la commande",
-        timestamp: new Date().toISOString(),
-      });
+      return res
+        .status(500)
+        .json(
+          createErrorResponse(
+            "Service de commande indisponible",
+            (error as any)?.message ||
+              "Erreur lors de la création de la commande"
+          )
+        );
     }
 
     // 7. Appel au Email Service pour envoyer l'email de confirmation (non-bloquant)
     try {
-      const customer = preparedData.customer || {};
-      const customerEmail = preparedData.customerEmail || "";
-      const shipping = preparedData.shippingAddress || {};
-
-      const items = (preparedData.items || []).map((item: any) => ({
-        name: item.productName,
-        quantity: item.quantity,
-        unitPrice: item.unitPriceTTC,
-        totalPrice: item.totalPriceTTC,
-        vatRate: item.vatRate,
-      }));
+      const emailItems = transformItemsForEmail(items);
 
       const customerName = `${
-        customer.firstName || shipping?.firstName || ""
-      } ${customer.lastName || shipping?.lastName || ""}`.trim();
+        customer.firstName || shippingAddress?.firstName || ""
+      } ${customer.lastName || shippingAddress?.lastName || ""}`.trim();
 
-      const subtotal = Number(preparedData.totalAmountHT || 0);
-      const total = Number(preparedData.totalAmountTTC || 0);
+      const subtotal = Number(cart.subtotal || 0);
+      const total = Number(cart.total || 0);
       const tax = total - subtotal;
 
       const emailPayload = {
@@ -277,17 +333,17 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         customerName,
         orderId,
         orderDate: new Date().toISOString(),
-        items,
+        items: emailItems,
         subtotal,
         tax,
         total,
         shippingAddress: {
-          firstName: shipping?.firstName || customer.firstName || "",
-          lastName: shipping?.lastName || customer.lastName || "",
-          address: shipping?.address || "",
-          city: shipping?.city || "",
-          postalCode: shipping?.postalCode || "",
-          country: shipping?.country || "",
+          firstName: shippingAddress?.firstName || customer.firstName || "",
+          lastName: shippingAddress?.lastName || customer.lastName || "",
+          address: shippingAddress?.address || "",
+          city: shippingAddress?.city || "",
+          postalCode: shippingAddress?.postalCode || "",
+          country: shippingAddress?.country || "",
         },
       };
 
@@ -318,10 +374,13 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("❌ Finalisation de paiement - erreur:", error);
-    return res.status(500).json({
-      error: "Erreur interne du serveur",
-      message: "Veuillez réessayer plus tard",
-      timestamp: new Date().toISOString(),
-    });
+    return res
+      .status(500)
+      .json(
+        createErrorResponse(
+          "Erreur interne du serveur",
+          "Veuillez réessayer plus tard"
+        )
+      );
   }
 };
