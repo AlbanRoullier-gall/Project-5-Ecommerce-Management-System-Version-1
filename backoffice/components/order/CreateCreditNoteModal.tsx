@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import Button from "../product/ui/Button";
+import Button from "../shared/Button";
 import {
   CreditNoteCreateDTO,
   OrderPublicDTO,

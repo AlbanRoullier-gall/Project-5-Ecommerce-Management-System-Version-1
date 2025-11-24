@@ -1,7 +1,7 @@
 import React from "react";
 import { CategoryPublicDTO } from "../../../dto";
 import ActionButtons from "../table/ActionButtons";
-import { TableRow, TableCell } from "../../ui/TableLayout";
+import { TableRow, TableCell } from "../../shared/TableLayout";
 
 interface CategoryTableRowProps {
   category: CategoryPublicDTO;

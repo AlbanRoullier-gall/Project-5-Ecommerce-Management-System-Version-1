@@ -3,8 +3,8 @@
 import Head from "next/head";
 import { useState } from "react";
 import { useRouter } from "next/router";
-import AuthForm from "../components/auth/AuthForm";
-import { UserLoginDTO, UserPublicDTO } from "../dto";
+import AuthForm from "../../components/auth/AuthForm";
+import { UserLoginDTO, UserPublicDTO } from "../../dto";
 
 /**
  * Page de connexion au backoffice
@@ -96,12 +96,12 @@ const LoginPage: React.FC = () => {
   const loginLinks = [
     {
       text: "Mot de passe oublié ?",
-      href: "/reset-password",
+      href: "/auth/reset-password",
       label: "Réinitialiser le mot de passe",
     },
     {
       text: "Pas encore de compte ?",
-      href: "/register",
+      href: "/auth/register",
       label: "Créer un compte",
     },
   ];

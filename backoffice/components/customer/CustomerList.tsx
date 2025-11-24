@@ -3,9 +3,9 @@ import CustomerFilters from "./CustomerFilters";
 import CustomerTable from "./CustomerTable";
 import CustomerForm from "./CustomerForm";
 import AddressManagement from "./AddressManagement";
-import ErrorAlert from "../product/ui/ErrorAlert";
-import PageHeader from "../product/ui/PageHeader";
-import Button from "../product/ui/Button";
+import ErrorAlert from "../shared/ErrorAlert";
+import PageHeader from "../shared/PageHeader";
+import Button from "../shared/Button";
 import {
   CustomerPublicDTO,
   CustomerCreateDTO,

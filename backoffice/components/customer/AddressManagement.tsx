@@ -7,8 +7,8 @@ import {
 } from "../../dto";
 import AddressForm from "./address/AddressForm";
 import AddressTable from "./address/AddressTable";
-import Button from "../product/ui/Button";
-import ErrorAlert from "../product/ui/ErrorAlert";
+import Button from "../shared/Button";
+import ErrorAlert from "../shared/ErrorAlert";
 
 /** URL de l'API depuis les variables d'environnement */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";

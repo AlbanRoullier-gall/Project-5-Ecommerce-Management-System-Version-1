@@ -3,8 +3,8 @@
 import Head from "next/head";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import AuthForm from "../components/auth/AuthForm";
-import { PasswordResetDTO } from "../dto";
+import AuthForm from "../../components/auth/AuthForm";
+import { PasswordResetDTO } from "../../dto";
 
 /**
  * Page de réinitialisation de mot de passe
@@ -72,7 +72,7 @@ const ResetPasswordPage: React.FC = () => {
         setSuccess(
           "Un email de réinitialisation a été envoyé à votre adresse email."
         );
-        setStep("reset");
+        // Ne pas changer d'étape, rester sur la page email avec le message de succès
       } else {
         const data = await response.json();
         setError(data.message || "Erreur lors de l'envoi de l'email");
@@ -82,7 +82,7 @@ const ResetPasswordPage: React.FC = () => {
       setSuccess(
         "Un email de réinitialisation a été envoyé à votre adresse email."
       );
-      setStep("reset");
+      // Ne pas changer d'étape, rester sur la page email avec le message de succès
     } finally {
       setIsLoading(false);
     }
@@ -146,7 +146,7 @@ const ResetPasswordPage: React.FC = () => {
           "Mot de passe réinitialisé avec succès ! Vous pouvez maintenant vous connecter."
         );
         setTimeout(() => {
-          router.push("/login");
+          router.push("/auth/login");
         }, 2000);
       } else {
         setError(data.message || "Erreur lors de la réinitialisation");
@@ -188,7 +188,7 @@ const ResetPasswordPage: React.FC = () => {
   const emailLinks = [
     {
       text: "Retour à la connexion",
-      href: "/login",
+      href: "/auth/login",
       label: "Se connecter",
     },
   ];
@@ -196,7 +196,7 @@ const ResetPasswordPage: React.FC = () => {
   const resetLinks = [
     {
       text: "Retour à la connexion",
-      href: "/login",
+      href: "/auth/login",
       label: "Se connecter",
     },
   ];

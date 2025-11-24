@@ -72,3 +72,4 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onClose }) => {
 };
 
 export default ErrorAlert;
+

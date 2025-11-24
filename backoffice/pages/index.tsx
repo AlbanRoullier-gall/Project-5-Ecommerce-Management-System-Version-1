@@ -2,13 +2,17 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/router";
+import { UserPublicDTO } from "../dto";
+import { LoadingSpinner } from "../components/shared";
 
 /**
  * Page racine du backoffice (/)
  *
- * Gère la redirection automatique :
- * - Si authentifié → Redirige vers /dashboard
- * - Si non authentifié → Redirige vers /login
+ * Gère la redirection automatique selon l'état d'authentification et d'approbation :
+ * - Pas de token → Redirige vers /auth/login
+ * - Token mais rejeté → Redirige vers /access-rejected
+ * - Token mais pas approuvé → Redirige vers /pending-approval
+ * - Token et approuvé → Redirige vers /dashboard
  *
  * Affiche un loader pendant la vérification
  * Cette page ne doit jamais être vue directement par l'utilisateur
@@ -17,55 +21,50 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Vérifier si l'utilisateur est authentifié côté client
-    const token = localStorage.getItem("auth_token");
+    const checkAuth = () => {
+      const token = localStorage.getItem("auth_token");
+      const userStr = localStorage.getItem("user");
 
-    if (!token) {
-      // Si pas de token, rediriger vers la page de connexion
-      router.push("/login");
-    } else {
-      // Si authentifié, rediriger vers le dashboard
+      if (!token) {
+        // Pas de token, rediriger vers la page de connexion
+        router.push("/auth/login");
+        return;
+      }
+
+      // Vérifier le statut d'approbation backoffice
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr) as UserPublicDTO;
+
+          // Rediriger si l'accès a été rejeté
+          if (user.isBackofficeRejected) {
+            router.push("/access-rejected");
+            return;
+          }
+
+          // Rediriger si l'accès n'est pas encore approuvé
+          if (!user.isBackofficeApproved) {
+            router.push("/pending-approval");
+            return;
+          }
+        } catch (error) {
+          console.error(
+            "Erreur lors de la lecture des données utilisateur:",
+            error
+          );
+          // En cas d'erreur, rediriger vers login
+          router.push("/auth/login");
+          return;
+        }
+      }
+
+      // Token présent et utilisateur approuvé, rediriger vers le dashboard
       router.push("/dashboard");
-    }
+    };
+
+    checkAuth();
   }, [router]);
 
   // Afficher un loader pendant la vérification
-  return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-        background: "linear-gradient(135deg, #13686a 0%, #0d4f51 100%)",
-        color: "white",
-        fontSize: "1.2rem",
-      }}
-    >
-      <div style={{ textAlign: "center" }}>
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            border: "4px solid rgba(255,255,255,0.3)",
-            borderTop: "4px solid white",
-            borderRadius: "50%",
-            animation: "spin 1s linear infinite",
-            margin: "0 auto 1rem",
-          }}
-        ></div>
-        <p>Vérification de l'authentification...</p>
-        <style jsx>{`
-          @keyframes spin {
-            0% {
-              transform: rotate(0deg);
-            }
-            100% {
-              transform: rotate(360deg);
-            }
-          }
-        `}</style>
-      </div>
-    </div>
-  );
+  return <LoadingSpinner message="Vérification de l'authentification..." />;
 }

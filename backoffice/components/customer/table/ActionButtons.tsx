@@ -1,6 +1,6 @@
 import React from "react";
 import { CustomerPublicDTO } from "../../../dto";
-import { ActionButtonsContainer, ActionButton } from "../../ui/ActionButton";
+import { ActionButtonsContainer, ActionButton } from "../../shared/ActionButton";
 
 /**
  * Props du composant ActionButtons

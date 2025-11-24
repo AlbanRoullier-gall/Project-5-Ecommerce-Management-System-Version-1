@@ -70,7 +70,7 @@ export const handlePasswordReset = async (req: Request, res: Response) => {
             userName: authData.userName || "Utilisateur",
             resetUrl: `${
               process.env["FRONTEND_URL"] || "http://localhost:3009"
-            }/reset-password`,
+            }/auth/reset-password`,
           }),
         }
       );

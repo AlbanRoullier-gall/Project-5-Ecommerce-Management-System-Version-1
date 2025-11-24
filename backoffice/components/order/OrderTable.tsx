@@ -4,7 +4,7 @@ import TableLayout, {
   TableHeader,
   TableRow,
   TableCell,
-} from "../ui/TableLayout";
+} from "../shared/TableLayout";
 import OrderActionButtons from "./table/OrderActionButtons";
 
 interface OrderTableProps {

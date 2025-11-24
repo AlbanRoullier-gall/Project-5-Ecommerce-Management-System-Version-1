@@ -5,7 +5,7 @@ import TableLayout, {
   TableHeader,
   TableRow,
   TableCell,
-} from "../../ui/TableLayout";
+} from "../../shared/TableLayout";
 
 /**
  * Props du composant CategoryTable

@@ -9,5 +9,5 @@ export { default as AuthGuard } from "./AuthGuard";
 // Composants de formulaire
 export * from "./form";
 
-// Composants UI
-export * from "./ui";
+// Composants utilitaires
+export { default as GlobalMessage } from "./GlobalMessage";

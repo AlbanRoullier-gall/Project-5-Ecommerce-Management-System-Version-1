@@ -3,9 +3,9 @@ import ProductFilters from "./ProductFilters";
 import ProductTable from "./ProductTable";
 import ProductForm from "./ProductForm";
 import CategoryManagement from "./CategoryManagement";
-import ErrorAlert from "./ui/ErrorAlert";
-import PageHeader from "./ui/PageHeader";
-import Button from "./ui/Button";
+import ErrorAlert from "../shared/ErrorAlert";
+import PageHeader from "../shared/PageHeader";
+import Button from "../shared/Button";
 import {
   ProductPublicDTO,
   ProductCreateDTO,

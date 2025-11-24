@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { UserPublicDTO } from "../../dto";
-import LoadingSpinner from "./ui/LoadingSpinner";
+import { LoadingSpinner } from "../shared";
 
 /**
  * Props du composant AuthGuard
@@ -20,7 +20,7 @@ interface AuthGuardProps {
  * avant d'afficher le contenu protégé
  *
  * Scénarios de redirection :
- * - Pas de token → /login
+ * - Pas de token → /auth/login
  * - Token mais rejeté → /access-rejected
  * - Token mais pas approuvé → /pending-approval
  * - Token et approuvé → Affiche le contenu protégé
@@ -44,7 +44,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
       if (!token) {
         // Pas de token, rediriger vers la page de connexion
-        router.push("/login");
+        router.push("/auth/login");
         return;
       }
 
@@ -70,7 +70,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
             error
           );
           // En cas d'erreur, rediriger vers login
-          router.push("/login");
+          router.push("/auth/login");
           return;
         }
       }

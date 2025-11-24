@@ -1,5 +1,5 @@
 import React from "react";
-import Button from "../product/ui/Button";
+import Button from "../shared/Button";
 import {
   CreditNotePublicDTO,
   CreditNoteItemPublicDTO,

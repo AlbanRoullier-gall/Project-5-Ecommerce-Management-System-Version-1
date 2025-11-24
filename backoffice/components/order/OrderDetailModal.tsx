@@ -4,7 +4,7 @@ import {
   OrderItemPublicDTO,
   OrderAddressPublicDTO,
 } from "../../dto";
-import Button from "../product/ui/Button";
+import Button from "../shared/Button";
 import CreateCreditNoteModal from "./CreateCreditNoteModal";
 
 interface OrderDetailModalProps {

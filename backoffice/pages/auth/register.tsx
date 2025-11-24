@@ -3,8 +3,8 @@
 import Head from "next/head";
 import { useState } from "react";
 import { useRouter } from "next/router";
-import AuthForm from "../components/auth/AuthForm";
-import { UserCreateDTO, UserPublicDTO } from "../dto";
+import AuthForm from "../../components/auth/AuthForm";
+import { UserCreateDTO, UserPublicDTO } from "../../dto";
 
 /**
  * Page d'inscription au backoffice
@@ -86,7 +86,7 @@ const RegisterPage: React.FC = () => {
             "Compte créé avec succès ! Un email de demande d'approbation a été envoyé à l'administrateur. Vous recevrez une notification une fois votre accès approuvé."
         );
         setTimeout(() => {
-          router.push("/login");
+          router.push("/auth/login");
         }, 3000);
       } else {
         setError(data.message || "Erreur lors de la création du compte");
@@ -139,7 +139,7 @@ const RegisterPage: React.FC = () => {
   const registerLinks = [
     {
       text: "Déjà un compte ?",
-      href: "/login",
+      href: "/auth/login",
       label: "Se connecter",
     },
   ];

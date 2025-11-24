@@ -6,10 +6,8 @@ export { default as ProductFilters } from "./ProductFilters";
 export { default as CategoryManagement } from "./CategoryManagement";
 export { default as ProductImageManager } from "./ProductImageManager";
 
-// UI components
-export { default as ErrorAlert } from "./ui/ErrorAlert";
-export { default as PageHeader } from "./ui/PageHeader";
-export { default as Button } from "./ui/Button";
+// Shared UI components (re-exported for convenience)
+export { ErrorAlert, PageHeader, Button } from "../shared";
 
 // Form components
 export { default as FormInput } from "./form/FormInput";

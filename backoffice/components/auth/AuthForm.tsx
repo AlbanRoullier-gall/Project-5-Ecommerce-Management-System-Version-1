@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import FormField from "./form/FormField";
 import FormButton from "./form/FormButton";
 import FormLinks from "./form/FormLinks";
-import GlobalMessage from "./ui/GlobalMessage";
+import GlobalMessage from "./GlobalMessage";
 
 /**
  * Props du composant AuthForm
@@ -48,7 +48,6 @@ interface AuthFormProps {
  * - Validation des champs requis
  * - Affichage des erreurs par champ et globales
  * - État de chargement avec bouton désactivé
- * - Toggle de visibilité pour les champs password
  * - Liens additionnels configurables
  *
  * Utilisé pour : login, inscription, reset password
@@ -82,7 +81,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
+    // Effacer l'erreur lorsque l'utilisateur commence à taper
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -91,7 +90,7 @@ const AuthForm: React.FC<AuthFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic validation
+    // Validation de base
     const newErrors: Record<string, string> = {};
     fields.forEach((field) => {
       if (field.required && !formData[field.name]) {

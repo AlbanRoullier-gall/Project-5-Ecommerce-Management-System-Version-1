@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import PageHeader from "../product/ui/PageHeader";
-import Button from "../product/ui/Button";
-import ErrorAlert from "../product/ui/ErrorAlert";
+import PageHeader from "../shared/PageHeader";
+import Button from "../shared/Button";
+import ErrorAlert from "../shared/ErrorAlert";
 import OrderTable from "./OrderTable";
 import CreditNoteTable from "./CreditNoteTable";
 import CreditNoteDetailModal from "./CreditNoteDetailModal";

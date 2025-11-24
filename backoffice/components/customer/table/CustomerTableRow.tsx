@@ -1,7 +1,7 @@
 import React from "react";
 import { CustomerPublicDTO } from "../../../dto";
 import ActionButtons from "./ActionButtons";
-import { TableRow, TableCell } from "../../ui/TableLayout";
+import { TableRow, TableCell } from "../../shared/TableLayout";
 
 /**
  * Props du composant CustomerTableRow
