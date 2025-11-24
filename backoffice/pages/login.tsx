@@ -4,7 +4,6 @@ import Head from "next/head";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import AuthForm from "../components/auth/AuthForm";
-import AuthRedirectGuard from "../components/auth/AuthRedirectGuard";
 import { UserLoginDTO, UserPublicDTO } from "../dto";
 
 /**
@@ -20,8 +19,6 @@ import { UserLoginDTO, UserPublicDTO } from "../dto";
  *   * En attente → Redirection vers /pending-approval
  *   * Approuvé → Redirection vers /dashboard
  * - Lien vers inscription et reset password
- *
- * Protégée par AuthRedirectGuard (redirige si déjà connecté)
  */
 const LoginPage: React.FC = () => {
   const router = useRouter();
@@ -110,7 +107,7 @@ const LoginPage: React.FC = () => {
   ];
 
   return (
-    <AuthRedirectGuard>
+    <>
       <Head>
         <title>Connexion - Nature de Pierre</title>
         <meta
@@ -146,7 +143,7 @@ const LoginPage: React.FC = () => {
           />
         </div>
       </div>
-    </AuthRedirectGuard>
+    </>
   );
 };
 

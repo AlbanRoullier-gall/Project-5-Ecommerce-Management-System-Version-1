@@ -4,7 +4,6 @@ import Head from "next/head";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import AuthForm from "../components/auth/AuthForm";
-import AuthRedirectGuard from "../components/auth/AuthRedirectGuard";
 import { UserCreateDTO, UserPublicDTO } from "../dto";
 
 /**
@@ -22,8 +21,6 @@ import { UserCreateDTO, UserPublicDTO } from "../dto";
  *
  * Note : L'accès au backoffice nécessite une approbation admin
  * après l'inscription
- *
- * Protégée par AuthRedirectGuard (redirige si déjà connecté)
  */
 const RegisterPage: React.FC = () => {
   const router = useRouter();
@@ -148,7 +145,7 @@ const RegisterPage: React.FC = () => {
   ];
 
   return (
-    <AuthRedirectGuard>
+    <>
       <Head>
         <title>Inscription - Nature de Pierre</title>
         <meta
@@ -185,7 +182,7 @@ const RegisterPage: React.FC = () => {
           />
         </div>
       </div>
-    </AuthRedirectGuard>
+    </>
   );
 };
 

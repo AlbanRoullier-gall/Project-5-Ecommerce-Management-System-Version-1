@@ -4,7 +4,6 @@ import Head from "next/head";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import AuthForm from "../components/auth/AuthForm";
-import AuthRedirectGuard from "../components/auth/AuthRedirectGuard";
 import { PasswordResetDTO } from "../dto";
 
 /**
@@ -24,8 +23,6 @@ import { PasswordResetDTO } from "../dto";
  *    - Redirection vers login après succès
  *
  * La détection du token dans l'URL détermine l'étape affichée
- *
- * Protégée par AuthRedirectGuard (redirige si déjà connecté)
  */
 const ResetPasswordPage: React.FC = () => {
   const router = useRouter();
@@ -205,7 +202,7 @@ const ResetPasswordPage: React.FC = () => {
   ];
 
   return (
-    <AuthRedirectGuard>
+    <>
       <Head>
         <title>Réinitialisation - Nature de Pierre</title>
         <meta
@@ -256,7 +253,7 @@ const ResetPasswordPage: React.FC = () => {
           )}
         </div>
       </div>
-    </AuthRedirectGuard>
+    </>
   );
 };
 
