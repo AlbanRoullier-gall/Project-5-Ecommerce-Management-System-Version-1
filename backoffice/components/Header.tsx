@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/router";
+import { useAuth } from "../contexts/AuthContext";
 
 /**
  * Composant Header du backoffice
@@ -13,31 +13,20 @@ import { useRouter } from "next/router";
  * - Navigation principale (Dashboard, Produits, Clients, Commandes)
  * - Bouton de déconnexion (si authentifié)
  * - Menu mobile responsive
- * - Détection automatique de l'état d'authentification
+ * - Détection automatique de l'état d'authentification via le contexte
  *
  * Navigation desktop affichée sous le header
  * Navigation mobile affichée dans un menu déroulant
  */
 const Header: React.FC = () => {
-  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  /**
-   * Vérifie l'état d'authentification au montage
-   */
-  useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    setIsAuthenticated(!!token);
-  }, []);
+  const { isAuthenticated, logout } = useAuth();
 
   /**
    * Déconnecte l'utilisateur et redirige vers la page de connexion
    */
   const handleLogout = () => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("user");
-    router.push("/auth/login");
+    logout();
   };
 
   return (

@@ -4,17 +4,18 @@ import Head from "next/head";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import AuthForm from "../../components/auth/AuthForm";
-import { UserCreateDTO, UserPublicDTO } from "../../dto";
+import { useAuth } from "../../contexts/AuthContext";
+import { UserCreateDTO } from "../../dto";
 
 /**
  * Page d'inscription au backoffice
  *
  * Fonctionnalités :
  * - Formulaire d'inscription (prénom, nom, email, password, confirmation)
- * - Validation côté client :
+ * - Validation côté client via le contexte :
  *   * Correspondance des mots de passe
  *   * Longueur minimale du mot de passe (6 caractères)
- * - Appel API de création de compte
+ * - Utilisation du contexte d'authentification pour l'appel API
  * - Message de succès après inscription
  * - Redirection automatique vers login après 3 secondes
  * - Lien vers la page de connexion
@@ -24,6 +25,7 @@ import { UserCreateDTO, UserPublicDTO } from "../../dto";
  */
 const RegisterPage: React.FC = () => {
   const router = useRouter();
+  const { register, validatePassword } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -37,65 +39,37 @@ const RegisterPage: React.FC = () => {
     setError("");
     setSuccess("");
 
-    // Validation côté client
-    if (formData.password !== formData.confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
+    // Validation côté client via le contexte
+    const validation = validatePassword(
+      formData.password,
+      formData.confirmPassword
+    );
+
+    if (!validation.isValid) {
+      setError(validation.error || "Erreur de validation");
       setIsLoading(false);
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères");
-      setIsLoading(false);
-      return;
+    const registerRequest: UserCreateDTO = {
+      email: formData.email,
+      password: formData.password,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+    };
+
+    const result = await register(registerRequest);
+
+    if (result.success) {
+      setSuccess(result.message || "Compte créé avec succès !");
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 3000);
+    } else {
+      setError(result.error || "Erreur lors de la création du compte");
     }
 
-    try {
-      const registerRequest: UserCreateDTO = {
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-      };
-
-      const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020"
-        }/api/auth/register`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(registerRequest),
-        }
-      );
-
-      const data = (await response.json()) as {
-        success: boolean;
-        user: UserPublicDTO;
-        token: string;
-        approvalToken?: string;
-        rejectionToken?: string;
-        message?: string;
-      };
-
-      if (response.ok) {
-        setSuccess(
-          data.message ||
-            "Compte créé avec succès ! Un email de demande d'approbation a été envoyé à l'administrateur. Vous recevrez une notification une fois votre accès approuvé."
-        );
-        setTimeout(() => {
-          router.push("/auth/login");
-        }, 3000);
-      } else {
-        setError(data.message || "Erreur lors de la création du compte");
-      }
-    } catch (error) {
-      setError("Erreur de connexion au serveur");
-    } finally {
-      setIsLoading(false);
-    }
+    setIsLoading(false);
   };
 
   const registerFields = [

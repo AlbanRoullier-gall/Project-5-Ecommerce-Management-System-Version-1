@@ -4,7 +4,7 @@ import Head from "next/head";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import AuthForm from "../../components/auth/AuthForm";
-import { UserLoginDTO, UserPublicDTO } from "../../dto";
+import { useAuth } from "../../contexts/AuthContext";
 
 /**
  * Page de connexion au backoffice
@@ -12,16 +12,13 @@ import { UserLoginDTO, UserPublicDTO } from "../../dto";
  * Fonctionnalités :
  * - Formulaire de connexion (email + password)
  * - Validation côté client
- * - Appel API d'authentification
- * - Stockage du token et des infos utilisateur dans localStorage
- * - Gestion des états d'approbation backoffice :
- *   * Rejeté → Redirection vers /access-rejected
- *   * En attente → Redirection vers /pending-approval
- *   * Approuvé → Redirection vers /dashboard
+ * - Utilisation du contexte d'authentification pour l'appel API et le stockage
+ * - Redirection vers /dashboard après connexion (AuthGuard gérera les cas rejeté/pending)
  * - Lien vers inscription et reset password
  */
 const LoginPage: React.FC = () => {
   const router = useRouter();
+  const { loginWithCredentials } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,47 +30,20 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
     setError("");
 
-    try {
-      const loginRequest: UserLoginDTO = {
-        email: formData.email,
-        password: formData.password,
-      };
+    const result = await loginWithCredentials(
+      formData.email,
+      formData.password
+    );
 
-      const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020"
-        }/api/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(loginRequest),
-        }
-      );
-
-      const data = (await response.json()) as {
-        success: boolean;
-        user: UserPublicDTO;
-        token: string;
-        message?: string;
-      };
-
-      if (response.ok) {
-        // Stocker le token d'authentification et les données utilisateur
-        localStorage.setItem("auth_token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        // Rediriger vers le dashboard
-        router.push("/dashboard");
-      } else {
-        setError(data.message || "Erreur de connexion");
-      }
-    } catch (error) {
-      setError("Erreur de connexion au serveur");
-    } finally {
-      setIsLoading(false);
+    if (result.success) {
+      // Rediriger vers le dashboard
+      // AuthGuard sur /dashboard gérera automatiquement les cas rejeté/pending
+      router.push("/dashboard");
+    } else {
+      setError(result.error || "Erreur de connexion");
     }
+
+    setIsLoading(false);
   };
 
   const loginFields = [

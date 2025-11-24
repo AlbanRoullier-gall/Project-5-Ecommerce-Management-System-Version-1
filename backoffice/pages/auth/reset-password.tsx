@@ -4,7 +4,7 @@ import Head from "next/head";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import AuthForm from "../../components/auth/AuthForm";
-import { PasswordResetDTO } from "../../dto";
+import { useAuth, AUTH_ERROR_MESSAGES } from "../../contexts/AuthContext";
 
 /**
  * Page de réinitialisation de mot de passe
@@ -13,19 +13,21 @@ import { PasswordResetDTO } from "../../dto";
  *
  * 1. Étape "email" :
  *    - Formulaire de demande avec email
- *    - Envoie un email avec lien de reset
+ *    - Utilisation du contexte pour l'appel API
  *    - Affiche message de succès
  *
  * 2. Étape "reset" (avec token dans URL) :
  *    - Formulaire de nouveau mot de passe + confirmation
- *    - Validation de correspondance des mots de passe
- *    - Appel API avec token pour réinitialiser
+ *    - Validation via le contexte
+ *    - Utilisation du contexte pour l'appel API
  *    - Redirection vers login après succès
  *
  * La détection du token dans l'URL détermine l'étape affichée
  */
 const ResetPasswordPage: React.FC = () => {
   const router = useRouter();
+  const { requestPasswordReset, confirmPasswordReset, validatePassword } =
+    useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -50,42 +52,15 @@ const ResetPasswordPage: React.FC = () => {
     setError("");
     setSuccess("");
 
-    try {
-      const resetRequest = {
-        email: formData.email,
-      };
+    const result = await requestPasswordReset(formData.email);
 
-      const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020"
-        }/api/auth/reset-password`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(resetRequest),
-        }
-      );
-
-      if (response.ok) {
-        setSuccess(
-          "Un email de réinitialisation a été envoyé à votre adresse email."
-        );
-        // Ne pas changer d'étape, rester sur la page email avec le message de succès
-      } else {
-        const data = await response.json();
-        setError(data.message || "Erreur lors de l'envoi de l'email");
-      }
-    } catch (error) {
-      // Pour la démo, on simule un succès
-      setSuccess(
-        "Un email de réinitialisation a été envoyé à votre adresse email."
-      );
-      // Ne pas changer d'étape, rester sur la page email avec le message de succès
-    } finally {
-      setIsLoading(false);
+    if (result.success) {
+      setSuccess(result.message || "Email envoyé avec succès");
+    } else {
+      setError(result.error || "Erreur lors de l'envoi de l'email");
     }
+
+    setIsLoading(false);
   };
 
   const handlePasswordReset = async (formData: any) => {
@@ -93,14 +68,14 @@ const ResetPasswordPage: React.FC = () => {
     setError("");
     setSuccess("");
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
-      setIsLoading(false);
-      return;
-    }
+    // Validation via le contexte
+    const validation = validatePassword(
+      formData.password,
+      formData.confirmPassword
+    );
 
-    if (formData.password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères");
+    if (!validation.isValid) {
+      setError(validation.error || "Erreur de validation");
       setIsLoading(false);
       return;
     }
@@ -111,51 +86,23 @@ const ResetPasswordPage: React.FC = () => {
     const token = tokenFromUrl || formData.token;
 
     if (!token) {
-      setError("Token de réinitialisation manquant");
+      setError(AUTH_ERROR_MESSAGES.TOKEN_MISSING);
       setIsLoading(false);
       return;
     }
 
-    try {
-      // Utilisation du DTO PasswordResetDTO pour la cohérence des types
-      const resetRequest: PasswordResetDTO = {
-        token: token,
-        newPassword: formData.password,
-      };
+    const result = await confirmPasswordReset(token, formData.password);
 
-      const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020"
-        }/api/auth/reset-password/confirm`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(resetRequest),
-        }
-      );
-
-      const data = (await response.json()) as {
-        success: boolean;
-        message?: string;
-      };
-
-      if (response.ok) {
-        setSuccess(
-          "Mot de passe réinitialisé avec succès ! Vous pouvez maintenant vous connecter."
-        );
-        setTimeout(() => {
-          router.push("/auth/login");
-        }, 2000);
-      } else {
-        setError(data.message || "Erreur lors de la réinitialisation");
-      }
-    } catch (error) {
-      setError("Erreur de connexion au serveur");
-    } finally {
-      setIsLoading(false);
+    if (result.success) {
+      setSuccess(result.message || "Mot de passe réinitialisé avec succès !");
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 2000);
+    } else {
+      setError(result.error || "Erreur lors de la réinitialisation");
     }
+
+    setIsLoading(false);
   };
 
   const emailFields = [
