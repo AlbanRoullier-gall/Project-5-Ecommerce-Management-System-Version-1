@@ -56,45 +56,43 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       });
     }
 
-    // 3. Appel au Cart Service pour récupérer les données préparées
-    let preparedData: any;
+    // 3. Appel au Cart Service pour récupérer cart et snapshot
+    let cart: any;
+    let snapshot: any;
 
     try {
-      const prepareResponse = await fetch(
-        `${SERVICES.cart}/api/cart/prepare-order-data/${cartSessionId}`,
+      const checkoutResponse = await fetch(
+        `${SERVICES.cart}/api/cart/checkout-data/${cartSessionId}`,
         {
-          method: "POST",
+          method: "GET",
           headers: {
-            "Content-Type": "application/json",
             "X-Service-Request": "api-gateway",
           },
         }
       );
 
-      if (!prepareResponse.ok) {
-        if (prepareResponse.status === 404) {
+      if (!checkoutResponse.ok) {
+        if (checkoutResponse.status === 404) {
           return res.status(404).json({
             error: "Données de checkout introuvables",
             message: "Panier ou snapshot non trouvé pour cette session",
             timestamp: new Date().toISOString(),
           });
         }
-        throw new Error(`Cart Service error: ${prepareResponse.statusText}`);
+        throw new Error(`Cart Service error: ${checkoutResponse.statusText}`);
       }
 
-      const prepareData = (await prepareResponse.json()) as any;
-      preparedData = prepareData.data;
+      const checkoutData = (await checkoutResponse.json()) as any;
+      cart = checkoutData.cart;
+      snapshot = checkoutData.snapshot;
 
-      if (!preparedData) {
+      if (!cart || !snapshot) {
         return res.status(404).json({
           error: "Données de checkout introuvables",
           message: "Panier ou snapshot non trouvé pour cette session",
           timestamp: new Date().toISOString(),
         });
       }
-
-      // Les items sont déjà enrichis avec productName depuis le cart-service
-      // (enregistré lors de l'ajout au panier côté frontend)
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Cart Service:", error);
       return res.status(500).json({
@@ -103,6 +101,46 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         timestamp: new Date().toISOString(),
       });
     }
+
+    // 3.1. Transformer les données pour order-service
+    // Extraire les items du panier
+    const items = (cart.items || []).map((item: any) => {
+      const itemData: any = {
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPriceHT: item.unitPriceHT,
+        unitPriceTTC: item.unitPriceTTC,
+        vatRate: item.vatRate,
+        totalPriceHT: item.totalPriceHT,
+        totalPriceTTC: item.totalPriceTTC,
+      };
+      if (item.productName !== undefined) {
+        itemData.productName = item.productName;
+      }
+      return itemData;
+    });
+
+    // Extraire les informations customer depuis le snapshot
+    const customer = snapshot.customer || {};
+    const customerEmail = customer.email || snapshot.email || "";
+
+    // Extraire les adresses (gère camelCase et snake_case)
+    const shippingAddress =
+      snapshot.shippingAddress || snapshot.shipping_address || null;
+    const billingAddress =
+      snapshot.billingAddress || snapshot.billing_address || null;
+
+    // Préparer les données formatées
+    const preparedData = {
+      items,
+      totalAmountHT: cart.subtotal,
+      totalAmountTTC: cart.total,
+      customer,
+      customerEmail,
+      shippingAddress,
+      billingAddress,
+      notes: snapshot.notes || undefined,
+    };
 
     // 4. Appel au Customer Service pour résoudre le customerId
     let customerId: number | undefined;

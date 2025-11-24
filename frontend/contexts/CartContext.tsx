@@ -34,6 +34,15 @@ const API_URL = (() => {
   return url;
 })();
 
+/**
+ * Helper pour les logs de debug (uniquement en développement)
+ */
+const debugLog = (...args: any[]) => {
+  if (process.env.NODE_ENV === "development") {
+    console.log(...args);
+  }
+};
+
 interface CartTotals {
   totalHT: number;
   totalTTC: number;
@@ -190,7 +199,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       const data = await response.json();
       setCart(data.cart);
     } catch (err) {
-      console.error("Error loading cart:", err);
+      console.error("Erreur lors du chargement du panier:", err);
       setError(
         err instanceof Error
           ? err.message
@@ -214,11 +223,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     imageUrl?: string
   ) => {
     if (!sessionId) {
-      console.log("⚠️ Pas de sessionId, impossible d'ajouter au panier");
+      debugLog("⚠️ Pas de sessionId, impossible d'ajouter au panier");
       return;
     }
 
-    console.log(
+    debugLog(
       `➕ Ajout au panier: produit ${productId}, quantité ${quantity}, prix ${priceTTC}`
     );
     setIsLoading(true);
@@ -226,7 +235,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
     try {
       const url = `${API_URL}/api/cart/items?sessionId=${sessionId}`;
-      console.log(`📡 POST ${url}`);
+      debugLog(`📡 POST ${url}`);
 
       // Créer le DTO pour l'ajout d'article
       const itemData: CartItemCreateDTO = {
@@ -239,9 +248,6 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         vatRate,
       };
 
-      // Debug: vérifier ce qui est envoyé
-      console.log("📤 Données envoyées au panier:", itemData);
-
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -252,38 +258,24 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("❌ Erreur API:", errorData);
+        console.error("Erreur lors de l'ajout au panier:", errorData);
         throw new Error(
           errorData.message || "Erreur lors de l'ajout au panier"
         );
       }
 
       const result = await response.json();
-      console.log("✅ Réponse ajout:", result);
 
-      // Si la réponse contient directement le panier, on l'utilise
+      // Utiliser le panier de la réponse s'il est présent, sinon recharger
       if (result.cart) {
-        console.log("✅ Panier mis à jour:", result.cart);
-        // Debug: vérifier les items et leur imageUrl
-        if (result.cart.items && result.cart.items.length > 0) {
-          console.log("📦 Items du panier:", result.cart.items);
-          result.cart.items.forEach((item: any, index: number) => {
-            console.log(`📦 Item ${index}:`, {
-              productId: item.productId,
-              productName: item.productName,
-              imageUrl: item.imageUrl,
-              description: item.description,
-              fullItem: item,
-            });
-          });
-        }
+        debugLog("✅ Panier mis à jour depuis la réponse");
         setCart(result.cart);
       } else {
-        // Sinon on recharge
+        debugLog("⚠️ Pas de panier dans la réponse, rechargement...");
         await refreshCart();
       }
     } catch (err) {
-      console.error("❌ Error adding to cart:", err);
+      console.error("Erreur lors de l'ajout au panier:", err);
       setError(
         err instanceof Error ? err.message : "Erreur lors de l'ajout au panier"
       );
@@ -326,7 +318,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
       await refreshCart();
     } catch (err) {
-      console.error("Error updating quantity:", err);
+      console.error("Erreur lors de la mise à jour de la quantité:", err);
       setError(
         err instanceof Error ? err.message : "Erreur lors de la mise à jour"
       );
@@ -360,7 +352,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
       await refreshCart();
     } catch (err) {
-      console.error("Error removing from cart:", err);
+      console.error("Erreur lors de la suppression de l'article:", err);
       setError(
         err instanceof Error ? err.message : "Erreur lors de la suppression"
       );
@@ -400,7 +392,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
       setCart(null);
     } catch (err) {
-      console.error("Error clearing cart:", err);
+      console.error("Erreur lors du vidage du panier:", err);
       setError(
         err instanceof Error ? err.message : "Erreur lors du vidage du panier"
       );

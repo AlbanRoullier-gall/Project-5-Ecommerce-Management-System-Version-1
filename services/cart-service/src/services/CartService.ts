@@ -129,8 +129,7 @@ export default class CartService {
    * Nettoyer les paniers expirés
    */
   async cleanupExpiredCarts(): Promise<number> {
-    const cleanedCount = await this.cartRepository.cleanupExpiredCarts();
-    return cleanedCount;
+    return await this.cartRepository.cleanupExpiredCarts();
   }
 
   /**
@@ -151,25 +150,13 @@ export default class CartService {
     resolved: boolean;
   }> {
     if (!cartSessionId) {
-      return {
-        cartSessionId: null,
-        resolved: false,
-      };
+      return { cartSessionId: null, resolved: false };
     }
 
-    // Vérifier que le panier existe
     const cart = await this.getCart(cartSessionId);
-    if (cart) {
-      return {
-        cartSessionId,
-        resolved: true,
-      };
-    }
-
-    // Panier introuvable
     return {
-      cartSessionId: null,
-      resolved: false,
+      cartSessionId: cart ? cartSessionId : null,
+      resolved: !!cart,
     };
   }
 
@@ -218,82 +205,6 @@ export default class CartService {
     }
 
     return { cart, snapshot };
-  }
-
-  /**
-   * Préparer les données de commande à partir du cart et snapshot
-   *
-   * Extrait et formate les données nécessaires pour order-service :
-   * - Items du panier avec calculs HT/TTC
-   * - Adresses de livraison et facturation depuis le snapshot
-   * - Informations customer depuis le snapshot
-   *
-   * @param cartSessionId - Identifiant de session du panier
-   * @returns Données formatées pour order-service ou null si cart/snapshot introuvable
-   */
-  async prepareOrderData(cartSessionId: string): Promise<{
-    items: Array<{
-      productId: number;
-      productName?: string;
-      quantity: number;
-      unitPriceHT: number;
-      unitPriceTTC: number;
-      vatRate: number;
-      totalPriceHT: number;
-      totalPriceTTC: number;
-    }>;
-    totalAmountHT: number;
-    totalAmountTTC: number;
-    customer: any;
-    customerEmail: string;
-    shippingAddress: any;
-    billingAddress: any;
-    notes?: string;
-  } | null> {
-    const checkoutData = await this.getCheckoutData(cartSessionId);
-    if (!checkoutData) {
-      return null;
-    }
-
-    const { cart, snapshot } = checkoutData;
-
-    // Extraire les items du panier (utilise directement les prix stockés)
-    const items = cart.items.map((item) => {
-      const itemData: any = {
-        productId: item.productId,
-        quantity: item.quantity,
-        unitPriceHT: item.unitPriceHT,
-        unitPriceTTC: item.unitPriceTTC,
-        vatRate: item.vatRate,
-        totalPriceHT: item.totalPriceHT,
-        totalPriceTTC: item.totalPriceTTC,
-      };
-      if (item.productName !== undefined) {
-        itemData.productName = item.productName;
-      }
-      return itemData;
-    });
-
-    // Extraire les informations customer depuis le snapshot
-    const customer = snapshot.customer || {};
-    const customerEmail = customer.email || snapshot.email || "";
-
-    // Extraire les adresses (gère camelCase et snake_case)
-    const shippingAddress =
-      snapshot.shippingAddress || snapshot.shipping_address || null;
-    const billingAddress =
-      snapshot.billingAddress || snapshot.billing_address || null;
-
-    return {
-      items,
-      totalAmountHT: cart.subtotal,
-      totalAmountTTC: cart.total,
-      customer,
-      customerEmail,
-      shippingAddress,
-      billingAddress,
-      notes: snapshot.notes || undefined,
-    };
   }
 
   /**

@@ -183,14 +183,6 @@ export class ApiRouter {
       }
     );
 
-    // Préparer les données de commande (cart + snapshot formatés pour order-service)
-    app.post(
-      "/api/cart/prepare-order-data/:cartSessionId",
-      (req: Request, res: Response) => {
-        this.cartController.prepareOrderData(req, res);
-      }
-    );
-
     // ===== GESTION DES ERREURS =====
     app.use((req: Request, res: Response) => {
       res.status(404).json(ResponseMapper.notFoundError("Route"));

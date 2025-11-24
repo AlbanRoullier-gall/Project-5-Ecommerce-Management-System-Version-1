@@ -46,14 +46,7 @@ export class CartMapper {
     if (dto.imageUrl !== undefined) {
       itemData.image_url = dto.imageUrl;
     }
-    console.log("🔧 CartMapper - itemData créé:", itemData);
-    const cartItem = new CartItem(itemData);
-    console.log("🔧 CartMapper - CartItem créé:", {
-      id: cartItem.id,
-      productId: cartItem.productId,
-      imageUrl: cartItem.imageUrl,
-    });
-    return cartItem;
+    return new CartItem(itemData);
   }
 
   /**
@@ -98,12 +91,6 @@ export class CartMapper {
     if (item.imageUrl !== undefined) {
       dto.imageUrl = item.imageUrl;
     }
-    console.log("🔧 CartMapper - DTO créé:", {
-      id: dto.id,
-      productId: dto.productId,
-      imageUrl: dto.imageUrl,
-      itemImageUrl: item.imageUrl,
-    });
     return dto;
   }
 

@@ -52,17 +52,6 @@ export class CartItem {
     this.unitPriceTTC = data.unit_price_ttc;
     this.totalPriceHT = data.total_price_ht;
     this.totalPriceTTC = data.total_price_ttc;
-
-    // Debug: vérifier si imageUrl est présent
-    if (data.id && !this.imageUrl && data.image_url === undefined) {
-      console.log("⚠️ CartItem créé sans imageUrl:", {
-        id: this.id,
-        productId: this.productId,
-        productName: this.productName,
-        image_url: data.image_url,
-        data: data,
-      });
-    }
   }
 
   /**

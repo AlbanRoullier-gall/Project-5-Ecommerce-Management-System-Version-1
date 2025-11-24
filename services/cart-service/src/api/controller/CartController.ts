@@ -17,6 +17,18 @@ export class CartController {
   }
 
   /**
+   * Helper pour valider cartSessionId depuis req.params
+   */
+  private validateCartSessionId(
+    cartSessionId: string | undefined
+  ): string | null {
+    if (!cartSessionId) {
+      return null;
+    }
+    return cartSessionId;
+  }
+
+  /**
    * Récupérer un panier
    */
   async getCart(req: Request, res: Response): Promise<void> {
@@ -57,23 +69,10 @@ export class CartController {
       }
 
       const itemData = req.body as CartItemCreateDTO;
-      console.log("📥 Données reçues pour ajout au panier:", itemData);
-
       const cart = await this.cartService.addItem(
         sessionId as string,
         itemData
       );
-
-      // Debug: vérifier les items du panier retourné
-      console.log("📦 Panier après ajout:", {
-        itemsCount: cart.items.length,
-        items: cart.items.map((item) => ({
-          productId: item.productId,
-          productName: item.productName,
-          imageUrl: item.imageUrl,
-          description: item.description,
-        })),
-      });
 
       res.status(200).json(ResponseMapper.itemAdded(cart));
     } catch (error: any) {
@@ -229,7 +228,9 @@ export class CartController {
    */
   async saveCheckoutSnapshot(req: Request, res: Response): Promise<void> {
     try {
-      const { cartSessionId } = req.params;
+      const cartSessionId = this.validateCartSessionId(
+        req.params.cartSessionId
+      );
       if (!cartSessionId) {
         res
           .status(400)
@@ -238,7 +239,6 @@ export class CartController {
       }
 
       await this.cartService.saveCheckoutSnapshot(cartSessionId, req.body);
-
       res.status(204).send();
     } catch (error: any) {
       console.error("Save checkout snapshot error:", error);
@@ -251,7 +251,9 @@ export class CartController {
    */
   async getCheckoutSnapshot(req: Request, res: Response): Promise<void> {
     try {
-      const { cartSessionId } = req.params;
+      const cartSessionId = this.validateCartSessionId(
+        req.params.cartSessionId
+      );
       if (!cartSessionId) {
         res
           .status(400)
@@ -284,7 +286,9 @@ export class CartController {
    */
   async deleteCheckoutSnapshot(req: Request, res: Response): Promise<void> {
     try {
-      const { cartSessionId } = req.params;
+      const cartSessionId = this.validateCartSessionId(
+        req.params.cartSessionId
+      );
       if (!cartSessionId) {
         res
           .status(400)
@@ -293,7 +297,6 @@ export class CartController {
       }
 
       await this.cartService.deleteCheckoutSnapshot(cartSessionId);
-
       res.status(204).send();
     } catch (error: any) {
       console.error("Delete checkout snapshot error:", error);
@@ -306,7 +309,9 @@ export class CartController {
    */
   async getCheckoutData(req: Request, res: Response): Promise<void> {
     try {
-      const { cartSessionId } = req.params;
+      const cartSessionId = this.validateCartSessionId(
+        req.params.cartSessionId
+      );
       if (!cartSessionId) {
         res
           .status(400)
@@ -327,9 +332,7 @@ export class CartController {
         return;
       }
 
-      // Formater le cart en DTO
       const cartDTO = CartMapper.cartToPublicDTO(checkoutData.cart);
-
       res.status(200).json({
         success: true,
         cart: cartDTO,
@@ -338,46 +341,6 @@ export class CartController {
       });
     } catch (error: any) {
       console.error("Get checkout data error:", error);
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Préparer les données de commande à partir du cart et snapshot
-   *
-   * Retourne les données formatées pour order-service, incluant :
-   * - Items avec calculs HT/TTC
-   * - Totaux
-   * - Informations customer et adresses extraites du snapshot
-   */
-  async prepareOrderData(req: Request, res: Response): Promise<void> {
-    try {
-      const { cartSessionId } = req.params;
-      if (!cartSessionId) {
-        res
-          .status(400)
-          .json(ResponseMapper.validationError("cartSessionId is required"));
-        return;
-      }
-
-      const orderData = await this.cartService.prepareOrderData(cartSessionId);
-
-      if (!orderData) {
-        res.status(404).json({
-          error: "Order data not found",
-          message: "Cart or snapshot not found for this session",
-          timestamp: new Date().toISOString(),
-        });
-        return;
-      }
-
-      res.status(200).json({
-        success: true,
-        data: orderData,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      console.error("Prepare order data error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
