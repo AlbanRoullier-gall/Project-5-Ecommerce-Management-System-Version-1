@@ -54,7 +54,7 @@ export class CartMapper {
    * Inclut tous les calculs HT/TTC pré-calculés pour performance
    */
   static cartItemToPublicDTO(item: CartItem): DTO.CartItemPublicDTO {
-    return {
+    const dto: DTO.CartItemPublicDTO = {
       id: item.id,
       productId: item.productId,
       quantity: item.quantity,
@@ -65,6 +65,10 @@ export class CartMapper {
       totalPriceTTC: item.getTotalTTC(),
       addedAt: item.addedAt,
     };
+    if (item.productName !== undefined) {
+      dto.productName = item.productName;
+    }
+    return dto;
   }
 
   /**

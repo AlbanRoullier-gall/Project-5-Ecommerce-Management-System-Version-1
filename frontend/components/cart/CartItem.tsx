@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { CartItemPublicDTO } from "../../dto";
-import { useCart } from "../../contexts/CartContext";
+import { useCart, EnrichedCartItem } from "../../contexts/CartContext";
 
 /**
  * URL de l'API depuis les variables d'environnement
@@ -16,7 +15,7 @@ const API_URL = (() => {
 })();
 
 interface CartItemProps {
-  item: CartItemPublicDTO;
+  item: EnrichedCartItem;
 }
 
 /**
@@ -113,7 +112,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
         >
           <img
             src={productImage}
-            alt={item.product?.name || "Produit"}
+            alt={item.productName || item.product?.name || "Produit"}
             style={{
               width: "100%",
               height: "100%",
@@ -145,7 +144,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
               color: "#333",
             }}
           >
-            {item.product?.name || "Chargement..."}
+            {item.productName || item.product?.name || "Produit"}
           </h3>
           <div
             style={{

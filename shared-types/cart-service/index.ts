@@ -3,8 +3,6 @@
  * Types partagés pour l'API REST
  */
 
-import { ProductPublicDTO } from "../product-service";
-
 // ===== TYPES BASÉS SUR CartItemData =====
 
 /**
@@ -28,11 +26,12 @@ export interface CartItemUpdateDTO {
 
 /**
  * DTO public pour un article du panier
+ * Reflète exactement ce que le cart-service retourne
  */
 export interface CartItemPublicDTO {
   id: string;
   productId: number;
-  product?: ProductPublicDTO;
+  productName?: string; // Nom du produit (snapshot au moment de l'ajout)
   quantity: number;
   vatRate: number;
   unitPriceHT: number;

@@ -18,7 +18,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { useCart } from "../../contexts/CartContext";
+import { useCart, EnrichedCartItem } from "../../contexts/CartContext";
 import { useCheckout } from "../../contexts/CheckoutContext";
 
 /**
@@ -31,6 +31,9 @@ export default function CheckoutOrderSummary() {
   // Consolider les appels de hooks - une seule fois chacun
   const { cart, totals } = useCart();
   const { customerData, addressData, completeOrder } = useCheckout();
+
+  // Les items du cart sont enrichis côté frontend
+  const enrichedItems = (cart?.items || []) as EnrichedCartItem[];
 
   // Utiliser les adresses depuis le contexte
   const shippingAddress = addressData.shipping;
@@ -302,7 +305,7 @@ export default function CheckoutOrderSummary() {
 
           {/* Liste des produits commandés */}
           <div style={{ marginBottom: "2rem" }}>
-            {cart?.items?.map((item, index) => {
+            {enrichedItems.map((item, index) => {
               return (
                 <div
                   key={index}
@@ -319,7 +322,7 @@ export default function CheckoutOrderSummary() {
                 >
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: "600", marginBottom: "0.3rem" }}>
-                      {item.product?.name || "Produit"}
+                      {item.productName || item.product?.name || "Produit"}
                     </div>
                     <div style={{ color: "#666", fontSize: "1.2rem" }}>
                       Quantité: {item.quantity} × {item.unitPriceTTC.toFixed(2)}{" "}

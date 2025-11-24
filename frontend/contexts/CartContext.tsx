@@ -7,10 +7,20 @@ import React, {
 } from "react";
 import {
   CartPublicDTO,
+  CartItemPublicDTO,
   CartItemCreateDTO,
   CartItemUpdateDTO,
   CartClearDTO,
+  ProductPublicDTO,
 } from "../dto";
+
+/**
+ * Type enrichi local pour les items du panier avec les données produit
+ * Utilisé uniquement côté frontend pour l'affichage
+ */
+export type EnrichedCartItem = CartItemPublicDTO & {
+  product?: ProductPublicDTO;
+};
 
 /**
  * URL de l'API depuis les variables d'environnement
@@ -162,13 +172,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       }
 
       // Enrichir uniquement les items qui n'ont pas encore de product
-      const itemsToEnrich = cart.items.filter((item) => !item.product);
+      const itemsToEnrich = (cart.items as EnrichedCartItem[]).filter(
+        (item) => !item.product
+      );
       if (itemsToEnrich.length === 0) {
         return;
       }
 
       try {
-        const enrichedItems = await Promise.all(
+        const enrichedProducts = await Promise.all(
           itemsToEnrich.map(async (item) => {
             try {
               const response = await fetch(
@@ -177,22 +189,26 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
               if (response.ok) {
                 const data = await response.json();
                 const productData = data.product || data;
-                return { ...item, product: productData };
+                return { itemId: item.id, product: productData };
               }
             } catch (err) {
               console.error(`Error loading product ${item.productId}:`, err);
             }
-            return item;
+            return null;
           })
         );
 
         // Mettre à jour le cart avec les items enrichis
-        const updatedItems = cart.items.map((item) => {
-          const enriched = enrichedItems.find((e) => e.id === item.id);
-          return enriched || item;
+        const updatedItems: EnrichedCartItem[] = cart.items.map((item) => {
+          const enriched = enrichedProducts.find(
+            (e) => e && e.itemId === item.id
+          );
+          return enriched
+            ? { ...item, product: enriched.product }
+            : (item as EnrichedCartItem);
         });
 
-        setCart({ ...cart, items: updatedItems });
+        setCart({ ...cart, items: updatedItems as any });
       } catch (err) {
         console.error("Error enriching cart items:", err);
       }
