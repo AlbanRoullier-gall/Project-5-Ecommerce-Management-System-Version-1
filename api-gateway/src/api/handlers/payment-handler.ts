@@ -55,11 +55,11 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       });
     }
 
-    // 3. Appel au Cart Service pour récupérer les données préparées
+    // 4. Appel au Cart Service pour récupérer les données préparées
     let preparedData: any;
 
     try {
-      const cartResponse = await fetch(
+      const prepareResponse = await fetch(
         `${SERVICES.cart}/api/cart/prepare-order-data/${cartSessionId}`,
         {
           method: "POST",
@@ -70,19 +70,19 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         }
       );
 
-      if (!cartResponse.ok) {
-        if (cartResponse.status === 404) {
+      if (!prepareResponse.ok) {
+        if (prepareResponse.status === 404) {
           return res.status(404).json({
             error: "Données de checkout introuvables",
             message: "Panier ou snapshot non trouvé pour cette session",
             timestamp: new Date().toISOString(),
           });
         }
-        throw new Error(`Cart Service error: ${cartResponse.statusText}`);
+        throw new Error(`Cart Service error: ${prepareResponse.statusText}`);
       }
 
-      const cartData = (await cartResponse.json()) as any;
-      preparedData = cartData.data;
+      const prepareData = (await prepareResponse.json()) as any;
+      preparedData = prepareData.data;
 
       if (!preparedData) {
         return res.status(404).json({
@@ -90,6 +90,44 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
           message: "Panier ou snapshot non trouvé pour cette session",
           timestamp: new Date().toISOString(),
         });
+      }
+
+      // Enrichir les items avec les noms de produits depuis le product-service
+      if (preparedData.items && Array.isArray(preparedData.items)) {
+        preparedData.items = await Promise.all(
+          preparedData.items.map(async (item: any) => {
+            // Enrichir avec le nom du produit depuis product-service
+            let productName = item.productName || "";
+
+            if (!productName && item.productId) {
+              try {
+                const productResponse = await fetch(
+                  `${SERVICES.product}/api/products/${item.productId}`,
+                  {
+                    headers: {
+                      "X-Service-Request": "api-gateway",
+                    },
+                  }
+                );
+                if (productResponse.ok) {
+                  const productData = (await productResponse.json()) as any;
+                  const product = productData.product || productData;
+                  productName = product?.name || "";
+                }
+              } catch (err) {
+                console.error(
+                  `Error loading product ${item.productId} for order:`,
+                  err
+                );
+              }
+            }
+
+            return {
+              ...item,
+              productName,
+            };
+          })
+        );
       }
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Cart Service:", error);
@@ -215,7 +253,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       const shipping = preparedData.shippingAddress || {};
 
       const items = (preparedData.items || []).map((item: any) => ({
-        name: item.productName || `Produit #${item.productId}`,
+        name: item.productName,
         quantity: item.quantity,
         unitPrice: item.unitPriceTTC,
         totalPrice: item.totalPriceTTC,

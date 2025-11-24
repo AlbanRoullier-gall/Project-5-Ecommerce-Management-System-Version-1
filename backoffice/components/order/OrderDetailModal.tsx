@@ -590,7 +590,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                                 color: "#111827",
                               }}
                             >
-                              {it.productName || `Produit #${it.productId}`}
+                              {it.productName}
                             </td>
                             <td
                               style={{

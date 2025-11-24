@@ -41,7 +41,6 @@ export class ApiRouter {
       // Schéma de création d'article de panier
       cartItemCreateSchema: Joi.object({
         productId: Joi.number().positive().required(),
-        productName: Joi.string().optional().allow(null, ""),
         quantity: Joi.number().positive().required(),
         price: Joi.number().positive().required(),
         vatRate: Joi.number().min(0).max(100).required(),

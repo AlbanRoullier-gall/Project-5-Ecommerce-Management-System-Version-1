@@ -29,7 +29,7 @@ export default function CheckoutOrderSummary() {
   const router = useRouter();
 
   // Consolider les appels de hooks - une seule fois chacun
-  const { cart, totals, products } = useCart();
+  const { cart, totals } = useCart();
   const { customerData, addressData, completeOrder } = useCheckout();
 
   // Utiliser les adresses depuis le contexte
@@ -50,7 +50,7 @@ export default function CheckoutOrderSummary() {
     setIsProcessing(true);
     setError(null);
 
-    const result = await completeOrder(cart, products);
+    const result = await completeOrder(cart);
 
     if (result.success && result.paymentUrl) {
       // Rediriger vers la page de paiement Stripe
@@ -302,9 +302,7 @@ export default function CheckoutOrderSummary() {
 
           {/* Liste des produits commandés */}
           <div style={{ marginBottom: "2rem" }}>
-            {products.map((item, index) => {
-              const vatMultiplier = 1 + (item.vatRate || 0) / 100;
-              const unitPriceHT = item.price / vatMultiplier;
+            {cart?.items?.map((item, index) => {
               return (
                 <div
                   key={index}
@@ -324,7 +322,8 @@ export default function CheckoutOrderSummary() {
                       {item.product?.name || "Produit"}
                     </div>
                     <div style={{ color: "#666", fontSize: "1.2rem" }}>
-                      Quantité: {item.quantity} × {item.price.toFixed(2)} €
+                      Quantité: {item.quantity} × {item.unitPriceTTC.toFixed(2)}{" "}
+                      €
                     </div>
                   </div>
                   <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
@@ -335,7 +334,7 @@ export default function CheckoutOrderSummary() {
                         fontWeight: 600,
                       }}
                     >
-                      {unitPriceHT.toFixed(2)} € HTVA / unité
+                      {item.unitPriceHT.toFixed(2)} € HTVA / unité
                     </div>
                     <div style={{ fontSize: "1.1rem", color: "#7a7a7a" }}>
                       TVA {item.vatRate}%
@@ -347,7 +346,7 @@ export default function CheckoutOrderSummary() {
                         marginTop: "0.4rem",
                       }}
                     >
-                      {item.total.toFixed(2)} €
+                      {item.totalPriceTTC.toFixed(2)} €
                     </div>
                   </div>
                 </div>

@@ -3,18 +3,18 @@
  * Types partagés pour l'API REST
  */
 
+import { ProductPublicDTO } from "../product-service";
+
 // ===== TYPES BASÉS SUR CartItemData =====
 
 /**
  * DTO pour ajouter un article au panier
- * Basé sur CartItemData avec ajout de la session
  */
 export interface CartItemCreateDTO {
   productId: number;
-  productName?: string; // Nom du produit (optionnel pour rétrocompatibilité)
   quantity: number;
   price: number;
-  vatRate: number; // taux de TVA du produit (en %)
+  vatRate: number;
 }
 
 /**
@@ -27,21 +27,17 @@ export interface CartItemUpdateDTO {
 
 /**
  * DTO public pour un article du panier
- * Basé sur CartItemData avec calculs HT/TTC complets
  */
 export interface CartItemPublicDTO {
   id: string;
   productId: number;
-  productName?: string; // Nom du produit (snapshot au moment de l'ajout)
+  product?: ProductPublicDTO;
   quantity: number;
-  price: number; // Prix unitaire TTC (conservé pour rétrocompatibilité)
   vatRate: number;
-  total: number; // Total TTC (conservé pour rétrocompatibilité)
-  // Nouveaux champs avec calculs HT/TTC complets
-  unitPriceHT: number; // Prix unitaire HT
-  unitPriceTTC: number; // Prix unitaire TTC (identique à price)
-  totalPriceHT: number; // Total HT
-  totalPriceTTC: number; // Total TTC (identique à total)
+  unitPriceHT: number;
+  unitPriceTTC: number;
+  totalPriceHT: number;
+  totalPriceTTC: number;
   addedAt: Date;
 }
 

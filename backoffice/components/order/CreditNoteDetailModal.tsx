@@ -525,7 +525,7 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                               fontWeight: 500,
                             }}
                           >
-                            {it.productName || `Produit #${it.productId}`}
+                            {it.productName}
                           </td>
                           <td
                             style={{

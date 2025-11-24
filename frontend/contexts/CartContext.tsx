@@ -10,8 +10,6 @@ import {
   CartItemCreateDTO,
   CartItemUpdateDTO,
   CartClearDTO,
-  CartItemPublicDTO,
-  ProductPublicDTO,
 } from "../dto";
 
 /**
@@ -39,26 +37,17 @@ interface CartTotals {
   breakdown: { rate: number; amount: number }[];
 }
 
-/**
- * Extension de CartItemPublicDTO avec les informations complètes du produit
- */
-export interface CartItemWithProduct extends CartItemPublicDTO {
-  product?: ProductPublicDTO;
-}
-
 interface CartContextType {
   cart: CartPublicDTO | null;
   itemCount: number;
   totals: CartTotals;
   isLoading: boolean;
   error: string | null;
-  products: CartItemWithProduct[]; // Produits avec leurs détails complets
   addToCart: (
     productId: number,
     quantity: number,
     priceTTC: number,
-    vatRate: number,
-    productName?: string
+    vatRate: number
   ) => Promise<void>;
   updateQuantity: (productId: number, quantity: number) => Promise<void>;
   removeFromCart: (productId: number) => Promise<void>;
@@ -91,7 +80,6 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [products, setProducts] = useState<CartItemWithProduct[]>([]);
 
   /**
    * Calcule les totaux du panier
@@ -115,9 +103,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     const vatByRate = new Map<number, number>();
     for (const item of cart.items) {
       const rate = item.vatRate ?? 0;
-      const multiplier = 1 + rate / 100;
-      const lineTotalTTC = item.price * item.quantity;
-      const lineTotalHT = lineTotalTTC / multiplier;
+      const lineTotalTTC = item.totalPriceTTC;
+      const lineTotalHT = item.totalPriceHT;
       const vat = lineTotalTTC - lineTotalHT;
 
       vatByRate.set(rate, (vatByRate.get(rate) || 0) + vat);
@@ -164,38 +151,53 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   }, [sessionId]);
 
   /**
-   * Charge les détails des produits depuis l'API
-   * Récupère les informations complètes de chaque produit dans le panier
+   * Enrichit les items du panier avec les détails des produits
+   * Charge les informations complètes de chaque produit depuis l'API
    */
   useEffect(() => {
-    const loadProducts = async () => {
+    const enrichCartItems = async () => {
       if (!cart?.items || cart.items.length === 0) {
-        setProducts([]);
+        return;
+      }
+
+      // Enrichir uniquement les items qui n'ont pas encore de product
+      const itemsToEnrich = cart.items.filter((item) => !item.product);
+      if (itemsToEnrich.length === 0) {
         return;
       }
 
       try {
-        const productPromises = cart.items.map(async (item) => {
-          const response = await fetch(
-            `${API_URL}/api/products/${item.productId}`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            return { ...item, product: data.product || data };
-          }
-          return item;
+        const enrichedItems = await Promise.all(
+          itemsToEnrich.map(async (item) => {
+            try {
+              const response = await fetch(
+                `${API_URL}/api/products/${item.productId}`
+              );
+              if (response.ok) {
+                const data = await response.json();
+                const productData = data.product || data;
+                return { ...item, product: productData };
+              }
+            } catch (err) {
+              console.error(`Error loading product ${item.productId}:`, err);
+            }
+            return item;
+          })
+        );
+
+        // Mettre à jour le cart avec les items enrichis
+        const updatedItems = cart.items.map((item) => {
+          const enriched = enrichedItems.find((e) => e.id === item.id);
+          return enriched || item;
         });
 
-        const productsData = await Promise.all(productPromises);
-        setProducts(productsData);
+        setCart({ ...cart, items: updatedItems });
       } catch (err) {
-        console.error("Error loading products:", err);
-        // En cas d'erreur, on garde les items sans les détails produits
-        setProducts(cart.items);
+        console.error("Error enriching cart items:", err);
       }
     };
 
-    loadProducts();
+    enrichCartItems();
   }, [cart]);
 
   /**
@@ -249,8 +251,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     productId: number,
     quantity: number,
     priceTTC: number,
-    vatRate: number,
-    productName?: string
+    vatRate: number
   ) => {
     if (!sessionId) {
       console.log("⚠️ Pas de sessionId, impossible d'ajouter au panier");
@@ -270,7 +271,6 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       // Créer le DTO pour l'ajout d'article
       const itemData: CartItemCreateDTO = {
         productId,
-        productName,
         quantity,
         price: priceTTC,
         vatRate,
@@ -437,7 +437,6 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     totals,
     isLoading,
     error,
-    products,
     addToCart,
     updateQuantity,
     removeFromCart,

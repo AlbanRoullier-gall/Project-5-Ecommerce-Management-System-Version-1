@@ -7,7 +7,7 @@ import React, {
   useCallback,
 } from "react";
 import { CustomerCreateDTO, AddressCreateDTO } from "../dto";
-import { CartItemPublicDTO, ProductPublicDTO } from "../dto";
+import { CartItemPublicDTO } from "../dto";
 
 /**
  * Structure des données d'adresse pour le checkout
@@ -45,7 +45,6 @@ export interface CompleteOrderResult {
 
 /**
  * Type du contexte Checkout
- * Simplifié : plus de gestion d'étapes, uniquement les données
  */
 interface CheckoutContextType {
   // Données
@@ -54,8 +53,6 @@ interface CheckoutContextType {
 
   // Actions générales
   updateCustomerData: (data: Partial<CustomerCreateDTO>) => void;
-  updateAddressData: (data: AddressFormData) => void;
-  resetCheckout: () => void;
 
   // Actions spécifiques aux adresses
   updateShippingField: (field: string, value: string) => void;
@@ -65,8 +62,7 @@ interface CheckoutContextType {
 
   // Action de finalisation de commande
   completeOrder: (
-    cart: { items: CartItemPublicDTO[]; total: number } | null,
-    products: (CartItemPublicDTO & { product?: ProductPublicDTO })[]
+    cart: { items: CartItemPublicDTO[]; total: number } | null
   ) => Promise<CompleteOrderResult>;
 }
 
@@ -195,15 +191,6 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   }, []);
 
   /**
-   * Met à jour les données d'adresse
-   */
-  const updateAddressData = useCallback((data: AddressFormData) => {
-    setAddressData((prev) => {
-      return { ...prev, ...data };
-    });
-  }, []);
-
-  /**
    * Met à jour un champ spécifique de l'adresse de livraison
    */
   const updateShippingField = useCallback((field: string, value: string) => {
@@ -294,29 +281,6 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   }, [addressData]);
 
   /**
-   * Réinitialise toutes les données checkout
-   */
-  const resetCheckout = useCallback(() => {
-    setCustomerData({});
-    setAddressData({
-      shipping: {},
-      billing: {},
-      useSameBillingAddress: true,
-    });
-
-    if (typeof window !== "undefined") {
-      try {
-        sessionStorage.removeItem(STORAGE_KEY);
-      } catch (error) {
-        console.error(
-          "Error clearing checkout data from sessionStorage:",
-          error
-        );
-      }
-    }
-  }, []);
-
-  /**
    * Helper pour créer un DTO d'adresse
    */
   const createAddressDTO = useCallback(
@@ -387,8 +351,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
    */
   const completeOrder = useCallback(
     async (
-      cart: { items: CartItemPublicDTO[]; total: number } | null,
-      products: (CartItemPublicDTO & { product?: ProductPublicDTO })[]
+      cart: { items: CartItemPublicDTO[]; total: number } | null
     ): Promise<CompleteOrderResult> => {
       if (!cart) {
         return {
@@ -485,16 +448,13 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         }
 
         // Étape 3 : Préparer les données de paiement pour Stripe
-        const paymentItems = cart.items.map((item) => {
-          const product = products.find((p) => p.productId === item.productId);
-          return {
-            name: product?.product?.name || "Produit",
-            description: product?.product?.description || "",
-            price: Math.round(item.price * 100),
+        const paymentItems = cart.items.map((item) => ({
+          name: item.product?.name || "Produit",
+          description: item.product?.description || "",
+          price: Math.round(item.unitPriceTTC * 100),
             quantity: item.quantity,
             currency: "eur",
-          };
-        });
+        }));
 
         // Étape 4 : Construire le snapshot checkout à attacher au panier
         // Le snapshot contient toutes les informations de la commande pour référence future
@@ -619,8 +579,6 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
     customerData,
     addressData,
     updateCustomerData,
-    updateAddressData,
-    resetCheckout,
     updateShippingField,
     updateBillingField,
     setUseSameBillingAddress,

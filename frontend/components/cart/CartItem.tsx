@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CartItemPublicDTO, ProductPublicDTO } from "../../dto";
+import { CartItemPublicDTO } from "../../dto";
 import { useCart } from "../../contexts/CartContext";
 
 /**
@@ -25,30 +25,11 @@ interface CartItemProps {
  */
 const CartItem: React.FC<CartItemProps> = ({ item }) => {
   const { updateQuantity, removeFromCart } = useCart();
-  const [product, setProduct] = useState<ProductPublicDTO | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [quantity, setQuantity] = useState(item.quantity);
 
-  // Charger les informations du produit
-  React.useEffect(() => {
-    const loadProduct = async () => {
-      try {
-        const response = await fetch(
-          `${API_URL}/api/products/${item.productId}`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          // L'API peut retourner { product: {...} } ou directement le produit
-          const productData = data.product || data;
-          setProduct(productData);
-        }
-      } catch (err) {
-        console.error("Error loading product:", err);
-      }
-    };
-
-    loadProduct();
-  }, [item.productId]);
+  // Utiliser directement item.product si disponible
+  const product = item.product;
 
   /**
    * Met à jour la quantité
@@ -87,12 +68,12 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
     }
   };
 
-  // Image du produit (utilise filePath comme dans ProductCard)
+  // Image du produit
   const productImage = product?.images?.[0]
     ? `${API_URL}/${product.images[0].filePath}`
     : "/images/placeholder.svg";
-  // Prix HTVA unitaire calculé à partir du prix TTC et du taux de TVA
-  const unitPriceHT = item.price / (1 + (item.vatRate || 0) / 100);
+  // Prix HTVA unitaire (utilise directement le champ calculé)
+  const unitPriceHT = item.unitPriceHT;
 
   return (
     <div
@@ -132,7 +113,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
         >
           <img
             src={productImage}
-            alt={product?.name || "Produit"}
+            alt={item.product?.name || "Produit"}
             style={{
               width: "100%",
               height: "100%",
@@ -164,7 +145,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
               color: "#333",
             }}
           >
-            {product?.name || "Chargement..."}
+            {item.product?.name || "Chargement..."}
           </h3>
           <div
             style={{
@@ -285,7 +266,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
                 whiteSpace: "nowrap",
               }}
             >
-              {item.total.toFixed(2)} €
+              {item.totalPriceTTC.toFixed(2)} €
             </div>
             <div
               style={{
@@ -419,7 +400,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
 
           /* Prix total TTC */
           div[style*="textAlign: right"]::after {
-            content: "${item.total.toFixed(2)} €";
+            content: "${item.totalPriceTTC.toFixed(2)} €";
             display: block !important;
             font-size: 1.4rem !important;
             color: #13686a !important;

@@ -454,7 +454,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                               <td
                                 style={{ padding: "0.5rem", color: "#111827" }}
                               >
-                                {it.productName || `Produit #${it.productId}`}
+                                {it.productName}
                               </td>
                               <td
                                 style={{

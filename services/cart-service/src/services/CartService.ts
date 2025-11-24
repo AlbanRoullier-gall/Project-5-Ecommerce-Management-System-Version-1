@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from "uuid";
 import { CartRepository } from "../repositories/CartRepository";
 import { CheckoutSnapshotRepository } from "../repositories/CheckoutSnapshotRepository";
 import { Cart } from "../models/Cart";
-import { CartItem } from "../models/CartItem";
+import { CartMapper } from "../api/mapper/CartMapper";
 import * as DTO from "@tfe/shared-types/cart-service";
 
 export default class CartService {
@@ -68,26 +68,7 @@ export default class CartService {
       cart = await this.createCart(sessionId);
     }
 
-    const itemDataForCartItem: {
-      id: string;
-      product_id: number;
-      product_name?: string;
-      quantity: number;
-      price: number;
-      vat_rate: number;
-      added_at: Date;
-    } = {
-      id: uuidv4(),
-      product_id: itemData.productId,
-      quantity: itemData.quantity,
-      price: itemData.price,
-      vat_rate: (itemData as any).vatRate ?? 0,
-      added_at: new Date(),
-    };
-    if (itemData.productName) {
-      itemDataForCartItem.product_name = itemData.productName;
-    }
-    const cartItem = new CartItem(itemDataForCartItem);
+    const cartItem = CartMapper.cartItemCreateDTOToCartItem(itemData, uuidv4());
 
     const updatedCart = cart.addItem(cartItem);
     await this.cartRepository.updateCart(updatedCart);
@@ -253,7 +234,7 @@ export default class CartService {
   async prepareOrderData(cartSessionId: string): Promise<{
     items: Array<{
       productId: number;
-      productName: string;
+      productName?: string;
       quantity: number;
       unitPriceHT: number;
       unitPriceTTC: number;
@@ -277,16 +258,21 @@ export default class CartService {
     const { cart, snapshot } = checkoutData;
 
     // Extraire les items du panier avec tous les calculs HT/TTC
-    const items = cart.items.map((item) => ({
-      productId: item.productId,
-      productName: item.productName || `Produit #${item.productId}`,
-      quantity: item.quantity,
-      unitPriceHT: item.getUnitPriceHT(),
-      unitPriceTTC: item.getUnitPriceTTC(),
-      vatRate: item.vatRate,
-      totalPriceHT: item.getTotalHT(),
-      totalPriceTTC: item.getTotalTTC(),
-    }));
+    const items = cart.items.map((item) => {
+      const itemData: any = {
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPriceHT: item.getUnitPriceHT(),
+        unitPriceTTC: item.getUnitPriceTTC(),
+        vatRate: item.vatRate,
+        totalPriceHT: item.getTotalHT(),
+        totalPriceTTC: item.getTotalTTC(),
+      };
+      if (item.productName !== undefined) {
+        itemData.productName = item.productName;
+      }
+      return itemData;
+    });
 
     // Extraire les informations customer depuis le snapshot
     const customer = snapshot.customer || {};

@@ -56,13 +56,9 @@ export class CartController {
         return;
       }
 
-      const itemData = CartMapper.cartItemCreateDTOToServiceData(
-        req.body as CartItemCreateDTO
-      );
-
       const cart = await this.cartService.addItem(
         sessionId as string,
-        itemData
+        req.body as CartItemCreateDTO
       );
 
       res.status(200).json(ResponseMapper.itemAdded(cart));
