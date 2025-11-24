@@ -16,7 +16,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 export default function CheckoutSuccessPage() {
   const router = useRouter();
   const { csid } = router.query;
-  const { clearCart } = useCart();
+  const { clearCart, cart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
   const hasFinalized = useRef(false);
 
@@ -32,9 +32,6 @@ export default function CheckoutSuccessPage() {
       return;
     }
 
-    setIsProcessing(true);
-    hasFinalized.current = true;
-
     const cartSessionId =
       typeof window !== "undefined"
         ? window.localStorage.getItem("cart_session_id")
@@ -42,20 +39,53 @@ export default function CheckoutSuccessPage() {
 
     if (!cartSessionId) {
       console.error("No cart session ID found");
-      setIsProcessing(false);
       return;
     }
 
+    // Attendre que le cart soit chargé et que les items soient enrichis
+    if (!cart || !cart.items || cart.items.length === 0) {
+      // Le cart n'est pas encore chargé, on attend
+      return;
+    }
+
+    // Vérifier que les items ont des productName (enrichis)
+    const itemsEnriched = cart.items.every((item) => item.product?.name);
+
+    if (!itemsEnriched) {
+      // Les items ne sont pas encore enrichis, on attend
+      return;
+    }
+
+    setIsProcessing(true);
+    hasFinalized.current = true;
+
     const finalize = async () => {
       try {
+        // Préparer les items enrichis avec productName depuis le cart
+        const enrichedItems = cart.items.map((item) => ({
+          productId: item.productId,
+          productName: item.product?.name || "",
+          quantity: item.quantity,
+          unitPriceHT: item.unitPriceHT,
+          unitPriceTTC: item.unitPriceTTC,
+          vatRate: item.vatRate,
+          totalPriceHT: item.totalPriceHT,
+          totalPriceTTC: item.totalPriceTTC,
+        }));
+
         console.log("Finalizing payment with:", {
           csid: sessionId,
           cartSessionId,
+          itemsCount: enrichedItems.length,
         });
         const response = await fetch(`${API_URL}/api/payment/finalize`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ csid: sessionId, cartSessionId }),
+          body: JSON.stringify({
+            csid: sessionId,
+            cartSessionId,
+            items: enrichedItems,
+          }),
         });
 
         if (!response.ok) {
@@ -86,7 +116,7 @@ export default function CheckoutSuccessPage() {
         // Ne pas vider le panier si la finalisation échoue
       })
       .finally(() => setIsProcessing(false));
-  }, [router.query.session_id, router.query.csid, clearCart]);
+  }, [router.query.session_id, router.query.csid, clearCart, cart]);
 
   return (
     <>

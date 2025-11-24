@@ -1,6 +1,7 @@
 /**
  * Handler pour la finalisation de paiement après succès Stripe
  * Orchestre l'appel entre Payment Service, Cart Service, Customer Service, Order Service et Email Service
+ * Note: L'enrichissement des items avec les noms de produits est fait côté frontend
  */
 
 import { Request, Response } from "express";
@@ -8,7 +9,7 @@ import { SERVICES } from "../../config";
 
 export const handleFinalizePayment = async (req: Request, res: Response) => {
   try {
-    const { csid, cartSessionId } = req.body || {};
+    const { csid, cartSessionId, items: frontendItems } = req.body || {};
 
     if (!csid) {
       return res.status(400).json({
@@ -55,7 +56,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       });
     }
 
-    // 4. Appel au Cart Service pour récupérer les données préparées
+    // 3. Appel au Cart Service pour récupérer les données préparées
     let preparedData: any;
 
     try {
@@ -92,42 +93,14 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         });
       }
 
-      // Enrichir les items avec les noms de produits depuis le product-service
-      if (preparedData.items && Array.isArray(preparedData.items)) {
-        preparedData.items = await Promise.all(
-          preparedData.items.map(async (item: any) => {
-            // Enrichir avec le nom du produit depuis product-service
-            let productName = item.productName || "";
-
-            if (!productName && item.productId) {
-              try {
-                const productResponse = await fetch(
-                  `${SERVICES.product}/api/products/${item.productId}`,
-                  {
-                    headers: {
-                      "X-Service-Request": "api-gateway",
-                    },
-                  }
-                );
-                if (productResponse.ok) {
-                  const productData = (await productResponse.json()) as any;
-                  const product = productData.product || productData;
-                  productName = product?.name || "";
-                }
-              } catch (err) {
-                console.error(
-                  `Error loading product ${item.productId} for order:`,
-                  err
-                );
-              }
-            }
-
-            return {
-              ...item,
-              productName,
-            };
-          })
-        );
+      // Utiliser les items enrichis du frontend s'ils sont fournis
+      // Sinon, utiliser ceux du cart service
+      if (
+        frontendItems &&
+        Array.isArray(frontendItems) &&
+        frontendItems.length > 0
+      ) {
+        preparedData.items = frontendItems;
       }
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Cart Service:", error);
