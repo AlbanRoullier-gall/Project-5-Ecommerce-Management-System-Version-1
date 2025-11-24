@@ -18,7 +18,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { useCart, EnrichedCartItem } from "../../contexts/CartContext";
+import { useCart, CartItemPublicDTO } from "../../contexts/CartContext";
 import { useCheckout } from "../../contexts/CheckoutContext";
 
 /**
@@ -32,8 +32,8 @@ export default function CheckoutOrderSummary() {
   const { cart, totals } = useCart();
   const { customerData, addressData, completeOrder } = useCheckout();
 
-  // Les items du cart sont enrichis côté frontend
-  const enrichedItems = (cart?.items || []) as EnrichedCartItem[];
+  // Les items du cart
+  const cartItems = (cart?.items || []) as CartItemPublicDTO[];
 
   // Utiliser les adresses depuis le contexte
   const shippingAddress = addressData.shipping;
@@ -305,7 +305,7 @@ export default function CheckoutOrderSummary() {
 
           {/* Liste des produits commandés */}
           <div style={{ marginBottom: "2rem" }}>
-            {enrichedItems.map((item, index) => {
+            {cartItems.map((item, index) => {
               return (
                 <div
                   key={index}
@@ -322,7 +322,7 @@ export default function CheckoutOrderSummary() {
                 >
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: "600", marginBottom: "0.3rem" }}>
-                      {item.productName || item.product?.name || "Produit"}
+                      {item.productName || "Produit"}
                     </div>
                     <div style={{ color: "#666", fontSize: "1.2rem" }}>
                       Quantité: {item.quantity} × {item.unitPriceTTC.toFixed(2)}{" "}

@@ -56,10 +56,24 @@ export class CartController {
         return;
       }
 
+      const itemData = req.body as CartItemCreateDTO;
+      console.log("📥 Données reçues pour ajout au panier:", itemData);
+
       const cart = await this.cartService.addItem(
         sessionId as string,
-        req.body as CartItemCreateDTO
+        itemData
       );
+
+      // Debug: vérifier les items du panier retourné
+      console.log("📦 Panier après ajout:", {
+        itemsCount: cart.items.length,
+        items: cart.items.map((item) => ({
+          productId: item.productId,
+          productName: item.productName,
+          imageUrl: item.imageUrl,
+          description: item.description,
+        })),
+      });
 
       res.status(200).json(ResponseMapper.itemAdded(cart));
     } catch (error: any) {

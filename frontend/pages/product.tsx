@@ -254,12 +254,18 @@ export default function ProductPage() {
                       onClick={async () => {
                         const priceWithVat =
                           product.price * (1 + product.vatRate / 100);
+                        const imageUrl =
+                          product.images && product.images.length > 0
+                            ? `${API_URL}/${product.images[0].filePath}`
+                            : undefined;
                         await addToCart(
                           product.id,
                           1,
                           priceWithVat,
                           product.vatRate,
-                          product.name
+                          product.name,
+                          product.description || undefined,
+                          imageUrl
                         );
                       }}
                       disabled={cartLoading}

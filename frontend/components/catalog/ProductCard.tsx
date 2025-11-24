@@ -81,12 +81,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
    */
   const handleAddToCart = async () => {
     try {
+      const imageUrl =
+        product.images && product.images.length > 0
+          ? `${API_URL}/${product.images[0].filePath}`
+          : undefined;
       await addToCart(
         product.id,
         1,
         getPriceWithVat(),
         product.vatRate,
-        product.name
+        product.name,
+        product.description || undefined,
+        imageUrl
       );
     } catch (error) {
       console.error("Erreur lors de l'ajout au panier:", error);

@@ -120,10 +120,9 @@ export class Cart {
    * Créer un nouveau panier avec les articles donnés
    */
   private createCartWithItems(items: CartItem[]): Cart {
-    // Interpréter item.price comme un prix TTC unitaire
-    // Calculer par ligne avec le taux de TVA propre à chaque article
-    const lineTotalsTTC = items.map((item) => item.getTotal());
-    const lineTotalsHT = items.map((item) => item.getTotalHT());
+    // Utiliser les prix stockés directement (plus besoin de calculer)
+    const lineTotalsTTC = items.map((item) => item.totalPriceTTC);
+    const lineTotalsHT = items.map((item) => item.totalPriceHT);
 
     const totalTTC = lineTotalsTTC.reduce((sum, v) => sum + v, 0);
     const subtotalHT = lineTotalsHT.reduce((sum, v) => sum + v, 0);
@@ -141,9 +140,14 @@ export class Cart {
         id: item.id,
         product_id: item.productId,
         product_name: item.productName,
+        description: item.description,
+        image_url: item.imageUrl,
         quantity: item.quantity,
-        price: item.price,
         vat_rate: item.vatRate,
+        unit_price_ht: item.unitPriceHT,
+        unit_price_ttc: item.unitPriceTTC,
+        total_price_ht: item.totalPriceHT,
+        total_price_ttc: item.totalPriceTTC,
         added_at: item.addedAt,
       })),
       subtotal,

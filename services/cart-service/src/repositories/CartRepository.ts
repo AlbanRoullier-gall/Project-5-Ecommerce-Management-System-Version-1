@@ -50,9 +50,14 @@ export class CartRepository {
           id: item.id,
           product_id: item.productId,
           product_name: item.productName,
+          description: item.description,
+          image_url: item.imageUrl,
           quantity: item.quantity,
-          price: item.price,
           vat_rate: item.vatRate,
+          unit_price_ht: item.unitPriceHT,
+          unit_price_ttc: item.unitPriceTTC,
+          total_price_ht: item.totalPriceHT,
+          total_price_ttc: item.totalPriceTTC,
           added_at: item.addedAt,
         })),
         subtotal: cart.subtotal,
@@ -78,6 +83,15 @@ export class CartRepository {
 
     try {
       const cartData = JSON.parse(data) as CartData;
+      console.log("📥 CartRepository - Données récupérées depuis Redis:", {
+        itemsCount: cartData.items?.length || 0,
+        items: cartData.items?.map((item: any) => ({
+          productId: item.product_id,
+          productName: item.product_name,
+          image_url: item.image_url,
+          description: item.description,
+        })),
+      });
       return new Cart(cartData);
     } catch (error) {
       console.error("Error parsing cart data:", error);
@@ -90,21 +104,46 @@ export class CartRepository {
    */
   async updateCart(cart: Cart): Promise<void> {
     const key = this.getCartKey(cart.sessionId);
+    // Debug: vérifier les items avant mapping
+    console.log(
+      "🔍 CartRepository - Items avant mapping:",
+      cart.items.map((item) => ({
+        id: item.id,
+        productId: item.productId,
+        imageUrl: item.imageUrl,
+        productName: item.productName,
+      }))
+    );
+    const itemsToStore = cart.items.map((item) => ({
+      id: item.id,
+      product_id: item.productId,
+      product_name: item.productName,
+      description: item.description,
+      image_url: item.imageUrl,
+      quantity: item.quantity,
+      vat_rate: item.vatRate,
+      unit_price_ht: item.unitPriceHT,
+      unit_price_ttc: item.unitPriceTTC,
+      total_price_ht: item.totalPriceHT,
+      total_price_ttc: item.totalPriceTTC,
+      added_at: item.addedAt,
+    }));
+    console.log("💾 CartRepository - Données à stocker dans Redis:", {
+      itemsCount: itemsToStore.length,
+      items: itemsToStore.map((item) => ({
+        productId: item.product_id,
+        productName: item.product_name,
+        image_url: item.image_url,
+        description: item.description,
+      })),
+    });
     await this.redis.setex(
       key,
       this.ttl,
       JSON.stringify({
         id: cart.id,
         session_id: cart.sessionId,
-        items: cart.items.map((item) => ({
-          id: item.id,
-          product_id: item.productId,
-          product_name: item.productName,
-          quantity: item.quantity,
-          price: item.price,
-          vat_rate: item.vatRate,
-          added_at: item.addedAt,
-        })),
+        items: itemsToStore,
         subtotal: cart.subtotal,
         tax: cart.tax,
         total: cart.total,

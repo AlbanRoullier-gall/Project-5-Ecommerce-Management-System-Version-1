@@ -18,18 +18,42 @@ export class CartMapper {
     dto: DTO.CartItemCreateDTO,
     id: string
   ): CartItem {
+    // Calculer les prix HT/TTC
+    const unitPriceTTC = dto.unitPriceTTC;
+    const multiplier = 1 + (dto.vatRate || 0) / 100;
+    const unitPriceHT =
+      multiplier > 0 ? dto.unitPriceTTC / multiplier : dto.unitPriceTTC;
+    const totalPriceHT = unitPriceHT * dto.quantity;
+    const totalPriceTTC = unitPriceTTC * dto.quantity;
+
     const itemData: any = {
       id,
       product_id: dto.productId,
       quantity: dto.quantity,
-      price: dto.price,
       vat_rate: dto.vatRate,
+      unit_price_ht: unitPriceHT,
+      unit_price_ttc: unitPriceTTC,
+      total_price_ht: totalPriceHT,
+      total_price_ttc: totalPriceTTC,
       added_at: new Date(),
     };
     if (dto.productName !== undefined) {
       itemData.product_name = dto.productName;
     }
-    return new CartItem(itemData);
+    if (dto.description !== undefined) {
+      itemData.description = dto.description;
+    }
+    if (dto.imageUrl !== undefined) {
+      itemData.image_url = dto.imageUrl;
+    }
+    console.log("🔧 CartMapper - itemData créé:", itemData);
+    const cartItem = new CartItem(itemData);
+    console.log("🔧 CartMapper - CartItem créé:", {
+      id: cartItem.id,
+      productId: cartItem.productId,
+      imageUrl: cartItem.imageUrl,
+    });
+    return cartItem;
   }
 
   /**
@@ -51,7 +75,7 @@ export class CartMapper {
 
   /**
    * Convertir le modèle CartItem en CartItemPublicDTO
-   * Inclut tous les calculs HT/TTC pré-calculés pour performance
+   * Utilise les valeurs stockées directement (plus besoin de calculer)
    */
   static cartItemToPublicDTO(item: CartItem): DTO.CartItemPublicDTO {
     const dto: DTO.CartItemPublicDTO = {
@@ -59,15 +83,27 @@ export class CartMapper {
       productId: item.productId,
       quantity: item.quantity,
       vatRate: item.vatRate,
-      unitPriceHT: item.getUnitPriceHT(),
-      unitPriceTTC: item.getUnitPriceTTC(),
-      totalPriceHT: item.getTotalHT(),
-      totalPriceTTC: item.getTotalTTC(),
+      unitPriceHT: item.unitPriceHT,
+      unitPriceTTC: item.unitPriceTTC,
+      totalPriceHT: item.totalPriceHT,
+      totalPriceTTC: item.totalPriceTTC,
       addedAt: item.addedAt,
     };
     if (item.productName !== undefined) {
       dto.productName = item.productName;
     }
+    if (item.description !== undefined) {
+      dto.description = item.description;
+    }
+    if (item.imageUrl !== undefined) {
+      dto.imageUrl = item.imageUrl;
+    }
+    console.log("🔧 CartMapper - DTO créé:", {
+      id: dto.id,
+      productId: dto.productId,
+      imageUrl: dto.imageUrl,
+      itemImageUrl: item.imageUrl,
+    });
     return dto;
   }
 

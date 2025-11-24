@@ -7,7 +7,7 @@ import React, {
   useCallback,
 } from "react";
 import { CustomerCreateDTO, AddressCreateDTO } from "../dto";
-import { EnrichedCartItem } from "./CartContext";
+import { CartItemPublicDTO } from "./CartContext";
 
 /**
  * Structure des données d'adresse pour le checkout
@@ -62,7 +62,7 @@ interface CheckoutContextType {
 
   // Action de finalisation de commande
   completeOrder: (
-    cart: { items: EnrichedCartItem[]; total: number } | null
+    cart: { items: CartItemPublicDTO[]; total: number } | null
   ) => Promise<CompleteOrderResult>;
 }
 
@@ -351,7 +351,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
    */
   const completeOrder = useCallback(
     async (
-      cart: { items: EnrichedCartItem[]; total: number } | null
+      cart: { items: CartItemPublicDTO[]; total: number } | null
     ): Promise<CompleteOrderResult> => {
       if (!cart) {
         return {
@@ -449,8 +449,8 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
 
         // Étape 3 : Préparer les données de paiement pour Stripe
         const paymentItems = cart.items.map((item) => ({
-          name: item.productName || item.product?.name || "Produit",
-          description: item.product?.description || "",
+          name: item.productName || "Produit",
+          description: item.description || "",
           price: Math.round(item.unitPriceTTC * 100),
           quantity: item.quantity,
           currency: "eur",

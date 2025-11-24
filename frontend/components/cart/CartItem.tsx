@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useCart, EnrichedCartItem } from "../../contexts/CartContext";
+import { useCart, CartItemPublicDTO } from "../../contexts/CartContext";
 
 /**
  * URL de l'API depuis les variables d'environnement
@@ -15,7 +15,7 @@ const API_URL = (() => {
 })();
 
 interface CartItemProps {
-  item: EnrichedCartItem;
+  item: CartItemPublicDTO;
 }
 
 /**
@@ -26,9 +26,6 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
   const { updateQuantity, removeFromCart } = useCart();
   const [isUpdating, setIsUpdating] = useState(false);
   const [quantity, setQuantity] = useState(item.quantity);
-
-  // Utiliser directement item.product si disponible
-  const product = item.product;
 
   /**
    * Met à jour la quantité
@@ -67,10 +64,9 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
     }
   };
 
-  // Image du produit
-  const productImage = product?.images?.[0]
-    ? `${API_URL}/${product.images[0].filePath}`
-    : "/images/placeholder.svg";
+  // Image du produit : utiliser imageUrl du cart item
+  // Si imageUrl n'est pas présent, utiliser le placeholder
+  const productImage = item.imageUrl || "/images/placeholder.svg";
   // Prix HTVA unitaire (utilise directement le champ calculé)
   const unitPriceHT = item.unitPriceHT;
 
@@ -112,7 +108,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
         >
           <img
             src={productImage}
-            alt={item.productName || item.product?.name || "Produit"}
+            alt={item.productName || "Produit"}
             style={{
               width: "100%",
               height: "100%",
@@ -144,7 +140,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
               color: "#333",
             }}
           >
-            {item.productName || item.product?.name || "Produit"}
+            {item.productName || "Produit"}
           </h3>
           <div
             style={{

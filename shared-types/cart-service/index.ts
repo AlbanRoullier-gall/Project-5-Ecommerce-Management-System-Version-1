@@ -11,8 +11,10 @@
 export interface CartItemCreateDTO {
   productId: number;
   productName?: string; // Nom du produit (snapshot au moment de l'ajout)
+  description?: string; // Description du produit (snapshot au moment de l'ajout)
+  imageUrl?: string; // URL de la première image du produit (snapshot au moment de l'ajout)
   quantity: number;
-  price: number;
+  unitPriceTTC: number; // Prix unitaire TTC (remplace price)
   vatRate: number;
 }
 
@@ -32,6 +34,8 @@ export interface CartItemPublicDTO {
   id: string;
   productId: number;
   productName?: string; // Nom du produit (snapshot au moment de l'ajout)
+  description?: string; // Description du produit (snapshot au moment de l'ajout)
+  imageUrl?: string; // URL de la première image du produit (snapshot au moment de l'ajout)
   quantity: number;
   vatRate: number;
   unitPriceHT: number;

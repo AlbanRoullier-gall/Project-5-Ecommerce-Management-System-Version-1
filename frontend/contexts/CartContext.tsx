@@ -11,16 +11,10 @@ import {
   CartItemCreateDTO,
   CartItemUpdateDTO,
   CartClearDTO,
-  ProductPublicDTO,
 } from "../dto";
 
-/**
- * Type enrichi local pour les items du panier avec les données produit
- * Utilisé uniquement côté frontend pour l'affichage
- */
-export type EnrichedCartItem = CartItemPublicDTO & {
-  product?: ProductPublicDTO;
-};
+// Export CartItemPublicDTO pour faciliter l'utilisation dans les composants
+export type { CartItemPublicDTO };
 
 /**
  * URL de l'API depuis les variables d'environnement
@@ -58,7 +52,9 @@ interface CartContextType {
     quantity: number,
     priceTTC: number,
     vatRate: number,
-    productName?: string
+    productName?: string,
+    description?: string,
+    imageUrl?: string
   ) => Promise<void>;
   updateQuantity: (productId: number, quantity: number) => Promise<void>;
   removeFromCart: (productId: number) => Promise<void>;
@@ -162,62 +158,6 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   }, [sessionId]);
 
   /**
-   * Enrichit les items du panier avec les détails des produits
-   * Charge les informations complètes de chaque produit depuis l'API
-   */
-  useEffect(() => {
-    const enrichCartItems = async () => {
-      if (!cart?.items || cart.items.length === 0) {
-        return;
-      }
-
-      // Enrichir uniquement les items qui n'ont pas encore de product
-      const itemsToEnrich = (cart.items as EnrichedCartItem[]).filter(
-        (item) => !item.product
-      );
-      if (itemsToEnrich.length === 0) {
-        return;
-      }
-
-      try {
-        const enrichedProducts = await Promise.all(
-          itemsToEnrich.map(async (item) => {
-            try {
-              const response = await fetch(
-                `${API_URL}/api/products/${item.productId}`
-              );
-              if (response.ok) {
-                const data = await response.json();
-                const productData = data.product || data;
-                return { itemId: item.id, product: productData };
-              }
-            } catch (err) {
-              console.error(`Error loading product ${item.productId}:`, err);
-            }
-            return null;
-          })
-        );
-
-        // Mettre à jour le cart avec les items enrichis
-        const updatedItems: EnrichedCartItem[] = cart.items.map((item) => {
-          const enriched = enrichedProducts.find(
-            (e) => e && e.itemId === item.id
-          );
-          return enriched
-            ? { ...item, product: enriched.product }
-            : (item as EnrichedCartItem);
-        });
-
-        setCart({ ...cart, items: updatedItems as any });
-      } catch (err) {
-        console.error("Error enriching cart items:", err);
-      }
-    };
-
-    enrichCartItems();
-  }, [cart]);
-
-  /**
    * Calcule le nombre total d'articles dans le panier
    */
   const itemCount =
@@ -269,7 +209,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     quantity: number,
     priceTTC: number,
     vatRate: number,
-    productName?: string
+    productName?: string,
+    description?: string,
+    imageUrl?: string
   ) => {
     if (!sessionId) {
       console.log("⚠️ Pas de sessionId, impossible d'ajouter au panier");
@@ -290,10 +232,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       const itemData: CartItemCreateDTO = {
         productId,
         productName,
+        description,
+        imageUrl,
         quantity,
-        price: priceTTC,
+        unitPriceTTC: priceTTC,
         vatRate,
       };
+
+      // Debug: vérifier ce qui est envoyé
+      console.log("📤 Données envoyées au panier:", itemData);
 
       const response = await fetch(url, {
         method: "POST",
@@ -317,6 +264,19 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       // Si la réponse contient directement le panier, on l'utilise
       if (result.cart) {
         console.log("✅ Panier mis à jour:", result.cart);
+        // Debug: vérifier les items et leur imageUrl
+        if (result.cart.items && result.cart.items.length > 0) {
+          console.log("📦 Items du panier:", result.cart.items);
+          result.cart.items.forEach((item: any, index: number) => {
+            console.log(`📦 Item ${index}:`, {
+              productId: item.productId,
+              productName: item.productName,
+              imageUrl: item.imageUrl,
+              description: item.description,
+              fullItem: item,
+            });
+          });
+        }
         setCart(result.cart);
       } else {
         // Sinon on recharge

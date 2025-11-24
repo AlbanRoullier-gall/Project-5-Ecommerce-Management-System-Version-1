@@ -257,16 +257,16 @@ export default class CartService {
 
     const { cart, snapshot } = checkoutData;
 
-    // Extraire les items du panier avec tous les calculs HT/TTC
+    // Extraire les items du panier (utilise directement les prix stockés)
     const items = cart.items.map((item) => {
       const itemData: any = {
         productId: item.productId,
         quantity: item.quantity,
-        unitPriceHT: item.getUnitPriceHT(),
-        unitPriceTTC: item.getUnitPriceTTC(),
+        unitPriceHT: item.unitPriceHT,
+        unitPriceTTC: item.unitPriceTTC,
         vatRate: item.vatRate,
-        totalPriceHT: item.getTotalHT(),
-        totalPriceTTC: item.getTotalTTC(),
+        totalPriceHT: item.totalPriceHT,
+        totalPriceTTC: item.totalPriceTTC,
       };
       if (item.productName !== undefined) {
         itemData.productName = item.productName;
