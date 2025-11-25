@@ -14,6 +14,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useCheckout } from "../../contexts/CheckoutContext";
+import { FormInput, FormContainer, Button, FormHeader } from "../shared";
 
 /**
  * Composant formulaire informations client
@@ -28,11 +29,9 @@ export default function CheckoutCustomerForm() {
   /**
    * Gère les changements dans les champs du formulaire
    * Met à jour le contexte checkout
-   * @param e - Événement de changement sur un input ou select
+   * @param e - Événement de changement sur un input
    */
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     updateCustomerData({
       ...customerData,
@@ -63,51 +62,8 @@ export default function CheckoutCustomerForm() {
   };
 
   return (
-    <div
-      className="checkout-form-container"
-      style={{
-        background: "white",
-        borderRadius: "16px",
-        padding: "3rem",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-      }}
-    >
-      <div
-        className="checkout-form-header"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "1rem",
-          marginBottom: "2.5rem",
-        }}
-      >
-        <div
-          style={{
-            width: "50px",
-            height: "50px",
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-            color: "white",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "1.8rem",
-            fontWeight: "700",
-          }}
-        >
-          1
-        </div>
-        <h2
-          className="checkout-form-title"
-          style={{
-            fontSize: "2.2rem",
-            fontWeight: "700",
-            color: "#333",
-          }}
-        >
-          Vos informations personnelles
-        </h2>
-      </div>
+    <FormContainer>
+      <FormHeader stepNumber={1} title="Vos informations personnelles" />
 
       <form onSubmit={handleSubmit}>
         {/* Grille de champs du formulaire */}
@@ -123,135 +79,45 @@ export default function CheckoutCustomerForm() {
           {/* Civilité supprimée */}
 
           {/* Champ prénom */}
-          <div className="checkout-form-group">
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.8rem",
-                fontSize: "1.3rem",
-                fontWeight: "600",
-                color: "#333",
-              }}
-            >
-              Prénom <span style={{ color: "#c33" }}>*</span>
-            </label>
-            <input
-              type="text"
-              name="firstName"
-              value={customerData.firstName || ""}
-              onChange={handleChange}
-              required
-              placeholder="Votre prénom"
-              style={{
-                width: "100%",
-                padding: "1.2rem",
-                fontSize: "1.3rem",
-                border: "2px solid #ddd",
-                borderRadius: "8px",
-                transition: "border-color 0.3s ease",
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-            />
-          </div>
+          <FormInput
+            name="firstName"
+            label="Prénom"
+            value={customerData.firstName || ""}
+            onChange={handleChange}
+            required
+            placeholder="Votre prénom"
+          />
 
           {/* Champ nom */}
-          <div className="checkout-form-group">
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.8rem",
-                fontSize: "1.3rem",
-                fontWeight: "600",
-                color: "#333",
-              }}
-            >
-              Nom <span style={{ color: "#c33" }}>*</span>
-            </label>
-            <input
-              type="text"
-              name="lastName"
-              value={customerData.lastName || ""}
-              onChange={handleChange}
-              required
-              placeholder="Votre nom"
-              style={{
-                width: "100%",
-                padding: "1.2rem",
-                fontSize: "1.3rem",
-                border: "2px solid #ddd",
-                borderRadius: "8px",
-                transition: "border-color 0.3s ease",
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-            />
-          </div>
+          <FormInput
+            name="lastName"
+            label="Nom"
+            value={customerData.lastName || ""}
+            onChange={handleChange}
+            required
+            placeholder="Votre nom"
+          />
 
           {/* Champ email */}
-          <div className="checkout-form-group">
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.8rem",
-                fontSize: "1.3rem",
-                fontWeight: "600",
-                color: "#333",
-              }}
-            >
-              Email <span style={{ color: "#c33" }}>*</span>
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={customerData.email || ""}
-              onChange={handleChange}
-              required
-              placeholder="votre.email@exemple.com"
-              style={{
-                width: "100%",
-                padding: "1.2rem",
-                fontSize: "1.3rem",
-                border: "2px solid #ddd",
-                borderRadius: "8px",
-                transition: "border-color 0.3s ease",
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-            />
-          </div>
+          <FormInput
+            name="email"
+            label="Email"
+            type="email"
+            value={customerData.email || ""}
+            onChange={handleChange}
+            required
+            placeholder="votre.email@exemple.com"
+          />
 
           {/* Champ téléphone (optionnel) */}
-          <div className="checkout-form-group">
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.8rem",
-                fontSize: "1.3rem",
-                fontWeight: "600",
-                color: "#333",
-              }}
-            >
-              Téléphone
-            </label>
-            <input
-              type="tel"
-              name="phoneNumber"
-              value={customerData.phoneNumber || ""}
-              onChange={handleChange}
-              placeholder="+32 123 45 67 89"
-              style={{
-                width: "100%",
-                padding: "1.2rem",
-                fontSize: "1.3rem",
-                border: "2px solid #ddd",
-                borderRadius: "8px",
-                transition: "border-color 0.3s ease",
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#13686a")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#ddd")}
-            />
-          </div>
+          <FormInput
+            name="phoneNumber"
+            label="Téléphone"
+            type="tel"
+            value={customerData.phoneNumber || ""}
+            onChange={handleChange}
+            placeholder="+32 123 45 67 89"
+          />
 
           {/* Date de naissance supprimée */}
         </div>
@@ -300,34 +166,18 @@ export default function CheckoutCustomerForm() {
             </button>
           )}
           {/* Bouton continuer */}
-          <button
+          <Button
             type="submit"
-            style={{
-              padding: "1.2rem 3rem",
-              fontSize: "1.4rem",
-              fontWeight: "600",
-              border: "none",
-              background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-              color: "white",
-              borderRadius: "8px",
-              cursor: "pointer",
-              transition: "transform 0.2s ease",
-              boxShadow: "0 4px 12px rgba(19, 104, 106, 0.3)",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
+            variant="primary"
             disabled={isLoading}
+            isLoading={isLoading}
           >
             Continuer
             <i
               className="fas fa-arrow-right"
               style={{ marginLeft: "0.8rem" }}
             ></i>
-          </button>
+          </Button>
         </div>
       </form>
 
@@ -466,6 +316,6 @@ export default function CheckoutCustomerForm() {
           }
         }
       `}</style>
-    </div>
+    </FormContainer>
   );
 }

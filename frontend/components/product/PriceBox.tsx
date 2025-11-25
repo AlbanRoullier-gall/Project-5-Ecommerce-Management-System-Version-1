@@ -1,30 +1,6 @@
 import React from "react";
 import { ProductPublicDTO } from "../../dto";
-
-/**
- * Props du composant PriceBox
- */
-interface PriceBoxProps {
-  /** Produit dont on affiche le prix */
-  product: ProductPublicDTO;
-}
-
-/**
- * Formate un prix en euros (format belge)
- */
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("fr-BE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(price);
-};
-
-/**
- * Calcule le prix TTC à partir du prix HT et du taux de TVA
- */
-const getPriceWithVat = (price: number, vatRate: number) => {
-  return price * (1 + vatRate / 100);
-};
+import { formatPrice, getPriceWithVat } from "../shared";
 
 /**
  * Composant d'affichage du prix du produit

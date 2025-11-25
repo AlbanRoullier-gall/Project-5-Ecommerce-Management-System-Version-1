@@ -1,4 +1,5 @@
 import React from "react";
+import FilterSelect from "../../../shared/filters/FilterSelect";
 
 /**
  * Props du composant StatusFilter
@@ -21,53 +22,19 @@ interface StatusFilterProps {
  * />
  */
 const StatusFilter: React.FC<StatusFilterProps> = ({ value, onChange }) => {
-  const selectStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "1rem 1.25rem",
-    border: "2px solid #e1e5e9",
-    borderRadius: "10px",
-    fontSize: "1rem",
-    transition: "all 0.3s ease",
-    background: "#f8f9fa",
-    fontFamily: "inherit",
-    boxSizing: "border-box",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: "1.1rem",
-    fontWeight: "600",
-    color: "#13686a",
-    marginBottom: "0.75rem",
-  };
-
   return (
-    <div style={{ minWidth: "300px", maxWidth: "100%" }}>
-      <label htmlFor="status" style={labelStyle}>
-        <i className="fas fa-toggle-on" style={{ marginRight: "0.5rem" }}></i>
-        Statut
-      </label>
-      <select
-        id="status"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={selectStyle}
-        onFocus={(e) => {
-          e.target.style.borderColor = "#13686a";
-          e.target.style.background = "white";
-          e.target.style.boxShadow = "0 0 0 3px rgba(19, 104, 106, 0.1)";
-        }}
-        onBlur={(e) => {
-          e.target.style.borderColor = "#e1e5e9";
-          e.target.style.background = "#f8f9fa";
-          e.target.style.boxShadow = "none";
-        }}
-      >
-        <option value="">Tous les statuts</option>
-        <option value="active">Actif</option>
-        <option value="inactive">Inactif</option>
-      </select>
-    </div>
+    <FilterSelect
+      id="status"
+      label="Statut"
+      icon="fas fa-toggle-on"
+      value={value}
+      onChange={onChange}
+      placeholder="Tous les statuts"
+      options={[
+        { value: "active", label: "Actif" },
+        { value: "inactive", label: "Inactif" },
+      ]}
+    />
   );
 };
 

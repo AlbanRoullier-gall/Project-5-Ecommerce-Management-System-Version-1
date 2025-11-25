@@ -5,5 +5,4 @@
  */
 
 export { default as ProductForm } from "./ProductForm";
-export { default as ProductImageManager } from "./ProductImageManager";
 

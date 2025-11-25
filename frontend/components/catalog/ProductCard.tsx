@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { ProductPublicDTO } from "../../dto";
 import { useCart } from "../../contexts/CartContext";
+import { formatPrice, getPriceWithVat } from "../shared";
 
 /**
  * URL de l'API depuis les variables d'environnement
@@ -42,16 +43,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     useCart();
 
   /**
-   * Formate un prix en euros (fr-BE)
-   */
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("fr-BE", {
-      style: "currency",
-      currency: "EUR",
-    }).format(price);
-  };
-
-  /**
    * Récupère l'URL de la première image du produit
    */
   const getImageUrl = () => {
@@ -66,9 +57,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   /**
    * Calcule le prix TTC (avec TVA)
    */
-  const getPriceWithVat = () => {
-    return product.price * (1 + product.vatRate / 100);
-  };
+  const priceWithVat = getPriceWithVat(product.price, product.vatRate);
 
   /**
    * Trouve l'article dans le panier s'il existe
@@ -88,7 +77,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       await addToCart(
         product.id,
         1,
-        getPriceWithVat(),
+        priceWithVat,
         product.vatRate,
         product.name,
         product.description || undefined,
@@ -331,7 +320,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                       transform: isHovered ? "translateY(-1px)" : "none",
                     }}
                   >
-                    {formatPrice(getPriceWithVat())}
+                    {formatPrice(priceWithVat)}
                   </span>
                 </div>
               </div>

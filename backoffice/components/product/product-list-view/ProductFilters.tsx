@@ -1,5 +1,5 @@
 import React from "react";
-import SearchInput from "../../shared/filters/SearchInput";
+import { SearchInput, FilterContainer } from "../../shared";
 import CategoryFilter from "./filters/CategoryFilter";
 import StatusFilter from "./filters/StatusFilter";
 
@@ -49,34 +49,15 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   categories,
 }) => {
   return (
-    <div
-      style={{
-        background: "white",
-        borderRadius: "16px",
-        padding: "2rem",
-        marginBottom: "2rem",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-        border: "2px solid rgba(19, 104, 106, 0.1)",
-      }}
-    >
-      <div
-        className="filters-grid"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "1.5rem",
-          alignItems: "start",
-        }}
-      >
-        <SearchInput value={searchTerm} onChange={onSearchChange} />
-        <CategoryFilter
-          value={selectedCategory}
-          onChange={onCategoryChange}
-          categories={categories}
-        />
-        <StatusFilter value={statusFilter} onChange={onStatusFilterChange} />
-      </div>
-    </div>
+    <FilterContainer>
+      <SearchInput value={searchTerm} onChange={onSearchChange} />
+      <CategoryFilter
+        value={selectedCategory}
+        onChange={onCategoryChange}
+        categories={categories}
+      />
+      <StatusFilter value={statusFilter} onChange={onStatusFilterChange} />
+    </FilterContainer>
   );
 };
 

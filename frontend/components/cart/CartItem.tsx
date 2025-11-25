@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useCart, CartItemPublicDTO } from "../../contexts/CartContext";
+import { QuantitySelector } from "../shared";
 
 /**
  * URL de l'API depuis les variables d'environnement
@@ -180,70 +181,13 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
             gap: "1.2rem",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-            <button
-              onClick={() => handleQuantityChange(quantity - 1)}
-              disabled={isUpdating || quantity <= 1}
-              style={{
-                width: "44px",
-                height: "44px",
-                border: "2px solid #13686a",
-                background: "white",
-                color: "#13686a",
-                borderRadius: "10px",
-                cursor: quantity <= 1 || isUpdating ? "not-allowed" : "pointer",
-                fontSize: "1.5rem",
-                fontWeight: "bold",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: quantity <= 1 || isUpdating ? 0.5 : 1,
-                transition: "all 0.2s ease",
-              }}
-            >
-              <i className="fas fa-minus"></i>
-            </button>
-            <input
-              type="number"
-              value={quantity}
-              onChange={(e) => {
-                const val = parseInt(e.target.value) || 1;
-                handleQuantityChange(val);
-              }}
-              min="1"
-              disabled={isUpdating}
-              style={{
-                width: "100px",
-                height: "44px",
-                textAlign: "center",
-                border: "2px solid #ddd",
-                fontSize: "1.4rem",
-                borderRadius: "10px",
-                fontWeight: "600",
-              }}
-            />
-            <button
-              onClick={() => handleQuantityChange(quantity + 1)}
-              disabled={isUpdating}
-              style={{
-                width: "44px",
-                height: "44px",
-                border: "2px solid #13686a",
-                background: isUpdating ? "#ccc" : "#13686a",
-                color: "white",
-                borderRadius: "10px",
-                cursor: isUpdating ? "not-allowed" : "pointer",
-                fontSize: "1.5rem",
-                fontWeight: "bold",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.2s ease",
-              }}
-            >
-              <i className="fas fa-plus"></i>
-            </button>
-          </div>
+          <QuantitySelector
+            quantity={quantity}
+            onChange={handleQuantityChange}
+            min={1}
+            disabled={isUpdating}
+            isLoading={isUpdating}
+          />
 
           <div
             style={{

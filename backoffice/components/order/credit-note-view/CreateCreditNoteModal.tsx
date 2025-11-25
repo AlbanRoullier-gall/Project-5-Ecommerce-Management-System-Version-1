@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import Button from "../../shared/Button";
+import { Button, Modal, ErrorAlert } from "../../shared";
 import {
   CreditNoteCreateDTO,
   OrderPublicDTO,
@@ -222,80 +222,38 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.35)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        padding: "0.5rem",
-      }}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        className="create-credit-note-modal"
-        style={{
-          width: "100%",
-          maxWidth: "min(98vw, 800px)",
-          maxHeight: "98vh",
-          background: "white",
-          borderRadius: 8,
-          border: "2px solid rgba(19, 104, 106, 0.1)",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <div
-          className="modal-header"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "1rem",
-            background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-            flexWrap: "wrap",
-            gap: "0.75rem",
-            minHeight: "60px",
-          }}
-        >
-          <h3 style={{ margin: 0, color: "white" }}>Créer un avoir</h3>
-          <Button variant="gold" onClick={handleClose} icon="fas fa-times">
-            Fermer
+    <Modal
+      isOpen={isOpen}
+      title="Créer un avoir"
+      onClose={handleClose}
+      maxWidth="800px"
+      headerActions={
+        <Button variant="gold" onClick={handleClose} icon="fas fa-times">
+          Fermer
+        </Button>
+      }
+      footerActions={
+        <>
+          <Button
+            variant="secondary"
+            onClick={handleClose}
+            disabled={isSubmitting}
+          >
+            Annuler
           </Button>
-        </div>
-
-        <div
-          className="modal-content"
-          style={{
-            padding: "1rem",
-            overflowY: "auto",
-            flex: 1,
-            minHeight: 0,
-          }}
-        >
-          {error && (
-            <div
-              style={{
-                background: "#FEF2F2",
-                color: "#B91C1C",
-                border: "1px solid #FECACA",
-                padding: "0.75rem 1rem",
-                borderRadius: 12,
-                marginBottom: "0.75rem",
-              }}
-            >
-              {error}
-            </div>
-          )}
+          <Button
+            variant="primary"
+            icon="fas fa-file-invoice-dollar"
+            onClick={handleSubmit}
+            disabled={!canSubmit || isSubmitting}
+          >
+            {isSubmitting ? "Création…" : "Créer l'avoir"}
+          </Button>
+        </>
+      }
+    >
+      {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
 
           <div
             className="credit-note-form"
@@ -745,37 +703,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
               </div>
             </div>
           </div>
-        </div>
-
-        <div
-          className="modal-actions"
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: "0.5rem",
-            padding: "0.75rem 1.25rem",
-            borderTop: "1px solid #e5e7eb",
-            flexWrap: "wrap",
-          }}
-        >
-          <Button
-            variant="secondary"
-            onClick={handleClose}
-            disabled={isSubmitting}
-          >
-            Annuler
-          </Button>
-          <Button
-            variant="primary"
-            icon="fas fa-file-invoice-dollar"
-            onClick={handleSubmit}
-            disabled={!canSubmit || isSubmitting}
-          >
-            {isSubmitting ? "Création…" : "Créer l'avoir"}
-          </Button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

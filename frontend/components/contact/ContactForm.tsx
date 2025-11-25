@@ -1,6 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import {
+  FormInput,
+  FormTextarea,
+  FormContainer,
+  Button,
+  Alert,
+} from "../shared";
 
 // URL de l'API pour l'envoi d'emails (depuis les variables d'environnement ou valeur par défaut)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
@@ -82,26 +89,16 @@ export default function ContactForm() {
    * Gère les changements dans les champs du formulaire
    * Met à jour l'état formData avec la nouvelle valeur du champ modifié
    */
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   return (
-    // Conteneur principal du formulaire avec style de carte
-    <div
-      style={{
-        background: "white",
-        padding: "2rem",
-        borderRadius: "12px",
-        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-      }}
-    >
+    <FormContainer className="contact-form-container">
       {/* Titre du formulaire */}
       <h2
         style={{
@@ -117,21 +114,11 @@ export default function ContactForm() {
 
       {/* Affichage conditionnel du message de statut (succès ou erreur) */}
       {submitStatus.type && (
-        <div
-          style={{
-            padding: "1rem",
-            marginBottom: "1.5rem",
-            borderRadius: "4px",
-            backgroundColor:
-              submitStatus.type === "success" ? "#d4edda" : "#f8d7da",
-            color: submitStatus.type === "success" ? "#155724" : "#721c24",
-            border: `1px solid ${
-              submitStatus.type === "success" ? "#c3e6cb" : "#f5c6cb"
-            }`,
-          }}
-        >
-          {submitStatus.message}
-        </div>
+        <Alert
+          type={submitStatus.type}
+          message={submitStatus.message}
+          onClose={() => setSubmitStatus({ type: null, message: "" })}
+        />
       )}
 
       {/* Formulaire de contact */}
@@ -144,184 +131,55 @@ export default function ContactForm() {
         }}
       >
         {/* Champ : Nom */}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <label
-            htmlFor="name"
-            style={{
-              fontSize: "1rem",
-              color: "#13686a",
-              marginBottom: "0.5rem",
-              fontWeight: "bold",
-            }}
-          >
-            Nom
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            style={{
-              padding: "0.75rem",
-              fontSize: "1rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              transition: "border-color 0.3s ease",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "#13686a";
-              e.currentTarget.style.outline = "none";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "#ddd";
-            }}
-          />
-        </div>
+        <FormInput
+          id="name"
+          name="name"
+          label="Nom"
+          value={formData.name}
+          onChange={handleInputChange}
+        />
 
         {/* Champ : Email (obligatoire) */}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <label
-            htmlFor="email"
-            style={{
-              fontSize: "1rem",
-              color: "#13686a",
-              marginBottom: "0.5rem",
-              fontWeight: "bold",
-            }}
-          >
-            Email *
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            style={{
-              padding: "0.75rem",
-              fontSize: "1rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              transition: "border-color 0.3s ease",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "#13686a";
-              e.currentTarget.style.outline = "none";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "#ddd";
-            }}
-          />
-        </div>
+        <FormInput
+          id="email"
+          name="email"
+          label="Email"
+          type="email"
+          value={formData.email}
+          onChange={handleInputChange}
+          required
+        />
 
         {/* Champ : Sujet */}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <label
-            htmlFor="subject"
-            style={{
-              fontSize: "1rem",
-              color: "#13686a",
-              marginBottom: "0.5rem",
-              fontWeight: "bold",
-            }}
-          >
-            Sujet
-          </label>
-          <input
-            type="text"
-            id="subject"
-            name="subject"
-            value={formData.subject}
-            onChange={handleChange}
-            style={{
-              padding: "0.75rem",
-              fontSize: "1rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              transition: "border-color 0.3s ease",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "#13686a";
-              e.currentTarget.style.outline = "none";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "#ddd";
-            }}
-          />
-        </div>
+        <FormInput
+          id="subject"
+          name="subject"
+          label="Sujet"
+          value={formData.subject}
+          onChange={handleInputChange}
+        />
 
         {/* Champ : Message (textarea) */}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <label
-            htmlFor="message"
-            style={{
-              fontSize: "1rem",
-              color: "#13686a",
-              marginBottom: "0.5rem",
-              fontWeight: "bold",
-            }}
-          >
-            Message
-          </label>
-          <textarea
-            id="message"
-            name="message"
-            rows={6}
-            value={formData.message}
-            onChange={handleChange}
-            style={{
-              padding: "0.75rem",
-              fontSize: "1rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              resize: "vertical",
-              fontFamily: "inherit",
-              transition: "border-color 0.3s ease",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "#13686a";
-              e.currentTarget.style.outline = "none";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "#ddd";
-            }}
-          />
-        </div>
+        <FormTextarea
+          id="message"
+          name="message"
+          label="Message"
+          value={formData.message}
+          onChange={handleTextareaChange}
+          rows={6}
+        />
 
         {/* Bouton de soumission avec état de chargement */}
-        <button
+        <Button
           type="submit"
+          variant="primary"
           disabled={isSubmitting}
-          style={{
-            padding: "1rem 2rem",
-            background: isSubmitting
-              ? "#ccc"
-              : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            fontSize: "1.1rem",
-            fontWeight: "600",
-            cursor: isSubmitting ? "not-allowed" : "pointer",
-            transition: "transform 0.2s ease",
-            opacity: isSubmitting ? 0.7 : 1,
-          }}
-          onMouseOver={(e) => {
-            // Effet de survol : légère élévation du bouton
-            if (!isSubmitting) {
-              e.currentTarget.style.transform = "translateY(-2px)";
-            }
-          }}
-          onMouseOut={(e) => {
-            // Retour à la position normale
-            e.currentTarget.style.transform = "translateY(0)";
-          }}
+          isLoading={isSubmitting}
+          fullWidth
         >
           {isSubmitting ? "Envoi en cours..." : "Envoyer le message"}
-        </button>
+        </Button>
       </form>
-    </div>
+    </FormContainer>
   );
 }

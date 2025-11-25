@@ -5,7 +5,8 @@ import TableLayout, {
   TableRow,
   TableCell,
 } from "../../shared/TableLayout";
-import CreditNoteActionButtons from "../order-list-view/table/CreditNoteActionButtons";
+import { Badge } from "../../shared";
+import CreditNoteActionButtons from "./CreditNoteActionButtons";
 
 interface CreditNoteTableProps {
   creditNotes: CreditNotePublicDTO[];
@@ -95,35 +96,19 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
               </TableCell>
               <TableCell className="mobile-hide">{emitted}</TableCell>
               <TableCell align="center">
-                {(c.status || "pending") === "refunded" ? (
-                  <span
-                    style={{
-                      padding: "0.25rem 0.75rem",
-                      borderRadius: "6px",
-                      fontSize: "0.9rem",
-                      fontWeight: "500",
-                      background:
-                        "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
-                      color: "white",
-                    }}
-                  >
-                    Remboursé
-                  </span>
-                ) : (
-                  <span
-                    style={{
-                      padding: "0.25rem 0.75rem",
-                      borderRadius: "6px",
-                      fontSize: "0.9rem",
-                      fontWeight: "500",
-                      background:
-                        "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)",
-                      color: "white",
-                    }}
-                  >
-                    En attente
-                  </span>
-                )}
+                <Badge
+                  type={
+                    (c.status || "pending") === "refunded"
+                      ? "success"
+                      : "warning"
+                  }
+                  label={
+                    (c.status || "pending") === "refunded"
+                      ? "Remboursé"
+                      : "En attente"
+                  }
+                  variant="compact"
+                />
               </TableCell>
               <TableCell width="160px">
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>

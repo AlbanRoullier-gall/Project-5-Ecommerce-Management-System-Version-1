@@ -20,6 +20,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import { useCart, CartItemPublicDTO } from "../../contexts/CartContext";
 import { useCheckout } from "../../contexts/CheckoutContext";
+import { FormHeader, Alert, SummaryRow } from "../shared";
 
 /**
  * Composant récapitulatif de commande et paiement
@@ -76,62 +77,11 @@ export default function CheckoutOrderSummary() {
       }}
     >
       {/* En-tête du formulaire avec numéro d'étape */}
-      <div
-        className="checkout-form-header"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "1rem",
-          marginBottom: "2.5rem",
-        }}
-      >
-        <div
-          style={{
-            width: "50px",
-            height: "50px",
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-            color: "white",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "1.8rem",
-            fontWeight: "700",
-          }}
-        >
-          3
-        </div>
-        <h2
-          className="checkout-form-title"
-          style={{
-            fontSize: "2.2rem",
-            fontWeight: "700",
-            color: "#333",
-          }}
-        >
-          Récapitulatif et paiement
-        </h2>
-      </div>
+      <FormHeader stepNumber={3} title="Récapitulatif et paiement" />
 
       {/* Affichage des erreurs éventuelles */}
       {error && (
-        <div
-          style={{
-            background: "#fee",
-            border: "2px solid #fcc",
-            color: "#c33",
-            padding: "1.5rem",
-            borderRadius: "12px",
-            marginBottom: "2rem",
-            fontSize: "1.2rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "1rem",
-          }}
-        >
-          <i className="fas fa-exclamation-triangle"></i>
-          {error}
-        </div>
+        <Alert type="error" message={error} onClose={() => setError(null)} />
       )}
 
       {/* Grille principale : informations client à gauche, commande à droite */}
@@ -367,18 +317,11 @@ export default function CheckoutOrderSummary() {
             }}
           >
             {/* Total HT */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "0.6rem 0",
-                fontSize: "1.5rem",
-                color: "#555",
-              }}
-            >
-              <span>Total HT</span>
-              <span>{totals.totalHT.toFixed(2)} €</span>
-            </div>
+            <SummaryRow
+              label="Total HT"
+              value={totals.totalHT}
+              formatValue={(val) => `${Number(val).toFixed(2)} €`}
+            />
 
             {/* Détail de la TVA par taux */}
             {totals.breakdown.map((b) => (
@@ -398,36 +341,19 @@ export default function CheckoutOrderSummary() {
             ))}
 
             {/* Total TVA (cumul de tous les taux) */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "0.8rem 0",
-                fontSize: "1.6rem",
-                color: "#333",
-                fontWeight: 700,
-              }}
-            >
-              <span>Total TVA</span>
-              <span>{totals.vatAmount.toFixed(2)} €</span>
-            </div>
+            <SummaryRow
+              label="Total TVA"
+              value={totals.vatAmount}
+              formatValue={(val) => `${Number(val).toFixed(2)} €`}
+            />
 
             {/* Total TTC (montant final à payer) */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "1.5rem 0",
-                fontSize: "1.8rem",
-                color: "#13686a",
-                fontWeight: "700",
-                borderTop: "2px solid #e0e0e0",
-                marginTop: "1rem",
-              }}
-            >
-              <span>Total TTC</span>
-              <span>{cart?.total.toFixed(2)} €</span>
-            </div>
+            <SummaryRow
+              label="Total TTC"
+              value={cart?.total || 0}
+              variant="total"
+              formatValue={(val) => `${Number(val).toFixed(2)} €`}
+            />
           </div>
         </div>
       </div>

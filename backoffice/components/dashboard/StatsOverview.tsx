@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import StatCard from "./StatCard";
+import { StatCard } from "../shared";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 

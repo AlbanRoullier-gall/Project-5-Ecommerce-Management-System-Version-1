@@ -1,4 +1,5 @@
 import React from "react";
+import Badge from "../../../shared/Badge";
 
 /**
  * Props du composant StatusBadge
@@ -22,41 +23,12 @@ interface StatusBadgeProps {
  */
 const StatusBadge: React.FC<StatusBadgeProps> = ({ isActive, onClick }) => {
   return (
-    <button
+    <Badge
+      type={isActive ? "active" : "inactive"}
+      label={isActive ? "Actif" : "Inactif"}
+      icon={`fas fa-${isActive ? "check-circle" : "times-circle"}`}
       onClick={onClick}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "0.5rem",
-        padding: "0.5rem 1.25rem",
-        borderRadius: "20px",
-        fontSize: "0.9rem",
-        fontWeight: "600",
-        cursor: "pointer",
-        border: "none",
-        transition: "all 0.3s ease",
-        background: isActive
-          ? "linear-gradient(135deg, #10b981 0%, #34d399 100%)"
-          : "linear-gradient(135deg, #ef4444 0%, #f87171 100%)",
-        color: "white",
-        boxShadow: isActive
-          ? "0 2px 8px rgba(16, 185, 129, 0.3)"
-          : "0 2px 8px rgba(239, 68, 68, 0.3)",
-      }}
-      onMouseOver={(e) => {
-        e.currentTarget.style.transform = "translateY(-1px)";
-        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
-      }}
-      onMouseOut={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = isActive
-          ? "0 2px 8px rgba(16, 185, 129, 0.3)"
-          : "0 2px 8px rgba(239, 68, 68, 0.3)";
-      }}
-    >
-      <i className={`fas fa-${isActive ? "check-circle" : "times-circle"}`}></i>
-      {isActive ? "Actif" : "Inactif"}
-    </button>
+    />
   );
 };
 

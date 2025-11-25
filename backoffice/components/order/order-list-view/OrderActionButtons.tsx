@@ -2,7 +2,7 @@ import React from "react";
 import {
   ActionButtonsContainer,
   ActionButton,
-} from "../../../shared/ActionButton";
+} from "../../shared/ActionButton";
 
 /**
  * Props du composant OrderActionButtons

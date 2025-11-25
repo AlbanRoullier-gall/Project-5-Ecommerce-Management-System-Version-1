@@ -5,7 +5,8 @@ import TableLayout, {
   TableRow,
   TableCell,
 } from "../../shared/TableLayout";
-import OrderActionButtons from "./table/OrderActionButtons";
+import { Badge } from "../../shared";
+import OrderActionButtons from "./OrderActionButtons";
 
 interface OrderTableProps {
   orders: OrderPublicDTO[];
@@ -81,35 +82,11 @@ const OrderTable: React.FC<OrderTableProps> = ({
                 {new Date(o.createdAt).toLocaleString()}
               </TableCell>
               <TableCell align="center">
-                {o.delivered ? (
-                  <span
-                    style={{
-                      padding: "0.25rem 0.75rem",
-                      borderRadius: "6px",
-                      fontSize: "0.9rem",
-                      fontWeight: "500",
-                      background:
-                        "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
-                      color: "white",
-                    }}
-                  >
-                    Livré
-                  </span>
-                ) : (
-                  <span
-                    style={{
-                      padding: "0.25rem 0.75rem",
-                      borderRadius: "6px",
-                      fontSize: "0.9rem",
-                      fontWeight: "500",
-                      background:
-                        "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)",
-                      color: "white",
-                    }}
-                  >
-                    En attente
-                  </span>
-                )}
+                <Badge
+                  type={o.delivered ? "success" : "warning"}
+                  label={o.delivered ? "Livré" : "En attente"}
+                  variant="compact"
+                />
               </TableCell>
               <TableCell width="160px">
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>

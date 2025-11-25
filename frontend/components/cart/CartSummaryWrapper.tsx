@@ -9,6 +9,7 @@
 import React from "react";
 import Link from "next/link";
 import { useCart } from "../../contexts/CartContext";
+import { SummaryRow } from "../shared";
 
 /**
  * Props du composant CartSummaryWrapper
@@ -71,54 +72,22 @@ const CartSummaryWrapper: React.FC<CartSummaryWrapperProps> = () => {
 
         {/* Section des totaux */}
         <div style={{ marginBottom: "2rem" }}>
-          <div
-            className="cart-summary-row"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              padding: "0.6rem 0",
-              fontSize: "1.4rem",
-              color: "#555",
-              fontWeight: 700,
-            }}
-          >
-            <span>Total HT</span>
-            <span>{totals.totalHT.toFixed(2)} €</span>
-          </div>
-
-          {/* Total TVA (cumul) */}
-          <div
-            className="cart-summary-row"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              padding: "0.8rem 0",
-              fontSize: "1.5rem",
-              color: "#333",
-              fontWeight: 400,
-            }}
-          >
-            <span>Total TVA</span>
-            <span>{totals.vatAmount.toFixed(2)} €</span>
-          </div>
-
-          {/* Total TTC */}
-          <div
-            className="cart-summary-row cart-summary-total"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              padding: "1.5rem 0",
-              fontSize: "1.8rem",
-              color: "#13686a",
-              fontWeight: "700",
-              borderTop: "2px solid #e0e0e0",
-              marginTop: "1rem",
-            }}
-          >
-            <span>Total TTC</span>
-            <span>{cart.total.toFixed(2)} €</span>
-          </div>
+          <SummaryRow
+            label="Total HT"
+            value={totals.totalHT}
+            formatValue={(val) => `${Number(val).toFixed(2)} €`}
+          />
+          <SummaryRow
+            label="Total TVA"
+            value={totals.vatAmount}
+            formatValue={(val) => `${Number(val).toFixed(2)} €`}
+          />
+          <SummaryRow
+            label="Total TTC"
+            value={cart.total}
+            variant="total"
+            formatValue={(val) => `${Number(val).toFixed(2)} €`}
+          />
         </div>
 
         {/* Boutons d'action */}

@@ -1,4 +1,5 @@
 import React from "react";
+import FilterSelect from "../../../shared/filters/FilterSelect";
 
 /**
  * Props du composant CategoryFilter
@@ -28,56 +29,21 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   onChange,
   categories,
 }) => {
-  const selectStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "1rem 1.25rem",
-    border: "2px solid #e1e5e9",
-    borderRadius: "10px",
-    fontSize: "1rem",
-    transition: "all 0.3s ease",
-    background: "#f8f9fa",
-    fontFamily: "inherit",
-    boxSizing: "border-box",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: "1.1rem",
-    fontWeight: "600",
-    color: "#13686a",
-    marginBottom: "0.75rem",
-  };
+  const options = categories.map((cat) => ({
+    value: cat.id.toString(),
+    label: cat.name,
+  }));
 
   return (
-    <div style={{ minWidth: "300px", maxWidth: "100%" }}>
-      <label htmlFor="category" style={labelStyle}>
-        <i className="fas fa-tags" style={{ marginRight: "0.5rem" }}></i>
-        Catégorie
-      </label>
-      <select
-        id="category"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={selectStyle}
-        onFocus={(e) => {
-          e.target.style.borderColor = "#13686a";
-          e.target.style.background = "white";
-          e.target.style.boxShadow = "0 0 0 3px rgba(19, 104, 106, 0.1)";
-        }}
-        onBlur={(e) => {
-          e.target.style.borderColor = "#e1e5e9";
-          e.target.style.background = "#f8f9fa";
-          e.target.style.boxShadow = "none";
-        }}
-      >
-        <option value="">Toutes les catégories</option>
-        {categories.map((cat) => (
-          <option key={cat.id} value={cat.id.toString()}>
-            {cat.name}
-          </option>
-        ))}
-      </select>
-    </div>
+    <FilterSelect
+      id="category"
+      label="Catégorie"
+      icon="fas fa-tags"
+      value={value}
+      onChange={onChange}
+      placeholder="Toutes les catégories"
+      options={options}
+    />
   );
 };
 
