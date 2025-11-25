@@ -1,10 +1,10 @@
 import React from "react";
-import { OrderPublicDTO } from "../../dto";
+import { OrderPublicDTO } from "../../../dto";
 import TableLayout, {
   TableHeader,
   TableRow,
   TableCell,
-} from "../shared/TableLayout";
+} from "../../shared/TableLayout";
 import OrderActionButtons from "./table/OrderActionButtons";
 
 interface OrderTableProps {

@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from "react";
-import Button from "../shared/Button";
+import Button from "../../shared/Button";
 import {
   CreditNoteCreateDTO,
   OrderPublicDTO,
   CreditNotePublicDTO,
   OrderItemPublicDTO,
-} from "../../dto";
+} from "../../../dto";
 
 interface CreateCreditNoteModalProps {
   isOpen: boolean;

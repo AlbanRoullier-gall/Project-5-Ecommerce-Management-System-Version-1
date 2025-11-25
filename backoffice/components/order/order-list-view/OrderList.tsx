@@ -1,18 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import PageHeader from "../shared/PageHeader";
-import Button from "../shared/Button";
-import ErrorAlert from "../shared/ErrorAlert";
+import { useRouter } from "next/router";
+import PageHeader from "../../shared/PageHeader";
+import Button from "../../shared/Button";
+import ErrorAlert from "../../shared/ErrorAlert";
 import OrderTable from "./OrderTable";
-import CreditNoteTable from "./CreditNoteTable";
-import CreditNoteDetailModal from "./CreditNoteDetailModal";
 import OrderFilters from "./OrderFilters";
-import { OrderPublicDTO, CreditNotePublicDTO } from "../../dto";
-import OrderDetailModal from "./OrderDetailModal";
-import CreateCreditNoteModal from "./CreateCreditNoteModal";
+import { OrderPublicDTO, CreditNotePublicDTO } from "../../../dto";
+import {
+  CreateCreditNoteModal,
+  CreditNoteDetailModal,
+  CreditNoteTable,
+} from "../credit-note-view";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
 const OrderList: React.FC = () => {
+  const router = useRouter();
   const [orders, setOrders] = useState<OrderPublicDTO[]>([]);
   const [creditNotes, setCreditNotes] = useState<CreditNotePublicDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,10 +34,6 @@ const OrderList: React.FC = () => {
   const [hasMoreCreditNotes, setHasMoreCreditNotes] = useState(true);
   const [isLoadingMoreCreditNotes, setIsLoadingMoreCreditNotes] =
     useState(false);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [detailOrder, setDetailOrder] = useState<OrderPublicDTO | null>(null);
-  const [isDetailLoading, setIsDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState<string | null>(null);
   const [isCreateCreditNoteOpen, setIsCreateCreditNoteOpen] = useState(false);
   const [isCreditNoteDetailOpen, setIsCreditNoteDetailOpen] = useState(false);
   const [detailCreditNote, setDetailCreditNote] = useState<any | null>(null);
@@ -330,30 +329,11 @@ const OrderList: React.FC = () => {
     }
   };
 
-  const openOrderDetail = async (orderId: number) => {
-    setIsDetailOpen(true);
-    setDetailOrder(null);
-    setDetailError(null);
-    setIsDetailLoading(true);
-    try {
-      const token = getAuthToken();
-      if (!token) throw new Error("Non authentifié");
-
-      const res = await fetch(`${API_URL}/api/admin/orders/${orderId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Erreur lors du chargement du détail");
-
-      const json = await res.json();
-      const order: OrderPublicDTO = json?.order || json?.data?.order || json;
-      setDetailOrder(order);
-    } catch (e) {
-      setDetailError(
-        e instanceof Error ? e.message : "Erreur lors du chargement du détail"
-      );
-    } finally {
-      setIsDetailLoading(false);
-    }
+  /**
+   * Navigue vers la page de détail d'une commande
+   */
+  const openOrderDetail = (orderId: number) => {
+    router.push(`/orders/${orderId}`);
   };
 
   const handleCreditNoteCreated = async () => {
@@ -720,18 +700,6 @@ const OrderList: React.FC = () => {
           </p>
         )}
       </div>
-
-      <OrderDetailModal
-        isOpen={isDetailOpen}
-        order={detailOrder}
-        isLoading={isDetailLoading}
-        error={detailError}
-        onClose={() => {
-          setIsDetailOpen(false);
-          // If a credit note was just created, parent modal already closed; still reload list
-          handleCreditNoteCreated();
-        }}
-      />
 
       <CreateCreditNoteModal
         isOpen={isCreateCreditNoteOpen}

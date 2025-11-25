@@ -1,10 +1,10 @@
 import React from "react";
-import Button from "../shared/Button";
+import Button from "../../shared/Button";
 import {
   CreditNotePublicDTO,
   CreditNoteItemPublicDTO,
   OrderPublicDTO,
-} from "../../dto";
+} from "../../../dto";
 
 interface CreditNoteDetailModalProps {
   isOpen: boolean;

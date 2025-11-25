@@ -1,11 +1,11 @@
 import React from "react";
-import { CreditNotePublicDTO, OrderPublicDTO } from "../../dto";
+import { CreditNotePublicDTO, OrderPublicDTO } from "../../../dto";
 import TableLayout, {
   TableHeader,
   TableRow,
   TableCell,
-} from "../shared/TableLayout";
-import CreditNoteActionButtons from "./table/CreditNoteActionButtons";
+} from "../../shared/TableLayout";
+import CreditNoteActionButtons from "../order-list-view/table/CreditNoteActionButtons";
 
 interface CreditNoteTableProps {
   creditNotes: CreditNotePublicDTO[];

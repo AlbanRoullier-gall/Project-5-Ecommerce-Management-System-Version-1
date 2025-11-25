@@ -3,9 +3,9 @@ import {
   OrderPublicDTO,
   OrderItemPublicDTO,
   OrderAddressPublicDTO,
-} from "../../dto";
-import Button from "../shared/Button";
-import CreateCreditNoteModal from "./CreateCreditNoteModal";
+} from "../../../dto";
+import Button from "../../shared/Button";
+import { CreateCreditNoteModal } from "../credit-note-view";
 
 interface OrderDetailModalProps {
   isOpen: boolean;
