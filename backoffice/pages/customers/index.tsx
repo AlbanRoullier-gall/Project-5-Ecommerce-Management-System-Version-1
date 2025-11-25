@@ -1,31 +1,23 @@
 "use client";
 
 import Head from "next/head";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import AuthGuard from "../components/auth/AuthGuard";
-import CustomerList from "../components/customer/CustomerList";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import AuthGuard from "../../components/auth/AuthGuard";
+import { CustomerList } from "../../components/customer/customer-list-view";
 
 /**
- * Page de gestion des clients
+ * Page de liste des clients
  *
- * Utilise le composant CustomerList qui gère :
- * - Affichage et filtrage des clients
- * - Création/édition/suppression de clients
- * - Gestion des adresses (multiple adresses par client)
- * - Activation/désactivation de clients
- *
+ * Affiche la liste des clients avec filtres et actions
  * Protégée par AuthGuard (accessible uniquement si authentifié et approuvé)
  */
 const CustomersPage: React.FC = () => {
   return (
     <AuthGuard>
       <Head>
-        <title>Gestion des Clients - Nature de Pierre</title>
-        <meta
-          name="description"
-          content="Gérer les clients et leurs adresses"
-        />
+        <title>Clients - Nature de Pierre</title>
+        <meta name="description" content="Gérer les clients" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 

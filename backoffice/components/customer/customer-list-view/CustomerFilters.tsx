@@ -1,5 +1,5 @@
 import React from "react";
-import SearchInput from "../shared/filters/SearchInput";
+import SearchInput from "../../shared/filters/SearchInput";
 
 /**
  * Props du composant CustomerFilters

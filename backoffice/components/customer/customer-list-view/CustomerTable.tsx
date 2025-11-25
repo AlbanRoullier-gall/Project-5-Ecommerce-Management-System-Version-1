@@ -1,11 +1,11 @@
 import React from "react";
-import { CustomerPublicDTO } from "../../dto";
+import { CustomerPublicDTO } from "../../../dto";
 import TableLayout, {
   TableHeader,
   TableRow,
   TableCell,
-} from "../shared/TableLayout";
-import { ActionButtonsContainer, ActionButton } from "../shared/ActionButton";
+} from "../../shared/TableLayout";
+import { ActionButtonsContainer, ActionButton } from "../../shared/ActionButton";
 
 /**
  * Props du composant CustomerTable
