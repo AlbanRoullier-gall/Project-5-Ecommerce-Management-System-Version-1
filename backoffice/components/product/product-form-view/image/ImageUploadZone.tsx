@@ -41,7 +41,6 @@ const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
     <label
       className="image-upload-zone"
       style={{
-        display: "block",
         border: "2px dashed #d1d5db",
         borderRadius: "10px",
         padding: "2rem",

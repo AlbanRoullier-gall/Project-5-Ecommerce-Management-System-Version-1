@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ProductPublicDTO, ProductImagePublicDTO } from "../../dto";
+import { ProductPublicDTO, ProductImagePublicDTO } from "../../../dto";
 
 interface ProductImageManagerProps {
   product: ProductPublicDTO;

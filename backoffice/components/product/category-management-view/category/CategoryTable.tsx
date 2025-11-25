@@ -1,11 +1,11 @@
 import React from "react";
-import { CategoryPublicDTO } from "../../../dto";
+import { CategoryPublicDTO } from "../../../../dto";
 import CategoryTableRow from "./CategoryTableRow";
 import TableLayout, {
   TableHeader,
   TableRow,
   TableCell,
-} from "../../shared/TableLayout";
+} from "../../../shared/TableLayout";
 
 /**
  * Props du composant CategoryTable

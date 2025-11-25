@@ -1,11 +1,11 @@
 import React from "react";
-import { ProductPublicDTO } from "../../dto";
+import { ProductPublicDTO } from "../../../dto";
 import ProductTableRow from "./table/ProductTableRow";
 import TableLayout, {
   TableHeader,
   TableRow,
   TableCell,
-} from "../shared/TableLayout";
+} from "../../shared/TableLayout";
 
 /**
  * Props du composant ProductTable

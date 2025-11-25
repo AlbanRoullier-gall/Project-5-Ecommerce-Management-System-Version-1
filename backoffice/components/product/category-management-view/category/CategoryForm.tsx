@@ -3,10 +3,10 @@ import {
   CategoryPublicDTO,
   CategoryCreateDTO,
   CategoryUpdateDTO,
-} from "../../../dto";
-import FormInput from "../../shared/form/FormInput";
-import FormTextarea from "../../shared/form/FormTextarea";
-import FormActions from "../../shared/form/FormActions";
+} from "../../../../dto";
+import FormInput from "../../../shared/form/FormInput";
+import FormTextarea from "../../../shared/form/FormTextarea";
+import FormActions from "../../../shared/form/FormActions";
 
 interface CategoryFormProps {
   formData: CategoryCreateDTO | CategoryUpdateDTO;

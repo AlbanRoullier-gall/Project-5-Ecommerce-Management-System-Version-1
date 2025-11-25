@@ -1,29 +1,23 @@
 "use client";
 
 import Head from "next/head";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import AuthGuard from "../components/auth/AuthGuard";
-import ProductList from "../components/product/ProductList";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import AuthGuard from "../../components/auth/AuthGuard";
+import { ProductList } from "../../components/product/product-list-view";
 
 /**
- * Page de gestion des produits et catégories
+ * Page de liste des produits
  *
- * Utilise le composant ProductList qui gère :
- * - Affichage et filtrage des produits
- * - Création/édition/suppression de produits
- * - Gestion des images produits
- * - Gestion des catégories
- * - Activation/désactivation de produits
- *
+ * Affiche la liste des produits avec filtres et actions
  * Protégée par AuthGuard (accessible uniquement si authentifié et approuvé)
  */
 const ProductsPage: React.FC = () => {
   return (
     <AuthGuard>
       <Head>
-        <title>Gestion des Produits - Nature de Pierre</title>
-        <meta name="description" content="Gérer les produits et catégories" />
+        <title>Produits - Nature de Pierre</title>
+        <meta name="description" content="Gérer les produits" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 

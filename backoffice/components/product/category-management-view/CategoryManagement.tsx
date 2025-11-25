@@ -3,10 +3,10 @@ import {
   CategoryPublicDTO,
   CategoryCreateDTO,
   CategoryUpdateDTO,
-} from "../../dto";
+} from "../../../dto";
 import CategoryForm from "./category/CategoryForm";
 import CategoryTable from "./category/CategoryTable";
-import Button from "../shared/Button";
+import Button from "../../shared/Button";
 
 /**
  * Props du composant CategoryManagement

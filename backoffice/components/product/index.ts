@@ -1,37 +1,13 @@
-// Main components
-export { default as ProductList } from "./ProductList";
-export { default as ProductForm } from "./ProductForm";
-export { default as ProductTable } from "./ProductTable";
-export { default as ProductFilters } from "./ProductFilters";
-export { default as CategoryManagement } from "./CategoryManagement";
-export { default as ProductImageManager } from "./ProductImageManager";
+/**
+ * Index des composants de gestion des produits
+ * Facilite l'import des composants
+ */
 
-// Shared UI components (re-exported for convenience)
-export { ErrorAlert, PageHeader, Button } from "../shared";
+// Vue de liste des produits (page /products)
+export * from "./product-list-view";
 
-// Form components (shared)
-export { default as FormInput } from "../shared/form/FormInput";
-export { default as FormTextarea } from "../shared/form/FormTextarea";
-export { default as FormSelect } from "../shared/form/FormSelect";
-export { default as FormCheckbox } from "../shared/form/FormCheckbox";
-export { default as FormActions } from "../shared/form/FormActions";
+// Vue de formulaire produit (pages /products/new et /products/[id])
+export * from "./product-form-view";
 
-// Category components
-export { default as CategoryForm } from "./category/CategoryForm";
-export { default as CategoryTable } from "./category/CategoryTable";
-export { default as CategoryTableRow } from "./category/CategoryTableRow";
-
-// Table components
-export { default as ProductTableRow } from "./table/ProductTableRow";
-export { default as StatusBadge } from "./table/StatusBadge";
-export { default as ActionButtons } from "./table/ActionButtons";
-
-// Filter components
-export { default as SearchInput } from "../shared/filters/SearchInput";
-export { default as CategoryFilter } from "./filters/CategoryFilter";
-export { default as StatusFilter } from "./filters/StatusFilter";
-
-// Image components
-export { default as ImageUploadZone } from "./image/ImageUploadZone";
-export { default as ExistingImagesList } from "./image/ExistingImagesList";
-export { default as NewImagesList } from "./image/NewImagesList";
+// Vue de gestion des catégories (page /products/categories)
+export * from "./category-management-view";
