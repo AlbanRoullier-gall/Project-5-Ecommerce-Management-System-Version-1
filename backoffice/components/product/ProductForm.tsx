@@ -5,11 +5,11 @@ import {
   ProductUpdateDTO,
   CategoryPublicDTO,
 } from "../../dto";
-import FormInput from "./form/FormInput";
-import FormTextarea from "./form/FormTextarea";
-import FormSelect from "./form/FormSelect";
-import FormCheckbox from "./form/FormCheckbox";
-import FormActions from "./form/FormActions";
+import FormInput from "../shared/form/FormInput";
+import FormTextarea from "../shared/form/FormTextarea";
+import FormSelect from "../shared/form/FormSelect";
+import FormCheckbox from "../shared/form/FormCheckbox";
+import FormActions from "../shared/form/FormActions";
 import ImageUploadZone from "./image/ImageUploadZone";
 import ExistingImagesList from "./image/ExistingImagesList";
 import NewImagesList from "./image/NewImagesList";

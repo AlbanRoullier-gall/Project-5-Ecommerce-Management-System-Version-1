@@ -4,8 +4,8 @@ import {
   CustomerCreateDTO,
   CustomerUpdateDTO,
 } from "../../dto";
-import FormInput from "../product/form/FormInput";
-import FormActions from "../product/form/FormActions";
+import FormInput from "../shared/form/FormInput";
+import FormActions from "../shared/form/FormActions";
 
 /**
  * Props du composant CustomerForm

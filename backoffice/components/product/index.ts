@@ -9,12 +9,12 @@ export { default as ProductImageManager } from "./ProductImageManager";
 // Shared UI components (re-exported for convenience)
 export { ErrorAlert, PageHeader, Button } from "../shared";
 
-// Form components
-export { default as FormInput } from "./form/FormInput";
-export { default as FormTextarea } from "./form/FormTextarea";
-export { default as FormSelect } from "./form/FormSelect";
-export { default as FormCheckbox } from "./form/FormCheckbox";
-export { default as FormActions } from "./form/FormActions";
+// Form components (shared)
+export { default as FormInput } from "../shared/form/FormInput";
+export { default as FormTextarea } from "../shared/form/FormTextarea";
+export { default as FormSelect } from "../shared/form/FormSelect";
+export { default as FormCheckbox } from "../shared/form/FormCheckbox";
+export { default as FormActions } from "../shared/form/FormActions";
 
 // Category components
 export { default as CategoryForm } from "./category/CategoryForm";
@@ -27,7 +27,7 @@ export { default as StatusBadge } from "./table/StatusBadge";
 export { default as ActionButtons } from "./table/ActionButtons";
 
 // Filter components
-export { default as SearchInput } from "./filters/SearchInput";
+export { default as SearchInput } from "../shared/filters/SearchInput";
 export { default as CategoryFilter } from "./filters/CategoryFilter";
 export { default as StatusFilter } from "./filters/StatusFilter";
 

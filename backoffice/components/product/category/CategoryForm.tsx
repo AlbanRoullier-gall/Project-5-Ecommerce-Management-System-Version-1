@@ -4,9 +4,9 @@ import {
   CategoryCreateDTO,
   CategoryUpdateDTO,
 } from "../../../dto";
-import FormInput from "../form/FormInput";
-import FormTextarea from "../form/FormTextarea";
-import FormActions from "../form/FormActions";
+import FormInput from "../../shared/form/FormInput";
+import FormTextarea from "../../shared/form/FormTextarea";
+import FormActions from "../../shared/form/FormActions";
 
 interface CategoryFormProps {
   formData: CategoryCreateDTO | CategoryUpdateDTO;

@@ -1,5 +1,5 @@
 import React from "react";
-import SearchInput from "../product/filters/SearchInput";
+import SearchInput from "../shared/filters/SearchInput";
 
 interface OrderFiltersProps {
   searchTerm: string;
