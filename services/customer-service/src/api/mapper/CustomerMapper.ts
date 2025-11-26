@@ -15,7 +15,6 @@ import {
   CustomerCreateDTO,
   CustomerUpdateDTO,
   CustomerPublicDTO,
-  CustomerListDTO,
   AddressCreateDTO,
   AddressUpdateDTO,
   AddressPublicDTO,
@@ -74,22 +73,6 @@ export class CustomerMapper {
    */
   static customersToPublicDTOs(customers: Customer[]): CustomerPublicDTO[] {
     return customers.map((customer) => this.customerToPublicDTO(customer));
-  }
-
-  /**
-   * Créer une réponse de liste de clients
-   */
-  static createCustomerListResponse(
-    customers: Customer[],
-    pagination: any
-  ): CustomerListDTO {
-    return {
-      customers: this.customersToPublicDTOs(customers),
-      total: pagination.total || 0,
-      page: pagination.page || 1,
-      limit: pagination.limit || 10,
-      totalPages: Math.ceil((pagination.total || 0) / (pagination.limit || 10)),
-    };
   }
 
   // ===== ADDRESS MAPPING =====

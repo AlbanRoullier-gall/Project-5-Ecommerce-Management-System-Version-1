@@ -40,19 +40,6 @@ export interface CustomerPublicDTO {
   phoneNumber: string | null;
 }
 
-// ===== TYPES SPÉCIFIQUES =====
-
-/**
- * DTO pour la réponse de liste de clients
- */
-export interface CustomerListDTO {
-  customers: CustomerPublicDTO[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
 // ===== TYPES POUR LES ADRESSES =====
 
 /**
@@ -92,21 +79,4 @@ export interface AddressPublicDTO {
   city: string;
   countryName: string;
   isDefault: boolean;
-}
-
-/**
- * DTO de réponse pour la liste des adresses
- */
-export interface AddressListResponse {
-  message: string;
-  addresses: AddressPublicDTO[];
-}
-
-// ===== TYPES COMMUNS =====
-
-/**
- * DTO pour les informations de pays (uniquement la Belgique)
- */
-export interface CountryDTO {
-  countryName: string;
 }

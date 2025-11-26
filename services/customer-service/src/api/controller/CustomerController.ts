@@ -201,10 +201,16 @@ export class CustomerController {
         limit: parseInt(limit as string) || 10,
         search: (search as string) || "",
       });
-      const response = CustomerMapper.createCustomerListResponse(
-        result.customers,
-        result.pagination
-      );
+
+      const response = {
+        customers: CustomerMapper.customersToPublicDTOs(result.customers),
+        total: result.pagination.total || 0,
+        page: result.pagination.page || 1,
+        limit: result.pagination.limit || 10,
+        totalPages: Math.ceil(
+          (result.pagination.total || 0) / (result.pagination.limit || 10)
+        ),
+      };
 
       res.json(response);
     } catch (error: any) {
@@ -212,5 +218,4 @@ export class CustomerController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
-
 }
