@@ -133,34 +133,6 @@ export default class CartService {
   }
 
   /**
-   * Résout le cartSessionId et vérifie que le panier existe
-   *
-   * Le cartSessionId est nécessaire pour :
-   * - Récupérer le panier depuis cart-service
-   * - Identifier le snapshot checkout depuis la Map en mémoire (gérée côté gateway)
-   *
-   * Note : La Map stripeSessionToCartSession est gérée côté gateway et peut être utilisée
-   * comme source de secours avant d'appeler cette méthode.
-   *
-   * @param cartSessionId - cartSessionId à vérifier
-   * @returns Résultat de la résolution avec cartSessionId et statut
-   */
-  async resolveCartSessionId(cartSessionId?: string): Promise<{
-    cartSessionId: string | null;
-    resolved: boolean;
-  }> {
-    if (!cartSessionId) {
-      return { cartSessionId: null, resolved: false };
-    }
-
-    const cart = await this.getCart(cartSessionId);
-    return {
-      cartSessionId: cart ? cartSessionId : null,
-      resolved: !!cart,
-    };
-  }
-
-  /**
    * Sauvegarder un snapshot checkout
    */
   async saveCheckoutSnapshot(

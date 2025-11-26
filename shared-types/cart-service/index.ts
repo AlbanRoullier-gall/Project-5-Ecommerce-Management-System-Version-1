@@ -71,18 +71,3 @@ export interface CartPublicDTO {
 export interface CartClearDTO {
   sessionId: string;
 }
-
-/**
- * DTO pour résoudre un cartSessionId
- */
-export interface CartSessionResolveDTO {
-  cartSessionId?: string; // cartSessionId à vérifier
-}
-
-/**
- * DTO de réponse pour la résolution de session
- */
-export interface CartSessionResolveResponseDTO {
-  cartSessionId: string | null;
-  resolved: boolean;
-}

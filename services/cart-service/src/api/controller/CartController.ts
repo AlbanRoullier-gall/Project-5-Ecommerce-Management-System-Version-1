@@ -7,7 +7,6 @@ import { Request, Response } from "express";
 import CartService from "../../services/CartService";
 import { CartMapper, ResponseMapper } from "../mapper";
 import { CartItemCreateDTO, CartItemUpdateDTO, CartClearDTO } from "../dto";
-import * as DTO from "@tfe/shared-types/cart-service";
 
 export class CartController {
   private cartService: CartService;
@@ -184,41 +183,6 @@ export class CartController {
         res.status(404).json(ResponseMapper.notFoundError("Panier"));
         return;
       }
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Résoudre un cartSessionId et vérifier que le panier existe
-   *
-   * Vérifie que le cartSessionId fourni correspond à un panier existant.
-   */
-  async resolveSession(req: Request, res: Response): Promise<void> {
-    try {
-      const resolveData = req.body as DTO.CartSessionResolveDTO;
-
-      const result = await this.cartService.resolveCartSessionId(
-        resolveData.cartSessionId
-      );
-
-      if (!result.resolved) {
-        res.status(404).json({
-          error: "Cart session not found",
-          message: "Cart session does not exist",
-          cartSessionId: null,
-          resolved: false,
-        });
-        return;
-      }
-
-      res.status(200).json({
-        success: true,
-        cartSessionId: result.cartSessionId,
-        resolved: result.resolved,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      console.error("Resolve session error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
