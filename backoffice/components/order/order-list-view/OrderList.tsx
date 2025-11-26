@@ -24,7 +24,24 @@ const OrderList: React.FC = () => {
   const [search, setSearch] = useState("");
   const [deliveryFilter, setDeliveryFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
+  const [totalFilter, setTotalFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
   const [page, setPage] = useState(1);
+
+  const handleResetFilters = async () => {
+    setSearch("");
+    setDeliveryFilter("");
+    setYearFilter("");
+    setTotalFilter("");
+    setDateFilter("");
+    setPage(1);
+    // Recharger les commandes après réinitialisation
+    try {
+      await loadOrdersPage(1, false);
+    } catch (err) {
+      console.error("Error reloading orders after reset:", err);
+    }
+  };
   const [limit] = useState(20);
   const [hasMore, setHasMore] = useState(true);
   const [totalOrders, setTotalOrders] = useState<number | null>(null);
@@ -100,8 +117,9 @@ const OrderList: React.FC = () => {
     url.searchParams.set("page", String(targetPage));
     url.searchParams.set("limit", String(limit));
     if (search) url.searchParams.set("search", search);
-    // Envoyer le filtre par année au serveur pour un filtrage côté serveur
     if (yearFilter) url.searchParams.set("year", yearFilter);
+    if (totalFilter) url.searchParams.set("total", totalFilter);
+    if (dateFilter) url.searchParams.set("date", dateFilter);
 
     const res = await fetch(url.toString(), {
       headers: { Authorization: `Bearer ${token}` },
@@ -232,6 +250,27 @@ const OrderList: React.FC = () => {
     loadInitial();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [yearFilter]);
+
+  // Reload when total filter changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHasMore(true);
+      setPage(1);
+      setTotalOrders(null);
+      loadInitial();
+    }, 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalFilter]);
+
+  // Reload when date filter changes
+  useEffect(() => {
+    setHasMore(true);
+    setPage(1);
+    setTotalOrders(null);
+    loadInitial();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateFilter]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -393,6 +432,11 @@ const OrderList: React.FC = () => {
         onDeliveryFilterChange={setDeliveryFilter}
         yearFilter={yearFilter}
         onYearFilterChange={setYearFilter}
+        totalFilter={totalFilter}
+        onTotalFilterChange={setTotalFilter}
+        dateFilter={dateFilter}
+        onDateFilterChange={setDateFilter}
+        onResetFilters={handleResetFilters}
       />
 
       {/* Indicateur de filtrage */}

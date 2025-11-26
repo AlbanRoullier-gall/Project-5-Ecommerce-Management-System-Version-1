@@ -24,10 +24,10 @@ interface StatusFilterProps {
 const StatusFilter: React.FC<StatusFilterProps> = ({ value, onChange }) => {
   return (
     <FilterSelect
-      id="status"
+        id="status"
       label="Statut"
       icon="fas fa-toggle-on"
-      value={value}
+        value={value}
       onChange={onChange}
       placeholder="Tous les statuts"
       options={[

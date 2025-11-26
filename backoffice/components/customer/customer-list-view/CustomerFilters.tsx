@@ -21,11 +21,11 @@ const CustomerFilters: React.FC<CustomerFiltersProps> = ({
 }) => {
   return (
     <FilterContainer>
-      <SearchInput
-        value={searchTerm}
-        onChange={onSearchChange}
-        placeholder="Rechercher par nom, email ou téléphone..."
-      />
+        <SearchInput
+          value={searchTerm}
+          onChange={onSearchChange}
+          placeholder="Rechercher par nom, email ou téléphone..."
+        />
     </FilterContainer>
   );
 };

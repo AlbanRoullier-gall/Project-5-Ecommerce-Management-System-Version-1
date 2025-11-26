@@ -20,6 +20,8 @@ export interface OrderListOptions {
   endDate?: string;
   sort?: string;
   year?: number | undefined;
+  total?: number | undefined;
+  date?: string | undefined;
 }
 
 export default class OrderRepository {
@@ -236,7 +238,15 @@ export default class OrderRepository {
     options: OrderListOptions = {}
   ): Promise<{ orders: Order[]; pagination: any }> {
     try {
-      const { page = 1, limit = 10, search, customerId, year } = options;
+      const {
+        page = 1,
+        limit = 10,
+        search,
+        customerId,
+        year,
+        total,
+        date,
+      } = options;
 
       const offset = (page - 1) * limit;
       const conditions = [];
@@ -249,15 +259,64 @@ export default class OrderRepository {
       }
 
       if (search) {
-        conditions.push(
-          `(notes ILIKE $${++paramCount} OR payment_method ILIKE $${++paramCount})`
+        // Recherche uniquement dans : REFERENCE (ID), CLIENT (nom/prénom), EMAIL
+        const searchTerm = `%${search}%`;
+        const searchParts = [];
+
+        // Recherche par ID (référence) - conversion en texte pour recherche partielle
+        searchParts.push(`o.id::text ILIKE $${++paramCount}`);
+        params.push(searchTerm);
+
+        // Recherche dans le nom et prénom du client
+        searchParts.push(
+          `COALESCE(
+            o.customer_snapshot->>'first_name',
+            o.customer_snapshot->>'firstName',
+            o.customer_snapshot->>'firstname',
+            ''
+          ) ILIKE $${++paramCount}`,
+          `COALESCE(
+            o.customer_snapshot->>'last_name',
+            o.customer_snapshot->>'lastName',
+            o.customer_snapshot->>'lastname',
+            ''
+          ) ILIKE $${++paramCount}`
         );
-        params.push(`%${search}%`, `%${search}%`);
+        params.push(searchTerm, searchTerm);
+
+        // Recherche dans l'email
+        searchParts.push(
+          `COALESCE(
+            o.customer_snapshot->>'email',
+            o.customer_snapshot->>'emailAddress',
+            ''
+          ) ILIKE $${++paramCount}`
+        );
+        params.push(searchTerm);
+
+        conditions.push(`(${searchParts.join(" OR ")})`);
       }
 
       if (year) {
         conditions.push(`EXTRACT(YEAR FROM created_at) = $${++paramCount}`);
         params.push(year);
+      }
+
+      if (total !== undefined && total !== null && !isNaN(total) && total > 0) {
+        // Recherche partielle dans total HT et total TTC (conversion en texte)
+        // Permet de trouver "100" dans "100.00", "100.50", "1100.00", etc.
+        const totalStr = String(total);
+        const totalTerm = `%${totalStr}%`;
+        conditions.push(
+          `(o.total_amount_ht::text ILIKE $${++paramCount} OR o.total_amount_ttc::text ILIKE $${++paramCount})`
+        );
+        params.push(totalTerm, totalTerm);
+      }
+
+      if (date && date.trim() !== "") {
+        // Recherche par date exacte (comparaison avec DATE pour ignorer l'heure)
+        conditions.push(`DATE(o.created_at) = $${++paramCount}`);
+        params.push(date);
       }
 
       const whereClause =
@@ -299,12 +358,11 @@ export default class OrderRepository {
 
       const result = await this.pool.query(query, params);
 
-      // Compter le total
-      const countQuery = `SELECT COUNT(*) FROM orders ${whereClause}`;
-      const countResult = await this.pool.query(
-        countQuery,
-        params.slice(0, -2)
-      );
+      // Compter le total - construire les paramètres sans LIMIT et OFFSET
+      const countParams = params.slice(0, -2);
+      const countQuery = `SELECT COUNT(*) as count FROM orders o ${whereClause}`;
+
+      const countResult = await this.pool.query(countQuery, countParams);
 
       return {
         orders: result.rows.map((row) => {

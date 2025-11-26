@@ -36,10 +36,10 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
 
   return (
     <FilterSelect
-      id="category"
+        id="category"
       label="Catégorie"
       icon="fas fa-tags"
-      value={value}
+        value={value}
       onChange={onChange}
       placeholder="Toutes les catégories"
       options={options}

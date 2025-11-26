@@ -185,7 +185,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
             quantity={quantity}
             onChange={handleQuantityChange}
             min={1}
-            disabled={isUpdating}
+              disabled={isUpdating}
             isLoading={isUpdating}
           />
 

@@ -29,38 +29,38 @@ const AddressFields: React.FC<AddressFieldsProps> = ({ address, onChange }) => {
   return (
     <>
       <FormInput
-        name="address"
+          name="address"
         label="Adresse complète"
-        value={address.address || ""}
-        onChange={handleInputChange}
-        required
-        placeholder="Numéro et nom de rue"
+          value={address.address || ""}
+          onChange={handleInputChange}
+          required
+          placeholder="Numéro et nom de rue"
         gridColumn="1 / -1"
-      />
+        />
       <FormInput
-        name="postalCode"
+          name="postalCode"
         label="Code postal"
-        value={address.postalCode || ""}
-        onChange={handleInputChange}
-        required
-        placeholder="1000"
-      />
+          value={address.postalCode || ""}
+          onChange={handleInputChange}
+          required
+          placeholder="1000"
+        />
       <FormInput
-        name="city"
+          name="city"
         label="Ville"
-        value={address.city || ""}
-        onChange={handleInputChange}
-        required
-        placeholder="Bruxelles"
-      />
+          value={address.city || ""}
+          onChange={handleInputChange}
+          required
+          placeholder="Bruxelles"
+        />
       <FormInput
-        name="countryName"
+          name="countryName"
         label="Pays"
-        value={address.countryName || "Belgique"}
+          value={address.countryName || "Belgique"}
         onChange={handleInputChange}
-        readOnly
+          readOnly
         gridColumn="1 / -1"
-      />
+        />
     </>
   );
 };

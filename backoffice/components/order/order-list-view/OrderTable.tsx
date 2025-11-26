@@ -22,7 +22,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
   onToggleDelivery,
 }) => {
   const headers: TableHeader[] = [
-    { label: "#" },
+    { label: "REFERENCE" },
     { label: "Client" },
     { label: "Email", className: "mobile-hide" },
     { label: "Total HT", align: "right", className: "mobile-hide" },

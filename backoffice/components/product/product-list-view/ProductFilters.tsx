@@ -50,13 +50,13 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 }) => {
   return (
     <FilterContainer>
-      <SearchInput value={searchTerm} onChange={onSearchChange} />
-      <CategoryFilter
-        value={selectedCategory}
-        onChange={onCategoryChange}
-        categories={categories}
-      />
-      <StatusFilter value={statusFilter} onChange={onStatusFilterChange} />
+        <SearchInput value={searchTerm} onChange={onSearchChange} />
+        <CategoryFilter
+          value={selectedCategory}
+          onChange={onCategoryChange}
+          categories={categories}
+        />
+        <StatusFilter value={statusFilter} onChange={onStatusFilterChange} />
     </FilterContainer>
   );
 };

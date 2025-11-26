@@ -80,44 +80,44 @@ export default function CheckoutCustomerForm() {
 
           {/* Champ prénom */}
           <FormInput
-            name="firstName"
+              name="firstName"
             label="Prénom"
-            value={customerData.firstName || ""}
-            onChange={handleChange}
-            required
-            placeholder="Votre prénom"
-          />
+              value={customerData.firstName || ""}
+              onChange={handleChange}
+              required
+              placeholder="Votre prénom"
+            />
 
           {/* Champ nom */}
           <FormInput
-            name="lastName"
+              name="lastName"
             label="Nom"
-            value={customerData.lastName || ""}
-            onChange={handleChange}
-            required
-            placeholder="Votre nom"
-          />
+              value={customerData.lastName || ""}
+              onChange={handleChange}
+              required
+              placeholder="Votre nom"
+            />
 
           {/* Champ email */}
           <FormInput
             name="email"
             label="Email"
-            type="email"
-            value={customerData.email || ""}
-            onChange={handleChange}
-            required
-            placeholder="votre.email@exemple.com"
-          />
+              type="email"
+              value={customerData.email || ""}
+              onChange={handleChange}
+              required
+              placeholder="votre.email@exemple.com"
+            />
 
           {/* Champ téléphone (optionnel) */}
           <FormInput
             name="phoneNumber"
             label="Téléphone"
-            type="tel"
-            value={customerData.phoneNumber || ""}
-            onChange={handleChange}
-            placeholder="+32 123 45 67 89"
-          />
+              type="tel"
+              value={customerData.phoneNumber || ""}
+              onChange={handleChange}
+              placeholder="+32 123 45 67 89"
+            />
 
           {/* Date de naissance supprimée */}
         </div>

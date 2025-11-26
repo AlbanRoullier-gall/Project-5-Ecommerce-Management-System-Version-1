@@ -163,6 +163,14 @@ export class OrderController {
         ...(req.query.year && {
           year: parseInt(req.query.year as string),
         }),
+        ...(req.query.total &&
+          req.query.total !== "" && {
+            total: parseFloat(req.query.total as string),
+          }),
+        ...(req.query.date &&
+          req.query.date !== "" && {
+            date: req.query.date as string,
+          }),
       };
 
       const result = await this.orderService.listOrders(options);

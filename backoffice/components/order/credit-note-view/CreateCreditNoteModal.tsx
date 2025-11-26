@@ -229,8 +229,8 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
       onClose={handleClose}
       maxWidth="800px"
       headerActions={
-        <Button variant="gold" onClick={handleClose} icon="fas fa-times">
-          Fermer
+          <Button variant="gold" onClick={handleClose} icon="fas fa-times">
+            Fermer
         </Button>
       }
       footerActions={
@@ -247,7 +247,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
             icon="fas fa-file-invoice-dollar"
             onClick={handleSubmit}
             disabled={!canSubmit || isSubmitting}
-          >
+        >
             {isSubmitting ? "Création…" : "Créer l'avoir"}
           </Button>
         </>
