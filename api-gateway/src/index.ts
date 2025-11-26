@@ -1,11 +1,10 @@
 /**
- * API GATEWAY - POINT D'ENTRÉE PRINCIPAL
+ * API GATEWAY - PROXY SIMPLE
  *
- * Architecture v3.0 - Pattern ApiRouter direct
- * - Routes enregistrées directement (comme les services)
- * - Pas de couche de configuration déclarative
- * - Handlers séparés pour la logique métier
- * - Conventions automatiques appliquées lors de l'enregistrement
+ * Architecture simplifiée - Proxy automatique
+ * - Proxy automatique vers les services backend
+ * - Handlers spéciaux uniquement pour l'orchestration (auth, payment, export)
+ * - Détection automatique du service à partir du chemin de la route
  */
 
 import dotenv from "dotenv";
@@ -29,7 +28,7 @@ apiRouter.setupRoutes(app);
 
 app.listen(PORT, () => {
   console.log("╔════════════════════════════════════════╗");
-  console.log("║   🚀 API GATEWAY - MODULAIRE v2.2      ║");
+  console.log("║   🚀 API GATEWAY - PROXY SIMPLE        ║");
   console.log("╚════════════════════════════════════════╝");
   console.log("");
   console.log(`📍 Port: ${PORT}`);

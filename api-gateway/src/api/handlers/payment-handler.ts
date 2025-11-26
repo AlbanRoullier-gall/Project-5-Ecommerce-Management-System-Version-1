@@ -1,11 +1,12 @@
 /**
- * Handler pour la finalisation de paiement après succès Stripe
- * Orchestre l'appel entre Payment Service, Cart Service, Customer Service, Order Service et Email Service
- * Note: Les items sont enrichis avec productName lors de l'ajout au panier côté frontend
+ * Handlers pour les routes de paiement
+ * - handleCreatePayment: Transforme le body du frontend pour le payment-service
+ * - handleFinalizePayment: Orchestre la finalisation après succès Stripe
  */
 
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
+import { proxyRequest } from "../proxy";
 import { OrderCompleteDTO } from "../../../../shared-types/order-service";
 
 /**
@@ -49,6 +50,31 @@ const transformItemsForEmail = (items: any[]) => {
     totalPrice: item.totalPriceTTC,
     vatRate: item.vatRate,
   }));
+};
+
+/**
+ * Handler pour la création de paiement
+ * Transforme le body du frontend pour le format attendu par payment-service
+ * Le frontend envoie { payment, cartSessionId, snapshot }
+ * On enrichit payment.metadata avec cartSessionId et checkoutSnapshot
+ */
+export const handleCreatePayment = async (req: Request, res: Response) => {
+  const body = req.body as any;
+
+  // Si le body contient payment, cartSessionId et snapshot, on transforme
+  if (body.payment && body.cartSessionId && body.snapshot) {
+    if (!body.payment.metadata) {
+      body.payment.metadata = {};
+    }
+    // Enrichir les metadata avec les données nécessaires pour la finalisation
+    body.payment.metadata.cartSessionId = body.cartSessionId;
+    body.payment.metadata.checkoutSnapshot = JSON.stringify(body.snapshot);
+    // Remplacer req.body par seulement l'objet payment enrichi
+    req.body = body.payment;
+  }
+
+  // Proxy vers le payment-service
+  await proxyRequest(req, res, "payment");
 };
 
 export const handleFinalizePayment = async (req: Request, res: Response) => {
