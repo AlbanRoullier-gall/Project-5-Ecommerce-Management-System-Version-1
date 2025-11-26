@@ -24,7 +24,7 @@ import {
   handleCreatePayment,
   handleFinalizePayment,
 } from "./handlers/payment-handler";
-import { ExportHandler } from "./handlers/export-handler";
+import { handleExportOrdersYear } from "./handlers/export-handler";
 
 export class ApiRouter {
   private upload: multer.Multer;
@@ -120,10 +120,7 @@ export class ApiRouter {
     app.get(
       "/api/admin/exports/orders-year/:year",
       requireAuth,
-      async (req, res) => {
-        const exportHandler = new ExportHandler();
-        await exportHandler.exportOrdersYear(req, res);
-      }
+      handleExportOrdersYear
     );
 
     // ===== PROXY AUTOMATIQUE POUR TOUTES LES AUTRES ROUTES =====
