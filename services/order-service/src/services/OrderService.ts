@@ -20,7 +20,7 @@ import OrderItemRepository from "../repositories/OrderItemRepository";
 import CreditNoteRepository from "../repositories/CreditNoteRepository";
 import CreditNoteItemRepository from "../repositories/CreditNoteItemRepository";
 import OrderAddressRepository from "../repositories/OrderAddressRepository";
-import { OrderFromCheckoutDTO } from "../api/dto/index";
+import { OrderCompleteDTO } from "../api/dto/index";
 
 export default class OrderService {
   private pool: Pool;
@@ -102,7 +102,7 @@ export default class OrderService {
    * Réutilise la logique des repositories mais avec un client de transaction
    */
   async createOrderFromCheckout(
-    checkoutData: OrderFromCheckoutDTO
+    checkoutData: OrderCompleteDTO
   ): Promise<Order> {
     const client = await this.pool.connect();
     try {

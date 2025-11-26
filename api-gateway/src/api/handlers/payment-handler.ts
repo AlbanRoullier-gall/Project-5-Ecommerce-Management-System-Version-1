@@ -6,6 +6,7 @@
 
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
+import { OrderCompleteDTO } from "../../../../shared-types/order-service";
 
 /**
  * Helper pour créer une réponse d'erreur standardisée
@@ -250,26 +251,18 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       });
     }
 
-    const orderPayload: any = {
+    const orderPayload: OrderCompleteDTO = {
       totalAmountHT: cart.subtotal,
       totalAmountTTC: cart.total,
       paymentMethod: "stripe",
       notes: snapshot.notes || undefined,
       items,
-      addresses: addresses.length > 0 ? addresses : undefined,
+      ...(addresses.length > 0 && { addresses }),
+      ...(customerId && { customerId }),
+      ...(customer &&
+        Object.keys(customer).length > 0 && { customerSnapshot: customer }),
+      ...(paymentIntentId && { paymentIntentId }),
     };
-
-    if (customerId) {
-      orderPayload.customerId = customerId;
-    }
-
-    if (customer && Object.keys(customer).length > 0) {
-      orderPayload.customerSnapshot = customer;
-    }
-
-    if (paymentIntentId) {
-      orderPayload.paymentIntentId = paymentIntentId;
-    }
 
     // 6. Appel au Order Service pour créer la commande
     let orderId: number;

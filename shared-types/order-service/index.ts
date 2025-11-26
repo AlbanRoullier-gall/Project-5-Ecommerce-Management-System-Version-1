@@ -278,10 +278,10 @@ export interface OrderStatisticsDTO {
 }
 
 /**
- * DTO pour créer une commande complète depuis un checkout
+ * DTO pour créer une commande complète avec items et adresses
  * Inclut la commande, les items et les adresses en une seule transaction
  */
-export interface OrderFromCheckoutDTO {
+export interface OrderCompleteDTO {
   // Données de la commande
   customerId?: number; // Optionnel, peut être résolu depuis customerSnapshot
   customerSnapshot?: any;

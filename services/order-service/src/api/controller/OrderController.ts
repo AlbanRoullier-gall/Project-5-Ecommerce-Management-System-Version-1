@@ -10,7 +10,7 @@
 
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
-import { OrderCreateDTO, OrderUpdateDTO, OrderFromCheckoutDTO } from "../dto";
+import { OrderCreateDTO, OrderUpdateDTO, OrderCompleteDTO } from "../dto";
 import { OrderMapper, ResponseMapper } from "../mapper";
 
 export class OrderController {
@@ -286,7 +286,7 @@ export class OrderController {
    */
   async createOrderFromCheckout(req: Request, res: Response): Promise<void> {
     try {
-      const checkoutData: OrderFromCheckoutDTO = req.body;
+      const checkoutData: OrderCompleteDTO = req.body;
 
       const order = await this.orderService.createOrderFromCheckout(
         checkoutData
