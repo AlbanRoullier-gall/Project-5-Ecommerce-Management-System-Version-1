@@ -1,13 +1,13 @@
 /**
  * Handlers pour les routes de paiement
- * - handleCreatePayment: Transforme le body du frontend pour le payment-service
- * - handleFinalizePayment: Orchestre la finalisation après succès Stripe
+ * Utilise les types partagés pour réduire les transformations
  */
 
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
 import { proxyRequest } from "../proxy";
 import { OrderCompleteDTO } from "../../../../shared-types/order-service";
+import { CartItemPublicDTO } from "../../../../shared-types/cart-service";
 
 /**
  * Helper pour créer une réponse d'erreur standardisée
@@ -19,36 +19,21 @@ const createErrorResponse = (error: string, message: string) => ({
 });
 
 /**
- * Helper pour transformer les items du panier en format order-service
+ * Transforme les items du panier (CartItemPublicDTO) en format OrderCompleteDTO
+ * Utilise directement les types partagés
  */
-const transformItemsForOrder = (cartItems: any[]) => {
-  return cartItems.map((item: any) => {
-    const itemData: any = {
-      productId: item.productId,
-      quantity: item.quantity,
-      unitPriceHT: item.unitPriceHT,
-      unitPriceTTC: item.unitPriceTTC,
-      vatRate: item.vatRate,
-      totalPriceHT: item.totalPriceHT,
-      totalPriceTTC: item.totalPriceTTC,
-    };
-    if (item.productName !== undefined) {
-      itemData.productName = item.productName;
-    }
-    return itemData;
-  });
-};
-
-/**
- * Helper pour transformer les items en format email-service
- */
-const transformItemsForEmail = (items: any[]) => {
-  return items.map((item: any) => ({
-    name: item.productName,
+const transformCartItemsToOrderItems = (
+  cartItems: CartItemPublicDTO[]
+): OrderCompleteDTO["items"] => {
+  return cartItems.map((item) => ({
+    productId: item.productId,
+    productName: item.productName || "Produit",
     quantity: item.quantity,
-    unitPrice: item.unitPriceTTC,
-    totalPrice: item.totalPriceTTC,
+    unitPriceHT: item.unitPriceHT,
+    unitPriceTTC: item.unitPriceTTC,
     vatRate: item.vatRate,
+    totalPriceHT: item.totalPriceHT,
+    totalPriceTTC: item.totalPriceTTC,
   }));
 };
 
@@ -219,9 +204,8 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // 3.1. Extraire et transformer les données pour order-service
-    // Transformer les items du panier
-    const items = transformItemsForOrder(cart.items || []);
+    // Transformer les items du panier en utilisant les types partagés
+    const items = transformCartItemsToOrderItems(cart.items || []);
 
     // Extraire les informations customer depuis le snapshot
     const customer = snapshot.customer || {};
@@ -337,7 +321,14 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
 
     // 7. Appel au Email Service pour envoyer l'email de confirmation (non-bloquant)
     try {
-      const emailItems = transformItemsForEmail(items);
+      // Utiliser directement les items transformés
+      const emailItems = items.map((item) => ({
+        name: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPriceTTC,
+        totalPrice: item.totalPriceTTC,
+        vatRate: item.vatRate,
+      }));
 
       const customerName = `${
         customer.firstName || shippingAddress?.firstName || ""

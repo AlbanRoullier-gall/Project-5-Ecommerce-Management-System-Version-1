@@ -1,14 +1,14 @@
 /**
- * Export Handler
- * Gère les requêtes d'export PDF des commandes et avoirs par année
+ * Handler pour l'export
+ * Fait des appels directs aux services Order et PDF Export
  */
 
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
 
 /**
- * Exporte les commandes et avoirs pour une année spécifique en HTML
- * Orchestre l'appel entre Order Service et PDF Export Service
+ * Exporte les commandes et avoirs pour une année spécifique
+ * Appels directs aux services sans transformations
  */
 export const handleExportOrdersYear = async (
   req: Request,
@@ -25,16 +25,13 @@ export const handleExportOrdersYear = async (
       return;
     }
 
-    // Étape 1 : Récupérer les données depuis le service order-service
-
-    // Extraire les informations utilisateur de la requête (définies par le middleware requireAuth)
-    // Le middleware requireAuth a déjà vérifié le token, donc req.user est garanti d'exister
     const user = (req as any).user;
     if (!user) {
-      // Cela ne devrait jamais arriver si le middleware requireAuth est correctement appliqué
       res.status(401).json({ error: "Utilisateur non authentifié" });
       return;
     }
+
+    // 1. Appel direct au Order Service
 
     const orderServiceResponse = await fetch(
       `${SERVICES.order}/api/admin/orders/year/${yearNumber}/export-data`,
@@ -62,15 +59,7 @@ export const handleExportOrdersYear = async (
       return;
     }
 
-    // Étape 2 : Générer le HTML via le service pdf-export
-
-    const requestBody = {
-      year: yearNumber,
-      orders: orderData.data.orders,
-      creditNotes: orderData.data.creditNotes,
-    };
-
-    const jsonBody = JSON.stringify(requestBody);
+    // 2. Appel direct au PDF Export Service
 
     const pdfServiceResponse = await fetch(
       `${SERVICES["pdf-export"]}/api/admin/export/orders-year`,
@@ -81,7 +70,11 @@ export const handleExportOrdersYear = async (
           "x-user-id": String(user.userId),
           "x-user-email": user.email,
         },
-        body: jsonBody,
+        body: JSON.stringify({
+          year: yearNumber,
+          orders: orderData.data.orders,
+          creditNotes: orderData.data.creditNotes,
+        }),
       }
     );
 
@@ -98,7 +91,7 @@ export const handleExportOrdersYear = async (
       return;
     }
 
-    // Étape 3 : Retourner le HTML au client
+    // 3. Retourner le HTML au client
     const htmlBuffer = await pdfServiceResponse.arrayBuffer();
 
     res.setHeader("Content-Type", "text/html");

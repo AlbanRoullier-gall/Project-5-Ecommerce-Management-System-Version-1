@@ -1,10 +1,20 @@
 /**
- * Handlers spécialisés pour l'authentification
- * Gère les flux complexes nécessitant plusieurs services
+ * Handlers pour l'authentification
+ * Fait des appels directs aux services Auth et Email
+ * Les services restent indépendants
  */
 
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
+
+/**
+ * Helper pour créer une réponse d'erreur standardisée
+ */
+const createErrorResponse = (error: string, message: string) => ({
+  error,
+  message,
+  timestamp: new Date().toISOString(),
+});
 
 /**
  * Handler pour la réinitialisation de mot de passe
@@ -21,75 +31,48 @@ export const handlePasswordReset = async (req: Request, res: Response) => {
       });
     }
 
-    // 1. Appel au Auth Service pour générer le token
-    let authData: any;
-
-    try {
-      const authResponse = await fetch(
-        `${SERVICES.auth}/api/auth/reset-password`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Service-Request": "api-gateway",
-          },
-          body: JSON.stringify({ email }),
-        }
-      );
-
-      authData = (await authResponse.json()) as any;
-
-      if (!authResponse.ok) {
-        console.error(`❌ Auth Service error: ${authData.message}`);
-        throw new Error(`Auth Service error: ${authData.message}`);
+    // 1. Appel direct au Auth Service
+    const authResponse = await fetch(
+      `${SERVICES.auth}/api/auth/reset-password`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Service-Request": "api-gateway",
+        },
+        body: JSON.stringify({ email }),
       }
-    } catch (error) {
-      console.error(`❌ Erreur lors de l'appel à l'Auth Service:`, error);
-      return res.status(500).json({
-        error: "Service d'authentification indisponible",
-        message: "Veuillez réessayer plus tard",
-        timestamp: new Date().toISOString(),
-      });
+    );
+
+    if (!authResponse.ok) {
+      const authData = (await authResponse.json()) as any;
+      return res.status(authResponse.status).json(authData);
     }
 
-    // 2. Appel au Email Service pour envoyer l'email
-    let emailData: any;
+    const authData = (await authResponse.json()) as any;
 
+    // 2. Appel au Email Service (non-bloquant)
     try {
-      const emailResponse = await fetch(
-        `${SERVICES.email}/api/email/send-reset-email`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Service-Request": "api-gateway",
-          },
-          body: JSON.stringify({
-            email: email,
-            token: authData.token,
-            userName: authData.userName || "Utilisateur",
-            resetUrl: `${
-              process.env["FRONTEND_URL"] || "http://localhost:3009"
-            }/auth/reset-password`,
-          }),
-        }
-      );
-
-      emailData = (await emailResponse.json()) as any;
-
-      if (!emailResponse.ok) {
-        throw new Error(`Email Service error: ${emailData.message}`);
-      }
-    } catch (error) {
-      console.error(`❌ Erreur lors de l'appel à l'Email Service:`, error);
-      return res.status(500).json({
-        error: "Service d'email indisponible",
-        message: "Veuillez réessayer plus tard",
-        timestamp: new Date().toISOString(),
+      await fetch(`${SERVICES.email}/api/email/send-reset-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Service-Request": "api-gateway",
+        },
+        body: JSON.stringify({
+          email,
+          token: authData.token,
+          userName: authData.userName || "Utilisateur",
+          resetUrl: `${
+            process.env["FRONTEND_URL"] || "http://localhost:3009"
+          }/auth/reset-password`,
+        }),
       });
+    } catch (error) {
+      console.warn("⚠️ Erreur lors de l'envoi de l'email:", error);
+      // Ne pas faire échouer la requête si l'email échoue
     }
 
-    // 3. Retourner succès au back-office
     return res.json({
       success: true,
       message: "Email de réinitialisation envoyé",
@@ -97,11 +80,14 @@ export const handlePasswordReset = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("❌ Password reset error:", error);
-    return res.status(500).json({
-      error: "Erreur interne du serveur",
-      message: "Veuillez réessayer plus tard",
-      timestamp: new Date().toISOString(),
-    });
+    return res
+      .status(500)
+      .json(
+        createErrorResponse(
+          "Erreur interne du serveur",
+          "Veuillez réessayer plus tard"
+        )
+      );
   }
 };
 
@@ -175,32 +161,20 @@ export const handlePasswordResetConfirm = async (
  */
 export const handleRegister = async (req: Request, res: Response) => {
   try {
-    // 1. Appel au Auth Service pour créer l'utilisateur
-    let authData: any;
+    // 1. Appel direct au Auth Service
+    const authResponse = await fetch(`${SERVICES.auth}/api/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Service-Request": "api-gateway",
+      },
+      body: JSON.stringify(req.body),
+    });
 
-    try {
-      const authResponse = await fetch(`${SERVICES.auth}/api/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Service-Request": "api-gateway",
-        },
-        body: JSON.stringify(req.body),
-      });
+    const authData = (await authResponse.json()) as any;
 
-      authData = (await authResponse.json()) as any;
-
-      if (!authResponse.ok) {
-        console.error(`❌ Auth Service error: ${authData.message}`);
-        return res.status(authResponse.status).json(authData);
-      }
-    } catch (error) {
-      console.error(`❌ Erreur lors de l'appel à l'Auth Service:`, error);
-      return res.status(500).json({
-        error: "Service d'authentification indisponible",
-        message: "Veuillez réessayer plus tard",
-        timestamp: new Date().toISOString(),
-      });
+    if (!authResponse.ok) {
+      return res.status(authResponse.status).json(authData);
     }
 
     // 2. Construire les URLs d'approbation/rejet
@@ -267,33 +241,19 @@ export const handleApproveBackofficeAccess = async (
       });
     }
 
-    // 1. Appel au Auth Service pour approuver
-    let authData: any;
-
-    try {
-      const authResponse = await fetch(
-        `${SERVICES.auth}/api/auth/approve-backoffice?token=${token}`,
-        {
-          method: "GET",
-          headers: {
-            "X-Service-Request": "api-gateway",
-          },
-        }
-      );
-
-      authData = (await authResponse.json()) as any;
-
-      if (!authResponse.ok) {
-        console.error(`❌ Auth Service error: ${authData.message}`);
-        return res.status(authResponse.status).json(authData);
+    // 1. Appel direct au Auth Service
+    const authResponse = await fetch(
+      `${SERVICES.auth}/api/auth/approve-backoffice?token=${token}`,
+      {
+        method: "GET",
+        headers: { "X-Service-Request": "api-gateway" },
       }
-    } catch (error) {
-      console.error(`❌ Erreur lors de l'appel à l'Auth Service:`, error);
-      return res.status(500).json({
-        error: "Service d'authentification indisponible",
-        message: "Veuillez réessayer plus tard",
-        timestamp: new Date().toISOString(),
-      });
+    );
+
+    const authData = (await authResponse.json()) as any;
+
+    if (!authResponse.ok) {
+      return res.status(authResponse.status).json(authData);
     }
 
     // 2. Appel au Email Service pour envoyer la confirmation
@@ -358,33 +318,19 @@ export const handleRejectBackofficeAccess = async (
       });
     }
 
-    // 1. Appel au Auth Service pour rejeter
-    let authData: any;
-
-    try {
-      const authResponse = await fetch(
-        `${SERVICES.auth}/api/auth/reject-backoffice?token=${token}`,
-        {
-          method: "GET",
-          headers: {
-            "X-Service-Request": "api-gateway",
-          },
-        }
-      );
-
-      authData = (await authResponse.json()) as any;
-
-      if (!authResponse.ok) {
-        console.error(`❌ Auth Service error: ${authData.message}`);
-        return res.status(authResponse.status).json(authData);
+    // 1. Appel direct au Auth Service
+    const authResponse = await fetch(
+      `${SERVICES.auth}/api/auth/reject-backoffice?token=${token}`,
+      {
+        method: "GET",
+        headers: { "X-Service-Request": "api-gateway" },
       }
-    } catch (error) {
-      console.error(`❌ Erreur lors de l'appel à l'Auth Service:`, error);
-      return res.status(500).json({
-        error: "Service d'authentification indisponible",
-        message: "Veuillez réessayer plus tard",
-        timestamp: new Date().toISOString(),
-      });
+    );
+
+    const authData = (await authResponse.json()) as any;
+
+    if (!authResponse.ok) {
+      return res.status(authResponse.status).json(authData);
     }
 
     // 2. Appel au Email Service pour envoyer la notification
