@@ -228,11 +228,6 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
       title="Créer un avoir"
       onClose={handleClose}
       maxWidth="800px"
-      headerActions={
-          <Button variant="gold" onClick={handleClose} icon="fas fa-times">
-            Fermer
-        </Button>
-      }
       footerActions={
         <>
           <Button
@@ -247,7 +242,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
             icon="fas fa-file-invoice-dollar"
             onClick={handleSubmit}
             disabled={!canSubmit || isSubmitting}
-        >
+          >
             {isSubmitting ? "Création…" : "Créer l'avoir"}
           </Button>
         </>
@@ -255,454 +250,445 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
     >
       {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
 
-          <div
-            className="credit-note-form"
-            style={{ display: "grid", gap: "1rem" }}
-          >
-            {selectedOrder ? (
-              <div style={{ color: "#6b7280" }}>
-                Commande #{selectedOrder.id}
-              </div>
-            ) : (
-              <div>
-                <label style={{ display: "block", fontWeight: 600 }}>
-                  Sélectionner une commande
-                </label>
-                <select
-                  value={selectedOrderId}
-                  onChange={(e) => setSelectedOrderId(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    borderRadius: 10,
-                    border: "2px solid #e1e5e9",
-                    background: "white",
-                  }}
-                >
-                  <option value="">— Choisir une commande —</option>
-                  {orders.map((o) => {
-                    const customerName = `${o.customerFirstName || ""} ${
-                      o.customerLastName || ""
-                    }`.trim();
-                    return (
-                      <option key={o.id} value={o.id}>
-                        #{o.id} — {customerName || o.customerEmail || "Client"}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            )}
-
-            {selectedOrder && (
-              <div
-                style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  padding: "0.75rem",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  <div style={{ fontWeight: 600, color: "#111827" }}>
-                    Articles de la commande
-                  </div>
-                  {itemsLoading && (
-                    <div style={{ color: "#6b7280", fontSize: "0.9rem" }}>
-                      Chargement…
-                    </div>
-                  )}
-                </div>
-
-                {itemsError && (
-                  <div
-                    style={{
-                      background: "#FEF2F2",
-                      color: "#B91C1C",
-                      border: "1px solid #FECACA",
-                      padding: "0.5rem 0.75rem",
-                      borderRadius: 10,
-                      marginBottom: "0.5rem",
-                    }}
-                  >
-                    {itemsError}
-                  </div>
-                )}
-
-                {!itemsLoading && !itemsError && (
-                  <div
-                    className="table-responsive"
-                    style={{ overflowX: "auto" }}
-                  >
-                    <table
-                      style={{
-                        width: "100%",
-                        borderCollapse: "separate",
-                        borderSpacing: 0,
-                        fontSize: "0.95rem",
-                        minWidth: "500px",
-                      }}
-                    >
-                      <thead
-                        style={{ background: "#f3f4f6", color: "#374151" }}
-                      >
-                        <tr>
-                          <th style={{ textAlign: "left", padding: "0.5rem" }}>
-                            Sélection
-                          </th>
-                          <th style={{ textAlign: "left", padding: "0.5rem" }}>
-                            Produit
-                          </th>
-                          <th style={{ textAlign: "right", padding: "0.5rem" }}>
-                            Qté
-                          </th>
-                          <th
-                            className="mobile-hide"
-                            style={{ textAlign: "right", padding: "0.5rem" }}
-                          >
-                            Total HT
-                          </th>
-                          <th style={{ textAlign: "right", padding: "0.5rem" }}>
-                            Total TTC
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {orderItems.length === 0 && (
-                          <tr>
-                            <td
-                              colSpan={5}
-                              style={{
-                                padding: "0.5rem",
-                                textAlign: "center",
-                                color: "#6b7280",
-                              }}
-                            >
-                              Aucun article
-                            </td>
-                          </tr>
-                        )}
-                        {orderItems.map((it) => {
-                          const checked = selectedItemIds.includes(it.id);
-                          return (
-                            <tr
-                              key={it.id}
-                              style={{ borderTop: "1px solid #f3f4f6" }}
-                            >
-                              <td style={{ padding: "0.5rem" }}>
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={(e) => {
-                                    setSelectedItemIds((prev) => {
-                                      const set = new Set(prev);
-                                      if (e.target.checked) set.add(it.id);
-                                      else set.delete(it.id);
-                                      return Array.from(set);
-                                    });
-                                  }}
-                                />
-                              </td>
-                              <td
-                                style={{ padding: "0.5rem", color: "#111827" }}
-                              >
-                                {it.productName}
-                              </td>
-                              <td
-                                style={{
-                                  padding: "0.5rem",
-                                  textAlign: "right",
-                                }}
-                              >
-                                {it.quantity}
-                              </td>
-                              <td
-                                className="mobile-hide"
-                                style={{
-                                  padding: "0.5rem",
-                                  textAlign: "right",
-                                }}
-                              >
-                                {(Number(it.totalPriceHT) || 0).toFixed(2)} €
-                              </td>
-                              <td
-                                style={{
-                                  padding: "0.5rem",
-                                  textAlign: "right",
-                                }}
-                              >
-                                {(Number(it.totalPriceTTC) || 0).toFixed(2)} €
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div
-              className="form-fields"
+      <div
+        className="credit-note-form"
+        style={{ display: "grid", gap: "1rem" }}
+      >
+        {selectedOrder ? (
+          <div style={{ color: "#6b7280" }}>Commande #{selectedOrder.id}</div>
+        ) : (
+          <div>
+            <label style={{ display: "block", fontWeight: 600 }}>
+              Sélectionner une commande
+            </label>
+            <select
+              value={selectedOrderId}
+              onChange={(e) => setSelectedOrderId(e.target.value)}
               style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: 8,
-                padding: "1rem",
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                gap: "1rem",
+                width: "100%",
+                padding: "0.75rem",
+                borderRadius: 10,
+                border: "2px solid #e1e5e9",
+                background: "white",
               }}
             >
-              <div className="form-field">
-                <label
-                  style={{
-                    display: "block",
-                    fontWeight: 600,
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  Motif
-                </label>
-                <input
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Ex: Retour produit, geste commercial..."
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    borderRadius: 8,
-                    border: "2px solid #e1e5e9",
-                    fontSize: "1rem",
-                    transition: "border-color 0.2s ease",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#13686a";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#e1e5e9";
-                  }}
-                />
-              </div>
+              <option value="">— Choisir une commande —</option>
+              {orders.map((o) => {
+                const customerName = `${o.customerFirstName || ""} ${
+                  o.customerLastName || ""
+                }`.trim();
+                return (
+                  <option key={o.id} value={o.id}>
+                    #{o.id} — {customerName || o.customerEmail || "Client"}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        )}
 
-              <div className="form-field">
-                <label
-                  style={{
-                    display: "block",
-                    fontWeight: 600,
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  Date d'émission
-                </label>
-                <input
-                  type="date"
-                  value={issueDate}
-                  disabled
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    borderRadius: 8,
-                    border: "2px solid #e1e5e9",
-                    background: "#f9fafb",
-                    color: "#6b7280",
-                    fontSize: "1rem",
-                    boxSizing: "border-box",
-                  }}
-                />
+        {selectedOrder && (
+          <div
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: "0.75rem",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "0.5rem",
+              }}
+            >
+              <div style={{ fontWeight: 600, color: "#111827" }}>
+                Articles de la commande
               </div>
+              {itemsLoading && (
+                <div style={{ color: "#6b7280", fontSize: "0.9rem" }}>
+                  Chargement…
+                </div>
+              )}
+            </div>
 
-              <div className="form-field form-field-full">
-                <label
-                  style={{
-                    display: "block",
-                    fontWeight: 600,
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  Description
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Détails supplémentaires"
-                  rows={3}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    borderRadius: 8,
-                    border: "2px solid #e1e5e9",
-                    fontSize: "1rem",
-                    resize: "vertical",
-                    minHeight: "80px",
-                    transition: "border-color 0.2s ease",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#13686a";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#e1e5e9";
-                  }}
-                />
-              </div>
-
-              <div className="form-field">
-                <label
-                  style={{
-                    display: "block",
-                    fontWeight: 600,
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  Paiement
-                </label>
-                <input
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  placeholder="Ex: carte, virement"
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    borderRadius: 8,
-                    border: "2px solid #e1e5e9",
-                    fontSize: "1rem",
-                    transition: "border-color 0.2s ease",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#13686a";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#e1e5e9";
-                  }}
-                />
-              </div>
-
-              <div className="form-field">
-                <label
-                  style={{
-                    display: "block",
-                    fontWeight: 600,
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  Notes
-                </label>
-                <input
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Notes internes"
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    borderRadius: 8,
-                    border: "2px solid #e1e5e9",
-                    fontSize: "1rem",
-                    transition: "border-color 0.2s ease",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#13686a";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#e1e5e9";
-                  }}
-                />
-              </div>
-
+            {itemsError && (
               <div
-                className="totals-grid"
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                  gap: "1rem",
-                  gridColumn: "1 / -1",
-                  marginTop: "1rem",
+                  background: "#FEF2F2",
+                  color: "#B91C1C",
+                  border: "1px solid #FECACA",
+                  padding: "0.5rem 0.75rem",
+                  borderRadius: 10,
+                  marginBottom: "0.5rem",
                 }}
               >
-                <div className="total-field">
-                  <label
-                    style={{
-                      display: "block",
-                      fontWeight: 600,
-                      marginBottom: "0.5rem",
-                    }}
-                  >
-                    Total HT
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={totalHT}
-                    onChange={(e) => {
-                      setTotalHT(e.target.value);
-                      setLockTotals(false);
-                    }}
-                    placeholder="0.00"
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: 8,
-                      border: "2px solid #e1e5e9",
-                      fontSize: "1rem",
-                      transition: "border-color 0.2s ease",
-                      boxSizing: "border-box",
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = "#13686a";
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = "#e1e5e9";
-                    }}
-                  />
-                </div>
-                <div className="total-field">
-                  <label
-                    style={{
-                      display: "block",
-                      fontWeight: 600,
-                      marginBottom: "0.5rem",
-                    }}
-                  >
-                    Total TTC
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={totalTTC}
-                    onChange={(e) => {
-                      setTotalTTC(e.target.value);
-                      setLockTotals(false);
-                    }}
-                    placeholder="0.00"
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: 8,
-                      border: "2px solid #e1e5e9",
-                      fontSize: "1rem",
-                      transition: "border-color 0.2s ease",
-                      boxSizing: "border-box",
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = "#13686a";
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = "#e1e5e9";
-                    }}
-                  />
-                </div>
+                {itemsError}
               </div>
+            )}
+
+            {!itemsLoading && !itemsError && (
+              <div className="table-responsive" style={{ overflowX: "auto" }}>
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "separate",
+                    borderSpacing: 0,
+                    fontSize: "0.95rem",
+                    minWidth: "500px",
+                  }}
+                >
+                  <thead style={{ background: "#f3f4f6", color: "#374151" }}>
+                    <tr>
+                      <th style={{ textAlign: "left", padding: "0.5rem" }}>
+                        Sélection
+                      </th>
+                      <th style={{ textAlign: "left", padding: "0.5rem" }}>
+                        Produit
+                      </th>
+                      <th style={{ textAlign: "right", padding: "0.5rem" }}>
+                        Qté
+                      </th>
+                      <th
+                        className="mobile-hide"
+                        style={{ textAlign: "right", padding: "0.5rem" }}
+                      >
+                        Total HT
+                      </th>
+                      <th style={{ textAlign: "right", padding: "0.5rem" }}>
+                        Total TTC
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orderItems.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          style={{
+                            padding: "0.5rem",
+                            textAlign: "center",
+                            color: "#6b7280",
+                          }}
+                        >
+                          Aucun article
+                        </td>
+                      </tr>
+                    )}
+                    {orderItems.map((it) => {
+                      const checked = selectedItemIds.includes(it.id);
+                      return (
+                        <tr
+                          key={it.id}
+                          style={{ borderTop: "1px solid #f3f4f6" }}
+                        >
+                          <td style={{ padding: "0.5rem" }}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                setSelectedItemIds((prev) => {
+                                  const set = new Set(prev);
+                                  if (e.target.checked) set.add(it.id);
+                                  else set.delete(it.id);
+                                  return Array.from(set);
+                                });
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: "0.5rem", color: "#111827" }}>
+                            {it.productName}
+                          </td>
+                          <td
+                            style={{
+                              padding: "0.5rem",
+                              textAlign: "right",
+                            }}
+                          >
+                            {it.quantity}
+                          </td>
+                          <td
+                            className="mobile-hide"
+                            style={{
+                              padding: "0.5rem",
+                              textAlign: "right",
+                            }}
+                          >
+                            {(Number(it.totalPriceHT) || 0).toFixed(2)} €
+                          </td>
+                          <td
+                            style={{
+                              padding: "0.5rem",
+                              textAlign: "right",
+                            }}
+                          >
+                            {(Number(it.totalPriceTTC) || 0).toFixed(2)} €
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div
+          className="form-fields"
+          style={{
+            border: "1px solid #e5e7eb",
+            borderRadius: 8,
+            padding: "1rem",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: "1rem",
+          }}
+        >
+          <div className="form-field">
+            <label
+              style={{
+                display: "block",
+                fontWeight: 600,
+                marginBottom: "0.5rem",
+              }}
+            >
+              Motif
+            </label>
+            <input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Ex: Retour produit, geste commercial..."
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                borderRadius: 8,
+                border: "2px solid #e1e5e9",
+                fontSize: "1rem",
+                transition: "border-color 0.2s ease",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#13686a";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#e1e5e9";
+              }}
+            />
+          </div>
+
+          <div className="form-field">
+            <label
+              style={{
+                display: "block",
+                fontWeight: 600,
+                marginBottom: "0.5rem",
+              }}
+            >
+              Date d'émission
+            </label>
+            <input
+              type="date"
+              value={issueDate}
+              disabled
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                borderRadius: 8,
+                border: "2px solid #e1e5e9",
+                background: "#f9fafb",
+                color: "#6b7280",
+                fontSize: "1rem",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+
+          <div className="form-field form-field-full">
+            <label
+              style={{
+                display: "block",
+                fontWeight: 600,
+                marginBottom: "0.5rem",
+              }}
+            >
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Détails supplémentaires"
+              rows={3}
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                borderRadius: 8,
+                border: "2px solid #e1e5e9",
+                fontSize: "1rem",
+                resize: "vertical",
+                minHeight: "80px",
+                transition: "border-color 0.2s ease",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#13686a";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#e1e5e9";
+              }}
+            />
+          </div>
+
+          <div className="form-field">
+            <label
+              style={{
+                display: "block",
+                fontWeight: 600,
+                marginBottom: "0.5rem",
+              }}
+            >
+              Paiement
+            </label>
+            <input
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              placeholder="Ex: carte, virement"
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                borderRadius: 8,
+                border: "2px solid #e1e5e9",
+                fontSize: "1rem",
+                transition: "border-color 0.2s ease",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#13686a";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#e1e5e9";
+              }}
+            />
+          </div>
+
+          <div className="form-field">
+            <label
+              style={{
+                display: "block",
+                fontWeight: 600,
+                marginBottom: "0.5rem",
+              }}
+            >
+              Notes
+            </label>
+            <input
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Notes internes"
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                borderRadius: 8,
+                border: "2px solid #e1e5e9",
+                fontSize: "1rem",
+                transition: "border-color 0.2s ease",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#13686a";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#e1e5e9";
+              }}
+            />
+          </div>
+
+          <div
+            className="totals-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+              gap: "1rem",
+              gridColumn: "1 / -1",
+              marginTop: "1rem",
+            }}
+          >
+            <div className="total-field">
+              <label
+                style={{
+                  display: "block",
+                  fontWeight: 600,
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Total HT
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={totalHT}
+                onChange={(e) => {
+                  setTotalHT(e.target.value);
+                  setLockTotals(false);
+                }}
+                placeholder="0.00"
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  borderRadius: 8,
+                  border: "2px solid #e1e5e9",
+                  fontSize: "1rem",
+                  transition: "border-color 0.2s ease",
+                  boxSizing: "border-box",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#13686a";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#e1e5e9";
+                }}
+              />
+            </div>
+            <div className="total-field">
+              <label
+                style={{
+                  display: "block",
+                  fontWeight: 600,
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Total TTC
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={totalTTC}
+                onChange={(e) => {
+                  setTotalTTC(e.target.value);
+                  setLockTotals(false);
+                }}
+                placeholder="0.00"
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  borderRadius: 8,
+                  border: "2px solid #e1e5e9",
+                  fontSize: "1rem",
+                  transition: "border-color 0.2s ease",
+                  boxSizing: "border-box",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#13686a";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#e1e5e9";
+                }}
+              />
             </div>
           </div>
+        </div>
+      </div>
     </Modal>
   );
 };

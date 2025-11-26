@@ -116,7 +116,12 @@ const Modal: React.FC<ModalProps> = ({
           </h3>
           <div
             className="modal-header-actions"
-            style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}
+            style={{
+              display: "flex",
+              gap: "0.5rem",
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
           >
             {headerActions}
             {showCloseButton && (
@@ -127,11 +132,16 @@ const Modal: React.FC<ModalProps> = ({
                   border: "none",
                   borderRadius: "6px",
                   color: "white",
-                  padding: "0.5rem 1rem",
+                  padding: "0.5rem",
                   cursor: "pointer",
-                  fontSize: "1rem",
+                  fontSize: "1.2rem",
                   fontWeight: 600,
                   transition: "background 0.2s ease",
+                  minWidth: "36px",
+                  height: "36px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
@@ -184,4 +194,3 @@ const Modal: React.FC<ModalProps> = ({
 };
 
 export default Modal;
-

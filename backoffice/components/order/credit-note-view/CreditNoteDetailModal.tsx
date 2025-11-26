@@ -96,9 +96,6 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
               Supprimer
             </Button>
           )}
-          <Button variant="gold" onClick={onClose} icon="fas fa-times">
-            Fermer
-          </Button>
         </>
       }
     >

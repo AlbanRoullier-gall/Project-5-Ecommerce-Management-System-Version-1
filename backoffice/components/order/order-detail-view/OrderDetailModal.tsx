@@ -126,19 +126,14 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
         onClose={onClose}
         maxWidth="900px"
         headerActions={
-          <>
-            <Button
-              variant="primary"
-              icon="fas fa-file-invoice-dollar"
-              onClick={() => setIsCreateCreditNoteOpen(true)}
-              disabled={!order}
-            >
-              Créer un avoir
-            </Button>
-            <Button variant="gold" onClick={onClose} icon="fas fa-times">
-              Fermer
-            </Button>
-          </>
+          <Button
+            variant="primary"
+            icon="fas fa-file-invoice-dollar"
+            onClick={() => setIsCreateCreditNoteOpen(true)}
+            disabled={!order}
+          >
+            Créer un avoir
+          </Button>
         }
       >
         {isLoading && (
