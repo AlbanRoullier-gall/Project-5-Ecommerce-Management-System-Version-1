@@ -134,8 +134,8 @@ const ResetPasswordPage: React.FC = () => {
       return;
     }
 
-    // Validation via le contexte
-    const validation = validatePassword(
+    // Validation via le contexte (appel API backend)
+    const validation = await validatePassword(
       resetFormData.password,
       resetFormData.confirmPassword
     );

@@ -83,8 +83,8 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
-    // Validation côté client via le contexte
-    const validation = validatePassword(
+    // Validation côté client via le contexte (appel API backend)
+    const validation = await validatePassword(
       formData.password,
       formData.confirmPassword
     );

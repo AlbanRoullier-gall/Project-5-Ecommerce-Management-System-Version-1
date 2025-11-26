@@ -9,8 +9,9 @@
  */
 import { Request, Response } from "express";
 import { AuthService } from "../../services/AuthService";
-import { UserCreateDTO, UserLoginDTO, PasswordChangeDTO } from "../dto";
+import { UserCreateDTO, UserLoginDTO, PasswordValidationDTO } from "../dto";
 import { UserMapper, ResponseMapper } from "../mapper";
+import { User } from "../../models/User";
 
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -105,63 +106,26 @@ export class AuthController {
   }
 
   /**
-   * Changer le mot de passe de l'utilisateur connecté
-   */
-  async changePassword(req: Request, res: Response): Promise<void> {
-    try {
-      const passwordChangeDTO: PasswordChangeDTO = req.body;
-
-      // Récupérer l'ID utilisateur depuis les headers envoyés par l'API Gateway
-      const userId = req.headers["x-user-id"];
-      if (!userId) {
-        res.status(401).json({
-          error: "Erreur d'authentification",
-          message: "Informations utilisateur manquantes",
-          timestamp: new Date().toISOString(),
-          status: 401,
-        });
-        return;
-      }
-
-      // Changer le mot de passe
-      await this.authService.changePassword(
-        Number(userId),
-        passwordChangeDTO.currentPassword,
-        passwordChangeDTO.newPassword
-      );
-
-      // Réponse de succès
-      const response = ResponseMapper.passwordChangeSuccess();
-
-      res.json(response);
-    } catch (error: any) {
-      console.error("Change password error:", error);
-      if (
-        error.message.includes("incorrect") ||
-        error.message.includes("invalide")
-      ) {
-        res.status(400).json(ResponseMapper.validationError(error.message));
-        return;
-      }
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
    * Validation d'un mot de passe
+   * Utilise PasswordValidationDTO et la validation du modèle User
    */
   async validatePassword(req: Request, res: Response): Promise<void> {
     try {
-      const { password } = req.body;
+      const passwordValidationDTO: PasswordValidationDTO = req.body;
 
-      // Validation simple du mot de passe
-      const isValid = password && password.length >= 6;
+      // Utiliser la validation du modèle User (8 caractères, majuscule, minuscule, chiffre, caractère spécial)
+      const validationResult = User.validatePassword(
+        passwordValidationDTO.password
+      );
+
       const response = {
         success: true,
-        valid: isValid,
-        message: isValid
+        valid: validationResult.isValid,
+        isValid: validationResult.isValid,
+        errors: validationResult.errors,
+        message: validationResult.isValid
           ? "Mot de passe valide"
-          : "Mot de passe invalide (minimum 6 caractères)",
+          : validationResult.errors.join("; "),
       };
 
       res.json(response);

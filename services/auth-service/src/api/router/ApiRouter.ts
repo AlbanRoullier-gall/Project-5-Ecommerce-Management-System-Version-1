@@ -71,16 +71,6 @@ export class ApiRouter {
     );
 
     // Routes admin (authentification gérée par l'API Gateway)
-    app.put(
-      "/api/admin/auth/change-password",
-      ValidationMiddleware.validateRequest(
-        this.validationSchemas.changePasswordSchema
-      ),
-      (req: Request, res: Response) => {
-        this.authController.changePassword(req, res);
-      }
-    );
-
     app.post("/api/admin/auth/logout", (req: Request, res: Response) => {
       this.authController.logout(req, res);
     });

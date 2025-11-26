@@ -13,6 +13,7 @@ import {
   UserLoginDTO,
   UserCreateDTO,
   PasswordResetDTO,
+  PasswordValidationDTO,
 } from "../dto";
 
 /**
@@ -98,11 +99,11 @@ interface AuthContextType extends AuthState {
     token: string,
     newPassword: string
   ) => Promise<AuthOperationResult>;
-  /** Valide un mot de passe */
+  /** Valide un mot de passe via l'API backend */
   validatePassword: (
     password: string,
     confirmPassword?: string
-  ) => PasswordValidationResult;
+  ) => Promise<PasswordValidationResult>;
 }
 
 /**
@@ -200,17 +201,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [token]);
 
   /**
-   * Valide un mot de passe
+   * Valide un mot de passe via l'API backend
+   * La validation de correspondance (confirmPassword) reste côté client
    */
   const validatePassword = useCallback(
-    (password: string, confirmPassword?: string): PasswordValidationResult => {
-      if (password.length < 6) {
-        return {
-          isValid: false,
-          error: AUTH_ERROR_MESSAGES.PASSWORD_TOO_SHORT,
-        };
-      }
-
+    async (
+      password: string,
+      confirmPassword?: string
+    ): Promise<PasswordValidationResult> => {
+      // Validation de correspondance côté client
       if (confirmPassword !== undefined && password !== confirmPassword) {
         return {
           isValid: false,
@@ -218,7 +217,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
       }
 
-      return { isValid: true };
+      // Validation de force du mot de passe via l'API backend
+      try {
+        const validationRequest: PasswordValidationDTO = {
+          password,
+        };
+
+        const response = await fetch(`${API_URL}/api/auth/validate-password`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(validationRequest),
+        });
+
+        const data = (await response.json()) as {
+          success: boolean;
+          valid: boolean;
+          isValid: boolean;
+          errors?: string[];
+          message?: string;
+        };
+
+        if (response.ok && data.success) {
+          const isValid = data.valid ?? data.isValid ?? false;
+          const errorMessage =
+            data.errors && data.errors.length > 0
+              ? data.errors.join("; ")
+              : data.message || "Mot de passe invalide";
+
+          return {
+            isValid,
+            error: isValid ? undefined : errorMessage,
+          };
+        } else {
+          return {
+            isValid: false,
+            error: data.message || AUTH_ERROR_MESSAGES.SERVER_ERROR,
+          };
+        }
+      } catch (error) {
+        console.error("Password validation error:", error);
+        return {
+          isValid: false,
+          error: AUTH_ERROR_MESSAGES.SERVER_ERROR,
+        };
+      }
     },
     []
   );

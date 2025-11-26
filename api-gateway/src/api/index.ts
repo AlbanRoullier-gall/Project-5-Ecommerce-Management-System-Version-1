@@ -120,11 +120,6 @@ export class ApiRouter {
     );
 
     // Routes admin
-    app.put(
-      "/api/admin/auth/change-password",
-      requireAuth,
-      this.authController.changePassword
-    );
     app.post("/api/admin/auth/logout", requireAuth, this.authController.logout);
 
     // ===== ROUTES PRODUITS =====

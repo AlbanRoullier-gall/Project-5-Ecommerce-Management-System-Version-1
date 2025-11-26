@@ -55,10 +55,6 @@ export class AuthController {
 
   // ===== ROUTES ADMIN PROXY =====
 
-  changePassword = async (req: Request, res: Response): Promise<void> => {
-    await this.proxyToAuth(req, res);
-  };
-
   logout = async (req: Request, res: Response): Promise<void> => {
     await this.proxyToAuth(req, res);
   };

@@ -177,47 +177,6 @@ export class AuthService {
     }
   }
 
-  // ===== GESTION DU MOT DE PASSE =====
-
-  /**
-   * Changer le mot de passe
-   */
-  async changePassword(
-    userId: number,
-    currentPassword: string,
-    newPassword: string
-  ): Promise<boolean> {
-    try {
-      const user = await this.userRepository.getById(userId);
-      if (!user) {
-        throw new Error("Utilisateur non trouvé");
-      }
-
-      // Vérifier le mot de passe actuel
-      const isCurrentPasswordValid = await user.verifyPassword(currentPassword);
-      if (!isCurrentPasswordValid) {
-        throw new Error("Le mot de passe actuel est incorrect");
-      }
-
-      // Valider le nouveau mot de passe
-      this.validatePasswordWithError(newPassword, "Nouveau mot de passe");
-
-      // Hasher le nouveau mot de passe
-      const newPasswordHash = await User.hashPassword(newPassword);
-
-      // Créer l'utilisateur mis à jour avec le nouveau mot de passe
-      const updatedUser = this.userRepository.createUserWithMerge(user, {
-        password_hash: newPasswordHash,
-      });
-
-      await this.userRepository.update(updatedUser);
-      return true;
-    } catch (error) {
-      console.error("Error changing password:", error);
-      throw error;
-    }
-  }
-
   // ===== RÉINITIALISATION DE MOT DE PASSE (BASE DE DONNÉES) =====
 
   /**

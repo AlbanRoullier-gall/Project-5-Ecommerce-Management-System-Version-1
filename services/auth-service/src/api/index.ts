@@ -74,34 +74,76 @@ export class ApiRouter {
   private setupValidationSchemas(): any {
     return {
       registerSchema: Joi.object({
-        email: Joi.string().email().required(),
-        password: Joi.string().min(8).required(),
-        confirmPassword: Joi.string().optional(),
-        firstName: Joi.string().max(100).required(),
-        lastName: Joi.string().max(100).required(),
+        email: Joi.string().email().required().label("Email").messages({
+          "string.empty": "L'email est requis",
+          "string.email": "L'email doit être une adresse email valide",
+          "any.required": "L'email est requis",
+        }),
+        password: Joi.string()
+          .min(8)
+          .required()
+          .label("Mot de passe")
+          .messages({
+            "string.empty": "Le mot de passe est requis",
+            "string.min": "Le mot de passe doit contenir au moins 8 caractères",
+            "any.required": "Le mot de passe est requis",
+          }),
+        confirmPassword: Joi.string()
+          .optional()
+          .label("Confirmation du mot de passe"),
+        firstName: Joi.string().max(100).required().label("Prénom").messages({
+          "string.empty": "Le prénom est requis",
+          "string.max": "Le prénom ne doit pas dépasser 100 caractères",
+          "any.required": "Le prénom est requis",
+        }),
+        lastName: Joi.string().max(100).required().label("Nom").messages({
+          "string.empty": "Le nom est requis",
+          "string.max": "Le nom ne doit pas dépasser 100 caractères",
+          "any.required": "Le nom est requis",
+        }),
       }),
 
       loginSchema: Joi.object({
-        email: Joi.string().email().required(),
-        password: Joi.string().required(),
+        email: Joi.string().email().required().label("Email").messages({
+          "string.empty": "L'email est requis",
+          "string.email": "L'email doit être une adresse email valide",
+          "any.required": "L'email est requis",
+        }),
+        password: Joi.string().required().label("Mot de passe").messages({
+          "string.empty": "Le mot de passe est requis",
+          "any.required": "Le mot de passe est requis",
+        }),
       }),
 
       passwordValidationSchema: Joi.object({
-        password: Joi.string().min(8).required(),
-      }),
-
-      changePasswordSchema: Joi.object({
-        currentPassword: Joi.string().required(),
-        newPassword: Joi.string().min(8).required(),
+        password: Joi.string().required().label("Mot de passe").messages({
+          "string.empty": "Le mot de passe est requis",
+          "any.required": "Le mot de passe est requis",
+        }),
       }),
 
       resetPasswordSchema: Joi.object({
-        email: Joi.string().email().required(),
+        email: Joi.string().email().required().label("Email").messages({
+          "string.empty": "L'email est requis",
+          "string.email": "L'email doit être une adresse email valide",
+          "any.required": "L'email est requis",
+        }),
       }),
 
       confirmResetPasswordSchema: Joi.object({
-        token: Joi.string().required(),
-        password: Joi.string().min(8).required(),
+        token: Joi.string().required().label("Token").messages({
+          "string.empty": "Le token est requis",
+          "any.required": "Le token est requis",
+        }),
+        password: Joi.string()
+          .min(8)
+          .required()
+          .label("Mot de passe")
+          .messages({
+            "string.empty": "Le mot de passe est requis",
+            "string.min": "Le mot de passe doit contenir au moins 8 caractères",
+            "any.required": "Le mot de passe est requis",
+          }),
       }),
     };
   }
@@ -111,13 +153,28 @@ export class ApiRouter {
    */
   private validateRequest = (schema: Joi.ObjectSchema) => {
     return (req: Request, res: Response, next: NextFunction): void => {
-      const { error } = schema.validate(req.body);
+      const { error } = schema.validate(req.body, {
+        abortEarly: false,
+        messages: {
+          "string.empty": "Le champ {#label} est requis",
+          "string.min":
+            "Le champ {#label} doit contenir au moins {#limit} caractères",
+          "string.max":
+            "Le champ {#label} ne doit pas dépasser {#limit} caractères",
+          "string.email":
+            "Le champ {#label} doit être une adresse email valide",
+          "any.required": "Le champ {#label} est requis",
+          "any.only":
+            "Le champ {#label} doit être l'une des valeurs suivantes: {#valids}",
+        },
+      });
       if (error) {
+        const messages = error.details.map((detail) => detail.message);
         res
           .status(400)
           .json(
             ResponseMapper.validationError(
-              error.details[0]?.message || "Validation error"
+              messages.join("; ") || "Erreur de validation"
             )
           );
         return;
@@ -193,15 +250,6 @@ export class ApiRouter {
     });
 
     // ===== ROUTES ADMIN (AVEC AUTHENTIFICATION) =====
-    app.put(
-      "/api/admin/auth/change-password",
-      this.requireAuth,
-      this.validateRequest(schemas.changePasswordSchema),
-      (req: Request, res: Response) => {
-        this.authController.changePassword(req, res);
-      }
-    );
-
     app.post(
       "/api/admin/auth/logout",
       this.requireAuth,

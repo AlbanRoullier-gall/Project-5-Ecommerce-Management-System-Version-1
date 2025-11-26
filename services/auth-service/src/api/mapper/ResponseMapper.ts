@@ -43,15 +43,6 @@ export class ResponseMapper {
   }
 
   /**
-   * Réponse de changement de mot de passe
-   */
-  static passwordChangeSuccess() {
-    return {
-      message: "Mot de passe modifié avec succès",
-    };
-  }
-
-  /**
    * Réponse de déconnexion
    */
   static logoutSuccess() {

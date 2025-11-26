@@ -26,22 +26,6 @@ export interface UserLoginDTO {
   password: string;
 }
 
-/**
- * DTO pour la mise à jour du profil utilisateur
- * Utilise les noms camelCase pour l'API REST
- *
- * Note: isBackofficeApproved et isBackofficeRejected ne sont PAS
- * modifiables via ce DTO. Utiliser les routes dédiées :
- * - GET /api/auth/approve-backoffice?token=xxx
- * - GET /api/auth/reject-backoffice?token=xxx
- */
-export interface UserUpdateDTO {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  isActive?: boolean;
-}
-
 // ===== TYPES SPÉCIFIQUES (non basés sur UserData) =====
 
 /**
@@ -49,14 +33,6 @@ export interface UserUpdateDTO {
  */
 export interface PasswordValidationDTO {
   password: string;
-}
-
-/**
- * DTO pour le changement de mot de passe
- */
-export interface PasswordChangeDTO {
-  currentPassword: string;
-  newPassword: string;
 }
 
 /**
