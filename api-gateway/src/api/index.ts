@@ -359,7 +359,6 @@ export class ApiRouter {
       "/api/email/send-reset-email",
       this.emailController.sendResetEmail
     );
-    app.post("/api/email/confirmation", this.emailController.sendConfirmation);
     app.post(
       "/api/email/backoffice-approval-request",
       this.emailController.sendBackofficeApprovalRequest

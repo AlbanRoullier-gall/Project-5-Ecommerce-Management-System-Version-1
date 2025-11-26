@@ -50,15 +50,6 @@ export class ApiRouter {
         clientEmail: Joi.string().email().required(),
       }),
 
-      // Email confirmation schema
-      emailConfirmationSchema: Joi.object({
-        clientName: Joi.string().max(100).required(),
-        clientEmail: Joi.string().email().required(),
-        subject: Joi.string().max(255).required(),
-        message: Joi.string().max(5000).required(),
-        sentAt: Joi.date().required(),
-      }),
-
       // Email reset password schema
       emailResetPasswordSchema: Joi.object({
         email: Joi.string().email().required(),
@@ -164,15 +155,6 @@ export class ApiRouter {
       this.validateRequest(schemas.emailSendSchema),
       (req: Request, res: Response) => {
         this.emailController.sendClientEmail(req, res);
-      }
-    );
-
-    // Envoyer une confirmation à l'admin (optionnel, car fait automatiquement)
-    app.post(
-      "/api/email/confirmation",
-      this.validateRequest(schemas.emailConfirmationSchema),
-      (req: Request, res: Response) => {
-        this.emailController.sendConfirmationEmail(req, res);
       }
     );
 

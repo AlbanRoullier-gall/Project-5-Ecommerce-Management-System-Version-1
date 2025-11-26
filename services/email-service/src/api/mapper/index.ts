@@ -4,4 +4,3 @@
  */
 
 export * from "./ResponseMapper";
-export * from "./EmailMapper";

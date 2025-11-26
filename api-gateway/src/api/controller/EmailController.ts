@@ -24,10 +24,6 @@ export class EmailController {
     await this.proxyToEmail(req, res);
   };
 
-  sendConfirmation = async (req: Request, res: Response): Promise<void> => {
-    await this.proxyToEmail(req, res);
-  };
-
   sendBackofficeApprovalRequest = async (
     req: Request,
     res: Response

@@ -7,20 +7,15 @@ export class ResponseMapper {
   /**
    * Réponse d'email envoyé au client
    */
-  static emailSent(email: any) {
+  static emailSent(result: any) {
     return {
+      success: true,
       message: "Email envoyé au client avec succès",
-      email,
-    };
-  }
-
-  /**
-   * Réponse de confirmation envoyée à l'admin
-   */
-  static confirmationSent(email: any) {
-    return {
-      message: "Confirmation d'envoi envoyée à l'admin",
-      email,
+      messageId: result.messageId,
+      recipient: result.recipient,
+      subject: result.subject,
+      sentAt: result.sentAt,
+      timestamp: new Date().toISOString(),
     };
   }
 

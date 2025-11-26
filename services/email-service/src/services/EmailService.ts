@@ -84,20 +84,6 @@ export default class EmailService {
 
       const result = await this.transporter.sendMail(mailOptions);
 
-      // Envoyer automatiquement la confirmation à l'admin (sans faire échouer l'envoi principal)
-      try {
-        await this.sendConfirmationEmail({
-          clientName: emailData.clientName,
-          clientEmail: emailData.clientEmail,
-          subject: emailData.subject,
-          message: emailData.message,
-          sentAt: new Date(),
-        });
-      } catch (confirmationError) {
-        console.warn("Failed to send confirmation email:", confirmationError);
-        // Ne pas faire échouer l'envoi principal si la confirmation échoue
-      }
-
       return {
         messageId: result.messageId,
         status: "sent",
@@ -107,71 +93,6 @@ export default class EmailService {
       };
     } catch (error) {
       console.error("Error sending client email:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Envoyer une confirmation d'envoi à l'admin
-   * @param {Object} confirmationData Données de confirmation
-   * @returns {Promise<Object>} Résultat d'envoi
-   */
-  async sendConfirmationEmail(confirmationData: any): Promise<any> {
-    if (!this.transporter) {
-      console.error("Gmail transporter not configured for confirmation");
-      return {
-        messageId: "mock-confirmation-id",
-        status: "failed",
-        recipient: this.adminEmail,
-        subject: "Confirmation failed",
-        sentAt: null,
-        error: "Gmail transporter not configured",
-      };
-    }
-
-    try {
-      const mailOptions = {
-        from: process.env.GMAIL_USER,
-        to: this.adminEmail,
-        subject: `[CONFIRMATION] Email envoyé à ${confirmationData.clientName}`,
-        html: `
-          <h2>✅ Confirmation d'envoi d'email</h2>
-          <p>Un email a été envoyé avec succès au client suivant :</p>
-          <ul>
-            <li><strong>Nom:</strong> ${confirmationData.clientName}</li>
-            <li><strong>Email:</strong> ${confirmationData.clientEmail}</li>
-            <li><strong>Sujet:</strong> ${confirmationData.subject}</li>
-            <li><strong>Envoyé le:</strong> ${confirmationData.sentAt.toLocaleString()}</li>
-          </ul>
-          <hr>
-          <h3>Contenu du message envoyé :</h3>
-          <p>${confirmationData.message}</p>
-        `,
-        text: `
-          CONFIRMATION D'ENVOI D'EMAIL
-          
-          Un email a été envoyé avec succès au client suivant :
-          - Nom: ${confirmationData.clientName}
-          - Email: ${confirmationData.clientEmail}
-          - Sujet: ${confirmationData.subject}
-          - Envoyé le: ${confirmationData.sentAt.toLocaleString()}
-          
-          Contenu du message envoyé :
-          ${confirmationData.message}
-        `,
-      };
-
-      const result = await this.transporter.sendMail(mailOptions);
-
-      return {
-        messageId: result.messageId,
-        status: "sent",
-        recipient: this.adminEmail,
-        subject: mailOptions.subject,
-        sentAt: new Date(),
-      };
-    } catch (error) {
-      console.error("Error sending confirmation email:", error);
       throw error;
     }
   }
