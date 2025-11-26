@@ -23,6 +23,11 @@ export default function CheckoutSuccessPage() {
   // Finaliser le paiement : créer la commande, envoyer l'email de confirmation et vider le panier
   // Cette finalisation se fait depuis cette page après la redirection Stripe
   useEffect(() => {
+    // Attendre que le router soit prêt pour accéder aux query params
+    if (!router.isReady) {
+      return;
+    }
+
     // Stripe ajoute session_id dans les query params, pas csid
     const sessionId =
       (router.query.session_id as string) || (router.query.csid as string);
@@ -42,11 +47,8 @@ export default function CheckoutSuccessPage() {
       return;
     }
 
-    // Attendre que le cart soit chargé
-    if (!cart || !cart.items || cart.items.length === 0) {
-      // Le cart n'est pas encore chargé, on attend
-      return;
-    }
+    // Note: On ne vérifie pas si le cart est vide car après un paiement réussi,
+    // le cart peut être vide. La finalisation utilise le cartSessionId et session_id.
 
     setIsProcessing(true);
     hasFinalized.current = true;
@@ -94,7 +96,7 @@ export default function CheckoutSuccessPage() {
         // Ne pas vider le panier si la finalisation échoue
       })
       .finally(() => setIsProcessing(false));
-  }, [router.query.session_id, router.query.csid, clearCart, cart]);
+  }, [router.isReady, router.query.session_id, router.query.csid, clearCart]);
 
   return (
     <>
