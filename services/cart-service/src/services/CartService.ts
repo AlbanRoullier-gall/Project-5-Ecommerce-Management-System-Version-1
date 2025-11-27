@@ -126,13 +126,6 @@ export default class CartService {
   }
 
   /**
-   * Nettoyer les paniers expirés
-   */
-  async cleanupExpiredCarts(): Promise<number> {
-    return await this.cartRepository.cleanupExpiredCarts();
-  }
-
-  /**
    * Sauvegarder un snapshot checkout
    */
   async saveCheckoutSnapshot(

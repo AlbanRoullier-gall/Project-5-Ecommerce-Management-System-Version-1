@@ -346,19 +346,6 @@ export class AuthService {
   }
 
   /**
-   * Vérifier si un utilisateur est approuvé pour le backoffice
-   */
-  async isBackofficeApproved(userId: number): Promise<boolean> {
-    try {
-      const user = await this.userRepository.getById(userId);
-      return user ? user.isBackofficeApproved : false;
-    } catch (error) {
-      console.error("Error checking backoffice approval:", error);
-      return false;
-    }
-  }
-
-  /**
    * Générer un token d'approbation
    * Note: Utilisé par l'API Gateway pour créer des liens d'approbation/rejet
    */

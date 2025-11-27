@@ -186,25 +186,6 @@ export class CartRepository {
   }
 
   /**
-   * Nettoyer les paniers expirés
-   */
-  async cleanupExpiredCarts(): Promise<number> {
-    const allKeys = await this.redis.keys("cart:*");
-    let cleanedCount = 0;
-
-    for (const key of allKeys) {
-      const ttl = await this.redis.ttl(key);
-      if (ttl === -1) {
-        // Pas de TTL définie
-        await this.redis.del(key);
-        cleanedCount++;
-      }
-    }
-
-    return cleanedCount;
-  }
-
-  /**
    * Obtenir la clé Redis pour un panier
    */
   private getCartKey(sessionId: string): string {

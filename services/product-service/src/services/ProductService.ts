@@ -316,19 +316,6 @@ export default class ProductService {
   }
 
   /**
-   * Mettre à jour une image
-   * @param {number} id ID de l'image
-   * @param {Partial<ProductImageData>} imageData Données de l'image à mettre à jour
-   * @returns {Promise<ProductImage|null>} Image mise à jour ou null si non trouvée
-   */
-  async updateImage(
-    id: number,
-    imageData: Partial<ProductImageData>
-  ): Promise<ProductImage | null> {
-    return await this.imageRepository.updateImage(id, imageData);
-  }
-
-  /**
    * Supprimer une image
    * @param {number} productId ID du produit
    * @param {number} imageId ID de l'image
