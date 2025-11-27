@@ -130,8 +130,11 @@ export default class ProductService {
     page: number;
     limit: number;
     categoryId?: number;
+    categories?: number[]; // Support pour multi-catégories (ProductFilterDTO)
     search?: string;
     activeOnly?: boolean;
+    minPrice?: number; // Support pour plage de prix (ProductFilterDTO)
+    maxPrice?: number; // Support pour plage de prix (ProductFilterDTO)
     sortBy?: string;
     sortOrder?: "asc" | "desc";
   }): Promise<{
@@ -244,6 +247,29 @@ export default class ProductService {
    */
   async listCategories(): Promise<Category[]> {
     return await this.categoryRepository.listCategories();
+  }
+
+  /**
+   * Lister les catégories avec pagination et recherche (CategorySearchDTO)
+   * @param {Object} options Options de recherche
+   * @returns {Promise<Object>} Catégories avec informations de pagination
+   */
+  async listCategoriesWithSearch(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: "name" | "createdAt";
+    sortOrder?: "asc" | "desc";
+  }): Promise<{
+    categories: Category[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }> {
+    return await this.categoryRepository.listCategoriesWithSearch(options);
   }
 
   // ===== MÉTHODES IMAGE DE PRODUIT =====

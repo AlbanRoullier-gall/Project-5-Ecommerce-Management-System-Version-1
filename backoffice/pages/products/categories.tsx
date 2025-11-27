@@ -14,6 +14,7 @@ import {
   CategoryPublicDTO,
   CategoryCreateDTO,
   CategoryUpdateDTO,
+  CategoryListDTO,
 } from "../../dto";
 
 /** URL de l'API depuis les variables d'environnement */
@@ -69,8 +70,18 @@ const CategoriesPage: React.FC = () => {
         );
       }
 
-      const data = await response.json();
-      setCategories(data.categories || data || []);
+      const data = (await response.json()) as
+        | CategoryListDTO
+        | { categories: CategoryPublicDTO[] }
+        | CategoryPublicDTO[];
+      // Gérer différents formats de réponse
+      if (Array.isArray(data)) {
+        setCategories(data);
+      } else if ("categories" in data) {
+        setCategories(data.categories);
+      } else {
+        setCategories([]);
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du chargement"

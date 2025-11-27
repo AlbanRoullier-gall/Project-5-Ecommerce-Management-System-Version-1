@@ -168,18 +168,6 @@ export interface CategoryListDTO {
 }
 
 /**
- * DTO pour les statistiques de produits
- */
-export interface ProductStatsDTO {
-  totalProducts: number;
-  activeProducts: number;
-  inactiveProducts: number;
-  totalCategories: number;
-  averagePrice: number;
-  productsByCategory: Record<string, number>;
-}
-
-/**
  * DTO pour l'upload d'image
  */
 export interface ProductImageUploadDTO {
@@ -212,21 +200,4 @@ export interface ProductFilterDTO {
     from: Date;
     to: Date;
   };
-}
-
-/**
- * DTO pour les métadonnées de produit
- */
-export interface ProductMetadataDTO {
-  seoTitle?: string;
-  seoDescription?: string;
-  tags?: string[];
-  weight?: number;
-  dimensions?: {
-    width: number;
-    height: number;
-    depth: number;
-  };
-  sku?: string;
-  barcode?: string;
 }

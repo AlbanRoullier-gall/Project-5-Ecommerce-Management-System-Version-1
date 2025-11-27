@@ -14,6 +14,8 @@ import {
   ProductPublicDTO,
   ProductUpdateDTO,
   CategoryPublicDTO,
+  CategoryListDTO,
+  ProductImageUploadResponseDTO,
 } from "../../dto";
 
 /** URL de l'API depuis les variables d'environnement */
@@ -102,8 +104,18 @@ const EditProductPage: React.FC = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setCategories(data.categories || data || []);
+        const data = (await response.json()) as
+          | CategoryListDTO
+          | { categories: CategoryPublicDTO[] }
+          | CategoryPublicDTO[];
+        // Gérer différents formats de réponse
+        if (Array.isArray(data)) {
+          setCategories(data);
+        } else if ("categories" in data) {
+          setCategories(data.categories);
+        } else {
+          setCategories([]);
+        }
       }
     } catch (err) {
       console.error("Error loading categories:", err);
@@ -180,7 +192,19 @@ const EditProductPage: React.FC = () => {
         );
 
         if (!imgResponse.ok) {
-          throw new Error("Erreur lors de l'ajout des images");
+          const errorData = await imgResponse.json().catch(() => ({}));
+          throw new Error(
+            errorData.message || "Erreur lors de l'ajout des images"
+          );
+        }
+
+        // Typage de la réponse si elle est structurée
+        const uploadResult = await imgResponse.json().catch(() => null);
+        if (uploadResult && typeof uploadResult === "object") {
+          const typedResult = uploadResult as ProductImageUploadResponseDTO;
+          if (!typedResult.success && typedResult.error) {
+            console.error("Upload error:", typedResult.error);
+          }
         }
       }
 

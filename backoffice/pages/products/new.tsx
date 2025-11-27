@@ -13,6 +13,7 @@ import {
   ProductCreateDTO,
   ProductUpdateDTO,
   CategoryPublicDTO,
+  CategoryListDTO,
 } from "../../dto";
 
 /** URL de l'API depuis les variables d'environnement */
@@ -55,8 +56,18 @@ const NewProductPage: React.FC = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setCategories(data.categories || data || []);
+        const data = (await response.json()) as
+          | CategoryListDTO
+          | { categories: CategoryPublicDTO[] }
+          | CategoryPublicDTO[];
+        // Gérer différents formats de réponse
+        if (Array.isArray(data)) {
+          setCategories(data);
+        } else if ("categories" in data) {
+          setCategories(data.categories);
+        } else {
+          setCategories([]);
+        }
       }
     } catch (err) {
       console.error("Error loading categories:", err);
@@ -113,6 +124,11 @@ const NewProductPage: React.FC = () => {
           errorData.message || "Erreur lors de la création du produit"
         );
       }
+
+      // Note: La création de produit avec images via FormData retourne généralement
+      // un ProductPublicDTO avec les images incluses, pas un ProductImageUploadResponseDTO
+      // Le ProductImageUploadResponseDTO est utilisé uniquement pour les endpoints
+      // d'upload d'images séparés (POST /api/admin/products/:id/images)
 
       // Rediriger vers la liste des produits après création
       router.push("/products");

@@ -36,7 +36,7 @@ interface ProductTableProps {
  *
  * @example
  * <ProductTable
- *   products={filteredProducts}
+ *   products={products}
  *   onEdit={handleEditProduct}
  *   onDelete={handleDeleteProduct}
  *   onToggleStatus={handleToggleProductStatus}

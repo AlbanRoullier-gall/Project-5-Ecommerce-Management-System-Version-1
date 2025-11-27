@@ -143,14 +143,76 @@ export class CategoryController {
 
   /**
    * Lister les catégories
+   * Supporte CategorySearchDTO pour la recherche et pagination
    */
   async listCategories(req: Request, res: Response): Promise<void> {
     try {
-      const categories = await this.productService.listCategories();
-      const categoriesDTO = categories.map((category) =>
-        ProductMapper.categoryToPublicDTO(category)
-      );
-      res.json(ResponseMapper.categoryListed(categoriesDTO));
+      // Vérifier si des paramètres de recherche sont présents (CategorySearchDTO)
+      const hasSearchParams =
+        req.query.page ||
+        req.query.limit ||
+        req.query.search ||
+        req.query.sortBy ||
+        req.query.sortOrder;
+
+      if (hasSearchParams) {
+        // Utiliser la recherche avec pagination
+        const sortByMapping: Record<string, string> = {
+          name: "name",
+          createdAt: "createdAt",
+          created_at: "createdAt",
+        };
+
+        const sortByParam = (req.query.sortBy as string) || "name";
+        const sortBy = sortByMapping[sortByParam] || sortByParam;
+
+        // Construire l'objet options en n'incluant que les propriétés définies
+        const searchOptions: {
+          page?: number;
+          limit?: number;
+          search?: string;
+          sortBy?: "name" | "createdAt";
+          sortOrder?: "asc" | "desc";
+        } = {};
+
+        if (req.query.page) {
+          searchOptions.page = parseInt(req.query.page as string);
+        }
+        if (req.query.limit) {
+          searchOptions.limit = parseInt(req.query.limit as string);
+        }
+        if (req.query.search) {
+          searchOptions.search = req.query.search as string;
+        }
+        if (sortBy) {
+          searchOptions.sortBy = sortBy as "name" | "createdAt";
+        }
+        if (req.query.sortOrder) {
+          searchOptions.sortOrder = req.query.sortOrder as "asc" | "desc";
+        }
+
+        const result = await this.productService.listCategoriesWithSearch(
+          searchOptions
+        );
+
+        const categoriesDTO = result.categories.map((category) =>
+          ProductMapper.categoryToPublicDTO(category)
+        );
+
+        res.json(
+          ResponseMapper.categoryListedWithPagination(
+            categoriesDTO,
+            result.pagination
+          )
+        );
+      } else {
+        // Comportement par défaut : retourner toutes les catégories
+        const categories = await this.productService.listCategories();
+        const categoriesDTO = categories.map((category) =>
+          ProductMapper.categoryToPublicDTO(category)
+        );
+        res.json(ResponseMapper.categoryListed(categoriesDTO));
+      }
     } catch (error: any) {
       console.error("Erreur lors de la liste des catégories:", error);
       res.status(500).json(ResponseMapper.internalServerError());

@@ -169,6 +169,107 @@ export class CategoryRepository {
   }
 
   /**
+   * Lister les catégories avec pagination et recherche (CategorySearchDTO)
+   * @param {Object} options Options de recherche
+   * @returns {Promise<Object>} Catégories avec informations de pagination
+   */
+  async listCategoriesWithSearch(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: "name" | "createdAt";
+    sortOrder?: "asc" | "desc";
+  }): Promise<{
+    categories: Category[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }> {
+    try {
+      const page = options.page || 1;
+      const limit = options.limit || 10;
+      const offset = (page - 1) * limit;
+
+      const whereConditions = [];
+      const values = [];
+      let paramCount = 0;
+
+      if (options.search) {
+        whereConditions.push(
+          `(name ILIKE $${++paramCount} OR description ILIKE $${++paramCount})`
+        );
+        const searchTerm = `%${options.search}%`;
+        values.push(searchTerm, searchTerm);
+      }
+
+      const whereClause =
+        whereConditions.length > 0
+          ? `WHERE ${whereConditions.join(" AND ")}`
+          : "";
+
+      // Compter le total des catégories
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM categories
+        ${whereClause}
+      `;
+      const countResult = await this.pool.query(countQuery, values);
+      const total = parseInt(countResult.rows[0].total);
+
+      // Mapper les noms de colonnes camelCase vers snake_case
+      const sortByMapping: Record<string, string> = {
+        name: "name",
+        createdAt: "created_at",
+        created_at: "created_at",
+      };
+
+      const sortByParam = options.sortBy || "name";
+      const sortBy = sortByMapping[sortByParam] || sortByParam;
+      const sortOrder = options.sortOrder || "asc";
+
+      // Valider que la colonne existe pour éviter les injections SQL
+      const allowedColumns = ["name", "created_at", "updated_at"];
+      const safeSortBy = allowedColumns.includes(sortBy) ? sortBy : "name";
+      const orderClause = `ORDER BY ${safeSortBy} ${sortOrder.toUpperCase()}`;
+
+      // Obtenir les catégories
+      const query = `
+        SELECT id, name, description, created_at, updated_at
+        FROM categories
+        ${whereClause}
+        ${orderClause}
+        LIMIT $${++paramCount} OFFSET $${++paramCount}
+      `;
+
+      values.push(limit, offset);
+      const result = await this.pool.query(query, values);
+
+      const categories = result.rows.map(
+        (row) => new Category(row as CategoryData)
+      );
+
+      return {
+        categories,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      console.error(
+        "Erreur lors de la liste des catégories avec recherche:",
+        error
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Vérifier si le nom de catégorie existe
    * @param {string} name Nom de la catégorie
    * @param {number} excludeId ID de catégorie à exclure de la vérification

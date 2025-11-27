@@ -114,6 +114,19 @@ export class ResponseMapper {
   }
 
   /**
+   * Réponse de liste de catégories avec pagination (CategorySearchDTO)
+   */
+  static categoryListedWithPagination(
+    categories: any[],
+    pagination: any
+  ) {
+    return {
+      categories,
+      pagination,
+    };
+  }
+
+  /**
    * Réponse d'image créée
    */
   static imageCreated(image: any) {

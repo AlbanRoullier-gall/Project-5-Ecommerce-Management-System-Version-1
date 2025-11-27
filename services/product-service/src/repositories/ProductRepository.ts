@@ -198,8 +198,11 @@ export class ProductRepository {
     page: number;
     limit: number;
     categoryId?: number;
+    categories?: number[]; // Support pour multi-catégories (ProductFilterDTO)
     search?: string;
     activeOnly?: boolean;
+    minPrice?: number; // Support pour plage de prix (ProductFilterDTO)
+    maxPrice?: number; // Support pour plage de prix (ProductFilterDTO)
     sortBy?: string;
     sortOrder?: "asc" | "desc";
   }): Promise<{
@@ -217,9 +220,16 @@ export class ProductRepository {
       const values = [];
       let paramCount = 0;
 
+      // Support pour une seule catégorie (rétrocompatibilité)
       if (options.categoryId) {
         whereConditions.push(`p.category_id = $${++paramCount}`);
         values.push(options.categoryId);
+      }
+
+      // Support pour plusieurs catégories (ProductFilterDTO)
+      if (options.categories && options.categories.length > 0) {
+        whereConditions.push(`p.category_id = ANY($${++paramCount})`);
+        values.push(options.categories);
       }
 
       if (options.search) {
@@ -230,9 +240,21 @@ export class ProductRepository {
         values.push(searchTerm, searchTerm);
       }
 
-      if (options.activeOnly) {
+      // Filtrer par statut actif/inactif si activeOnly est défini (true ou false)
+      if (options.activeOnly !== undefined) {
         whereConditions.push(`p.is_active = $${++paramCount}`);
-        values.push(true);
+        values.push(options.activeOnly);
+      }
+
+      // Support pour plage de prix (ProductFilterDTO)
+      if (options.minPrice !== undefined) {
+        whereConditions.push(`p.price >= $${++paramCount}`);
+        values.push(options.minPrice);
+      }
+
+      if (options.maxPrice !== undefined) {
+        whereConditions.push(`p.price <= $${++paramCount}`);
+        values.push(options.maxPrice);
       }
 
       const whereClause =
@@ -250,9 +272,24 @@ export class ProductRepository {
       const total = parseInt(countResult.rows[0].total);
 
       // Obtenir les produits
-      const sortBy = options.sortBy || "created_at";
+      // Mapper les noms de colonnes camelCase vers snake_case pour la base de données
+      const sortByMapping: Record<string, string> = {
+        name: "name",
+        price: "price",
+        createdAt: "created_at",
+        created_at: "created_at",
+      };
+
+      const sortByParam = options.sortBy || "created_at";
+      const sortBy = sortByMapping[sortByParam] || sortByParam;
       const sortOrder = options.sortOrder || "desc";
-      const orderClause = `ORDER BY p.${sortBy} ${sortOrder.toUpperCase()}`;
+
+      // Valider que la colonne existe pour éviter les injections SQL
+      const allowedColumns = ["name", "price", "created_at", "updated_at"];
+      const safeSortBy = allowedColumns.includes(sortBy)
+        ? sortBy
+        : "created_at";
+      const orderClause = `ORDER BY p.${safeSortBy} ${sortOrder.toUpperCase()}`;
 
       const query = `
         SELECT p.id, p.name, p.description, p.price, p.vat_rate, p.category_id, p.is_active, 

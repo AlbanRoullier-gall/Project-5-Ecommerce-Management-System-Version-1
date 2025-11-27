@@ -5,7 +5,14 @@ import ProductTable from "./ProductTable";
 import ErrorAlert from "../../shared/ErrorAlert";
 import PageHeader from "../../shared/PageHeader";
 import Button from "../../shared/Button";
-import { ProductPublicDTO, CategoryPublicDTO } from "../../../dto";
+import {
+  ProductPublicDTO,
+  CategoryPublicDTO,
+  ProductListDTO,
+  CategoryListDTO,
+  ProductSearchDTO,
+  ProductFilterDTO,
+} from "../../../dto";
 
 /** URL de l'API depuis les variables d'environnement */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
@@ -31,51 +38,82 @@ const ProductList: React.FC = () => {
 
   // États de données
   const [products, setProducts] = useState<ProductPublicDTO[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<ProductPublicDTO[]>(
-    []
-  );
   const [categories, setCategories] = useState<CategoryPublicDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [totalProducts, setTotalProducts] = useState<number>(0);
 
-  // États des filtres
+  // États des filtres avec DTOs
+  const [searchParams, setSearchParams] = useState<Partial<ProductSearchDTO>>({
+    page: 1,
+    limit: 20,
+    search: undefined,
+    categoryId: undefined,
+    isActive: undefined,
+    sortBy: "createdAt",
+    sortOrder: "desc",
+  });
+
+  const [filterParams, setFilterParams] = useState<Partial<ProductFilterDTO>>({
+    categories: undefined,
+    isActive: undefined,
+  });
+
+  // États des filtres UI (pour les composants)
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
-  // Charger les données au montage du composant
+  // Charger les catégories au montage du composant
   useEffect(() => {
-    loadProducts();
     loadCategories();
   }, []);
 
   /**
-   * Effet de filtrage des produits
-   * Applique les filtres de recherche, catégorie et statut
+   * Effet : Mettre à jour les paramètres de recherche quand les filtres UI changent
+   * Utilise un debounce pour éviter trop d'appels API
    */
   useEffect(() => {
-    let filtered = [...products];
+    const timer = setTimeout(() => {
+      setSearchParams((prevParams) => {
+        const newSearchParams: Partial<ProductSearchDTO> = {
+          ...prevParams,
+          page: 1, // Réinitialiser la page à 1 lors d'un nouveau filtre
+          search: searchTerm || undefined,
+          categoryId: selectedCategory ? parseInt(selectedCategory) : undefined,
+          isActive:
+            statusFilter === "active"
+              ? true
+              : statusFilter === "inactive"
+              ? false
+              : undefined,
+        };
+        return newSearchParams;
+      });
 
-    if (searchTerm) {
-      filtered = filtered.filter((p) =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+      setFilterParams({
+        categories: selectedCategory ? [parseInt(selectedCategory)] : undefined,
+        isActive:
+          statusFilter === "active"
+            ? true
+            : statusFilter === "inactive"
+            ? false
+            : undefined,
+      });
+    }, 300); // Debounce de 300ms
 
-    if (selectedCategory) {
-      filtered = filtered.filter(
-        (p) => p.categoryId === parseInt(selectedCategory)
-      );
-    }
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, selectedCategory, statusFilter]);
 
-    if (statusFilter === "active") {
-      filtered = filtered.filter((p) => p.isActive);
-    } else if (statusFilter === "inactive") {
-      filtered = filtered.filter((p) => !p.isActive);
-    }
-
-    setFilteredProducts(filtered);
-  }, [products, searchTerm, selectedCategory, statusFilter]);
+  /**
+   * Effet : Recharger les produits quand les paramètres de recherche changent
+   * Ce useEffect gère aussi le chargement initial
+   */
+  useEffect(() => {
+    loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   /**
    * Récupère le token d'authentification du localStorage
@@ -86,7 +124,8 @@ const ProductList: React.FC = () => {
   };
 
   /**
-   * Charge la liste des produits depuis l'API
+   * Charge la liste des produits depuis l'API avec filtres côté serveur
+   * Utilise ProductSearchDTO pour construire les paramètres de requête
    * Gère les erreurs et met à jour l'état de chargement
    */
   const loadProducts = async () => {
@@ -101,11 +140,47 @@ const ProductList: React.FC = () => {
         );
       }
 
-      const response = await fetch(`${API_URL}/api/admin/products`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Construire les paramètres de requête à partir de ProductSearchDTO et ProductFilterDTO
+      const queryParams = new URLSearchParams();
+      if (searchParams.page) queryParams.set("page", String(searchParams.page));
+      if (searchParams.limit)
+        queryParams.set("limit", String(searchParams.limit));
+      if (searchParams.search) queryParams.set("search", searchParams.search);
+      if (searchParams.categoryId)
+        queryParams.set("categoryId", String(searchParams.categoryId));
+      // Envoyer activeOnly seulement si isActive est défini (true ou false)
+      // Si undefined, on n'envoie pas le paramètre pour voir tous les produits
+      if (
+        searchParams.isActive !== undefined &&
+        searchParams.isActive !== null
+      ) {
+        queryParams.set("activeOnly", String(searchParams.isActive));
+      }
+      if (searchParams.sortBy) queryParams.set("sortBy", searchParams.sortBy);
+      if (searchParams.sortOrder)
+        queryParams.set("sortOrder", searchParams.sortOrder);
+
+      // Utiliser ProductFilterDTO pour le filtrage avancé
+      if (filterParams.categories && filterParams.categories.length > 0) {
+        queryParams.set("categories", filterParams.categories.join(","));
+      }
+      if (filterParams.priceRange) {
+        if (filterParams.priceRange.min !== undefined) {
+          queryParams.set("minPrice", String(filterParams.priceRange.min));
+        }
+        if (filterParams.priceRange.max !== undefined) {
+          queryParams.set("maxPrice", String(filterParams.priceRange.max));
+        }
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/admin/products?${queryParams.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -114,8 +189,28 @@ const ProductList: React.FC = () => {
         );
       }
 
-      const data = await response.json();
-      setProducts(data.products || data || []);
+      const data = (await response.json()) as
+        | ProductListDTO
+        | { products: ProductPublicDTO[]; pagination?: any }
+        | ProductPublicDTO[];
+
+      // Gérer différents formats de réponse
+      if (Array.isArray(data)) {
+        setProducts(data);
+        setTotalProducts(data.length);
+      } else if ("products" in data) {
+        setProducts(data.products);
+        if ("pagination" in data && data.pagination) {
+          setTotalProducts(data.pagination.total || data.products.length);
+        } else if ("total" in data) {
+          setTotalProducts((data as ProductListDTO).total);
+        } else {
+          setTotalProducts(data.products.length);
+        }
+      } else {
+        setProducts([]);
+        setTotalProducts(0);
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du chargement"
@@ -128,6 +223,7 @@ const ProductList: React.FC = () => {
 
   /**
    * Charge la liste des catégories depuis l'API
+   * Utilise CategorySearchDTO pour la recherche et pagination côté serveur
    */
   const loadCategories = async () => {
     try {
@@ -138,11 +234,21 @@ const ProductList: React.FC = () => {
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/admin/categories`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Utiliser CategorySearchDTO pour la recherche et pagination
+      const queryParams = new URLSearchParams();
+      queryParams.set("page", "1");
+      queryParams.set("limit", "100"); // Charger toutes les catégories pour les filtres
+      queryParams.set("sortBy", "name");
+      queryParams.set("sortOrder", "asc");
+
+      const response = await fetch(
+        `${API_URL}/api/admin/categories?${queryParams.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -151,8 +257,18 @@ const ProductList: React.FC = () => {
         );
       }
 
-      const data = await response.json();
-      setCategories(data.categories || data || []);
+      const data = (await response.json()) as
+        | CategoryListDTO
+        | { categories: CategoryPublicDTO[]; pagination?: any }
+        | CategoryPublicDTO[];
+      // Gérer différents formats de réponse
+      if (Array.isArray(data)) {
+        setCategories(data);
+      } else if ("categories" in data) {
+        setCategories(data.categories);
+      } else {
+        setCategories([]);
+      }
     } catch (err) {
       console.error("Error loading categories:", err);
     }
@@ -297,11 +413,11 @@ const ProductList: React.FC = () => {
             fontWeight: "500",
           }}
         >
-          {filteredProducts.length} produit(s) trouvé(s)
+          {totalProducts} produit(s) trouvé(s)
         </p>
       </div>
       <ProductTable
-        products={filteredProducts}
+        products={products}
         onEdit={handleEditProduct}
         onDelete={handleDeleteProduct}
         onToggleStatus={handleToggleProductStatus}

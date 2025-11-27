@@ -144,15 +144,47 @@ export class ProductController {
    */
   async listProducts(req: Request, res: Response): Promise<void> {
     try {
+      // Mapper les noms de colonnes camelCase vers snake_case pour la base de données
+      const sortByMapping: Record<string, string> = {
+        name: "name",
+        price: "price",
+        createdAt: "created_at",
+        created_at: "created_at",
+      };
+
+      const sortByParam = (req.query.sortBy as string) || "created_at";
+      const sortBy = sortByMapping[sortByParam] || sortByParam;
+
+      // Parser les catégories multiples si présentes (ProductFilterDTO)
+      let categories: number[] | undefined;
+      if (req.query.categories) {
+        const categoriesParam = req.query.categories as string;
+        categories = categoriesParam
+          .split(",")
+          .map((id) => parseInt(id.trim()))
+          .filter((id) => !isNaN(id));
+      }
+
       const options = {
         page: parseInt(req.query.page as string) || 1,
         limit: parseInt(req.query.limit as string) || 10,
         ...(req.query.categoryId && {
           categoryId: parseInt(req.query.categoryId as string),
         }),
+        ...(categories && categories.length > 0 && { categories }),
         search: req.query.search as string,
-        activeOnly: req.query.activeOnly === "true",
-        sortBy: req.query.sortBy as string,
+        // Ne filtrer par activeOnly que si le paramètre est explicitement présent
+        // Convertir "true" en true, "false" en false
+        ...(req.query.activeOnly !== undefined && {
+          activeOnly: String(req.query.activeOnly) === "true",
+        }),
+        ...(req.query.minPrice && {
+          minPrice: parseFloat(req.query.minPrice as string),
+        }),
+        ...(req.query.maxPrice && {
+          maxPrice: parseFloat(req.query.maxPrice as string),
+        }),
+        sortBy: sortBy,
         sortOrder: req.query.sortOrder as "asc" | "desc",
       };
 

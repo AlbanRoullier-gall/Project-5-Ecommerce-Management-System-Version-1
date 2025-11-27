@@ -8,6 +8,7 @@ import { SERVICES } from "../../config";
 import { proxyRequest } from "../proxy";
 import { OrderCompleteDTO } from "../../../../shared-types/order-service";
 import { CartItemPublicDTO } from "../../../../shared-types/cart-service";
+import { PaymentCreateDTO } from "../../../../shared-types/payment-service";
 
 /**
  * Helper pour créer une réponse d'erreur standardisée
@@ -44,18 +45,24 @@ const transformCartItemsToOrderItems = (
  * On enrichit payment.metadata avec cartSessionId et checkoutSnapshot
  */
 export const handleCreatePayment = async (req: Request, res: Response) => {
-  const body = req.body as any;
+  const body = req.body as {
+    payment?: PaymentCreateDTO;
+    cartSessionId?: string;
+    snapshot?: any;
+  };
 
   // Si le body contient payment, cartSessionId et snapshot, on transforme
   if (body.payment && body.cartSessionId && body.snapshot) {
-    if (!body.payment.metadata) {
-      body.payment.metadata = {};
-    }
-    // Enrichir les metadata avec les données nécessaires pour la finalisation
-    body.payment.metadata.cartSessionId = body.cartSessionId;
-    body.payment.metadata.checkoutSnapshot = JSON.stringify(body.snapshot);
+    const paymentDTO: PaymentCreateDTO = {
+      ...body.payment,
+      metadata: {
+        ...body.payment.metadata,
+        cartSessionId: body.cartSessionId,
+        checkoutSnapshot: JSON.stringify(body.snapshot),
+      },
+    };
     // Remplacer req.body par seulement l'objet payment enrichi
-    req.body = body.payment;
+    req.body = paymentDTO;
   }
 
   // Proxy vers le payment-service
@@ -94,7 +101,15 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       );
 
       if (paymentResponse.ok) {
-        const paymentData = (await paymentResponse.json()) as any;
+        const paymentData = (await paymentResponse.json()) as {
+          paymentIntentId?: string;
+          session?: {
+            metadata?: {
+              cartSessionId?: string;
+              checkoutSnapshot?: string;
+            };
+          };
+        };
         paymentIntentId = paymentData.paymentIntentId;
 
         // Récupérer le cartSessionId et le snapshot depuis les metadata Stripe

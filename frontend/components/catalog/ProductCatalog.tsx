@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { ProductPublicDTO, CategoryPublicDTO } from "../../dto";
+import {
+  ProductPublicDTO,
+  CategoryPublicDTO,
+  ProductListDTO,
+  CategoryListDTO,
+  ProductSearchDTO,
+} from "../../dto";
 import CategoryFilter from "./CategoryFilter";
 import ProductGrid from "./ProductGrid";
 
@@ -33,57 +39,102 @@ const ProductCatalog: React.FC = () => {
   // États de données
   const [products, setProducts] = useState<ProductPublicDTO[]>([]);
   const [categories, setCategories] = useState<CategoryPublicDTO[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<ProductPublicDTO[]>(
-    []
-  );
+  const [totalProducts, setTotalProducts] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // État du filtre
   const [selectedCategoryId, setSelectedCategoryId] = useState<number>(0);
 
+  // Paramètres de recherche côté serveur
+  const [searchParams, setSearchParams] = useState<Partial<ProductSearchDTO>>({
+    page: 1,
+    limit: 20,
+    search: undefined,
+    categoryId: undefined,
+    isActive: true, // Seulement les produits actifs pour le frontend
+    sortBy: "createdAt",
+    sortOrder: "desc",
+  });
+
   /**
-   * Charge les produits au montage du composant
+   * Charge les catégories au montage du composant
    */
   useEffect(() => {
-    loadProducts();
     loadCategories();
   }, []);
 
   /**
-   * Filtre les produits quand la catégorie sélectionnée change
+   * Mettre à jour les paramètres de recherche quand la catégorie change
    */
   useEffect(() => {
-    if (selectedCategoryId === 0) {
-      setFilteredProducts(products);
-    } else {
-      setFilteredProducts(
-        products.filter((p) => p.categoryId === selectedCategoryId)
-      );
-    }
-  }, [selectedCategoryId, products]);
+    setSearchParams((prevParams) => ({
+      ...prevParams,
+      page: 1, // Réinitialiser la page
+      categoryId: selectedCategoryId === 0 ? undefined : selectedCategoryId,
+    }));
+  }, [selectedCategoryId]);
+
+  /**
+   * Recharger les produits quand les paramètres de recherche changent
+   */
+  useEffect(() => {
+    loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   /**
    * Charge la liste des produits actifs depuis l'API publique
+   * Utilise ProductSearchDTO pour la recherche côté serveur
    */
   const loadProducts = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/products`);
+      // Construire les paramètres de requête à partir de ProductSearchDTO
+      const queryParams = new URLSearchParams();
+      if (searchParams.page) queryParams.set("page", String(searchParams.page));
+      if (searchParams.limit)
+        queryParams.set("limit", String(searchParams.limit));
+      if (searchParams.search) queryParams.set("search", searchParams.search);
+      if (searchParams.categoryId)
+        queryParams.set("categoryId", String(searchParams.categoryId));
+      if (searchParams.isActive !== undefined)
+        queryParams.set("activeOnly", String(searchParams.isActive));
+      if (searchParams.sortBy) queryParams.set("sortBy", searchParams.sortBy);
+      if (searchParams.sortOrder)
+        queryParams.set("sortOrder", searchParams.sortOrder);
+
+      const response = await fetch(
+        `${API_URL}/api/products?${queryParams.toString()}`
+      );
 
       if (!response.ok) {
         throw new Error("Erreur lors du chargement des produits");
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as
+        | ProductListDTO
+        | { products: ProductPublicDTO[]; pagination?: any }
+        | ProductPublicDTO[];
 
-      // Filtrer uniquement les produits actifs
-      const activeProducts = (data.products || data || []).filter(
-        (p: ProductPublicDTO) => p.isActive
-      );
-
-      setProducts(activeProducts);
+      // Gérer différents formats de réponse
+      if (Array.isArray(data)) {
+        setProducts(data);
+        setTotalProducts(data.length);
+      } else if ("products" in data) {
+        setProducts(data.products);
+        if ("pagination" in data && data.pagination) {
+          setTotalProducts(data.pagination.total || data.products.length);
+        } else if ("total" in data) {
+          setTotalProducts((data as ProductListDTO).total);
+        } else {
+          setTotalProducts(data.products.length);
+        }
+      } else {
+        setProducts([]);
+        setTotalProducts(0);
+      }
     } catch (err) {
       setError(
         err instanceof Error
@@ -107,8 +158,18 @@ const ProductCatalog: React.FC = () => {
         throw new Error("Erreur lors du chargement des catégories");
       }
 
-      const data = await response.json();
-      const categoriesData = data.categories || data || [];
+      const data = (await response.json()) as
+        | CategoryListDTO
+        | { categories: CategoryPublicDTO[] }
+        | CategoryPublicDTO[];
+
+      // Gérer différents formats de réponse
+      let categoriesData: CategoryPublicDTO[] = [];
+      if (Array.isArray(data)) {
+        categoriesData = data;
+      } else if ("categories" in data) {
+        categoriesData = data.categories;
+      }
 
       // Calculer le nombre de produits actifs par catégorie
       const categoriesWithCount = categoriesData.map(
@@ -187,7 +248,7 @@ const ProductCatalog: React.FC = () => {
         />
       )}
 
-      <ProductGrid products={filteredProducts} isLoading={isLoading} />
+      <ProductGrid products={products} isLoading={isLoading} />
     </>
   );
 };

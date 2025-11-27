@@ -6,7 +6,14 @@ import React, {
   ReactNode,
   useCallback,
 } from "react";
-import { CustomerCreateDTO, AddressCreateDTO } from "../dto";
+import {
+  CustomerCreateDTO,
+  AddressCreateDTO,
+  PaymentCreateDTO,
+  PaymentItem,
+  PaymentCustomer,
+  PaymentPublicDTO,
+} from "../dto";
 import { CartItemPublicDTO } from "./CartContext";
 
 /**
@@ -448,10 +455,10 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         }
 
         // Étape 3 : Préparer les données de paiement pour Stripe
-        const paymentItems = cart.items.map((item) => ({
+        const paymentItems: PaymentItem[] = cart.items.map((item) => ({
           name: item.productName || "Produit",
           description: item.description || "",
-          price: Math.round(item.unitPriceTTC * 100),
+          price: Math.round(item.unitPriceTTC * 100), // en centimes
           quantity: item.quantity,
           currency: "eur",
         }));
@@ -504,22 +511,28 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         }
 
         // Étape 5 : Préparer le payload pour créer la session de paiement Stripe
+        const paymentCustomer: PaymentCustomer = {
+          email: customerData.email || "",
+          name:
+            `${customerData.firstName} ${customerData.lastName}`.trim() ||
+            undefined,
+          phone: customerData.phoneNumber || undefined,
+        };
+
+        const paymentCreateDTO: PaymentCreateDTO = {
+          customer: paymentCustomer,
+          items: paymentItems,
+          successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${window.location.origin}/checkout/cancel`,
+          metadata: {
+            customerId: customerId.toString(),
+          },
+        };
+
         const paymentCreatePayload = {
           cartSessionId,
           snapshot,
-          payment: {
-            customer: {
-              email: customerData.email || "",
-              name: `${customerData.firstName} ${customerData.lastName}`,
-              phone: customerData.phoneNumber,
-            },
-            items: paymentItems,
-            successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancelUrl: `${window.location.origin}/checkout/cancel`,
-            metadata: {
-              customerId: customerId.toString(),
-            },
-          },
+          payment: paymentCreateDTO,
         };
 
         // Étape 6 : Créer la session de paiement Stripe
@@ -538,7 +551,10 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
           };
         }
 
-        const paymentResult = await paymentResponse.json();
+        const paymentResult = (await paymentResponse.json()) as {
+          payment?: PaymentPublicDTO;
+          url?: string;
+        };
         const url = paymentResult.url || paymentResult.payment?.url;
 
         // Étape 7 : Retourner l'URL de paiement
