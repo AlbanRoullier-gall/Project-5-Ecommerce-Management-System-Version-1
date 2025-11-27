@@ -76,23 +76,23 @@ const ProductTable: React.FC<ProductTableProps> = ({
   // Empty state handled below inside TableLayout for consistency
 
   const headers: TableHeader[] = [
-    { label: "Produit" },
-    { label: "Catégorie" },
-    { label: "Prix" },
-    { label: "TVA", className: "mobile-hide" },
-    { label: "Statut" },
-    { label: "Date création", className: "mobile-hide" },
-    { label: "Actions", align: "right", width: "160px" },
+    { label: "Produit", width: "30%" },
+    { label: "Catégorie", width: "15%" },
+    { label: "Prix", width: "10%", align: "right" },
+    { label: "TVA", width: "8%", className: "mobile-hide", align: "center" },
+    { label: "Statut", width: "10%", align: "center" },
+    { label: "Date création", width: "12%", className: "mobile-hide" },
+    { label: "Actions", align: "right", width: "15%" },
   ];
 
   return (
-    <TableLayout headers={headers} minWidth="800px" headerGradient="teal">
+    <TableLayout headers={headers} minWidth="1000px" headerGradient="teal">
       {products.length === 0 && (
         <TableRow>
           <TableCell
-            colSpan={7}
+            colSpan={headers.length}
             align="center"
-            style={{ color: "#6b7280", padding: "1rem" }}
+            style={{ color: "#6b7280", padding: "2rem" }}
           >
             Aucun produit trouvé
           </TableCell>

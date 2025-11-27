@@ -11,39 +11,12 @@
 import { Request, Response } from "express";
 import ProductService from "../../services/ProductService";
 import { ProductMapper, ResponseMapper } from "../mapper";
-import { ProductImageCreateDTO } from "../dto";
 
 export class ProductImageController {
   private productService: ProductService;
 
   constructor(productService: ProductService) {
     this.productService = productService;
-  }
-
-  /**
-   * Créer une image de produit
-   */
-  async createProductImage(req: Request, res: Response): Promise<void> {
-    try {
-      const imageData = ProductMapper.productImageCreateDTOToProductImageData(
-        req.body as ProductImageCreateDTO
-      );
-      const image = await this.productService.createImage(imageData);
-      res
-        .status(201)
-        .json(
-          ResponseMapper.imageCreated(
-            ProductMapper.productImageToPublicDTO(image)
-          )
-        );
-    } catch (error: any) {
-      console.error("Erreur lors de la création de l'image de produit:", error);
-      if (error.message === "Product not found") {
-        res.status(404).json(ResponseMapper.notFoundError("Product"));
-        return;
-      }
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
   }
 
   // (Handlers admin pour récupérer/mettre à jour une image supprimés)

@@ -15,8 +15,6 @@ import {
   CategoryCreateDTO,
   CategoryUpdateDTO,
   CategoryPublicDTO,
-  ProductImageCreateDTO,
-  ProductImageUpdateDTO,
   ProductImagePublicDTO,
 } from "../dto";
 import { ProductData } from "../../models/Product";
@@ -121,33 +119,6 @@ export class ProductMapper {
   }
 
   // ===== MAPPERS IMAGE DE PRODUIT =====
-
-  /**
-   * Convertir ProductImageCreateDTO vers ProductImageData
-   */
-  static productImageCreateDTOToProductImageData(
-    dto: ProductImageCreateDTO
-  ): Partial<ProductImageData> {
-    return {
-      product_id: dto.productId,
-      filename: dto.filename,
-      file_path: dto.filePath,
-      order_index: dto.orderIndex || 0,
-    };
-  }
-
-  /**
-   * Convertir ProductImageUpdateDTO vers ProductImageData
-   */
-  static productImageUpdateDTOToProductImageData(
-    dto: ProductImageUpdateDTO
-  ): Partial<ProductImageData> {
-    const data: Partial<ProductImageData> = {};
-    if (dto.filename !== undefined) data.filename = dto.filename;
-    if (dto.filePath !== undefined) data.file_path = dto.filePath;
-    if (dto.orderIndex !== undefined) data.order_index = dto.orderIndex;
-    return data;
-  }
 
   /**
    * Convertir le modèle ProductImage vers ProductImagePublicDTO

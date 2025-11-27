@@ -71,6 +71,7 @@ const TableLayout: React.FC<TableLayoutProps> = ({
         <table
           style={{
             width: "100%",
+            tableLayout: "fixed",
             borderCollapse: "separate",
             borderSpacing: 0,
             fontSize: "1rem",

@@ -46,7 +46,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
   return (
     <TableRow>
       <TableCell>
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", minWidth: 0 }}>
           <div
             style={{
               flexShrink: 0,
@@ -93,12 +93,15 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
               }}
             ></i>
           </div>
-          <div style={{ marginLeft: "1rem" }}>
+          <div style={{ marginLeft: "1rem", minWidth: 0, flex: 1 }}>
             <div
               style={{
                 fontSize: "1rem",
                 fontWeight: "600",
                 color: "#111827",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
             >
               {product.name}
@@ -106,9 +109,8 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
             {product.description && (
               <div
                 style={{
-                  fontSize: "0.9rem",
+                  fontSize: "0.875rem",
                   color: "#6b7280",
-                  maxWidth: "300px",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -121,11 +123,20 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         </div>
       </TableCell>
       <TableCell>
-        <span style={{ fontSize: "1rem", color: "#111827" }}>
+        <span
+          style={{
+            fontSize: "1rem",
+            color: "#111827",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            display: "block",
+          }}
+        >
           {product.categoryName || "-"}
         </span>
       </TableCell>
-      <TableCell>
+      <TableCell align="right">
         <span
           style={{
             fontSize: "1rem",
@@ -136,38 +147,35 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
           {formatPrice(product.price)}
         </span>
       </TableCell>
-      <TableCell className="mobile-hide">
+      <TableCell className="mobile-hide" align="center">
         <span style={{ fontSize: "1rem", color: "#111827" }}>
           {product.vatRate}%
         </span>
       </TableCell>
-      <TableCell>
+      <TableCell align="center">
         <StatusBadge
           isActive={product.isActive}
           onClick={() => onToggleStatus(product.id, product.isActive)}
         />
       </TableCell>
-      <TableCell
-        className="mobile-hide"
-        style={{ fontSize: "1rem", color: "#6b7280" }}
-      >
-        {formatDate(product.createdAt)}
+      <TableCell className="mobile-hide">
+        <span style={{ fontSize: "1rem", color: "#6b7280" }}>
+          {formatDate(product.createdAt)}
+        </span>
       </TableCell>
-      <TableCell width="160px">
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <ActionButtons
-            onEdit={() => onEdit(product)}
-            onDelete={() => {
-              if (
-                window.confirm(
-                  `Êtes-vous sûr de vouloir supprimer le produit "${product.name}" ?`
-                )
-              ) {
-                onDelete(product.id);
-              }
-            }}
-          />
-        </div>
+      <TableCell align="right">
+        <ActionButtons
+          onEdit={() => onEdit(product)}
+          onDelete={() => {
+            if (
+              window.confirm(
+                `Êtes-vous sûr de vouloir supprimer le produit "${product.name}" ?`
+              )
+            ) {
+              onDelete(product.id);
+            }
+          }}
+        />
       </TableCell>
     </TableRow>
   );

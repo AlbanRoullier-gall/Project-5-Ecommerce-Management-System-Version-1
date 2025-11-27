@@ -12,6 +12,7 @@ import {
   CategoryListDTO,
   ProductSearchDTO,
   ProductFilterDTO,
+  CategorySearchDTO,
 } from "../../../dto";
 
 /** URL de l'API depuis les variables d'environnement */
@@ -59,15 +60,27 @@ const ProductList: React.FC = () => {
     isActive: undefined,
   });
 
+  // Paramètres de recherche côté serveur pour les catégories
+  const [categorySearchParams, setCategorySearchParams] = useState<
+    Partial<CategorySearchDTO>
+  >({
+    page: 1,
+    limit: 100, // Charger toutes les catégories pour les filtres
+    search: undefined,
+    sortBy: "name",
+    sortOrder: "asc",
+  });
+
   // États des filtres UI (pour les composants)
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
-  // Charger les catégories au montage du composant
+  // Charger les catégories au montage du composant et quand les paramètres changent
   useEffect(() => {
     loadCategories();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categorySearchParams]);
 
   /**
    * Effet : Mettre à jour les paramètres de recherche quand les filtres UI changent
@@ -234,12 +247,18 @@ const ProductList: React.FC = () => {
         return;
       }
 
-      // Utiliser CategorySearchDTO pour la recherche et pagination
+      // Construire les paramètres de requête à partir de CategorySearchDTO
       const queryParams = new URLSearchParams();
-      queryParams.set("page", "1");
-      queryParams.set("limit", "100"); // Charger toutes les catégories pour les filtres
-      queryParams.set("sortBy", "name");
-      queryParams.set("sortOrder", "asc");
+      if (categorySearchParams.page)
+        queryParams.set("page", String(categorySearchParams.page));
+      if (categorySearchParams.limit)
+        queryParams.set("limit", String(categorySearchParams.limit));
+      if (categorySearchParams.search)
+        queryParams.set("search", categorySearchParams.search);
+      if (categorySearchParams.sortBy)
+        queryParams.set("sortBy", categorySearchParams.sortBy);
+      if (categorySearchParams.sortOrder)
+        queryParams.set("sortOrder", categorySearchParams.sortOrder);
 
       const response = await fetch(
         `${API_URL}/api/admin/categories?${queryParams.toString()}`,

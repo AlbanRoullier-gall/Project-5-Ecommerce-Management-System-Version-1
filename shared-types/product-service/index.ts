@@ -85,27 +85,6 @@ export interface CategoryPublicDTO {
 // ===== TYPES BASÉS SUR ProductImageData =====
 
 /**
- * DTO pour la création d'une image de produit
- * Basé sur ProductImageData avec conversion camelCase
- */
-export interface ProductImageCreateDTO {
-  productId: number;
-  filename: string;
-  filePath: string;
-  orderIndex: number;
-}
-
-/**
- * DTO pour la mise à jour d'une image de produit
- * Utilise Partial pour rendre tous les champs optionnels
- */
-export interface ProductImageUpdateDTO {
-  filename?: string;
-  filePath?: string;
-  orderIndex?: number;
-}
-
-/**
  * DTO public pour une image de produit
  * Basé sur ProductImageData
  */

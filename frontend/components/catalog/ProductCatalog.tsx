@@ -5,6 +5,7 @@ import {
   ProductListDTO,
   CategoryListDTO,
   ProductSearchDTO,
+  CategorySearchDTO,
 } from "../../dto";
 import CategoryFilter from "./CategoryFilter";
 import ProductGrid from "./ProductGrid";
@@ -46,7 +47,7 @@ const ProductCatalog: React.FC = () => {
   // État du filtre
   const [selectedCategoryId, setSelectedCategoryId] = useState<number>(0);
 
-  // Paramètres de recherche côté serveur
+  // Paramètres de recherche côté serveur pour les produits
   const [searchParams, setSearchParams] = useState<Partial<ProductSearchDTO>>({
     page: 1,
     limit: 20,
@@ -57,12 +58,24 @@ const ProductCatalog: React.FC = () => {
     sortOrder: "desc",
   });
 
+  // Paramètres de recherche côté serveur pour les catégories
+  const [categorySearchParams, setCategorySearchParams] = useState<
+    Partial<CategorySearchDTO>
+  >({
+    page: 1,
+    limit: 100, // Charger toutes les catégories pour les filtres
+    search: undefined,
+    sortBy: "name",
+    sortOrder: "asc",
+  });
+
   /**
    * Charge les catégories au montage du composant
    */
   useEffect(() => {
     loadCategories();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categorySearchParams]);
 
   /**
    * Mettre à jour les paramètres de recherche quand la catégorie change
@@ -149,10 +162,26 @@ const ProductCatalog: React.FC = () => {
 
   /**
    * Charge la liste des catégories depuis l'API publique
+   * Utilise CategorySearchDTO pour la recherche et pagination côté serveur
    */
   const loadCategories = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/categories`);
+      // Construire les paramètres de requête à partir de CategorySearchDTO
+      const queryParams = new URLSearchParams();
+      if (categorySearchParams.page)
+        queryParams.set("page", String(categorySearchParams.page));
+      if (categorySearchParams.limit)
+        queryParams.set("limit", String(categorySearchParams.limit));
+      if (categorySearchParams.search)
+        queryParams.set("search", categorySearchParams.search);
+      if (categorySearchParams.sortBy)
+        queryParams.set("sortBy", categorySearchParams.sortBy);
+      if (categorySearchParams.sortOrder)
+        queryParams.set("sortOrder", categorySearchParams.sortOrder);
+
+      const response = await fetch(
+        `${API_URL}/api/categories?${queryParams.toString()}`
+      );
 
       if (!response.ok) {
         throw new Error("Erreur lors du chargement des catégories");
@@ -160,7 +189,7 @@ const ProductCatalog: React.FC = () => {
 
       const data = (await response.json()) as
         | CategoryListDTO
-        | { categories: CategoryPublicDTO[] }
+        | { categories: CategoryPublicDTO[]; pagination?: any }
         | CategoryPublicDTO[];
 
       // Gérer différents formats de réponse

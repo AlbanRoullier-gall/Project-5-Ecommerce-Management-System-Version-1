@@ -25,6 +25,7 @@ import {
   ProductImageController,
 } from "./controller";
 import { ResponseMapper, ProductMapper } from "./mapper";
+import { ProductImageData } from "../models/ProductImage";
 
 export class ApiRouter {
   private healthController: HealthController;
@@ -89,19 +90,6 @@ export class ApiRouter {
       categoryUpdateSchema: Joi.object({
         name: Joi.string().max(100).optional(),
         description: Joi.string().optional(),
-      }),
-
-      // Schémas d'image de produit
-      productImageCreateSchema: Joi.object({
-        productId: Joi.number().integer().positive().required(),
-        filename: Joi.string().max(255).required(),
-        filePath: Joi.string().max(500).required(),
-        orderIndex: Joi.number().integer().min(0).optional(),
-      }),
-      productImageUpdateSchema: Joi.object({
-        filename: Joi.string().max(255).optional(),
-        filePath: Joi.string().max(500).optional(),
-        orderIndex: Joi.number().integer().min(0).optional(),
       }),
     };
   }
@@ -439,13 +427,12 @@ export class ApiRouter {
             // Créer l'image dans la base de données
             const orderIndex =
               uploadDTO.orderIndex ?? existingImages.length + i;
-            const imageData =
-              ProductMapper.productImageCreateDTOToProductImageData({
-                productId: productId,
-                filename: uploadDTO.filename,
-                filePath: `uploads/products/${uniqueFilename}`,
-                orderIndex: orderIndex,
-              });
+            const imageData: Partial<ProductImageData> = {
+              product_id: productId,
+              filename: uploadDTO.filename,
+              file_path: `uploads/products/${uniqueFilename}`,
+              order_index: orderIndex,
+            };
 
             const image = await this.productService.createImage(imageData);
             images.push(ProductMapper.productImageToPublicDTO(image));
