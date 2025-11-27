@@ -168,11 +168,13 @@ export interface CategoryListDTO {
 }
 
 /**
- * DTO pour l'upload d'image
+ * DTO pour l'upload d'image (utilise base64 au lieu de File)
  */
 export interface ProductImageUploadDTO {
   productId: number;
-  file: File;
+  filename: string;
+  base64Data: string; // Image encodée en base64 (sans le préfixe data:image/...)
+  mimeType: string; // Ex: "image/jpeg", "image/png"
   orderIndex?: number;
 }
 

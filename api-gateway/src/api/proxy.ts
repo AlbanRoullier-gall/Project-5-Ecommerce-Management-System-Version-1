@@ -5,7 +5,6 @@
 
 import { Request, Response } from "express";
 import axios, { AxiosResponse } from "axios";
-import FormData from "form-data";
 import { ServiceName, SERVICES } from "../config";
 import { AuthenticatedUser } from "./middleware/auth";
 
@@ -22,50 +21,7 @@ const buildBaseHeaders = (req: Request): Record<string, string> => {
   return headers;
 };
 
-/**
- * Prépare les données multipart/form-data pour les uploads
- */
-const prepareMultipartData = (req: Request): FormData => {
-  const formData = new FormData();
-  const hasFile = !!(req as any).file;
-  const hasFiles = !!(req as any).files;
-
-  // Ajouter les données du body
-  if (req.body) {
-    Object.keys(req.body).forEach((key) => {
-      const value = req.body[key];
-      if (typeof value === "string") {
-        formData.append(key, value);
-      } else if (typeof value === "object" && value !== null) {
-        formData.append(key, JSON.stringify(value));
-      } else {
-        formData.append(key, String(value));
-      }
-    });
-  }
-
-  // Fichier unique
-  if (hasFile) {
-    const file = (req as any).file;
-    formData.append("image", file.buffer, {
-      filename: file.originalname,
-      contentType: file.mimetype,
-    });
-  }
-
-  // Fichiers multiples
-  if (hasFiles) {
-    const files = (req as any).files as Express.Multer.File[];
-    files.forEach((file) => {
-      formData.append("images", file.buffer, {
-        filename: file.originalname,
-        contentType: file.mimetype,
-      });
-    });
-  }
-
-  return formData;
-};
+// prepareMultipartData supprimée - plus utilisée car les uploads utilisent maintenant base64 via DTOs
 
 /**
  * Construit la configuration de la requête proxy
@@ -77,20 +33,8 @@ const buildProxyRequest = (
   const serviceUrl = SERVICES[service];
   const targetUrl = `${serviceUrl}${req.path}`;
   const baseHeaders = buildBaseHeaders(req);
-  const hasFile = !!(req as any).file;
-  const hasFiles = !!(req as any).files;
 
-  if (hasFile || hasFiles) {
-    const formData = prepareMultipartData(req);
-    const formDataHeaders = formData.getHeaders();
-    return {
-      url: targetUrl,
-      headers: { ...baseHeaders, ...formDataHeaders },
-      data: formData,
-      params: req.query,
-    };
-  }
-
+  // Plus de gestion FormData - tout passe par JSON maintenant
   return {
     url: targetUrl,
     headers: { ...baseHeaders, "Content-Type": "application/json" },

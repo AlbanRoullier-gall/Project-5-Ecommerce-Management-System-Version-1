@@ -14,7 +14,7 @@ import cors from "cors";
 import helmet from "helmet";
 import Joi from "joi";
 import morgan from "morgan";
-import multer from "multer";
+// multer n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
 import path from "path";
 import fs from "fs";
 import ProductService from "../services/ProductService";
@@ -106,53 +106,7 @@ export class ApiRouter {
     };
   }
 
-  /**
-   * Configuration du téléchargement de fichiers
-   */
-  private setupFileUpload() {
-    // Créer le répertoire uploads s'il n'existe pas
-    const uploadDir = "uploads/products";
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const storage = multer.diskStorage({
-      destination: (
-        req: Request,
-        file: Express.Multer.File,
-        cb: (error: Error | null, destination: string) => void
-      ) => {
-        cb(null, uploadDir);
-      },
-      filename: (
-        req: Request,
-        file: Express.Multer.File,
-        cb: (error: Error | null, filename: string) => void
-      ) => {
-        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        cb(
-          null,
-          file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
-        );
-      },
-    });
-
-    return multer({
-      storage: storage,
-      limits: { fileSize: 10 * 1024 * 1024 }, // Limite de 10MB
-      fileFilter: (
-        req: Request,
-        file: Express.Multer.File,
-        cb: multer.FileFilterCallback
-      ) => {
-        if (file.mimetype.startsWith("image/")) {
-          cb(null, true);
-        } else {
-          cb(new Error("Seuls les fichiers image sont autorisés"));
-        }
-      },
-    });
-  }
+  // setupFileUpload supprimée - les uploads utilisent maintenant base64 via DTOs
 
   /**
    * Middleware de validation
@@ -210,7 +164,7 @@ export class ApiRouter {
   setupRoutes(app: express.Application): void {
     this.setupMiddlewares(app);
     const schemas = this.setupValidationSchemas();
-    const upload = this.setupFileUpload();
+    // upload n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
 
     // ===== ROUTES DE SANTÉ =====
     app.get("/api/health", (req: Request, res: Response) => {
@@ -277,6 +231,16 @@ export class ApiRouter {
       }
     );
 
+    // Créer un produit (admin) - Endpoint JSON
+    app.post(
+      "/api/admin/products",
+      this.requireAuth,
+      this.validateRequest(schemas.productCreateSchema),
+      (req: Request, res: Response) => {
+        this.productController.createProduct(req, res);
+      }
+    );
+
     // Modifier un produit (admin)
     app.put(
       "/api/admin/products/:id",
@@ -311,87 +275,6 @@ export class ApiRouter {
       this.requireAuth,
       (req: Request, res: Response) => {
         this.productController.deactivateProduct(req, res);
-      }
-    );
-
-    // Créer un produit avec images (admin)
-    app.post(
-      "/api/admin/products/with-images",
-      this.requireAuth,
-      upload.array("images", 10),
-      async (req: Request, res: Response) => {
-        try {
-          // Vérifier que les données du produit sont présentes
-          if (!req.body.product) {
-            res
-              .status(400)
-              .json(ResponseMapper.validationError("Product data is required"));
-            return;
-          }
-
-          // Parser les données du produit (envoyées en JSON string dans le FormData)
-          let productDTO;
-          try {
-            productDTO =
-              typeof req.body.product === "string"
-                ? JSON.parse(req.body.product)
-                : req.body.product;
-          } catch (parseError) {
-            res
-              .status(400)
-              .json(
-                ResponseMapper.validationError("Invalid product data format")
-              );
-            return;
-          }
-
-          // Valider les données du produit
-          const { error } = schemas.productCreateSchema.validate(productDTO);
-          if (error) {
-            res
-              .status(400)
-              .json(
-                ResponseMapper.validationError(
-                  error.details[0]?.message || "Validation error"
-                )
-              );
-            return;
-          }
-
-          // Créer le produit d'abord
-          const productData =
-            ProductMapper.productCreateDTOToProductData(productDTO);
-          const product = await this.productService.createProduct(productData);
-
-          // Si des fichiers sont uploadés, créer les images associées
-          const images = [];
-          if (req.files && Array.isArray(req.files)) {
-            for (let i = 0; i < req.files.length; i++) {
-              const file = req.files[i];
-              const imageData =
-                ProductMapper.productImageCreateDTOToProductImageData({
-                  productId: product.id,
-                  filename: file.filename,
-                  filePath: file.path,
-                  orderIndex: i,
-                });
-
-              const image = await this.productService.createImage(imageData);
-              images.push(ProductMapper.productImageToPublicDTO(image));
-            }
-          }
-
-          // Retourner le produit avec ses images
-          const productDTO_response = ProductMapper.productToPublicDTO(product);
-          productDTO_response.images = images;
-
-          res
-            .status(201)
-            .json(ResponseMapper.productCreated(productDTO_response));
-        } catch (error: any) {
-          console.error("Create product with images error:", error);
-          res.status(500).json(ResponseMapper.internalServerError());
-        }
       }
     );
 
@@ -444,22 +327,14 @@ export class ApiRouter {
     );
 
     // === GESTION DES IMAGES DE PRODUITS (ADMIN) ===
-    // Ajouter des images à un produit existant (admin)
+    // IMPORTANT: La route /upload doit être définie AVANT /images pour qu'Express la matche correctement
+    // Ajouter des images à un produit existant via DTO (admin) - Nouvelle route avec base64
     app.post(
-      "/api/admin/products/:id/images",
+      "/api/admin/products/:id/images/upload",
       this.requireAuth,
-      upload.array("images", 5),
+      express.json({ limit: "50mb" }), // Limite augmentée pour les images base64
       async (req: Request, res: Response) => {
         try {
-          // Vérifier que des fichiers sont présents
-          const files = (req as any).files as Express.Multer.File[];
-          if (!files || files.length === 0) {
-            res
-              .status(400)
-              .json(ResponseMapper.validationError("No images uploaded"));
-            return;
-          }
-
           const productId = parseInt(req.params.id);
           if (isNaN(productId)) {
             res
@@ -475,34 +350,100 @@ export class ApiRouter {
             return;
           }
 
+          // Valider le body (peut être un tableau ou un seul objet)
+          const uploadDTOs = Array.isArray(req.body) ? req.body : [req.body];
+
+          if (uploadDTOs.length === 0) {
+            res
+              .status(400)
+              .json(ResponseMapper.validationError("No images provided"));
+            return;
+          }
+
           // Récupérer le nombre d'images existantes
           const existingImages = await this.productService.listImages(
             productId
           );
 
           // Limiter à 5 images total
-          if (existingImages.length + files.length > 5) {
+          if (existingImages.length + uploadDTOs.length > 5) {
             res
               .status(400)
               .json(
                 ResponseMapper.validationError(
-                  `Cannot add ${files.length} images. Product already has ${existingImages.length} image(s). Maximum is 5.`
+                  `Cannot add ${uploadDTOs.length} images. Product already has ${existingImages.length} image(s). Maximum is 5.`
                 )
               );
             return;
           }
 
-          // Créer les images
-          const images = [];
-          for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            const orderIndex = existingImages.length + i;
+          // Créer le dossier uploads s'il n'existe pas
+          const uploadsDir = path.join(process.cwd(), "uploads", "products");
+          if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+          }
 
+          // Traiter chaque image
+          const images = [];
+          for (let i = 0; i < uploadDTOs.length; i++) {
+            const uploadDTO = uploadDTOs[i];
+
+            // Valider les champs requis
+            if (
+              !uploadDTO.filename ||
+              !uploadDTO.base64Data ||
+              !uploadDTO.mimeType
+            ) {
+              res
+                .status(400)
+                .json(
+                  ResponseMapper.validationError(
+                    `Image ${
+                      i + 1
+                    }: filename, base64Data, and mimeType are required`
+                  )
+                );
+              return;
+            }
+
+            // Décoder le base64
+            let imageBuffer: Buffer;
+            try {
+              // Supprimer le préfixe data:image/...;base64, s'il existe
+              const base64Data = uploadDTO.base64Data.replace(
+                /^data:image\/[a-z]+;base64,/,
+                ""
+              );
+              imageBuffer = Buffer.from(base64Data, "base64");
+            } catch (error) {
+              res
+                .status(400)
+                .json(
+                  ResponseMapper.validationError(
+                    `Image ${i + 1}: Invalid base64 data`
+                  )
+                );
+              return;
+            }
+
+            // Générer un nom de fichier unique
+            const ext = path.extname(uploadDTO.filename) || ".jpg";
+            const uniqueFilename = `${Date.now()}-${Math.random()
+              .toString(36)
+              .substring(7)}${ext}`;
+            const filePath = path.join(uploadsDir, uniqueFilename);
+
+            // Sauvegarder le fichier
+            fs.writeFileSync(filePath, imageBuffer);
+
+            // Créer l'image dans la base de données
+            const orderIndex =
+              uploadDTO.orderIndex ?? existingImages.length + i;
             const imageData =
               ProductMapper.productImageCreateDTOToProductImageData({
                 productId: productId,
-                filename: file.filename,
-                filePath: file.path,
+                filename: uploadDTO.filename,
+                filePath: `uploads/products/${uniqueFilename}`,
                 orderIndex: orderIndex,
               });
 
@@ -511,11 +452,12 @@ export class ApiRouter {
           }
 
           res.status(201).json({
+            success: true,
             message: `${images.length} image(s) ajoutée(s) avec succès`,
             images: images,
           });
         } catch (error: any) {
-          console.error("Add product images error:", error);
+          console.error("Upload product images error:", error);
           res.status(500).json(ResponseMapper.internalServerError());
         }
       }

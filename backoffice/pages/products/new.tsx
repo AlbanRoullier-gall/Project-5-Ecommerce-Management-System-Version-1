@@ -14,6 +14,7 @@ import {
   ProductUpdateDTO,
   CategoryPublicDTO,
   CategoryListDTO,
+  ProductImageUploadDTO,
 } from "../../dto";
 
 /** URL de l'API depuis les variables d'environnement */
@@ -96,26 +97,14 @@ const NewProductPage: React.FC = () => {
       // En mode création, on s'assure que tous les champs requis sont présents
       const createData = data as ProductCreateDTO;
 
-      const formData = new FormData();
-      formData.append("name", createData.name);
-      formData.append("description", createData.description || "");
-      formData.append("price", String(createData.price));
-      formData.append("vatRate", String(createData.vatRate || 21));
-      formData.append("categoryId", String(createData.categoryId));
-      formData.append("isActive", String(createData.isActive || true));
-
-      if (images) {
-        images.forEach((image) => {
-          formData.append("images", image);
-        });
-      }
-
+      // Créer le produit d'abord (sans images)
       const response = await fetch(`${API_URL}/api/admin/products`, {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: formData,
+        body: JSON.stringify(createData),
       });
 
       if (!response.ok) {
@@ -125,10 +114,68 @@ const NewProductPage: React.FC = () => {
         );
       }
 
-      // Note: La création de produit avec images via FormData retourne généralement
-      // un ProductPublicDTO avec les images incluses, pas un ProductImageUploadResponseDTO
-      // Le ProductImageUploadResponseDTO est utilisé uniquement pour les endpoints
-      // d'upload d'images séparés (POST /api/admin/products/:id/images)
+      const createdProduct = await response.json();
+      // La réponse peut être { message: "...", product: {...} } ou directement le produit
+      const productId =
+        createdProduct.product?.id ||
+        createdProduct.id ||
+        (createdProduct.product && createdProduct.product.id);
+
+      // Si des images sont fournies, les uploader via le nouvel endpoint
+      if (images && images.length > 0 && productId) {
+        // Convertir les fichiers en base64 et créer les DTOs
+        const uploadDTOs: ProductImageUploadDTO[] = await Promise.all(
+          images.map(async (file, index) => {
+            // Convertir le fichier en base64
+            const base64Data = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                if (typeof reader.result === "string") {
+                  // Supprimer le préfixe data:image/...;base64,
+                  const base64 = reader.result.replace(
+                    /^data:image\/[a-z]+;base64,/,
+                    ""
+                  );
+                  resolve(base64);
+                } else {
+                  reject(new Error("Failed to convert file to base64"));
+                }
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+
+            // Déterminer le type MIME
+            const mimeType = file.type || "image/jpeg";
+
+            return {
+              productId: productId,
+              filename: file.name,
+              base64Data: base64Data,
+              mimeType: mimeType,
+              orderIndex: index,
+            };
+          })
+        );
+
+        const imgResponse = await fetch(
+          `${API_URL}/api/admin/products/${productId}/images/upload`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(uploadDTOs),
+          }
+        );
+
+        if (!imgResponse.ok) {
+          const errorData = await imgResponse.json().catch(() => ({}));
+          console.error("Erreur lors de l'ajout des images:", errorData);
+          // Ne pas bloquer la création si l'upload d'images échoue
+        }
+      }
 
       // Rediriger vers la liste des produits après création
       router.push("/products");

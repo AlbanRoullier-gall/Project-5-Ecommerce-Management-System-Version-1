@@ -16,6 +16,7 @@ import {
   CategoryPublicDTO,
   CategoryListDTO,
   ProductImageUploadResponseDTO,
+  ProductImageUploadDTO,
 } from "../../dto";
 
 /** URL de l'API depuis les variables d'environnement */
@@ -175,19 +176,50 @@ const EditProductPage: React.FC = () => {
 
       // Ajouter les nouvelles images si nécessaire
       if (images && images.length > 0) {
-        const formData = new FormData();
-        images.forEach((image) => {
-          formData.append("images", image);
-        });
+        // Convertir les fichiers en base64 et créer les DTOs
+        const uploadDTOs: ProductImageUploadDTO[] = await Promise.all(
+          images.map(async (file, index) => {
+            // Convertir le fichier en base64
+            const base64Data = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                if (typeof reader.result === "string") {
+                  // Supprimer le préfixe data:image/...;base64,
+                  const base64 = reader.result.replace(
+                    /^data:image\/[a-z]+;base64,/,
+                    ""
+                  );
+                  resolve(base64);
+                } else {
+                  reject(new Error("Failed to convert file to base64"));
+                }
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+
+            // Déterminer le type MIME
+            const mimeType = file.type || "image/jpeg";
+
+            return {
+              productId: product.id,
+              filename: file.name,
+              base64Data: base64Data,
+              mimeType: mimeType,
+              orderIndex: index,
+            };
+          })
+        );
 
         const imgResponse = await fetch(
-          `${API_URL}/api/admin/products/${product.id}/images`,
+          `${API_URL}/api/admin/products/${product.id}/images/upload`,
           {
             method: "POST",
             headers: {
+              "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: formData,
+            body: JSON.stringify(uploadDTOs),
           }
         );
 

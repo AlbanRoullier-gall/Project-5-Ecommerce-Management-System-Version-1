@@ -6,10 +6,7 @@
 
 import { Application, Request, Response } from "express";
 import express from "express";
-import multer from "multer";
-import FormData from "form-data";
-import axios from "axios";
-import { ServiceName, SERVICES } from "../config";
+import { ServiceName } from "../config";
 import { proxyRequest } from "./proxy";
 import { requireAuth } from "./middleware/auth";
 import {
@@ -32,14 +29,7 @@ import {
 import { handleExportOrdersYear } from "./handlers/export-handler";
 
 export class ApiRouter {
-  private upload: multer.Multer;
-
-  constructor() {
-    this.upload = multer({
-      storage: multer.memoryStorage(),
-      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-    });
-  }
+  // Multer n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
 
   private getServiceFromPath(path: string): ServiceName | null {
     if (path.startsWith("/api/auth")) return "auth";
@@ -134,20 +124,6 @@ export class ApiRouter {
     // ===== PROXY AUTOMATIQUE POUR TOUTES LES AUTRES ROUTES =====
     // IMPORTANT: L'ordre est crucial - les routes spécifiques doivent être enregistrées AVANT les routes génériques
 
-    // Routes avec uploads spécifiques (AVANT les routes génériques)
-    app.post(
-      "/api/admin/products/with-images",
-      requireAuth,
-      this.upload.array("images", 10),
-      (req, res) => proxyRequest(req, res, "product")
-    );
-    app.post(
-      "/api/admin/products/:id/images",
-      requireAuth,
-      this.upload.array("images", 5),
-      (req, res) => proxyRequest(req, res, "product")
-    );
-
     // Routes admin spécifiques avec paramètres (AVANT la route générique /api/admin/*)
     app.post("/api/admin/products/:id/activate", requireAuth, (req, res) =>
       proxyRequest(req, res, "product")
@@ -164,91 +140,15 @@ export class ApiRouter {
       (req, res) => proxyRequest(req, res, "product")
     );
 
-    // Route spécifique pour créer un produit (avec ou sans images)
+    // Route spécifique pour créer un produit
+    // Le backoffice utilise maintenant JSON avec DTOs (plus de FormData)
     // Doit être avant la route générique /api/admin/*
     app.post(
       "/api/admin/products",
       requireAuth,
-      this.upload.any(), // Parse FormData si présent, sinon passe à travers
+      // Plus besoin de multer, on utilise JSON uniquement
       async (req, res) => {
-        // Détecter si c'est un FormData (multipart) en vérifiant si multer a parsé des champs
-        // ou si des fichiers sont présents
-        const isFormData =
-          req.headers["content-type"]?.includes("multipart/form-data") ||
-          (req.files && Array.isArray(req.files) && req.files.length > 0) ||
-          (req.body &&
-            typeof req.body === "object" &&
-            "name" in req.body &&
-            !("product" in req.body));
-
-        if (isFormData) {
-          // Construire l'objet produit depuis le FormData
-          const productData: any = {};
-          if (req.body.name) productData.name = req.body.name;
-          if (req.body.description !== undefined)
-            productData.description = req.body.description;
-          if (req.body.price) productData.price = parseFloat(req.body.price);
-          if (req.body.vatRate)
-            productData.vatRate = parseFloat(req.body.vatRate);
-          if (req.body.categoryId)
-            productData.categoryId = parseInt(req.body.categoryId);
-          if (req.body.isActive !== undefined)
-            productData.isActive =
-              req.body.isActive === "true" || req.body.isActive === true;
-
-          // Si des images sont présentes, utiliser la route with-images
-          if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-            // Construire un FormData pour la route with-images
-            const formData = new FormData();
-            formData.append("product", JSON.stringify(productData));
-            req.files.forEach((file: Express.Multer.File) => {
-              formData.append("images", file.buffer, {
-                filename: file.originalname,
-                contentType: file.mimetype,
-              });
-            });
-
-            // Faire le proxy vers /api/admin/products/with-images
-            const serviceUrl = SERVICES["product"];
-            const targetUrl = `${serviceUrl}/api/admin/products/with-images`;
-            const headers: Record<string, string> = {
-              Authorization: req.headers.authorization || "",
-              ...formData.getHeaders(),
-            };
-            if ((req as any).user) {
-              const user = (req as any).user;
-              headers["x-user-id"] = String(user.userId);
-              headers["x-user-email"] = user.email;
-            }
-
-            try {
-              const response = await axios.post(targetUrl, formData, {
-                headers,
-                timeout: 60000,
-                maxBodyLength: Infinity,
-                maxContentLength: Infinity,
-              });
-              res.status(response.status).json(response.data);
-            } catch (error: any) {
-              if (error.response) {
-                res.status(error.response.status).json(error.response.data);
-              } else {
-                res.status(500).json({
-                  error: "Service Error",
-                  message: "Erreur de communication avec le service",
-                });
-              }
-            }
-            return;
-          }
-
-          // Pas d'images, convertir le FormData en JSON et envoyer
-          req.body = productData;
-          // Changer le Content-Type pour JSON
-          req.headers["content-type"] = "application/json";
-        }
-
-        // Proxy normal vers le service
+        // Proxy normal vers le service (JSON uniquement)
         await proxyRequest(req, res, "product");
       }
     );
