@@ -9,65 +9,21 @@
  */
 
 import {
-  OrderCreateDTO,
-  OrderUpdateDTO,
   OrderPublicDTO,
-  OrderItemCreateDTO,
-  OrderItemUpdateDTO,
   OrderItemPublicDTO,
   CreditNoteCreateDTO,
-  CreditNoteUpdateDTO,
   CreditNotePublicDTO,
   CreditNoteItemCreateDTO,
-  CreditNoteItemUpdateDTO,
   CreditNoteItemPublicDTO,
 } from "../dto";
-import {
-  OrderAddressCreateDTO,
-  OrderAddressUpdateDTO,
-  OrderAddressPublicDTO,
-} from "../dto";
-import { OrderData } from "../../models/Order";
-import { OrderItemData } from "../../models/OrderItem";
+import { OrderAddressPublicDTO } from "../dto";
 import { CreditNoteData } from "../../models/CreditNote";
 import { CreditNoteItemData } from "../../models/CreditNoteItem";
-import { OrderAddressData } from "../../models/OrderAddress";
 
 /**
  * Mapper des Commandes pour la transformation de données
  */
 export class OrderMapper {
-  /**
-   * Convertir OrderCreateDTO en OrderData
-   */
-  static orderCreateDTOToOrderData(dto: OrderCreateDTO): Partial<OrderData> {
-    return {
-      customer_id: dto.customerId,
-      customer_snapshot: dto.customerSnapshot || null,
-      total_amount_ht: dto.totalAmountHT,
-      total_amount_ttc: dto.totalAmountTTC,
-      payment_method: dto.paymentMethod,
-      notes: dto.notes || "",
-    };
-  }
-
-  /**
-   * Convertir OrderUpdateDTO en OrderData
-   */
-  static orderUpdateDTOToOrderData(dto: OrderUpdateDTO): Partial<OrderData> {
-    const data: Partial<OrderData> = {};
-    if (dto.customerSnapshot !== undefined)
-      data.customer_snapshot = dto.customerSnapshot;
-    if (dto.totalAmountHT !== undefined)
-      data.total_amount_ht = dto.totalAmountHT;
-    if (dto.totalAmountTTC !== undefined)
-      data.total_amount_ttc = dto.totalAmountTTC;
-    if (dto.paymentMethod !== undefined)
-      data.payment_method = dto.paymentMethod;
-    if (dto.notes !== undefined) data.notes = dto.notes;
-    return data;
-  }
-
   /**
    * Convertir le modèle Order en OrderPublicDTO
    */
@@ -89,47 +45,6 @@ export class OrderMapper {
   }
 
   // ===== MAPPERS DES ARTICLES DE COMMANDE =====
-
-  /**
-   * Convertir OrderItemCreateDTO en OrderItemData
-   */
-  static orderItemCreateDTOToOrderItemData(
-    dto: OrderItemCreateDTO
-  ): OrderItemData {
-    return {
-      id: 0, // Sera défini par la base de données
-      order_id: dto.orderId,
-      product_id: dto.productId,
-      product_name: dto.productName,
-      quantity: dto.quantity,
-      unit_price_ht: dto.unitPriceHT,
-      unit_price_ttc: dto.unitPriceTTC,
-      vat_rate: dto.vatRate,
-      total_price_ht: dto.totalPriceHT,
-      total_price_ttc: dto.totalPriceTTC,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-  }
-
-  /**
-   * Convertir OrderItemUpdateDTO en OrderItemData
-   */
-  static orderItemUpdateDTOToOrderItemData(
-    dto: OrderItemUpdateDTO
-  ): Partial<OrderItemData> {
-    const data: Partial<OrderItemData> = {};
-    if (dto.productId !== undefined) data.product_id = dto.productId;
-    if (dto.productName !== undefined) data.product_name = dto.productName;
-    if (dto.quantity !== undefined) data.quantity = dto.quantity;
-    if (dto.unitPriceHT !== undefined) data.unit_price_ht = dto.unitPriceHT;
-    if (dto.unitPriceTTC !== undefined) data.unit_price_ttc = dto.unitPriceTTC;
-    if (dto.vatRate !== undefined) data.vat_rate = dto.vatRate;
-    if (dto.totalPriceHT !== undefined) data.total_price_ht = dto.totalPriceHT;
-    if (dto.totalPriceTTC !== undefined)
-      data.total_price_ttc = dto.totalPriceTTC;
-    return data;
-  }
 
   /**
    * Convertir le modèle OrderItem en OrderItemPublicDTO
@@ -173,27 +88,6 @@ export class OrderMapper {
   }
 
   /**
-   * Convertir CreditNoteUpdateDTO en CreditNoteData
-   */
-  static creditNoteUpdateDTOToCreditNoteData(
-    dto: CreditNoteUpdateDTO
-  ): Partial<CreditNoteData> {
-    const data: Partial<CreditNoteData> = {};
-    if (dto.totalAmountHT !== undefined)
-      data.total_amount_ht = dto.totalAmountHT;
-    if (dto.totalAmountTTC !== undefined)
-      data.total_amount_ttc = dto.totalAmountTTC;
-    if (dto.reason !== undefined) data.reason = dto.reason;
-    if (dto.description !== undefined) data.description = dto.description;
-    if (dto.issueDate !== undefined)
-      data.issue_date = dto.issueDate ? new Date(dto.issueDate) : null;
-    if (dto.paymentMethod !== undefined)
-      data.payment_method = dto.paymentMethod;
-    if (dto.notes !== undefined) data.notes = dto.notes;
-    return data;
-  }
-
-  /**
    * Convertir le modèle CreditNote en CreditNotePublicDTO
    */
   static creditNoteToPublicDTO(creditNote: any): CreditNotePublicDTO {
@@ -221,8 +115,9 @@ export class OrderMapper {
    */
   static creditNoteItemCreateDTOToCreditNoteItemData(
     dto: CreditNoteItemCreateDTO
-  ): Partial<CreditNoteItemData> {
+  ): CreditNoteItemData {
     return {
+      id: 0, // Sera défini par la base de données
       credit_note_id: dto.creditNoteId,
       product_id: dto.productId,
       product_name: dto.productName,
@@ -232,24 +127,9 @@ export class OrderMapper {
       vat_rate: dto.vatRate,
       total_price_ht: dto.totalPriceHT,
       total_price_ttc: dto.totalPriceTTC,
+      created_at: new Date(),
+      updated_at: new Date(),
     };
-  }
-
-  /**
-   * Convertir CreditNoteItemUpdateDTO en CreditNoteItemData
-   */
-  static creditNoteItemUpdateDTOToCreditNoteItemData(
-    dto: CreditNoteItemUpdateDTO
-  ): Partial<CreditNoteItemData> {
-    const data: Partial<CreditNoteItemData> = {};
-    if (dto.productName !== undefined) data.product_name = dto.productName;
-    if (dto.quantity !== undefined) data.quantity = dto.quantity;
-    if (dto.unitPriceHT !== undefined) data.unit_price_ht = dto.unitPriceHT;
-    if (dto.unitPriceTTC !== undefined) data.unit_price_ttc = dto.unitPriceTTC;
-    if (dto.totalPriceHT !== undefined) data.total_price_ht = dto.totalPriceHT;
-    if (dto.totalPriceTTC !== undefined)
-      data.total_price_ttc = dto.totalPriceTTC;
-    return data;
   }
 
   /**
@@ -275,32 +155,6 @@ export class OrderMapper {
   }
 
   // ===== MAPPERS DES ADRESSES DE COMMANDE =====
-
-  /**
-   * Convertir OrderAddressCreateDTO en OrderAddressData
-   */
-  static orderAddressCreateDTOToOrderAddressData(
-    dto: OrderAddressCreateDTO
-  ): Partial<OrderAddressData> {
-    return {
-      order_id: dto.orderId,
-      address_type: dto.addressType,
-      address_snapshot: dto.addressSnapshot,
-    };
-  }
-
-  /**
-   * Convertir OrderAddressUpdateDTO en OrderAddressData
-   */
-  static orderAddressUpdateDTOToOrderAddressData(
-    dto: OrderAddressUpdateDTO
-  ): Partial<OrderAddressData> {
-    const data: Partial<OrderAddressData> = {};
-    if (dto.addressType !== undefined) data.address_type = dto.addressType;
-    if (dto.addressSnapshot !== undefined)
-      data.address_snapshot = dto.addressSnapshot;
-    return data;
-  }
 
   /**
    * Convertir le modèle OrderAddress en OrderAddressPublicDTO

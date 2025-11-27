@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Button, Modal, ErrorAlert } from "../../shared";
 import {
   CreditNoteCreateDTO,
+  CreditNoteItemCreateDTO,
   OrderPublicDTO,
   CreditNotePublicDTO,
   OrderItemPublicDTO,
@@ -187,17 +188,19 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
         json?.data?.creditNote || json?.creditNote || json;
 
       if (selectedItems.length > 0) {
-        const itemPayloads = selectedItems.map((it) => ({
-          creditNoteId: created.id,
-          productId: it.productId,
-          productName: it.productName,
-          quantity: it.quantity,
-          unitPriceHT: it.unitPriceHT,
-          unitPriceTTC: it.unitPriceTTC,
-          vatRate: it.vatRate,
-          totalPriceHT: it.totalPriceHT,
-          totalPriceTTC: it.totalPriceTTC,
-        }));
+        const itemPayloads: CreditNoteItemCreateDTO[] = selectedItems.map(
+          (it) => ({
+            creditNoteId: created.id,
+            productId: it.productId,
+            productName: it.productName,
+            quantity: it.quantity,
+            unitPriceHT: it.unitPriceHT,
+            unitPriceTTC: it.unitPriceTTC,
+            vatRate: it.vatRate,
+            totalPriceHT: it.totalPriceHT,
+            totalPriceTTC: it.totalPriceTTC,
+          })
+        );
         await Promise.all(
           itemPayloads.map((p) =>
             fetch(`${API_URL}/api/admin/credit-note-items`, {

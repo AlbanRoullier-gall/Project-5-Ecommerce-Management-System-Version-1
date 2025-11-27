@@ -32,7 +32,7 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
   }, [orders]);
 
   const headers: TableHeader[] = [
-    { label: "#" },
+    { label: "REFERENCE" },
     { label: "Client" },
     { label: "Commande", align: "center" },
     { label: "Motif", className: "mobile-hide" },

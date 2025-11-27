@@ -10,8 +10,7 @@
 
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
-import { CreditNoteItemCreateDTO, CreditNoteItemUpdateDTO } from "../dto";
-import { CreditNoteItemData } from "../../models/CreditNoteItem";
+import { CreditNoteItemCreateDTO } from "../dto";
 import { OrderMapper, ResponseMapper } from "../mapper";
 
 export class CreditNoteItemController {
@@ -35,7 +34,7 @@ export class CreditNoteItemController {
         );
 
       const creditNoteItem = await this.orderService.createCreditNoteItem(
-        creditNoteItemData as CreditNoteItemData
+        creditNoteItemData
       );
       const creditNoteItemDTO =
         OrderMapper.creditNoteItemToPublicDTO(creditNoteItem);
@@ -73,38 +72,6 @@ export class CreditNoteItemController {
       res.json(ResponseMapper.creditNoteItemRetrieved(creditNoteItemDTO));
     } catch (error: any) {
       console.error("Get credit note item error:", error);
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Mettre à jour un article d'avoir
-   */
-  async updateCreditNoteItem(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const creditNoteItemUpdateDTO: CreditNoteItemUpdateDTO = req.body;
-
-      // Convertir le DTO en CreditNoteItemData
-      const creditNoteItemData =
-        OrderMapper.creditNoteItemUpdateDTOToCreditNoteItemData(
-          creditNoteItemUpdateDTO
-        );
-
-      const creditNoteItem = await this.orderService.updateCreditNoteItem(
-        parseInt(id!),
-        creditNoteItemData
-      );
-      const creditNoteItemDTO =
-        OrderMapper.creditNoteItemToPublicDTO(creditNoteItem);
-
-      res.json(ResponseMapper.creditNoteItemUpdated(creditNoteItemDTO));
-    } catch (error: any) {
-      console.error("Update credit note item error:", error);
-      if (error.message === "Credit note item not found") {
-        res.status(404).json(ResponseMapper.notFoundError("Credit note item"));
-        return;
-      }
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }

@@ -10,7 +10,7 @@
 
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
-import { CreditNoteCreateDTO, CreditNoteUpdateDTO } from "../dto";
+import { CreditNoteCreateDTO } from "../dto";
 import { CreditNoteData } from "../../models/CreditNote";
 import { OrderMapper, ResponseMapper } from "../mapper";
 
@@ -67,35 +67,6 @@ export class CreditNoteController {
       res.json(ResponseMapper.creditNoteRetrieved(creditNoteDTO));
     } catch (error: any) {
       console.error("Get credit note error:", error);
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Mettre à jour un avoir
-   */
-  async updateCreditNote(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const creditNoteUpdateDTO: CreditNoteUpdateDTO = req.body;
-
-      // Convertir le DTO en CreditNoteData
-      const creditNoteData =
-        OrderMapper.creditNoteUpdateDTOToCreditNoteData(creditNoteUpdateDTO);
-
-      const creditNote = await this.orderService.updateCreditNote(
-        parseInt(id!),
-        creditNoteData
-      );
-      const creditNoteDTO = OrderMapper.creditNoteToPublicDTO(creditNote);
-
-      res.json(ResponseMapper.creditNoteUpdated(creditNoteDTO));
-    } catch (error: any) {
-      console.error("Update credit note error:", error);
-      if (error.message === "Credit note not found") {
-        res.status(404).json(ResponseMapper.notFoundError("Credit note"));
-        return;
-      }
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }

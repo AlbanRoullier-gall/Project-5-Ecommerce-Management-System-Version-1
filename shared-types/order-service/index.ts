@@ -6,31 +6,6 @@
 // ===== TYPES BASÉS SUR OrderData =====
 
 /**
- * DTO pour la création d'une commande
- * Basé sur OrderData avec conversion camelCase
- */
-export interface OrderCreateDTO {
-  customerId: number;
-  customerSnapshot: any;
-  totalAmountHT: number;
-  totalAmountTTC: number;
-  paymentMethod: string | null;
-  notes?: string;
-}
-
-/**
- * DTO pour la mise à jour d'une commande
- * Utilise Partial pour rendre tous les champs optionnels
- */
-export interface OrderUpdateDTO {
-  customerSnapshot?: any;
-  totalAmountHT?: number;
-  totalAmountTTC?: number;
-  paymentMethod?: string | null;
-  notes?: string;
-}
-
-/**
  * DTO public pour une commande
  * Basé sur OrderData avec informations client
  */
@@ -53,33 +28,6 @@ export interface OrderPublicDTO {
 // ===== TYPES BASÉS SUR OrderItemData =====
 
 /**
- * DTO pour la création d'un article de commande
- */
-export interface OrderItemCreateDTO {
-  orderId: number;
-  productId: number;
-  productName: string;
-  quantity: number;
-  unitPriceHT: number;
-  unitPriceTTC: number;
-  vatRate: number;
-  totalPriceHT: number;
-  totalPriceTTC: number;
-}
-
-/**
- * DTO pour la mise à jour d'un article de commande
- */
-export interface OrderItemUpdateDTO {
-  productName?: string;
-  quantity?: number;
-  unitPriceHT?: number;
-  unitPriceTTC?: number;
-  totalPriceHT?: number;
-  totalPriceTTC?: number;
-}
-
-/**
  * DTO public pour un article de commande
  */
 export interface OrderItemPublicDTO {
@@ -98,34 +46,6 @@ export interface OrderItemPublicDTO {
 }
 
 // ===== TYPES BASÉS SUR OrderAddressData =====
-
-/**
- * DTO pour la création d'une adresse de commande
- */
-export interface OrderAddressCreateDTO {
-  orderId: number;
-  addressType: "shipping" | "billing";
-  firstName: string;
-  lastName: string;
-  address: string;
-  city: string;
-  postalCode: string;
-  country: string;
-  phone?: string;
-}
-
-/**
- * DTO pour la mise à jour d'une adresse de commande
- */
-export interface OrderAddressUpdateDTO {
-  firstName?: string;
-  lastName?: string;
-  address?: string;
-  city?: string;
-  postalCode?: string;
-  country?: string;
-  phone?: string;
-}
 
 /**
  * DTO public pour une adresse de commande
@@ -165,19 +85,6 @@ export interface CreditNoteCreateDTO {
 }
 
 /**
- * DTO pour la mise à jour d'un avoir
- */
-export interface CreditNoteUpdateDTO {
-  reason?: string;
-  description?: string;
-  issueDate?: string; // ISO date string
-  paymentMethod?: string;
-  totalAmountHT?: number;
-  totalAmountTTC?: number;
-  notes?: string;
-}
-
-/**
  * DTO public pour un avoir
  */
 export interface CreditNotePublicDTO {
@@ -208,20 +115,9 @@ export interface CreditNoteItemCreateDTO {
   quantity: number;
   unitPriceHT: number;
   unitPriceTTC: number;
+  vatRate: number;
   totalPriceHT: number;
   totalPriceTTC: number;
-}
-
-/**
- * DTO pour la mise à jour d'un article d'avoir
- */
-export interface CreditNoteItemUpdateDTO {
-  productName?: string;
-  quantity?: number;
-  unitPriceHT?: number;
-  unitPriceTTC?: number;
-  totalPriceHT?: number;
-  totalPriceTTC?: number;
 }
 
 /**
@@ -242,40 +138,6 @@ export interface CreditNoteItemPublicDTO {
 }
 
 // ===== TYPES SPÉCIFIQUES =====
-
-/**
- * DTO pour les options de recherche de commandes
- */
-export interface OrderSearchDTO {
-  page?: number;
-  limit?: number;
-  customerId?: number;
-  status?: string;
-  dateFrom?: string;
-  dateTo?: string;
-}
-
-/**
- * DTO pour la réponse de liste de commandes
- */
-export interface OrderListDTO {
-  orders: OrderPublicDTO[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-/**
- * DTO pour les statistiques de commandes
- */
-export interface OrderStatisticsDTO {
-  totalOrders: number;
-  totalRevenue: number;
-  averageOrderValue: number;
-  ordersByStatus: Record<string, number>;
-  revenueByMonth: Record<string, number>;
-}
 
 /**
  * DTO pour créer une commande complète avec items et adresses

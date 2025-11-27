@@ -95,47 +95,6 @@ export class ApiRouter {
    */
   private setupValidationSchemas() {
     return {
-      // Order schemas
-      orderCreateSchema: Joi.object({
-        customerId: Joi.number().integer().positive().required(),
-        customerSnapshot: Joi.object().optional(),
-        totalAmountHT: Joi.number().positive().required(),
-        totalAmountTTC: Joi.number().positive().required(),
-        paymentMethod: Joi.string().required(),
-        notes: Joi.string().optional(),
-        paymentIntentId: Joi.string().optional(),
-      }),
-      orderUpdateSchema: Joi.object({
-        customerSnapshot: Joi.object().optional(),
-        totalAmountHT: Joi.number().positive().optional(),
-        totalAmountTTC: Joi.number().positive().optional(),
-        paymentMethod: Joi.string().optional(),
-        notes: Joi.string().optional(),
-      }),
-
-      // OrderItem schemas
-      orderItemCreateSchema: Joi.object({
-        orderId: Joi.number().integer().positive().required(),
-        productId: Joi.number().integer().positive().required(),
-        productName: Joi.string().required(),
-        quantity: Joi.number().integer().positive().required(),
-        unitPriceHT: Joi.number().positive().required(),
-        unitPriceTTC: Joi.number().positive().required(),
-        vatRate: Joi.number().positive().required(),
-        totalPriceHT: Joi.number().positive().required(),
-        totalPriceTTC: Joi.number().positive().required(),
-      }),
-      orderItemUpdateSchema: Joi.object({
-        productId: Joi.number().integer().positive().optional(),
-        productName: Joi.string().optional(),
-        quantity: Joi.number().integer().positive().optional(),
-        unitPriceHT: Joi.number().positive().optional(),
-        unitPriceTTC: Joi.number().positive().optional(),
-        vatRate: Joi.number().positive().optional(),
-        totalPriceHT: Joi.number().positive().optional(),
-        totalPriceTTC: Joi.number().positive().optional(),
-      }),
-
       // CreditNote schemas
       creditNoteCreateSchema: Joi.object({
         customerId: Joi.number().integer().positive().required(),
@@ -147,46 +106,18 @@ export class ApiRouter {
         paymentMethod: Joi.string().required(),
         notes: Joi.string().optional(),
       }),
-      creditNoteUpdateSchema: Joi.object({
-        reason: Joi.string().optional(),
-        description: Joi.string().optional(),
-        totalAmountHT: Joi.number().positive().optional(),
-        totalAmountTTC: Joi.number().positive().optional(),
-        paymentMethod: Joi.string().optional(),
-        notes: Joi.string().optional(),
-      }),
 
       // CreditNoteItem schemas
       creditNoteItemCreateSchema: Joi.object({
         creditNoteId: Joi.number().integer().positive().required(),
         productId: Joi.number().integer().positive().required(),
-        productName: Joi.string().optional(),
+        productName: Joi.string().required(),
         quantity: Joi.number().integer().positive().required(),
         unitPriceHT: Joi.number().positive().required(),
         unitPriceTTC: Joi.number().positive().required(),
         vatRate: Joi.number().positive().required(),
         totalPriceHT: Joi.number().positive().required(),
         totalPriceTTC: Joi.number().positive().required(),
-      }),
-      creditNoteItemUpdateSchema: Joi.object({
-        productId: Joi.number().integer().positive().optional(),
-        quantity: Joi.number().integer().positive().optional(),
-        unitPriceHT: Joi.number().positive().optional(),
-        unitPriceTTC: Joi.number().positive().optional(),
-        vatRate: Joi.number().positive().optional(),
-        totalPriceHT: Joi.number().positive().optional(),
-        totalPriceTTC: Joi.number().positive().optional(),
-      }),
-
-      // OrderAddress schemas
-      orderAddressCreateSchema: Joi.object({
-        orderId: Joi.number().integer().positive().required(),
-        addressType: Joi.string().required(),
-        addressSnapshot: Joi.object().required(),
-      }),
-      orderAddressUpdateSchema: Joi.object({
-        addressType: Joi.string().optional(),
-        addressSnapshot: Joi.object().optional(),
       }),
 
       // Order from checkout schema
@@ -265,14 +196,6 @@ export class ApiRouter {
 
     // Routes publiques pour les commandes
     app.post(
-      "/api/orders",
-      this.validateRequest(schemas.orderCreateSchema),
-      (req: Request, res: Response) => {
-        this.orderController.createOrder(req, res);
-      }
-    );
-
-    app.post(
       "/api/orders/from-checkout",
       this.validateRequest(schemas.orderFromCheckoutSchema),
       (req: Request, res: Response) => {
@@ -289,27 +212,11 @@ export class ApiRouter {
     });
 
     // Routes publiques pour les articles de commande
-    app.post(
-      "/api/orders/:orderId/items",
-      this.validateRequest(schemas.orderItemCreateSchema),
-      (req: Request, res: Response) => {
-        this.orderItemController.createOrderItem(req, res);
-      }
-    );
-
     app.get("/api/orders/:orderId/items", (req: Request, res: Response) => {
       this.orderItemController.getOrderItemsByOrderId(req, res);
     });
 
     // Routes publiques pour les adresses de commande
-    app.post(
-      "/api/orders/:orderId/addresses",
-      this.validateRequest(schemas.orderAddressCreateSchema),
-      (req: Request, res: Response) => {
-        this.orderAddressController.createOrderAddress(req, res);
-      }
-    );
-
     app.get("/api/orders/:orderId/addresses", (req: Request, res: Response) => {
       this.orderAddressController.getOrderAddressesByOrderId(req, res);
     });
@@ -330,15 +237,6 @@ export class ApiRouter {
     // ===== ROUTES ADMIN (AVEC AUTHENTIFICATION) =====
 
     // Routes admin pour les commandes
-    app.put(
-      "/api/admin/orders/:id",
-      this.requireAuth,
-      this.validateRequest(schemas.orderUpdateSchema),
-      (req: Request, res: Response) => {
-        this.orderController.updateOrder(req, res);
-      }
-    );
-
     app.delete(
       "/api/admin/orders/:id",
       this.requireAuth,
@@ -399,29 +297,11 @@ export class ApiRouter {
     );
 
     // Routes admin pour les articles de commande
-    app.post(
-      "/api/admin/order-items",
-      this.requireAuth,
-      this.validateRequest(schemas.orderItemCreateSchema),
-      (req: Request, res: Response) => {
-        this.orderItemController.createOrderItem(req, res);
-      }
-    );
-
     app.get(
       "/api/admin/order-items/:id",
       this.requireAuth,
       (req: Request, res: Response) => {
         this.orderItemController.getOrderItemById(req, res);
-      }
-    );
-
-    app.put(
-      "/api/admin/order-items/:id",
-      this.requireAuth,
-      this.validateRequest(schemas.orderItemUpdateSchema),
-      (req: Request, res: Response) => {
-        this.orderItemController.updateOrderItem(req, res);
       }
     );
 
@@ -459,15 +339,6 @@ export class ApiRouter {
       }
     );
 
-    app.put(
-      "/api/admin/credit-notes/:id",
-      this.requireAuth,
-      this.validateRequest(schemas.creditNoteUpdateSchema),
-      (req: Request, res: Response) => {
-        this.creditNoteController.updateCreditNote(req, res);
-      }
-    );
-
     app.delete(
       "/api/admin/credit-notes/:id",
       this.requireAuth,
@@ -502,15 +373,6 @@ export class ApiRouter {
       }
     );
 
-    app.put(
-      "/api/admin/credit-note-items/:id",
-      this.requireAuth,
-      this.validateRequest(schemas.creditNoteItemUpdateSchema),
-      (req: Request, res: Response) => {
-        this.creditNoteItemController.updateCreditNoteItem(req, res);
-      }
-    );
-
     app.delete(
       "/api/admin/credit-note-items/:id",
       this.requireAuth,
@@ -531,29 +393,11 @@ export class ApiRouter {
     );
 
     // Routes admin pour les adresses de commande
-    app.post(
-      "/api/admin/order-addresses",
-      this.requireAuth,
-      this.validateRequest(schemas.orderAddressCreateSchema),
-      (req: Request, res: Response) => {
-        this.orderAddressController.createOrderAddress(req, res);
-      }
-    );
-
     app.get(
       "/api/admin/order-addresses/:id",
       this.requireAuth,
       (req: Request, res: Response) => {
         this.orderAddressController.getOrderAddressById(req, res);
-      }
-    );
-
-    app.put(
-      "/api/admin/order-addresses/:id",
-      this.requireAuth,
-      this.validateRequest(schemas.orderAddressUpdateSchema),
-      (req: Request, res: Response) => {
-        this.orderAddressController.updateOrderAddress(req, res);
       }
     );
 

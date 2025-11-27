@@ -10,7 +10,6 @@
 
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
-import { OrderItemCreateDTO, OrderItemUpdateDTO } from "../dto";
 import { OrderMapper, ResponseMapper } from "../mapper";
 
 export class OrderItemController {
@@ -18,31 +17,6 @@ export class OrderItemController {
 
   constructor(orderService: OrderService) {
     this.orderService = orderService;
-  }
-
-  /**
-   * Créer un nouvel article de commande
-   */
-  async createOrderItem(req: Request, res: Response): Promise<void> {
-    try {
-      const orderItemCreateDTO: OrderItemCreateDTO = req.body;
-
-      // Convertir le DTO en OrderItemData
-      const orderItemData =
-        OrderMapper.orderItemCreateDTOToOrderItemData(orderItemCreateDTO);
-
-      const orderItem = await this.orderService.createOrderItem(orderItemData);
-      const orderItemDTO = OrderMapper.orderItemToPublicDTO(orderItem);
-
-      res.status(201).json(ResponseMapper.orderItemCreated(orderItemDTO));
-    } catch (error: any) {
-      console.error("Create order item error:", error);
-      if (error.message.includes("already exists")) {
-        res.status(409).json(ResponseMapper.conflictError(error.message));
-        return;
-      }
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
   }
 
   /**
@@ -62,35 +36,6 @@ export class OrderItemController {
       res.json(ResponseMapper.orderItemRetrieved(orderItemDTO));
     } catch (error: any) {
       console.error("Get order item error:", error);
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Mettre à jour un article de commande
-   */
-  async updateOrderItem(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const orderItemUpdateDTO: OrderItemUpdateDTO = req.body;
-
-      // Convertir le DTO en OrderItemData
-      const orderItemData =
-        OrderMapper.orderItemUpdateDTOToOrderItemData(orderItemUpdateDTO);
-
-      const orderItem = await this.orderService.updateOrderItem(
-        parseInt(id!),
-        orderItemData
-      );
-      const orderItemDTO = OrderMapper.orderItemToPublicDTO(orderItem);
-
-      res.json(ResponseMapper.orderItemUpdated(orderItemDTO));
-    } catch (error: any) {
-      console.error("Update order item error:", error);
-      if (error.message === "Order item not found") {
-        res.status(404).json(ResponseMapper.notFoundError("Order item"));
-        return;
-      }
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
