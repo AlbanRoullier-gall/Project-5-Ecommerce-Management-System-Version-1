@@ -205,67 +205,6 @@ export default class CreditNoteItemRepository {
   }
 
   /**
-   * Mettre à jour un article d'avoir
-   */
-  async updateCreditNoteItem(
-    id: number,
-    creditNoteItemData: Partial<CreditNoteItemData>
-  ): Promise<CreditNoteItem> {
-    const fields = [];
-    const values = [];
-    let paramCount = 0;
-
-    if (creditNoteItemData.credit_note_id !== undefined) {
-      fields.push(`credit_note_id = $${++paramCount}`);
-      values.push(creditNoteItemData.credit_note_id);
-    }
-    if (creditNoteItemData.product_id !== undefined) {
-      fields.push(`product_id = $${++paramCount}`);
-      values.push(creditNoteItemData.product_id);
-    }
-    if (creditNoteItemData.quantity !== undefined) {
-      fields.push(`quantity = $${++paramCount}`);
-      values.push(creditNoteItemData.quantity);
-    }
-    if (creditNoteItemData.unit_price_ht !== undefined) {
-      fields.push(`unit_price_ht = $${++paramCount}`);
-      values.push(creditNoteItemData.unit_price_ht);
-    }
-    if (creditNoteItemData.unit_price_ttc !== undefined) {
-      fields.push(`unit_price_ttc = $${++paramCount}`);
-      values.push(creditNoteItemData.unit_price_ttc);
-    }
-    if (creditNoteItemData.total_price_ht !== undefined) {
-      fields.push(`total_price_ht = $${++paramCount}`);
-      values.push(creditNoteItemData.total_price_ht);
-    }
-    if (creditNoteItemData.total_price_ttc !== undefined) {
-      fields.push(`total_price_ttc = $${++paramCount}`);
-      values.push(creditNoteItemData.total_price_ttc);
-    }
-
-    if (fields.length === 0) {
-      throw new Error("No fields to update");
-    }
-
-    values.push(id);
-
-    const query = `
-      UPDATE credit_note_items 
-      SET ${fields.join(", ")} 
-      WHERE id = $${++paramCount}
-      RETURNING *
-    `;
-
-    const result = await this.pool.query(query, values);
-    if (result.rows.length === 0) {
-      throw new Error("Credit note item not found");
-    }
-
-    return new CreditNoteItem(result.rows[0]);
-  }
-
-  /**
    * Supprimer un article d'avoir
    */
   async deleteCreditNoteItem(id: number): Promise<boolean> {

@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import OrderAddress, { OrderAddressData } from "../models/OrderAddress";
+import OrderAddress from "../models/OrderAddress";
 
 export default class OrderAddressRepository {
   private pool: Pool;
@@ -130,29 +130,6 @@ export default class OrderAddressRepository {
   }
 
   /**
-   * Créer une adresse de commande
-   */
-  async createOrderAddress(
-    orderAddressData: OrderAddressData
-  ): Promise<OrderAddress> {
-    const query = `
-      INSERT INTO order_addresses (
-        order_id, type, address_snapshot
-      ) VALUES ($1, $2, $3)
-      RETURNING id, order_id, type AS address_type, address_snapshot, created_at, updated_at
-    `;
-
-    const values = [
-      orderAddressData.order_id,
-      orderAddressData.address_type,
-      orderAddressData.address_snapshot,
-    ];
-
-    const result = await this.pool.query(query, values);
-    return new OrderAddress(result.rows[0]);
-  }
-
-  /**
    * Obtenir une adresse de commande par ID
    */
   async getOrderAddressById(id: number): Promise<OrderAddress | null> {
@@ -161,51 +138,6 @@ export default class OrderAddressRepository {
 
     if (result.rows.length === 0) {
       return null;
-    }
-
-    return new OrderAddress(result.rows[0]);
-  }
-
-  /**
-   * Mettre à jour une adresse de commande
-   */
-  async updateOrderAddress(
-    id: number,
-    orderAddressData: Partial<OrderAddressData>
-  ): Promise<OrderAddress> {
-    const fields = [];
-    const values = [];
-    let paramCount = 0;
-
-    if (orderAddressData.order_id !== undefined) {
-      fields.push(`order_id = $${++paramCount}`);
-      values.push(orderAddressData.order_id);
-    }
-    if (orderAddressData.address_type !== undefined) {
-      fields.push(`type = $${++paramCount}`);
-      values.push(orderAddressData.address_type);
-    }
-    if (orderAddressData.address_snapshot !== undefined) {
-      fields.push(`address_snapshot = $${++paramCount}`);
-      values.push(orderAddressData.address_snapshot);
-    }
-
-    if (fields.length === 0) {
-      throw new Error("No fields to update");
-    }
-
-    values.push(id);
-
-    const query = `
-      UPDATE order_addresses 
-      SET ${fields.join(", ")} 
-      WHERE id = $${++paramCount}
-      RETURNING id, order_id, type AS address_type, address_snapshot, created_at, updated_at
-    `;
-
-    const result = await this.pool.query(query, values);
-    if (result.rows.length === 0) {
-      throw new Error("Order address not found");
     }
 
     return new OrderAddress(result.rows[0]);

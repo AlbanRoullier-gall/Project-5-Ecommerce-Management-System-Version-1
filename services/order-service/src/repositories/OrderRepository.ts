@@ -32,40 +32,6 @@ export default class OrderRepository {
   }
 
   /**
-   * Créer une nouvelle commande
-   * @param {OrderData} orderData Données de la commande
-   * @returns {Promise<Order>} Commande créée
-   */
-  async createOrder(orderData: OrderData): Promise<Order> {
-    try {
-      const query = `
-        INSERT INTO orders (customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
-                           payment_method, notes, payment_intent_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
-        ON CONFLICT (payment_intent_id) WHERE payment_intent_id IS NOT NULL DO UPDATE SET updated_at = NOW()
-        RETURNING id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
-                  payment_method, notes, created_at, updated_at
-      `;
-
-      const values = [
-        orderData.customer_id,
-        orderData.customer_snapshot,
-        orderData.total_amount_ht,
-        orderData.total_amount_ttc,
-        orderData.payment_method,
-        orderData.notes,
-        (orderData as any).payment_intent_id || null,
-      ];
-
-      const result = await this.pool.query(query, values);
-      return new Order(result.rows[0] as OrderData);
-    } catch (error) {
-      console.error("Error creating order:", error);
-      throw new Error("Failed to create order");
-    }
-  }
-
-  /**
    * Récupérer une commande par ID
    * @param {number} id ID de la commande
    * @returns {Promise<Order | null>} Commande trouvée ou null
@@ -89,127 +55,6 @@ export default class OrderRepository {
     } catch (error) {
       console.error("Error getting order by ID:", error);
       throw new Error("Failed to retrieve order");
-    }
-  }
-
-  /**
-   * Récupérer une commande par ID avec données jointes
-   * @param {number} id ID de la commande
-   * @returns {Promise<Order | null>} Commande avec données jointes ou null
-   */
-  async getOrderByIdWithJoins(id: number): Promise<Order | null> {
-    try {
-      const query = `
-        SELECT 
-          o.id, 
-          o.customer_id, 
-          o.customer_snapshot, 
-          o.total_amount_ht, 
-          o.total_amount_ttc, 
-          o.payment_method, 
-          o.notes, 
-          o.delivered,
-          o.created_at, 
-          o.updated_at,
-          COALESCE(
-            o.customer_snapshot->>'first_name',
-            o.customer_snapshot->>'firstName',
-            o.customer_snapshot->>'firstname'
-          ) AS first_name,
-          COALESCE(
-            o.customer_snapshot->>'last_name',
-            o.customer_snapshot->>'lastName',
-            o.customer_snapshot->>'lastname'
-          ) AS last_name,
-          COALESCE(
-            o.customer_snapshot->>'email',
-            o.customer_snapshot->>'emailAddress'
-          ) AS email
-        FROM orders o
-        WHERE o.id = $1
-      `;
-
-      const result = await this.pool.query(query, [id]);
-
-      if (result.rows.length === 0) {
-        return null;
-      }
-
-      const order = new Order(result.rows[0] as OrderData);
-      order.customerFirstName = result.rows[0].first_name;
-      order.customerLastName = result.rows[0].last_name;
-      order.customerEmail = result.rows[0].email;
-      return order;
-    } catch (error) {
-      console.error("Error getting order by ID with joins:", error);
-      throw new Error("Failed to retrieve order");
-    }
-  }
-
-  /**
-   * Mettre à jour une commande
-   * @param {number} id ID de la commande
-   * @param {Partial<OrderData>} orderData Données à mettre à jour
-   * @returns {Promise<Order | null>} Commande mise à jour ou null
-   */
-  async updateOrder(
-    id: number,
-    orderData: Partial<OrderData>
-  ): Promise<Order | null> {
-    try {
-      const setClause = [];
-      const values = [];
-      let paramCount = 0;
-
-      if (orderData.customer_snapshot !== undefined) {
-        setClause.push(`customer_snapshot = $${++paramCount}`);
-        values.push(orderData.customer_snapshot);
-      }
-
-      if (orderData.total_amount_ht !== undefined) {
-        setClause.push(`total_amount_ht = $${++paramCount}`);
-        values.push(orderData.total_amount_ht);
-      }
-
-      if (orderData.total_amount_ttc !== undefined) {
-        setClause.push(`total_amount_ttc = $${++paramCount}`);
-        values.push(orderData.total_amount_ttc);
-      }
-
-      if (orderData.payment_method !== undefined) {
-        setClause.push(`payment_method = $${++paramCount}`);
-        values.push(orderData.payment_method);
-      }
-
-      if (orderData.notes !== undefined) {
-        setClause.push(`notes = $${++paramCount}`);
-        values.push(orderData.notes);
-      }
-
-      if (setClause.length === 0) {
-        return this.getOrderById(id);
-      }
-
-      values.push(id);
-
-      const query = `
-        UPDATE orders 
-        SET ${setClause.join(", ")}
-        WHERE id = $${++paramCount}
-        RETURNING id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
-                  payment_method, notes, created_at, updated_at
-      `;
-
-      const result = await this.pool.query(query, values);
-
-      if (result.rows.length === 0) {
-        return null;
-      }
-
-      return new Order(result.rows[0] as OrderData);
-    } catch (error) {
-      console.error("Error updating order:", error);
-      throw new Error("Failed to update order");
     }
   }
 
@@ -487,22 +332,6 @@ export default class OrderRepository {
     } catch (error) {
       console.error("Error getting orders totals:", error);
       throw new Error("Failed to retrieve orders totals");
-    }
-  }
-
-  /**
-   * Vérifier si une commande existe
-   * @param {number} id ID de la commande
-   * @returns {Promise<boolean>} True si existe, false sinon
-   */
-  async orderExists(id: number): Promise<boolean> {
-    try {
-      const query = "SELECT 1 FROM orders WHERE id = $1";
-      const result = await this.pool.query(query, [id]);
-      return result.rows.length > 0;
-    } catch (error) {
-      console.error("Error checking if order exists:", error);
-      return false;
     }
   }
 
