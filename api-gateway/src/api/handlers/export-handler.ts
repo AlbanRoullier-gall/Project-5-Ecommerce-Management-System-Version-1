@@ -5,6 +5,11 @@
 
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
+import {
+  YearExportRequestDTO,
+  OrderExportData,
+  CreditNoteExportData,
+} from "../../../../shared-types/pdf-export-service";
 
 /**
  * Exporte les commandes et avoirs pour une année spécifique
@@ -50,7 +55,14 @@ export const handleExportOrdersYear = async (
       return;
     }
 
-    const orderData = (await orderServiceResponse.json()) as any;
+    const orderData = (await orderServiceResponse.json()) as {
+      success: boolean;
+      year: number;
+      data: {
+        orders: OrderExportData[];
+        creditNotes: CreditNoteExportData[];
+      };
+    };
 
     if (!orderData.success) {
       res
@@ -61,6 +73,12 @@ export const handleExportOrdersYear = async (
 
     // 2. Appel direct au PDF Export Service
 
+    const exportRequest: YearExportRequestDTO = {
+      year: yearNumber,
+      orders: orderData.data.orders,
+      creditNotes: orderData.data.creditNotes,
+    };
+
     const pdfServiceResponse = await fetch(
       `${SERVICES["pdf-export"]}/api/admin/export/orders-year`,
       {
@@ -70,11 +88,7 @@ export const handleExportOrdersYear = async (
           "x-user-id": String(user.userId),
           "x-user-email": user.email,
         },
-        body: JSON.stringify({
-          year: yearNumber,
-          orders: orderData.data.orders,
-          creditNotes: orderData.data.creditNotes,
-        }),
+        body: JSON.stringify(exportRequest),
       }
     );
 

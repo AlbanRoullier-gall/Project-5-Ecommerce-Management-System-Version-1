@@ -94,16 +94,3 @@ export interface YearExportRequestDTO {
   orders: OrderExportData[];
   creditNotes: CreditNoteExportData[];
 }
-
-// ===== TYPES BASÉS SUR ExportResponseDTO =====
-
-/**
- * DTO pour la réponse d'export
- */
-export interface ExportResponseDTO {
-  success: boolean;
-  htmlBuffer?: Buffer;
-  error?: string;
-  filename?: string;
-  contentType?: string;
-}
