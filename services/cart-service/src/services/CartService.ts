@@ -121,15 +121,4 @@ export default class CartService {
 
     return clearedCart;
   }
-
-  /**
-   * Vérifier la configuration Redis
-   */
-  getConfigurationStatus(): any {
-    return {
-      redisConfigured: !!this.cartRepository,
-      redisHost: process.env.REDIS_HOST || "localhost",
-      redisPort: process.env.REDIS_PORT || "6379",
-    };
-  }
 }

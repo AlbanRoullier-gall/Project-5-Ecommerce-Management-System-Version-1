@@ -1,10 +1,11 @@
 import React from "react";
-import { Button, Modal } from "../../shared";
+import { Button, Modal, ItemDisplayTable } from "../../shared";
 import {
   CreditNotePublicDTO,
   CreditNoteItemPublicDTO,
   OrderPublicDTO,
 } from "../../../dto";
+import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
 
 interface CreditNoteDetailModalProps {
   isOpen: boolean;
@@ -348,174 +349,34 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
           )}
 
           {!itemsLoading && !itemsError && (
-            <div className="table-responsive" style={{ overflowX: "auto" }}>
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "separate",
-                  borderSpacing: 0,
-                  fontSize: "1rem",
-                  minWidth: "700px",
-                }}
-              >
-                <thead
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-                    color: "white",
-                  }}
-                >
-                  <tr>
-                    <th
-                      style={{
-                        textAlign: "left",
-                        padding: "1rem 1.25rem",
-                        fontWeight: 700,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      Produit
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "right",
-                        padding: "1rem 1.25rem",
-                        fontWeight: 700,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      Qté
-                    </th>
-                    <th
-                      className="mobile-hide"
-                      style={{
-                        textAlign: "right",
-                        padding: "1rem 1.25rem",
-                        fontWeight: 700,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      Prix unit. HT
-                    </th>
-                    <th
-                      className="mobile-hide"
-                      style={{
-                        textAlign: "right",
-                        padding: "1rem 1.25rem",
-                        fontWeight: 700,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      Prix unit. TTC
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "right",
-                        padding: "1rem 1.25rem",
-                        fontWeight: 700,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      Total HT
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "right",
-                        padding: "1rem 1.25rem",
-                        fontWeight: 700,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      Total TTC
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        style={{
-                          padding: "0.75rem",
-                          textAlign: "center",
-                          color: "#6b7280",
-                        }}
-                      >
-                        Aucun article
-                      </td>
-                    </tr>
-                  )}
-                  {items.map((it) => (
-                    <tr key={it.id} style={{ borderTop: "1px solid #f3f4f6" }}>
-                      <td
-                        style={{
-                          padding: "0.75rem 1rem",
-                          color: "#111827",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {it.productName}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem 1rem",
-                          textAlign: "right",
-                          color: "#111827",
-                        }}
-                      >
-                        {it.quantity}
-                      </td>
-                      <td
-                        className="mobile-hide"
-                        style={{
-                          padding: "0.75rem 1rem",
-                          textAlign: "right",
-                          color: "#111827",
-                        }}
-                      >
-                        {(Number(it.unitPriceHT) || 0).toFixed(2)} €
-                      </td>
-                      <td
-                        className="mobile-hide"
-                        style={{
-                          padding: "0.75rem 1rem",
-                          textAlign: "right",
-                          color: "#111827",
-                        }}
-                      >
-                        {(Number(it.unitPriceTTC) || 0).toFixed(2)} €
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem 1rem",
-                          textAlign: "right",
-                          color: "#13686a",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {(Number(it.totalPriceHT) || 0).toFixed(2)} €
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.75rem 1rem",
-                          textAlign: "right",
-                          color: "#13686a",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {(Number(it.totalPriceTTC) || 0).toFixed(2)} €
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ItemDisplayTable
+              items={
+                items.map((it) => ({
+                  productId: it.productId,
+                  productName: it.productName,
+                  description: null,
+                  imageUrl: null,
+                  quantity: it.quantity,
+                  vatRate: 21, // Valeur par défaut pour les avoirs
+                  unitPriceHT: it.unitPriceHT,
+                  unitPriceTTC: it.unitPriceTTC,
+                  totalPriceHT: it.totalPriceHT,
+                  totalPriceTTC: it.totalPriceTTC,
+                  createdAt: it.createdAt,
+                })) as BaseItemDTO[]
+              }
+              variant="credit-note"
+              showDescription={false}
+              showImage={false}
+              columns={{
+                product: true,
+                quantity: true,
+                unitPriceHT: true,
+                vatRate: false,
+                totalPriceHT: true,
+                totalPriceTTC: true,
+              }}
+            />
           )}
         </div>
 

@@ -743,15 +743,4 @@ export default class EmailService {
     }
   }
 
-  /**
-   * Vérifier la configuration Gmail
-   * @returns {Object} État de la configuration
-   */
-  getConfigurationStatus(): any {
-    return {
-      gmailConfigured: !!this.transporter,
-      adminEmail: this.adminEmail,
-      gmailUser: process.env.GMAIL_USER ? "configured" : "not configured",
-    };
-  }
 }

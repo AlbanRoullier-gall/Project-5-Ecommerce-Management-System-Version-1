@@ -5,15 +5,8 @@
 
 import { Request, Response } from "express";
 import { ResponseMapper } from "../mapper";
-import PaymentService from "../../services/PaymentService";
 
 export class HealthController {
-  private paymentService: PaymentService;
-
-  constructor() {
-    this.paymentService = new PaymentService();
-  }
-
   /**
    * Vérification de santé basique
    */
@@ -26,11 +19,16 @@ export class HealthController {
    */
   async detailedHealthCheck(req: Request, res: Response): Promise<void> {
     try {
-      const configStatus = this.paymentService.getConfigurationStatus();
-
       res.json({
         ...ResponseMapper.healthSuccess(),
-        stripeConfig: configStatus,
+        stripeConfig: {
+          publicKey: process.env.STRIPE_PUBLIC_KEY
+            ? "configured"
+            : "not configured",
+          secretKey: process.env.STRIPE_SECRET_KEY
+            ? "configured"
+            : "not configured",
+        },
       });
     } catch (error) {
       console.error("Health check error:", error);

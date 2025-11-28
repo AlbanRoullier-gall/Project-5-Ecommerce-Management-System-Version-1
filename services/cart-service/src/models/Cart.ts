@@ -207,25 +207,4 @@ export class Cart {
       this.total >= 0
     );
   }
-
-  /**
-   * Vérifier si le panier est vide
-   */
-  isEmpty(): boolean {
-    return this.items.length === 0;
-  }
-
-  /**
-   * Obtenir le nombre total d'articles
-   */
-  getTotalItems(): number {
-    return this.items.reduce((sum, item) => sum + item.quantity, 0);
-  }
-
-  /**
-   * Vérifier si le panier a expiré
-   */
-  isExpired(): boolean {
-    return new Date() > this.expiresAt;
-  }
 }

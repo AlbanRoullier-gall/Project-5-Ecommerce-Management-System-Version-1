@@ -4,8 +4,9 @@ import {
   OrderItemPublicDTO,
   OrderAddressPublicDTO,
 } from "../../../dto";
-import { Button, Modal } from "../../shared";
+import { Button, Modal, ItemDisplayTable } from "../../shared";
 import { CreateCreditNoteModal } from "../credit-note-view";
+import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
 
 interface OrderDetailModalProps {
   isOpen: boolean;
@@ -405,171 +406,12 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
               )}
 
               {!itemsLoading && !itemsError && (
-                <div className="table-responsive" style={{ overflowX: "auto" }}>
-                  <table
-                    style={{
-                      width: "100%",
-                      borderCollapse: "separate",
-                      borderSpacing: 0,
-                      fontSize: "0.9rem",
-                      minWidth: "700px",
-                    }}
-                  >
-                    <thead
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-                        color: "white",
-                      }}
-                    >
-                      <tr>
-                        <th
-                          style={{
-                            textAlign: "left",
-                            padding: "0.75rem 1rem",
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.5px",
-                            fontSize: "0.85rem",
-                          }}
-                        >
-                          Produit
-                        </th>
-                        <th
-                          style={{
-                            textAlign: "center",
-                            padding: "0.75rem 1rem",
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.5px",
-                            fontSize: "0.85rem",
-                          }}
-                        >
-                          Qté
-                        </th>
-                        <th
-                          className="mobile-hide"
-                          style={{
-                            textAlign: "right",
-                            padding: "0.75rem 1rem",
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.5px",
-                            fontSize: "0.85rem",
-                          }}
-                        >
-                          Prix unit. HT
-                        </th>
-                        <th
-                          className="mobile-hide"
-                          style={{
-                            textAlign: "right",
-                            padding: "0.75rem 1rem",
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.5px",
-                            fontSize: "0.85rem",
-                          }}
-                        >
-                          TVA
-                        </th>
-                        <th
-                          style={{
-                            textAlign: "right",
-                            padding: "1rem 1.25rem",
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.5px",
-                          }}
-                        >
-                          Total HT
-                        </th>
-                        <th
-                          style={{
-                            textAlign: "right",
-                            padding: "1rem 1.25rem",
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.5px",
-                          }}
-                        >
-                          Total TTC
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.length === 0 && (
-                        <tr>
-                          <td
-                            colSpan={6}
-                            style={{
-                              padding: "0.75rem",
-                              textAlign: "center",
-                              color: "#6b7280",
-                            }}
-                          >
-                            Aucun article
-                          </td>
-                        </tr>
-                      )}
-                      {items.map((it) => (
-                        <tr
-                          key={it.id}
-                          style={{ borderTop: "1px solid #f3f4f6" }}
-                        >
-                          <td
-                            style={{
-                              padding: "0.5rem 0.75rem",
-                              color: "#111827",
-                            }}
-                          >
-                            {it.productName}
-                          </td>
-                          <td
-                            style={{
-                              padding: "0.5rem 0.75rem",
-                              textAlign: "right",
-                            }}
-                          >
-                            {it.quantity}
-                          </td>
-                          <td
-                            style={{
-                              padding: "0.5rem 0.75rem",
-                              textAlign: "right",
-                            }}
-                          >
-                            {(Number(it.unitPriceHT) || 0).toFixed(2)} €
-                          </td>
-                          <td
-                            style={{
-                              padding: "0.5rem 0.75rem",
-                              textAlign: "right",
-                            }}
-                          >
-                            {(Number(it.vatRate) || 0).toFixed(0)}%
-                          </td>
-                          <td
-                            style={{
-                              padding: "0.5rem 0.75rem",
-                              textAlign: "right",
-                            }}
-                          >
-                            {(Number(it.totalPriceHT) || 0).toFixed(2)} €
-                          </td>
-                          <td
-                            style={{
-                              padding: "0.5rem 0.75rem",
-                              textAlign: "right",
-                            }}
-                          >
-                            {(Number(it.totalPriceTTC) || 0).toFixed(2)} €
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <ItemDisplayTable
+                  items={items as BaseItemDTO[]}
+                  variant="order"
+                  showDescription={false}
+                  showImage={false}
+                />
               )}
             </div>
 

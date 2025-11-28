@@ -145,7 +145,7 @@ export default class OrderService {
           vat_rate: item.vatRate,
           total_price_ht: item.totalPriceHT,
           total_price_ttc: item.totalPriceTTC,
-          created_at: new Date(),
+          created_at: item.createdAt,
           updated_at: new Date(),
         };
         await this.orderItemRepository.createOrderItem(itemData, client);

@@ -20,7 +20,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import { useCart, CartItemPublicDTO } from "../../contexts/CartContext";
 import { useCheckout } from "../../contexts/CheckoutContext";
-import { FormHeader, Alert, SummaryRow } from "../shared";
+import { FormHeader, Alert, SummaryRow, ItemDisplay } from "../shared";
 
 /**
  * Composant récapitulatif de commande et paiement
@@ -253,58 +253,19 @@ export default function CheckoutOrderSummary() {
             Votre commande
           </h3>
 
-          {/* Liste des produits commandés */}
+          {/* Liste des produits commandés - Utilise ItemDisplay */}
           <div style={{ marginBottom: "2rem" }}>
-            {cartItems.map((item, index) => {
-              return (
-                <div
-                  key={index}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "1.2rem",
-                    background: "#f8f9fa",
-                    borderRadius: "8px",
-                    marginBottom: "1rem",
-                    fontSize: "1.3rem",
-                  }}
-                >
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: "600", marginBottom: "0.3rem" }}>
-                      {item.productName || "Produit"}
-                    </div>
-                    <div style={{ color: "#666", fontSize: "1.2rem" }}>
-                      Quantité: {item.quantity} × {item.unitPriceTTC.toFixed(2)}{" "}
-                      €
-                    </div>
-                  </div>
-                  <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                    <div
-                      style={{
-                        fontSize: "1.2rem",
-                        color: "#333",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {item.unitPriceHT.toFixed(2)} € HTVA / unité
-                    </div>
-                    <div style={{ fontSize: "1.1rem", color: "#7a7a7a" }}>
-                      TVA {item.vatRate}%
-                    </div>
-                    <div
-                      style={{
-                        fontWeight: "700",
-                        color: "#13686a",
-                        marginTop: "0.4rem",
-                      }}
-                    >
-                      {item.totalPriceTTC.toFixed(2)} €
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {cartItems.map((item, index) => (
+              <ItemDisplay
+                key={index}
+                item={item}
+                variant="checkout"
+                showImage={true}
+                showDescription={false}
+                showQuantityControls={false}
+                showRemoveButton={false}
+              />
+            ))}
           </div>
 
           {/* Section des totaux */}

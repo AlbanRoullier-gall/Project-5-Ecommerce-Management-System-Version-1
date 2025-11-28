@@ -18,14 +18,6 @@ export interface ProductData {
   updated_at: Date;
 }
 
-/**
- * Résultat de validation du produit
- */
-export interface ProductValidationResult {
-  isValid: boolean;
-  errors: string[];
-}
-
 class Product {
   public readonly id: number;
   public readonly name: string;
@@ -60,47 +52,6 @@ class Product {
       this.vatRate <= 100 &&
       this.categoryId > 0
     );
-  }
-
-  /**
-   * Valider les données du produit
-   * @returns {Object} Résultat de validation
-   */
-  validate(): ProductValidationResult {
-    const errors: string[] = [];
-
-    if (!this.name || this.name.trim().length === 0) {
-      errors.push("Le nom du produit est requis");
-    }
-
-    if (this.price <= 0) {
-      errors.push("Le prix du produit doit être supérieur à 0");
-    }
-
-    if (this.vatRate < 0 || this.vatRate > 100) {
-      errors.push("Le taux de TVA doit être entre 0 et 100");
-    }
-
-    if (!this.categoryId || this.categoryId <= 0) {
-      errors.push("L'ID de catégorie est requis et doit être positif");
-    }
-
-    if (this.name && this.name.length > 255) {
-      errors.push("Le nom du produit doit faire moins de 255 caractères");
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-    };
-  }
-
-  /**
-   * Calculer le prix TTC
-   * @returns {number} Prix avec TVA
-   */
-  getPriceWithVAT(): number {
-    return this.price * (1 + this.vatRate / 100);
   }
 }
 

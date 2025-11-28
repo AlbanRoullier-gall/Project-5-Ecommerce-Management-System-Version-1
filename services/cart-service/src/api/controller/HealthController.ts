@@ -5,15 +5,8 @@
 
 import { Request, Response } from "express";
 import { ResponseMapper } from "../mapper";
-import CartService from "../../services/CartService";
 
 export class HealthController {
-  private cartService: CartService;
-
-  constructor() {
-    this.cartService = new CartService();
-  }
-
   /**
    * Vérification de santé basique
    */
@@ -26,11 +19,12 @@ export class HealthController {
    */
   async detailedHealthCheck(req: Request, res: Response): Promise<void> {
     try {
-      const configStatus = this.cartService.getConfigurationStatus();
-
       res.json({
         ...ResponseMapper.healthSuccess(),
-        redisConfig: configStatus,
+        redisConfig: {
+          redisHost: process.env.REDIS_HOST || "localhost",
+          redisPort: process.env.REDIS_PORT || "6379",
+        },
       });
     } catch (error) {
       console.error("Erreur de vérification de santé:", error);

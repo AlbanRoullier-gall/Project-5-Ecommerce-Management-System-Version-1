@@ -5,14 +5,8 @@
 
 import { Request, Response } from "express";
 import { ResponseMapper } from "../mapper";
-import EmailService from "../../services/EmailService";
 
 export class HealthController {
-  private emailService: EmailService;
-
-  constructor() {
-    this.emailService = new EmailService();
-  }
 
   /**
    * Vérification de santé basique
@@ -26,11 +20,12 @@ export class HealthController {
    */
   async detailedHealthCheck(req: Request, res: Response): Promise<void> {
     try {
-      const configStatus = this.emailService.getConfigurationStatus();
-
       res.json({
         ...ResponseMapper.healthSuccess(),
-        gmailConfig: configStatus,
+        gmailConfig: {
+          adminEmail: process.env.ADMIN_EMAIL || "not configured",
+          gmailUser: process.env.GMAIL_USER ? "configured" : "not configured",
+        },
       });
     } catch (error) {
       console.error("Health check error:", error);

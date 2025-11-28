@@ -23,31 +23,6 @@ class CustomerService {
     this.addressRepository = new CustomerAddressRepository(pool);
   }
 
-  // ===== MÉTHODES UTILITAIRES =====
-
-  /**
-   * Construire un CustomerData complet à partir de données partielles
-   * @param {Partial<CustomerData>} data Données partielles du client
-   * @returns {CustomerData} Données complètes du client
-   */
-  private buildCustomerData(data: Partial<CustomerData>): CustomerData {
-    if (!data.firstName || !data.lastName || !data.email) {
-      throw new Error(
-        "Les champs firstName, lastName et email sont obligatoires"
-      );
-    }
-
-    return {
-      customerId: 0, // Sera remplacé par la base de données
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      phoneNumber: data.phoneNumber || null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-  }
-
   // ===== CRÉATION DE CLIENTS =====
 
   /**
@@ -64,8 +39,22 @@ class CustomerService {
         throw new Error("Un client avec cet email existe déjà");
       }
 
-      // Construire les données complètes du client
-      const customerData = this.buildCustomerData(data);
+      // Valider et construire les données complètes du client
+      if (!data.firstName || !data.lastName || !data.email) {
+        throw new Error(
+          "Les champs firstName, lastName et email sont obligatoires"
+        );
+      }
+
+      const customerData: CustomerData = {
+        customerId: 0, // Sera remplacé par la base de données
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phoneNumber: data.phoneNumber || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
       const customer = new Customer(customerData);
 
       // Sauvegarder le client
@@ -128,8 +117,22 @@ class CustomerService {
         return existingCustomer.customerId;
       }
 
-      // Le client n'existe pas, le créer en utilisant buildCustomerData
-      const customerData = this.buildCustomerData(data);
+      // Le client n'existe pas, le créer
+      if (!data.firstName || !data.lastName || !data.email) {
+        throw new Error(
+          "Les champs firstName, lastName et email sont obligatoires"
+        );
+      }
+
+      const customerData: CustomerData = {
+        customerId: 0,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phoneNumber: data.phoneNumber || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
       const customer = new Customer(customerData);
       const savedCustomer = await this.customerRepository.save(customer);
 

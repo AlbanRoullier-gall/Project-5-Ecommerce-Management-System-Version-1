@@ -37,14 +37,6 @@ class Customer {
   }
 
   /**
-   * Obtenir le nom complet du client
-   * @returns {string} Nom complet
-   */
-  fullName(): string {
-    return `${this.firstName} ${this.lastName}`.trim();
-  }
-
-  /**
    * Valider les données de l'entité
    * @returns {Object} Résultat de validation
    */

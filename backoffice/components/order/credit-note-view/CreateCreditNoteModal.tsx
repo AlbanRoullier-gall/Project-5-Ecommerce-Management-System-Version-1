@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { Button, Modal, ErrorAlert } from "../../shared";
+import { Button, Modal, ErrorAlert, ItemDisplayTable } from "../../shared";
+import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
 import {
   CreditNoteCreateDTO,
   CreditNoteItemCreateDTO,
@@ -332,108 +333,33 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
             )}
 
             {!itemsLoading && !itemsError && (
-              <div className="table-responsive" style={{ overflowX: "auto" }}>
-                <table
-                  style={{
-                    width: "100%",
-                    borderCollapse: "separate",
-                    borderSpacing: 0,
-                    fontSize: "0.95rem",
-                    minWidth: "500px",
-                  }}
-                >
-                  <thead style={{ background: "#f3f4f6", color: "#374151" }}>
-                    <tr>
-                      <th style={{ textAlign: "left", padding: "0.5rem" }}>
-                        Sélection
-                      </th>
-                      <th style={{ textAlign: "left", padding: "0.5rem" }}>
-                        Produit
-                      </th>
-                      <th style={{ textAlign: "right", padding: "0.5rem" }}>
-                        Qté
-                      </th>
-                      <th
-                        className="mobile-hide"
-                        style={{ textAlign: "right", padding: "0.5rem" }}
-                      >
-                        Total HT
-                      </th>
-                      <th style={{ textAlign: "right", padding: "0.5rem" }}>
-                        Total TTC
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orderItems.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={5}
-                          style={{
-                            padding: "0.5rem",
-                            textAlign: "center",
-                            color: "#6b7280",
-                          }}
-                        >
-                          Aucun article
-                        </td>
-                      </tr>
-                    )}
-                    {orderItems.map((it) => {
-                      const checked = selectedItemIds.includes(it.id);
-                      return (
-                        <tr
-                          key={it.id}
-                          style={{ borderTop: "1px solid #f3f4f6" }}
-                        >
-                          <td style={{ padding: "0.5rem" }}>
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={(e) => {
-                                setSelectedItemIds((prev) => {
-                                  const set = new Set(prev);
-                                  if (e.target.checked) set.add(it.id);
-                                  else set.delete(it.id);
-                                  return Array.from(set);
-                                });
-                              }}
-                            />
-                          </td>
-                          <td style={{ padding: "0.5rem", color: "#111827" }}>
-                            {it.productName}
-                          </td>
-                          <td
-                            style={{
-                              padding: "0.5rem",
-                              textAlign: "right",
-                            }}
-                          >
-                            {it.quantity}
-                          </td>
-                          <td
-                            className="mobile-hide"
-                            style={{
-                              padding: "0.5rem",
-                              textAlign: "right",
-                            }}
-                          >
-                            {(Number(it.totalPriceHT) || 0).toFixed(2)} €
-                          </td>
-                          <td
-                            style={{
-                              padding: "0.5rem",
-                              textAlign: "right",
-                            }}
-                          >
-                            {(Number(it.totalPriceTTC) || 0).toFixed(2)} €
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <ItemDisplayTable
+                items={orderItems as BaseItemDTO[]}
+                variant="credit-note"
+                showDescription={false}
+                showImage={false}
+                columns={{
+                  selection: true,
+                  product: true,
+                  quantity: true,
+                  unitPriceHT: false,
+                  vatRate: false,
+                  totalPriceHT: true,
+                  totalPriceTTC: true,
+                }}
+                selectedItemIds={selectedItemIds}
+                getItemId={(item) => (item as OrderItemPublicDTO).id}
+                onSelectionChange={(itemId, checked) => {
+                  setSelectedItemIds((prev) => {
+                    const set = new Set(prev);
+                    const numId =
+                      typeof itemId === "number" ? itemId : Number(itemId);
+                    if (checked) set.add(numId);
+                    else set.delete(numId);
+                    return Array.from(set);
+                  });
+                }}
+              />
             )}
           </div>
         )}

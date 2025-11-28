@@ -63,13 +63,6 @@ export class User {
   }
 
   /**
-   * Obtenir le nom complet
-   */
-  fullName(): string {
-    return `${this.firstName} ${this.lastName}`;
-  }
-
-  /**
    * Vérifier un mot de passe
    */
   async verifyPassword(password: string): Promise<boolean> {

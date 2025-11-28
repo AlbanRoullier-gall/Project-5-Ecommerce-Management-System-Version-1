@@ -50,23 +50,24 @@ export class OrderMapper {
   /**
    * Convertir le modèle OrderItem en OrderItemPublicDTO
    * Harmonisé avec CartItemPublicDTO
+   * Structure simplifiée grâce à BaseItemDTO
    */
   static orderItemToPublicDTO(orderItem: any): OrderItemPublicDTO {
     return {
-      id: orderItem.id,
-      orderId: orderItem.orderId,
+      id: orderItem.id, // Spécifique à Order (auto-increment)
+      orderId: orderItem.orderId, // Spécifique à Order
       productId: orderItem.productId,
-      productName: orderItem.productName || "", // Garantir une valeur non vide
+      productName: orderItem.productName || "",
       description: orderItem.description ?? null,
       imageUrl: orderItem.imageUrl ?? null,
       quantity: orderItem.quantity,
+      vatRate: orderItem.vatRate || 21,
       unitPriceHT: orderItem.unitPriceHT,
       unitPriceTTC: orderItem.unitPriceTTC,
-      vatRate: orderItem.vatRate || 21,
       totalPriceHT: orderItem.totalPriceHT,
       totalPriceTTC: orderItem.totalPriceTTC,
       createdAt: orderItem.createdAt,
-      updatedAt: orderItem.updatedAt,
+      updatedAt: orderItem.updatedAt, // Spécifique à Order
     };
   }
 

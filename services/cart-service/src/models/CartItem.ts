@@ -55,41 +55,6 @@ export class CartItem {
   }
 
   /**
-   * Calculer le total pour cet article (alias pour totalPriceTTC)
-   */
-  getTotal(): number {
-    return this.totalPriceTTC;
-  }
-
-  /**
-   * Prix unitaire HT (retourne la valeur stockée)
-   */
-  getUnitPriceHT(): number {
-    return this.unitPriceHT;
-  }
-
-  /**
-   * Prix unitaire TTC (retourne la valeur stockée)
-   */
-  getUnitPriceTTC(): number {
-    return this.unitPriceTTC;
-  }
-
-  /**
-   * Total HT (retourne la valeur stockée)
-   */
-  getTotalHT(): number {
-    return this.totalPriceHT;
-  }
-
-  /**
-   * Total TTC (retourne la valeur stockée)
-   */
-  getTotalTTC(): number {
-    return this.totalPriceTTC;
-  }
-
-  /**
    * Valider l'article
    */
   isValid(): boolean {

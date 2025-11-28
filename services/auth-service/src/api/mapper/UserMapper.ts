@@ -33,7 +33,7 @@ export class UserMapper {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      fullName: user.fullName(),
+      fullName: `${user.firstName} ${user.lastName}`,
       isActive: user.isActive,
       isBackofficeApproved: user.isBackofficeApproved,
       isBackofficeRejected: user.isBackofficeRejected,

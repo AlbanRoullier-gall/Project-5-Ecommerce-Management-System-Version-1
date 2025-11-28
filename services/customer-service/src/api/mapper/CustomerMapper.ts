@@ -64,7 +64,7 @@ export class CustomerMapper {
       lastName: customer.lastName,
       email: customer.email,
       phoneNumber: customer.phoneNumber,
-      fullName: customer.fullName(),
+      fullName: `${customer.firstName} ${customer.lastName}`.trim(),
     };
   }
 

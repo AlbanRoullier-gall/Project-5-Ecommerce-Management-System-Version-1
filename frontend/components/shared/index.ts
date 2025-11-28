@@ -24,5 +24,8 @@ export { default as QuantitySelector } from "./QuantitySelector";
 export { default as SummaryRow } from "./SummaryRow";
 export type { SummaryRowVariant } from "./SummaryRow";
 
+// Composants d'affichage
+export { default as ItemDisplay } from "./ItemDisplay";
+
 // Utilitaires
 export { formatPrice } from "./utils/formatPrice";

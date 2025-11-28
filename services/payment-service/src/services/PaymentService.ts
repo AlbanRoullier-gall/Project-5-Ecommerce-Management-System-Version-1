@@ -259,21 +259,5 @@ export default class PaymentService {
       );
     }
   }
-
-  /**
-   * Vérifier la configuration Stripe
-   * @returns {Object} État de la configuration
-   */
-  getConfigurationStatus(): any {
-    return {
-      stripeConfigured: !!this.stripe,
-      publicKey: process.env.STRIPE_PUBLIC_KEY
-        ? "configured"
-        : "not configured",
-      secretKey: process.env.STRIPE_SECRET_KEY
-        ? "configured"
-        : "not configured",
-    };
-  }
 }
 console.log("STRIPE_SECRET_KEY:", process.env.STRIPE_SECRET_KEY);
