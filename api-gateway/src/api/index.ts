@@ -27,6 +27,7 @@ import {
   handleFinalizePayment,
 } from "./handlers/payment-handler";
 import { handleExportOrdersYear } from "./handlers/export-handler";
+import { handleDashboardStatistics } from "./handlers/statistics-handler";
 
 export class ApiRouter {
   // Multer n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
@@ -119,6 +120,13 @@ export class ApiRouter {
       "/api/admin/exports/orders-year/:year",
       requireAuth,
       handleExportOrdersYear
+    );
+
+    // Statistics - Route orchestrée pour le dashboard
+    app.get(
+      "/api/admin/statistics/dashboard",
+      requireAuth,
+      handleDashboardStatistics
     );
 
     // ===== PROXY AUTOMATIQUE POUR TOUTES LES AUTRES ROUTES =====

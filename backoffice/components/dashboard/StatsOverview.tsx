@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { StatCard } from "../shared";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
@@ -10,7 +10,7 @@ interface StatsData {
   customersCount: number;
   ordersCount: number;
   totalRevenue: number; // TTC
-  totalRevenueHT?: number; // HT (admin)
+  totalRevenueHT: number; // HT (admin)
 }
 
 const formatCurrency = (amount: number): string => {
@@ -29,95 +29,54 @@ const StatsOverview: React.FC = () => {
     new Date().getFullYear()
   );
 
-  const getAuthToken = () => localStorage.getItem("auth_token");
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
+      const token = localStorage.getItem("auth_token");
       if (!token) throw new Error("Non authentifié");
 
-      // Appels parallèles vers l'API Gateway (admin routes)
-      // Note: Les clients ne sont pas filtrés par année
-      const [productsRes, customersRes, ordersRes, revenueRes] =
-        await Promise.all([
-          fetch(`${API_URL}/api/admin/products?year=${selectedYear}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_URL}/api/admin/customers`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_URL}/api/admin/orders?year=${selectedYear}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          // Statistiques admin pour récupérer TTC et HT
-          fetch(`${API_URL}/api/admin/statistics/orders?year=${selectedYear}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
-
-      if (!productsRes.ok) throw new Error("Erreur chargement produits");
-      if (!customersRes.ok) throw new Error("Erreur chargement clients");
-      if (!ordersRes.ok) throw new Error("Erreur chargement commandes");
-      if (!revenueRes.ok) throw new Error("Erreur chargement statistiques");
-
-      const [productsJson, customersJson, ordersJson, revenueJson] =
-        await Promise.all([
-          productsRes.json(),
-          customersRes.json(),
-          ordersRes.json(),
-          revenueRes.json(),
-        ]);
-
-      const productsCount =
-        productsJson?.data?.products?.length ??
-        productsJson?.products?.length ??
-        (Array.isArray(productsJson) ? productsJson.length : 0);
-
-      const customersCount =
-        customersJson?.data?.customers?.length ??
-        customersJson?.customers?.length ??
-        (Array.isArray(customersJson) ? customersJson.length : 0);
-
-      const ordersCount =
-        ordersJson?.data?.pagination?.total ??
-        ordersJson?.pagination?.total ??
-        ordersJson?.data?.orders?.length ??
-        ordersJson?.orders?.length ??
-        (Array.isArray(ordersJson) ? ordersJson.length : 0);
-
-      const totalRevenue = Number(
-        revenueJson?.data?.statistics?.totalAmount ??
-          revenueJson?.statistics?.totalAmount ??
-          revenueJson?.data?.totalAmount ??
-          revenueJson?.totalAmount ??
-          0
+      const response = await fetch(
+        `${API_URL}/api/admin/statistics/dashboard?year=${selectedYear}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
 
-      const totalRevenueHT = Number(
-        revenueJson?.data?.statistics?.totalAmountHT ??
-          revenueJson?.statistics?.totalAmountHT ??
-          0
-      );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message ||
+            errorData.error ||
+            "Erreur lors du chargement des statistiques"
+        );
+      }
+
+      const {
+        data: { statistics },
+      } = await response.json();
+
+      if (!statistics) {
+        throw new Error("Format de réponse invalide");
+      }
 
       setStats({
-        productsCount,
-        customersCount,
-        ordersCount,
-        totalRevenue,
-        totalRevenueHT,
+        productsCount: statistics.productsCount ?? 0,
+        customersCount: statistics.customersCount ?? 0,
+        ordersCount: statistics.ordersCount ?? 0,
+        totalRevenue: statistics.totalRevenue ?? 0,
+        totalRevenueHT: statistics.totalRevenueHT ?? 0,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur lors du chargement");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedYear]);
 
   useEffect(() => {
     loadStats();
-  }, [selectedYear]);
+  }, [loadStats]);
 
   if (isLoading) {
     return (
@@ -146,7 +105,7 @@ const StatsOverview: React.FC = () => {
   // Générer les années disponibles (2025 à année actuelle + 5)
   const currentYear = new Date().getFullYear();
   const availableYears = Array.from(
-    { length: currentYear - 2025 + 6 },
+    { length: currentYear - 2019 },
     (_, i) => 2025 + i
   );
 
