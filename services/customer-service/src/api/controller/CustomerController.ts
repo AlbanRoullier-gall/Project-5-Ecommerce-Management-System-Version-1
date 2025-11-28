@@ -288,4 +288,39 @@ export class CustomerController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Valider les données client (sans les créer)
+   * Endpoint public pour valider les données client avant soumission
+   */
+  async validateCustomerData(req: Request, res: Response): Promise<void> {
+    try {
+      const customerData: CustomerResolveOrCreateDTO = req.body;
+
+      const validationResult =
+        this.customerService.validateCustomerData(customerData);
+
+      if (!validationResult.isValid) {
+        res.status(400).json({
+          success: false,
+          isValid: false,
+          errors: validationResult.errors,
+          timestamp: new Date().toISOString(),
+          status: 400,
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        isValid: true,
+        message: "Les données client sont valides",
+        timestamp: new Date().toISOString(),
+        status: 200,
+      });
+    } catch (error: any) {
+      console.error("Validate customer data error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

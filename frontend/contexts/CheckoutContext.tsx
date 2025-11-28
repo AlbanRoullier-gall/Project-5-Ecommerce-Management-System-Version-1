@@ -27,6 +27,23 @@ export interface AddressValidationResult {
 }
 
 /**
+ * Erreur de validation par champ
+ */
+export interface FieldValidationError {
+  field: string;
+  message: string;
+}
+
+/**
+ * Résultat de validation des données client
+ */
+export interface CustomerValidationResult {
+  isValid: boolean;
+  errors?: FieldValidationError[];
+  generalError?: string;
+}
+
+/**
  * Résultat de la finalisation de commande
  */
 export interface CompleteOrderResult {
@@ -52,6 +69,9 @@ interface CheckoutContextType {
   updateBillingField: (field: string, value: string) => void;
   setUseSameBillingAddress: (useSame: boolean) => void;
   validateAddresses: () => Promise<AddressValidationResult>;
+
+  // Action de validation des données client
+  validateCustomerData: () => Promise<CustomerValidationResult>;
 
   // Action de finalisation de commande
   completeOrder: (
@@ -274,6 +294,47 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
     }, [addressData]);
 
   /**
+   * Valide les données client
+   * Délègue la validation au service customer-service pour cohérence et sécurité
+   * Retourne les erreurs structurées par champ
+   */
+  const validateCustomerData = useCallback(
+    async (): Promise<CustomerValidationResult> => {
+      try {
+        const response = await fetch(
+          `${API_URL}/api/customers/validate`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include", // Important pour CORS avec credentials: true
+            body: JSON.stringify(customerData),
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.isValid) {
+          return {
+            isValid: false,
+            errors: result.errors || [],
+            generalError:
+              result.message || "Erreur lors de la validation des données client",
+          };
+        }
+
+        return { isValid: true };
+      } catch (error) {
+        console.error("Erreur lors de la validation des données client:", error);
+        return {
+          isValid: false,
+          generalError: "Erreur lors de la validation des données client",
+        };
+      }
+    },
+    [customerData]
+  );
+
+  /**
    * Fonction principale pour finaliser la commande
    * Délègue toute l'orchestration à l'API Gateway
    */
@@ -370,6 +431,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
     updateBillingField,
     setUseSameBillingAddress,
     validateAddresses,
+    validateCustomerData,
     completeOrder,
   };
 

@@ -25,4 +25,4 @@ export { default as SummaryRow } from "./SummaryRow";
 export type { SummaryRowVariant } from "./SummaryRow";
 
 // Utilitaires
-export { formatPrice, getPriceWithVat } from "./utils/formatPrice";
+export { formatPrice } from "./utils/formatPrice";

@@ -9,13 +9,3 @@ export const formatPrice = (price: number): string => {
     currency: "EUR",
   }).format(price);
 };
-
-/**
- * Calcule le prix TTC à partir du prix HT et du taux de TVA
- * @param priceHT - Prix hors taxes
- * @param vatRate - Taux de TVA en pourcentage
- * @returns Prix TTC
- */
-export const getPriceWithVat = (priceHT: number, vatRate: number): number => {
-  return priceHT * (1 + vatRate / 100);
-};

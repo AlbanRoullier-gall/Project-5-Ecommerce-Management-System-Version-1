@@ -255,8 +255,8 @@ export default function ProductPage() {
                           "0 2px 8px rgba(19, 104, 106, 0.2)";
                       }}
                       onClick={async () => {
-                        const priceWithVat =
-                          product.price * (1 + product.vatRate / 100);
+                        // Utiliser le prix TTC calculé côté serveur (garantit la cohérence et la sécurité)
+                        const priceWithVat = product.priceTTC;
                         const imageUrl =
                           product.images && product.images.length > 0
                             ? `${API_URL}/${product.images[0].filePath}`

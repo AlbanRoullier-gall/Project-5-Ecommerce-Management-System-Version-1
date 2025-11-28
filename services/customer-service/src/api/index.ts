@@ -234,6 +234,13 @@ export class ApiRouter {
       }
     );
 
+    // Valider les données client (route publique, sans authentification)
+    // Route sous /api/customers pour cohérence avec l'architecture REST
+    // Note: Pas de middleware Joi ici car on veut retourner toutes les erreurs structurées par champ
+    app.post("/api/customers/validate", (req: Request, res: Response) => {
+      this.customerController.validateCustomerData(req, res);
+    });
+
     // Récupérer uniquement le customerId par email (route optimisée - doit être avant la route générale)
     app.get(
       "/api/customers/by-email/:email/id",

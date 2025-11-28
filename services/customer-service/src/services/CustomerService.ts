@@ -523,6 +523,91 @@ class CustomerService {
 
     return { isValid: true };
   }
+
+  /**
+   * Valider les données client (sans les créer)
+   * Utilise la validation Joi pour retourner des erreurs structurées par champ
+   * @param customerData Données client à valider
+   * @returns Résultat de validation avec erreurs par champ
+   */
+  validateCustomerData(customerData: {
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+  }): {
+    isValid: boolean;
+    errors: { field: string; message: string }[];
+  } {
+    const errors: { field: string; message: string }[] = [];
+
+    // Validation de l'email (obligatoire)
+    if (!customerData.email || customerData.email.trim().length === 0) {
+      errors.push({
+        field: "email",
+        message: "L'email est requis",
+      });
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerData.email)) {
+      errors.push({
+        field: "email",
+        message: "L'email doit être une adresse email valide",
+      });
+    } else if (customerData.email.length > 255) {
+      errors.push({
+        field: "email",
+        message: "L'email ne doit pas dépasser 255 caractères",
+      });
+    }
+
+    // Validation du prénom (optionnel mais recommandé pour le checkout)
+    if (customerData.firstName !== undefined) {
+      if (customerData.firstName.trim().length === 0) {
+        errors.push({
+          field: "firstName",
+          message: "Le prénom ne peut pas être vide",
+        });
+      } else if (customerData.firstName.length > 100) {
+        errors.push({
+          field: "firstName",
+          message: "Le prénom ne doit pas dépasser 100 caractères",
+        });
+      }
+    }
+
+    // Validation du nom (optionnel mais recommandé pour le checkout)
+    if (customerData.lastName !== undefined) {
+      if (customerData.lastName.trim().length === 0) {
+        errors.push({
+          field: "lastName",
+          message: "Le nom ne peut pas être vide",
+        });
+      } else if (customerData.lastName.length > 100) {
+        errors.push({
+          field: "lastName",
+          message: "Le nom ne doit pas dépasser 100 caractères",
+        });
+      }
+    }
+
+    // Validation du téléphone (optionnel)
+    if (
+      customerData.phoneNumber !== undefined &&
+      customerData.phoneNumber !== null &&
+      customerData.phoneNumber.trim().length > 0
+    ) {
+      if (customerData.phoneNumber.length > 20) {
+        errors.push({
+          field: "phoneNumber",
+          message: "Le numéro de téléphone ne doit pas dépasser 20 caractères",
+        });
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
 }
 
 export default CustomerService;

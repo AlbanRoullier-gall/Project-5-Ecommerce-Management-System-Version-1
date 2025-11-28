@@ -19,7 +19,6 @@ import {
 } from "../dto";
 import { ProductData } from "../../models/Product";
 import { CategoryData } from "../../models/Category";
-import { ProductImageData } from "../../models/ProductImage";
 
 /**
  * Classe Mapper Produit
@@ -61,14 +60,27 @@ export class ProductMapper {
 
   /**
    * Convertir le modèle Product vers ProductPublicDTO
+   * Calcule le prix TTC côté serveur pour garantir la cohérence et la sécurité
    */
   static productToPublicDTO(product: any): ProductPublicDTO {
+    // Calculer le prix TTC : utiliser la méthode du modèle si disponible, sinon calculer directement
+    const price = product.price || 0;
+    const vatRate = product.vatRate || 0;
+
+    let priceTTC: number;
+    if (typeof product.getPriceWithVAT === "function") {
+      priceTTC = product.getPriceWithVAT();
+    } else {
+      priceTTC = price * (1 + vatRate / 100);
+    }
+
     return {
       id: product.id,
       name: product.name,
       description: product.description,
-      price: product.price,
-      vatRate: product.vatRate,
+      price: price,
+      priceTTC: Math.round(priceTTC * 100) / 100, // Arrondir à 2 décimales
+      vatRate: vatRate,
       categoryId: product.categoryId,
       isActive: product.isActive,
       createdAt: product.createdAt,

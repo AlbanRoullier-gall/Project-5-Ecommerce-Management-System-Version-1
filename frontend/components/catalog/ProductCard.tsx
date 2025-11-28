@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { ProductPublicDTO } from "../../dto";
 import { useCart } from "../../contexts/CartContext";
-import { formatPrice, getPriceWithVat } from "../shared";
+import { formatPrice } from "../shared";
 
 /**
  * URL de l'API depuis les variables d'environnement
@@ -55,9 +55,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   /**
-   * Calcule le prix TTC (avec TVA)
+   * Utilise le prix TTC calculé côté serveur (garantit la cohérence et la sécurité)
    */
-  const priceWithVat = getPriceWithVat(product.price, product.vatRate);
+  const priceWithVat = product.priceTTC;
 
   /**
    * Trouve l'article dans le panier s'il existe

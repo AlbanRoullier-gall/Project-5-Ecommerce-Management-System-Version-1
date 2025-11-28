@@ -35,6 +35,7 @@ export interface ProductPublicDTO {
     name: string;
     description: string | null;
     price: number;
+    priceTTC: number;
     vatRate: number;
     categoryId: number;
     isActive: boolean;

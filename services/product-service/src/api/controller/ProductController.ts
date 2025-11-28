@@ -214,17 +214,38 @@ export class ProductController {
 
       const result = await this.productService.listProducts(options);
 
-      // Ajouter les images à chaque produit
+      // Mapper les produits vers ProductPublicDTO et ajouter les images
       if (result.products) {
-        for (let product of result.products) {
-          const images = await this.productService.listImages(product.id!);
-          (product as any).images = images.map((image) =>
-            ProductMapper.productImageToPublicDTO(image)
-          );
-        }
-      }
+        const mappedProducts = await Promise.all(
+          result.products.map(async (product) => {
+            // Mapper le produit vers DTO (inclut maintenant priceTTC)
+            const productDTO = ProductMapper.productToPublicDTO(product);
+            // Ajouter les images
+            try {
+              const images = await this.productService.listImages(product.id!);
+              productDTO.images = images.map((image) =>
+                ProductMapper.productImageToPublicDTO(image)
+              );
+            } catch (imageError) {
+              console.error(
+                `Erreur lors du chargement des images pour le produit ${product.id}:`,
+                imageError
+              );
+              productDTO.images = [];
+            }
+            return productDTO;
+          })
+        );
 
-      res.json(ResponseMapper.productListed(result));
+        res.json(
+          ResponseMapper.productListed({
+            ...result,
+            products: mappedProducts,
+          })
+        );
+      } else {
+        res.json(ResponseMapper.productListed(result));
+      }
     } catch (error: any) {
       console.error("Erreur lors de la liste des produits:", error);
       res.status(500).json(ResponseMapper.internalServerError());

@@ -14,7 +14,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useCheckout } from "../../contexts/CheckoutContext";
-import { FormInput, FormContainer, Button, FormHeader } from "../shared";
+import { FormInput, FormContainer, Button, FormHeader, Alert } from "../shared";
 
 /**
  * Composant formulaire informations client
@@ -22,13 +22,15 @@ import { FormInput, FormContainer, Button, FormHeader } from "../shared";
  */
 export default function CheckoutCustomerForm() {
   const router = useRouter();
-  const { customerData, updateCustomerData } = useCheckout();
+  const { customerData, updateCustomerData, validateCustomerData } = useCheckout();
   // État local du composant
   const [isLoading, setIsLoading] = useState(false); // Indicateur de chargement
+  const [errors, setErrors] = useState<{ [key: string]: string }>({}); // Erreurs par champ
+  const [generalError, setGeneralError] = useState<string | null>(null); // Erreur générale
 
   /**
    * Gère les changements dans les champs du formulaire
-   * Met à jour le contexte checkout
+   * Met à jour le contexte checkout et efface l'erreur du champ modifié
    * @param e - Événement de changement sur un input
    */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,33 +39,79 @@ export default function CheckoutCustomerForm() {
       ...customerData,
       [name]: value,
     });
+
+    // Effacer l'erreur du champ modifié
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+
+    // Effacer l'erreur générale si présente
+    if (generalError) {
+      setGeneralError(null);
+    }
   };
 
   /**
    * Gère la soumission du formulaire
-   * Valide que tous les champs obligatoires (prénom, nom, email) sont remplis
+   * Valide les données via l'API avant de continuer
    * @param e - Événement de soumission du formulaire
    */
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation des champs obligatoires
-    if (
-      !customerData.firstName ||
-      !customerData.lastName ||
-      !customerData.email
-    ) {
-      alert("Veuillez remplir tous les champs obligatoires");
-      return;
-    }
+    // Réinitialiser les erreurs
+    setErrors({});
+    setGeneralError(null);
+    setIsLoading(true);
 
-    // Rediriger vers la page d'adresse si la validation réussit
-    router.push("/checkout/address");
+    try {
+      // Validation côté serveur
+      const validationResult = await validateCustomerData();
+
+      if (!validationResult.isValid) {
+        // Afficher les erreurs par champ
+        if (validationResult.errors && validationResult.errors.length > 0) {
+          const fieldErrors: { [key: string]: string } = {};
+          validationResult.errors.forEach((error) => {
+            fieldErrors[error.field] = error.message;
+          });
+          setErrors(fieldErrors);
+        }
+
+        // Afficher l'erreur générale si présente
+        if (validationResult.generalError) {
+          setGeneralError(validationResult.generalError);
+        }
+
+        setIsLoading(false);
+        return;
+      }
+
+      // Si la validation réussit, rediriger vers la page d'adresse
+      router.push("/checkout/address");
+    } catch (error) {
+      console.error("Erreur lors de la validation:", error);
+      setGeneralError("Une erreur est survenue lors de la validation");
+      setIsLoading(false);
+    }
   };
 
   return (
     <FormContainer>
       <FormHeader stepNumber={1} title="Vos informations personnelles" />
+
+      {/* Affichage de l'erreur générale */}
+      {generalError && (
+        <Alert
+          type="error"
+          message={generalError}
+          onClose={() => setGeneralError(null)}
+        />
+      )}
 
       <form onSubmit={handleSubmit}>
         {/* Grille de champs du formulaire */}
@@ -79,45 +127,101 @@ export default function CheckoutCustomerForm() {
           {/* Civilité supprimée */}
 
           {/* Champ prénom */}
-          <FormInput
+          <div>
+            <FormInput
               name="firstName"
-            label="Prénom"
+              label="Prénom"
               value={customerData.firstName || ""}
               onChange={handleChange}
               required
               placeholder="Votre prénom"
             />
+            {errors.firstName && (
+              <p
+                style={{
+                  color: "#ef4444",
+                  fontSize: "1.2rem",
+                  marginTop: "0.5rem",
+                  marginBottom: 0,
+                }}
+              >
+                {errors.firstName}
+              </p>
+            )}
+          </div>
 
           {/* Champ nom */}
-          <FormInput
+          <div>
+            <FormInput
               name="lastName"
-            label="Nom"
+              label="Nom"
               value={customerData.lastName || ""}
               onChange={handleChange}
               required
               placeholder="Votre nom"
             />
+            {errors.lastName && (
+              <p
+                style={{
+                  color: "#ef4444",
+                  fontSize: "1.2rem",
+                  marginTop: "0.5rem",
+                  marginBottom: 0,
+                }}
+              >
+                {errors.lastName}
+              </p>
+            )}
+          </div>
 
           {/* Champ email */}
-          <FormInput
-            name="email"
-            label="Email"
+          <div>
+            <FormInput
+              name="email"
+              label="Email"
               type="email"
               value={customerData.email || ""}
               onChange={handleChange}
               required
               placeholder="votre.email@exemple.com"
             />
+            {errors.email && (
+              <p
+                style={{
+                  color: "#ef4444",
+                  fontSize: "1.2rem",
+                  marginTop: "0.5rem",
+                  marginBottom: 0,
+                }}
+              >
+                {errors.email}
+              </p>
+            )}
+          </div>
 
           {/* Champ téléphone (optionnel) */}
-          <FormInput
-            name="phoneNumber"
-            label="Téléphone"
+          <div>
+            <FormInput
+              name="phoneNumber"
+              label="Téléphone"
               type="tel"
               value={customerData.phoneNumber || ""}
               onChange={handleChange}
               placeholder="+32 123 45 67 89"
             />
+            {errors.phoneNumber && (
+              <p
+                style={{
+                  color: "#ef4444",
+                  fontSize: "1.2rem",
+                  marginTop: "0.5rem",
+                  marginBottom: 0,
+                }}
+              >
+                {errors.phoneNumber}
+              </p>
+            )}
+          </div>
 
           {/* Date de naissance supprimée */}
         </div>

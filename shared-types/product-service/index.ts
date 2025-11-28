@@ -39,7 +39,8 @@ export interface ProductPublicDTO {
   id: number;
   name: string;
   description: string | null;
-  price: number;
+  price: number; // Prix HT
+  priceTTC: number; // Prix TTC calculé côté serveur
   vatRate: number;
   categoryId: number;
   isActive: boolean;

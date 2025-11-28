@@ -1,6 +1,10 @@
 import React from "react";
 import { ProductPublicDTO } from "../../dto";
-import { formatPrice, getPriceWithVat } from "../shared";
+import { formatPrice } from "../shared";
+
+interface PriceBoxProps {
+  product: ProductPublicDTO;
+}
 
 /**
  * Composant d'affichage du prix du produit
@@ -11,9 +15,9 @@ import { formatPrice, getPriceWithVat } from "../shared";
  */
 const PriceBox: React.FC<PriceBoxProps> = ({ product }) => {
   /**
-   * Calcule le prix TTC du produit
+   * Utilise le prix TTC calculé côté serveur (garantit la cohérence et la sécurité)
    */
-  const priceWithVat = getPriceWithVat(product.price, product.vatRate);
+  const priceWithVat = product.priceTTC;
   return (
     <section
       style={{
