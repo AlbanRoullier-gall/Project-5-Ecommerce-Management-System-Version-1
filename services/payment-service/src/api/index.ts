@@ -97,12 +97,20 @@ export class ApiRouter {
           .unknown(true)
           .required(),
         customer: Joi.object({
-          email: Joi.string().email().required(),
+          email: Joi.string().email().optional(),
           name: Joi.string().max(100).optional().allow(null, ""),
           phone: Joi.string().max(20).allow("", null).optional(),
         })
           .unknown(true)
-          .required(),
+          .optional(),
+        customerData: Joi.object({
+          firstName: Joi.string().optional().allow(null, ""),
+          lastName: Joi.string().optional().allow(null, ""),
+          email: Joi.string().email().required(),
+          phoneNumber: Joi.string().optional().allow(null, ""),
+        })
+          .unknown(true)
+          .optional(),
         successUrl: Joi.string().required(),
         cancelUrl: Joi.string().required(),
         metadata: Joi.object().optional(),

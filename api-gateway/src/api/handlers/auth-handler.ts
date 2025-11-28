@@ -109,15 +109,7 @@ export const handlePasswordResetConfirm = async (
       });
     }
 
-    // Validation du mot de passe côté client
-    if (newPassword.length < 6) {
-      return res.status(400).json({
-        error: "Mot de passe invalide",
-        message: "Le mot de passe doit contenir au moins 6 caractères",
-      });
-    }
-
-    // Appel direct au Auth Service avec le DTO PasswordResetDTO
+    // Appel direct au Auth Service (la validation du mot de passe est gérée par le service)
     const authResponse = await fetch(
       `${SERVICES.auth}/api/auth/reset-password/confirm`,
       {
@@ -184,6 +176,7 @@ export const handleRegister = async (req: Request, res: Response) => {
     const rejectionUrl = `${baseUrl}/api/auth/reject-backoffice?token=${authData.rejectionToken}`;
 
     // 3. Appel au Email Service pour envoyer l'email d'approbation
+    // email-service construit userFullName à partir de user object
     try {
       const emailResponse = await fetch(
         `${SERVICES.email}/api/email/backoffice-approval-request`,
@@ -194,8 +187,7 @@ export const handleRegister = async (req: Request, res: Response) => {
             "X-Service-Request": "api-gateway",
           },
           body: JSON.stringify({
-            userFullName: `${authData.user.firstName} ${authData.user.lastName}`,
-            userEmail: authData.user.email,
+            user: authData.user,
             approvalUrl,
             rejectionUrl,
           }),
@@ -257,6 +249,7 @@ export const handleApproveBackofficeAccess = async (
     }
 
     // 2. Appel au Email Service pour envoyer la confirmation
+    // email-service construit userFullName à partir de user object
     try {
       const backofficeUrl =
         process.env["BACKOFFICE_URL"] || "http://localhost:3011";
@@ -270,8 +263,7 @@ export const handleApproveBackofficeAccess = async (
             "X-Service-Request": "api-gateway",
           },
           body: JSON.stringify({
-            userEmail: authData.user.email,
-            userFullName: `${authData.user.firstName} ${authData.user.lastName}`,
+            user: authData.user,
             backofficeUrl,
           }),
         }
@@ -334,6 +326,7 @@ export const handleRejectBackofficeAccess = async (
     }
 
     // 2. Appel au Email Service pour envoyer la notification
+    // email-service construit userFullName à partir de user object
     try {
       const emailResponse = await fetch(
         `${SERVICES.email}/api/email/backoffice-rejection-notification`,
@@ -344,8 +337,7 @@ export const handleRejectBackofficeAccess = async (
             "X-Service-Request": "api-gateway",
           },
           body: JSON.stringify({
-            userEmail: authData.user.email,
-            userFullName: `${authData.user.firstName} ${authData.user.lastName}`,
+            user: authData.user,
           }),
         }
       );

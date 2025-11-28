@@ -150,12 +150,12 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     const customerData = checkoutData.customerData || {};
     const addressData = checkoutData.addressData || {};
 
-    // 4. Résoudre le customerId
+    // 4. Utiliser le customerId des métadonnées Stripe (évite la résolution en double)
     let customerId: number | undefined;
-
     if (customerIdFromMetadata) {
       customerId = parseInt(customerIdFromMetadata, 10);
     } else if (customerData.email) {
+      // Fallback uniquement si customerId n'est pas dans les métadonnées
       try {
         const customerResponse = await fetch(
           `${SERVICES.customer}/api/customers/resolve-or-create`,
@@ -184,19 +184,11 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       }
     }
 
-    // 5. Construire le payload pour order-service
-    const customerSnapshot = {
-      firstName: customerData.firstName || "",
-      lastName: customerData.lastName || "",
-      email: customerData.email,
-      phoneNumber: customerData.phoneNumber || null,
-    };
-
+    // 5. Construire le payload pour order-service (customerSnapshot sera construit dans le service)
     const orderPayload = {
       cart,
       customerId,
       customerData,
-      customerSnapshot,
       addressData,
       paymentIntentId,
       paymentMethod: "stripe",
@@ -250,53 +242,24 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     }
 
     // 7. Ajouter les adresses au customer-service (non-bloquant)
+    // Utilise le nouvel endpoint qui gère shipping + billing en une fois
     if (customerId) {
       try {
-        const shippingAddressData = addressData.shipping || {};
-        if (shippingAddressData.address) {
-          await fetch(
-            `${SERVICES.customer}/api/customers/${customerId}/addresses`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Service-Request": "api-gateway",
-              },
-              body: JSON.stringify({
-                addressType: "shipping",
-                address: shippingAddressData.address,
-                postalCode: shippingAddressData.postalCode || "",
-                city: shippingAddressData.city || "",
-                countryName: shippingAddressData.countryName || "Belgique",
-                isDefault: true,
-              }),
-            }
-          );
-        }
-
-        const billingAddressData = addressData.useSameBillingAddress
-          ? shippingAddressData
-          : addressData.billing || {};
-        if (billingAddressData.address && !addressData.useSameBillingAddress) {
-          await fetch(
-            `${SERVICES.customer}/api/customers/${customerId}/addresses`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Service-Request": "api-gateway",
-              },
-              body: JSON.stringify({
-                addressType: "billing",
-                address: billingAddressData.address,
-                postalCode: billingAddressData.postalCode || "",
-                city: billingAddressData.city || "",
-                countryName: billingAddressData.countryName || "Belgique",
-                isDefault: false,
-              }),
-            }
-          );
-        }
+        await fetch(
+          `${SERVICES.customer}/api/customers/${customerId}/addresses/bulk`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Service-Request": "api-gateway",
+            },
+            body: JSON.stringify({
+              shipping: addressData.shipping,
+              billing: addressData.billing,
+              useSameBillingAddress: addressData.useSameBillingAddress,
+            }),
+          }
+        );
       } catch (error) {
         console.warn(
           "⚠️ Erreur lors de l'ajout des adresses au customer-service:",
@@ -306,35 +269,8 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     }
 
     // 8. Appeler email-service pour envoyer l'email de confirmation (non-bloquant)
+    // email-service construit les données à partir des données brutes
     try {
-      const emailData = {
-        customerEmail: customerData.email,
-        customerName:
-          `${customerData.firstName || ""} ${
-            customerData.lastName || ""
-          }`.trim() || "Client",
-        orderId,
-        orderDate: new Date().toISOString(),
-        items: cart.items.map((item: any) => ({
-          name: item.productName,
-          quantity: item.quantity,
-          unitPrice: item.unitPriceTTC,
-          totalPrice: item.totalPriceTTC,
-          vatRate: item.vatRate,
-        })),
-        subtotal: cart.subtotal,
-        tax: cart.tax,
-        total: cart.total,
-        shippingAddress: {
-          firstName: customerData.firstName || "",
-          lastName: customerData.lastName || "",
-          address: addressData.shipping?.address || "",
-          city: addressData.shipping?.city || "",
-          postalCode: addressData.shipping?.postalCode || "",
-          country: addressData.shipping?.countryName || "Belgique",
-        },
-      };
-
       const emailResponse = await fetch(
         `${SERVICES.email}/api/email/order-confirmation`,
         {
@@ -343,7 +279,12 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
             "Content-Type": "application/json",
             "X-Service-Request": "api-gateway",
           },
-          body: JSON.stringify(emailData),
+          body: JSON.stringify({
+            orderId,
+            cart,
+            customerData,
+            addressData,
+          }),
         }
       );
 

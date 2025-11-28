@@ -59,56 +59,131 @@ export class ApiRouter {
       }),
 
       // Backoffice approval request schema
-      backofficeApprovalRequestSchema: Joi.object({
-        userFullName: Joi.string().max(200).required(),
-        userEmail: Joi.string().email().required(),
-        approvalUrl: Joi.string().uri().required(),
-        rejectionUrl: Joi.string().uri().required(),
-      }),
+      // Accepte soit userFullName/userEmail (compatibilité), soit user object (nouveau format)
+      backofficeApprovalRequestSchema: Joi.alternatives().try(
+        Joi.object({
+          userFullName: Joi.string().max(200).required(),
+          userEmail: Joi.string().email().required(),
+          approvalUrl: Joi.string().uri().required(),
+          rejectionUrl: Joi.string().uri().required(),
+        }).unknown(true),
+        Joi.object({
+          user: Joi.object({
+            firstName: Joi.string().optional(),
+            lastName: Joi.string().optional(),
+            email: Joi.string().email().required(),
+          })
+            .unknown(true)
+            .required(),
+          approvalUrl: Joi.string().uri().required(),
+          rejectionUrl: Joi.string().uri().required(),
+        }).unknown(true)
+      ),
 
       // Backoffice approval confirmation schema
-      backofficeApprovalConfirmationSchema: Joi.object({
-        userEmail: Joi.string().email().required(),
-        userFullName: Joi.string().max(200).required(),
-        backofficeUrl: Joi.string().uri().required(),
-      }),
+      // Accepte soit userFullName/userEmail (compatibilité), soit user object (nouveau format)
+      backofficeApprovalConfirmationSchema: Joi.alternatives().try(
+        Joi.object({
+          userEmail: Joi.string().email().required(),
+          userFullName: Joi.string().max(200).required(),
+          backofficeUrl: Joi.string().uri().required(),
+        }).unknown(true),
+        Joi.object({
+          user: Joi.object({
+            firstName: Joi.string().optional(),
+            lastName: Joi.string().optional(),
+            email: Joi.string().email().required(),
+          })
+            .unknown(true)
+            .required(),
+          backofficeUrl: Joi.string().uri().required(),
+        }).unknown(true)
+      ),
 
       // Backoffice rejection notification schema
-      backofficeRejectionNotificationSchema: Joi.object({
-        userEmail: Joi.string().email().required(),
-        userFullName: Joi.string().max(200).required(),
-      }),
+      // Accepte soit userFullName/userEmail (compatibilité), soit user object (nouveau format)
+      backofficeRejectionNotificationSchema: Joi.alternatives().try(
+        Joi.object({
+          userEmail: Joi.string().email().required(),
+          userFullName: Joi.string().max(200).required(),
+        }).unknown(true),
+        Joi.object({
+          user: Joi.object({
+            firstName: Joi.string().optional(),
+            lastName: Joi.string().optional(),
+            email: Joi.string().email().required(),
+          })
+            .unknown(true)
+            .required(),
+        }).unknown(true)
+      ),
 
       // Order confirmation email schema
-      orderConfirmationEmailSchema: Joi.object({
-        customerEmail: Joi.string().email().required(),
-        customerName: Joi.string().max(200).required(),
-        orderId: Joi.number().integer().positive().required(),
-        orderDate: Joi.date().optional(),
-        items: Joi.array()
-          .items(
-            Joi.object({
-              name: Joi.string().required(),
-              quantity: Joi.number().integer().positive().required(),
-              unitPrice: Joi.number().positive().required(), // TTC unitaire
-              totalPrice: Joi.number().positive().required(), // TTC total
-              vatRate: Joi.number().min(0).max(100).optional(), // pour calculer HT/TVA par ligne
+      // Accepte soit le format formaté (compatibilité), soit le format brut (orderId, cart, customerData, addressData)
+      orderConfirmationEmailSchema: Joi.alternatives().try(
+        // Nouveau format : données brutes
+        Joi.object({
+          orderId: Joi.number().integer().positive().required(),
+          cart: Joi.object({
+            items: Joi.array().min(1).required(),
+            subtotal: Joi.number().required(),
+            tax: Joi.number().required(),
+            total: Joi.number().required(),
+          })
+            .unknown(true)
+            .required(),
+          customerData: Joi.object({
+            firstName: Joi.string().optional().allow(null, ""),
+            lastName: Joi.string().optional().allow(null, ""),
+            email: Joi.string().email().required(),
+            phoneNumber: Joi.string().optional().allow(null, ""),
+          })
+            .unknown(true)
+            .required(),
+          addressData: Joi.object({
+            shipping: Joi.object({
+              address: Joi.string().optional().allow(null, ""),
+              postalCode: Joi.string().optional().allow(null, ""),
+              city: Joi.string().optional().allow(null, ""),
+              countryName: Joi.string().optional().allow(null, ""),
             })
-          )
-          .min(1)
-          .required(),
-        subtotal: Joi.number().positive().required(),
-        tax: Joi.number().min(0).required(),
-        total: Joi.number().positive().required(),
-        shippingAddress: Joi.object({
-          firstName: Joi.string().required(),
-          lastName: Joi.string().required(),
-          address: Joi.string().required(),
-          city: Joi.string().required(),
-          postalCode: Joi.string().required(),
-          country: Joi.string().required(),
-        }).required(),
-      }),
+              .unknown(true)
+              .optional(),
+          })
+            .unknown(true)
+            .required(),
+        }).unknown(true),
+        // Ancien format : données formatées (compatibilité)
+        Joi.object({
+          customerEmail: Joi.string().email().required(),
+          customerName: Joi.string().max(200).required(),
+          orderId: Joi.number().integer().positive().required(),
+          orderDate: Joi.date().optional(),
+          items: Joi.array()
+            .items(
+              Joi.object({
+                name: Joi.string().required(),
+                quantity: Joi.number().integer().positive().required(),
+                unitPrice: Joi.number().positive().required(),
+                totalPrice: Joi.number().positive().required(),
+                vatRate: Joi.number().min(0).max(100).optional(),
+              })
+            )
+            .min(1)
+            .required(),
+          subtotal: Joi.number().positive().required(),
+          tax: Joi.number().min(0).required(),
+          total: Joi.number().positive().required(),
+          shippingAddress: Joi.object({
+            firstName: Joi.string().required(),
+            lastName: Joi.string().required(),
+            address: Joi.string().required(),
+            city: Joi.string().required(),
+            postalCode: Joi.string().required(),
+            country: Joi.string().required(),
+          }).required(),
+        }).unknown(true)
+      ),
     };
   }
 

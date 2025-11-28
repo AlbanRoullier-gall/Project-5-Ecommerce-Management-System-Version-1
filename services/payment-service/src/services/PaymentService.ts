@@ -89,6 +89,12 @@ export default class PaymentService {
       name?: string;
       phone?: string;
     };
+    customerData?: {
+      firstName?: string;
+      lastName?: string;
+      email: string;
+      phoneNumber?: string;
+    };
     successUrl: string;
     cancelUrl: string;
     metadata?: Record<string, string>;
@@ -98,6 +104,24 @@ export default class PaymentService {
       if (!data.cart || !data.cart.items || data.cart.items.length === 0) {
         throw new Error("Le panier est vide");
       }
+
+      // Construire customer.name à partir de customerData si disponible
+      let customerName = data.customer?.name;
+      if (!customerName && data.customerData) {
+        customerName = `${data.customerData.firstName || ""} ${
+          data.customerData.lastName || ""
+        }`.trim();
+      }
+
+      // Utiliser customer.email ou customerData.email
+      const customerEmail = data.customer?.email || data.customerData?.email;
+      if (!customerEmail) {
+        throw new Error("L'email du client est requis");
+      }
+
+      // Utiliser customer.phone ou customerData.phoneNumber
+      const customerPhone =
+        data.customer?.phone || data.customerData?.phoneNumber;
 
       // Transformer les items du panier en items de paiement
       const paymentItems = data.cart.items.map((item: any) => ({
@@ -129,12 +153,12 @@ export default class PaymentService {
         payment_method_types: ["card"],
         line_items,
         mode: "payment",
-        customer_email: data.customer.email,
+        customer_email: customerEmail,
         success_url: data.successUrl,
         cancel_url: data.cancelUrl,
         metadata: {
-          customer_name: data.customer.name || "",
-          customer_phone: data.customer.phone || "",
+          customer_name: customerName || "",
+          customer_phone: customerPhone || "",
           ...data.metadata,
         },
       });
@@ -145,7 +169,7 @@ export default class PaymentService {
         status: session.payment_status,
         amount: session.amount_total,
         currency: "eur",
-        customerEmail: data.customer.email,
+        customerEmail: customerEmail,
         createdAt: new Date(session.created * 1000),
       };
     } catch (error: any) {

@@ -100,8 +100,25 @@ export default class EmailService {
   /**
    * Envoyer un email de demande d'approbation backoffice
    */
+  /**
+   * Construire userFullName à partir de user object ou userFullName
+   */
+  private buildUserFullName(data: {
+    userFullName?: string;
+    user?: { firstName?: string; lastName?: string };
+  }): string {
+    if (data.userFullName) {
+      return data.userFullName;
+    }
+    if (data.user) {
+      return `${data.user.firstName || ""} ${data.user.lastName || ""}`.trim();
+    }
+    return "Utilisateur";
+  }
+
   async sendBackofficeApprovalRequest(data: {
-    userFullName: string;
+    userFullName?: string;
+    user?: { firstName?: string; lastName?: string; email?: string };
     userEmail: string;
     approvalUrl: string;
     rejectionUrl: string;
@@ -111,16 +128,19 @@ export default class EmailService {
       throw new Error("Gmail transporter not configured");
     }
 
+    const userFullName = this.buildUserFullName(data);
+    const userEmail = data.user?.email || data.userEmail;
+
     try {
       const mailOptions = {
         from: process.env.GMAIL_USER,
         to: this.adminEmail,
-        subject: `[BACKOFFICE] Nouvelle demande d'accès - ${data.userFullName}`,
+        subject: `[BACKOFFICE] Nouvelle demande d'accès - ${userFullName}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #13686a;">Nouvelle demande d'accès au backoffice</h2>
-            <p><strong>Nom:</strong> ${data.userFullName}</p>
-            <p><strong>Email:</strong> ${data.userEmail}</p>
+            <p><strong>Nom:</strong> ${userFullName}</p>
+            <p><strong>Email:</strong> ${userEmail}</p>
             <p><strong>Date de demande:</strong> ${new Date().toLocaleString(
               "fr-FR"
             )}</p>
@@ -147,8 +167,8 @@ export default class EmailService {
         text: `
           Nouvelle demande d'accès au backoffice
           
-          Nom: ${data.userFullName}
-          Email: ${data.userEmail}
+          Nom: ${userFullName}
+          Email: ${userEmail}
           Date de demande: ${new Date().toLocaleString("fr-FR")}
           
           Pour approuver: ${data.approvalUrl}
@@ -177,8 +197,9 @@ export default class EmailService {
    * Envoyer un email de confirmation d'approbation backoffice
    */
   async sendBackofficeApprovalConfirmation(data: {
-    userEmail: string;
-    userFullName: string;
+    userEmail?: string;
+    userFullName?: string;
+    user?: { firstName?: string; lastName?: string; email?: string };
     backofficeUrl: string;
   }): Promise<any> {
     if (!this.transporter) {
@@ -186,15 +207,21 @@ export default class EmailService {
       throw new Error("Gmail transporter not configured");
     }
 
+    const userFullName = this.buildUserFullName(data);
+    const userEmail = data.user?.email || data.userEmail;
+    if (!userEmail) {
+      throw new Error("userEmail est requis");
+    }
+
     try {
       const mailOptions = {
         from: process.env.GMAIL_USER,
-        to: data.userEmail,
+        to: userEmail,
         subject: "Accès au backoffice approuvé - Nature de Pierre",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #28a745;">Félicitations !</h2>
-            <p>Bonjour ${data.userFullName},</p>
+            <p>Bonjour ${userFullName},</p>
             <p>Votre demande d'accès au backoffice a été approuvée.</p>
             <p>Vous pouvez maintenant vous connecter à l'interface d'administration :</p>
             <p style="text-align: center; margin: 30px 0;">
@@ -213,7 +240,7 @@ export default class EmailService {
         text: `
           Félicitations !
           
-          Bonjour ${data.userFullName},
+          Bonjour ${userFullName},
           
           Votre demande d'accès au backoffice a été approuvée.
           
@@ -229,7 +256,7 @@ export default class EmailService {
       return {
         messageId: result.messageId,
         status: "sent",
-        recipient: data.userEmail,
+        recipient: userEmail,
         subject: mailOptions.subject,
         sentAt: new Date(),
       };
@@ -243,23 +270,30 @@ export default class EmailService {
    * Envoyer un email de notification de rejet backoffice
    */
   async sendBackofficeRejectionNotification(data: {
-    userEmail: string;
-    userFullName: string;
+    userEmail?: string;
+    userFullName?: string;
+    user?: { firstName?: string; lastName?: string; email?: string };
   }): Promise<any> {
     if (!this.transporter) {
       console.error("Gmail transporter not configured");
       throw new Error("Gmail transporter not configured");
     }
 
+    const userFullName = this.buildUserFullName(data);
+    const userEmail = data.user?.email || data.userEmail;
+    if (!userEmail) {
+      throw new Error("userEmail est requis");
+    }
+
     try {
       const mailOptions = {
         from: process.env.GMAIL_USER,
-        to: data.userEmail,
+        to: userEmail,
         subject: "Demande d'accès au backoffice rejetée - Nature de Pierre",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #dc3545;">Notification</h2>
-            <p>Bonjour ${data.userFullName},</p>
+            <p>Bonjour ${userFullName},</p>
             <p>Votre demande d'accès au backoffice a été rejetée.</p>
             <p>Si vous pensez qu'il s'agit d'une erreur, veuillez contacter l'administrateur.</p>
             <p>Cordialement,<br>L'équipe d'administration Nature de Pierre</p>
@@ -272,7 +306,7 @@ export default class EmailService {
         text: `
           Notification
           
-          Bonjour ${data.userFullName},
+          Bonjour ${userFullName},
           
           Votre demande d'accès au backoffice a été rejetée.
           Si vous pensez qu'il s'agit d'une erreur, veuillez contacter l'administrateur.
@@ -287,7 +321,7 @@ export default class EmailService {
       return {
         messageId: result.messageId,
         status: "sent",
-        recipient: data.userEmail,
+        recipient: userEmail,
         subject: mailOptions.subject,
         sentAt: new Date(),
       };
@@ -389,6 +423,67 @@ export default class EmailService {
     ) {
       throw new Error("L'adresse de livraison est incomplète");
     }
+  }
+
+  /**
+   * Envoyer un email de confirmation de commande depuis des données brutes
+   * Construit les données formatées en interne
+   */
+  async sendOrderConfirmationEmailFromData(data: {
+    orderId: number;
+    cart: any; // CartPublicDTO
+    customerData: {
+      firstName?: string;
+      lastName?: string;
+      email: string;
+      phoneNumber?: string;
+    };
+    addressData: {
+      shipping?: {
+        address?: string;
+        postalCode?: string;
+        city?: string;
+        countryName?: string;
+      };
+    };
+  }): Promise<any> {
+    // Construire customerName à partir de customerData
+    const customerName =
+      `${data.customerData.firstName || ""} ${
+        data.customerData.lastName || ""
+      }`.trim() || "Client";
+
+    // Transformer les items du panier en items formatés
+    const items = data.cart.items.map((item: any) => ({
+      name: item.productName,
+      quantity: item.quantity,
+      unitPrice: item.unitPriceTTC,
+      totalPrice: item.totalPriceTTC,
+      vatRate: item.vatRate,
+    }));
+
+    // Construire shippingAddress
+    const shippingAddress = {
+      firstName: data.customerData.firstName || "",
+      lastName: data.customerData.lastName || "",
+      address: data.addressData.shipping?.address || "",
+      city: data.addressData.shipping?.city || "",
+      postalCode: data.addressData.shipping?.postalCode || "",
+      country: data.addressData.shipping?.countryName || "Belgique",
+    };
+
+    // Appeler la méthode existante avec les données formatées
+    return await this.sendOrderConfirmationEmail({
+      customerEmail: data.customerData.email,
+      customerName,
+      orderId: data.orderId,
+      orderDate: new Date(),
+      items,
+      subtotal: data.cart.subtotal,
+      tax: data.cart.tax,
+      total: data.cart.total,
+      shippingAddress,
+    });
   }
 
   /**

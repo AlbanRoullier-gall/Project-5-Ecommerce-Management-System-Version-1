@@ -30,11 +30,7 @@ export const handleExportOrdersYear = async (
       return;
     }
 
-    const user = (req as any).user;
-    if (!user) {
-      res.status(401).json({ error: "Utilisateur non authentifié" });
-      return;
-    }
+    const user = (req as any).user; // requireAuth garantit que user existe
 
     // 1. Appel direct au Order Service
 

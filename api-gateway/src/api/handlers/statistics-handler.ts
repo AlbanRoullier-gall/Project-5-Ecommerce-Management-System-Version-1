@@ -24,12 +24,7 @@ export const handleDashboardStatistics = async (
   res: Response
 ): Promise<void> => {
   try {
-    const user = (req as any).user as AuthenticatedUser;
-    if (!user) {
-      res.status(401).json({ error: "Utilisateur non authentifié" });
-      return;
-    }
-
+    const user = (req as any).user as AuthenticatedUser; // requireAuth garantit que user existe
     const year = req.query["year"]
       ? parseInt(req.query["year"] as string)
       : new Date().getFullYear();

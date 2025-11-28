@@ -80,11 +80,13 @@ export class EmailController {
       console.log("📧 EmailController: Starting sendBackofficeApprovalRequest");
       console.log("📧 Request body:", req.body);
 
-      const { userFullName, userEmail, approvalUrl, rejectionUrl } = req.body;
+      const { userFullName, userEmail, user, approvalUrl, rejectionUrl } =
+        req.body;
 
       const result = await this.emailService.sendBackofficeApprovalRequest({
         userFullName,
         userEmail,
+        user,
         approvalUrl,
         rejectionUrl,
       });
@@ -116,12 +118,13 @@ export class EmailController {
       );
       console.log("📧 Request body:", req.body);
 
-      const { userEmail, userFullName, backofficeUrl } = req.body;
+      const { userEmail, userFullName, user, backofficeUrl } = req.body;
 
       const result = await this.emailService.sendBackofficeApprovalConfirmation(
         {
           userEmail,
           userFullName,
+          user,
           backofficeUrl,
         }
       );
@@ -153,12 +156,13 @@ export class EmailController {
       );
       console.log("📧 Request body:", req.body);
 
-      const { userEmail, userFullName } = req.body;
+      const { userEmail, userFullName, user } = req.body;
 
       const result =
         await this.emailService.sendBackofficeRejectionNotification({
           userEmail,
           userFullName,
+          user,
         });
 
       const response = {
@@ -177,35 +181,47 @@ export class EmailController {
 
   /**
    * Envoyer un email de confirmation de commande
+   * Accepte soit le format formaté (compatibilité), soit le format brut (orderId, cart, customerData, addressData)
    */
   async sendOrderConfirmationEmail(req: Request, res: Response): Promise<void> {
     try {
-      console.log("📧 EmailController: Starting sendOrderConfirmationEmail");
-      console.log("📧 Request body:", req.body);
+      const body = req.body;
 
-      const {
-        customerEmail,
-        customerName,
-        orderId,
-        orderDate,
-        items,
-        subtotal,
-        tax,
-        total,
-        shippingAddress,
-      } = req.body;
+      // Détecter le format : si cart est présent, utiliser le nouveau format
+      let result;
+      if (body.cart && body.customerData && body.addressData) {
+        // Nouveau format : données brutes, le service construit tout
+        result = await this.emailService.sendOrderConfirmationEmailFromData({
+          orderId: body.orderId,
+          cart: body.cart,
+          customerData: body.customerData,
+          addressData: body.addressData,
+        });
+      } else {
+        // Ancien format : données déjà formatées (compatibilité)
+        const {
+          orderId,
+          customerEmail,
+          customerName,
+          items,
+          subtotal,
+          tax,
+          total,
+          shippingAddress,
+        } = body;
 
-      const result = await this.emailService.sendOrderConfirmationEmail({
-        customerEmail,
-        customerName,
-        orderId,
-        orderDate: orderDate ? new Date(orderDate) : new Date(),
-        items,
-        subtotal,
-        tax,
-        total,
-        shippingAddress,
-      });
+        result = await this.emailService.sendOrderConfirmationEmail({
+          customerEmail,
+          customerName: customerName || "Client",
+          orderId,
+          orderDate: new Date(),
+          items,
+          subtotal,
+          tax,
+          total,
+          shippingAddress,
+        });
+      }
 
       const response = {
         success: true,

@@ -143,18 +143,18 @@ export const handleCheckoutComplete = async (
             "X-Service-Request": "api-gateway",
           },
           body: JSON.stringify(body.customerData),
-        }
-      );
+          }
+        );
 
-      if (!customerResponse.ok) {
-        const errorData = (await customerResponse.json()) as any;
-        res.status(customerResponse.status).json({
+        if (!customerResponse.ok) {
+          const errorData = (await customerResponse.json()) as any;
+          res.status(customerResponse.status).json({
           error: "Erreur lors de la résolution/création du client",
           message:
             errorData.message || "Impossible de résoudre ou créer le client",
-        });
-        return;
-      }
+          });
+          return;
+        }
 
       const customerResponseData = (await customerResponse.json()) as {
         success: boolean;
@@ -175,19 +175,10 @@ export const handleCheckoutComplete = async (
     }
 
     // 3. Construire le payload pour payment-service
-    const customerName = `${body.customerData.firstName || ""} ${
-      body.customerData.lastName || ""
-    }`.trim();
-
+    // payment-service construit customer.name à partir de customerData
     const paymentPayload = {
       cart,
-      customer: {
-        email: body.customerData.email,
-        ...(customerName && { name: customerName }),
-        ...(body.customerData.phoneNumber && {
-          phone: body.customerData.phoneNumber,
-        }),
-      },
+      customerData: body.customerData,
       successUrl: body.successUrl,
       cancelUrl: body.cancelUrl,
       metadata: {
@@ -265,8 +256,8 @@ export const handleCheckoutComplete = async (
       .json(
         createErrorResponse(
           "Erreur interne du serveur",
-          error instanceof Error
-            ? error.message
+        error instanceof Error
+          ? error.message
             : "Une erreur est survenue lors du traitement de votre commande"
         )
       );
