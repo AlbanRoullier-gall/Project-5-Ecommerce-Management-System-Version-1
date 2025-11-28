@@ -65,6 +65,13 @@ export class ApiRouter {
         phoneNumber: Joi.string().max(20).optional(),
       }),
 
+      customerResolveOrCreateSchema: Joi.object({
+        email: Joi.string().email().max(255).required(),
+        firstName: Joi.string().max(100).optional(),
+        lastName: Joi.string().max(100).optional(),
+        phoneNumber: Joi.string().max(20).optional(),
+      }),
+
       addressCreateSchema: Joi.object({
         addressType: Joi.string().valid("shipping", "billing").required(),
         address: Joi.string().required(),
@@ -193,6 +200,15 @@ export class ApiRouter {
       this.validateRequest(schemas.customerCreateSchema),
       (req: Request, res: Response) => {
         this.customerController.createCustomer(req, res);
+      }
+    );
+
+    // Résoudre ou créer un client (route publique)
+    app.post(
+      "/api/customers/resolve-or-create",
+      this.validateRequest(schemas.customerResolveOrCreateSchema),
+      (req: Request, res: Response) => {
+        this.customerController.resolveOrCreateCustomer(req, res);
       }
     );
 

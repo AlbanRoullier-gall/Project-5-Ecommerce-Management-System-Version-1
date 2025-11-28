@@ -123,6 +123,55 @@ class CustomerService {
     }
   }
 
+  /**
+   * Résoudre ou créer un client
+   * Cherche le client par email, le crée s'il n'existe pas
+   * @param {Partial<CustomerData>} data Données du client
+   * @returns {Promise<number>} ID du client (existant ou créé)
+   */
+  async resolveOrCreateCustomer(data: Partial<CustomerData>): Promise<number> {
+    try {
+      if (!data.email) {
+        throw new Error("L'email est obligatoire");
+      }
+
+      // Chercher le client existant par email
+      const existingCustomer = await this.customerRepository.getByEmail(
+        data.email
+      );
+
+      if (existingCustomer) {
+        return existingCustomer.customerId;
+      }
+
+      // Le client n'existe pas, le créer
+      // Valider les champs obligatoires pour la création
+      if (!data.firstName || !data.lastName) {
+        throw new Error(
+          "Les champs firstName et lastName sont obligatoires pour créer un nouveau client"
+        );
+      }
+
+      const customerData: CustomerData = {
+        customerId: 0, // Sera remplacé par la base de données
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phoneNumber: data.phoneNumber || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const customer = new Customer(customerData);
+      const savedCustomer = await this.customerRepository.save(customer);
+
+      return savedCustomer.customerId;
+    } catch (error) {
+      console.error("Erreur lors de la résolution/création du client:", error);
+      throw error;
+    }
+  }
+
   // ===== MISE À JOUR DE CLIENTS =====
 
   /**

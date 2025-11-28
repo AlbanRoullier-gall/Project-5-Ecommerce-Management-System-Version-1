@@ -1,13 +1,15 @@
 /**
  * Handlers pour les routes de paiement
- * Utilise les types partagés pour réduire les transformations
+ * Orchestre les appels aux services (pas de logique métier)
  */
 
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
 import { proxyRequest } from "../proxy";
 import { OrderCompleteDTO } from "../../../../shared-types/order-service";
-import { CartItemPublicDTO } from "../../../../shared-types/cart-service";
+import { CartPublicDTO } from "../../../../shared-types/cart-service";
+import { PaymentMapper } from "../../mappers";
+import { EmailMapper } from "../../mappers";
 
 /**
  * Helper pour créer une réponse d'erreur standardisée
@@ -17,25 +19,6 @@ const createErrorResponse = (error: string, message: string) => ({
   message,
   timestamp: new Date().toISOString(),
 });
-
-/**
- * Transforme les items du panier (CartItemPublicDTO) en format OrderCompleteDTO
- * Simplifié : productName est maintenant requis dans CartItemPublicDTO
- */
-const transformCartItemsToOrderItems = (
-  cartItems: CartItemPublicDTO[]
-): OrderCompleteDTO["items"] => {
-  return cartItems.map((item) => ({
-    productId: item.productId,
-    productName: item.productName, // Plus besoin de fallback, productName est requis
-    quantity: item.quantity,
-    unitPriceHT: item.unitPriceHT,
-    unitPriceTTC: item.unitPriceTTC,
-    vatRate: item.vatRate,
-    totalPriceHT: item.totalPriceHT,
-    totalPriceTTC: item.totalPriceTTC,
-  }));
-};
 
 /**
  * Handler pour la création de paiement
@@ -49,6 +32,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
   try {
     const { csid, cartSessionId, checkoutData } = req.body || {};
 
+    // Validation HTTP basique (pas de logique métier)
     if (!csid) {
       return res
         .status(400)
@@ -82,7 +66,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // 1. Appel au Payment Service pour récupérer la session Stripe et vérifier le paiement
+    // 1. Récupérer la session de paiement depuis payment-service
     let paymentIntentId: string | undefined;
     let customerIdFromMetadata: string | undefined;
 
@@ -115,46 +99,10 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         "⚠️ Erreur lors de l'appel au Payment Service:",
         (error as any)?.message
       );
-      paymentIntentId = undefined;
     }
 
-    // 2. Extraire les données de checkout depuis le body
-    const customerData = checkoutData.customerData || {};
-    const addressData = checkoutData.addressData || {};
-    const shippingAddressData = addressData.shipping || {};
-    const billingAddressData = addressData.useSameBillingAddress
-      ? shippingAddressData
-      : addressData.billing || {};
-
-    // Construire les adresses au format attendu
-    const shippingAddress = shippingAddressData.address
-      ? {
-          firstName: customerData.firstName || "",
-          lastName: customerData.lastName || "",
-          address: shippingAddressData.address || "",
-          city: shippingAddressData.city || "",
-          postalCode: shippingAddressData.postalCode || "",
-          country: shippingAddressData.countryName || "Belgique",
-          phone: customerData.phoneNumber || "",
-        }
-      : null;
-
-    const billingAddress =
-      billingAddressData.address &&
-      billingAddressData.address !== shippingAddressData.address
-        ? {
-            firstName: customerData.firstName || "",
-            lastName: customerData.lastName || "",
-            address: billingAddressData.address || "",
-            city: billingAddressData.city || "",
-            postalCode: billingAddressData.postalCode || "",
-            country: billingAddressData.countryName || "Belgique",
-            phone: customerData.phoneNumber || "",
-          }
-        : null;
-
-    // 3. Récupérer le panier actif depuis le cart-service
-    let cart: any;
+    // 2. Récupérer le panier depuis cart-service
+    let cart: CartPublicDTO;
 
     try {
       const cartResponse = await fetch(
@@ -181,7 +129,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         throw new Error(`Cart Service error: ${cartResponse.statusText}`);
       }
 
-      const cartData = (await cartResponse.json()) as any;
+      const cartData = (await cartResponse.json()) as { cart: CartPublicDTO };
       cart = cartData.cart;
 
       if (!cart || !cart.items || cart.items.length === 0) {
@@ -201,37 +149,39 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // Transformer les items du panier en utilisant les types partagés
-    const items = transformCartItemsToOrderItems(cart.items || []);
+    // 3. Extraire les données de checkout
+    const customerData = checkoutData.customerData || {};
+    const addressData = checkoutData.addressData || {};
+    const shippingAddressData = addressData.shipping || {};
+    const billingAddressData = addressData.useSameBillingAddress
+      ? shippingAddressData
+      : addressData.billing || {};
 
-    // Extraire les informations customer depuis les données checkout
-    const customer = customerData || {};
-    const customerEmail = customer.email || "";
-
-    // 4. Résoudre le customerId : utiliser celui des métadonnées Stripe si disponible, sinon le résoudre
+    // 4. Résoudre le customerId
     let customerId: number | undefined;
 
     if (customerIdFromMetadata) {
-      // Utiliser le customerId depuis les métadonnées Stripe (déjà résolu au checkout)
       customerId = parseInt(customerIdFromMetadata, 10);
-    } else if (customerEmail) {
-      // Fallback : résoudre le customerId depuis l'email
+    } else if (customerData.email) {
       try {
         const customerResponse = await fetch(
-          `${SERVICES.customer}/api/customers/by-email/${encodeURIComponent(
-            customerEmail
-          )}/id`,
+          `${SERVICES.customer}/api/customers/resolve-or-create`,
           {
-            method: "GET",
+            method: "POST",
             headers: {
+              "Content-Type": "application/json",
               "X-Service-Request": "api-gateway",
             },
+            body: JSON.stringify(customerData),
           }
         );
 
         if (customerResponse.ok) {
-          const customerData = (await customerResponse.json()) as any;
-          customerId = customerData.customerId;
+          const customerDataResponse = (await customerResponse.json()) as {
+            success: boolean;
+            customerId: number;
+          };
+          customerId = customerDataResponse.customerId;
         }
       } catch (error) {
         console.warn(
@@ -241,34 +191,61 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       }
     }
 
-    // 5. Construire le payload pour order-service
-    const addresses = [];
-    if (shippingAddress) {
+    // 5. Mapper les items du panier vers les items de commande (mapping simple)
+    const orderItems = PaymentMapper.cartItemsToOrderItems(cart.items);
+
+    // 6. Construire les adresses (construction simple, pas de logique métier)
+    const addresses: OrderCompleteDTO["addresses"] = [];
+
+    if (shippingAddressData.address) {
       addresses.push({
         addressType: "shipping",
-        addressSnapshot: shippingAddress,
-      });
-    }
-    if (billingAddress) {
-      addresses.push({
-        addressType: "billing",
-        addressSnapshot: billingAddress,
+        addressSnapshot: {
+          firstName: customerData.firstName || "",
+          lastName: customerData.lastName || "",
+          address: shippingAddressData.address || "",
+          city: shippingAddressData.city || "",
+          postalCode: shippingAddressData.postalCode || "",
+          country: shippingAddressData.countryName || "Belgique",
+          phone: customerData.phoneNumber || "",
+        },
       });
     }
 
+    if (
+      billingAddressData.address &&
+      billingAddressData.address !== shippingAddressData.address
+    ) {
+      addresses.push({
+        addressType: "billing",
+        addressSnapshot: {
+          firstName: customerData.firstName || "",
+          lastName: customerData.lastName || "",
+          address: billingAddressData.address || "",
+          city: billingAddressData.city || "",
+          postalCode: billingAddressData.postalCode || "",
+          country: billingAddressData.countryName || "Belgique",
+          phone: customerData.phoneNumber || "",
+        },
+      });
+    }
+
+    // 7. Construire le payload OrderCompleteDTO
     const orderPayload: OrderCompleteDTO = {
       totalAmountHT: cart.subtotal,
       totalAmountTTC: cart.total,
       paymentMethod: "stripe",
-      items,
+      items: orderItems,
       ...(addresses.length > 0 && { addresses }),
       ...(customerId && { customerId }),
-      ...(customer &&
-        Object.keys(customer).length > 0 && { customerSnapshot: customer }),
+      ...(customerData &&
+        Object.keys(customerData).length > 0 && {
+          customerSnapshot: customerData,
+        }),
       ...(paymentIntentId && { paymentIntentId }),
     };
 
-    // 6. Appel au Order Service pour créer la commande
+    // 8. Appeler order-service pour créer la commande
     let orderId: number;
 
     try {
@@ -294,7 +271,9 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
       }
 
-      const orderData = (await orderResponse.json()) as any;
+      const orderData = (await orderResponse.json()) as {
+        order: { id: number };
+      };
       orderId = orderData.order?.id;
 
       if (!orderId) {
@@ -313,43 +292,36 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // 7. Appel au Email Service pour envoyer l'email de confirmation (non-bloquant)
+    // 9. Appeler email-service pour envoyer l'email de confirmation (non-bloquant)
     try {
-      // Utiliser directement les items transformés
-      const emailItems = items.map((item) => ({
-        name: item.productName,
-        quantity: item.quantity,
-        unitPrice: item.unitPriceTTC,
-        totalPrice: item.totalPriceTTC,
-        vatRate: item.vatRate,
-      }));
-
-      const customerName = `${
-        customer.firstName || shippingAddress?.firstName || ""
-      } ${customer.lastName || shippingAddress?.lastName || ""}`.trim();
-
-      const subtotal = Number(cart.subtotal || 0);
-      const total = Number(cart.total || 0);
-      const tax = total - subtotal;
-
-      const emailPayload = {
-        customerEmail,
-        customerName,
-        orderId,
-        orderDate: new Date().toISOString(),
-        items: emailItems,
-        subtotal,
-        tax,
-        total,
-        shippingAddress: {
-          firstName: shippingAddress?.firstName || customer.firstName || "",
-          lastName: shippingAddress?.lastName || customer.lastName || "",
-          address: shippingAddress?.address || "",
-          city: shippingAddress?.city || "",
-          postalCode: shippingAddress?.postalCode || "",
-          country: shippingAddress?.country || "",
-        },
+      // Construire l'adresse de livraison
+      const shippingAddress = {
+        firstName:
+          shippingAddressData.address && customerData.firstName
+            ? customerData.firstName
+            : "",
+        lastName:
+          shippingAddressData.address && customerData.lastName
+            ? customerData.lastName
+            : "",
+        address: shippingAddressData.address || "",
+        city: shippingAddressData.city || "",
+        postalCode: shippingAddressData.postalCode || "",
+        country: shippingAddressData.countryName || "Belgique",
       };
+
+      // Mapper les données de commande vers les données d'email (mapping simple)
+      const emailData = EmailMapper.orderToEmailData(
+        orderItems,
+        customerData,
+        shippingAddress,
+        {
+          subtotal: cart.subtotal,
+          tax: cart.tax,
+          total: cart.total,
+        },
+        orderId
+      );
 
       const emailResponse = await fetch(
         `${SERVICES.email}/api/email/order-confirmation`,
@@ -359,7 +331,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
             "Content-Type": "application/json",
             "X-Service-Request": "api-gateway",
           },
-          body: JSON.stringify(emailPayload),
+          body: JSON.stringify(emailData),
         }
       );
 

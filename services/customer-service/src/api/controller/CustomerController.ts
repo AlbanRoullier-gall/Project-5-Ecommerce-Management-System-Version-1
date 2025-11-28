@@ -218,4 +218,38 @@ export class CustomerController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Résoudre ou créer un client
+   * Cherche le client par email, le crée s'il n'existe pas
+   */
+  async resolveOrCreateCustomer(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, firstName, lastName, phoneNumber } = req.body;
+
+      if (!email) {
+        res.status(400).json(ResponseMapper.validationError("Email requis"));
+        return;
+      }
+
+      const customerId = await this.customerService.resolveOrCreateCustomer({
+        email,
+        firstName,
+        lastName,
+        phoneNumber,
+      });
+
+      res.json({
+        success: true,
+        customerId,
+      });
+    } catch (error: any) {
+      console.error("Resolve or create customer error:", error);
+      if (error.message.includes("obligatoire")) {
+        res.status(400).json(ResponseMapper.validationError(error.message));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

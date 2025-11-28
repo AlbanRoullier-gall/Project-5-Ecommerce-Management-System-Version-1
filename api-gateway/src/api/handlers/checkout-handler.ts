@@ -1,11 +1,16 @@
 /**
  * Handler pour l'orchestration complète du checkout
- * Orchestre les appels aux services pour finaliser une commande
+ * Orchestre les appels aux services (pas de logique métier)
  */
 
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
-import { PaymentCreateDTO } from "../../../../shared-types/payment-service";
+import {
+  PaymentCreateDTO,
+  PaymentCustomer,
+} from "../../../../shared-types/payment-service";
+import { CartPublicDTO } from "../../../../shared-types/cart-service";
+import { CheckoutMapper } from "../../mappers";
 
 /**
  * Interface pour les données de checkout reçues du frontend
@@ -38,6 +43,15 @@ interface CheckoutCompleteRequest {
 }
 
 /**
+ * Helper pour créer une réponse d'erreur standardisée
+ */
+const createErrorResponse = (error: string, message: string) => ({
+  error,
+  message,
+  timestamp: new Date().toISOString(),
+});
+
+/**
  * Orchestre le processus complet de checkout
  * POST /api/checkout/complete
  */
@@ -48,25 +62,33 @@ export const handleCheckoutComplete = async (
   try {
     const body = req.body as CheckoutCompleteRequest;
 
-    // Validation des données requises
+    // Validation HTTP basique (pas de logique métier)
     if (!body.cartSessionId) {
-      res.status(400).json({
-        error: "cartSessionId requis",
-        message: "L'identifiant de session du panier est obligatoire",
-      });
+      res
+        .status(400)
+        .json(
+          createErrorResponse(
+            "cartSessionId requis",
+            "L'identifiant de session du panier est obligatoire"
+          )
+        );
       return;
     }
 
     if (!body.customerData?.email) {
-      res.status(400).json({
-        error: "Email requis",
-        message: "L'email du client est obligatoire",
-      });
+      res
+        .status(400)
+        .json(
+          createErrorResponse(
+            "Email requis",
+            "L'email du client est obligatoire"
+          )
+        );
       return;
     }
 
-    // 1. Récupérer le panier
-    let cart: any;
+    // 1. Récupérer le panier depuis cart-service
+    let cart: CartPublicDTO;
     try {
       const cartResponse = await fetch(
         `${SERVICES.cart}/api/cart?sessionId=${body.cartSessionId}`,
@@ -79,103 +101,92 @@ export const handleCheckoutComplete = async (
 
       if (!cartResponse.ok) {
         if (cartResponse.status === 404) {
-          res.status(404).json({
-            error: "Panier introuvable",
-            message: "Le panier n'existe pas pour cette session",
-          });
+          res
+            .status(404)
+            .json(
+              createErrorResponse(
+                "Panier introuvable",
+                "Le panier n'existe pas pour cette session"
+              )
+            );
           return;
         }
         throw new Error(`Cart Service error: ${cartResponse.statusText}`);
       }
 
-      const cartData = (await cartResponse.json()) as any;
+      const cartData = (await cartResponse.json()) as { cart: CartPublicDTO };
       cart = cartData.cart;
 
       if (!cart || !cart.items || cart.items.length === 0) {
-        res.status(400).json({
-          error: "Panier vide",
-          message: "Votre panier est vide",
-        });
+        res
+          .status(400)
+          .json(createErrorResponse("Panier vide", "Votre panier est vide"));
         return;
       }
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Cart Service:", error);
-      res.status(500).json({
-        error: "Service de panier indisponible",
-        message: "Veuillez réessayer plus tard",
-      });
+      res
+        .status(500)
+        .json(
+          createErrorResponse(
+            "Service de panier indisponible",
+            "Veuillez réessayer plus tard"
+          )
+        );
       return;
     }
 
-    // 2. Vérifier si le client existe déjà (par email), sinon le créer
+    // 2. Résoudre/créer le client via customer-service
     let customerId: number;
-    const emailEncoded = encodeURIComponent(body.customerData.email);
-
     try {
-      const existingCustomerResponse = await fetch(
-        `${SERVICES.customer}/api/customers/by-email/${emailEncoded}`,
+      const customerResponse = await fetch(
+        `${SERVICES.customer}/api/customers/resolve-or-create`,
         {
+          method: "POST",
           headers: {
+            "Content-Type": "application/json",
             "X-Service-Request": "api-gateway",
           },
+          body: JSON.stringify(body.customerData),
         }
       );
 
-      if (existingCustomerResponse.ok) {
-        // Client existant : récupérer son ID
-        const existingData = (await existingCustomerResponse.json()) as any;
-        customerId = existingData.customer.customerId;
-      } else {
-        // Client inexistant : créer un nouveau client
-        const customerResponse = await fetch(
-          `${SERVICES.customer}/api/customers`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Service-Request": "api-gateway",
-            },
-            body: JSON.stringify(body.customerData),
-          }
-        );
-
-        if (!customerResponse.ok) {
-          const errorData = (await customerResponse.json()) as any;
-          res.status(customerResponse.status).json({
-            error: "Erreur lors de la création du client",
-            message: errorData.message || "Impossible de créer le client",
-          });
-          return;
-        }
-
-        const customerResponseData = (await customerResponse.json()) as any;
-        customerId = customerResponseData.customer.customerId;
+      if (!customerResponse.ok) {
+        const errorData = (await customerResponse.json()) as any;
+        res.status(customerResponse.status).json({
+          error: "Erreur lors de la résolution/création du client",
+          message:
+            errorData.message || "Impossible de résoudre ou créer le client",
+        });
+        return;
       }
+
+      const customerResponseData = (await customerResponse.json()) as {
+        success: boolean;
+        customerId: number;
+      };
+      customerId = customerResponseData.customerId;
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Customer Service:", error);
-      res.status(500).json({
-        error: "Service client indisponible",
-        message: "Veuillez réessayer plus tard",
-      });
+      res
+        .status(500)
+        .json(
+          createErrorResponse(
+            "Service client indisponible",
+            "Veuillez réessayer plus tard"
+          )
+        );
       return;
     }
 
-    // 3. Préparer les données de paiement pour Stripe
-    const paymentItems = cart.items.map((item: any) => ({
-      name: item.productName, // Plus besoin de fallback, productName est requis
-      description: item.description || "",
-      price: Math.round(item.unitPriceTTC * 100), // en centimes
-      quantity: item.quantity,
-      currency: "eur",
-    }));
+    // 3. Mapper les items du panier vers les items de paiement (mapping simple)
+    const paymentItems = CheckoutMapper.cartItemsToPaymentItems(cart.items);
 
-    // 4. Préparer le payload pour créer la session de paiement Stripe
-    // Les métadonnées Stripe contiennent uniquement les identifiants essentiels
-    // Les données checkout complètes sont envoyées par le frontend à la finalisation
+    // 4. Construire le payload PaymentCreateDTO
     const customerName = `${body.customerData.firstName || ""} ${
       body.customerData.lastName || ""
     }`.trim();
-    const paymentCustomer = {
+    const paymentCustomer: PaymentCustomer = {
       email: body.customerData.email,
       ...(customerName && { name: customerName }),
       ...(body.customerData.phoneNumber && {
@@ -194,7 +205,7 @@ export const handleCheckoutComplete = async (
       },
     };
 
-    // 5. Créer la session de paiement Stripe
+    // 5. Appeler payment-service pour créer la session
     try {
       const paymentResponse = await fetch(
         `${SERVICES.payment}/api/payment/create`,
@@ -222,7 +233,6 @@ export const handleCheckoutComplete = async (
         return;
       }
 
-      // Le payment-service retourne { success: true, paymentUrl: "...", payment: {...} }
       const paymentData = (await paymentResponse.json()) as {
         success: boolean;
         paymentUrl: string;
@@ -230,10 +240,14 @@ export const handleCheckoutComplete = async (
       };
 
       if (!paymentData.success || !paymentData.paymentUrl) {
-        res.status(500).json({
-          error: "URL de paiement non reçue",
-          message: "La session de paiement n'a pas retourné d'URL",
-        });
+        res
+          .status(500)
+          .json(
+            createErrorResponse(
+              "URL de paiement non reçue",
+              "La session de paiement n'a pas retourné d'URL"
+            )
+          );
         return;
       }
 
@@ -244,19 +258,26 @@ export const handleCheckoutComplete = async (
       });
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Payment Service:", error);
-      res.status(500).json({
-        error: "Service de paiement indisponible",
-        message: "Veuillez réessayer plus tard",
-      });
+      res
+        .status(500)
+        .json(
+          createErrorResponse(
+            "Service de paiement indisponible",
+            "Veuillez réessayer plus tard"
+          )
+        );
     }
   } catch (error) {
     console.error("❌ Erreur lors de l'orchestration du checkout:", error);
-    res.status(500).json({
-      error: "Erreur interne du serveur",
-      message:
-        error instanceof Error
-          ? error.message
-          : "Une erreur est survenue lors du traitement de votre commande",
-    });
+    res
+      .status(500)
+      .json(
+        createErrorResponse(
+          "Erreur interne du serveur",
+          error instanceof Error
+            ? error.message
+            : "Une erreur est survenue lors du traitement de votre commande"
+        )
+      );
   }
 };
