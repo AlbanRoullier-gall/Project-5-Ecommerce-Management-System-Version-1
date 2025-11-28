@@ -126,6 +126,73 @@ export class AddressController {
   }
 
   /**
+   * Créer plusieurs adresses pour un client (shipping + billing)
+   */
+  async createAddresses(req: Request, res: Response): Promise<void> {
+    try {
+      const { customerId } = req.params;
+
+      if (!customerId) {
+        res.status(400).json({ error: "Customer ID is required" });
+        return;
+      }
+
+      const { shipping, billing, useSameBillingAddress } = req.body;
+
+      // Valider que shipping ou billing est fourni
+      if (!shipping && !billing) {
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              "Au moins une adresse (shipping ou billing) doit être fournie"
+            )
+          );
+        return;
+      }
+
+      const result = await this.customerService.addAddresses(
+        parseInt(customerId),
+        {
+          shipping,
+          billing,
+          useSameBillingAddress,
+        }
+      );
+
+      const response = {
+        message: "Adresses créées avec succès",
+        addresses: {
+          ...(result.shipping && {
+            shipping: CustomerMapper.addressToPublicDTO(result.shipping),
+          }),
+          ...(result.billing && {
+            billing: CustomerMapper.addressToPublicDTO(result.billing),
+          }),
+        },
+        timestamp: new Date().toISOString(),
+        status: 201,
+      };
+
+      res.status(201).json(response);
+    } catch (error: any) {
+      console.error("Create addresses error:", error);
+      if (
+        error.message === "Client non trouvé" ||
+        error.message === "Customer not found"
+      ) {
+        res.status(404).json(ResponseMapper.notFoundError("Customer"));
+        return;
+      }
+      if (error.message.includes("validation")) {
+        res.status(400).json(ResponseMapper.validationError(error.message));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
    * Supprimer une adresse
    */
   async deleteAddress(req: Request, res: Response): Promise<void> {

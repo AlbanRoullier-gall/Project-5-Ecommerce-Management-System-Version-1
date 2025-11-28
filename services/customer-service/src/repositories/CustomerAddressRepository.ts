@@ -16,32 +16,42 @@ class CustomerAddressRepository {
 
   /**
    * Vérifier si une adresse existe déjà pour un client avec les mêmes champs
-   * Un doublon est défini par le même customer_id, address, postal_code, city, country_name
+   * Un doublon est défini par le même customer_id, address_type, address, postal_code, city, country_name
+   * Permet d'avoir la même adresse en shipping et billing
    */
   async existsForCustomer(params: {
     customerId: number;
+    addressType?: string;
     address: string;
     postalCode: string;
     city: string;
     countryName: string;
   }): Promise<boolean> {
     try {
-      const result = await this.pool.query(
-        `SELECT address_id FROM customer_addresses
+      let query = `SELECT address_id FROM customer_addresses
          WHERE customer_id = $1
            AND address = $2
            AND postal_code = $3
            AND city = $4
-           AND country_name = $5
-         LIMIT 1`,
-        [
-          params.customerId,
-          params.address,
-          params.postalCode,
-          params.city,
-          params.countryName,
-        ]
-      );
+           AND country_name = $5`;
+
+      const values: any[] = [
+        params.customerId,
+        params.address,
+        params.postalCode,
+        params.city,
+        params.countryName,
+      ];
+
+      // Si addressType est fourni, l'inclure dans la vérification
+      if (params.addressType) {
+        query += ` AND address_type = $6`;
+        values.push(params.addressType);
+      }
+
+      query += ` LIMIT 1`;
+
+      const result = await this.pool.query(query, values);
       return result.rows.length > 0;
     } catch (error) {
       console.error("Error checking existing address:", error);
