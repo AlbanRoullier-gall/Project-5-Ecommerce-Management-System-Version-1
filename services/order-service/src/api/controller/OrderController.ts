@@ -10,7 +10,6 @@
 
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
-import { OrderCompleteDTO } from "../dto";
 import { OrderMapper, ResponseMapper } from "../mapper";
 
 export class OrderController {
@@ -216,30 +215,6 @@ export class OrderController {
         success: false,
         error: "Erreur lors de la récupération des données d'export",
       });
-    }
-  }
-
-  /**
-   * Créer une commande complète depuis un checkout
-   * Crée la commande, les items et les adresses en une seule transaction atomique
-   */
-  async createOrderFromCheckout(req: Request, res: Response): Promise<void> {
-    try {
-      const checkoutData: OrderCompleteDTO = req.body;
-
-      const order = await this.orderService.createOrderFromCheckout(
-        checkoutData
-      );
-      const orderDTO = OrderMapper.orderToPublicDTO(order);
-
-      res.status(201).json(ResponseMapper.orderCreated(orderDTO));
-    } catch (error: any) {
-      console.error("Create order from checkout error:", error);
-      if (error.message.includes("already exists")) {
-        res.status(409).json(ResponseMapper.conflictError(error.message));
-        return;
-      }
-      res.status(500).json(ResponseMapper.internalServerError());
     }
   }
 

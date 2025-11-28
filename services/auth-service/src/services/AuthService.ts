@@ -285,8 +285,9 @@ export class AuthService {
 
   /**
    * Générer un token JWT pour l'authentification
+   * Méthode privée utilisée uniquement en interne
    */
-  generateJWT(user: User, expiresIn: string = "24h"): string {
+  private generateJWT(user: User, expiresIn: string = "24h"): string {
     const payload = {
       userId: user.userId,
       email: user.email,
@@ -300,22 +301,34 @@ export class AuthService {
   // ===== GESTION APPROBATION BACKOFFICE =====
 
   /**
+   * Méthode privée pour mettre à jour le statut d'approbation backoffice
+   * @param {number} userId ID de l'utilisateur
+   * @param {boolean} approved True pour approuver, false pour rejeter
+   * @returns {Promise<User>} Utilisateur mis à jour
+   */
+  private async updateBackofficeAccessStatus(
+    userId: number,
+    approved: boolean
+  ): Promise<User> {
+    const user = await this.userRepository.getById(userId);
+    if (!user) {
+      throw new Error("Utilisateur non trouvé");
+    }
+
+    const updatedUser = this.userRepository.createUserWithMerge(user, {
+      is_backoffice_approved: approved,
+      is_backoffice_rejected: !approved,
+    });
+
+    return await this.userRepository.update(updatedUser);
+  }
+
+  /**
    * Approuver l'accès backoffice d'un utilisateur
    */
   async approveBackofficeAccess(userId: number): Promise<User> {
     try {
-      const user = await this.userRepository.getById(userId);
-      if (!user) {
-        throw new Error("Utilisateur non trouvé");
-      }
-
-      // Mettre à jour le statut d'approbation et réinitialiser le rejet
-      const updatedUser = this.userRepository.createUserWithMerge(user, {
-        is_backoffice_approved: true,
-        is_backoffice_rejected: false,
-      });
-
-      return await this.userRepository.update(updatedUser);
+      return await this.updateBackofficeAccessStatus(userId, true);
     } catch (error) {
       console.error("Error approving backoffice access:", error);
       throw error;
@@ -327,18 +340,7 @@ export class AuthService {
    */
   async rejectBackofficeAccess(userId: number): Promise<User> {
     try {
-      const user = await this.userRepository.getById(userId);
-      if (!user) {
-        throw new Error("Utilisateur non trouvé");
-      }
-
-      // Mettre à jour le statut d'approbation et marquer comme refusé
-      const updatedUser = this.userRepository.createUserWithMerge(user, {
-        is_backoffice_approved: false,
-        is_backoffice_rejected: true,
-      });
-
-      return await this.userRepository.update(updatedUser);
+      return await this.updateBackofficeAccessStatus(userId, false);
     } catch (error) {
       console.error("Error rejecting backoffice access:", error);
       throw error;

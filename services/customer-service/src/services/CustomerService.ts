@@ -26,26 +26,26 @@ class CustomerService {
   // ===== MÉTHODES UTILITAIRES =====
 
   /**
-   * Méthode utilitaire pour récupérer une entité par ID
-   * @param {Function} repositoryMethod Méthode du repository à appeler
-   * @param {number} id ID de l'entité
-   * @param {string} entityName Nom de l'entité pour les logs
-   * @returns {Promise<T|null>} Entité ou null si non trouvée
+   * Construire un CustomerData complet à partir de données partielles
+   * @param {Partial<CustomerData>} data Données partielles du client
+   * @returns {CustomerData} Données complètes du client
    */
-  private async getEntityById<T>(
-    repositoryMethod: (id: number) => Promise<T | null>,
-    id: number,
-    entityName: string
-  ): Promise<T | null> {
-    try {
-      return await repositoryMethod(id);
-    } catch (error) {
-      console.error(
-        `Erreur lors de la récupération de ${entityName} par ID:`,
-        error
+  private buildCustomerData(data: Partial<CustomerData>): CustomerData {
+    if (!data.firstName || !data.lastName || !data.email) {
+      throw new Error(
+        "Les champs firstName, lastName et email sont obligatoires"
       );
-      throw error;
     }
+
+    return {
+      customerId: 0, // Sera remplacé par la base de données
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phoneNumber: data.phoneNumber || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
   }
 
   // ===== CRÉATION DE CLIENTS =====
@@ -64,29 +64,12 @@ class CustomerService {
         throw new Error("Un client avec cet email existe déjà");
       }
 
-      // Valider les champs obligatoires
-      if (!data.firstName || !data.lastName || !data.email) {
-        throw new Error("Tous les champs obligatoires doivent être fournis");
-      }
-
-      // Créer l'entité client avec des données temporaires pour l'insertion
-      const customerData: CustomerData = {
-        customerId: 0, // Sera remplacé par la base de données
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        phoneNumber: data.phoneNumber || null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
+      // Construire les données complètes du client
+      const customerData = this.buildCustomerData(data);
       const customer = new Customer(customerData);
 
       // Sauvegarder le client
-      const savedCustomer = await this.customerRepository.save(customer);
-
-      // Retourner le client
-      return savedCustomer;
+      return await this.customerRepository.save(customer);
     } catch (error) {
       console.error("Erreur lors de la création du client:", error);
       throw error;
@@ -99,11 +82,12 @@ class CustomerService {
    * @returns {Promise<Customer|null>} Client ou null si non trouvé
    */
   async getCustomerById(id: number): Promise<Customer | null> {
-    return this.getEntityById(
-      this.customerRepository.getById.bind(this.customerRepository),
-      id,
-      "customer"
-    );
+    try {
+      return await this.customerRepository.getById(id);
+    } catch (error) {
+      console.error("Erreur lors de la récupération du client par ID:", error);
+      throw error;
+    }
   }
 
   /**
@@ -144,24 +128,8 @@ class CustomerService {
         return existingCustomer.customerId;
       }
 
-      // Le client n'existe pas, le créer
-      // Valider les champs obligatoires pour la création
-      if (!data.firstName || !data.lastName) {
-        throw new Error(
-          "Les champs firstName et lastName sont obligatoires pour créer un nouveau client"
-        );
-      }
-
-      const customerData: CustomerData = {
-        customerId: 0, // Sera remplacé par la base de données
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        phoneNumber: data.phoneNumber || null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
+      // Le client n'existe pas, le créer en utilisant buildCustomerData
+      const customerData = this.buildCustomerData(data);
       const customer = new Customer(customerData);
       const savedCustomer = await this.customerRepository.save(customer);
 

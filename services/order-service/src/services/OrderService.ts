@@ -12,7 +12,7 @@ import Order, { OrderData } from "../models/Order";
 import OrderItem, { OrderItemData } from "../models/OrderItem";
 import CreditNote, { CreditNoteData } from "../models/CreditNote";
 import CreditNoteItem, { CreditNoteItemData } from "../models/CreditNoteItem";
-import OrderAddress, { OrderAddressData } from "../models/OrderAddress";
+import OrderAddress from "../models/OrderAddress";
 import OrderRepository, {
   OrderListOptions,
 } from "../repositories/OrderRepository";
@@ -20,8 +20,6 @@ import OrderItemRepository from "../repositories/OrderItemRepository";
 import CreditNoteRepository from "../repositories/CreditNoteRepository";
 import CreditNoteItemRepository from "../repositories/CreditNoteItemRepository";
 import OrderAddressRepository from "../repositories/OrderAddressRepository";
-import { OrderCompleteDTO } from "../api/dto/index";
-
 export default class OrderService {
   private pool: Pool;
   private orderRepository: OrderRepository;
@@ -42,63 +40,8 @@ export default class OrderService {
   // ===== CRÉATION DE COMMANDES =====
 
   /**
-   * Créer une nouvelle commande
-   * @param {Partial<OrderData>} orderData Données de la commande
-   * @returns {Promise<Order>} Commande créée
-   */
-  async createOrder(orderData: Partial<OrderData>): Promise<Order> {
-    try {
-      // Validation des données obligatoires
-      if (!orderData.customer_id) {
-        throw new Error("Customer ID is required");
-      }
-
-      if (
-        orderData.total_amount_ht === undefined ||
-        orderData.total_amount_ht < 0
-      ) {
-        throw new Error("Total amount HT must be non-negative");
-      }
-
-      if (
-        orderData.total_amount_ttc === undefined ||
-        orderData.total_amount_ttc < 0
-      ) {
-        throw new Error("Total amount TTC must be non-negative");
-      }
-
-      if (
-        !orderData.payment_method ||
-        orderData.payment_method.trim().length === 0
-      ) {
-        throw new Error("Payment method is required");
-      }
-
-      // Créer la commande
-      const order = await this.orderRepository.createOrder({
-        id: 0, // Sera défini par la base de données
-        customer_id: orderData.customer_id,
-        customer_snapshot: orderData.customer_snapshot || null,
-        total_amount_ht: orderData.total_amount_ht,
-        total_amount_ttc: orderData.total_amount_ttc,
-        payment_method: orderData.payment_method,
-        notes: orderData.notes || "",
-        // @ts-ignore - champ étendu autorisé à passer par le repo pour supporter l'idempotence sur le paiement
-        payment_intent_id: (orderData as any).payment_intent_id || null,
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-
-      return order;
-    } catch (error: any) {
-      console.error("Error creating order:", error);
-      throw new Error(`Failed to create order: ${error.message}`);
-    }
-  }
-
-  /**
    * Créer une commande complète depuis un panier
-   * Transforme le panier en items de commande et crée la commande
+   * Transforme le panier en commande et crée tout en base de données avec une transaction
    * @param {Object} data Données contenant le panier et les informations de commande
    * @returns {Promise<Order>} Commande créée
    */
@@ -130,63 +73,13 @@ export default class OrderService {
     paymentIntentId?: string;
     paymentMethod: string;
   }): Promise<Order> {
+    const client = await this.pool.connect();
     try {
+      await client.query("BEGIN");
+
       // Valider que le panier n'est pas vide
       if (!data.cart || !data.cart.items || data.cart.items.length === 0) {
         throw new Error("Le panier est vide");
-      }
-
-      // Transformer les items du panier en items de commande
-      const orderItems = data.cart.items.map((item: any) => ({
-        productId: item.productId,
-        productName: item.productName,
-        quantity: item.quantity,
-        unitPriceHT: item.unitPriceHT,
-        unitPriceTTC: item.unitPriceTTC,
-        vatRate: item.vatRate,
-        totalPriceHT: item.totalPriceHT,
-        totalPriceTTC: item.totalPriceTTC,
-      }));
-
-      // Construire les adresses
-      const addresses: OrderCompleteDTO["addresses"] = [];
-
-      const shippingAddressData = data.addressData.shipping || {};
-      const billingAddressData = data.addressData.useSameBillingAddress
-        ? shippingAddressData
-        : data.addressData.billing || {};
-
-      if (shippingAddressData.address) {
-        addresses.push({
-          addressType: "shipping",
-          addressSnapshot: {
-            firstName: data.customerData.firstName || "",
-            lastName: data.customerData.lastName || "",
-            address: shippingAddressData.address || "",
-            city: shippingAddressData.city || "",
-            postalCode: shippingAddressData.postalCode || "",
-            country: shippingAddressData.countryName || "Belgique",
-            phone: data.customerData.phoneNumber || "",
-          },
-        });
-      }
-
-      if (
-        billingAddressData.address &&
-        billingAddressData.address !== shippingAddressData.address
-      ) {
-        addresses.push({
-          addressType: "billing",
-          addressSnapshot: {
-            firstName: data.customerData.firstName || "",
-            lastName: data.customerData.lastName || "",
-            address: billingAddressData.address || "",
-            city: billingAddressData.city || "",
-            postalCode: billingAddressData.postalCode || "",
-            country: billingAddressData.countryName || "Belgique",
-            phone: data.customerData.phoneNumber || "",
-          },
-        });
       }
 
       // Construire le customerSnapshot à partir de customerData si non fourni
@@ -200,113 +93,113 @@ export default class OrderService {
         };
       }
 
-      // Construire le payload OrderCompleteDTO
-      const checkoutData: OrderCompleteDTO = {
-        totalAmountHT: data.cart.subtotal,
-        totalAmountTTC: data.cart.total,
-        paymentMethod: data.paymentMethod,
-        items: orderItems,
-        ...(addresses.length > 0 && { addresses }),
-        ...(data.customerId && { customerId: data.customerId }),
-        ...(customerSnapshot &&
-          Object.keys(customerSnapshot).length > 0 && {
-            customerSnapshot: customerSnapshot,
-          }),
-        ...(data.paymentIntentId && { paymentIntentId: data.paymentIntentId }),
-      };
-
-      // Créer la commande en utilisant la méthode existante
-      return await this.createOrderFromCheckout(checkoutData);
-    } catch (error: any) {
-      console.error("Error creating order from cart:", error);
-      throw new Error(
-        `Erreur lors de la création de la commande: ${error.message}`
-      );
-    }
-  }
-
-  /**
-   * Créer une commande complète depuis un checkout (order + items + addresses)
-   * Utilise une transaction PostgreSQL pour garantir l'atomicité
-   * Réutilise la logique des repositories mais avec un client de transaction
-   */
-  async createOrderFromCheckout(
-    checkoutData: OrderCompleteDTO
-  ): Promise<Order> {
-    const client = await this.pool.connect();
-    try {
-      await client.query("BEGIN");
-
       // Validation
-      if (!checkoutData.customerId && !checkoutData.customerSnapshot) {
+      if (!data.customerId && !customerSnapshot) {
         throw new Error("Customer ID or customer snapshot is required");
       }
 
-      // Créer la commande (réutilise la logique du repository mais avec le client de transaction)
-      const orderQuery = `
-        INSERT INTO orders (customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
-                           payment_method, notes, payment_intent_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
-        ON CONFLICT (payment_intent_id) WHERE payment_intent_id IS NOT NULL DO UPDATE SET updated_at = NOW()
-        RETURNING id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
-                  payment_method, notes, created_at, updated_at
-      `;
-      const orderValues = [
-        checkoutData.customerId || null,
-        checkoutData.customerSnapshot || null,
-        checkoutData.totalAmountHT,
-        checkoutData.totalAmountTTC,
-        checkoutData.paymentMethod,
-        checkoutData.notes || "",
-        checkoutData.paymentIntentId || null,
-      ];
-      const orderResult = await client.query(orderQuery, orderValues);
-      const order = new Order(orderResult.rows[0] as OrderData);
+      // Créer la commande via le repository avec le client de transaction
+      const orderData: Partial<OrderData> & {
+        payment_intent_id?: string | null;
+      } = {
+        customer_id: data.customerId || 0, // 0 sera traité comme null par le repository
+        customer_snapshot: customerSnapshot || null,
+        total_amount_ht: data.cart.subtotal,
+        total_amount_ttc: data.cart.total,
+        payment_method: data.paymentMethod,
+        notes: "",
+        created_at: new Date(),
+        updated_at: new Date(),
+        payment_intent_id: data.paymentIntentId || null,
+      };
 
-      // Créer les items (réutilise la logique du repository)
-      for (const item of checkoutData.items || []) {
-        const itemQuery = `
-          INSERT INTO order_items (order_id, product_id, product_name, quantity, 
-                                  unit_price_ht, unit_price_ttc, vat_rate, 
-                                  total_price_ht, total_price_ttc, created_at, updated_at)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-          RETURNING id, order_id, product_id, product_name, quantity, 
-                    unit_price_ht, unit_price_ttc, vat_rate, 
-                    total_price_ht, total_price_ttc, created_at, updated_at
-        `;
-        await client.query(itemQuery, [
-          order.id,
-          item.productId,
-          item.productName,
-          item.quantity,
-          item.unitPriceHT,
-          item.unitPriceTTC,
-          item.vatRate,
-          item.totalPriceHT,
-          item.totalPriceTTC,
-        ]);
+      const order = await this.orderRepository.createOrder(orderData, client);
+
+      // Vérifier que l'ID de la commande a été généré
+      if (!order.id) {
+        throw new Error("Order ID was not generated after creation");
       }
 
-      // Créer les adresses (réutilise la logique du repository)
-      for (const address of checkoutData.addresses || []) {
-        const addressQuery = `
-          INSERT INTO order_addresses (order_id, type, address_snapshot, created_at, updated_at)
-          VALUES ($1, $2, $3, NOW(), NOW())
-          RETURNING id, order_id, type AS address_type, address_snapshot, created_at, updated_at
-        `;
-        await client.query(addressQuery, [
-          order.id,
-          address.addressType,
-          address.addressSnapshot, // PostgreSQL gère automatiquement la conversion JSONB
-        ]);
+      const orderId = order.id;
+
+      // Créer les items via le repository avec le client de transaction
+      for (const item of data.cart.items || []) {
+        const itemData: OrderItemData = {
+          id: 0, // Sera défini par la base de données
+          order_id: orderId,
+          product_id: item.productId,
+          product_name: item.productName,
+          quantity: item.quantity,
+          unit_price_ht: item.unitPriceHT,
+          unit_price_ttc: item.unitPriceTTC,
+          vat_rate: item.vatRate,
+          total_price_ht: item.totalPriceHT,
+          total_price_ttc: item.totalPriceTTC,
+          created_at: new Date(),
+          updated_at: new Date(),
+        };
+        await this.orderItemRepository.createOrderItem(itemData, client);
+      }
+
+      // Construire les adresses
+      const shippingAddressData = data.addressData.shipping || {};
+      const billingAddressData = data.addressData.useSameBillingAddress
+        ? shippingAddressData
+        : data.addressData.billing || {};
+
+      // Créer l'adresse de livraison si fournie
+      if (shippingAddressData.address) {
+        const shippingAddress = new OrderAddress({
+          id: 0, // Sera défini par la base de données
+          order_id: orderId,
+          address_type: "shipping" as any,
+          address_snapshot: {
+            firstName: data.customerData.firstName || "",
+            lastName: data.customerData.lastName || "",
+            address: shippingAddressData.address || "",
+            city: shippingAddressData.city || "",
+            postalCode: shippingAddressData.postalCode || "",
+            country: shippingAddressData.countryName || "Belgique",
+            phone: data.customerData.phoneNumber || "",
+          },
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+        await this.orderAddressRepository.save(shippingAddress, client);
+      }
+
+      // Créer l'adresse de facturation si différente de l'adresse de livraison
+      if (
+        billingAddressData.address &&
+        billingAddressData.address !== shippingAddressData.address
+      ) {
+        const billingAddress = new OrderAddress({
+          id: 0, // Sera défini par la base de données
+          order_id: orderId,
+          address_type: "billing" as any,
+          address_snapshot: {
+            firstName: data.customerData.firstName || "",
+            lastName: data.customerData.lastName || "",
+            address: billingAddressData.address || "",
+            city: billingAddressData.city || "",
+            postalCode: billingAddressData.postalCode || "",
+            country: billingAddressData.countryName || "Belgique",
+            phone: data.customerData.phoneNumber || "",
+          },
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+        await this.orderAddressRepository.save(billingAddress, client);
       }
 
       await client.query("COMMIT");
       return order;
     } catch (error: any) {
       await client.query("ROLLBACK");
-      console.error("Error creating order from checkout:", error);
-      throw new Error(`Failed to create order from checkout: ${error.message}`);
+      console.error("Error creating order from cart:", error);
+      throw new Error(
+        `Erreur lors de la création de la commande: ${error.message}`
+      );
     } finally {
       client.release();
     }
@@ -329,77 +222,6 @@ export default class OrderService {
     } catch (error: any) {
       console.error("Error getting order by ID:", error);
       throw new Error(`Failed to retrieve order: ${error.message}`);
-    }
-  }
-
-  /**
-   * Récupérer une commande par ID avec données jointes
-   * @param {number} id ID de la commande
-   * @returns {Promise<Order | null>} Commande avec données jointes ou null
-   */
-  async getOrderByIdWithJoins(id: number): Promise<Order | null> {
-    try {
-      if (!id || id <= 0) {
-        throw new Error("Invalid order ID");
-      }
-
-      return await this.orderRepository.getOrderByIdWithJoins(id);
-    } catch (error: any) {
-      console.error("Error getting order by ID with joins:", error);
-      throw new Error(`Failed to retrieve order: ${error.message}`);
-    }
-  }
-
-  // ===== MISE À JOUR DE COMMANDES =====
-
-  /**
-   * Mettre à jour une commande
-   * @param {number} id ID de la commande
-   * @param {Partial<OrderData>} orderData Données à mettre à jour
-   * @returns {Promise<Order | null>} Commande mise à jour ou null
-   */
-  async updateOrder(
-    id: number,
-    orderData: Partial<OrderData>
-  ): Promise<Order | null> {
-    try {
-      if (!id || id <= 0) {
-        throw new Error("Invalid order ID");
-      }
-
-      // Vérifier que la commande existe
-      const existingOrder = await this.orderRepository.getOrderById(id);
-      if (!existingOrder) {
-        throw new Error("Order not found");
-      }
-
-      // Validation des données
-      if (
-        orderData.total_amount_ht !== undefined &&
-        orderData.total_amount_ht < 0
-      ) {
-        throw new Error("Total amount HT must be non-negative");
-      }
-
-      if (
-        orderData.total_amount_ttc !== undefined &&
-        orderData.total_amount_ttc < 0
-      ) {
-        throw new Error("Total amount TTC must be non-negative");
-      }
-
-      if (
-        orderData.payment_method !== undefined &&
-        orderData.payment_method !== null &&
-        orderData.payment_method.trim().length === 0
-      ) {
-        throw new Error("Payment method cannot be empty");
-      }
-
-      return await this.orderRepository.updateOrder(id, orderData);
-    } catch (error: any) {
-      console.error("Error updating order:", error);
-      throw new Error(`Failed to update order: ${error.message}`);
     }
   }
 
@@ -517,53 +339,13 @@ export default class OrderService {
     }
   }
 
-  // ===== MÉTHODES UTILITAIRES =====
-
-  /**
-   * Vérifier si une commande existe
-   * @param {number} id ID de la commande
-   * @returns {Promise<boolean>} True si existe, false sinon
-   */
-  async orderExists(id: number): Promise<boolean> {
-    try {
-      return await this.orderRepository.orderExists(id);
-    } catch (error: any) {
-      console.error("Error checking if order exists:", error);
-      return false;
-    }
-  }
-
   // ===== GESTION DES ARTICLES DE COMMANDE =====
-
-  /**
-   * Créer un article de commande
-   */
-  async createOrderItem(orderItemData: OrderItemData): Promise<OrderItem> {
-    return await this.orderItemRepository.createOrderItem(orderItemData);
-  }
 
   /**
    * Récupérer un article de commande par ID
    */
   async getOrderItemById(id: number): Promise<OrderItem | null> {
     return await this.orderItemRepository.getOrderItemById(id);
-  }
-
-  /**
-   * Mettre à jour un article de commande
-   */
-  async updateOrderItem(
-    id: number,
-    orderItemData: Partial<OrderItemData>
-  ): Promise<OrderItem> {
-    const result = await this.orderItemRepository.updateOrderItem(
-      id,
-      orderItemData
-    );
-    if (!result) {
-      throw new Error("Order item not found");
-    }
-    return result;
   }
 
   /**
@@ -606,16 +388,6 @@ export default class OrderService {
   }
 
   /**
-   * Mettre à jour un avoir
-   */
-  async updateCreditNote(
-    id: number,
-    creditNoteData: Partial<CreditNoteData>
-  ): Promise<CreditNote> {
-    return await this.creditNoteRepository.updateCreditNote(id, creditNoteData);
-  }
-
-  /**
    * Supprimer un avoir
    */
   async deleteCreditNote(id: number): Promise<boolean> {
@@ -652,19 +424,6 @@ export default class OrderService {
   }
 
   /**
-   * Mettre à jour un article d'avoir
-   */
-  async updateCreditNoteItem(
-    id: number,
-    creditNoteItemData: Partial<CreditNoteItemData>
-  ): Promise<CreditNoteItem> {
-    return await this.creditNoteItemRepository.updateCreditNoteItem(
-      id,
-      creditNoteItemData
-    );
-  }
-
-  /**
    * Supprimer un article d'avoir
    */
   async deleteCreditNoteItem(id: number): Promise<boolean> {
@@ -685,34 +444,10 @@ export default class OrderService {
   // ===== GESTION DES ADRESSES DE COMMANDE =====
 
   /**
-   * Créer une adresse de commande
-   */
-  async createOrderAddress(
-    orderAddressData: OrderAddressData
-  ): Promise<OrderAddress> {
-    return await this.orderAddressRepository.createOrderAddress(
-      orderAddressData
-    );
-  }
-
-  /**
    * Récupérer une adresse de commande par ID
    */
   async getOrderAddressById(id: number): Promise<OrderAddress | null> {
     return await this.orderAddressRepository.getOrderAddressById(id);
-  }
-
-  /**
-   * Mettre à jour une adresse de commande
-   */
-  async updateOrderAddress(
-    id: number,
-    orderAddressData: Partial<OrderAddressData>
-  ): Promise<OrderAddress> {
-    return await this.orderAddressRepository.updateOrderAddress(
-      id,
-      orderAddressData
-    );
   }
 
   /**
@@ -770,6 +505,164 @@ export default class OrderService {
     }
   }
 
+  // ===== MÉTHODES PRIVÉES POUR L'EXPORT =====
+
+  /**
+   * Calculer les totaux HT et TTC à partir d'une liste d'items
+   * @param {any[]} items Liste d'items avec totalPriceHT et totalPriceTTC
+   * @param {number} fallbackHT Total HT par défaut si pas d'items
+   * @param {number} fallbackTTC Total TTC par défaut si pas d'items
+   * @returns {{totalHT: number, totalTTC: number}} Totaux calculés
+   */
+  private calculateTotalsFromItems(
+    items: any[],
+    fallbackHT: number = 0,
+    fallbackTTC: number = 0
+  ): { totalHT: number; totalTTC: number } {
+    if (!items || items.length === 0) {
+      return {
+        totalHT: Number(fallbackHT) || 0,
+        totalTTC: Number(fallbackTTC) || 0,
+      };
+    }
+
+    const totalHT = items.reduce(
+      (sum: number, item: any) =>
+        sum + parseFloat(String(item.totalPriceHT || 0)),
+      0
+    );
+    const totalTTC = items.reduce(
+      (sum: number, item: any) =>
+        sum + parseFloat(String(item.totalPriceTTC || 0)),
+      0
+    );
+
+    return {
+      totalHT: isNaN(totalHT) ? 0 : Number(totalHT),
+      totalTTC: isNaN(totalTTC) ? 0 : Number(totalTTC),
+    };
+  }
+
+  /**
+   * Mapper un item pour l'export (normalisation des propriétés)
+   * @param {any} item Item à mapper
+   * @returns {any} Item mappé
+   */
+  private mapItemForExport(item: any): any {
+    return {
+      id: item.id,
+      orderId: item.orderId,
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      unitPriceHT: item.unitPriceHT,
+      unitPriceTTC: item.unitPriceTTC,
+      vatRate: item.vatRate,
+      totalPriceHT: item.totalPriceHT,
+      totalPriceTTC: item.totalPriceTTC,
+    };
+  }
+
+  /**
+   * Mapper une commande pour l'export avec ses items et adresses
+   * @param {Order} order Commande à mapper
+   * @param {OrderItem[]} items Items de la commande
+   * @param {OrderAddress[]} addresses Adresses de la commande
+   * @returns {any} Commande mappée pour l'export
+   */
+  private mapOrderForExport(
+    order: Order,
+    items: OrderItem[],
+    addresses: OrderAddress[]
+  ): any {
+    const totals = this.calculateTotalsFromItems(
+      items,
+      order.totalAmountHT,
+      order.totalAmountTTC
+    );
+
+    return {
+      id: order.id,
+      customerId: order.customerId,
+      customerSnapshot: order.customerSnapshot,
+      totalAmountHT: parseFloat(totals.totalHT.toFixed(2)),
+      totalAmountTTC: parseFloat(totals.totalTTC.toFixed(2)),
+      paymentMethod: order.paymentMethod,
+      notes: order.notes,
+      delivered: order.delivered,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      items: items ? items.map((item) => this.mapItemForExport(item)) : [],
+      addresses: addresses
+        ? addresses.map((address: any) => ({
+            id: address.id,
+            orderId: address.orderId,
+            addressType: address.addressType || address.type,
+            addressSnapshot: address.addressSnapshot || address,
+          }))
+        : [],
+    };
+  }
+
+  /**
+   * Mapper un avoir pour l'export avec ses items
+   * @param {CreditNote} creditNote Avoir à mapper
+   * @param {CreditNoteItem[]} items Items de l'avoir
+   * @returns {any} Avoir mappé pour l'export
+   */
+  private mapCreditNoteForExport(
+    creditNote: CreditNote,
+    items: CreditNoteItem[]
+  ): any {
+    const totals = this.calculateTotalsFromItems(
+      items,
+      creditNote.totalAmountHT,
+      creditNote.totalAmountTTC
+    );
+
+    return {
+      id: creditNote.id,
+      customerId: creditNote.customerId,
+      orderId: creditNote.orderId,
+      reason: creditNote.reason,
+      description: creditNote.description,
+      issueDate: creditNote.issueDate,
+      paymentMethod: creditNote.paymentMethod,
+      totalAmountHT: parseFloat(totals.totalHT.toFixed(2)),
+      totalAmountTTC: parseFloat(totals.totalTTC.toFixed(2)),
+      notes: creditNote.notes,
+      createdAt: creditNote.createdAt,
+      updatedAt: creditNote.updatedAt,
+      items: items ? items.map((item) => this.mapItemForExport(item)) : [],
+    };
+  }
+
+  /**
+   * Sérialiser les données d'export en JSON pour garantir la sérialisation
+   * @param {any} data Données à sérialiser
+   * @returns {any} Données sérialisées
+   */
+  private serializeExportData(data: { orders: any[]; creditNotes: any[] }): {
+    orders: any[];
+    creditNotes: any[];
+  } {
+    const jsonString = JSON.stringify(data);
+    console.log(
+      `📏 Taille JSON: ${(jsonString.length / 1024 / 1024).toFixed(2)} MB`
+    );
+
+    const serializedData = JSON.parse(jsonString);
+
+    // Vérification finale
+    if (serializedData.orders.length !== data.orders.length) {
+      console.error(
+        `❌ ERREUR: Perte de données lors de la sérialisation! ${data.orders.length} -> ${serializedData.orders.length}`
+      );
+    }
+
+    return serializedData;
+  }
+
   /**
    * Obtenir les commandes et avoirs pour l'export d'année
    */
@@ -778,16 +671,13 @@ export default class OrderService {
     creditNotes: any[];
   }> {
     try {
-      // Obtenir les commandes de l'année en utilisant le repository
+      // Obtenir les commandes de l'année
       const orders = await this.orderRepository.getOrdersByYear(year);
-
       console.log(
         `📊 Export pour l'année ${year}: ${orders.length} commandes trouvées`
       );
 
-      // Obtenir les articles et adresses pour chaque commande en utilisant les repositories
-      // Recalculer les totaux à partir des items pour garantir l'exactitude
-      // Créer de nouveaux objets pour s'assurer que toutes les propriétés sont bien sérialisées
+      // Traiter chaque commande avec ses items et adresses
       console.log(`🔄 Traitement de ${orders.length} commandes...`);
       const ordersWithDetails = await Promise.all(
         orders.map(async (order) => {
@@ -797,82 +687,14 @@ export default class OrderService {
             );
             const addresses =
               await this.orderAddressRepository.getAddressesByOrderId(order.id);
-
-            // Recalculer les totaux à partir des items pour garantir l'exactitude
-            let totalHT = parseFloat(String(order.totalAmountHT || 0));
-            let totalTTC = parseFloat(String(order.totalAmountTTC || 0));
-            if (items && items.length > 0) {
-              totalHT = items.reduce(
-                (sum: number, item: any) =>
-                  sum + parseFloat(String(item.totalPriceHT || 0)),
-                0
-              );
-              totalTTC = items.reduce(
-                (sum: number, item: any) =>
-                  sum + parseFloat(String(item.totalPriceTTC || 0)),
-                0
-              );
-            }
-
-            // S'assurer que les totaux sont des nombres
-            totalHT = isNaN(totalHT) ? 0 : Number(totalHT);
-            totalTTC = isNaN(totalTTC) ? 0 : Number(totalTTC);
-
-            // Créer un nouvel objet avec toutes les propriétés explicitement
-            return {
-              id: order.id,
-              customerId: order.customerId,
-              customerSnapshot: order.customerSnapshot,
-              totalAmountHT: parseFloat(totalHT.toFixed(2)),
-              totalAmountTTC: parseFloat(totalTTC.toFixed(2)),
-              paymentMethod: order.paymentMethod,
-              notes: order.notes,
-              delivered: order.delivered,
-              createdAt: order.createdAt,
-              updatedAt: order.updatedAt,
-              items: items
-                ? items.map((item: any) => ({
-                    id: item.id,
-                    orderId: item.orderId,
-                    productId: item.productId,
-                    productName: item.productName,
-                    quantity: item.quantity,
-                    unitPriceHT: item.unitPriceHT,
-                    unitPriceTTC: item.unitPriceTTC,
-                    vatRate: item.vatRate,
-                    totalPriceHT: item.totalPriceHT,
-                    totalPriceTTC: item.totalPriceTTC,
-                  }))
-                : [],
-              addresses: addresses
-                ? addresses.map((address: any) => ({
-                    id: address.id,
-                    orderId: address.orderId,
-                    addressType: address.addressType || address.type,
-                    addressSnapshot: address.addressSnapshot || address,
-                  }))
-                : [],
-            };
+            return this.mapOrderForExport(order, items, addresses);
           } catch (error) {
             console.error(
               `❌ Erreur lors du traitement de la commande ${order.id}:`,
               error
             );
             // Retourner la commande sans items/adresses en cas d'erreur
-            return {
-              id: order.id,
-              customerId: order.customerId,
-              customerSnapshot: order.customerSnapshot,
-              totalAmountHT: order.totalAmountHT || 0,
-              totalAmountTTC: order.totalAmountTTC || 0,
-              paymentMethod: order.paymentMethod,
-              notes: order.notes,
-              delivered: order.delivered,
-              createdAt: order.createdAt,
-              updatedAt: order.updatedAt,
-              items: [],
-              addresses: [],
-            };
+            return this.mapOrderForExport(order, [], []);
           }
         })
       );
@@ -881,108 +703,51 @@ export default class OrderService {
         `✅ ${ordersWithDetails.length} commandes traitées avec succès`
       );
 
-      // Obtenir les avoirs de l'année en utilisant le repository
+      // Obtenir les avoirs de l'année
       const creditNotes = await this.creditNoteRepository.getCreditNotesByYear(
         year
       );
-
       console.log(
         `📊 Export pour l'année ${year}: ${creditNotes.length} avoirs trouvés`
       );
 
-      // Obtenir les articles d'avoir pour chaque avoir en utilisant le repository
-      // Créer de nouveaux objets pour s'assurer que les items sont bien sérialisés
+      // Traiter chaque avoir avec ses items
       const creditNotesWithItems = await Promise.all(
         creditNotes.map(async (creditNote) => {
-          const items =
-            await this.creditNoteItemRepository.getItemsByCreditNoteId(
-              creditNote.id
+          try {
+            const items =
+              await this.creditNoteItemRepository.getItemsByCreditNoteId(
+                creditNote.id
+              );
+            console.log(`📋 Credit Note #${creditNote.id} items:`, {
+              itemsCount: items?.length || 0,
+            });
+            return this.mapCreditNoteForExport(creditNote, items);
+          } catch (error) {
+            console.error(
+              `❌ Erreur lors du traitement de l'avoir ${creditNote.id}:`,
+              error
             );
-          // Debug log
-          console.log(`📋 Credit Note #${creditNote.id} items:`, {
-            itemsCount: items?.length || 0,
-            items: items,
-          });
-          // Recalculer les totaux à partir des items pour garantir l'exactitude
-          let totalHT = parseFloat(String(creditNote.totalAmountHT || 0));
-          let totalTTC = parseFloat(String(creditNote.totalAmountTTC || 0));
-          if (items && items.length > 0) {
-            totalHT = items.reduce(
-              (sum: number, item: any) =>
-                sum + parseFloat(String(item.totalPriceHT || 0)),
-              0
-            );
-            totalTTC = items.reduce(
-              (sum: number, item: any) =>
-                sum + parseFloat(String(item.totalPriceTTC || 0)),
-              0
-            );
+            return this.mapCreditNoteForExport(creditNote, []);
           }
-
-          // S'assurer que les totaux sont des nombres
-          totalHT = isNaN(totalHT) ? 0 : Number(totalHT);
-          totalTTC = isNaN(totalTTC) ? 0 : Number(totalTTC);
-
-          // Créer un nouvel objet avec toutes les propriétés explicitement pour garantir la sérialisation
-          // Les objets PostgreSQL peuvent avoir des propriétés non-énumérables
-          return {
-            id: creditNote.id,
-            customerId: creditNote.customerId,
-            orderId: creditNote.orderId,
-            reason: creditNote.reason,
-            description: creditNote.description,
-            issueDate: creditNote.issueDate,
-            paymentMethod: creditNote.paymentMethod,
-            totalAmountHT: parseFloat(totalHT.toFixed(2)),
-            totalAmountTTC: parseFloat(totalTTC.toFixed(2)),
-            notes: creditNote.notes,
-            createdAt: creditNote.createdAt,
-            updatedAt: creditNote.updatedAt,
-            items: items
-              ? items.map((item: any) => ({
-                  id: item.id,
-                  productId: item.productId,
-                  productName: item.productName,
-                  quantity: item.quantity,
-                  unitPriceHT: item.unitPriceHT,
-                  unitPriceTTC: item.unitPriceTTC,
-                  vatRate: item.vatRate,
-                  totalPriceHT: item.totalPriceHT,
-                  totalPriceTTC: item.totalPriceTTC,
-                }))
-              : [],
-          };
         })
       );
 
-      // Vérifier avant sérialisation
       console.log(
         `📦 Avant sérialisation: ${ordersWithDetails.length} commandes, ${creditNotesWithItems.length} avoirs`
       );
 
-      // Forcer la sérialisation JSON pour garantir que tous les objets sont bien sérialisables
+      // Sérialiser et retourner
       const dataToSerialize = {
         orders: ordersWithDetails,
         creditNotes: creditNotesWithItems,
       };
 
-      const jsonString = JSON.stringify(dataToSerialize);
-      console.log(
-        `📏 Taille JSON: ${(jsonString.length / 1024 / 1024).toFixed(2)} MB`
-      );
-
-      const serializedData = JSON.parse(jsonString);
+      const serializedData = this.serializeExportData(dataToSerialize);
 
       console.log(
         `✅ Export sérialisé: ${serializedData.orders.length} commandes, ${serializedData.creditNotes.length} avoirs`
       );
-
-      // Vérification finale
-      if (serializedData.orders.length !== ordersWithDetails.length) {
-        console.error(
-          `❌ ERREUR: Perte de données lors de la sérialisation! ${ordersWithDetails.length} -> ${serializedData.orders.length}`
-        );
-      }
 
       return serializedData;
     } catch (error) {

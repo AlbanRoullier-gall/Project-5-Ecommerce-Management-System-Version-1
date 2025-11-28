@@ -179,12 +179,25 @@ export default class ProductService {
   }
 
   /**
+   * Méthode privée pour définir le statut actif d'un produit
+   * @param {number} id ID du produit
+   * @param {boolean} active True pour activer, false pour désactiver
+   * @returns {Promise<Product|null>} Produit mis à jour ou null si non trouvé
+   */
+  private async setProductActiveStatus(
+    id: number,
+    active: boolean
+  ): Promise<Product | null> {
+    return await this.updateProduct(id, { is_active: active });
+  }
+
+  /**
    * Activer un produit
    * @param {number} id ID du produit
    * @returns {Promise<Product|null>} Produit mis à jour ou null si non trouvé
    */
   async activateProduct(id: number): Promise<Product | null> {
-    return await this.updateProduct(id, { is_active: true });
+    return await this.setProductActiveStatus(id, true);
   }
 
   /**
@@ -193,7 +206,7 @@ export default class ProductService {
    * @returns {Promise<Product|null>} Produit mis à jour ou null si non trouvé
    */
   async deactivateProduct(id: number): Promise<Product | null> {
-    return await this.updateProduct(id, { is_active: false });
+    return await this.setProductActiveStatus(id, false);
   }
 
   // ===== MÉTHODES CATÉGORIE =====

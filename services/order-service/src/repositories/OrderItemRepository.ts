@@ -86,22 +86,6 @@ export default class OrderItemRepository {
   }
 
   /**
-   * Supprimer tous les articles d'une commande
-   * @param {number} orderId ID de la commande
-   * @returns {Promise<boolean>} True si supprimés, false sinon
-   */
-  async deleteOrderItemsByOrderId(orderId: number): Promise<boolean> {
-    try {
-      const query = "DELETE FROM order_items WHERE order_id = $1";
-      const result = await this.pool.query(query, [orderId]);
-      return result.rowCount !== null && result.rowCount > 0;
-    } catch (error) {
-      console.error("Error deleting order items by order ID:", error);
-      throw new Error("Failed to delete order items");
-    }
-  }
-
-  /**
    * Récupérer les articles d'une commande
    * @param {number} orderId ID de la commande
    * @returns {Promise<any[]>} Liste des articles
@@ -124,5 +108,42 @@ export default class OrderItemRepository {
       console.error("Error getting order items by order ID:", error);
       throw error;
     }
+  }
+
+  /**
+   * Créer un article de commande en base de données
+   * @param {OrderItemData} itemData Données de l'article
+   * @param {any} client Client de transaction optionnel (pour les transactions)
+   * @returns {Promise<OrderItem>} Article créé
+   */
+  async createOrderItem(
+    itemData: OrderItemData,
+    client?: any
+  ): Promise<OrderItem> {
+    const query = `
+      INSERT INTO order_items (order_id, product_id, product_name, quantity, 
+                              unit_price_ht, unit_price_ttc, vat_rate, 
+                              total_price_ht, total_price_ttc, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+      RETURNING id, order_id, product_id, product_name, quantity, 
+                unit_price_ht, unit_price_ttc, vat_rate, 
+                total_price_ht, total_price_ttc, created_at, updated_at
+    `;
+
+    const values = [
+      itemData.order_id,
+      itemData.product_id,
+      itemData.product_name,
+      itemData.quantity,
+      itemData.unit_price_ht,
+      itemData.unit_price_ttc,
+      itemData.vat_rate,
+      itemData.total_price_ht,
+      itemData.total_price_ttc,
+    ];
+
+    const executor = client || this.pool;
+    const result = await executor.query(query, values);
+    return new OrderItem(result.rows[0] as OrderItemData);
   }
 }

@@ -19,6 +19,123 @@ export default class PaymentService {
     console.log("✅ Stripe service initialized");
   }
 
+  // ===== MÉTHODES PRIVÉES =====
+
+  /**
+   * Construire les line_items Stripe à partir d'une liste d'items
+   * @param {any[]} items Liste d'items avec name, description, price, quantity, currency
+   * @returns {any[]} Line items formatés pour Stripe
+   */
+  private buildLineItems(items: any[]): any[] {
+    return items.map((item: any) => {
+      const product_data: any = { name: item.name };
+      if (item.description && String(item.description).trim().length > 0) {
+        product_data.description = item.description;
+      }
+      return {
+        price_data: {
+          currency: item.currency || "eur",
+          product_data,
+          unit_amount: item.price, // Prix en centimes
+        },
+        quantity: item.quantity,
+      };
+    });
+  }
+
+  /**
+   * Créer une session Stripe Checkout
+   * @param {any} params Paramètres de la session
+   * @returns {Promise<Stripe.Checkout.Session>} Session Stripe créée
+   */
+  private async createStripeSession(params: {
+    lineItems: any[];
+    customerEmail: string;
+    successUrl: string;
+    cancelUrl: string;
+    metadata?: Record<string, string>;
+  }): Promise<Stripe.Checkout.Session> {
+    return await this.stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: params.lineItems,
+      mode: "payment",
+      customer_email: params.customerEmail,
+      success_url: params.successUrl,
+      cancel_url: params.cancelUrl,
+      metadata: params.metadata || {},
+    });
+  }
+
+  /**
+   * Transformer un panier en données de paiement
+   * @param {any} data Données du panier
+   * @returns {any} Données de paiement formatées
+   */
+  private cartToPaymentData(data: {
+    cart: any;
+    customer?: { email: string; name?: string; phone?: string };
+    customerData?: {
+      firstName?: string;
+      lastName?: string;
+      email: string;
+      phoneNumber?: string;
+    };
+    successUrl: string;
+    cancelUrl: string;
+    metadata?: Record<string, string>;
+  }): any {
+    // Valider que le panier n'est pas vide
+    if (!data.cart || !data.cart.items || data.cart.items.length === 0) {
+      throw new Error("Le panier est vide");
+    }
+
+    // Construire customer.name à partir de customerData si disponible
+    let customerName = data.customer?.name;
+    if (!customerName && data.customerData) {
+      customerName = `${data.customerData.firstName || ""} ${
+        data.customerData.lastName || ""
+      }`.trim();
+    }
+
+    // Utiliser customer.email ou customerData.email
+    const customerEmail = data.customer?.email || data.customerData?.email;
+    if (!customerEmail) {
+      throw new Error("L'email du client est requis");
+    }
+
+    // Utiliser customer.phone ou customerData.phoneNumber
+    const customerPhone =
+      data.customer?.phone || data.customerData?.phoneNumber;
+
+    // Transformer les items du panier en items de paiement
+    const paymentItems = data.cart.items.map((item: any) => ({
+      name: item.productName,
+      description: item.description || "",
+      price: Math.round(item.unitPriceTTC * 100), // Conversion en centimes
+      quantity: item.quantity,
+      currency: "eur",
+    }));
+
+    return {
+      items: paymentItems,
+      customer: {
+        email: customerEmail,
+        name: customerName || "",
+        phone: customerPhone || "",
+      },
+      successUrl: data.successUrl,
+      cancelUrl: data.cancelUrl,
+      currency: "eur",
+      metadata: {
+        customer_name: customerName || "",
+        customer_phone: customerPhone || "",
+        ...data.metadata,
+      },
+    };
+  }
+
+  // ===== MÉTHODES PUBLIQUES =====
+
   /**
    * Créer un paiement
    * @param {Object} paymentData Données de paiement
@@ -26,31 +143,14 @@ export default class PaymentService {
    */
   async createPayment(paymentData: any): Promise<any> {
     try {
-      // Créer les éléments de ligne pour Stripe Checkout
-      const line_items = paymentData.items.map((item: any) => {
-        const product_data: any = { name: item.name };
-        if (item.description && String(item.description).trim().length > 0) {
-          product_data.description = item.description;
-        }
-        return {
-          price_data: {
-            currency: item.currency || "eur",
-            product_data,
-            unit_amount: item.price, // Prix en centimes
-          },
-          quantity: item.quantity,
-        };
-      });
+      const lineItems = this.buildLineItems(paymentData.items);
 
-      // Créer une session Stripe Checkout
-      const session = await this.stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items,
-        mode: "payment",
-        customer_email: paymentData.customer.email,
-        success_url:
+      const session = await this.createStripeSession({
+        lineItems,
+        customerEmail: paymentData.customer.email,
+        successUrl:
           paymentData.successUrl || "http://localhost:3000/checkout/success",
-        cancel_url:
+        cancelUrl:
           paymentData.cancelUrl || "http://localhost:3000/checkout/cancel",
         metadata: {
           customer_name: paymentData.customer.name || "",
@@ -61,7 +161,7 @@ export default class PaymentService {
 
       return {
         id: session.id,
-        url: session.url, // URL de redirection vers Stripe Checkout
+        url: session.url,
         status: session.payment_status,
         amount: session.amount_total,
         currency: paymentData.currency,
@@ -78,7 +178,7 @@ export default class PaymentService {
 
   /**
    * Créer un paiement depuis un panier
-   * Transforme le panier en items de paiement et crée la session Stripe
+   * Transforme le panier en données de paiement et utilise createPayment
    * @param {Object} data Données contenant le panier et les informations de paiement
    * @returns {Promise<Object>} Résultat du paiement
    */
@@ -100,78 +200,8 @@ export default class PaymentService {
     metadata?: Record<string, string>;
   }): Promise<any> {
     try {
-      // Valider que le panier n'est pas vide
-      if (!data.cart || !data.cart.items || data.cart.items.length === 0) {
-        throw new Error("Le panier est vide");
-      }
-
-      // Construire customer.name à partir de customerData si disponible
-      let customerName = data.customer?.name;
-      if (!customerName && data.customerData) {
-        customerName = `${data.customerData.firstName || ""} ${
-          data.customerData.lastName || ""
-        }`.trim();
-      }
-
-      // Utiliser customer.email ou customerData.email
-      const customerEmail = data.customer?.email || data.customerData?.email;
-      if (!customerEmail) {
-        throw new Error("L'email du client est requis");
-      }
-
-      // Utiliser customer.phone ou customerData.phoneNumber
-      const customerPhone =
-        data.customer?.phone || data.customerData?.phoneNumber;
-
-      // Transformer les items du panier en items de paiement
-      const paymentItems = data.cart.items.map((item: any) => ({
-        name: item.productName,
-        description: item.description || "",
-        price: Math.round(item.unitPriceTTC * 100), // Conversion en centimes
-        quantity: item.quantity,
-        currency: "eur",
-      }));
-
-      // Créer les éléments de ligne pour Stripe Checkout
-      const line_items = paymentItems.map((item: any) => {
-        const product_data: any = { name: item.name };
-        if (item.description && String(item.description).trim().length > 0) {
-          product_data.description = item.description;
-        }
-        return {
-          price_data: {
-            currency: item.currency || "eur",
-            product_data,
-            unit_amount: item.price, // Prix en centimes
-          },
-          quantity: item.quantity,
-        };
-      });
-
-      // Créer une session Stripe Checkout
-      const session = await this.stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items,
-        mode: "payment",
-        customer_email: customerEmail,
-        success_url: data.successUrl,
-        cancel_url: data.cancelUrl,
-        metadata: {
-          customer_name: customerName || "",
-          customer_phone: customerPhone || "",
-          ...data.metadata,
-        },
-      });
-
-      return {
-        id: session.id,
-        url: session.url, // URL de redirection vers Stripe Checkout
-        status: session.payment_status,
-        amount: session.amount_total,
-        currency: "eur",
-        customerEmail: customerEmail,
-        createdAt: new Date(session.created * 1000),
-      };
+      const paymentData = this.cartToPaymentData(data);
+      return await this.createPayment(paymentData);
     } catch (error: any) {
       console.error("Error creating payment from cart:", error);
       throw new Error(

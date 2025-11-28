@@ -231,53 +231,6 @@ export default class OrderRepository {
   }
 
   /**
-   * Obtenir le total HT des commandes (avec filtres optionnels)
-   * @param {OrderListOptions} options Options de filtrage
-   * @returns {Promise<number>} Somme HT
-   */
-  async getOrdersTotalHT(options: OrderListOptions = {}): Promise<number> {
-    try {
-      const { customerId, startDate, endDate } = options as any;
-
-      const conditions: string[] = [];
-      const params: any[] = [];
-      let paramCount = 0;
-
-      if (customerId) {
-        conditions.push(`customer_id = $${++paramCount}`);
-        params.push(customerId);
-      }
-
-      if (startDate) {
-        conditions.push(`created_at >= $${++paramCount}`);
-        params.push(startDate);
-      }
-
-      if (endDate) {
-        conditions.push(`created_at <= $${++paramCount}`);
-        params.push(endDate);
-      }
-
-      const whereClause =
-        conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-
-      const query = `
-        SELECT COALESCE(SUM(total_amount_ht), 0) AS total_ht
-        FROM orders
-        ${whereClause}
-      `;
-
-      const result = await this.pool.query(query, params);
-      const row = result.rows[0];
-      // pg retourne DECIMAL comme string → parseFloat en sécurité
-      return parseFloat(row.total_ht);
-    } catch (error) {
-      console.error("Error getting orders total HT:", error);
-      throw new Error("Failed to retrieve orders total HT");
-    }
-  }
-
-  /**
    * Obtenir les totaux HT et TTC des commandes (avec filtres optionnels)
    * @param {OrderListOptions} options Options de filtrage
    * @returns {Promise<{ totalHT: number; totalTTC: number }>} Totaux
@@ -495,5 +448,39 @@ export default class OrderRepository {
       console.error("Error getting orders by year:", error);
       throw error;
     }
+  }
+
+  /**
+   * Créer une commande en base de données
+   * @param {OrderData} orderData Données de la commande
+   * @param {any} client Client de transaction optionnel (pour les transactions)
+   * @returns {Promise<Order>} Commande créée
+   */
+  async createOrder(
+    orderData: Partial<OrderData>,
+    client?: any
+  ): Promise<Order> {
+    const query = `
+      INSERT INTO orders (customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+                         payment_method, notes, payment_intent_id, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+      ON CONFLICT (payment_intent_id) WHERE payment_intent_id IS NOT NULL DO UPDATE SET updated_at = NOW()
+      RETURNING id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+                payment_method, notes, created_at, updated_at
+    `;
+
+    const values = [
+      orderData.customer_id || null,
+      orderData.customer_snapshot || null,
+      orderData.total_amount_ht,
+      orderData.total_amount_ttc,
+      orderData.payment_method,
+      orderData.notes || "",
+      (orderData as any).payment_intent_id || null,
+    ];
+
+    const executor = client || this.pool;
+    const result = await executor.query(query, values);
+    return new Order(result.rows[0] as OrderData);
   }
 }

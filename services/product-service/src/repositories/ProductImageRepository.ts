@@ -73,6 +73,60 @@ export class ProductImageRepository {
   }
 
   /**
+   * Mettre à jour une image
+   * @param {number} id ID de l'image
+   * @param {Partial<ProductImageData>} imageData Données de l'image à mettre à jour
+   * @returns {Promise<ProductImage|null>} Image mise à jour ou null si non trouvée
+   */
+  async updateImage(
+    id: number,
+    imageData: Partial<ProductImageData>
+  ): Promise<ProductImage | null> {
+    try {
+      const setClause = [];
+      const values = [];
+      let paramCount = 0;
+
+      if (imageData.filename !== undefined) {
+        setClause.push(`filename = $${++paramCount}`);
+        values.push(imageData.filename);
+      }
+      if (imageData.file_path !== undefined) {
+        setClause.push(`file_path = $${++paramCount}`);
+        values.push(imageData.file_path);
+      }
+      if (imageData.order_index !== undefined) {
+        setClause.push(`order_index = $${++paramCount}`);
+        values.push(imageData.order_index);
+      }
+
+      if (setClause.length === 0) {
+        throw new Error("Aucun champ à mettre à jour");
+      }
+
+      values.push(id);
+
+      const query = `
+        UPDATE product_images 
+        SET ${setClause.join(", ")}
+        WHERE id = $${++paramCount}
+        RETURNING id, product_id, filename, file_path, order_index
+      `;
+
+      const result = await this.pool.query(query, values);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return new ProductImage(result.rows[0] as ProductImageData);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de l'image:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Supprimer une image
    * @param {number} id ID de l'image
    * @returns {Promise<boolean>} True si supprimée, false si non trouvée
