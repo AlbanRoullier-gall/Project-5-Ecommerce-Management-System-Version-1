@@ -28,6 +28,7 @@ import {
 } from "./handlers/payment-handler";
 import { handleExportOrdersYear } from "./handlers/export-handler";
 import { handleDashboardStatistics } from "./handlers/statistics-handler";
+import { handleCheckoutComplete } from "./handlers/checkout-handler";
 
 export class ApiRouter {
   // Multer n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
@@ -114,6 +115,9 @@ export class ApiRouter {
     // Payment - Routes avec transformation/orchestration
     app.post("/api/payment/create", handleCreatePayment);
     app.post("/api/payment/finalize", handleFinalizePayment);
+
+    // Checkout - Route orchestrée pour finaliser le checkout
+    app.post("/api/checkout/complete", handleCheckoutComplete);
 
     // Export - Route orchestrée
     app.get(

@@ -8,7 +8,6 @@ import { SERVICES } from "../../config";
 import { proxyRequest } from "../proxy";
 import { OrderCompleteDTO } from "../../../../shared-types/order-service";
 import { CartItemPublicDTO } from "../../../../shared-types/cart-service";
-import { PaymentCreateDTO } from "../../../../shared-types/payment-service";
 
 /**
  * Helper pour créer une réponse d'erreur standardisée
@@ -40,32 +39,9 @@ const transformCartItemsToOrderItems = (
 
 /**
  * Handler pour la création de paiement
- * Transforme le body du frontend pour le format attendu par payment-service
- * Le frontend envoie { payment, cartSessionId, snapshot }
- * On enrichit payment.metadata avec cartSessionId et checkoutSnapshot
+ * Simple proxy vers le payment-service
  */
 export const handleCreatePayment = async (req: Request, res: Response) => {
-  const body = req.body as {
-    payment?: PaymentCreateDTO;
-    cartSessionId?: string;
-    snapshot?: any;
-  };
-
-  // Si le body contient payment, cartSessionId et snapshot, on transforme
-  if (body.payment && body.cartSessionId && body.snapshot) {
-    const paymentDTO: PaymentCreateDTO = {
-      ...body.payment,
-      metadata: {
-        ...body.payment.metadata,
-        cartSessionId: body.cartSessionId,
-        checkoutSnapshot: JSON.stringify(body.snapshot),
-      },
-    };
-    // Remplacer req.body par seulement l'objet payment enrichi
-    req.body = paymentDTO;
-  }
-
-  // Proxy vers le payment-service
   await proxyRequest(req, res, "payment");
 };
 

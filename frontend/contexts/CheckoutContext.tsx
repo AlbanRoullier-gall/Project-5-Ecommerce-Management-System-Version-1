@@ -6,14 +6,7 @@ import React, {
   ReactNode,
   useCallback,
 } from "react";
-import {
-  CustomerCreateDTO,
-  AddressCreateDTO,
-  PaymentCreateDTO,
-  PaymentItem,
-  PaymentCustomer,
-  PaymentPublicDTO,
-} from "../dto";
+import { CustomerCreateDTO, AddressCreateDTO } from "../dto";
 import { CartItemPublicDTO } from "./CartContext";
 
 /**
@@ -288,73 +281,8 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   }, [addressData]);
 
   /**
-   * Helper pour créer un DTO d'adresse
-   */
-  const createAddressDTO = useCallback(
-    (
-      address: Partial<AddressCreateDTO>,
-      addressType: "shipping" | "billing",
-      isDefault: boolean
-    ): AddressCreateDTO => ({
-      addressType,
-      address: address.address || "",
-      postalCode: address.postalCode || "",
-      city: address.city || "",
-      countryName: address.countryName || "Belgique",
-      isDefault,
-    }),
-    []
-  );
-
-  /**
-   * Helper pour sauvegarder une adresse dans le carnet d'adresses du client
-   */
-  const saveAddressToCustomer = useCallback(
-    async (
-      customerId: number,
-      addressDTO: AddressCreateDTO,
-      addressType: "shipping" | "billing"
-    ): Promise<void> => {
-      const response = await fetch(
-        `${API_URL}/api/customers/${customerId}/addresses`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(addressDTO),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        if (
-          response.status === 409 &&
-          errorData.message?.includes("already exists")
-        ) {
-          console.log(
-            `${addressType} address already exists in customer address book`
-          );
-        } else {
-          console.warn(
-            `Failed to save ${addressType} address to customer address book:`,
-            errorData.message
-          );
-        }
-      } else {
-        console.log(`${addressType} address saved to customer address book`);
-      }
-    },
-    []
-  );
-
-  /**
    * Fonction principale pour finaliser la commande
-   *
-   * Processus complet :
-   * 1. Vérifie si le client existe déjà (par email), sinon le crée
-   * 2. Sauvegarde les adresses dans le carnet d'adresses du client
-   * 3. Prépare les données de paiement
-   * 4. Crée une session de paiement Stripe
-   * 5. Retourne l'URL de redirection vers Stripe
+   * Délègue toute l'orchestration à l'API Gateway
    */
   const completeOrder = useCallback(
     async (
@@ -368,136 +296,6 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
       }
 
       try {
-        let customerId: number;
-
-        // Étape 1 : Vérifier si le client existe déjà (recherche par email)
-        const emailEncoded = encodeURIComponent(customerData.email || "");
-        const existingCustomerResponse = await fetch(
-          `${API_URL}/api/customers/by-email/${emailEncoded}`
-        );
-
-        if (existingCustomerResponse.ok) {
-          // Client existant : récupérer ses informations
-          const existingData = await existingCustomerResponse.json();
-          customerId = existingData.customer.customerId;
-        } else {
-          // Client inexistant : créer un nouveau client
-          const customerResponse = await fetch(`${API_URL}/api/customers`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(customerData),
-          });
-
-          if (!customerResponse.ok) {
-            const errorData = await customerResponse.json();
-            return {
-              success: false,
-              error:
-                errorData.message || "Erreur lors de la création du client",
-            };
-          }
-
-          const customerResponseData = await customerResponse.json();
-          customerId = customerResponseData.customer.customerId;
-        }
-
-        // Étape 2 : Sauvegarder les adresses dans le carnet d'adresses du client
-        // Cette étape est non-bloquante : si elle échoue, on continue quand même
-        try {
-          const shippingAddress = addressData.shipping;
-          const billingAddress = addressData.useSameBillingAddress
-            ? addressData.shipping
-            : addressData.billing;
-
-          // Créer l'adresse de livraison (toujours définie comme adresse par défaut)
-          if (
-            shippingAddress?.address &&
-            shippingAddress?.postalCode &&
-            shippingAddress?.city
-          ) {
-            const shippingAddressDTO = createAddressDTO(
-              shippingAddress,
-              "shipping",
-              true
-            );
-            await saveAddressToCustomer(
-              customerId,
-              shippingAddressDTO,
-              "shipping"
-            );
-          }
-
-          // Créer l'adresse de facturation uniquement si elle est différente de l'adresse de livraison
-          if (
-            billingAddress?.address &&
-            billingAddress?.postalCode &&
-            billingAddress?.city &&
-            !addressData.useSameBillingAddress &&
-            billingAddress.address !== shippingAddress?.address
-          ) {
-            const billingAddressDTO = createAddressDTO(
-              billingAddress,
-              "billing",
-              false
-            );
-            await saveAddressToCustomer(
-              customerId,
-              billingAddressDTO,
-              "billing"
-            );
-          }
-        } catch (addressError) {
-          // Erreur non-bloquante : on continue même si la sauvegarde des adresses échoue
-          console.error(
-            "Address book save error (non-blocking):",
-            addressError
-          );
-        }
-
-        // Étape 3 : Préparer les données de paiement pour Stripe
-        const paymentItems: PaymentItem[] = cart.items.map((item) => ({
-          name: item.productName || "Produit",
-          description: item.description || "",
-          price: Math.round(item.unitPriceTTC * 100), // en centimes
-          quantity: item.quantity,
-          currency: "eur",
-        }));
-
-        // Étape 4 : Construire le snapshot checkout à attacher au panier
-        // Le snapshot contient toutes les informations de la commande pour référence future
-        const shippingAddress = addressData.shipping;
-        const billingAddress = addressData.useSameBillingAddress
-          ? addressData.shipping
-          : addressData.billing;
-
-        const snapshot = {
-          customer: {
-            ...customerData,
-          },
-          shippingAddress: {
-            firstName: customerData.firstName || "",
-            lastName: customerData.lastName || "",
-            address: shippingAddress.address || "",
-            city: shippingAddress.city || "",
-            postalCode: shippingAddress.postalCode || "",
-            country: shippingAddress.countryName,
-            phone: customerData.phoneNumber || "",
-          },
-          billingAddress:
-            billingAddress.address !== shippingAddress.address
-              ? {
-                  firstName: customerData.firstName || "",
-                  lastName: customerData.lastName || "",
-                  address: billingAddress.address || "",
-                  city: billingAddress.city || "",
-                  postalCode: billingAddress.postalCode || "",
-                  country: billingAddress.countryName,
-                  phone: customerData.phoneNumber || "",
-                }
-              : null,
-          notes: undefined,
-        };
-
         // Récupérer l'ID de session du panier depuis le localStorage
         const cartSessionId =
           (typeof window !== "undefined" &&
@@ -510,58 +308,36 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
           };
         }
 
-        // Étape 5 : Préparer le payload pour créer la session de paiement Stripe
-        const paymentCustomer: PaymentCustomer = {
-          email: customerData.email || "",
-          name:
-            `${customerData.firstName} ${customerData.lastName}`.trim() ||
-            undefined,
-          phone: customerData.phoneNumber || undefined,
-        };
-
-        const paymentCreateDTO: PaymentCreateDTO = {
-          customer: paymentCustomer,
-          items: paymentItems,
-          successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: `${window.location.origin}/checkout/cancel`,
-          metadata: {
-            customerId: customerId.toString(),
-          },
-        };
-
-        const paymentCreatePayload = {
-          cartSessionId,
-          snapshot,
-          payment: paymentCreateDTO,
-        };
-
-        // Étape 6 : Créer la session de paiement Stripe
-        const paymentResponse = await fetch(`${API_URL}/api/payment/create`, {
+        // Appel unique vers l'endpoint d'orchestration du checkout
+        const response = await fetch(`${API_URL}/api/checkout/complete`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(paymentCreatePayload),
+          body: JSON.stringify({
+            cartSessionId,
+            customerData,
+            addressData,
+            successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancelUrl: `${window.location.origin}/checkout/cancel`,
+          }),
         });
 
-        if (!paymentResponse.ok) {
-          const errorData = await paymentResponse.json();
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
           return {
             success: false,
             error:
-              errorData.message || "Erreur lors de la création du paiement",
+              errorData.message ||
+              errorData.error ||
+              "Erreur lors de la finalisation de la commande",
           };
         }
 
-        const paymentResult = (await paymentResponse.json()) as {
-          payment?: PaymentPublicDTO;
-          url?: string;
-        };
-        const url = paymentResult.url || paymentResult.payment?.url;
+        const data = await response.json();
 
-        // Étape 7 : Retourner l'URL de paiement
-        if (url) {
+        if (data.success && data.paymentUrl) {
           return {
             success: true,
-            paymentUrl: url,
+            paymentUrl: data.paymentUrl,
           };
         } else {
           return {
@@ -570,7 +346,6 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
           };
         }
       } catch (err) {
-        // Gestion des erreurs
         console.error("Error completing order:", err);
         return {
           success: false,
@@ -578,7 +353,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         };
       }
     },
-    [customerData, addressData, createAddressDTO, saveAddressToCustomer]
+    [customerData, addressData]
   );
 
   // Sauvegarder automatiquement quand les données changent (sans currentStep)

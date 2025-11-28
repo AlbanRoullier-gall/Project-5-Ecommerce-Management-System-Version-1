@@ -6,11 +6,13 @@
 export class ResponseMapper {
   /**
    * Réponse de paiement créé
+   * Retourne un format simplifié avec success et paymentUrl pour faciliter l'intégration
    */
   static paymentCreated(payment: any) {
     return {
-      message: "Paiement créé avec succès",
-      payment,
+      success: true,
+      paymentUrl: payment.url,
+      payment, // Garder l'objet payment complet pour compatibilité
     };
   }
 
