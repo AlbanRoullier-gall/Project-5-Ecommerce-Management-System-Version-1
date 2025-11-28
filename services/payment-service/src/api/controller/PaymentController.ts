@@ -42,6 +42,34 @@ export class PaymentController {
   }
 
   /**
+   * Créer un paiement depuis un panier
+   * Accepte un panier complet et fait la transformation en interne
+   */
+  async createPaymentFromCart(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await this.paymentService.createPaymentFromCart(req.body);
+      res
+        .status(201)
+        .json(
+          ResponseMapper.paymentCreated(
+            PaymentMapper.stripePaymentIntentToPublicDTO(result)
+          )
+        );
+    } catch (error: any) {
+      console.error("Create payment from cart error:", error);
+      if (error.message.includes("vide")) {
+        res.status(400).json(ResponseMapper.validationError(error.message));
+        return;
+      }
+      if (error.message.includes("card")) {
+        res.status(402).json(ResponseMapper.paymentError(error.message));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
    * Récupérer les informations d'une session Stripe
    * Retourne la session complète et le paymentIntentId extrait
    */
@@ -50,18 +78,22 @@ export class PaymentController {
       const { csid } = req.params;
 
       if (!csid) {
-        res.status(400).json(
-          ResponseMapper.validationError("csid (Checkout Session ID) est requis")
-        );
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              "csid (Checkout Session ID) est requis"
+            )
+          );
         return;
       }
 
       const { session, paymentIntentId } =
         await this.paymentService.getSessionInfo(csid);
 
-      res.status(200).json(
-        ResponseMapper.sessionRetrieved(session, paymentIntentId)
-      );
+      res
+        .status(200)
+        .json(ResponseMapper.sessionRetrieved(session, paymentIntentId));
     } catch (error: any) {
       console.error("Get session info error:", error);
       if (error.message.includes("non trouvée")) {

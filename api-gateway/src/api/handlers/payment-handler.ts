@@ -6,10 +6,7 @@
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
 import { proxyRequest } from "../proxy";
-import { OrderCompleteDTO } from "../../../../shared-types/order-service";
 import { CartPublicDTO } from "../../../../shared-types/cart-service";
-import { PaymentMapper } from "../../mappers";
-import { EmailMapper } from "../../mappers";
 
 /**
  * Helper pour créer une réponse d'erreur standardisée
@@ -152,10 +149,6 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     // 3. Extraire les données de checkout
     const customerData = checkoutData.customerData || {};
     const addressData = checkoutData.addressData || {};
-    const shippingAddressData = addressData.shipping || {};
-    const billingAddressData = addressData.useSameBillingAddress
-      ? shippingAddressData
-      : addressData.billing || {};
 
     // 4. Résoudre le customerId
     let customerId: number | undefined;
@@ -191,66 +184,30 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       }
     }
 
-    // 5. Mapper les items du panier vers les items de commande (mapping simple)
-    const orderItems = PaymentMapper.cartItemsToOrderItems(cart.items);
-
-    // 6. Construire les adresses (construction simple, pas de logique métier)
-    const addresses: OrderCompleteDTO["addresses"] = [];
-
-    if (shippingAddressData.address) {
-      addresses.push({
-        addressType: "shipping",
-        addressSnapshot: {
-          firstName: customerData.firstName || "",
-          lastName: customerData.lastName || "",
-          address: shippingAddressData.address || "",
-          city: shippingAddressData.city || "",
-          postalCode: shippingAddressData.postalCode || "",
-          country: shippingAddressData.countryName || "Belgique",
-          phone: customerData.phoneNumber || "",
-        },
-      });
-    }
-
-    if (
-      billingAddressData.address &&
-      billingAddressData.address !== shippingAddressData.address
-    ) {
-      addresses.push({
-        addressType: "billing",
-        addressSnapshot: {
-          firstName: customerData.firstName || "",
-          lastName: customerData.lastName || "",
-          address: billingAddressData.address || "",
-          city: billingAddressData.city || "",
-          postalCode: billingAddressData.postalCode || "",
-          country: billingAddressData.countryName || "Belgique",
-          phone: customerData.phoneNumber || "",
-        },
-      });
-    }
-
-    // 7. Construire le payload OrderCompleteDTO
-    const orderPayload: OrderCompleteDTO = {
-      totalAmountHT: cart.subtotal,
-      totalAmountTTC: cart.total,
-      paymentMethod: "stripe",
-      items: orderItems,
-      ...(addresses.length > 0 && { addresses }),
-      ...(customerId && { customerId }),
-      ...(customerData &&
-        Object.keys(customerData).length > 0 && {
-          customerSnapshot: customerData,
-        }),
-      ...(paymentIntentId && { paymentIntentId }),
+    // 5. Construire le payload pour order-service
+    const customerSnapshot = {
+      firstName: customerData.firstName || "",
+      lastName: customerData.lastName || "",
+      email: customerData.email,
+      phoneNumber: customerData.phoneNumber || null,
     };
 
-    // 8. Appeler order-service pour créer la commande
+    const orderPayload = {
+      cart,
+      customerId,
+      customerData,
+      customerSnapshot,
+      addressData,
+      paymentIntentId,
+      paymentMethod: "stripe",
+    };
+
+    // 6. Appeler order-service pour créer la commande
     let orderId: number;
 
     try {
       const orderResponse = await fetch(
-        `${SERVICES.order}/api/orders/from-checkout`,
+        `${SERVICES.order}/api/orders/create-from-cart`,
         {
           method: "POST",
           headers: {
@@ -292,36 +249,91 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // 9. Appeler email-service pour envoyer l'email de confirmation (non-bloquant)
-    try {
-      // Construire l'adresse de livraison
-      const shippingAddress = {
-        firstName:
-          shippingAddressData.address && customerData.firstName
-            ? customerData.firstName
-            : "",
-        lastName:
-          shippingAddressData.address && customerData.lastName
-            ? customerData.lastName
-            : "",
-        address: shippingAddressData.address || "",
-        city: shippingAddressData.city || "",
-        postalCode: shippingAddressData.postalCode || "",
-        country: shippingAddressData.countryName || "Belgique",
-      };
+    // 7. Ajouter les adresses au customer-service (non-bloquant)
+    if (customerId) {
+      try {
+        const shippingAddressData = addressData.shipping || {};
+        if (shippingAddressData.address) {
+          await fetch(
+            `${SERVICES.customer}/api/customers/${customerId}/addresses`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Service-Request": "api-gateway",
+              },
+              body: JSON.stringify({
+                addressType: "shipping",
+                address: shippingAddressData.address,
+                postalCode: shippingAddressData.postalCode || "",
+                city: shippingAddressData.city || "",
+                countryName: shippingAddressData.countryName || "Belgique",
+                isDefault: true,
+              }),
+            }
+          );
+        }
 
-      // Mapper les données de commande vers les données d'email (mapping simple)
-      const emailData = EmailMapper.orderToEmailData(
-        orderItems,
-        customerData,
-        shippingAddress,
-        {
-          subtotal: cart.subtotal,
-          tax: cart.tax,
-          total: cart.total,
+        const billingAddressData = addressData.useSameBillingAddress
+          ? shippingAddressData
+          : addressData.billing || {};
+        if (billingAddressData.address && !addressData.useSameBillingAddress) {
+          await fetch(
+            `${SERVICES.customer}/api/customers/${customerId}/addresses`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Service-Request": "api-gateway",
+              },
+              body: JSON.stringify({
+                addressType: "billing",
+                address: billingAddressData.address,
+                postalCode: billingAddressData.postalCode || "",
+                city: billingAddressData.city || "",
+                countryName: billingAddressData.countryName || "Belgique",
+                isDefault: false,
+              }),
+            }
+          );
+        }
+      } catch (error) {
+        console.warn(
+          "⚠️ Erreur lors de l'ajout des adresses au customer-service:",
+          error
+        );
+      }
+    }
+
+    // 8. Appeler email-service pour envoyer l'email de confirmation (non-bloquant)
+    try {
+      const emailData = {
+        customerEmail: customerData.email,
+        customerName:
+          `${customerData.firstName || ""} ${
+            customerData.lastName || ""
+          }`.trim() || "Client",
+        orderId,
+        orderDate: new Date().toISOString(),
+        items: cart.items.map((item: any) => ({
+          name: item.productName,
+          quantity: item.quantity,
+          unitPrice: item.unitPriceTTC,
+          totalPrice: item.totalPriceTTC,
+          vatRate: item.vatRate,
+        })),
+        subtotal: cart.subtotal,
+        tax: cart.tax,
+        total: cart.total,
+        shippingAddress: {
+          firstName: customerData.firstName || "",
+          lastName: customerData.lastName || "",
+          address: addressData.shipping?.address || "",
+          city: addressData.shipping?.city || "",
+          postalCode: addressData.shipping?.postalCode || "",
+          country: addressData.shipping?.countryName || "Belgique",
         },
-        orderId
-      );
+      };
 
       const emailResponse = await fetch(
         `${SERVICES.email}/api/email/order-confirmation`,

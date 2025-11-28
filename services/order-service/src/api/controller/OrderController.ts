@@ -242,4 +242,28 @@ export class OrderController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Créer une commande complète depuis un panier
+   * Accepte un panier complet et fait la transformation en interne
+   */
+  async createOrderFromCart(req: Request, res: Response): Promise<void> {
+    try {
+      const order = await this.orderService.createOrderFromCart(req.body);
+      const orderDTO = OrderMapper.orderToPublicDTO(order);
+
+      res.status(201).json(ResponseMapper.orderCreated(orderDTO));
+    } catch (error: any) {
+      console.error("Create order from cart error:", error);
+      if (error.message.includes("vide")) {
+        res.status(400).json(ResponseMapper.validationError(error.message));
+        return;
+      }
+      if (error.message.includes("already exists")) {
+        res.status(409).json(ResponseMapper.conflictError(error.message));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

@@ -121,9 +121,82 @@ export class ApiRouter {
       }),
 
       // Order from checkout schema
+      orderFromCartSchema: Joi.object({
+        cart: Joi.object({
+          id: Joi.string().required(),
+          sessionId: Joi.string().required(),
+          items: Joi.array()
+            .items(
+              Joi.object({
+                id: Joi.string().required(),
+                productId: Joi.number().required(),
+                productName: Joi.string().required(),
+                description: Joi.any().optional(),
+                imageUrl: Joi.any().optional(),
+                quantity: Joi.number().positive().required(),
+                unitPriceHT: Joi.number().required(),
+                unitPriceTTC: Joi.number().required(),
+                vatRate: Joi.number().required(),
+                totalPriceHT: Joi.number().required(),
+                totalPriceTTC: Joi.number().required(),
+                addedAt: Joi.any().optional(),
+              }).unknown(true)
+            )
+            .min(1)
+            .required(),
+          subtotal: Joi.number().required(),
+          tax: Joi.number().required(),
+          total: Joi.number().required(),
+          createdAt: Joi.any().optional(),
+          updatedAt: Joi.any().optional(),
+          expiresAt: Joi.any().optional(),
+        })
+          .unknown(true)
+          .required(),
+        customerId: Joi.number().optional(),
+        customerSnapshot: Joi.object().unknown(true).optional(),
+        customerData: Joi.object({
+          email: Joi.string().email().required(),
+          firstName: Joi.string().optional(),
+          lastName: Joi.string().optional(),
+          phoneNumber: Joi.string().optional(),
+        })
+          .unknown(true)
+          .required(),
+        addressData: Joi.object({
+          shipping: Joi.object({
+            address: Joi.string().optional(),
+            postalCode: Joi.string().optional(),
+            city: Joi.string().optional(),
+            countryName: Joi.string().optional(),
+            addressType: Joi.any().optional(),
+            firstName: Joi.string().optional(),
+            lastName: Joi.string().optional(),
+          })
+            .unknown(true)
+            .optional(),
+          billing: Joi.object({
+            address: Joi.string().optional(),
+            postalCode: Joi.string().optional(),
+            city: Joi.string().optional(),
+            countryName: Joi.string().optional(),
+            addressType: Joi.any().optional(),
+            firstName: Joi.string().optional(),
+            lastName: Joi.string().optional(),
+          })
+            .unknown(true)
+            .optional(),
+          useSameBillingAddress: Joi.boolean().required(),
+        })
+          .unknown(true)
+          .required(),
+        paymentIntentId: Joi.string().optional(),
+        paymentMethod: Joi.string().required(),
+      }),
+
       orderFromCheckoutSchema: Joi.object({
         customerId: Joi.number().integer().positive().optional(),
-        customerSnapshot: Joi.object().optional(),
+        customerSnapshot: Joi.object().unknown(true).optional(),
         totalAmountHT: Joi.number().positive().required(),
         totalAmountTTC: Joi.number().positive().required(),
         paymentMethod: Joi.string().required(),
@@ -195,6 +268,16 @@ export class ApiRouter {
     // ===== ROUTES PUBLIQUES (SANS AUTHENTIFICATION) =====
 
     // Routes publiques pour les commandes
+    // Créer une commande depuis un panier
+    app.post(
+      "/api/orders/create-from-cart",
+      this.validateRequest(schemas.orderFromCartSchema),
+      (req: Request, res: Response) => {
+        this.orderController.createOrderFromCart(req, res);
+      }
+    );
+
+    // Créer une commande depuis un checkout (endpoint existant pour compatibilité)
     app.post(
       "/api/orders/from-checkout",
       this.validateRequest(schemas.orderFromCheckoutSchema),

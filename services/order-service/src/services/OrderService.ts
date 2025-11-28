@@ -97,6 +97,124 @@ export default class OrderService {
   }
 
   /**
+   * Créer une commande complète depuis un panier
+   * Transforme le panier en items de commande et crée la commande
+   * @param {Object} data Données contenant le panier et les informations de commande
+   * @returns {Promise<Order>} Commande créée
+   */
+  async createOrderFromCart(data: {
+    cart: any; // CartPublicDTO
+    customerId?: number;
+    customerSnapshot?: any;
+    addressData: {
+      shipping: {
+        address?: string;
+        postalCode?: string;
+        city?: string;
+        countryName?: string;
+      };
+      billing?: {
+        address?: string;
+        postalCode?: string;
+        city?: string;
+        countryName?: string;
+      };
+      useSameBillingAddress: boolean;
+    };
+    customerData: {
+      email: string;
+      firstName?: string;
+      lastName?: string;
+      phoneNumber?: string;
+    };
+    paymentIntentId?: string;
+    paymentMethod: string;
+  }): Promise<Order> {
+    try {
+      // Valider que le panier n'est pas vide
+      if (!data.cart || !data.cart.items || data.cart.items.length === 0) {
+        throw new Error("Le panier est vide");
+      }
+
+      // Transformer les items du panier en items de commande
+      const orderItems = data.cart.items.map((item: any) => ({
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPriceHT: item.unitPriceHT,
+        unitPriceTTC: item.unitPriceTTC,
+        vatRate: item.vatRate,
+        totalPriceHT: item.totalPriceHT,
+        totalPriceTTC: item.totalPriceTTC,
+      }));
+
+      // Construire les adresses
+      const addresses: OrderCompleteDTO["addresses"] = [];
+
+      const shippingAddressData = data.addressData.shipping || {};
+      const billingAddressData = data.addressData.useSameBillingAddress
+        ? shippingAddressData
+        : data.addressData.billing || {};
+
+      if (shippingAddressData.address) {
+        addresses.push({
+          addressType: "shipping",
+          addressSnapshot: {
+            firstName: data.customerData.firstName || "",
+            lastName: data.customerData.lastName || "",
+            address: shippingAddressData.address || "",
+            city: shippingAddressData.city || "",
+            postalCode: shippingAddressData.postalCode || "",
+            country: shippingAddressData.countryName || "Belgique",
+            phone: data.customerData.phoneNumber || "",
+          },
+        });
+      }
+
+      if (
+        billingAddressData.address &&
+        billingAddressData.address !== shippingAddressData.address
+      ) {
+        addresses.push({
+          addressType: "billing",
+          addressSnapshot: {
+            firstName: data.customerData.firstName || "",
+            lastName: data.customerData.lastName || "",
+            address: billingAddressData.address || "",
+            city: billingAddressData.city || "",
+            postalCode: billingAddressData.postalCode || "",
+            country: billingAddressData.countryName || "Belgique",
+            phone: data.customerData.phoneNumber || "",
+          },
+        });
+      }
+
+      // Construire le payload OrderCompleteDTO
+      const checkoutData: OrderCompleteDTO = {
+        totalAmountHT: data.cart.subtotal,
+        totalAmountTTC: data.cart.total,
+        paymentMethod: data.paymentMethod,
+        items: orderItems,
+        ...(addresses.length > 0 && { addresses }),
+        ...(data.customerId && { customerId: data.customerId }),
+        ...(data.customerSnapshot &&
+          Object.keys(data.customerSnapshot).length > 0 && {
+            customerSnapshot: data.customerSnapshot,
+          }),
+        ...(data.paymentIntentId && { paymentIntentId: data.paymentIntentId }),
+      };
+
+      // Créer la commande en utilisant la méthode existante
+      return await this.createOrderFromCheckout(checkoutData);
+    } catch (error: any) {
+      console.error("Error creating order from cart:", error);
+      throw new Error(
+        `Erreur lors de la création de la commande: ${error.message}`
+      );
+    }
+  }
+
+  /**
    * Créer une commande complète depuis un checkout (order + items + addresses)
    * Utilise une transaction PostgreSQL pour garantir l'atomicité
    * Réutilise la logique des repositories mais avec un client de transaction

@@ -63,6 +63,50 @@ export class ApiRouter {
         cancelUrl: Joi.string().required(),
         metadata: Joi.object().optional(),
       }),
+      // Schéma de création de paiement depuis un panier
+      paymentCreateFromCartSchema: Joi.object({
+        cart: Joi.object({
+          id: Joi.string().required(),
+          sessionId: Joi.string().required(),
+          items: Joi.array()
+            .items(
+              Joi.object({
+                id: Joi.string().required(),
+                productId: Joi.number().required(),
+                productName: Joi.string().required(),
+                description: Joi.any().optional(),
+                imageUrl: Joi.any().optional(),
+                quantity: Joi.number().positive().required(),
+                unitPriceHT: Joi.number().required(),
+                unitPriceTTC: Joi.number().required(),
+                vatRate: Joi.number().required(),
+                totalPriceHT: Joi.number().required(),
+                totalPriceTTC: Joi.number().required(),
+                addedAt: Joi.any().optional(),
+              }).unknown(true)
+            )
+            .min(1)
+            .required(),
+          subtotal: Joi.number().required(),
+          tax: Joi.number().required(),
+          total: Joi.number().required(),
+          createdAt: Joi.any().optional(),
+          updatedAt: Joi.any().optional(),
+          expiresAt: Joi.any().optional(),
+        })
+          .unknown(true)
+          .required(),
+        customer: Joi.object({
+          email: Joi.string().email().required(),
+          name: Joi.string().max(100).optional().allow(null, ""),
+          phone: Joi.string().max(20).allow("", null).optional(),
+        })
+          .unknown(true)
+          .required(),
+        successUrl: Joi.string().required(),
+        cancelUrl: Joi.string().required(),
+        metadata: Joi.object().optional(),
+      }).unknown(true),
     };
   }
 
@@ -138,6 +182,15 @@ export class ApiRouter {
       this.validateRequest(schemas.paymentCreateSchema),
       (req: Request, res: Response) => {
         this.paymentController.createPayment(req, res);
+      }
+    );
+
+    // Créer un paiement depuis un panier
+    app.post(
+      "/api/payment/create-from-cart",
+      this.validateRequest(schemas.paymentCreateFromCartSchema),
+      (req: Request, res: Response) => {
+        this.paymentController.createPaymentFromCart(req, res);
       }
     );
 

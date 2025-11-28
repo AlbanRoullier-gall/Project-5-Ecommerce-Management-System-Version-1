@@ -5,12 +5,7 @@
 
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
-import {
-  PaymentCreateDTO,
-  PaymentCustomer,
-} from "../../../../shared-types/payment-service";
 import { CartPublicDTO } from "../../../../shared-types/cart-service";
-import { CheckoutMapper } from "../../mappers";
 
 /**
  * Interface pour les données de checkout reçues du frontend
@@ -179,24 +174,20 @@ export const handleCheckoutComplete = async (
       return;
     }
 
-    // 3. Mapper les items du panier vers les items de paiement (mapping simple)
-    const paymentItems = CheckoutMapper.cartItemsToPaymentItems(cart.items);
-
-    // 4. Construire le payload PaymentCreateDTO
+    // 3. Construire le payload pour payment-service
     const customerName = `${body.customerData.firstName || ""} ${
       body.customerData.lastName || ""
     }`.trim();
-    const paymentCustomer: PaymentCustomer = {
-      email: body.customerData.email,
-      ...(customerName && { name: customerName }),
-      ...(body.customerData.phoneNumber && {
-        phone: body.customerData.phoneNumber,
-      }),
-    };
 
-    const paymentCreateDTO: PaymentCreateDTO = {
-      customer: paymentCustomer,
-      items: paymentItems,
+    const paymentPayload = {
+      cart,
+      customer: {
+        email: body.customerData.email,
+        ...(customerName && { name: customerName }),
+        ...(body.customerData.phoneNumber && {
+          phone: body.customerData.phoneNumber,
+        }),
+      },
       successUrl: body.successUrl,
       cancelUrl: body.cancelUrl,
       metadata: {
@@ -205,17 +196,17 @@ export const handleCheckoutComplete = async (
       },
     };
 
-    // 5. Appeler payment-service pour créer la session
+    // 4. Appeler payment-service pour créer la session
     try {
       const paymentResponse = await fetch(
-        `${SERVICES.payment}/api/payment/create`,
+        `${SERVICES.payment}/api/payment/create-from-cart`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "X-Service-Request": "api-gateway",
           },
-          body: JSON.stringify(paymentCreateDTO),
+          body: JSON.stringify(paymentPayload),
         }
       );
 
