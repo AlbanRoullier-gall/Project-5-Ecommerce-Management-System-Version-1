@@ -162,7 +162,7 @@ export const handleCheckoutComplete = async (
 
     // 3. Préparer les données de paiement pour Stripe
     const paymentItems = cart.items.map((item: any) => ({
-      name: item.productName || "Produit",
+      name: item.productName, // Plus besoin de fallback, productName est requis
       description: item.description || "",
       price: Math.round(item.unitPriceTTC * 100), // en centimes
       quantity: item.quantity,

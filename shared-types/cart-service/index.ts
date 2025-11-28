@@ -33,7 +33,7 @@ export interface CartItemUpdateDTO {
 export interface CartItemPublicDTO {
   id: string;
   productId: number;
-  productName?: string; // Nom du produit (snapshot au moment de l'ajout)
+  productName: string; // Nom du produit (snapshot au moment de l'ajout) - requis pour compatibilité avec Order Service
   description?: string; // Description du produit (snapshot au moment de l'ajout)
   imageUrl?: string; // URL de la première image du produit (snapshot au moment de l'ajout)
   quantity: number;

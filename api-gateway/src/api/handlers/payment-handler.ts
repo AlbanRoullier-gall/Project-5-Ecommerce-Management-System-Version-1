@@ -20,14 +20,14 @@ const createErrorResponse = (error: string, message: string) => ({
 
 /**
  * Transforme les items du panier (CartItemPublicDTO) en format OrderCompleteDTO
- * Utilise directement les types partagés
+ * Simplifié : productName est maintenant requis dans CartItemPublicDTO
  */
 const transformCartItemsToOrderItems = (
   cartItems: CartItemPublicDTO[]
 ): OrderCompleteDTO["items"] => {
   return cartItems.map((item) => ({
     productId: item.productId,
-    productName: item.productName || "Produit",
+    productName: item.productName, // Plus besoin de fallback, productName est requis
     quantity: item.quantity,
     unitPriceHT: item.unitPriceHT,
     unitPriceTTC: item.unitPriceTTC,
