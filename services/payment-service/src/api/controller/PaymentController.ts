@@ -6,7 +6,7 @@
 import { Request, Response } from "express";
 import PaymentService from "../../services/PaymentService";
 import { PaymentMapper, ResponseMapper } from "../mapper";
-import { PaymentCreateDTO } from "../dto";
+import { PaymentCreateDTO, PaymentFromCartDTO } from "../dto";
 
 export class PaymentController {
   private paymentService: PaymentService;
@@ -47,7 +47,10 @@ export class PaymentController {
    */
   async createPaymentFromCart(req: Request, res: Response): Promise<void> {
     try {
-      const result = await this.paymentService.createPaymentFromCart(req.body);
+      const paymentFromCartDTO: PaymentFromCartDTO = req.body;
+      const result = await this.paymentService.createPaymentFromCart(
+        paymentFromCartDTO
+      );
       res
         .status(201)
         .json(

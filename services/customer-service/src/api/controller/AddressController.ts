@@ -10,7 +10,7 @@
 
 import { Request, Response } from "express";
 import CustomerService from "../../services/CustomerService";
-import { AddressCreateDTO, AddressUpdateDTO } from "../dto";
+import { AddressCreateDTO, AddressUpdateDTO, AddressesCreateDTO } from "../dto";
 import { CustomerMapper, ResponseMapper } from "../mapper";
 
 export class AddressController {
@@ -137,10 +137,10 @@ export class AddressController {
         return;
       }
 
-      const { shipping, billing, useSameBillingAddress } = req.body;
+      const addressesCreateDTO: AddressesCreateDTO = req.body;
 
       // Valider que shipping ou billing est fourni
-      if (!shipping && !billing) {
+      if (!addressesCreateDTO.shipping && !addressesCreateDTO.billing) {
         res
           .status(400)
           .json(
@@ -154,9 +154,29 @@ export class AddressController {
       const result = await this.customerService.addAddresses(
         parseInt(customerId),
         {
-          shipping,
-          billing,
-          useSameBillingAddress,
+          ...(addressesCreateDTO.shipping && {
+            shipping: {
+              address: addressesCreateDTO.shipping.address || "",
+              postalCode: addressesCreateDTO.shipping.postalCode || "",
+              city: addressesCreateDTO.shipping.city || "",
+              ...(addressesCreateDTO.shipping.countryName && {
+                countryName: addressesCreateDTO.shipping.countryName,
+              }),
+            },
+          }),
+          ...(addressesCreateDTO.billing && {
+            billing: {
+              address: addressesCreateDTO.billing.address || "",
+              postalCode: addressesCreateDTO.billing.postalCode || "",
+              city: addressesCreateDTO.billing.city || "",
+              ...(addressesCreateDTO.billing.countryName && {
+                countryName: addressesCreateDTO.billing.countryName,
+              }),
+            },
+          }),
+          ...(addressesCreateDTO.useSameBillingAddress !== undefined && {
+            useSameBillingAddress: addressesCreateDTO.useSameBillingAddress,
+          }),
         }
       );
 

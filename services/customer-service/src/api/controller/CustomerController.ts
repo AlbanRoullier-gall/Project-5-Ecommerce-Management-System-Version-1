@@ -10,7 +10,12 @@
 
 import { Request, Response } from "express";
 import CustomerService from "../../services/CustomerService";
-import { CustomerCreateDTO, CustomerUpdateDTO } from "../dto";
+import type {
+  CustomerCreateDTO,
+  CustomerUpdateDTO,
+  CustomerListRequestDTO,
+  CustomerResolveOrCreateDTO,
+} from "../dto";
 import { CustomerMapper, ResponseMapper } from "../mapper";
 
 export class CustomerController {
@@ -194,12 +199,16 @@ export class CustomerController {
    */
   async listCustomers(req: Request, res: Response): Promise<void> {
     try {
-      const { page = 1, limit = 10, search = "" } = req.query;
+      const options: Partial<CustomerListRequestDTO> = {
+        ...(req.query.page && { page: parseInt(req.query.page as string) }),
+        ...(req.query.limit && { limit: parseInt(req.query.limit as string) }),
+        ...(req.query.search && { search: req.query.search as string }),
+      };
 
       const result = await this.customerService.listCustomers({
-        page: parseInt(page as string) || 1,
-        limit: parseInt(limit as string) || 10,
-        search: (search as string) || "",
+        page: options.page ?? 1,
+        limit: options.limit ?? 10,
+        search: options.search ?? "",
       });
 
       const response = {
@@ -246,18 +255,24 @@ export class CustomerController {
    */
   async resolveOrCreateCustomer(req: Request, res: Response): Promise<void> {
     try {
-      const { email, firstName, lastName, phoneNumber } = req.body;
+      const resolveOrCreateDTO: CustomerResolveOrCreateDTO = req.body;
 
-      if (!email) {
+      if (!resolveOrCreateDTO.email) {
         res.status(400).json(ResponseMapper.validationError("Email requis"));
         return;
       }
 
       const customerId = await this.customerService.resolveOrCreateCustomer({
-        email,
-        firstName,
-        lastName,
-        phoneNumber,
+        email: resolveOrCreateDTO.email,
+        ...(resolveOrCreateDTO.firstName && {
+          firstName: resolveOrCreateDTO.firstName,
+        }),
+        ...(resolveOrCreateDTO.lastName && {
+          lastName: resolveOrCreateDTO.lastName,
+        }),
+        ...(resolveOrCreateDTO.phoneNumber && {
+          phoneNumber: resolveOrCreateDTO.phoneNumber,
+        }),
       });
 
       res.json({

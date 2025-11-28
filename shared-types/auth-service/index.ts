@@ -36,6 +36,13 @@ export interface PasswordValidationDTO {
 }
 
 /**
+ * DTO pour la demande de réinitialisation de mot de passe
+ */
+export interface PasswordResetRequestDTO {
+  email: string;
+}
+
+/**
  * DTO pour la réinitialisation de mot de passe
  */
 export interface PasswordResetDTO {

@@ -6,7 +6,12 @@
 import { Request, Response } from "express";
 import CartService from "../../services/CartService";
 import { CartMapper, ResponseMapper } from "../mapper";
-import { CartItemCreateDTO, CartItemUpdateDTO, CartClearDTO } from "../dto";
+import {
+  CartItemCreateDTO,
+  CartItemUpdateDTO,
+  CartClearDTO,
+  CartRequestDTO,
+} from "../dto";
 
 export class CartController {
   private cartService: CartService;
@@ -32,15 +37,18 @@ export class CartController {
    */
   async getCart(req: Request, res: Response): Promise<void> {
     try {
-      const { sessionId } = req.query;
-      if (!sessionId) {
+      const cartRequest: CartRequestDTO = {
+        sessionId: req.query.sessionId as string,
+      };
+
+      if (!cartRequest.sessionId) {
         res
           .status(400)
           .json(ResponseMapper.validationError("sessionId is required"));
         return;
       }
 
-      const cart = await this.cartService.getCart(sessionId as string);
+      const cart = await this.cartService.getCart(cartRequest.sessionId);
 
       if (!cart) {
         res.status(404).json(ResponseMapper.notFoundError("Panier"));
@@ -59,17 +67,20 @@ export class CartController {
    */
   async addItem(req: Request, res: Response): Promise<void> {
     try {
-      const { sessionId } = req.query;
-      if (!sessionId) {
+      const cartRequest: CartRequestDTO = {
+        sessionId: req.query.sessionId as string,
+      };
+
+      if (!cartRequest.sessionId) {
         res
           .status(400)
           .json(ResponseMapper.validationError("sessionId is required"));
         return;
       }
 
-      const itemData = req.body as CartItemCreateDTO;
+      const itemData: CartItemCreateDTO = req.body;
       const cart = await this.cartService.addItem(
-        sessionId as string,
+        cartRequest.sessionId,
         itemData
       );
 
@@ -85,11 +96,13 @@ export class CartController {
    */
   async updateItemQuantity(req: Request, res: Response): Promise<void> {
     try {
-      const { sessionId } = req.query;
-      const { productId } = req.params; // Correction: productId vient de req.params, pas req.query
-      const { quantity } = req.body as CartItemUpdateDTO;
+      const cartRequest: CartRequestDTO = {
+        sessionId: req.query.sessionId as string,
+      };
+      const { productId } = req.params;
+      const cartItemUpdateDTO: CartItemUpdateDTO = req.body;
 
-      if (!sessionId) {
+      if (!cartRequest.sessionId) {
         res
           .status(400)
           .json(ResponseMapper.validationError("sessionId is required"));
@@ -103,7 +116,7 @@ export class CartController {
         return;
       }
 
-      if (quantity === undefined) {
+      if (cartItemUpdateDTO.quantity === undefined) {
         res
           .status(400)
           .json(ResponseMapper.validationError("quantity is required"));
@@ -111,9 +124,9 @@ export class CartController {
       }
 
       const cart = await this.cartService.updateItemQuantity(
-        sessionId as string,
+        cartRequest.sessionId,
         parseInt(productId),
-        quantity
+        cartItemUpdateDTO.quantity
       );
 
       res.status(200).json(ResponseMapper.itemUpdated(cart));
@@ -132,10 +145,12 @@ export class CartController {
    */
   async removeItem(req: Request, res: Response): Promise<void> {
     try {
-      const { sessionId } = req.query;
-      const { productId } = req.params; // Correction: productId vient de req.params, pas req.query
+      const cartRequest: CartRequestDTO = {
+        sessionId: req.query.sessionId as string,
+      };
+      const { productId } = req.params;
 
-      if (!sessionId) {
+      if (!cartRequest.sessionId) {
         res
           .status(400)
           .json(ResponseMapper.validationError("sessionId is required"));
@@ -150,7 +165,7 @@ export class CartController {
       }
 
       const cart = await this.cartService.removeItem(
-        sessionId as string,
+        cartRequest.sessionId,
         parseInt(productId)
       );
 

@@ -63,3 +63,45 @@ export interface PaymentPublicDTO {
   error?: string;
   message?: string;
 }
+
+// ===== TYPES SPÉCIFIQUES =====
+
+/**
+ * DTO pour créer un paiement depuis un panier
+ */
+export interface PaymentFromCartDTO {
+  cart: {
+    id: string;
+    sessionId: string;
+    items: Array<{
+      id: string;
+      productId: number;
+      productName: string;
+      description?: string;
+      imageUrl?: string;
+      quantity: number;
+      unitPriceHT: number;
+      unitPriceTTC: number;
+      vatRate: number;
+      totalPriceHT: number;
+      totalPriceTTC: number;
+    }>;
+    subtotal: number;
+    tax: number;
+    total: number;
+  };
+  customer: {
+    email: string;
+    name?: string;
+    phone?: string;
+  };
+  customerData?: {
+    firstName?: string;
+    lastName?: string;
+    email: string;
+    phoneNumber?: string;
+  };
+  successUrl: string;
+  cancelUrl: string;
+  metadata?: Record<string, string>;
+}

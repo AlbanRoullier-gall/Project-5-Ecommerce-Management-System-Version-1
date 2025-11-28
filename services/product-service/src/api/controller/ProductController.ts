@@ -11,7 +11,11 @@
 import { Request, Response } from "express";
 import ProductService from "../../services/ProductService";
 import { ProductMapper, ResponseMapper } from "../mapper";
-import { ProductCreateDTO, ProductUpdateDTO } from "../dto";
+import {
+  ProductCreateDTO,
+  ProductUpdateDTO,
+  ProductListRequestDTO,
+} from "../dto";
 
 export class ProductController {
   private productService: ProductService;
@@ -155,7 +159,7 @@ export class ProductController {
       const sortByParam = (req.query.sortBy as string) || "created_at";
       const sortBy = sortByMapping[sortByParam] || sortByParam;
 
-      // Parser les catégories multiples si présentes (ProductFilterDTO)
+      // Parser les catégories multiples si présentes
       let categories: number[] | undefined;
       if (req.query.categories) {
         const categoriesParam = req.query.categories as string;
@@ -165,16 +169,15 @@ export class ProductController {
           .filter((id) => !isNaN(id));
       }
 
-      const options = {
-        page: parseInt(req.query.page as string) || 1,
-        limit: parseInt(req.query.limit as string) || 10,
+      // Construire le DTO de requête
+      const listRequestDTO: ProductListRequestDTO = {
+        ...(req.query.page && { page: parseInt(req.query.page as string) }),
+        ...(req.query.limit && { limit: parseInt(req.query.limit as string) }),
+        ...(req.query.search && { search: req.query.search as string }),
         ...(req.query.categoryId && {
           categoryId: parseInt(req.query.categoryId as string),
         }),
         ...(categories && categories.length > 0 && { categories }),
-        search: req.query.search as string,
-        // Ne filtrer par activeOnly que si le paramètre est explicitement présent
-        // Convertir "true" en true, "false" en false
         ...(req.query.activeOnly !== undefined && {
           activeOnly: String(req.query.activeOnly) === "true",
         }),
@@ -184,8 +187,29 @@ export class ProductController {
         ...(req.query.maxPrice && {
           maxPrice: parseFloat(req.query.maxPrice as string),
         }),
+        sortBy: sortBy as "name" | "price" | "createdAt" | "created_at",
+        ...(req.query.sortOrder && {
+          sortOrder: req.query.sortOrder as "asc" | "desc",
+        }),
+      };
+
+      const options = {
+        page: listRequestDTO.page || 1,
+        limit: listRequestDTO.limit || 10,
+        ...(listRequestDTO.categoryId && {
+          categoryId: listRequestDTO.categoryId,
+        }),
+        ...(listRequestDTO.categories && {
+          categories: listRequestDTO.categories,
+        }),
+        ...(listRequestDTO.search && { search: listRequestDTO.search }),
+        ...(listRequestDTO.activeOnly !== undefined && {
+          activeOnly: listRequestDTO.activeOnly,
+        }),
+        ...(listRequestDTO.minPrice && { minPrice: listRequestDTO.minPrice }),
+        ...(listRequestDTO.maxPrice && { maxPrice: listRequestDTO.maxPrice }),
         sortBy: sortBy,
-        sortOrder: req.query.sortOrder as "asc" | "desc",
+        sortOrder: listRequestDTO.sortOrder || "asc",
       };
 
       const result = await this.productService.listProducts(options);

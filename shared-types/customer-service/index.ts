@@ -80,3 +80,43 @@ export interface AddressPublicDTO {
   countryName: string;
   isDefault: boolean;
 }
+
+// ===== TYPES SPÉCIFIQUES =====
+
+/**
+ * DTO pour les options de recherche de clients
+ */
+export interface CustomerListRequestDTO {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+/**
+ * DTO pour résoudre ou créer un client
+ */
+export interface CustomerResolveOrCreateDTO {
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+}
+
+/**
+ * DTO pour créer plusieurs adresses en une fois (shipping + billing)
+ */
+export interface AddressesCreateDTO {
+  shipping?: {
+    address?: string;
+    postalCode?: string;
+    city?: string;
+    countryName?: string;
+  };
+  billing?: {
+    address?: string;
+    postalCode?: string;
+    city?: string;
+    countryName?: string;
+  };
+  useSameBillingAddress?: boolean;
+}

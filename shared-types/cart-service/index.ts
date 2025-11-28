@@ -66,6 +66,13 @@ export interface CartPublicDTO {
 // ===== TYPES SPÉCIFIQUES =====
 
 /**
+ * DTO pour les requêtes de panier avec sessionId
+ */
+export interface CartRequestDTO {
+  sessionId: string;
+}
+
+/**
  * DTO pour vider le panier
  */
 export interface CartClearDTO {

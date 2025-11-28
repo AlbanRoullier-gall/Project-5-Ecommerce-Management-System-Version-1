@@ -9,7 +9,13 @@
  */
 import { Request, Response } from "express";
 import { AuthService } from "../../services/AuthService";
-import { UserCreateDTO, UserLoginDTO, PasswordValidationDTO } from "../dto";
+import {
+  UserCreateDTO,
+  UserLoginDTO,
+  PasswordValidationDTO,
+  PasswordResetRequestDTO,
+  PasswordResetDTO,
+} from "../dto";
 import { UserMapper, ResponseMapper } from "../mapper";
 import { User } from "../../models/User";
 
@@ -140,10 +146,12 @@ export class AuthController {
    */
   async resetPassword(req: Request, res: Response): Promise<void> {
     try {
-      const { email } = req.body;
+      const passwordResetRequestDTO: PasswordResetRequestDTO = req.body;
 
       // Générer un token de réinitialisation
-      const resetToken = await this.authService.generateResetToken(email);
+      const resetToken = await this.authService.generateResetToken(
+        passwordResetRequestDTO.email
+      );
 
       // Retourner le token et les informations utilisateur
       const response = {
@@ -172,10 +180,13 @@ export class AuthController {
    */
   async confirmResetPassword(req: Request, res: Response): Promise<void> {
     try {
-      const { token, password } = req.body;
+      const passwordResetDTO: PasswordResetDTO = req.body;
 
       // Confirmer la réinitialisation
-      await this.authService.confirmResetPassword(token, password);
+      await this.authService.confirmResetPassword(
+        passwordResetDTO.token,
+        passwordResetDTO.newPassword
+      );
 
       // Réponse de succès
       const response = {

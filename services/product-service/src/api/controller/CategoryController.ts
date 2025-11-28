@@ -11,7 +11,11 @@
 import { Request, Response } from "express";
 import ProductService from "../../services/ProductService";
 import { ProductMapper, ResponseMapper } from "../mapper";
-import { CategoryCreateDTO, CategoryUpdateDTO } from "../dto";
+import {
+  CategoryCreateDTO,
+  CategoryUpdateDTO,
+  CategorySearchDTO,
+} from "../dto";
 
 export class CategoryController {
   private productService: ProductService;
@@ -166,30 +170,26 @@ export class CategoryController {
         const sortByParam = (req.query.sortBy as string) || "name";
         const sortBy = sortByMapping[sortByParam] || sortByParam;
 
-        // Construire l'objet options en n'incluant que les propriétés définies
-        const searchOptions: {
-          page?: number;
-          limit?: number;
-          search?: string;
-          sortBy?: "name" | "createdAt";
-          sortOrder?: "asc" | "desc";
-        } = {};
+        // Construire le DTO de recherche
+        const searchDTO: CategorySearchDTO = {
+          ...(req.query.page && { page: parseInt(req.query.page as string) }),
+          ...(req.query.limit && {
+            limit: parseInt(req.query.limit as string),
+          }),
+          ...(req.query.search && { search: req.query.search as string }),
+          sortBy: sortBy as "name" | "createdAt",
+          ...(req.query.sortOrder && {
+            sortOrder: req.query.sortOrder as "asc" | "desc",
+          }),
+        };
 
-        if (req.query.page) {
-          searchOptions.page = parseInt(req.query.page as string);
-        }
-        if (req.query.limit) {
-          searchOptions.limit = parseInt(req.query.limit as string);
-        }
-        if (req.query.search) {
-          searchOptions.search = req.query.search as string;
-        }
-        if (sortBy) {
-          searchOptions.sortBy = sortBy as "name" | "createdAt";
-        }
-        if (req.query.sortOrder) {
-          searchOptions.sortOrder = req.query.sortOrder as "asc" | "desc";
-        }
+        const searchOptions = {
+          ...(searchDTO.page && { page: searchDTO.page }),
+          ...(searchDTO.limit && { limit: searchDTO.limit }),
+          ...(searchDTO.search && { search: searchDTO.search }),
+          ...(searchDTO.sortBy && { sortBy: searchDTO.sortBy }),
+          ...(searchDTO.sortOrder && { sortOrder: searchDTO.sortOrder }),
+        };
 
         const result = await this.productService.listCategoriesWithSearch(
           searchOptions

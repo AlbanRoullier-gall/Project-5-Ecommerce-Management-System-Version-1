@@ -6,24 +6,16 @@ import React, {
   ReactNode,
   useCallback,
 } from "react";
-import { CustomerCreateDTO, AddressCreateDTO } from "../dto";
+import { CustomerResolveOrCreateDTO, AddressesCreateDTO } from "../dto";
 import { CartItemPublicDTO } from "./CartContext";
 
 /**
- * Structure des données d'adresse pour le checkout
- */
-interface AddressFormData {
-  shipping: Partial<AddressCreateDTO>;
-  billing: Partial<AddressCreateDTO>;
-  useSameBillingAddress: boolean;
-}
-
-/**
  * Structure des données checkout stockées (sans currentStep - toujours initialisé à 1)
+ * Utilise les DTOs existants directement
  */
 interface CheckoutData {
-  customerData: Partial<CustomerCreateDTO>;
-  addressData: AddressFormData;
+  customerData: CustomerResolveOrCreateDTO;
+  addressData: AddressesCreateDTO;
 }
 
 /**
@@ -45,14 +37,15 @@ export interface CompleteOrderResult {
 
 /**
  * Type du contexte Checkout
+ * Utilise les DTOs existants directement
  */
 interface CheckoutContextType {
   // Données
-  customerData: Partial<CustomerCreateDTO>;
-  addressData: AddressFormData;
+  customerData: CustomerResolveOrCreateDTO;
+  addressData: AddressesCreateDTO;
 
   // Actions générales
-  updateCustomerData: (data: Partial<CustomerCreateDTO>) => void;
+  updateCustomerData: (data: CustomerResolveOrCreateDTO) => void;
 
   // Actions spécifiques aux adresses
   updateShippingField: (field: string, value: string) => void;
@@ -107,13 +100,13 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   // Pour l'instant, on va lire directement depuis localStorage pour rester indépendant
   const [sessionId, setSessionId] = useState<string | null>(null);
 
-  // États du checkout
-  const [customerData, setCustomerData] = useState<Partial<CustomerCreateDTO>>(
-    {}
-  );
-  const [addressData, setAddressData] = useState<AddressFormData>({
-    shipping: {} as Partial<AddressCreateDTO>,
-    billing: {} as Partial<AddressCreateDTO>,
+  // États du checkout - Utilise les DTOs existants directement
+  const [customerData, setCustomerData] = useState<CustomerResolveOrCreateDTO>({
+    email: "",
+  });
+  const [addressData, setAddressData] = useState<AddressesCreateDTO>({
+    shipping: {},
+    billing: {},
     useSameBillingAddress: true,
   });
   const [isInitialized, setIsInitialized] = useState(false);
@@ -147,7 +140,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         const storedSessionId = localStorage.getItem("cart_session_id");
         if (parsed && storedSessionId === sessionId) {
           // Restaurer uniquement les données, pas l'étape (toujours commencer à 1)
-          setCustomerData(parsed.customerData || {});
+          setCustomerData(parsed.customerData || { email: "" });
           setAddressData(
             parsed.addressData || {
               shipping: {},
@@ -183,8 +176,9 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
 
   /**
    * Met à jour les données client
+   * Utilise CustomerResolveOrCreateDTO directement
    */
-  const updateCustomerData = useCallback((data: Partial<CustomerCreateDTO>) => {
+  const updateCustomerData = useCallback((data: CustomerResolveOrCreateDTO) => {
     setCustomerData((prev) => {
       return { ...prev, ...data };
     });
@@ -192,37 +186,35 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
 
   /**
    * Met à jour un champ spécifique de l'adresse de livraison
+   * Utilise AddressesCreateDTO directement
    */
   const updateShippingField = useCallback((field: string, value: string) => {
     setAddressData((prev) => {
       const updatedShipping = {
         ...prev.shipping,
         [field]: value,
-        addressType: "shipping" as const,
-        countryName: prev.shipping.countryName || "Belgique",
+        countryName: prev.shipping?.countryName || "Belgique",
       };
 
       return {
         ...prev,
         shipping: updatedShipping,
         // Si "même adresse", copier aussi dans billing
-        billing: prev.useSameBillingAddress
-          ? { ...updatedShipping, addressType: "billing" as const }
-          : prev.billing,
+        billing: prev.useSameBillingAddress ? updatedShipping : prev.billing,
       };
     });
   }, []);
 
   /**
    * Met à jour un champ spécifique de l'adresse de facturation
+   * Utilise AddressesCreateDTO directement
    */
   const updateBillingField = useCallback((field: string, value: string) => {
     setAddressData((prev) => {
       const updatedBilling = {
         ...prev.billing,
         [field]: value,
-        addressType: "billing" as const,
-        countryName: prev.billing.countryName || "Belgique",
+        countryName: prev.billing?.countryName || "Belgique",
       };
 
       return {
@@ -234,27 +226,27 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
 
   /**
    * Active/désactive l'utilisation de la même adresse pour la facturation
+   * Utilise AddressesCreateDTO directement
    */
   const setUseSameBillingAddress = useCallback((useSame: boolean) => {
     setAddressData((prev) => ({
       ...prev,
       useSameBillingAddress: useSame,
       // Si coché, copier l'adresse de livraison dans l'adresse de facturation
-      billing: useSame
-        ? { ...prev.shipping, addressType: "billing" as const }
-        : prev.billing,
+      billing: useSame ? prev.shipping : prev.billing,
     }));
   }, []);
 
   /**
    * Valide les adresses de livraison et de facturation
+   * Utilise AddressesCreateDTO directement
    */
   const validateAddresses = useCallback((): AddressValidationResult => {
     // Validation des champs obligatoires de l'adresse de livraison
     if (
-      !addressData.shipping.address ||
-      !addressData.shipping.city ||
-      !addressData.shipping.postalCode
+      !addressData.shipping?.address ||
+      !addressData.shipping?.city ||
+      !addressData.shipping?.postalCode
     ) {
       return {
         isValid: false,
@@ -266,9 +258,9 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
     // Validation des champs obligatoires de l'adresse de facturation si elle est différente
     if (
       !addressData.useSameBillingAddress &&
-      (!addressData.billing.address ||
-        !addressData.billing.city ||
-        !addressData.billing.postalCode)
+      (!addressData.billing?.address ||
+        !addressData.billing?.city ||
+        !addressData.billing?.postalCode)
     ) {
       return {
         isValid: false,
@@ -309,16 +301,25 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         }
 
         // Appel unique vers l'endpoint d'orchestration du checkout
+        // Utilise les DTOs existants directement : CustomerResolveOrCreateDTO et AddressesCreateDTO
+        const checkoutPayload: {
+          cartSessionId: string;
+          customerData: CustomerResolveOrCreateDTO;
+          addressData: AddressesCreateDTO;
+          successUrl: string;
+          cancelUrl: string;
+        } = {
+          cartSessionId,
+          customerData,
+          addressData,
+          successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${window.location.origin}/checkout/cancel`,
+        };
+
         const response = await fetch(`${API_URL}/api/checkout/complete`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            cartSessionId,
-            customerData,
-            addressData,
-            successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancelUrl: `${window.location.origin}/checkout/cancel`,
-          }),
+          body: JSON.stringify(checkoutPayload),
         });
 
         if (!response.ok) {

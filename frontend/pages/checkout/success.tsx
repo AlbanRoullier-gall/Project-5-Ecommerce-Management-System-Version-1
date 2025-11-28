@@ -7,6 +7,7 @@ import { useEffect, useState, useRef } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { useCart } from "../../contexts/CartContext";
+import { CustomerResolveOrCreateDTO, AddressesCreateDTO } from "../../dto";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
@@ -65,6 +66,21 @@ export default function CheckoutSuccessPage() {
 
         const checkoutData = JSON.parse(storedCheckoutData);
 
+        // Utilise les types existants directement
+        // checkoutData contient customerData (CustomerResolveOrCreateDTO) et addressData (AddressesCreateDTO)
+        const finalizePayload: {
+          csid: string;
+          cartSessionId: string;
+          checkoutData: {
+            customerData: CustomerResolveOrCreateDTO;
+            addressData: AddressesCreateDTO;
+          };
+        } = {
+          csid: sessionId,
+          cartSessionId,
+          checkoutData,
+        };
+
         console.log("Finalizing payment with:", {
           csid: sessionId,
           cartSessionId,
@@ -72,11 +88,7 @@ export default function CheckoutSuccessPage() {
         const response = await fetch(`${API_URL}/api/payment/finalize`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            csid: sessionId,
-            cartSessionId,
-            checkoutData,
-          }),
+          body: JSON.stringify(finalizePayload),
         });
 
         if (!response.ok) {

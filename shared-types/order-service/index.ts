@@ -140,32 +140,102 @@ export interface CreditNoteItemPublicDTO {
 // ===== TYPES SPÉCIFIQUES =====
 
 /**
- * DTO pour créer une commande complète avec items et adresses
- * Inclut la commande, les items et les adresses en une seule transaction
+ * DTO pour créer une commande depuis un panier
  */
-export interface OrderCompleteDTO {
-  // Données de la commande
-  customerId?: number; // Optionnel, peut être résolu depuis customerSnapshot
+export interface OrderFromCartDTO {
+  cart: {
+    id: string;
+    sessionId: string;
+    items: Array<{
+      id: string;
+      productId: number;
+      productName: string;
+      description?: string;
+      imageUrl?: string;
+      quantity: number;
+      unitPriceHT: number;
+      unitPriceTTC: number;
+      vatRate: number;
+      totalPriceHT: number;
+      totalPriceTTC: number;
+    }>;
+    subtotal: number;
+    tax: number;
+    total: number;
+  };
+  customerId?: number;
   customerSnapshot?: any;
-  totalAmountHT: number;
-  totalAmountTTC: number;
+  customerData: {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+  };
+  addressData: {
+    shipping: {
+      address?: string;
+      postalCode?: string;
+      city?: string;
+      countryName?: string;
+    };
+    billing?: {
+      address?: string;
+      postalCode?: string;
+      city?: string;
+      countryName?: string;
+    };
+    useSameBillingAddress: boolean;
+  };
   paymentMethod: string;
   paymentIntentId?: string;
-  notes?: string;
-  // Items de la commande (avec toutes les infos nécessaires)
-  items: Array<{
-    productId: number;
-    productName: string;
-    quantity: number;
-    unitPriceHT: number;
-    unitPriceTTC: number;
-    vatRate: number;
-    totalPriceHT: number;
-    totalPriceTTC: number;
-  }>;
-  // Adresses (optionnelles)
-  addresses?: Array<{
-    addressType: "shipping" | "billing";
-    addressSnapshot: any;
-  }>;
+}
+
+/**
+ * DTO pour les options de recherche de commandes
+ */
+export interface OrderListRequestDTO {
+  page?: number;
+  limit?: number;
+  search?: string;
+  customerId?: number;
+  year?: number;
+  total?: number;
+  date?: string;
+}
+
+/**
+ * DTO pour mettre à jour le statut de livraison d'une commande
+ */
+export interface OrderUpdateDeliveryStatusDTO {
+  delivered: boolean;
+}
+
+/**
+ * DTO pour mettre à jour le statut d'un avoir
+ */
+export interface OrderUpdateCreditNoteStatusDTO {
+  status: "pending" | "refunded";
+}
+
+/**
+ * DTO pour les options de recherche d'avoirs
+ */
+export interface CreditNoteListRequestDTO {
+  page?: number;
+  limit?: number;
+  customerId?: number;
+  year?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
+/**
+ * DTO pour les options de recherche de statistiques de commandes
+ */
+export interface OrderStatisticsRequestDTO {
+  startDate?: string;
+  endDate?: string;
+  customerId?: number;
+  status?: string;
+  year?: number;
 }

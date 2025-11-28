@@ -310,17 +310,17 @@ export class AuthService {
     userId: number,
     approved: boolean
   ): Promise<User> {
-    const user = await this.userRepository.getById(userId);
-    if (!user) {
-      throw new Error("Utilisateur non trouvé");
-    }
+      const user = await this.userRepository.getById(userId);
+      if (!user) {
+        throw new Error("Utilisateur non trouvé");
+      }
 
-    const updatedUser = this.userRepository.createUserWithMerge(user, {
+      const updatedUser = this.userRepository.createUserWithMerge(user, {
       is_backoffice_approved: approved,
       is_backoffice_rejected: !approved,
-    });
+      });
 
-    return await this.userRepository.update(updatedUser);
+      return await this.userRepository.update(updatedUser);
   }
 
   /**

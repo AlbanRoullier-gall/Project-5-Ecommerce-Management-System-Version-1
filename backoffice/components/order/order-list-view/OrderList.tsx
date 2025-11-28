@@ -5,7 +5,14 @@ import Button from "../../shared/Button";
 import ErrorAlert from "../../shared/ErrorAlert";
 import OrderTable from "./OrderTable";
 import OrderFilters from "./OrderFilters";
-import { OrderPublicDTO, CreditNotePublicDTO } from "../../../dto";
+import {
+  OrderPublicDTO,
+  CreditNotePublicDTO,
+  OrderListRequestDTO,
+  CreditNoteListRequestDTO,
+  OrderUpdateDeliveryStatusDTO,
+  OrderUpdateCreditNoteStatusDTO,
+} from "../../../dto";
 import {
   CreateCreditNoteModal,
   CreditNoteDetailModal,
@@ -113,13 +120,27 @@ const OrderList: React.FC = () => {
     const token = getAuthToken();
     if (!token) throw new Error("Non authentifié");
 
+    // Construire le DTO de requête avec typage explicite
+    const requestDTO: Partial<OrderListRequestDTO> = {
+      page: targetPage,
+      limit: limit,
+      ...(search && { search }),
+      ...(yearFilter && { year: parseInt(yearFilter) }),
+      ...(totalFilter &&
+        totalFilter !== "" && { total: parseFloat(totalFilter) }),
+      ...(dateFilter && dateFilter !== "" && { date: dateFilter }),
+    };
+
+    // Construire les query params à partir du DTO
     const url = new URL(`${API_URL}/api/admin/orders`);
-    url.searchParams.set("page", String(targetPage));
-    url.searchParams.set("limit", String(limit));
-    if (search) url.searchParams.set("search", search);
-    if (yearFilter) url.searchParams.set("year", yearFilter);
-    if (totalFilter) url.searchParams.set("total", totalFilter);
-    if (dateFilter) url.searchParams.set("date", dateFilter);
+    if (requestDTO.page) url.searchParams.set("page", String(requestDTO.page));
+    if (requestDTO.limit)
+      url.searchParams.set("limit", String(requestDTO.limit));
+    if (requestDTO.search) url.searchParams.set("search", requestDTO.search);
+    if (requestDTO.year) url.searchParams.set("year", String(requestDTO.year));
+    if (requestDTO.total)
+      url.searchParams.set("total", String(requestDTO.total));
+    if (requestDTO.date) url.searchParams.set("date", requestDTO.date);
 
     const res = await fetch(url.toString(), {
       headers: { Authorization: `Bearer ${token}` },
@@ -162,11 +183,19 @@ const OrderList: React.FC = () => {
     const token = getAuthToken();
     if (!token) throw new Error("Non authentifié");
 
+    // Construire le DTO de requête avec typage explicite
+    const requestDTO: Partial<CreditNoteListRequestDTO> = {
+      page: targetPage,
+      limit: limit,
+      ...(yearFilter && { year: parseInt(yearFilter) }),
+    };
+
+    // Construire les query params à partir du DTO
     const url = new URL(`${API_URL}/api/admin/credit-notes`);
-    url.searchParams.set("page", String(targetPage));
-    url.searchParams.set("limit", String(limit));
-    // Envoyer le filtre par année au serveur pour un filtrage côté serveur
-    if (yearFilter) url.searchParams.set("year", yearFilter);
+    if (requestDTO.page) url.searchParams.set("page", String(requestDTO.page));
+    if (requestDTO.limit)
+      url.searchParams.set("limit", String(requestDTO.limit));
+    if (requestDTO.year) url.searchParams.set("year", String(requestDTO.year));
 
     const res = await fetch(url.toString(), {
       headers: { Authorization: `Bearer ${token}` },
@@ -338,6 +367,11 @@ const OrderList: React.FC = () => {
       const token = getAuthToken();
       if (!token) throw new Error("Non authentifié");
 
+      // Utiliser le DTO avec typage explicite
+      const updateDTO: OrderUpdateDeliveryStatusDTO = {
+        delivered,
+      };
+
       const response = await fetch(
         `${API_URL}/api/admin/orders/${orderId}/delivery-status`,
         {
@@ -346,7 +380,7 @@ const OrderList: React.FC = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ delivered }),
+          body: JSON.stringify(updateDTO),
         }
       );
 
@@ -565,6 +599,11 @@ const OrderList: React.FC = () => {
                 )
               );
 
+              // Utiliser le DTO avec typage explicite
+              const updateDTO: OrderUpdateCreditNoteStatusDTO = {
+                status: newStatus as "pending" | "refunded",
+              };
+
               const response = await fetch(
                 `${API_URL}/api/admin/credit-notes/${creditNoteId}/status`,
                 {
@@ -573,7 +612,7 @@ const OrderList: React.FC = () => {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                   },
-                  body: JSON.stringify({ status: newStatus }),
+                  body: JSON.stringify(updateDTO),
                 }
               );
 

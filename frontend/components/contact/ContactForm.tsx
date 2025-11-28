@@ -8,7 +8,7 @@ import {
   Button,
   Alert,
 } from "../shared";
-import { EmailSendDTO } from "../../dto";
+import { EmailClientSendDTO } from "../../dto";
 
 // URL de l'API pour l'envoi d'emails (depuis les variables d'environnement ou valeur par défaut)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
@@ -48,7 +48,7 @@ export default function ContactForm() {
 
     try {
       // Préparation des données à envoyer à l'API
-      const emailData: EmailSendDTO = {
+      const emailData: EmailClientSendDTO = {
         to: { email: "u4999410740@gmail.com", name: "Nature de Pierre" },
         subject: formData.subject || "Nouveau message de contact",
         message: formData.message,

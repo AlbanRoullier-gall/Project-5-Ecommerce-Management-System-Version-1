@@ -6,6 +6,13 @@
 import { Request, Response } from "express";
 import EmailService from "../../services/EmailService";
 import { ResponseMapper } from "../mapper";
+import type {
+  EmailClientSendDTO,
+  EmailResetPasswordDTO,
+  EmailBackofficeApprovalRequestDTO,
+  EmailBackofficeApprovalConfirmationDTO,
+  EmailBackofficeRejectionDTO,
+} from "../dto";
 
 export class EmailController {
   private emailService: EmailService;
@@ -22,7 +29,10 @@ export class EmailController {
       console.log("📧 EmailController: Starting sendClientEmail");
       console.log("📧 Request body:", req.body);
 
-      const result = await this.emailService.sendClientEmail(req.body);
+      const emailClientSendDTO: EmailClientSendDTO = req.body;
+      const result = await this.emailService.sendClientEmail(
+        emailClientSendDTO
+      );
       console.log("📧 Service result:", result);
 
       const response = ResponseMapper.emailSent(result);
@@ -44,14 +54,11 @@ export class EmailController {
       console.log("📧 EmailController: Starting sendResetPasswordEmail");
       console.log("📧 Request body:", req.body);
 
-      const { email, token, userName, resetUrl } = req.body;
+      const emailResetPasswordDTO: EmailResetPasswordDTO = req.body;
 
-      const result = await this.emailService.sendResetPasswordEmail({
-        email,
-        token,
-        userName,
-        resetUrl,
-      });
+      const result = await this.emailService.sendResetPasswordEmail(
+        emailResetPasswordDTO
+      );
 
       console.log("📧 Reset password email sent:", result);
 
@@ -80,16 +87,12 @@ export class EmailController {
       console.log("📧 EmailController: Starting sendBackofficeApprovalRequest");
       console.log("📧 Request body:", req.body);
 
-      const { userFullName, userEmail, user, approvalUrl, rejectionUrl } =
+      const emailBackofficeApprovalRequestDTO: EmailBackofficeApprovalRequestDTO =
         req.body;
 
-      const result = await this.emailService.sendBackofficeApprovalRequest({
-        userFullName,
-        userEmail,
-        user,
-        approvalUrl,
-        rejectionUrl,
-      });
+      const result = await this.emailService.sendBackofficeApprovalRequest(
+        emailBackofficeApprovalRequestDTO
+      );
 
       const response = {
         success: true,
@@ -118,15 +121,11 @@ export class EmailController {
       );
       console.log("📧 Request body:", req.body);
 
-      const { userEmail, userFullName, user, backofficeUrl } = req.body;
+      const emailBackofficeApprovalConfirmationDTO: EmailBackofficeApprovalConfirmationDTO =
+        req.body;
 
       const result = await this.emailService.sendBackofficeApprovalConfirmation(
-        {
-          userEmail,
-          userFullName,
-          user,
-          backofficeUrl,
-        }
+        emailBackofficeApprovalConfirmationDTO
       );
 
       const response = {
@@ -156,14 +155,12 @@ export class EmailController {
       );
       console.log("📧 Request body:", req.body);
 
-      const { userEmail, userFullName, user } = req.body;
+      const emailBackofficeRejectionDTO: EmailBackofficeRejectionDTO = req.body;
 
       const result =
-        await this.emailService.sendBackofficeRejectionNotification({
-          userEmail,
-          userFullName,
-          user,
-        });
+        await this.emailService.sendBackofficeRejectionNotification(
+          emailBackofficeRejectionDTO
+        );
 
       const response = {
         success: true,

@@ -114,6 +114,23 @@ export interface ProductSearchDTO {
 }
 
 /**
+ * DTO pour les options de liste de produits (requête complète)
+ * Extension de ProductSearchDTO avec support pour plusieurs catégories et activeOnly
+ */
+export interface ProductListRequestDTO {
+  page?: number;
+  limit?: number;
+  search?: string;
+  categoryId?: number;
+  categories?: number[]; // Support pour plusieurs catégories
+  minPrice?: number;
+  maxPrice?: number;
+  activeOnly?: boolean; // Filtre pour produits actifs uniquement
+  sortBy?: "name" | "price" | "createdAt" | "created_at";
+  sortOrder?: "asc" | "desc";
+}
+
+/**
  * DTO pour les options de recherche de catégories
  */
 export interface CategorySearchDTO {

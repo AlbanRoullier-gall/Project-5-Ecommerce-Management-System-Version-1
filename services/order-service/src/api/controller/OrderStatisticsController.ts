@@ -10,7 +10,7 @@
 
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
-import { OrderStatisticsRequestDTO } from "../dto/OrderStatisticsDTO";
+import { OrderStatisticsRequestDTO } from "../dto";
 import { ResponseMapper } from "../mapper";
 
 export class OrderStatisticsController {
@@ -25,14 +25,16 @@ export class OrderStatisticsController {
    */
   async getOrderStatistics(req: Request, res: Response): Promise<void> {
     try {
-      const options: OrderStatisticsRequestDTO = {
-        startDate: req.query.startDate as string,
-        endDate: req.query.endDate as string,
-        customerId: req.query.customerId
-          ? parseInt(req.query.customerId as string)
-          : undefined,
-        status: req.query.status as string,
-        year: req.query.year ? parseInt(req.query.year as string) : undefined,
+      const options: Partial<OrderStatisticsRequestDTO> = {
+        ...(req.query.startDate && {
+          startDate: req.query.startDate as string,
+        }),
+        ...(req.query.endDate && { endDate: req.query.endDate as string }),
+        ...(req.query.customerId && {
+          customerId: parseInt(req.query.customerId as string),
+        }),
+        ...(req.query.status && { status: req.query.status as string }),
+        ...(req.query.year && { year: parseInt(req.query.year as string) }),
       };
 
       const statistics = await this.orderService.getOrderStatistics(options);

@@ -10,7 +10,7 @@
 
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
-import { CreditNoteCreateDTO } from "../dto";
+import { CreditNoteCreateDTO, CreditNoteListRequestDTO } from "../dto";
 import { CreditNoteData } from "../../models/CreditNote";
 import { OrderMapper, ResponseMapper } from "../mapper";
 
@@ -128,18 +128,18 @@ export class CreditNoteController {
    */
   async listCreditNotes(req: Request, res: Response): Promise<void> {
     try {
-      const options = {
-        page: parseInt(req.query.page as string) || 1,
-        limit: parseInt(req.query.limit as string) || 10,
+      const options: Partial<CreditNoteListRequestDTO> = {
+        ...(req.query.page && { page: parseInt(req.query.page as string) }),
+        ...(req.query.limit && { limit: parseInt(req.query.limit as string) }),
         ...(req.query.customerId && {
           customerId: parseInt(req.query.customerId as string),
         }),
-        ...(req.query.year && {
-          year: parseInt(req.query.year as string),
+        ...(req.query.year && { year: parseInt(req.query.year as string) }),
+        ...(req.query.startDate && {
+          startDate: req.query.startDate as string,
         }),
-        startDate: (req.query.startDate as string) || undefined,
-        endDate: (req.query.endDate as string) || undefined,
-      } as any;
+        ...(req.query.endDate && { endDate: req.query.endDate as string }),
+      };
 
       const result = await this.orderService.listCreditNotes(options);
       res.json(ResponseMapper.success(result));

@@ -11,6 +11,12 @@
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
 import { OrderMapper, ResponseMapper } from "../mapper";
+import {
+  OrderFromCartDTO,
+  OrderListRequestDTO,
+  OrderUpdateDeliveryStatusDTO,
+  OrderUpdateCreditNoteStatusDTO,
+} from "../dto";
 
 export class OrderController {
   private orderService: OrderService;
@@ -91,16 +97,14 @@ export class OrderController {
    */
   async listOrders(req: Request, res: Response): Promise<void> {
     try {
-      const options = {
-        page: parseInt(req.query.page as string) || 1,
-        limit: parseInt(req.query.limit as string) || 10,
-        search: req.query.search as string,
+      const options: Partial<OrderListRequestDTO> = {
+        ...(req.query.page && { page: parseInt(req.query.page as string) }),
+        ...(req.query.limit && { limit: parseInt(req.query.limit as string) }),
+        ...(req.query.search && { search: req.query.search as string }),
         ...(req.query.customerId && {
           customerId: parseInt(req.query.customerId as string),
         }),
-        ...(req.query.year && {
-          year: parseInt(req.query.year as string),
-        }),
+        ...(req.query.year && { year: parseInt(req.query.year as string) }),
         ...(req.query.total &&
           req.query.total !== "" && {
             total: parseFloat(req.query.total as string),
@@ -125,9 +129,9 @@ export class OrderController {
   async updateDeliveryStatus(req: Request, res: Response): Promise<void> {
     try {
       const orderId = parseInt(req.params.id);
-      const { delivered } = req.body;
+      const updateDTO: OrderUpdateDeliveryStatusDTO = req.body;
 
-      if (typeof delivered !== "boolean") {
+      if (typeof updateDTO.delivered !== "boolean") {
         res
           .status(400)
           .json(ResponseMapper.badRequestError("delivered must be a boolean"));
@@ -136,7 +140,7 @@ export class OrderController {
 
       const order = await this.orderService.updateDeliveryStatus(
         orderId,
-        delivered
+        updateDTO.delivered
       );
 
       if (!order) {
@@ -158,9 +162,12 @@ export class OrderController {
   async updateCreditNoteStatus(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { status } = req.body;
+      const updateDTO: OrderUpdateCreditNoteStatusDTO = req.body;
 
-      if (!status || !["pending", "refunded"].includes(status)) {
+      if (
+        !updateDTO.status ||
+        !["pending", "refunded"].includes(updateDTO.status)
+      ) {
         res.status(400).json({
           success: false,
           error: "Statut invalide. Doit être 'pending' ou 'refunded'",
@@ -170,12 +177,12 @@ export class OrderController {
 
       const creditNote = await this.orderService.updateCreditNoteStatus(
         parseInt(id),
-        status
+        updateDTO.status
       );
 
       res.json({
         success: true,
-        message: `Statut de l'avoir mis à jour vers ${status}`,
+        message: `Statut de l'avoir mis à jour vers ${updateDTO.status}`,
         data: OrderMapper.creditNoteToPublicDTO(creditNote),
       });
     } catch (error: any) {
@@ -224,7 +231,10 @@ export class OrderController {
    */
   async createOrderFromCart(req: Request, res: Response): Promise<void> {
     try {
-      const order = await this.orderService.createOrderFromCart(req.body);
+      const orderFromCartDTO: OrderFromCartDTO = req.body;
+      const order = await this.orderService.createOrderFromCart(
+        orderFromCartDTO
+      );
       const orderDTO = OrderMapper.orderToPublicDTO(order);
 
       res.status(201).json(ResponseMapper.orderCreated(orderDTO));

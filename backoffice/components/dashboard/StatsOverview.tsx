@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { StatCard } from "../shared";
+import { OrderStatisticsRequestDTO } from "../../dto";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
@@ -25,9 +26,10 @@ const StatsOverview: React.FC = () => {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedYear, setSelectedYear] = useState<number>(
-    new Date().getFullYear()
-  );
+  // Utilise le type year de OrderStatisticsRequestDTO pour cohérence
+  const [selectedYear, setSelectedYear] = useState<
+    OrderStatisticsRequestDTO["year"]
+  >(new Date().getFullYear());
 
   const loadStats = useCallback(async () => {
     setIsLoading(true);
