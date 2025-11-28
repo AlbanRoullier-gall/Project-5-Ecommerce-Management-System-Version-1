@@ -99,6 +99,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   /**
    * Calcule les totaux du panier
+   * Utilise les valeurs calculées par le cart-service (y compris le breakdown TVA)
    */
   const calculateTotals = (cart: CartPublicDTO | null): CartTotals => {
     if (!cart || !cart.items || cart.items.length === 0) {
@@ -110,25 +111,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       };
     }
 
-    // Utiliser les totaux déjà calculés par le cart-service
+    // Utiliser les totaux et le breakdown déjà calculés par le cart-service
     const totalHT = cart.subtotal || 0;
     const totalTTC = cart.total || 0;
     const vatAmount = cart.tax || 0;
-
-    // Calculer le breakdown par taux de TVA pour l'affichage détaillé
-    const vatByRate = new Map<number, number>();
-    for (const item of cart.items) {
-      const rate = item.vatRate ?? 0;
-      const lineTotalTTC = item.totalPriceTTC;
-      const lineTotalHT = item.totalPriceHT;
-      const vat = lineTotalTTC - lineTotalHT;
-
-      vatByRate.set(rate, (vatByRate.get(rate) || 0) + vat);
-    }
-
-    const breakdown = Array.from(vatByRate.entries())
-      .sort((a, b) => a[0] - b[0])
-      .map(([rate, amount]) => ({ rate, amount }));
+    const breakdown = cart.vatBreakdown || [];
 
     return { totalHT, totalTTC, vatAmount, breakdown };
   };

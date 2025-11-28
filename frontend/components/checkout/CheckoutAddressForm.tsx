@@ -29,38 +29,38 @@ const AddressFields: React.FC<AddressFieldsProps> = ({ address, onChange }) => {
   return (
     <>
       <FormInput
-          name="address"
+        name="address"
         label="Adresse complète"
-          value={address.address || ""}
-          onChange={handleInputChange}
-          required
-          placeholder="Numéro et nom de rue"
-        gridColumn="1 / -1"
-        />
-      <FormInput
-          name="postalCode"
-        label="Code postal"
-          value={address.postalCode || ""}
-          onChange={handleInputChange}
-          required
-          placeholder="1000"
-        />
-      <FormInput
-          name="city"
-        label="Ville"
-          value={address.city || ""}
-          onChange={handleInputChange}
-          required
-          placeholder="Bruxelles"
-        />
-      <FormInput
-          name="countryName"
-        label="Pays"
-          value={address.countryName || "Belgique"}
+        value={address.address || ""}
         onChange={handleInputChange}
-          readOnly
+        required
+        placeholder="Numéro et nom de rue"
         gridColumn="1 / -1"
-        />
+      />
+      <FormInput
+        name="postalCode"
+        label="Code postal"
+        value={address.postalCode || ""}
+        onChange={handleInputChange}
+        required
+        placeholder="1000"
+      />
+      <FormInput
+        name="city"
+        label="Ville"
+        value={address.city || ""}
+        onChange={handleInputChange}
+        required
+        placeholder="Bruxelles"
+      />
+      <FormInput
+        name="countryName"
+        label="Pays"
+        value={address.countryName || "Belgique"}
+        onChange={handleInputChange}
+        readOnly
+        gridColumn="1 / -1"
+      />
     </>
   );
 };
@@ -108,10 +108,13 @@ export default function CheckoutAddressForm() {
   /**
    * Gère la soumission du formulaire
    */
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validation = validateAddresses();
+    setIsLoading(true);
+    const validation = await validateAddresses();
+    setIsLoading(false);
+
     if (!validation.isValid) {
       alert(validation.error);
       return;

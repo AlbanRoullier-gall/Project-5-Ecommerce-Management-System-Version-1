@@ -243,4 +243,39 @@ export class AddressController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Valider les adresses (sans les créer)
+   * Endpoint public pour valider les données d'adresses avant soumission
+   */
+  async validateAddresses(req: Request, res: Response): Promise<void> {
+    try {
+      const addressesCreateDTO: AddressesCreateDTO = req.body;
+
+      const validationResult =
+        this.customerService.validateAddresses(addressesCreateDTO);
+
+      if (!validationResult.isValid) {
+        res.status(400).json({
+          success: false,
+          isValid: false,
+          error: validationResult.error,
+          timestamp: new Date().toISOString(),
+          status: 400,
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        isValid: true,
+        message: "Les adresses sont valides",
+        timestamp: new Date().toISOString(),
+        status: 200,
+      });
+    } catch (error: any) {
+      console.error("Validate addresses error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

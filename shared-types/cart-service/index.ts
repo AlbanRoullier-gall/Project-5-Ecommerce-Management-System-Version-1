@@ -48,6 +48,14 @@ export interface CartItemPublicDTO {
 // ===== TYPES BASÉS SUR CartData =====
 
 /**
+ * Élément du breakdown TVA par taux
+ */
+export interface VatBreakdownItem {
+  rate: number; // Taux de TVA (ex: 6, 12, 21)
+  amount: number; // Montant de TVA pour ce taux
+}
+
+/**
  * DTO public pour un panier
  * Basé sur CartData avec articles
  */
@@ -58,6 +66,7 @@ export interface CartPublicDTO {
   subtotal: number;
   tax: number;
   total: number;
+  vatBreakdown: VatBreakdownItem[]; // Répartition de la TVA par taux
   createdAt: Date;
   updatedAt: Date;
   expiresAt: Date;

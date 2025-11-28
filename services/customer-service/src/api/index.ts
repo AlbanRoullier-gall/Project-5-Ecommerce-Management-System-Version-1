@@ -318,6 +318,16 @@ export class ApiRouter {
     );
 
     // ===== ROUTES PUBLIQUES D'ADRESSES =====
+    // Validation des adresses (publique, sans authentification)
+    // Route sous /api/customers pour cohérence avec l'architecture REST
+    app.post(
+      "/api/customers/addresses/validate",
+      this.validateRequest(schemas.addressesCreateSchema),
+      (req: Request, res: Response) => {
+        this.addressController.validateAddresses(req, res);
+      }
+    );
+
     // Ajout d'adresse (publique pour les clients)
     app.post(
       "/api/customers/:customerId/addresses",

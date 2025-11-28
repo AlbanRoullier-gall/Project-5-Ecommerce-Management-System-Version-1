@@ -17,6 +17,7 @@ export interface CartData {
   subtotal: number;
   tax: number;
   total: number;
+  vat_breakdown?: Array<{ rate: number; amount: number }>; // Breakdown TVA par taux
   created_at: Date;
   updated_at: Date;
   expires_at: Date;
@@ -29,6 +30,7 @@ export class Cart {
   public readonly subtotal: number;
   public readonly tax: number;
   public readonly total: number;
+  public readonly vatBreakdown: Array<{ rate: number; amount: number }>;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
   public readonly expiresAt: Date;
@@ -36,10 +38,13 @@ export class Cart {
   constructor(data: CartData) {
     this.id = data.id;
     this.sessionId = data.session_id;
-    this.items = data.items.map((item) => new CartItem(item));
+    const items = data.items.map((item) => new CartItem(item));
+    this.items = items;
     this.subtotal = data.subtotal;
     this.tax = data.tax;
     this.total = data.total;
+    // Calculer le breakdown si non fourni (pour compatibilité avec anciennes données)
+    this.vatBreakdown = data.vat_breakdown || this.calculateVatBreakdown(items);
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
     this.expiresAt = data.expires_at;
@@ -117,6 +122,34 @@ export class Cart {
   }
 
   /**
+   * Calculer le breakdown de la TVA par taux
+   * @param items Les articles du panier
+   * @returns Tableau trié par taux croissant avec le montant de TVA pour chaque taux
+   */
+  private calculateVatBreakdown(
+    items: CartItem[]
+  ): Array<{ rate: number; amount: number }> {
+    const vatByRate = new Map<number, number>();
+
+    for (const item of items) {
+      const rate = item.vatRate ?? 0;
+      const lineTotalTTC = item.totalPriceTTC;
+      const lineTotalHT = item.totalPriceHT;
+      const vat = lineTotalTTC - lineTotalHT;
+
+      vatByRate.set(rate, (vatByRate.get(rate) || 0) + vat);
+    }
+
+    // Trier par taux croissant et arrondir les montants
+    return Array.from(vatByRate.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([rate, amount]) => ({
+        rate,
+        amount: Math.round(amount * 100) / 100,
+      }));
+  }
+
+  /**
    * Créer un nouveau panier avec les articles donnés
    */
   private createCartWithItems(items: CartItem[]): Cart {
@@ -132,6 +165,9 @@ export class Cart {
     const subtotal = Math.round(subtotalHT * 100) / 100;
     const total = Math.round(totalTTC * 100) / 100;
     const taxRounded = Math.round(tax * 100) / 100;
+
+    // Calculer le breakdown TVA
+    const vatBreakdown = this.calculateVatBreakdown(items);
 
     return new Cart({
       id: this.id,
@@ -153,6 +189,7 @@ export class Cart {
       subtotal,
       tax: taxRounded,
       total,
+      vat_breakdown: vatBreakdown,
       created_at: this.createdAt,
       updated_at: new Date(),
       expires_at: this.expiresAt,

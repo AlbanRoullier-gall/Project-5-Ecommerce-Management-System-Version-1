@@ -51,7 +51,7 @@ interface CheckoutContextType {
   updateShippingField: (field: string, value: string) => void;
   updateBillingField: (field: string, value: string) => void;
   setUseSameBillingAddress: (useSame: boolean) => void;
-  validateAddresses: () => AddressValidationResult;
+  validateAddresses: () => Promise<AddressValidationResult>;
 
   // Action de finalisation de commande
   completeOrder: (
@@ -239,38 +239,38 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
 
   /**
    * Valide les adresses de livraison et de facturation
-   * Utilise AddressesCreateDTO directement
+   * Délègue la validation au service customer-service pour cohérence et sécurité
    */
-  const validateAddresses = useCallback((): AddressValidationResult => {
-    // Validation des champs obligatoires de l'adresse de livraison
-    if (
-      !addressData.shipping?.address ||
-      !addressData.shipping?.city ||
-      !addressData.shipping?.postalCode
-    ) {
-      return {
-        isValid: false,
-        error:
-          "Veuillez remplir tous les champs obligatoires de l'adresse de livraison",
-      };
-    }
+  const validateAddresses =
+    useCallback(async (): Promise<AddressValidationResult> => {
+      try {
+        const response = await fetch(
+          `${API_URL}/api/customers/addresses/validate`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(addressData),
+          }
+        );
 
-    // Validation des champs obligatoires de l'adresse de facturation si elle est différente
-    if (
-      !addressData.useSameBillingAddress &&
-      (!addressData.billing?.address ||
-        !addressData.billing?.city ||
-        !addressData.billing?.postalCode)
-    ) {
-      return {
-        isValid: false,
-        error:
-          "Veuillez remplir tous les champs obligatoires de l'adresse de facturation",
-      };
-    }
+        const result = await response.json();
 
-    return { isValid: true };
-  }, [addressData]);
+        if (!response.ok || !result.isValid) {
+          return {
+            isValid: false,
+            error: result.error || "Erreur lors de la validation des adresses",
+          };
+        }
+
+        return { isValid: true };
+      } catch (error) {
+        console.error("Erreur lors de la validation des adresses:", error);
+        return {
+          isValid: false,
+          error: "Erreur lors de la validation des adresses",
+        };
+      }
+    }, [addressData]);
 
   /**
    * Fonction principale pour finaliser la commande

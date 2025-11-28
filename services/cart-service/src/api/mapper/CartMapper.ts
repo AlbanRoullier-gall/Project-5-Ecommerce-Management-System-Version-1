@@ -60,6 +60,7 @@ export class CartMapper {
       subtotal: cart.subtotal,
       tax: cart.tax,
       total: cart.total,
+      vatBreakdown: cart.vatBreakdown,
       createdAt: cart.createdAt,
       updatedAt: cart.updatedAt,
       expiresAt: cart.expiresAt,
@@ -74,6 +75,7 @@ export class CartMapper {
     const dto: DTO.CartItemPublicDTO = {
       id: item.id,
       productId: item.productId,
+      productName: item.productName || "", // Requis dans le DTO, utiliser chaîne vide si undefined
       quantity: item.quantity,
       vatRate: item.vatRate,
       unitPriceHT: item.unitPriceHT,
@@ -82,9 +84,6 @@ export class CartMapper {
       totalPriceTTC: item.totalPriceTTC,
       addedAt: item.addedAt,
     };
-    if (item.productName !== undefined) {
-      dto.productName = item.productName;
-    }
     if (item.description !== undefined) {
       dto.description = item.description;
     }

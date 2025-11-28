@@ -473,6 +473,56 @@ class CustomerService {
       throw error;
     }
   }
+
+  /**
+   * Valider les adresses de livraison et de facturation
+   * @param addressData Données des adresses à valider
+   * @returns Résultat de validation avec message d'erreur si invalide
+   */
+  validateAddresses(addressData: {
+    shipping?: {
+      address?: string;
+      postalCode?: string;
+      city?: string;
+      countryName?: string;
+    };
+    billing?: {
+      address?: string;
+      postalCode?: string;
+      city?: string;
+      countryName?: string;
+    };
+    useSameBillingAddress?: boolean;
+  }): { isValid: boolean; error?: string } {
+    // Validation des champs obligatoires de l'adresse de livraison
+    if (
+      !addressData.shipping?.address ||
+      !addressData.shipping?.city ||
+      !addressData.shipping?.postalCode
+    ) {
+      return {
+        isValid: false,
+        error:
+          "Veuillez remplir tous les champs obligatoires de l'adresse de livraison",
+      };
+    }
+
+    // Validation des champs obligatoires de l'adresse de facturation si elle est différente
+    if (
+      !addressData.useSameBillingAddress &&
+      (!addressData.billing?.address ||
+        !addressData.billing?.city ||
+        !addressData.billing?.postalCode)
+    ) {
+      return {
+        isValid: false,
+        error:
+          "Veuillez remplir tous les champs obligatoires de l'adresse de facturation",
+      };
+    }
+
+    return { isValid: true };
+  }
 }
 
 export default CustomerService;
