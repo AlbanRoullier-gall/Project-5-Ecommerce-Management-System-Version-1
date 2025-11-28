@@ -47,7 +47,7 @@ export const handleCreatePayment = async (req: Request, res: Response) => {
 
 export const handleFinalizePayment = async (req: Request, res: Response) => {
   try {
-    const { csid, cartSessionId } = req.body || {};
+    const { csid, cartSessionId, checkoutData } = req.body || {};
 
     if (!csid) {
       return res
@@ -60,10 +60,30 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // 1. Appel au Payment Service pour récupérer la session Stripe complète avec metadata
+    if (!cartSessionId) {
+      return res
+        .status(400)
+        .json(
+          createErrorResponse(
+            "cartSessionId requis",
+            "L'identifiant de session du panier est obligatoire"
+          )
+        );
+    }
+
+    if (!checkoutData) {
+      return res
+        .status(400)
+        .json(
+          createErrorResponse(
+            "checkoutData requis",
+            "Les données de checkout sont obligatoires"
+          )
+        );
+    }
+
+    // 1. Appel au Payment Service pour récupérer la session Stripe et vérifier le paiement
     let paymentIntentId: string | undefined;
-    let snapshot: any = null;
-    let cartSessionIdFromStripe: string | undefined;
 
     try {
       const paymentResponse = await fetch(
@@ -79,32 +99,8 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       if (paymentResponse.ok) {
         const paymentData = (await paymentResponse.json()) as {
           paymentIntentId?: string;
-          session?: {
-            metadata?: {
-              cartSessionId?: string;
-              checkoutSnapshot?: string;
-            };
-          };
         };
         paymentIntentId = paymentData.paymentIntentId;
-
-        // Récupérer le cartSessionId et le snapshot depuis les metadata Stripe
-        if (paymentData.session?.metadata) {
-          cartSessionIdFromStripe = paymentData.session.metadata.cartSessionId;
-
-          if (paymentData.session.metadata.checkoutSnapshot) {
-            try {
-              snapshot = JSON.parse(
-                paymentData.session.metadata.checkoutSnapshot
-              );
-            } catch (parseError) {
-              console.warn(
-                "⚠️ Erreur lors du parsing du snapshot depuis Stripe:",
-                parseError
-              );
-            }
-          }
-        }
       } else {
         console.warn("⚠️ Payment Service - session non trouvée");
       }
@@ -116,38 +112,47 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       paymentIntentId = undefined;
     }
 
-    // 2. Récupérer le cartSessionId depuis les metadata Stripe ou le body
-    const cartSessionIdToUse = cartSessionIdFromStripe || cartSessionId;
+    // 2. Extraire les données de checkout depuis le body
+    const customerData = checkoutData.customerData || {};
+    const addressData = checkoutData.addressData || {};
+    const shippingAddressData = addressData.shipping || {};
+    const billingAddressData = addressData.useSameBillingAddress
+      ? shippingAddressData
+      : addressData.billing || {};
 
-    if (!cartSessionIdToUse) {
-      return res
-        .status(400)
-        .json(
-          createErrorResponse(
-            "cartSessionId requis",
-            "L'identifiant de session du panier est obligatoire"
-          )
-        );
-    }
+    // Construire les adresses au format attendu
+    const shippingAddress = shippingAddressData.address
+      ? {
+          firstName: customerData.firstName || "",
+          lastName: customerData.lastName || "",
+          address: shippingAddressData.address || "",
+          city: shippingAddressData.city || "",
+          postalCode: shippingAddressData.postalCode || "",
+          country: shippingAddressData.countryName || "Belgique",
+          phone: customerData.phoneNumber || "",
+        }
+      : null;
 
-    // 3. Vérifier que le snapshot a été récupéré depuis Stripe
-    if (!snapshot) {
-      return res
-        .status(404)
-        .json(
-          createErrorResponse(
-            "Snapshot introuvable",
-            "Les données de checkout n'ont pas pu être récupérées depuis Stripe"
-          )
-        );
-    }
+    const billingAddress =
+      billingAddressData.address &&
+      billingAddressData.address !== shippingAddressData.address
+        ? {
+            firstName: customerData.firstName || "",
+            lastName: customerData.lastName || "",
+            address: billingAddressData.address || "",
+            city: billingAddressData.city || "",
+            postalCode: billingAddressData.postalCode || "",
+            country: billingAddressData.countryName || "Belgique",
+            phone: customerData.phoneNumber || "",
+          }
+        : null;
 
-    // 4. Appel au Cart Service pour récupérer uniquement le panier
+    // 3. Appel au Cart Service pour récupérer le panier
     let cart: any;
 
     try {
       const cartResponse = await fetch(
-        `${SERVICES.cart}/api/cart?sessionId=${cartSessionIdToUse}`,
+        `${SERVICES.cart}/api/cart?sessionId=${cartSessionId}`,
         {
           method: "GET",
           headers: {
@@ -198,15 +203,9 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     // Transformer les items du panier en utilisant les types partagés
     const items = transformCartItemsToOrderItems(cart.items || []);
 
-    // Extraire les informations customer depuis le snapshot
-    const customer = snapshot.customer || {};
-    const customerEmail = customer.email || snapshot.email || "";
-
-    // Extraire les adresses (gère camelCase et snake_case)
-    const shippingAddress =
-      snapshot.shippingAddress || snapshot.shipping_address || null;
-    const billingAddress =
-      snapshot.billingAddress || snapshot.billing_address || null;
+    // Extraire les informations customer depuis les données checkout
+    const customer = customerData || {};
+    const customerEmail = customer.email || "";
 
     // 4. Appel au Customer Service pour résoudre le customerId
     let customerId: number | undefined;
@@ -256,7 +255,6 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       totalAmountHT: cart.subtotal,
       totalAmountTTC: cart.total,
       paymentMethod: "stripe",
-      notes: snapshot.notes || undefined,
       items,
       ...(addresses.length > 0 && { addresses }),
       ...(customerId && { customerId }),

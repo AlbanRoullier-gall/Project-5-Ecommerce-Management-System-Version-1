@@ -55,6 +55,16 @@ export default function CheckoutSuccessPage() {
 
     const finalize = async () => {
       try {
+        // Récupérer les données checkout depuis sessionStorage
+        const checkoutDataKey = "checkout_data";
+        const storedCheckoutData = sessionStorage.getItem(checkoutDataKey);
+
+        if (!storedCheckoutData) {
+          throw new Error("Données de checkout introuvables");
+        }
+
+        const checkoutData = JSON.parse(storedCheckoutData);
+
         console.log("Finalizing payment with:", {
           csid: sessionId,
           cartSessionId,
@@ -65,6 +75,7 @@ export default function CheckoutSuccessPage() {
           body: JSON.stringify({
             csid: sessionId,
             cartSessionId,
+            checkoutData,
           }),
         });
 

@@ -241,36 +241,8 @@ export const handleCheckoutComplete = async (
       currency: "eur",
     }));
 
-    // 5. Construire le snapshot checkout
-    const snapshot = {
-      customer: {
-        ...body.customerData,
-      },
-      shippingAddress: {
-        firstName: body.customerData.firstName || "",
-        lastName: body.customerData.lastName || "",
-        address: shippingAddress.address || "",
-        city: shippingAddress.city || "",
-        postalCode: shippingAddress.postalCode || "",
-        country: shippingAddress.countryName || "Belgique",
-        phone: body.customerData.phoneNumber || "",
-      },
-      billingAddress:
-        billingAddress && billingAddress.address !== shippingAddress.address
-          ? {
-              firstName: body.customerData.firstName || "",
-              lastName: body.customerData.lastName || "",
-              address: billingAddress.address || "",
-              city: billingAddress.city || "",
-              postalCode: billingAddress.postalCode || "",
-              country: billingAddress.countryName || "Belgique",
-              phone: body.customerData.phoneNumber || "",
-            }
-          : null,
-      notes: undefined,
-    };
-
-    // 6. Préparer le payload pour créer la session de paiement Stripe
+    // 5. Préparer le payload pour créer la session de paiement Stripe
+    // On ne passe QUE le cartSessionId via Stripe - les autres données seront envoyées après le paiement
     const customerName = `${body.customerData.firstName || ""} ${
       body.customerData.lastName || ""
     }`.trim();
@@ -290,7 +262,6 @@ export const handleCheckoutComplete = async (
       metadata: {
         customerId: customerId.toString(),
         cartSessionId: body.cartSessionId,
-        checkoutSnapshot: JSON.stringify(snapshot),
       },
     };
 
