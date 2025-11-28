@@ -13,11 +13,17 @@ import { CartItem } from "../../models/CartItem";
 export class CartMapper {
   /**
    * Convertir CartItemCreateDTO en CartItem
+   * Garantit que productName, description et imageUrl sont correctement capturés
    */
   static cartItemCreateDTOToCartItem(
     dto: DTO.CartItemCreateDTO,
     id: string
   ): CartItem {
+    // Validation que productName est présent
+    if (!dto.productName || dto.productName.trim().length === 0) {
+      throw new Error("Product name is required and cannot be empty");
+    }
+
     // Calculer les prix HT/TTC
     const unitPriceTTC = dto.unitPriceTTC;
     const multiplier = 1 + (dto.vatRate || 0) / 100;
@@ -26,9 +32,10 @@ export class CartMapper {
     const totalPriceHT = unitPriceHT * dto.quantity;
     const totalPriceTTC = unitPriceTTC * dto.quantity;
 
-    const itemData: any = {
+    const itemData: CartItemData = {
       id,
       product_id: dto.productId,
+      product_name: dto.productName.trim(), // Nettoyer et garantir non vide
       quantity: dto.quantity,
       vat_rate: dto.vatRate,
       unit_price_ht: unitPriceHT,
@@ -36,16 +43,10 @@ export class CartMapper {
       total_price_ht: totalPriceHT,
       total_price_ttc: totalPriceTTC,
       added_at: new Date(),
+      description: dto.description ?? null,
+      image_url: dto.imageUrl ?? null,
     };
-    if (dto.productName !== undefined) {
-      itemData.product_name = dto.productName;
-    }
-    if (dto.description !== undefined) {
-      itemData.description = dto.description;
-    }
-    if (dto.imageUrl !== undefined) {
-      itemData.image_url = dto.imageUrl;
-    }
+
     return new CartItem(itemData);
   }
 
@@ -69,28 +70,23 @@ export class CartMapper {
 
   /**
    * Convertir le modèle CartItem en CartItemPublicDTO
-   * Utilise les valeurs stockées directement (plus besoin de calculer)
+   * Harmonisé avec OrderItemPublicDTO - utilise createdAt au lieu de addedAt
    */
   static cartItemToPublicDTO(item: CartItem): DTO.CartItemPublicDTO {
-    const dto: DTO.CartItemPublicDTO = {
+    return {
       id: item.id,
       productId: item.productId,
-      productName: item.productName || "", // Requis dans le DTO, utiliser chaîne vide si undefined
+      productName: item.productName || "", // Garantir une valeur non vide
+      description: item.description ?? null,
+      imageUrl: item.imageUrl ?? null,
       quantity: item.quantity,
       vatRate: item.vatRate,
       unitPriceHT: item.unitPriceHT,
       unitPriceTTC: item.unitPriceTTC,
       totalPriceHT: item.totalPriceHT,
       totalPriceTTC: item.totalPriceTTC,
-      addedAt: item.addedAt,
+      createdAt: item.addedAt, // Mapper addedAt vers createdAt pour harmonisation
     };
-    if (item.description !== undefined) {
-      dto.description = item.description;
-    }
-    if (item.imageUrl !== undefined) {
-      dto.imageUrl = item.imageUrl;
-    }
-    return dto;
   }
 
   /**

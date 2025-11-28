@@ -131,15 +131,16 @@ export class ApiRouter {
                 id: Joi.string().required(),
                 productId: Joi.number().required(),
                 productName: Joi.string().required(),
-                description: Joi.any().optional(),
-                imageUrl: Joi.any().optional(),
+                description: Joi.string().allow(null).optional(),
+                imageUrl: Joi.string().allow(null).optional(),
                 quantity: Joi.number().positive().required(),
                 unitPriceHT: Joi.number().required(),
                 unitPriceTTC: Joi.number().required(),
                 vatRate: Joi.number().required(),
                 totalPriceHT: Joi.number().required(),
                 totalPriceTTC: Joi.number().required(),
-                addedAt: Joi.any().optional(),
+                createdAt: Joi.any().optional(), // Harmonisé avec CartItemPublicDTO
+                addedAt: Joi.any().optional(), // Gardé pour compatibilité
               }).unknown(true)
             )
             .min(1)
@@ -193,7 +194,6 @@ export class ApiRouter {
         paymentIntentId: Joi.string().optional(),
         paymentMethod: Joi.string().required(),
       }),
-
     };
   }
 

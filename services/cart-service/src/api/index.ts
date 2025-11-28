@@ -39,11 +39,12 @@ export class ApiRouter {
   private setupValidationSchemas() {
     return {
       // Schéma de création d'article de panier
+      // Harmonisé avec OrderItemCreateDTO - productName est requis
       cartItemCreateSchema: Joi.object({
         productId: Joi.number().positive().required(),
-        productName: Joi.string().optional(),
-        description: Joi.string().optional().allow(null, ""),
-        imageUrl: Joi.string().optional().allow(null, ""),
+        productName: Joi.string().min(1).required(), // Requis et non vide
+        description: Joi.string().allow(null, "").optional(),
+        imageUrl: Joi.string().allow(null, "").optional(),
         quantity: Joi.number().positive().required(),
         unitPriceTTC: Joi.number().positive().required(),
         vatRate: Joi.number().min(0).max(100).required(),

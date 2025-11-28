@@ -10,12 +10,15 @@
 
 /**
  * Interface correspondant exactement à la table order_items
+ * Harmonisé avec CartItemData pour assurer la cohérence des données
  */
 export interface OrderItemData {
   id: number;
   order_id: number;
   product_id: number;
-  product_name?: string;
+  product_name: string; // Requis et non vide
+  description?: string | null; // Snapshot du produit
+  image_url?: string | null; // Snapshot de l'image
   quantity: number;
   unit_price_ht: number;
   unit_price_ttc: number;
@@ -38,7 +41,9 @@ class OrderItem {
   public readonly id: number;
   public readonly orderId: number;
   public readonly productId: number;
-  public readonly productName?: string;
+  public readonly productName: string; // Requis et non vide
+  public readonly description?: string | null;
+  public readonly imageUrl?: string | null;
   public readonly quantity: number;
   public readonly unitPriceHT: number;
   public readonly unitPriceTTC: number;
@@ -52,7 +57,9 @@ class OrderItem {
     this.id = data.id;
     this.orderId = data.order_id;
     this.productId = data.product_id;
-    this.productName = data.product_name;
+    this.productName = data.product_name || ""; // Garantir une valeur par défaut
+    this.description = data.description ?? null;
+    this.imageUrl = data.image_url ?? null;
     this.quantity = data.quantity;
     this.unitPriceHT = data.unit_price_ht;
     this.unitPriceTTC = data.unit_price_ttc;
@@ -87,14 +94,19 @@ class OrderItem {
 
   /**
    * Vérifier si l'article est valide
+   * Harmonisé avec validate() pour garantir la cohérence
    */
   isValid(): boolean {
     return (
       this.orderId !== null &&
+      this.orderId > 0 &&
       this.productId !== null &&
+      this.productId > 0 &&
+      this.productName.trim().length > 0 && // ProductName requis et non vide
       this.quantity > 0 &&
       this.unitPriceHT >= 0 &&
-      this.unitPriceTTC >= 0
+      this.unitPriceTTC >= 0 &&
+      this.unitPriceTTC >= this.unitPriceHT
     );
   }
 
@@ -111,6 +123,10 @@ class OrderItem {
 
     if (!this.productId || this.productId <= 0) {
       errors.push("Product ID is required and must be positive");
+    }
+
+    if (!this.productName || this.productName.trim().length === 0) {
+      errors.push("Product name is required and cannot be empty");
     }
 
     if (this.quantity <= 0) {

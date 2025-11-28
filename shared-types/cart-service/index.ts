@@ -3,16 +3,19 @@
  * Types partagés pour l'API REST
  */
 
+import { BaseItemDTO } from "../common/BaseItemDTO";
+
 // ===== TYPES BASÉS SUR CartItemData =====
 
 /**
  * DTO pour ajouter un article au panier
+ * Harmonisé avec ProductPublicDTO - productName est requis
  */
 export interface CartItemCreateDTO {
   productId: number;
-  productName?: string; // Nom du produit (snapshot au moment de l'ajout)
-  description?: string; // Description du produit (snapshot au moment de l'ajout)
-  imageUrl?: string; // URL de la première image du produit (snapshot au moment de l'ajout)
+  productName: string; // Requis et non vide - snapshot au moment de l'ajout
+  description?: string | null; // Description du produit (snapshot au moment de l'ajout)
+  imageUrl?: string | null; // URL de la première image du produit (snapshot au moment de l'ajout)
   quantity: number;
   unitPriceTTC: number; // Prix unitaire TTC (remplace price)
   vatRate: number;
@@ -28,21 +31,11 @@ export interface CartItemUpdateDTO {
 
 /**
  * DTO public pour un article du panier
- * Reflète exactement ce que le cart-service retourne
+ * Harmonisé avec ProductPublicDTO et OrderItemPublicDTO
+ * Étend BaseItemDTO pour partager la structure commune
  */
-export interface CartItemPublicDTO {
-  id: string;
-  productId: number;
-  productName: string; // Nom du produit (snapshot au moment de l'ajout) - requis pour compatibilité avec Order Service
-  description?: string; // Description du produit (snapshot au moment de l'ajout)
-  imageUrl?: string; // URL de la première image du produit (snapshot au moment de l'ajout)
-  quantity: number;
-  vatRate: number;
-  unitPriceHT: number;
-  unitPriceTTC: number;
-  totalPriceHT: number;
-  totalPriceTTC: number;
-  addedAt: Date;
+export interface CartItemPublicDTO extends BaseItemDTO {
+  id: string; // Spécifique à Cart (UUID string)
 }
 
 // ===== TYPES BASÉS SUR CartData =====

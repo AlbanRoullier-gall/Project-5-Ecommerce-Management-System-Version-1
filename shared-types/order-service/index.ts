@@ -3,6 +3,8 @@
  * Types partagés pour l'API REST
  */
 
+import { BaseItemDTO } from "../common/BaseItemDTO";
+
 // ===== TYPES BASÉS SUR OrderData =====
 
 /**
@@ -29,20 +31,13 @@ export interface OrderPublicDTO {
 
 /**
  * DTO public pour un article de commande
+ * Harmonisé avec CartItemPublicDTO et ProductPublicDTO
+ * Étend BaseItemDTO pour partager la structure commune
  */
-export interface OrderItemPublicDTO {
-  id: number;
-  orderId: number;
-  productId: number;
-  productName: string;
-  quantity: number;
-  unitPriceHT: number;
-  unitPriceTTC: number;
-  vatRate: number;
-  totalPriceHT: number;
-  totalPriceTTC: number;
-  createdAt: Date;
-  updatedAt: Date;
+export interface OrderItemPublicDTO extends BaseItemDTO {
+  id: number; // Spécifique à Order (auto-increment)
+  orderId: number; // Spécifique à Order
+  updatedAt: Date; // Spécifique à Order
 }
 
 // ===== TYPES BASÉS SUR OrderAddressData =====

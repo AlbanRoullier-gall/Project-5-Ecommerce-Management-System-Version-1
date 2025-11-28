@@ -61,7 +61,7 @@ interface CartContextType {
     quantity: number,
     priceTTC: number,
     vatRate: number,
-    productName?: string,
+    productName: string, // Requis et non vide
     description?: string,
     imageUrl?: string
   ) => Promise<void>;
@@ -210,7 +210,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     quantity: number,
     priceTTC: number,
     vatRate: number,
-    productName?: string,
+    productName: string, // Requis et non vide
     description?: string,
     imageUrl?: string
   ) => {

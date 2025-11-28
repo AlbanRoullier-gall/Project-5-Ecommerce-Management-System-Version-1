@@ -36,6 +36,7 @@ export class OrderMapper {
       totalAmountTTC: order.totalAmountTTC,
       paymentMethod: order.paymentMethod,
       notes: order.notes,
+      delivered: order.delivered ?? false,
       customerFirstName: order.customerFirstName,
       customerLastName: order.customerLastName,
       customerEmail: order.customerEmail,
@@ -48,13 +49,16 @@ export class OrderMapper {
 
   /**
    * Convertir le modèle OrderItem en OrderItemPublicDTO
+   * Harmonisé avec CartItemPublicDTO
    */
   static orderItemToPublicDTO(orderItem: any): OrderItemPublicDTO {
     return {
       id: orderItem.id,
       orderId: orderItem.orderId,
       productId: orderItem.productId,
-      productName: orderItem.productName,
+      productName: orderItem.productName || "", // Garantir une valeur non vide
+      description: orderItem.description ?? null,
+      imageUrl: orderItem.imageUrl ?? null,
       quantity: orderItem.quantity,
       unitPriceHT: orderItem.unitPriceHT,
       unitPriceTTC: orderItem.unitPriceTTC,
@@ -80,10 +84,10 @@ export class OrderMapper {
       total_amount_ht: dto.totalAmountHT,
       total_amount_ttc: dto.totalAmountTTC,
       reason: dto.reason,
-      description: dto.description || null,
+      description: dto.description ?? null,
       issue_date: dto.issueDate ? new Date(dto.issueDate) : null,
-      payment_method: dto.paymentMethod || null,
-      notes: dto.notes || null,
+      payment_method: dto.paymentMethod || "",
+      notes: dto.notes ?? null,
     };
   }
 
@@ -146,7 +150,6 @@ export class OrderMapper {
       quantity: creditNoteItem.quantity,
       unitPriceHT: creditNoteItem.unitPriceHT,
       unitPriceTTC: creditNoteItem.unitPriceTTC,
-      vatRate: creditNoteItem.vatRate || 0,
       totalPriceHT: creditNoteItem.totalPriceHT,
       totalPriceTTC: creditNoteItem.totalPriceTTC,
       createdAt: creditNoteItem.createdAt,

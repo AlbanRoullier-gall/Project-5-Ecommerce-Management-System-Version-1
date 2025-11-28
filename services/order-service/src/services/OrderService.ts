@@ -123,12 +123,22 @@ export default class OrderService {
       const orderId = order.id;
 
       // Créer les items via le repository avec le client de transaction
+      // Harmonisation complète des données depuis Cart vers Order
       for (const item of data.cart.items || []) {
+        // Validation que productName est présent et non vide
+        if (!item.productName || item.productName.trim().length === 0) {
+          throw new Error(
+            `Product name is required for product ID ${item.productId}`
+          );
+        }
+
         const itemData: OrderItemData = {
           id: 0, // Sera défini par la base de données
           order_id: orderId,
           product_id: item.productId,
-          product_name: item.productName,
+          product_name: item.productName.trim(), // Nettoyer et garantir non vide
+          description: item.description ?? null, // Transférer la description
+          image_url: item.imageUrl ?? null, // Transférer l'image URL
           quantity: item.quantity,
           unit_price_ht: item.unitPriceHT,
           unit_price_ttc: item.unitPriceTTC,

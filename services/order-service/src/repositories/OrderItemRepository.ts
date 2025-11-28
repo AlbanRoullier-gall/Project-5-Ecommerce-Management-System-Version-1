@@ -25,7 +25,7 @@ export default class OrderItemRepository {
   async getOrderItemById(id: number): Promise<OrderItem | null> {
     try {
       const query = `
-        SELECT id, order_id, product_id, quantity, 
+        SELECT id, order_id, product_id, product_name, description, image_url, quantity, 
                unit_price_ht, unit_price_ttc, vat_rate, total_price_ht, total_price_ttc, 
                created_at, updated_at
         FROM order_items 
@@ -53,7 +53,7 @@ export default class OrderItemRepository {
   async getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]> {
     try {
       const query = `
-        SELECT id, order_id, product_id, product_name, quantity, 
+        SELECT id, order_id, product_id, product_name, description, image_url, quantity, 
                unit_price_ht, unit_price_ttc, vat_rate, total_price_ht, total_price_ttc, 
                created_at, updated_at
         FROM order_items 
@@ -95,6 +95,7 @@ export default class OrderItemRepository {
       const query = `
         SELECT 
           oi.id, oi.product_id as "productId", oi.product_name as "productName",
+          oi.description, oi.image_url as "imageUrl",
           oi.quantity, oi.unit_price_ht as "unitPriceHT", oi.unit_price_ttc as "unitPriceTTC",
           oi.vat_rate as "vatRate", oi.total_price_ht as "totalPriceHT", oi.total_price_ttc as "totalPriceTTC"
         FROM order_items oi
@@ -121,11 +122,11 @@ export default class OrderItemRepository {
     client?: any
   ): Promise<OrderItem> {
     const query = `
-      INSERT INTO order_items (order_id, product_id, product_name, quantity, 
+      INSERT INTO order_items (order_id, product_id, product_name, description, image_url, quantity, 
                               unit_price_ht, unit_price_ttc, vat_rate, 
                               total_price_ht, total_price_ttc, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-      RETURNING id, order_id, product_id, product_name, quantity, 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+      RETURNING id, order_id, product_id, product_name, description, image_url, quantity, 
                 unit_price_ht, unit_price_ttc, vat_rate, 
                 total_price_ht, total_price_ttc, created_at, updated_at
     `;
@@ -133,7 +134,9 @@ export default class OrderItemRepository {
     const values = [
       itemData.order_id,
       itemData.product_id,
-      itemData.product_name,
+      itemData.product_name || "", // Garantir une valeur non vide
+      itemData.description ?? null,
+      itemData.image_url ?? null,
       itemData.quantity,
       itemData.unit_price_ht,
       itemData.unit_price_ttc,
