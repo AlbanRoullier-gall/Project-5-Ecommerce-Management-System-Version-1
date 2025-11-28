@@ -10,18 +10,15 @@
 
 import { v4 as uuidv4 } from "uuid";
 import { CartRepository } from "../repositories/CartRepository";
-import { CheckoutSnapshotRepository } from "../repositories/CheckoutSnapshotRepository";
 import { Cart } from "../models/Cart";
 import { CartMapper } from "../api/mapper/CartMapper";
 import * as DTO from "@tfe/shared-types/cart-service";
 
 export default class CartService {
   private cartRepository: CartRepository;
-  private snapshotRepository: CheckoutSnapshotRepository;
 
   constructor() {
     this.cartRepository = new CartRepository();
-    this.snapshotRepository = new CheckoutSnapshotRepository();
   }
 
   /**
@@ -123,53 +120,6 @@ export default class CartService {
     await this.cartRepository.updateCart(clearedCart);
 
     return clearedCart;
-  }
-
-  /**
-   * Sauvegarder un snapshot checkout
-   */
-  async saveCheckoutSnapshot(
-    cartSessionId: string,
-    snapshot: any
-  ): Promise<void> {
-    await this.snapshotRepository.saveSnapshot(cartSessionId, snapshot);
-  }
-
-  /**
-   * Récupérer un snapshot checkout
-   */
-  async getCheckoutSnapshot(cartSessionId: string): Promise<any | null> {
-    return await this.snapshotRepository.getSnapshot(cartSessionId);
-  }
-
-  /**
-   * Supprimer un snapshot checkout
-   */
-  async deleteCheckoutSnapshot(cartSessionId: string): Promise<void> {
-    await this.snapshotRepository.deleteSnapshot(cartSessionId);
-  }
-
-  /**
-   * Récupérer le panier et le snapshot checkout ensemble
-   *
-   * @param cartSessionId - Identifiant de session du panier
-   * @returns Panier et snapshot formatés ensemble, ou null si l'un des deux est introuvable
-   */
-  async getCheckoutData(cartSessionId: string): Promise<{
-    cart: Cart;
-    snapshot: any;
-  } | null> {
-    const cart = await this.getCart(cartSessionId);
-    if (!cart) {
-      return null;
-    }
-
-    const snapshot = await this.getCheckoutSnapshot(cartSessionId);
-    if (!snapshot) {
-      return null;
-    }
-
-    return { cart, snapshot };
   }
 
   /**

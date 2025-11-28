@@ -84,6 +84,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
 
     // 1. Appel au Payment Service pour récupérer la session Stripe et vérifier le paiement
     let paymentIntentId: string | undefined;
+    let customerIdFromMetadata: string | undefined;
 
     try {
       const paymentResponse = await fetch(
@@ -99,8 +100,13 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       if (paymentResponse.ok) {
         const paymentData = (await paymentResponse.json()) as {
           paymentIntentId?: string;
+          metadata?: {
+            customerId?: string;
+            cartSessionId?: string;
+          };
         };
         paymentIntentId = paymentData.paymentIntentId;
+        customerIdFromMetadata = paymentData.metadata?.customerId;
       } else {
         console.warn("⚠️ Payment Service - session non trouvée");
       }
@@ -147,7 +153,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
           }
         : null;
 
-    // 3. Appel au Cart Service pour récupérer le panier
+    // 3. Récupérer le panier actif depuis le cart-service
     let cart: any;
 
     try {
@@ -178,15 +184,10 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       const cartData = (await cartResponse.json()) as any;
       cart = cartData.cart;
 
-      if (!cart) {
+      if (!cart || !cart.items || cart.items.length === 0) {
         return res
-          .status(404)
-          .json(
-            createErrorResponse(
-              "Panier introuvable",
-              "Le panier n'existe pas pour cette session"
-            )
-          );
+          .status(400)
+          .json(createErrorResponse("Panier vide", "Le panier est vide"));
       }
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Cart Service:", error);
@@ -207,10 +208,14 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     const customer = customerData || {};
     const customerEmail = customer.email || "";
 
-    // 4. Appel au Customer Service pour résoudre le customerId
+    // 4. Résoudre le customerId : utiliser celui des métadonnées Stripe si disponible, sinon le résoudre
     let customerId: number | undefined;
 
-    if (customerEmail) {
+    if (customerIdFromMetadata) {
+      // Utiliser le customerId depuis les métadonnées Stripe (déjà résolu au checkout)
+      customerId = parseInt(customerIdFromMetadata, 10);
+    } else if (customerEmail) {
+      // Fallback : résoudre le customerId depuis l'email
       try {
         const customerResponse = await fetch(
           `${SERVICES.customer}/api/customers/by-email/${encodeURIComponent(

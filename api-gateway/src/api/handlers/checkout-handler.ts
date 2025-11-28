@@ -160,79 +160,7 @@ export const handleCheckoutComplete = async (
       return;
     }
 
-    // 3. Sauvegarder les adresses dans le carnet d'adresses du client (non-bloquant)
-    const shippingAddress = body.addressData.shipping;
-    const billingAddress = body.addressData.useSameBillingAddress
-      ? body.addressData.shipping
-      : body.addressData.billing;
-
-    try {
-      // Créer l'adresse de livraison
-      if (
-        shippingAddress?.address &&
-        shippingAddress?.postalCode &&
-        shippingAddress?.city
-      ) {
-        const shippingAddressDTO = {
-          addressType: "shipping" as const,
-          address: shippingAddress.address,
-          postalCode: shippingAddress.postalCode,
-          city: shippingAddress.city,
-          countryName: shippingAddress.countryName || "Belgique",
-          isDefault: true,
-        };
-
-        await fetch(
-          `${SERVICES.customer}/api/customers/${customerId}/addresses`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Service-Request": "api-gateway",
-            },
-            body: JSON.stringify(shippingAddressDTO),
-          }
-        );
-      }
-
-      // Créer l'adresse de facturation si différente
-      if (
-        billingAddress?.address &&
-        billingAddress?.postalCode &&
-        billingAddress?.city &&
-        !body.addressData.useSameBillingAddress &&
-        billingAddress.address !== shippingAddress?.address
-      ) {
-        const billingAddressDTO = {
-          addressType: "billing" as const,
-          address: billingAddress.address,
-          postalCode: billingAddress.postalCode,
-          city: billingAddress.city,
-          countryName: billingAddress.countryName || "Belgique",
-          isDefault: false,
-        };
-
-        await fetch(
-          `${SERVICES.customer}/api/customers/${customerId}/addresses`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Service-Request": "api-gateway",
-            },
-            body: JSON.stringify(billingAddressDTO),
-          }
-        );
-      }
-    } catch (addressError) {
-      // Erreur non-bloquante : on continue même si la sauvegarde des adresses échoue
-      console.warn(
-        "⚠️ Erreur lors de la sauvegarde des adresses:",
-        addressError
-      );
-    }
-
-    // 4. Préparer les données de paiement pour Stripe
+    // 3. Préparer les données de paiement pour Stripe
     const paymentItems = cart.items.map((item: any) => ({
       name: item.productName || "Produit",
       description: item.description || "",
@@ -241,8 +169,9 @@ export const handleCheckoutComplete = async (
       currency: "eur",
     }));
 
-    // 5. Préparer le payload pour créer la session de paiement Stripe
-    // On ne passe QUE le cartSessionId via Stripe - les autres données seront envoyées après le paiement
+    // 4. Préparer le payload pour créer la session de paiement Stripe
+    // Les métadonnées Stripe contiennent uniquement les identifiants essentiels
+    // Les données checkout complètes sont envoyées par le frontend à la finalisation
     const customerName = `${body.customerData.firstName || ""} ${
       body.customerData.lastName || ""
     }`.trim();
@@ -265,7 +194,7 @@ export const handleCheckoutComplete = async (
       },
     };
 
-    // 7. Créer la session de paiement Stripe
+    // 5. Créer la session de paiement Stripe
     try {
       const paymentResponse = await fetch(
         `${SERVICES.payment}/api/payment/create`,
@@ -308,7 +237,7 @@ export const handleCheckoutComplete = async (
         return;
       }
 
-      // 8. Retourner l'URL de redirection vers Stripe
+      // 6. Retourner l'URL de redirection vers Stripe
       res.json({
         success: true,
         paymentUrl: paymentData.paymentUrl,
