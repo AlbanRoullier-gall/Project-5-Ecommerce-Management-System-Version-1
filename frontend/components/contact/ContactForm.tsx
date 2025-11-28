@@ -60,6 +60,7 @@ export default function ContactForm() {
       const response = await fetch(`${API_URL}/api/email/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Important pour CORS avec credentials: true
         body: JSON.stringify(emailData),
       });
 

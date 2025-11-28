@@ -38,18 +38,10 @@ export default function CheckoutSuccessPage() {
       return;
     }
 
-    const cartSessionId =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem("cart_session_id")
-        : null;
-
-    if (!cartSessionId) {
-      console.error("No cart session ID found");
-      return;
-    }
-
+    // Note: Le cartSessionId est maintenant géré automatiquement via cookie httpOnly
+    // Plus besoin de le récupérer depuis localStorage - le serveur l'extrait du cookie
     // Note: On ne vérifie pas si le cart est vide car après un paiement réussi,
-    // le cart peut être vide. La finalisation utilise le cartSessionId et session_id.
+    // le cart peut être vide. La finalisation utilise le cartSessionId depuis le cookie.
 
     setIsProcessing(true);
     hasFinalized.current = true;
@@ -68,26 +60,26 @@ export default function CheckoutSuccessPage() {
 
         // Utilise les types existants directement
         // checkoutData contient customerData (CustomerResolveOrCreateDTO) et addressData (AddressesCreateDTO)
+        // Le cartSessionId est maintenant géré automatiquement via cookie httpOnly
         const finalizePayload: {
           csid: string;
-          cartSessionId: string;
           checkoutData: {
             customerData: CustomerResolveOrCreateDTO;
             addressData: AddressesCreateDTO;
           };
         } = {
           csid: sessionId,
-          cartSessionId,
           checkoutData,
         };
 
         console.log("Finalizing payment with:", {
           csid: sessionId,
-          cartSessionId,
+          // cartSessionId est maintenant dans le cookie httpOnly
         });
         const response = await fetch(`${API_URL}/api/payment/finalize`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include", // Important pour envoyer les cookies
           body: JSON.stringify(finalizePayload),
         });
 

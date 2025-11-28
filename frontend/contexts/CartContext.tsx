@@ -98,57 +98,45 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   /**
-   * Calcule les totaux du panier
-   * Utilise les valeurs calculées par le cart-service (y compris le breakdown TVA)
+   * Extrait les totaux directement depuis le panier fourni par le cart-service
+   * Le cart-service calcule déjà tous les totaux (subtotal, tax, total, vatBreakdown)
    */
-  const calculateTotals = (cart: CartPublicDTO | null): CartTotals => {
-    if (!cart || !cart.items || cart.items.length === 0) {
-      return {
+  const totals: CartTotals = cart
+    ? {
+        totalHT: cart.subtotal || 0,
+        totalTTC: cart.total || 0,
+        vatAmount: cart.tax || 0,
+        breakdown: cart.vatBreakdown || [],
+      }
+    : {
         totalHT: 0,
-        totalTTC: cart?.total || 0,
+        totalTTC: 0,
         vatAmount: 0,
         breakdown: [],
       };
-    }
-
-    // Utiliser les totaux et le breakdown déjà calculés par le cart-service
-    const totalHT = cart.subtotal || 0;
-    const totalTTC = cart.total || 0;
-    const vatAmount = cart.tax || 0;
-    const breakdown = cart.vatBreakdown || [];
-
-    return { totalHT, totalTTC, vatAmount, breakdown };
-  };
-
-  // Calculer les totaux à chaque changement de panier
-  const totals = calculateTotals(cart);
 
   /**
-   * Génère ou récupère l'ID de session depuis localStorage
-   * Uniquement côté client (pas SSR)
+   * Initialise la session du panier
+   * Le sessionId est maintenant géré automatiquement via cookie httpOnly
+   * Plus besoin de localStorage ou de génération côté client
+   * Le premier appel API créera automatiquement le cookie
    */
   useEffect(() => {
     // S'assurer qu'on est bien côté client
     if (typeof window === "undefined") return;
 
-    let storedSessionId = localStorage.getItem("cart_session_id");
-
-    if (!storedSessionId) {
-      // Générer un nouveau sessionId unique
-      storedSessionId = `session_${Date.now()}_${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
-      localStorage.setItem("cart_session_id", storedSessionId);
-    }
-
-    setSessionId(storedSessionId);
+    // Le sessionId sera géré automatiquement par le cookie httpOnly
+    // On peut charger le panier directement - le middleware créera le cookie si nécessaire
+    // On utilise un flag pour indiquer que la session est initialisée
+    setSessionId("initialized"); // Flag pour indiquer que c'est prêt
   }, []);
 
   /**
-   * Charge le panier au montage et quand le sessionId change
+   * Charge le panier au montage
+   * Le sessionId est géré automatiquement via cookie httpOnly
    */
   useEffect(() => {
-    if (sessionId) {
+    if (sessionId === "initialized") {
       refreshCart();
     }
   }, [sessionId]);
@@ -160,18 +148,34 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
   /**
+   * Construit les headers pour les requêtes cart
+   * Le sessionId est maintenant géré automatiquement via cookie httpOnly
+   * Plus besoin d'envoyer le header X-Cart-Session-ID
+   */
+  const buildCartHeaders = (): Record<string, string> => {
+    return {
+      "Content-Type": "application/json",
+      // Le cookie sera envoyé automatiquement par le navigateur
+    };
+  };
+
+  /**
    * Récupère le panier depuis l'API
+   * Le sessionId est transmis via le header X-Cart-Session-ID
    */
   const refreshCart = async () => {
-    if (!sessionId) return;
-
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/cart?sessionId=${sessionId}`
-      );
+      const response = await fetch(`${API_URL}/api/cart`, {
+        method: "GET",
+        headers: buildCartHeaders(),
+        credentials: "include", // Important pour envoyer les cookies
+      });
+
+      // Le sessionId est maintenant géré automatiquement via cookie httpOnly
+      // Plus besoin de récupérer ou stocker le sessionId
 
       if (response.status === 404) {
         // Pas de panier, c'est normal
@@ -199,6 +203,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   /**
    * Ajoute un article au panier
+   * Le sessionId est transmis via le header X-Cart-Session-ID
    */
   const addToCart = async (
     productId: number,
@@ -209,11 +214,6 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     description?: string,
     imageUrl?: string
   ) => {
-    if (!sessionId) {
-      debugLog("⚠️ Pas de sessionId, impossible d'ajouter au panier");
-      return;
-    }
-
     debugLog(
       `➕ Ajout au panier: produit ${productId}, quantité ${quantity}, prix ${priceTTC}`
     );
@@ -221,7 +221,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setError(null);
 
     try {
-      const url = `${API_URL}/api/cart/items?sessionId=${sessionId}`;
+      const url = `${API_URL}/api/cart/items`;
       debugLog(`📡 POST ${url}`);
 
       // Créer le DTO pour l'ajout d'article
@@ -237,11 +237,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
       const response = await fetch(url, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: buildCartHeaders(),
+        credentials: "include", // Important pour envoyer les cookies
         body: JSON.stringify(itemData),
       });
+
+      // Le sessionId est maintenant géré automatiquement via cookie httpOnly
+      // Plus besoin de récupérer ou stocker le sessionId
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -274,10 +276,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   /**
    * Met à jour la quantité d'un article
+   * Le sessionId est transmis via le header X-Cart-Session-ID
    */
   const updateQuantity = async (productId: number, quantity: number) => {
-    if (!sessionId) return;
-
     setIsLoading(true);
     setError(null);
 
@@ -287,16 +288,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         quantity,
       };
 
-      const response = await fetch(
-        `${API_URL}/api/cart/items/${productId}?sessionId=${sessionId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updateData),
-        }
-      );
+      const response = await fetch(`${API_URL}/api/cart/items/${productId}`, {
+        method: "PUT",
+        headers: buildCartHeaders(),
+        credentials: "include", // Important pour envoyer les cookies
+        body: JSON.stringify(updateData),
+      });
+
+      // Le sessionId est maintenant géré automatiquement via cookie httpOnly
+      // Plus besoin de récupérer ou stocker le sessionId
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -317,20 +317,20 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   /**
    * Supprime un article du panier
+   * Le sessionId est transmis via le header X-Cart-Session-ID
    */
   const removeFromCart = async (productId: number) => {
-    if (!sessionId) return;
-
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/cart/items/${productId}?sessionId=${sessionId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`${API_URL}/api/cart/items/${productId}`, {
+        method: "DELETE",
+        headers: buildCartHeaders(),
+      });
+
+      // Le sessionId est maintenant géré automatiquement via cookie httpOnly
+      // Plus besoin de récupérer ou stocker le sessionId
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -351,26 +351,27 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   /**
    * Vide complètement le panier
+   * Le sessionId est transmis via le header X-Cart-Session-ID
    */
   const clearCart = async () => {
-    if (!sessionId) return;
-
     setIsLoading(true);
     setError(null);
 
     try {
-      // Créer le DTO pour le vidage de panier
+      // Créer le DTO pour le vidage de panier (le sessionId sera extrait du cookie par le serveur)
       const clearData: CartClearDTO = {
-        sessionId: sessionId,
+        sessionId: "", // Sera ignoré côté serveur, extrait du cookie httpOnly
       };
 
       const response = await fetch(`${API_URL}/api/cart`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: buildCartHeaders(),
+        credentials: "include", // Important pour envoyer les cookies
         body: JSON.stringify(clearData),
       });
+
+      // Le sessionId est maintenant géré automatiquement via cookie httpOnly
+      // Plus besoin de récupérer ou stocker le sessionId
 
       if (!response.ok) {
         const errorData = await response.json();

@@ -21,6 +21,24 @@ const buildBaseHeaders = (req: Request): Record<string, string> => {
   return headers;
 };
 
+/**
+ * Construit les query params pour le cart-service
+ * Ajoute le sessionId si présent dans la requête
+ */
+const buildCartQueryParams = (req: Request): Record<string, string> => {
+  const params: Record<string, string> = { ...req.query } as Record<
+    string,
+    string
+  >;
+
+  // Si c'est une route cart et qu'on a un cartSessionId, l'ajouter
+  if (req.path.startsWith("/api/cart") && (req as any).cartSessionId) {
+    params["sessionId"] = (req as any).cartSessionId;
+  }
+
+  return params;
+};
+
 // prepareMultipartData supprimée - plus utilisée car les uploads utilisent maintenant base64 via DTOs
 
 /**
@@ -34,12 +52,37 @@ const buildProxyRequest = (
   const targetUrl = `${serviceUrl}${req.path}`;
   const baseHeaders = buildBaseHeaders(req);
 
+  // Pour le cart-service, utiliser les query params avec sessionId
+  const params = service === "cart" ? buildCartQueryParams(req) : req.query;
+
+  // Pour le cart-service, injecter le sessionId dans le body UNIQUEMENT pour DELETE
+  // Pour POST/PUT, le sessionId doit être uniquement dans les query params
+  let bodyData = req.body;
+  if (
+    service === "cart" &&
+    (req as any).cartSessionId &&
+    req.method === "DELETE"
+  ) {
+    // Pour DELETE /api/cart, le cart-service attend sessionId dans le body
+    if (bodyData && typeof bodyData === "object") {
+      bodyData = {
+        ...bodyData,
+        sessionId: (req as any).cartSessionId,
+      };
+    } else if (!bodyData) {
+      // Si pas de body, créer un objet avec le sessionId
+      bodyData = {
+        sessionId: (req as any).cartSessionId,
+      };
+    }
+  }
+
   // Plus de gestion FormData - tout passe par JSON maintenant
   return {
     url: targetUrl,
     headers: { ...baseHeaders, "Content-Type": "application/json" },
-    data: req.body,
-    params: req.query,
+    data: bodyData,
+    params,
   };
 };
 

@@ -119,7 +119,10 @@ const ProductCatalog: React.FC = () => {
         queryParams.set("sortOrder", searchParams.sortOrder);
 
       const response = await fetch(
-        `${API_URL}/api/products?${queryParams.toString()}`
+        `${API_URL}/api/products?${queryParams.toString()}`,
+        {
+          credentials: "include", // Important pour CORS avec credentials: true
+        }
       );
 
       if (!response.ok) {
@@ -180,7 +183,10 @@ const ProductCatalog: React.FC = () => {
         queryParams.set("sortOrder", categorySearchParams.sortOrder);
 
       const response = await fetch(
-        `${API_URL}/api/categories?${queryParams.toString()}`
+        `${API_URL}/api/categories?${queryParams.toString()}`,
+        {
+          credentials: "include", // Important pour CORS avec credentials: true
+        }
       );
 
       if (!response.ok) {

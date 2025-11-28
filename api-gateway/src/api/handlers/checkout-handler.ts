@@ -6,12 +6,13 @@
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
 import { CartPublicDTO } from "../../../../shared-types/cart-service";
+import { extractCartSessionId } from "../middleware/cart-session";
 
 /**
  * Interface pour les données de checkout reçues du frontend
+ * Note: cartSessionId est maintenant extrait du header X-Cart-Session-ID
  */
 interface CheckoutCompleteRequest {
-  cartSessionId: string;
   customerData: {
     firstName?: string;
     lastName?: string;
@@ -57,14 +58,18 @@ export const handleCheckoutComplete = async (
   try {
     const body = req.body as CheckoutCompleteRequest;
 
+    // Extraire le cartSessionId du header X-Cart-Session-ID
+    const cartSessionId =
+      extractCartSessionId(req) || (req as any).cartSessionId;
+
     // Validation HTTP basique (pas de logique métier)
-    if (!body.cartSessionId) {
+    if (!cartSessionId) {
       res
         .status(400)
         .json(
           createErrorResponse(
             "cartSessionId requis",
-            "L'identifiant de session du panier est obligatoire"
+            "L'identifiant de session du panier est obligatoire. Le cookie de session doit être présent."
           )
         );
       return;
@@ -86,7 +91,7 @@ export const handleCheckoutComplete = async (
     let cart: CartPublicDTO;
     try {
       const cartResponse = await fetch(
-        `${SERVICES.cart}/api/cart?sessionId=${body.cartSessionId}`,
+        `${SERVICES.cart}/api/cart?sessionId=${cartSessionId}`,
         {
           headers: {
             "X-Service-Request": "api-gateway",
@@ -143,18 +148,18 @@ export const handleCheckoutComplete = async (
             "X-Service-Request": "api-gateway",
           },
           body: JSON.stringify(body.customerData),
-          }
-        );
+        }
+      );
 
-        if (!customerResponse.ok) {
-          const errorData = (await customerResponse.json()) as any;
-          res.status(customerResponse.status).json({
+      if (!customerResponse.ok) {
+        const errorData = (await customerResponse.json()) as any;
+        res.status(customerResponse.status).json({
           error: "Erreur lors de la résolution/création du client",
           message:
             errorData.message || "Impossible de résoudre ou créer le client",
-          });
-          return;
-        }
+        });
+        return;
+      }
 
       const customerResponseData = (await customerResponse.json()) as {
         success: boolean;
@@ -183,7 +188,7 @@ export const handleCheckoutComplete = async (
       cancelUrl: body.cancelUrl,
       metadata: {
         customerId: customerId.toString(),
-        cartSessionId: body.cartSessionId,
+        cartSessionId: cartSessionId,
       },
     };
 
@@ -256,8 +261,8 @@ export const handleCheckoutComplete = async (
       .json(
         createErrorResponse(
           "Erreur interne du serveur",
-        error instanceof Error
-          ? error.message
+          error instanceof Error
+            ? error.message
             : "Une erreur est survenue lors du traitement de votre commande"
         )
       );

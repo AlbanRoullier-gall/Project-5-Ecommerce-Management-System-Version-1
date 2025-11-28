@@ -6,15 +6,48 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 
 // ===== MIDDLEWARES DE SÉCURITÉ =====
 
 /**
  * Configuration CORS
+ * IMPORTANT: Avec credentials: true, on ne peut pas utiliser origin: true ou "*"
+ * Il faut spécifier explicitement les origines autorisées
  */
 export const corsMiddleware: RequestHandler = cors({
-  origin: true,
-  credentials: true,
+  origin: (origin, callback) => {
+    // Récupérer la liste des origines autorisées depuis les variables d'environnement
+    const allowedOriginsEnv = process.env["ALLOWED_ORIGINS"];
+
+    let allowedOrigins: string[];
+
+    if (!allowedOriginsEnv) {
+      // Valeurs par défaut pour le développement local
+      allowedOrigins = [
+        "http://localhost:3000", // Frontend Next.js
+        "http://localhost:3009", // Backoffice Next.js
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3009",
+      ];
+    } else {
+      allowedOrigins = allowedOriginsEnv.split(",").map((o) => o.trim());
+    }
+
+    // Autoriser les requêtes sans origine (ex: Postman, mobile apps, SSR)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // Vérifier si l'origine est dans la liste autorisée
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️ CORS: Origine non autorisée: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true, // Nécessaire pour les cookies httpOnly
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: [
     "Content-Type",
@@ -30,6 +63,11 @@ export const corsMiddleware: RequestHandler = cors({
 export const helmetMiddleware: RequestHandler = helmet({
   crossOriginResourcePolicy: false,
 });
+
+/**
+ * Middleware pour parser les cookies
+ */
+export const cookieParserMiddleware: RequestHandler = cookieParser();
 
 // ===== MIDDLEWARES DE GESTION D'ERREURS =====
 

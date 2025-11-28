@@ -51,7 +51,9 @@ export default function ProductPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/products/${productId}`);
+      const response = await fetch(`${API_URL}/api/products/${productId}`, {
+        credentials: "include", // Important pour CORS avec credentials: true
+      });
       if (!response.ok) {
         throw new Error("Produit non trouvé");
       }

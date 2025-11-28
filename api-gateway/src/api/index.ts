@@ -12,6 +12,7 @@ import { requireAuth } from "./middleware/auth";
 import {
   corsMiddleware,
   helmetMiddleware,
+  cookieParserMiddleware,
   notFoundHandler,
   errorHandler,
 } from "./middleware/common";
@@ -29,6 +30,10 @@ import {
 import { handleExportOrdersYear } from "./handlers/export-handler";
 import { handleDashboardStatistics } from "./handlers/statistics-handler";
 import { handleCheckoutComplete } from "./handlers/checkout-handler";
+import {
+  cartSessionMiddleware,
+  handleCreateCartSession,
+} from "./middleware/cart-session";
 
 export class ApiRouter {
   // Multer n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
@@ -77,6 +82,9 @@ export class ApiRouter {
     app.use(corsMiddleware);
     app.use(helmetMiddleware);
 
+    // Parsing des cookies (nécessaire pour cart-session)
+    app.use(cookieParserMiddleware);
+
     // Parsing du body (Express gère déjà le Content-Type automatiquement)
     app.use(express.json({ limit: "10mb" }));
     app.use(express.urlencoded({ extended: true }));
@@ -114,10 +122,24 @@ export class ApiRouter {
 
     // Payment - Routes avec transformation/orchestration
     app.post("/api/payment/create", handleCreatePayment);
-    app.post("/api/payment/finalize", handleFinalizePayment);
+    // Applique le middleware cart-session pour extraire le sessionId du cookie
+    app.post(
+      "/api/payment/finalize",
+      cartSessionMiddleware,
+      handleFinalizePayment
+    );
 
     // Checkout - Route orchestrée pour finaliser le checkout
-    app.post("/api/checkout/complete", handleCheckoutComplete);
+    // Applique le middleware cart-session pour extraire le sessionId du header
+    app.post(
+      "/api/checkout/complete",
+      cartSessionMiddleware,
+      handleCheckoutComplete
+    );
+
+    // Cart Session - Route pour générer un nouveau sessionId (optionnel, le middleware le fait automatiquement)
+    // Utile si on veut forcer la création d'une nouvelle session
+    app.post("/api/cart/session", handleCreateCartSession);
 
     // Export - Route orchestrée
     app.get(
@@ -176,6 +198,17 @@ export class ApiRouter {
     });
 
     // Routes publiques - Proxy automatique
+    // Appliquer le middleware cart-session pour les routes /api/cart
+    app.all("/api/cart*", cartSessionMiddleware, async (req, res) => {
+      const service = this.getServiceFromPath(req.path);
+      if (service) {
+        await proxyRequest(req, res, service);
+      } else {
+        res.status(404).json({ error: "Service non trouvé pour cette route" });
+      }
+    });
+
+    // Autres routes publiques (sans middleware cart-session)
     app.all("/api/*", async (req, res) => {
       const service = this.getServiceFromPath(req.path);
       if (service) {

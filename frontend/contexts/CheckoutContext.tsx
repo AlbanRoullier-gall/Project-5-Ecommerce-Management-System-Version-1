@@ -249,6 +249,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include", // Important pour CORS avec credentials: true
             body: JSON.stringify(addressData),
           }
         );
@@ -288,28 +289,18 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
       }
 
       try {
-        // Récupérer l'ID de session du panier depuis le localStorage
-        const cartSessionId =
-          (typeof window !== "undefined" &&
-            window.localStorage.getItem("cart_session_id")) ||
-          "";
-        if (!cartSessionId) {
-          return {
-            success: false,
-            error: "Session panier introuvable",
-          };
-        }
+        // Le cartSessionId est maintenant géré automatiquement via cookie httpOnly
+        // Plus besoin de le récupérer depuis localStorage ou de l'envoyer dans le header
+        // Le cookie sera envoyé automatiquement par le navigateur
 
         // Appel unique vers l'endpoint d'orchestration du checkout
         // Utilise les DTOs existants directement : CustomerResolveOrCreateDTO et AddressesCreateDTO
         const checkoutPayload: {
-          cartSessionId: string;
           customerData: CustomerResolveOrCreateDTO;
           addressData: AddressesCreateDTO;
           successUrl: string;
           cancelUrl: string;
         } = {
-          cartSessionId,
           customerData,
           addressData,
           successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -318,7 +309,11 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
 
         const response = await fetch(`${API_URL}/api/checkout/complete`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            // Le cookie sera envoyé automatiquement par le navigateur
+          },
+          credentials: "include", // Important pour envoyer les cookies
           body: JSON.stringify(checkoutPayload),
         });
 

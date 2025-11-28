@@ -14,6 +14,16 @@ export {
 export {
   corsMiddleware,
   helmetMiddleware,
+  cookieParserMiddleware,
   notFoundHandler,
   errorHandler,
 } from "./common";
+
+// Middleware de gestion de session pour le panier
+export {
+  cartSessionMiddleware,
+  handleCreateCartSession,
+  generateCartSessionId,
+  extractCartSessionId,
+  CART_SESSION_COOKIE,
+} from "./cart-session";

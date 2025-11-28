@@ -7,6 +7,7 @@ import { Request, Response } from "express";
 import { SERVICES } from "../../config";
 import { proxyRequest } from "../proxy";
 import { CartPublicDTO } from "../../../../shared-types/cart-service";
+import { extractCartSessionId } from "../middleware/cart-session";
 
 /**
  * Helper pour créer une réponse d'erreur standardisée
@@ -27,7 +28,11 @@ export const handleCreatePayment = async (req: Request, res: Response) => {
 
 export const handleFinalizePayment = async (req: Request, res: Response) => {
   try {
-    const { csid, cartSessionId, checkoutData } = req.body || {};
+    const { csid, checkoutData } = req.body || {};
+
+    // Extraire le cartSessionId du cookie (via le middleware)
+    const cartSessionId =
+      extractCartSessionId(req) || (req as any).cartSessionId;
 
     // Validation HTTP basique (pas de logique métier)
     if (!csid) {
@@ -47,7 +52,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         .json(
           createErrorResponse(
             "cartSessionId requis",
-            "L'identifiant de session du panier est obligatoire"
+            "L'identifiant de session du panier est obligatoire. Le cookie de session doit être présent."
           )
         );
     }
@@ -293,6 +298,30 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       }
     } catch (error) {
       console.warn("⚠️ Erreur lors de l'envoi de l'email:", error);
+    }
+
+    // 9. Vider le panier après création réussie de la commande (non-bloquant)
+    try {
+      const clearCartResponse = await fetch(`${SERVICES.cart}/api/cart`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Service-Request": "api-gateway",
+        },
+        body: JSON.stringify({ sessionId: cartSessionId }),
+      });
+
+      if (!clearCartResponse.ok) {
+        console.warn(
+          "⚠️ Erreur lors du vidage du panier:",
+          clearCartResponse.statusText
+        );
+      } else {
+        console.log("✅ Panier vidé avec succès");
+      }
+    } catch (error) {
+      console.warn("⚠️ Erreur lors du vidage du panier:", error);
+      // Ne pas bloquer la réponse - la commande est déjà créée
     }
 
     return res.status(200).json({
