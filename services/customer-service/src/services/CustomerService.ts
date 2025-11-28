@@ -258,6 +258,32 @@ class CustomerService {
   }
 
   /**
+   * Obtenir les statistiques formatées pour le dashboard
+   * @returns {Promise<{customersCount: number}>} Statistiques formatées
+   */
+  async getDashboardStatistics(): Promise<{
+    customersCount: number;
+  }> {
+    try {
+      // Récupérer le nombre de clients
+      const customersList = await this.customerRepository.listAll({
+        page: 1,
+        limit: 1, // On n'a besoin que de la pagination
+      });
+      const customersCount = customersList.pagination?.total || 0;
+
+      return {
+        customersCount,
+      };
+    } catch (error: any) {
+      console.error("Error getting dashboard statistics:", error);
+      throw new Error(
+        `Failed to retrieve dashboard statistics: ${error.message}`
+      );
+    }
+  }
+
+  /**
    * Ajouter une adresse à un client
    * @param {number} customerId ID du client
    * @param {Object} addressData Données de l'adresse
@@ -281,13 +307,16 @@ class CustomerService {
       };
 
       // Vérifier les adresses en double avant de modifier les valeurs par défaut
+      // Prendre en compte le type d'adresse pour permettre shipping et billing avec les mêmes coordonnées
       const duplicateExists = await this.addressRepository.existsForCustomer({
         customerId,
+        addressType: addressWithBelgium.addressType,
         address: addressWithBelgium.address,
         postalCode: addressWithBelgium.postalCode,
         city: addressWithBelgium.city,
         countryName: addressWithBelgium.countryName,
       });
+
       if (duplicateExists) {
         throw new Error("Adresse déjà existante");
       }
@@ -306,6 +335,98 @@ class CustomerService {
       return await this.addressRepository.save(address);
     } catch (error) {
       console.error("Erreur lors de l'ajout de l'adresse:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Ajouter plusieurs adresses pour un client (shipping + billing)
+   * @param {number} customerId ID du client
+   * @param {Object} addressData Données contenant shipping et billing
+   * @returns {Promise<{shipping?: CustomerAddress, billing?: CustomerAddress}>} Adresses créées
+   */
+  async addAddresses(
+    customerId: number,
+    addressData: {
+      shipping?: {
+        address: string;
+        postalCode: string;
+        city: string;
+        countryName?: string;
+      };
+      billing?: {
+        address: string;
+        postalCode: string;
+        city: string;
+        countryName?: string;
+      };
+      useSameBillingAddress?: boolean;
+    }
+  ): Promise<{
+    shipping?: CustomerAddress;
+    billing?: CustomerAddress;
+  }> {
+    try {
+      // Vérifier que le client existe
+      const customer = await this.customerRepository.getById(customerId);
+      if (!customer) {
+        throw new Error("Client non trouvé");
+      }
+
+      const result: {
+        shipping?: CustomerAddress;
+        billing?: CustomerAddress;
+      } = {};
+
+      // Ajouter l'adresse de livraison si fournie
+      if (addressData.shipping?.address) {
+        const shippingAddressData = {
+          addressType: "shipping" as const,
+          address: addressData.shipping.address,
+          postalCode: addressData.shipping.postalCode || "",
+          city: addressData.shipping.city || "",
+          countryName: addressData.shipping.countryName,
+          isDefault: true, // L'adresse de livraison est par défaut
+        };
+
+        try {
+          result.shipping = await this.addAddress(
+            customerId,
+            shippingAddressData
+          );
+        } catch (error: any) {
+          // Ignorer les erreurs de doublon pour l'adresse de livraison
+          if (!error.message.includes("déjà existante")) {
+            throw error;
+          }
+        }
+      }
+
+      // Ajouter l'adresse de facturation si fournie et différente de l'adresse de livraison
+      // Si useSameBillingAddress est true, on n'ajoute pas d'adresse de facturation séparée
+      if (!addressData.useSameBillingAddress && addressData.billing?.address) {
+        const billingData = {
+          addressType: "billing" as const,
+          address: addressData.billing.address,
+          postalCode: addressData.billing.postalCode || "",
+          city: addressData.billing.city || "",
+          countryName: addressData.billing.countryName,
+          isDefault: false, // L'adresse de facturation n'est pas par défaut
+        };
+
+        try {
+          result.billing = await this.addAddress(customerId, billingData);
+        } catch (error: any) {
+          // Ignorer les erreurs de doublon pour l'adresse de facturation
+          if (!error.message.includes("déjà existante")) {
+            throw error;
+          }
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Erreur lors de l'ajout des adresses:", error);
       throw error;
     }
   }

@@ -1,6 +1,6 @@
 /**
  * Handler pour les statistiques du dashboard
- * Orchestre les appels aux services et agrège les données
+ * Orchestre les appels aux services (pas de logique métier)
  */
 
 import { Request, Response } from "express";
@@ -14,32 +14,6 @@ interface DashboardStatistics {
   totalRevenue: number; // TTC
   totalRevenueHT: number; // HT
 }
-
-/**
- * Helper pour extraire un count depuis différentes structures de réponse
- */
-const extractCount = (data: any, paths: string[]): number => {
-  for (const path of paths) {
-    const value = path.split(".").reduce((obj, key) => obj?.[key], data);
-    if (value !== undefined && value !== null) {
-      return Array.isArray(value) ? value.length : Number(value) || 0;
-    }
-  }
-  return Array.isArray(data) ? data.length : 0;
-};
-
-/**
- * Helper pour extraire un nombre depuis différentes structures de réponse
- */
-const extractNumber = (data: any, paths: string[]): number => {
-  for (const path of paths) {
-    const value = path.split(".").reduce((obj, key) => obj?.[key], data);
-    if (value !== undefined && value !== null) {
-      return Number(value) || 0;
-    }
-  }
-  return 0;
-};
 
 /**
  * Récupère les statistiques du dashboard en orchestrant les appels aux services
@@ -75,24 +49,27 @@ export const handleDashboardStatistics = async (
     };
 
     // Appels parallèles aux services
-    const [productsRes, customersRes, ordersRes, revenueRes] =
+    const [productsStatsRes, customersStatsRes, ordersStatsRes] =
       await Promise.all([
-        fetch(`${SERVICES.product}/api/admin/products?year=${year}`, {
+        fetch(
+          `${SERVICES.product}/api/admin/statistics/dashboard?year=${year}`,
+          {
+            headers,
+          }
+        ),
+        fetch(`${SERVICES.customer}/api/admin/statistics/dashboard`, {
           headers,
         }),
-        fetch(`${SERVICES.customer}/api/admin/customers`, { headers }),
-        fetch(`${SERVICES.order}/api/admin/orders?year=${year}`, { headers }),
-        fetch(`${SERVICES.order}/api/admin/statistics/orders?year=${year}`, {
+        fetch(`${SERVICES.order}/api/admin/statistics/dashboard?year=${year}`, {
           headers,
         }),
       ]);
 
     // Vérifier et parser les réponses
     const responses = [
-      { res: productsRes, name: "produits" },
-      { res: customersRes, name: "clients" },
-      { res: ordersRes, name: "commandes" },
-      { res: revenueRes, name: "statistiques de revenus" },
+      { res: productsStatsRes, name: "statistiques de produits" },
+      { res: customersStatsRes, name: "statistiques de clients" },
+      { res: ordersStatsRes, name: "statistiques de commandes" },
     ];
 
     for (const { res: response, name } of responses) {
@@ -107,43 +84,24 @@ export const handleDashboardStatistics = async (
     }
 
     // Parser les réponses JSON
-    const [productsJson, customersJson, ordersJson, revenueJson] =
+    const [productsStatsJson, customersStatsJson, ordersStatsJson] =
       await Promise.all([
-        productsRes.json(),
-        customersRes.json(),
-        ordersRes.json(),
-        revenueRes.json(),
+        productsStatsRes.json(),
+        customersStatsRes.json(),
+        ordersStatsRes.json(),
       ]);
 
-    // Extraire les statistiques avec normalisation
+    // Extraire les statistiques (déjà formatées par les services)
+    const productsStats = (productsStatsJson as any)?.data?.statistics || {};
+    const customersStats = (customersStatsJson as any)?.data?.statistics || {};
+    const ordersStats = (ordersStatsJson as any)?.data?.statistics || {};
+
     const statistics: DashboardStatistics = {
-      productsCount: extractCount(productsJson, ["data.products", "products"]),
-      customersCount: extractCount(customersJson, [
-        "data.customers",
-        "customers",
-      ]),
-      ordersCount: extractCount(ordersJson, [
-        "data.pagination.total",
-        "pagination.total",
-        "data.orders",
-        "orders",
-      ]),
-      totalRevenue: extractNumber(revenueJson, [
-        "data.statistics.totalAmountTTC",
-        "statistics.totalAmountTTC",
-        "data.totalAmountTTC",
-        "totalAmountTTC",
-        "data.statistics.totalAmount",
-        "statistics.totalAmount",
-        "data.totalAmount",
-        "totalAmount",
-      ]),
-      totalRevenueHT: extractNumber(revenueJson, [
-        "data.statistics.totalAmountHT",
-        "statistics.totalAmountHT",
-        "data.totalAmountHT",
-        "totalAmountHT",
-      ]),
+      productsCount: productsStats.productsCount || 0,
+      customersCount: customersStats.customersCount || 0,
+      ordersCount: ordersStats.ordersCount || 0,
+      totalRevenue: ordersStats.totalRevenue || 0,
+      totalRevenueHT: ordersStats.totalRevenueHT || 0,
     };
 
     res.json({

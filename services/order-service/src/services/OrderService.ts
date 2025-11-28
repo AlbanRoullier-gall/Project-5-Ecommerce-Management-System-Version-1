@@ -105,7 +105,13 @@ export default class OrderService {
   async createOrderFromCart(data: {
     cart: any; // CartPublicDTO
     customerId?: number;
-    customerSnapshot?: any;
+    customerSnapshot?: any; // Optionnel, sera construit à partir de customerData si non fourni
+    customerData: {
+      email: string;
+      firstName?: string;
+      lastName?: string;
+      phoneNumber?: string;
+    };
     addressData: {
       shipping: {
         address?: string;
@@ -120,12 +126,6 @@ export default class OrderService {
         countryName?: string;
       };
       useSameBillingAddress: boolean;
-    };
-    customerData: {
-      email: string;
-      firstName?: string;
-      lastName?: string;
-      phoneNumber?: string;
     };
     paymentIntentId?: string;
     paymentMethod: string;
@@ -189,6 +189,17 @@ export default class OrderService {
         });
       }
 
+      // Construire le customerSnapshot à partir de customerData si non fourni
+      let customerSnapshot = data.customerSnapshot;
+      if (!customerSnapshot && data.customerData) {
+        customerSnapshot = {
+          firstName: data.customerData.firstName || "",
+          lastName: data.customerData.lastName || "",
+          email: data.customerData.email,
+          phoneNumber: data.customerData.phoneNumber || null,
+        };
+      }
+
       // Construire le payload OrderCompleteDTO
       const checkoutData: OrderCompleteDTO = {
         totalAmountHT: data.cart.subtotal,
@@ -197,9 +208,9 @@ export default class OrderService {
         items: orderItems,
         ...(addresses.length > 0 && { addresses }),
         ...(data.customerId && { customerId: data.customerId }),
-        ...(data.customerSnapshot &&
-          Object.keys(data.customerSnapshot).length > 0 && {
-            customerSnapshot: data.customerSnapshot,
+        ...(customerSnapshot &&
+          Object.keys(customerSnapshot).length > 0 && {
+            customerSnapshot: customerSnapshot,
           }),
         ...(data.paymentIntentId && { paymentIntentId: data.paymentIntentId }),
       };
@@ -466,6 +477,43 @@ export default class OrderService {
     } catch (error: any) {
       console.error("Error getting order statistics:", error);
       throw new Error(`Failed to retrieve order statistics: ${error.message}`);
+    }
+  }
+
+  /**
+   * Obtenir les statistiques formatées pour le dashboard
+   * @param {number} year Année pour filtrer les statistiques
+   * @returns {Promise<{ordersCount: number, totalRevenue: number, totalRevenueHT: number}>} Statistiques formatées
+   */
+  async getDashboardStatistics(year: number): Promise<{
+    ordersCount: number;
+    totalRevenue: number;
+    totalRevenueHT: number;
+  }> {
+    try {
+      const options: OrderListOptions = { year };
+
+      // Récupérer le nombre de commandes pour l'année
+      const ordersList = await this.orderRepository.listOrders({
+        ...options,
+        page: 1,
+        limit: 1, // On n'a besoin que de la pagination
+      });
+      const ordersCount = ordersList.pagination?.total || 0;
+
+      // Récupérer les totaux (revenus)
+      const statistics = await this.getOrderStatistics(options);
+
+      return {
+        ordersCount,
+        totalRevenue: statistics.totalAmountTTC,
+        totalRevenueHT: statistics.totalAmountHT,
+      };
+    } catch (error: any) {
+      console.error("Error getting dashboard statistics:", error);
+      throw new Error(
+        `Failed to retrieve dashboard statistics: ${error.message}`
+      );
     }
   }
 

@@ -43,4 +43,38 @@ export class OrderStatisticsController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Obtenir les statistiques formatées pour le dashboard
+   */
+  async getDashboardStatistics(req: Request, res: Response): Promise<void> {
+    try {
+      const year = req.query.year
+        ? parseInt(req.query.year as string)
+        : new Date().getFullYear();
+
+      if (isNaN(year) || year < 2025) {
+        res.status(400).json({
+          error: "Année invalide",
+          message: "L'année doit être >= 2025",
+        });
+        return;
+      }
+
+      const statistics = await this.orderService.getDashboardStatistics(year);
+
+      res.json({
+        success: true,
+        data: {
+          statistics,
+          year,
+        },
+        timestamp: new Date().toISOString(),
+        status: 200,
+      });
+    } catch (error: any) {
+      console.error("Get dashboard statistics error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

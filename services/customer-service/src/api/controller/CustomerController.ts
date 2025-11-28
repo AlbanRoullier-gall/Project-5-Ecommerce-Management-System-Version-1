@@ -220,6 +220,27 @@ export class CustomerController {
   }
 
   /**
+   * Obtenir les statistiques formatées pour le dashboard
+   */
+  async getDashboardStatistics(req: Request, res: Response): Promise<void> {
+    try {
+      const statistics = await this.customerService.getDashboardStatistics();
+
+      res.json({
+        success: true,
+        data: {
+          statistics,
+        },
+        timestamp: new Date().toISOString(),
+        status: 200,
+      });
+    } catch (error: any) {
+      console.error("Get dashboard statistics error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
    * Résoudre ou créer un client
    * Cherche le client par email, le crée s'il n'existe pas
    */

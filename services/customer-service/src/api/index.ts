@@ -89,6 +89,28 @@ export class ApiRouter {
         countryName: Joi.string().optional(), // Optionnel car toujours "Belgique"
         isDefault: Joi.boolean().optional(),
       }),
+
+      addressesCreateSchema: Joi.object({
+        shipping: Joi.object({
+          address: Joi.string().optional().allow(null, ""),
+          postalCode: Joi.string().max(10).optional().allow(null, ""),
+          city: Joi.string().max(100).optional().allow(null, ""),
+          countryName: Joi.string().optional().allow(null, ""),
+        })
+          .optional()
+          .allow(null)
+          .unknown(true),
+        billing: Joi.object({
+          address: Joi.string().optional().allow(null, ""),
+          postalCode: Joi.string().max(10).optional().allow(null, ""),
+          city: Joi.string().max(100).optional().allow(null, ""),
+          countryName: Joi.string().optional().allow(null, ""),
+        })
+          .optional()
+          .allow(null)
+          .unknown(true),
+        useSameBillingAddress: Joi.boolean().optional(),
+      }).unknown(true),
     };
   }
 
@@ -277,6 +299,15 @@ export class ApiRouter {
       }
     );
 
+    // Routes admin pour les statistiques
+    app.get(
+      "/api/admin/statistics/dashboard",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.customerController.getDashboardStatistics(req, res);
+      }
+    );
+
     app.post(
       "/api/admin/customers",
       this.requireAuth,
@@ -293,6 +324,15 @@ export class ApiRouter {
       this.validateRequest(schemas.addressCreateSchema),
       (req: Request, res: Response) => {
         this.addressController.createAddress(req, res);
+      }
+    );
+
+    // Ajout de plusieurs adresses (shipping + billing) en une fois
+    app.post(
+      "/api/customers/:customerId/addresses/bulk",
+      this.validateRequest(schemas.addressesCreateSchema),
+      (req: Request, res: Response) => {
+        this.addressController.createAddresses(req, res);
       }
     );
 

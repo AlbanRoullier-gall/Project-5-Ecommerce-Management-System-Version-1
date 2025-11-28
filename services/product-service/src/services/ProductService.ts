@@ -150,6 +150,35 @@ export default class ProductService {
   }
 
   /**
+   * Obtenir les statistiques formatées pour le dashboard
+   * @param {number} year Année pour filtrer les statistiques
+   * @returns {Promise<{productsCount: number}>} Statistiques formatées
+   */
+  async getDashboardStatistics(year: number): Promise<{
+    productsCount: number;
+  }> {
+    try {
+      // Récupérer le nombre de produits pour l'année
+      // Note: Le filtrage par année n'est pas encore implémenté dans listProducts
+      // Pour l'instant, on retourne le total de tous les produits
+      const productsList = await this.productRepository.listProducts({
+        page: 1,
+        limit: 1, // On n'a besoin que de la pagination
+      });
+      const productsCount = productsList.pagination?.total || 0;
+
+      return {
+        productsCount,
+      };
+    } catch (error: any) {
+      console.error("Error getting dashboard statistics:", error);
+      throw new Error(
+        `Failed to retrieve dashboard statistics: ${error.message}`
+      );
+    }
+  }
+
+  /**
    * Activer un produit
    * @param {number} id ID du produit
    * @returns {Promise<Product|null>} Produit mis à jour ou null si non trouvé

@@ -501,6 +501,14 @@ export class ApiRouter {
       }
     );
 
+    app.get(
+      "/api/admin/statistics/dashboard",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderStatisticsController.getDashboardStatistics(req, res);
+      }
+    );
+
     // ===== GESTION DES ERREURS =====
     app.use((req: Request, res: Response) => {
       res.status(404).json(ResponseMapper.notFoundError("Route"));

@@ -266,6 +266,15 @@ export class ApiRouter {
       }
     );
 
+    // Routes admin pour les statistiques
+    app.get(
+      "/api/admin/statistics/dashboard",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.productController.getDashboardStatistics(req, res);
+      }
+    );
+
     // === GESTION DES CATÉGORIES (ADMIN) ===
     // Créer une nouvelle catégorie (admin)
     app.post(
