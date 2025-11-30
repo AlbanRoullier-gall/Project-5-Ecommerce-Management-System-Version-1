@@ -39,7 +39,6 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
   const [itemsLoading, setItemsLoading] = useState(false);
   const [itemsError, setItemsError] = useState<string | null>(null);
   const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
-  const [lockTotals, setLockTotals] = useState(true);
 
   const selectedOrder: OrderPublicDTO | null = useMemo(() => {
     if (order) return order;
@@ -48,8 +47,20 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
     return orders.find((o) => o.id === id) || null;
   }, [order, orders, selectedOrderId]);
 
+  const selectedItems = useMemo(() => {
+    const set = new Set(selectedItemIds);
+    return orderItems.filter((it) => set.has(it.id));
+  }, [orderItems, selectedItemIds]);
+
   const canSubmit = useMemo(() => {
     if (!selectedOrder) return false;
+
+    // Si des items sont sélectionnés, les totaux seront calculés par le service
+    if (selectedItems.length > 0) {
+      return reason.trim().length > 0 && paymentMethod.trim().length > 0;
+    }
+
+    // Sinon, les totaux doivent être fournis manuellement
     const nHT = Number(totalHT);
     const nTTC = Number(totalTTC);
     return (
@@ -60,31 +71,37 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
       nHT > 0 &&
       nTTC > 0
     );
-  }, [selectedOrder, reason, paymentMethod, totalHT, totalTTC]);
+  }, [
+    selectedOrder,
+    reason,
+    paymentMethod,
+    totalHT,
+    totalTTC,
+    selectedItems.length,
+  ]);
 
-  const selectedItems = useMemo(() => {
-    const set = new Set(selectedItemIds);
-    return orderItems.filter((it) => set.has(it.id));
-  }, [orderItems, selectedItemIds]);
+  // Calcul des totaux pour l'affichage (prévisualisation)
+  // Utilise la même logique que CreditNote.calculateTotalsFromItems() du service
+  // Le service recalculera lors de la soumission pour garantir la cohérence
+  const calculatedTotals = useMemo(() => {
+    if (!selectedItems || selectedItems.length === 0) {
+      return { totalHT: 0, totalTTC: 0 };
+    }
 
-  const totalsFromSelection = useMemo(() => {
-    const sumHT = selectedItems.reduce(
-      (acc, it) => acc + Number(it.totalPriceHT || 0),
+    const totalHT = selectedItems.reduce(
+      (sum, item) => sum + parseFloat(String(item.totalPriceHT || 0)),
       0
     );
-    const sumTTC = selectedItems.reduce(
-      (acc, it) => acc + Number(it.totalPriceTTC || 0),
+    const totalTTC = selectedItems.reduce(
+      (sum, item) => sum + parseFloat(String(item.totalPriceTTC || 0)),
       0
     );
-    return { sumHT, sumTTC };
+
+    return {
+      totalHT: isNaN(totalHT) ? 0 : Number(totalHT),
+      totalTTC: isNaN(totalTTC) ? 0 : Number(totalTTC),
+    };
   }, [selectedItems]);
-
-  React.useEffect(() => {
-    if (!lockTotals) return;
-    const { sumHT, sumTTC } = totalsFromSelection;
-    setTotalHT(sumHT ? String(sumHT.toFixed(2)) : "");
-    setTotalTTC(sumTTC ? String(sumTTC.toFixed(2)) : "");
-  }, [totalsFromSelection, lockTotals]);
 
   React.useEffect(() => {
     const loadItems = async () => {
@@ -133,7 +150,6 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
     setOrderItems([]);
     setSelectedItemIds([]);
     setItemsError(null);
-    setLockTotals(true);
   };
 
   React.useEffect(() => {
@@ -346,7 +362,13 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                       typeof itemId === "number" ? itemId : Number(itemId);
                     if (checked) set.add(numId);
                     else set.delete(numId);
-                    return Array.from(set);
+                    const newSelection = Array.from(set);
+                    // Si des items sont sélectionnés, vider les totaux manuels (seront calculés par le service)
+                    if (newSelection.length > 0) {
+                      setTotalHT("");
+                      setTotalTTC("");
+                    }
+                    return newSelection;
                   });
                 }}
               />
@@ -546,12 +568,14 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
               <input
                 type="number"
                 step="0.01"
-                value={totalHT}
-                onChange={(e) => {
-                  setTotalHT(e.target.value);
-                  setLockTotals(false);
-                }}
+                value={
+                  selectedItems.length > 0
+                    ? calculatedTotals.totalHT.toFixed(2)
+                    : totalHT
+                }
+                onChange={(e) => setTotalHT(e.target.value)}
                 placeholder="0.00"
+                disabled={selectedItems.length > 0}
                 style={{
                   width: "100%",
                   padding: "0.75rem",
@@ -560,14 +584,30 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                   fontSize: "1rem",
                   transition: "border-color 0.2s ease",
                   boxSizing: "border-box",
+                  background: selectedItems.length > 0 ? "#f9fafb" : "white",
+                  color: selectedItems.length > 0 ? "#6b7280" : "inherit",
+                  cursor: selectedItems.length > 0 ? "not-allowed" : "text",
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = "#13686a";
+                  if (selectedItems.length === 0) {
+                    e.target.style.borderColor = "#13686a";
+                  }
                 }}
                 onBlur={(e) => {
                   e.target.style.borderColor = "#e1e5e9";
                 }}
               />
+              {selectedItems.length > 0 && (
+                <div
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#6b7280",
+                    marginTop: "0.25rem",
+                  }}
+                >
+                  Calculé automatiquement à partir des articles sélectionnés
+                </div>
+              )}
             </div>
             <div className="total-field">
               <label
@@ -582,12 +622,14 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
               <input
                 type="number"
                 step="0.01"
-                value={totalTTC}
-                onChange={(e) => {
-                  setTotalTTC(e.target.value);
-                  setLockTotals(false);
-                }}
+                value={
+                  selectedItems.length > 0
+                    ? calculatedTotals.totalTTC.toFixed(2)
+                    : totalTTC
+                }
+                onChange={(e) => setTotalTTC(e.target.value)}
                 placeholder="0.00"
+                disabled={selectedItems.length > 0}
                 style={{
                   width: "100%",
                   padding: "0.75rem",
@@ -596,14 +638,30 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                   fontSize: "1rem",
                   transition: "border-color 0.2s ease",
                   boxSizing: "border-box",
+                  background: selectedItems.length > 0 ? "#f9fafb" : "white",
+                  color: selectedItems.length > 0 ? "#6b7280" : "inherit",
+                  cursor: selectedItems.length > 0 ? "not-allowed" : "text",
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = "#13686a";
+                  if (selectedItems.length === 0) {
+                    e.target.style.borderColor = "#13686a";
+                  }
                 }}
                 onBlur={(e) => {
                   e.target.style.borderColor = "#e1e5e9";
                 }}
               />
+              {selectedItems.length > 0 && (
+                <div
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#6b7280",
+                    marginTop: "0.25rem",
+                  }}
+                >
+                  Calculé automatiquement à partir des articles sélectionnés
+                </div>
+              )}
             </div>
           </div>
         </div>
