@@ -6,6 +6,7 @@ import {
   OrderPublicDTO,
 } from "../../../dto";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
+import { useAuth } from "../../../contexts/AuthContext";
 
 interface CreditNoteDetailModalProps {
   isOpen: boolean;
@@ -22,29 +23,26 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
   onClose,
   onDelete,
 }) => {
+  const { apiCall } = useAuth();
   const [items, setItems] = React.useState<CreditNoteItemPublicDTO[]>([]);
   const [itemsLoading, setItemsLoading] = React.useState(false);
   const [itemsError, setItemsError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
-    const getAuthToken = () => localStorage.getItem("auth_token");
     const loadItems = async () => {
       if (!creditNote?.id) return;
       setItems([]);
       setItemsError(null);
       setItemsLoading(true);
       try {
-        const token = getAuthToken();
-        if (!token) throw new Error("Non authentifié");
-        const res = await fetch(
-          `${API_URL}/api/admin/credit-notes/${creditNote.id}/items`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (!res.ok) throw new Error("Erreur chargement des articles d'avoir");
-        const json = await res.json();
+        const json = await apiCall<{
+          data?: { creditNoteItems?: CreditNoteItemPublicDTO[] };
+          creditNoteItems?: CreditNoteItemPublicDTO[];
+        }>({
+          url: `/api/admin/credit-notes/${creditNote.id}/items`,
+          method: "GET",
+          requireAuth: true,
+        });
         const list: CreditNoteItemPublicDTO[] =
           json?.data?.creditNoteItems || json?.creditNoteItems || [];
         setItems(list);
@@ -59,7 +57,7 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
       }
     };
     loadItems();
-  }, [creditNote?.id]);
+  }, [creditNote?.id, apiCall]);
 
   if (!isOpen || !creditNote) return null;
 

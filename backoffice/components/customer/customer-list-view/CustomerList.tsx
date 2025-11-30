@@ -5,6 +5,7 @@ import ErrorAlert from "../../shared/ErrorAlert";
 import PageHeader from "../../shared/PageHeader";
 import Button from "../../shared/Button";
 import { CustomerPublicDTO } from "../../../dto";
+import { useAuth } from "../../../contexts/AuthContext";
 
 /** URL de l'API depuis les variables d'environnement */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
@@ -61,13 +62,7 @@ const CustomerList: React.FC = () => {
     setFilteredCustomers(filtered);
   }, [customers, searchTerm]);
 
-  /**
-   * Récupère le token d'authentification du localStorage
-   * @returns Le token JWT ou null
-   */
-  const getAuthToken = () => {
-    return localStorage.getItem("auth_token");
-  };
+  const { apiCall } = useAuth();
 
   /**
    * Charge la liste des clients depuis l'API
@@ -77,28 +72,14 @@ const CustomerList: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-
-      if (!token) {
-        throw new Error(
-          "Token d'authentification manquant. Veuillez vous reconnecter."
-        );
-      }
-
-      const response = await fetch(`${API_URL}/api/admin/customers`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const data = await apiCall<{
+        customers?: CustomerPublicDTO[];
+      }>({
+        url: "/api/admin/customers",
+        method: "GET",
+        requireAuth: true,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors du chargement des clients"
-        );
-      }
-
-      const data = await response.json();
       const customersList: CustomerPublicDTO[] =
         data.customers || (Array.isArray(data) ? data : []);
       setCustomers(customersList);
@@ -124,23 +105,11 @@ const CustomerList: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-      const response = await fetch(
-        `${API_URL}/api/admin/customers/${customerId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors de la suppression du client"
-        );
-      }
+      await apiCall({
+        url: `/api/admin/customers/${customerId}`,
+        method: "DELETE",
+        requireAuth: true,
+      });
 
       await loadCustomers();
     } catch (err) {

@@ -72,6 +72,20 @@ interface AuthState {
 }
 
 /**
+ * Options pour les appels API
+ */
+export interface ApiCallOptions extends RequestInit {
+  /** URL complète ou chemin relatif (sera préfixé par API_URL) */
+  url: string;
+  /** Corps de la requête (sera automatiquement stringifié si objet) */
+  body?: any;
+  /** Headers additionnels */
+  headers?: Record<string, string>;
+  /** Si false, n'ajoute pas le token d'authentification */
+  requireAuth?: boolean;
+}
+
+/**
  * Méthodes du contexte d'authentification
  */
 interface AuthContextType extends AuthState {
@@ -85,6 +99,21 @@ interface AuthContextType extends AuthState {
   checkAuth: () => void;
   /** Récupère le token (helper) */
   getAuthToken: () => string | null;
+  /**
+   * Fait un appel API avec le token d'authentification automatiquement ajouté
+   * @param options - Options de la requête (url, method, body, headers, etc.)
+   * @returns Promise avec la réponse parsée en JSON
+   * @throws Error si la requête échoue ou si le token est requis mais absent
+   *
+   * @example
+   * const { apiCall } = useAuth();
+   * const data = await apiCall({
+   *   url: '/api/admin/statistics/dashboard',
+   *   method: 'GET',
+   *   requireAuth: true
+   * });
+   */
+  apiCall: <T = any>(options: ApiCallOptions) => Promise<T>;
   /** Connecte l'utilisateur avec email et mot de passe (appel API) */
   loginWithCredentials: (
     email: string,
@@ -199,6 +228,91 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const getAuthToken = useCallback(() => {
     return token;
   }, [token]);
+
+  /**
+   * Fait un appel API avec le token d'authentification automatiquement ajouté
+   * Centralise la gestion des appels API authentifiés
+   */
+  const apiCall = useCallback(
+    async <T = any,>(options: ApiCallOptions): Promise<T> => {
+      const {
+        url,
+        body,
+        headers = {},
+        requireAuth = true,
+        ...fetchOptions
+      } = options;
+
+      // Construire l'URL complète
+      const fullUrl = url.startsWith("http") ? url : `${API_URL}${url}`;
+
+      // Préparer les headers
+      const requestHeaders: HeadersInit = {
+        "Content-Type": "application/json",
+        ...headers,
+      };
+
+      // Ajouter le token si requis
+      if (requireAuth) {
+        const authToken = token || localStorage.getItem("auth_token");
+        if (!authToken) {
+          throw new Error("Token d'authentification requis");
+        }
+        requestHeaders["Authorization"] = `Bearer ${authToken}`;
+      }
+
+      // Préparer le body
+      let requestBody: string | undefined;
+      if (body !== undefined) {
+        if (typeof body === "string") {
+          requestBody = body;
+        } else {
+          requestBody = JSON.stringify(body);
+        }
+      }
+
+      // Faire l'appel
+      const response = await fetch(fullUrl, {
+        ...fetchOptions,
+        method: fetchOptions.method || "GET",
+        headers: requestHeaders,
+        body: requestBody,
+      });
+
+      // Parser la réponse
+      const contentType = response.headers.get("content-type");
+      const isJson = contentType?.includes("application/json");
+
+      if (!response.ok) {
+        // Essayer de parser l'erreur
+        let errorData: any = {};
+        try {
+          if (isJson) {
+            errorData = await response.json();
+          } else {
+            errorData = { message: await response.text() };
+          }
+        } catch {
+          errorData = { message: "Erreur inconnue" };
+        }
+
+        const error = new Error(
+          errorData.message || errorData.error || `Erreur ${response.status}`
+        );
+        (error as any).status = response.status;
+        (error as any).data = errorData;
+        throw error;
+      }
+
+      // Retourner les données parsées
+      if (isJson) {
+        return await response.json();
+      } else {
+        return (await response.text()) as T;
+      }
+    },
+    [token]
+  );
 
   /**
    * Valide un mot de passe via l'API backend
@@ -483,6 +597,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     checkAuth,
     getAuthToken,
+    apiCall,
     loginWithCredentials,
     register,
     requestPasswordReset,

@@ -7,6 +7,7 @@ import {
   CreditNotePublicDTO,
   OrderItemPublicDTO,
 } from "../../../dto";
+import { useAuth } from "../../../contexts/AuthContext";
 
 interface CreateCreditNoteModalProps {
   isOpen: boolean;
@@ -16,8 +17,6 @@ interface CreateCreditNoteModalProps {
   onCreated: (created: CreditNotePublicDTO) => void;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
-
 const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
   isOpen,
   order,
@@ -25,6 +24,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
   onClose,
   onCreated,
 }) => {
+  const { apiCall } = useAuth();
   const [reason, setReason] = useState("");
   const [description, setDescription] = useState("");
   const [issueDate, setIssueDate] = useState<string>("");
@@ -95,42 +95,24 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
 
       setIsCalculatingTotals(true);
       try {
-        const token = localStorage.getItem("auth_token");
-        if (!token) {
-          setCalculatedTotals({ totalHT: 0, totalTTC: 0 });
-          return;
-        }
-
         // Préparer les items pour l'API (seulement les propriétés nécessaires)
         const itemsForCalculation = selectedItems.map((item) => ({
           totalPriceHT: item.totalPriceHT || 0,
           totalPriceTTC: item.totalPriceTTC || 0,
         }));
 
-        const response = await fetch(
-          `${API_URL}/api/admin/credit-notes/calculate-totals`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ items: itemsForCalculation }),
-          }
-        );
+        const result = await apiCall<{
+          data: {
+            totalHT?: number;
+            totalTTC?: number;
+          };
+        }>({
+          url: "/api/admin/credit-notes/calculate-totals",
+          method: "POST",
+          body: { items: itemsForCalculation },
+          requireAuth: true,
+        });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error(
-            "Erreur lors du calcul des totaux:",
-            response.status,
-            errorData
-          );
-          setCalculatedTotals({ totalHT: 0, totalTTC: 0 });
-          return;
-        }
-
-        const result = await response.json();
         console.log("Réponse calcul totaux:", result);
 
         // La réponse utilise ResponseMapper.success() qui retourne { message, data, status, timestamp }
@@ -170,14 +152,14 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
       setOrderItems([]);
       setSelectedItemIds([]);
       try {
-        const token = localStorage.getItem("auth_token");
-        if (!token) throw new Error("Non authentifié");
-        const res = await fetch(
-          `${API_URL}/api/admin/orders/${selectedOrder.id}/items`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (!res.ok) throw new Error("Erreur chargement des articles");
-        const json = await res.json();
+        const json = await apiCall<{
+          data?: { orderItems?: OrderItemPublicDTO[] };
+          orderItems?: OrderItemPublicDTO[];
+        }>({
+          url: `/api/admin/orders/${selectedOrder.id}/items`,
+          method: "GET",
+          requireAuth: true,
+        });
         const list: OrderItemPublicDTO[] =
           json?.data?.orderItems || json?.orderItems || [];
         setOrderItems(list);
@@ -225,9 +207,6 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const token = localStorage.getItem("auth_token");
-      if (!token) throw new Error("Non authentifié");
-
       // Utiliser le même endpoint avec le DTO unifié
       const payload: CreditNoteCreateDTO = {
         customerId: selectedOrder.customerId,
@@ -257,24 +236,20 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
             }),
       };
 
-      const res = await fetch(`${API_URL}/api/admin/credit-notes`, {
+      const json = await apiCall<{
+        data?: CreditNotePublicDTO;
+        creditNote?: CreditNotePublicDTO;
+      }>({
+        url: "/api/admin/credit-notes",
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
+        body: payload,
+        requireAuth: true,
       });
 
-      const json = await res.json();
-      if (!res.ok) {
-        throw new Error(
-          json?.message || "Erreur lors de la création de l'avoir"
-        );
-      }
-
       const created: CreditNotePublicDTO =
-        json?.data?.creditNote || json?.creditNote || json;
+        (json?.data as CreditNotePublicDTO) ||
+        json?.creditNote ||
+        (json as CreditNotePublicDTO);
 
       onCreated(created);
 

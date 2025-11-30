@@ -16,9 +16,7 @@ import {
   CategoryUpdateDTO,
   CategoryListDTO,
 } from "../../dto";
-
-/** URL de l'API depuis les variables d'environnement */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+import { useAuth } from "../../contexts/AuthContext";
 
 /**
  * Page de gestion des catégories
@@ -31,12 +29,7 @@ const CategoriesPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Récupère le token d'authentification du localStorage
-   */
-  const getAuthToken = () => {
-    return localStorage.getItem("auth_token");
-  };
+  const { apiCall } = useAuth();
 
   /**
    * Charge les catégories
@@ -49,31 +42,15 @@ const CategoriesPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-
-      if (!token) {
-        throw new Error(
-          "Token d'authentification manquant. Veuillez vous reconnecter."
-        );
-      }
-
-      const response = await fetch(`${API_URL}/api/admin/categories`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors du chargement des catégories"
-        );
-      }
-
-      const data = (await response.json()) as
+      const data = await apiCall<
         | CategoryListDTO
         | { categories: CategoryPublicDTO[] }
-        | CategoryPublicDTO[];
+        | CategoryPublicDTO[]
+      >({
+        url: "/api/admin/categories",
+        method: "GET",
+        requireAuth: true,
+      });
       // Gérer différents formats de réponse
       if (Array.isArray(data)) {
         setCategories(data);
@@ -99,19 +76,12 @@ const CategoriesPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_URL}/api/admin/categories`, {
+      await apiCall({
+        url: "/api/admin/categories",
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
+        body: data,
+        requireAuth: true,
       });
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de la création de la catégorie");
-      }
 
       await loadCategories();
     } catch (err) {
@@ -134,22 +104,12 @@ const CategoriesPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-      const response = await fetch(
-        `${API_URL}/api/admin/categories/${categoryId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(data),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de la mise à jour de la catégorie");
-      }
+      await apiCall({
+        url: `/api/admin/categories/${categoryId}`,
+        method: "PUT",
+        body: data,
+        requireAuth: true,
+      });
 
       await loadCategories();
     } catch (err) {
@@ -169,22 +129,16 @@ const CategoriesPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-      const response = await fetch(
-        `${API_URL}/api/admin/categories/${categoryId}`,
-        {
+      try {
+        await apiCall({
+          url: `/api/admin/categories/${categoryId}`,
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 409) {
-          const errorData = await response.json();
+          requireAuth: true,
+        });
+      } catch (err: any) {
+        if (err.status === 409) {
           throw new Error(
-            errorData.message ||
+            err.data?.message ||
               "Cette catégorie contient des produits. Veuillez d'abord les supprimer ou les déplacer vers une autre catégorie."
           );
         }

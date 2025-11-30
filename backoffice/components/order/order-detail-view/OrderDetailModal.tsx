@@ -7,6 +7,7 @@ import {
 import { Button, Modal, ItemDisplayTable } from "../../shared";
 import { CreateCreditNoteModal } from "../credit-note-view";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
+import { useAuth } from "../../../contexts/AuthContext";
 
 interface OrderDetailModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   error = null,
   onClose,
 }) => {
+  const { apiCall } = useAuth();
   const [items, setItems] = useState<OrderItemPublicDTO[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
   const [itemsError, setItemsError] = useState<string | null>(null);
@@ -32,25 +34,21 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   const [isCreateCreditNoteOpen, setIsCreateCreditNoteOpen] = useState(false);
 
   useEffect(() => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
-    const getAuthToken = () => localStorage.getItem("auth_token");
     const loadItems = async () => {
       if (!order?.id) return;
       setItems([]);
       setItemsError(null);
       setItemsLoading(true);
       try {
-        const token = getAuthToken();
-        if (!token) throw new Error("Non authentifié");
         // Admin path proxied to service items list
-        const res = await fetch(
-          `${API_URL}/api/admin/orders/${order.id}/items`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (!res.ok) throw new Error("Erreur chargement des articles");
-        const json = await res.json();
+        const json = await apiCall<{
+          data?: { orderItems?: OrderItemPublicDTO[] };
+          orderItems?: OrderItemPublicDTO[];
+        }>({
+          url: `/api/admin/orders/${order.id}/items`,
+          method: "GET",
+          requireAuth: true,
+        });
         const list: OrderItemPublicDTO[] =
           json?.data?.orderItems || json?.orderItems || [];
         setItems(list);
@@ -64,27 +62,23 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
     };
 
     loadItems();
-  }, [order?.id]);
+  }, [order?.id, apiCall]);
 
   useEffect(() => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
-    const getAuthToken = () => localStorage.getItem("auth_token");
     const loadAddresses = async () => {
       if (!order?.id) return;
       setAddresses([]);
       setAddressesError(null);
       setAddressesLoading(true);
       try {
-        const token = getAuthToken();
-        if (!token) throw new Error("Non authentifié");
-        const res = await fetch(
-          `${API_URL}/api/admin/orders/${order.id}/addresses`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (!res.ok) throw new Error("Erreur chargement des adresses");
-        const json = await res.json();
+        const json = await apiCall<{
+          data?: { orderAddresses?: OrderAddressPublicDTO[] };
+          orderAddresses?: OrderAddressPublicDTO[];
+        }>({
+          url: `/api/admin/orders/${order.id}/addresses`,
+          method: "GET",
+          requireAuth: true,
+        });
         const list: OrderAddressPublicDTO[] =
           json?.data?.orderAddresses || json?.orderAddresses || [];
         setAddresses(list);
@@ -98,7 +92,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
     };
 
     loadAddresses();
-  }, [order?.id]);
+  }, [order?.id, apiCall]);
 
   const customerName = (() => {
     if (!order) return "";

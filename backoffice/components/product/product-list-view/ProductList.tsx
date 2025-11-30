@@ -14,9 +14,7 @@ import {
   ProductFilterDTO,
   CategorySearchDTO,
 } from "../../../dto";
-
-/** URL de l'API depuis les variables d'environnement */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+import { useAuth } from "../../../contexts/AuthContext";
 
 /**
  * Composant principal de gestion des produits
@@ -36,6 +34,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
  */
 const ProductList: React.FC = () => {
   const router = useRouter();
+  const { apiCall } = useAuth();
 
   // États de données
   const [products, setProducts] = useState<ProductPublicDTO[]>([]);
@@ -129,14 +128,6 @@ const ProductList: React.FC = () => {
   }, [searchParams]);
 
   /**
-   * Récupère le token d'authentification du localStorage
-   * @returns Le token JWT ou null
-   */
-  const getAuthToken = () => {
-    return localStorage.getItem("auth_token");
-  };
-
-  /**
    * Charge la liste des produits depuis l'API avec filtres côté serveur
    * Utilise ProductSearchDTO pour construire les paramètres de requête
    * Gère les erreurs et met à jour l'état de chargement
@@ -145,14 +136,6 @@ const ProductList: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-
-      if (!token) {
-        throw new Error(
-          "Token d'authentification manquant. Veuillez vous reconnecter."
-        );
-      }
-
       // Construire les paramètres de requête à partir de ProductSearchDTO et ProductFilterDTO
       const queryParams = new URLSearchParams();
       if (searchParams.page) queryParams.set("page", String(searchParams.page));
@@ -186,26 +169,15 @@ const ProductList: React.FC = () => {
         }
       }
 
-      const response = await fetch(
-        `${API_URL}/api/admin/products?${queryParams.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors du chargement des produits"
-        );
-      }
-
-      const data = (await response.json()) as
+      const data = await apiCall<
         | ProductListDTO
         | { products: ProductPublicDTO[]; pagination?: any }
-        | ProductPublicDTO[];
+        | ProductPublicDTO[]
+      >({
+        url: `/api/admin/products?${queryParams.toString()}`,
+        method: "GET",
+        requireAuth: true,
+      });
 
       // Gérer différents formats de réponse
       if (Array.isArray(data)) {
@@ -240,13 +212,6 @@ const ProductList: React.FC = () => {
    */
   const loadCategories = async () => {
     try {
-      const token = getAuthToken();
-
-      if (!token) {
-        console.error("Token manquant pour chargement des catégories");
-        return;
-      }
-
       // Construire les paramètres de requête à partir de CategorySearchDTO
       const queryParams = new URLSearchParams();
       if (categorySearchParams.page)
@@ -260,26 +225,15 @@ const ProductList: React.FC = () => {
       if (categorySearchParams.sortOrder)
         queryParams.set("sortOrder", categorySearchParams.sortOrder);
 
-      const response = await fetch(
-        `${API_URL}/api/admin/categories?${queryParams.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors du chargement des catégories"
-        );
-      }
-
-      const data = (await response.json()) as
+      const data = await apiCall<
         | CategoryListDTO
         | { categories: CategoryPublicDTO[]; pagination?: any }
-        | CategoryPublicDTO[];
+        | CategoryPublicDTO[]
+      >({
+        url: `/api/admin/categories?${queryParams.toString()}`,
+        method: "GET",
+        requireAuth: true,
+      });
       // Gérer différents formats de réponse
       if (Array.isArray(data)) {
         setCategories(data);
@@ -301,20 +255,11 @@ const ProductList: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-      const response = await fetch(
-        `${API_URL}/api/admin/products/${productId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de la suppression du produit");
-      }
+      await apiCall({
+        url: `/api/admin/products/${productId}`,
+        method: "DELETE",
+        requireAuth: true,
+      });
 
       await loadProducts();
     } catch (err) {
@@ -339,17 +284,12 @@ const ProductList: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
       const endpoint = currentStatus ? "deactivate" : "activate";
-      const response = await fetch(
-        `${API_URL}/api/admin/products/${productId}/${endpoint}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await apiCall({
+        url: `/api/admin/products/${productId}/${endpoint}`,
+        method: "POST",
+        requireAuth: true,
+      });
 
       if (!response.ok) {
         throw new Error("Erreur lors du changement de statut");

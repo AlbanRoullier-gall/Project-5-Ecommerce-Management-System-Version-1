@@ -16,9 +16,7 @@ import {
   CategoryListDTO,
   ProductImageUploadDTO,
 } from "../../dto";
-
-/** URL de l'API depuis les variables d'environnement */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+import { useAuth } from "../../contexts/AuthContext";
 
 /**
  * Page de création d'un nouveau produit
@@ -27,16 +25,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
  */
 const NewProductPage: React.FC = () => {
   const router = useRouter();
+  const { apiCall } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<CategoryPublicDTO[]>([]);
-
-  /**
-   * Récupère le token d'authentification du localStorage
-   */
-  const getAuthToken = () => {
-    return localStorage.getItem("auth_token");
-  };
 
   /**
    * Charge les catégories
@@ -47,28 +39,22 @@ const NewProductPage: React.FC = () => {
 
   const loadCategories = async () => {
     try {
-      const token = getAuthToken();
-      if (!token) return;
-
-      const response = await fetch(`${API_URL}/api/admin/categories`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const data = await apiCall<
+        | CategoryListDTO
+        | { categories: CategoryPublicDTO[] }
+        | CategoryPublicDTO[]
+      >({
+        url: "/api/admin/categories",
+        method: "GET",
+        requireAuth: true,
       });
-
-      if (response.ok) {
-        const data = (await response.json()) as
-          | CategoryListDTO
-          | { categories: CategoryPublicDTO[] }
-          | CategoryPublicDTO[];
-        // Gérer différents formats de réponse
-        if (Array.isArray(data)) {
-          setCategories(data);
-        } else if ("categories" in data) {
-          setCategories(data.categories);
-        } else {
-          setCategories([]);
-        }
+      // Gérer différents formats de réponse
+      if (Array.isArray(data)) {
+        setCategories(data);
+      } else if ("categories" in data) {
+        setCategories(data.categories);
+      } else {
+        setCategories([]);
       }
     } catch (err) {
       console.error("Error loading categories:", err);
@@ -86,35 +72,19 @@ const NewProductPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-
-      if (!token) {
-        throw new Error(
-          "Token d'authentification manquant. Veuillez vous reconnecter."
-        );
-      }
-
       // En mode création, on s'assure que tous les champs requis sont présents
       const createData = data as ProductCreateDTO;
 
       // Créer le produit d'abord (sans images)
-      const response = await fetch(`${API_URL}/api/admin/products`, {
+      const createdProduct = await apiCall<{
+        product?: { id?: number };
+        id?: number;
+      }>({
+        url: "/api/admin/products",
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(createData),
+        body: createData,
+        requireAuth: true,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors de la création du produit"
-        );
-      }
-
-      const createdProduct = await response.json();
       // La réponse peut être { message: "...", product: {...} } ou directement le produit
       const productId =
         createdProduct.product?.id ||
@@ -158,21 +128,15 @@ const NewProductPage: React.FC = () => {
           })
         );
 
-        const imgResponse = await fetch(
-          `${API_URL}/api/admin/products/${productId}/images/upload`,
-          {
+        try {
+          await apiCall({
+            url: `/api/admin/products/${productId}/images/upload`,
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(uploadDTOs),
-          }
-        );
-
-        if (!imgResponse.ok) {
-          const errorData = await imgResponse.json().catch(() => ({}));
-          console.error("Erreur lors de l'ajout des images:", errorData);
+            body: uploadDTOs,
+            requireAuth: true,
+          });
+        } catch (err) {
+          console.error("Erreur lors de l'ajout des images:", err);
           // Ne pas bloquer la création si l'upload d'images échoue
         }
       }

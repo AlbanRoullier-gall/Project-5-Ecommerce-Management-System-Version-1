@@ -9,9 +9,7 @@ import Button from "../../shared/Button";
 import ErrorAlert from "../../shared/ErrorAlert";
 import AddressForm from "./AddressForm";
 import AddressTable from "./AddressTable";
-
-/** URL de l'API depuis les variables d'environnement */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+import { useAuth } from "../../../contexts/AuthContext";
 
 /**
  * Props du composant AddressManagement
@@ -31,6 +29,7 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
   customer,
   onClose,
 }) => {
+  const { apiCall } = useAuth();
   const [addresses, setAddresses] = useState<AddressPublicDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,43 +44,21 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
   }, [customer.customerId]);
 
   /**
-   * Récupère le token d'authentification du localStorage
-   */
-  const getAuthToken = () => {
-    return localStorage.getItem("auth_token");
-  };
-
-  /**
    * Charge la liste des adresses du client
    */
   const loadAddresses = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-
-      if (!token) {
-        throw new Error("Token d'authentification manquant");
-      }
-
-      const response = await fetch(
-        `${API_URL}/api/admin/customers/${customer.customerId}/addresses`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors du chargement des adresses"
-        );
-      }
-
-      const data = await response.json();
-      setAddresses(data.addresses || data || []);
+      const data = await apiCall<
+        { addresses?: AddressPublicDTO[] } | AddressPublicDTO[]
+      >({
+        url: `/api/admin/customers/${customer.customerId}/addresses`,
+        method: "GET",
+        requireAuth: true,
+      });
+      const addressesList = Array.isArray(data) ? data : data.addresses || [];
+      setAddresses(addressesList);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du chargement"
@@ -110,26 +87,12 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-
-      const response = await fetch(
-        `${API_URL}/api/admin/customers/${customer.customerId}/addresses`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(createData),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors de la création de l'adresse"
-        );
-      }
+      await apiCall({
+        url: `/api/admin/customers/${customer.customerId}/addresses`,
+        method: "POST",
+        body: createData,
+        requireAuth: true,
+      });
 
       await loadAddresses();
       setShowAddressForm(false);
@@ -153,26 +116,12 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-
-      const response = await fetch(
-        `${API_URL}/api/admin/customers/${customer.customerId}/addresses/${editingAddress.addressId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(data),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors de la mise à jour de l'adresse"
-        );
-      }
+      await apiCall({
+        url: `/api/admin/customers/${customer.customerId}/addresses/${editingAddress.addressId}`,
+        method: "PUT",
+        body: data,
+        requireAuth: true,
+      });
 
       await loadAddresses();
       setShowAddressForm(false);
@@ -198,24 +147,11 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-
-      const response = await fetch(
-        `${API_URL}/api/admin/customers/${customer.customerId}/addresses/${addressId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors de la suppression de l'adresse"
-        );
-      }
+      await apiCall({
+        url: `/api/admin/customers/${customer.customerId}/addresses/${addressId}`,
+        method: "DELETE",
+        requireAuth: true,
+      });
 
       await loadAddresses();
     } catch (err) {

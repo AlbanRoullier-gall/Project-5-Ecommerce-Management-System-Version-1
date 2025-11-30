@@ -3,8 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { StatCard } from "../shared";
 import { OrderStatisticsRequestDTO } from "../../dto";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface StatsData {
   productsCount: number;
@@ -23,6 +22,7 @@ const formatCurrency = (amount: number): string => {
 };
 
 const StatsOverview: React.FC = () => {
+  const { apiCall } = useAuth();
   const [stats, setStats] = useState<StatsData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,28 +36,24 @@ const StatsOverview: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem("auth_token");
-      if (!token) throw new Error("Non authentifié");
+      const response = await apiCall<{
+        data: {
+          statistics: {
+            productsCount?: number;
+            customersCount?: number;
+            ordersCount?: number;
+            totalRevenue?: number;
+            totalRevenueHT?: number;
+          };
+          availableYears?: number[];
+        };
+      }>({
+        url: `/api/admin/statistics/dashboard?year=${selectedYear}`,
+        method: "GET",
+        requireAuth: true,
+      });
 
-      const response = await fetch(
-        `${API_URL}/api/admin/statistics/dashboard?year=${selectedYear}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message ||
-            errorData.error ||
-            "Erreur lors du chargement des statistiques"
-        );
-      }
-
-      const {
-        data: { statistics, availableYears: years },
-      } = await response.json();
+      const { statistics, availableYears: years } = response.data;
 
       if (!statistics) {
         throw new Error("Format de réponse invalide");
@@ -80,7 +76,7 @@ const StatsOverview: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedYear]);
+  }, [selectedYear, apiCall]);
 
   useEffect(() => {
     loadStats();

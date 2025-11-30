@@ -10,9 +10,7 @@ import { OrderDetailModal } from "../../components/order/order-detail-view";
 import ErrorAlert from "../../components/shared/ErrorAlert";
 import { LoadingSpinner } from "../../components/shared";
 import { OrderPublicDTO } from "../../dto";
-
-/** URL de l'API depuis les variables d'environnement */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+import { useAuth } from "../../contexts/AuthContext";
 
 /**
  * Page de détail d'une commande
@@ -21,17 +19,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
  */
 const OrderDetailPage: React.FC = () => {
   const router = useRouter();
+  const { apiCall } = useAuth();
   const { id } = router.query;
   const [order, setOrder] = useState<OrderPublicDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  /**
-   * Récupère le token d'authentification du localStorage
-   */
-  const getAuthToken = () => {
-    return localStorage.getItem("auth_token");
-  };
 
   /**
    * Charge les données de la commande
@@ -46,32 +38,21 @@ const OrderDetailPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-
-      if (!token) {
-        throw new Error(
-          "Token d'authentification manquant. Veuillez vous reconnecter."
-        );
-      }
-
-      const response = await fetch(`${API_URL}/api/admin/orders/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
+      try {
+        const data = await apiCall<{
+          order?: OrderPublicDTO;
+        }>({
+          url: `/api/admin/orders/${id}`,
+          method: "GET",
+          requireAuth: true,
+        });
+        setOrder(data.order || data);
+      } catch (err: any) {
+        if (err.status === 404) {
           throw new Error("Commande introuvable");
         }
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors du chargement de la commande"
-        );
+        throw err;
       }
-
-      const data = await response.json();
-      setOrder(data.order || data);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du chargement"

@@ -18,11 +18,11 @@ import {
   CreditNoteDetailModal,
   CreditNoteTable,
 } from "../credit-note-view";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+import { useAuth } from "../../../contexts/AuthContext";
 
 const OrderList: React.FC = () => {
   const router = useRouter();
+  const { apiCall } = useAuth();
   const [orders, setOrders] = useState<OrderPublicDTO[]>([]);
   const [creditNotes, setCreditNotes] = useState<CreditNotePublicDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -67,8 +67,6 @@ const OrderList: React.FC = () => {
   const creditNotesSentinelRef = useRef<HTMLDivElement | null>(null);
   const creditNotesContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const getAuthToken = () => localStorage.getItem("auth_token");
-
   const handleExportPDF = async () => {
     if (!yearFilter) {
       alert("Veuillez sélectionner une année pour l'export");
@@ -77,19 +75,23 @@ const OrderList: React.FC = () => {
 
     setIsExporting(true);
     try {
-      const token = getAuthToken();
+      // Appeler directement l'endpoint d'export qui récupère TOUTES les commandes de l'année
+      // Pour les fichiers binaires, on doit utiliser fetch directement
+      const token = localStorage.getItem("auth_token");
       if (!token) {
         alert("Non authentifié");
         return;
       }
 
-      // Appeler directement l'endpoint d'export qui récupère TOUTES les commandes de l'année
       const response = await fetch(
-        `${API_URL}/api/admin/exports/orders-year/${yearFilter}`,
+        `${
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020"
+        }/api/admin/exports/orders-year/${yearFilter}`,
         {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
+            Accept: "application/pdf",
           },
         }
       );
@@ -117,9 +119,6 @@ const OrderList: React.FC = () => {
   };
 
   const loadOrdersPage = async (targetPage: number, append: boolean) => {
-    const token = getAuthToken();
-    if (!token) throw new Error("Non authentifié");
-
     // Construire le DTO de requête avec typage explicite
     const requestDTO: Partial<OrderListRequestDTO> = {
       page: targetPage,
@@ -132,21 +131,23 @@ const OrderList: React.FC = () => {
     };
 
     // Construire les query params à partir du DTO
-    const url = new URL(`${API_URL}/api/admin/orders`);
-    if (requestDTO.page) url.searchParams.set("page", String(requestDTO.page));
-    if (requestDTO.limit)
-      url.searchParams.set("limit", String(requestDTO.limit));
-    if (requestDTO.search) url.searchParams.set("search", requestDTO.search);
-    if (requestDTO.year) url.searchParams.set("year", String(requestDTO.year));
-    if (requestDTO.total)
-      url.searchParams.set("total", String(requestDTO.total));
-    if (requestDTO.date) url.searchParams.set("date", requestDTO.date);
+    const queryParams = new URLSearchParams();
+    if (requestDTO.page) queryParams.set("page", String(requestDTO.page));
+    if (requestDTO.limit) queryParams.set("limit", String(requestDTO.limit));
+    if (requestDTO.search) queryParams.set("search", requestDTO.search);
+    if (requestDTO.year) queryParams.set("year", String(requestDTO.year));
+    if (requestDTO.total) queryParams.set("total", String(requestDTO.total));
+    if (requestDTO.date) queryParams.set("date", requestDTO.date);
 
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `Bearer ${token}` },
+    const json = await apiCall<{
+      data?: { orders?: OrderPublicDTO[]; pagination?: any };
+      orders?: OrderPublicDTO[];
+      pagination?: any;
+    }>({
+      url: `/api/admin/orders?${queryParams.toString()}`,
+      method: "GET",
+      requireAuth: true,
     });
-    if (!res.ok) throw new Error("Erreur chargement commandes");
-    const json = await res.json();
     const ordersList: OrderPublicDTO[] =
       json?.data?.orders ?? json?.orders ?? (Array.isArray(json) ? json : []);
 
@@ -180,9 +181,6 @@ const OrderList: React.FC = () => {
   };
 
   const loadCreditNotesPage = async (targetPage: number, append: boolean) => {
-    const token = getAuthToken();
-    if (!token) throw new Error("Non authentifié");
-
     // Construire le DTO de requête avec typage explicite
     const requestDTO: Partial<CreditNoteListRequestDTO> = {
       page: targetPage,
@@ -191,17 +189,20 @@ const OrderList: React.FC = () => {
     };
 
     // Construire les query params à partir du DTO
-    const url = new URL(`${API_URL}/api/admin/credit-notes`);
-    if (requestDTO.page) url.searchParams.set("page", String(requestDTO.page));
-    if (requestDTO.limit)
-      url.searchParams.set("limit", String(requestDTO.limit));
-    if (requestDTO.year) url.searchParams.set("year", String(requestDTO.year));
+    const queryParams = new URLSearchParams();
+    if (requestDTO.page) queryParams.set("page", String(requestDTO.page));
+    if (requestDTO.limit) queryParams.set("limit", String(requestDTO.limit));
+    if (requestDTO.year) queryParams.set("year", String(requestDTO.year));
 
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `Bearer ${token}` },
+    const json = await apiCall<{
+      data?: { creditNotes?: CreditNotePublicDTO[]; pagination?: any };
+      creditNotes?: CreditNotePublicDTO[];
+      pagination?: any;
+    }>({
+      url: `/api/admin/credit-notes?${queryParams.toString()}`,
+      method: "GET",
+      requireAuth: true,
     });
-    if (!res.ok) throw new Error("Erreur chargement avoirs");
-    const json = await res.json();
     const creditNotesList: CreditNotePublicDTO[] =
       json?.data?.creditNotes ??
       json?.creditNotes ??
@@ -364,29 +365,17 @@ const OrderList: React.FC = () => {
 
   const toggleDeliveryStatus = async (orderId: number, delivered: boolean) => {
     try {
-      const token = getAuthToken();
-      if (!token) throw new Error("Non authentifié");
-
       // Utiliser le DTO avec typage explicite
       const updateDTO: OrderUpdateDeliveryStatusDTO = {
         delivered,
       };
 
-      const response = await fetch(
-        `${API_URL}/api/admin/orders/${orderId}/delivery-status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updateDTO),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de la mise à jour de l'état de livraison");
-      }
+      await apiCall({
+        url: `/api/admin/orders/${orderId}/delivery-status`,
+        method: "PATCH",
+        body: updateDTO,
+        requireAuth: true,
+      });
 
       // Mettre à jour l'état local
       setOrders((prevOrders) =>
@@ -586,12 +575,6 @@ const OrderList: React.FC = () => {
           orders={orders}
           onToggleStatus={async (creditNoteId, newStatus) => {
             try {
-              const token = getAuthToken();
-              if (!token) {
-                alert("Non authentifié");
-                return;
-              }
-
               // Mise à jour optimiste de l'interface
               setCreditNotes((prevCreditNotes) =>
                 prevCreditNotes.map((cn) =>
@@ -604,19 +587,14 @@ const OrderList: React.FC = () => {
                 status: newStatus as "pending" | "refunded",
               };
 
-              const response = await fetch(
-                `${API_URL}/api/admin/credit-notes/${creditNoteId}/status`,
-                {
+              try {
+                await apiCall({
+                  url: `/api/admin/credit-notes/${creditNoteId}/status`,
                   method: "PATCH",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify(updateDTO),
-                }
-              );
-
-              if (!response.ok) {
+                  body: updateDTO,
+                  requireAuth: true,
+                });
+              } catch (err) {
                 // Revenir à l'état précédent en cas d'erreur
                 setCreditNotes((prevCreditNotes) =>
                   prevCreditNotes.map((cn) =>
@@ -640,16 +618,15 @@ const OrderList: React.FC = () => {
             }
           }}
           onView={async (creditNoteId) => {
-            const token = getAuthToken();
-            if (!token) return;
             try {
-              const res = await fetch(
-                `${API_URL}/api/admin/credit-notes/${creditNoteId}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
-              if (!res.ok)
-                throw new Error("Erreur lors du chargement de l'avoir");
-              const json = await res.json();
+              const json = await apiCall<{
+                data?: { creditNote?: any };
+                creditNote?: any;
+              }>({
+                url: `/api/admin/credit-notes/${creditNoteId}`,
+                method: "GET",
+                requireAuth: true,
+              });
               const creditNote =
                 json?.data?.creditNote || json?.creditNote || json;
               setDetailCreditNote(creditNote);
@@ -660,17 +637,12 @@ const OrderList: React.FC = () => {
           }}
           onDelete={async (creditNoteId) => {
             if (!window.confirm("Supprimer cet avoir ?")) return;
-            const token = getAuthToken();
-            if (!token) return;
             try {
-              const res = await fetch(
-                `${API_URL}/api/admin/credit-notes/${creditNoteId}`,
-                {
-                  method: "DELETE",
-                  headers: { Authorization: `Bearer ${token}` },
-                }
-              );
-              if (!res.ok) throw new Error("Suppression de l'avoir échouée");
+              await apiCall({
+                url: `/api/admin/credit-notes/${creditNoteId}`,
+                method: "DELETE",
+                requireAuth: true,
+              });
               await handleCreditNoteCreated();
             } catch (e) {
               // noop (optionally show toast)
@@ -806,17 +778,12 @@ const OrderList: React.FC = () => {
         onClose={() => setIsCreditNoteDetailOpen(false)}
         onDelete={async (creditNoteId) => {
           if (!window.confirm("Supprimer cet avoir ?")) return;
-          const token = getAuthToken();
-          if (!token) return;
           try {
-            const res = await fetch(
-              `${API_URL}/api/admin/credit-notes/${creditNoteId}`,
-              {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            );
-            if (!res.ok) throw new Error("Suppression de l'avoir échouée");
+            await apiCall({
+              url: `/api/admin/credit-notes/${creditNoteId}`,
+              method: "DELETE",
+              requireAuth: true,
+            });
             setIsCreditNoteDetailOpen(false);
             setDetailCreditNote(null);
             await handleCreditNoteCreated();

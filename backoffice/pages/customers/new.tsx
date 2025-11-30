@@ -10,9 +10,7 @@ import { CustomerForm } from "../../components/customer/customer-form-view";
 import ErrorAlert from "../../components/shared/ErrorAlert";
 import PageHeader from "../../components/shared/PageHeader";
 import { CustomerCreateDTO, CustomerUpdateDTO } from "../../dto";
-
-/** URL de l'API depuis les variables d'environnement */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+import { useAuth } from "../../contexts/AuthContext";
 
 /**
  * Page de création d'un nouveau client
@@ -21,15 +19,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
  */
 const NewCustomerPage: React.FC = () => {
   const router = useRouter();
+  const { apiCall } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  /**
-   * Récupère le token d'authentification du localStorage
-   */
-  const getAuthToken = () => {
-    return localStorage.getItem("auth_token");
-  };
 
   /**
    * Crée un nouveau client
@@ -40,32 +32,15 @@ const NewCustomerPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-
-      if (!token) {
-        throw new Error(
-          "Token d'authentification manquant. Veuillez vous reconnecter."
-        );
-      }
-
       // En mode création, on s'assure que tous les champs requis sont présents
       const createData = data as CustomerCreateDTO;
 
-      const response = await fetch(`${API_URL}/api/admin/customers`, {
+      await apiCall({
+        url: "/api/admin/customers",
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(createData),
+        body: createData,
+        requireAuth: true,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors de la création du client"
-        );
-      }
 
       // Rediriger vers la liste des clients après création
       router.push("/customers");

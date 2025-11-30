@@ -11,9 +11,7 @@ import ErrorAlert from "../../../components/shared/ErrorAlert";
 import PageHeader from "../../../components/shared/PageHeader";
 import { LoadingSpinner } from "../../../components/shared";
 import { CustomerPublicDTO } from "../../../dto";
-
-/** URL de l'API depuis les variables d'environnement */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+import { useAuth } from "../../../contexts/AuthContext";
 
 /**
  * Page de gestion des adresses d'un client
@@ -22,17 +20,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
  */
 const CustomerAddressesPage: React.FC = () => {
   const router = useRouter();
+  const { apiCall } = useAuth();
   const { id } = router.query;
   const [customer, setCustomer] = useState<CustomerPublicDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  /**
-   * Récupère le token d'authentification du localStorage
-   */
-  const getAuthToken = () => {
-    return localStorage.getItem("auth_token");
-  };
 
   /**
    * Charge les données du client
@@ -47,32 +39,21 @@ const CustomerAddressesPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-
-      if (!token) {
-        throw new Error(
-          "Token d'authentification manquant. Veuillez vous reconnecter."
-        );
-      }
-
-      const response = await fetch(`${API_URL}/api/admin/customers/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
+      try {
+        const data = await apiCall<{
+          customer?: CustomerPublicDTO;
+        }>({
+          url: `/api/admin/customers/${id}`,
+          method: "GET",
+          requireAuth: true,
+        });
+        setCustomer(data.customer || data);
+      } catch (err: any) {
+        if (err.status === 404) {
           throw new Error("Client introuvable");
         }
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors du chargement du client"
-        );
+        throw err;
       }
-
-      const data = await response.json();
-      setCustomer(data.customer || data);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du chargement"
