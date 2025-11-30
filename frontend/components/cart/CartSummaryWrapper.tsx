@@ -72,22 +72,9 @@ const CartSummaryWrapper: React.FC<CartSummaryWrapperProps> = () => {
 
         {/* Section des totaux */}
         <div style={{ marginBottom: "2rem" }}>
-          <SummaryRow
-            label="Total HT"
-            value={totals.totalHT}
-            formatValue={(val) => `${Number(val).toFixed(2)} €`}
-          />
-          <SummaryRow
-            label="Total TVA"
-            value={totals.vatAmount}
-            formatValue={(val) => `${Number(val).toFixed(2)} €`}
-          />
-          <SummaryRow
-            label="Total TTC"
-            value={cart.total}
-            variant="total"
-            formatValue={(val) => `${Number(val).toFixed(2)} €`}
-          />
+          <SummaryRow label="Total HT" value={totals.totalHT} />
+          <SummaryRow label="Total TVA" value={totals.vatAmount} />
+          <SummaryRow label="Total TTC" value={cart.total} variant="total" />
         </div>
 
         {/* Boutons d'action */}

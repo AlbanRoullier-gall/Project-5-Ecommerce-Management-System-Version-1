@@ -6,6 +6,7 @@ import TableLayout, {
   TableCell,
 } from "../../shared/TableLayout";
 import { Badge } from "../../shared";
+import { formatAmount } from "../../shared/utils/formatPrice";
 import CreditNoteActionButtons from "./CreditNoteActionButtons";
 
 interface CreditNoteTableProps {
@@ -89,10 +90,10 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
               <TableCell align="center">{c.orderId}</TableCell>
               <TableCell className="mobile-hide">{c.reason}</TableCell>
               <TableCell className="mobile-hide" align="right">
-                {(Number(c.totalAmountHT) || 0).toFixed(2)} €
+                {formatAmount(Number(c.totalAmountHT) || 0)}
               </TableCell>
               <TableCell align="right">
-                {(Number(c.totalAmountTTC) || 0).toFixed(2)} €
+                {formatAmount(Number(c.totalAmountTTC) || 0)}
               </TableCell>
               <TableCell className="mobile-hide">{emitted}</TableCell>
               <TableCell align="center">

@@ -1,5 +1,6 @@
 import React from "react";
 import { Button, Modal, ItemDisplayTable } from "../../shared";
+import { formatAmount } from "../../shared/utils/formatPrice";
 import {
   CreditNotePublicDTO,
   CreditNoteItemPublicDTO,
@@ -466,7 +467,7 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                   fontWeight: 700,
                 }}
               >
-                {(Number(creditNote.totalAmountHT) || 0).toFixed(2)} €
+                {formatAmount(Number(creditNote.totalAmountHT) || 0)}
               </div>
             </div>
             <div
@@ -494,7 +495,7 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                   fontWeight: 700,
                 }}
               >
-                {(Number(creditNote.totalAmountTTC) || 0).toFixed(2)} €
+                {formatAmount(Number(creditNote.totalAmountTTC) || 0)}
               </div>
             </div>
             <div
@@ -522,11 +523,10 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
                   fontWeight: 700,
                 }}
               >
-                {(
+                {formatAmount(
                   (Number(creditNote.totalAmountTTC) || 0) -
-                  (Number(creditNote.totalAmountHT) || 0)
-                ).toFixed(2)}{" "}
-                €
+                    (Number(creditNote.totalAmountHT) || 0)
+                )}
               </div>
             </div>
           </div>

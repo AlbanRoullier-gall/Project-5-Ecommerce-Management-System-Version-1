@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { StatCard } from "../shared";
 import { OrderStatisticsRequestDTO } from "../../dto";
 import { useAuth } from "../../contexts/AuthContext";
+import { formatCurrency } from "../shared/utils/formatPrice";
 
 interface StatsData {
   productsCount: number;
@@ -12,14 +13,6 @@ interface StatsData {
   totalRevenue: number; // TTC
   totalRevenueHT: number; // HT (admin)
 }
-
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 2,
-  }).format(amount || 0);
-};
 
 const StatsOverview: React.FC = () => {
   const { apiCall } = useAuth();

@@ -6,6 +6,7 @@ import TableLayout, {
   TableCell,
 } from "../../shared/TableLayout";
 import { Badge } from "../../shared";
+import { formatAmount } from "../../shared/utils/formatPrice";
 import OrderActionButtons from "./OrderActionButtons";
 
 interface OrderTableProps {
@@ -70,10 +71,10 @@ const OrderTable: React.FC<OrderTableProps> = ({
                 {o.customerEmail || "—"}
               </TableCell>
               <TableCell className="mobile-hide" align="right">
-                {(Number(o.totalAmountHT) || 0).toFixed(2)} €
+                {formatAmount(Number(o.totalAmountHT) || 0)}
               </TableCell>
               <TableCell align="right">
-                {(Number(o.totalAmountTTC) || 0).toFixed(2)} €
+                {formatAmount(Number(o.totalAmountTTC) || 0)}
               </TableCell>
               <TableCell className="mobile-hide">
                 {o.paymentMethod || "—"}

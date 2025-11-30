@@ -21,6 +21,7 @@ import { useRouter } from "next/router";
 import { useCart, CartItemPublicDTO } from "../../contexts/CartContext";
 import { useCheckout } from "../../contexts/CheckoutContext";
 import { FormHeader, Alert, SummaryRow, ItemDisplay } from "../shared";
+import { formatAmount } from "../shared/utils/formatPrice";
 
 /**
  * Composant récapitulatif de commande et paiement
@@ -278,11 +279,7 @@ export default function CheckoutOrderSummary() {
             }}
           >
             {/* Total HT */}
-            <SummaryRow
-              label="Total HT"
-              value={totals.totalHT}
-              formatValue={(val) => `${Number(val).toFixed(2)} €`}
-            />
+            <SummaryRow label="Total HT" value={totals.totalHT} />
 
             {/* Détail de la TVA par taux */}
             {totals.breakdown.map((b) => (
@@ -297,23 +294,18 @@ export default function CheckoutOrderSummary() {
                 }}
               >
                 <span>TVA ({b.rate}%)</span>
-                <span>{b.amount.toFixed(2)} €</span>
+                <span>{formatAmount(b.amount)}</span>
               </div>
             ))}
 
             {/* Total TVA (cumul de tous les taux) */}
-            <SummaryRow
-              label="Total TVA"
-              value={totals.vatAmount}
-              formatValue={(val) => `${Number(val).toFixed(2)} €`}
-            />
+            <SummaryRow label="Total TVA" value={totals.vatAmount} />
 
             {/* Total TTC (montant final à payer) */}
             <SummaryRow
               label="Total TTC"
               value={cart?.total || 0}
               variant="total"
-              formatValue={(val) => `${Number(val).toFixed(2)} €`}
             />
           </div>
         </div>

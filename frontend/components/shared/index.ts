@@ -28,4 +28,4 @@ export type { SummaryRowVariant } from "./SummaryRow";
 export { default as ItemDisplay } from "./ItemDisplay";
 
 // Utilitaires
-export { formatPrice } from "./utils/formatPrice";
+export { formatPrice, formatAmount, formatCurrency } from "./utils/formatPrice";
