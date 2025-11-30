@@ -107,6 +107,12 @@ export class OrderController {
           req.query.date !== "" && {
             date: req.query.date as string,
           }),
+        ...(req.query.delivered !== undefined &&
+          req.query.delivered !== "" && {
+            delivered:
+              req.query.delivered === "true" ||
+              req.query.delivered === "delivered",
+          }),
       };
 
       const result = await this.orderService.listOrders(options);

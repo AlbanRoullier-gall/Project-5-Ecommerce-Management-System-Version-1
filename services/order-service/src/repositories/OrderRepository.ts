@@ -22,6 +22,7 @@ export interface OrderListOptions {
   year?: number | undefined;
   total?: number | undefined;
   date?: string | undefined;
+  delivered?: boolean | undefined;
 }
 
 export default class OrderRepository {
@@ -91,6 +92,7 @@ export default class OrderRepository {
         year,
         total,
         date,
+        delivered,
       } = options;
 
       const offset = (page - 1) * limit;
@@ -162,6 +164,12 @@ export default class OrderRepository {
         // Recherche par date exacte (comparaison avec DATE pour ignorer l'heure)
         conditions.push(`DATE(o.created_at) = $${++paramCount}`);
         params.push(date);
+      }
+
+      if (delivered !== undefined && delivered !== null) {
+        // Filtre par état de livraison
+        conditions.push(`o.delivered = $${++paramCount}`);
+        params.push(delivered);
       }
 
       const whereClause =

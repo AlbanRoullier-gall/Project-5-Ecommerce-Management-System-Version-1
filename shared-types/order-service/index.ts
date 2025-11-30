@@ -208,6 +208,7 @@ export interface OrderListRequestDTO {
   year?: number;
   total?: number;
   date?: string;
+  delivered?: boolean;
 }
 
 /**

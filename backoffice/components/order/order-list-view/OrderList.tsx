@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import PageHeader from "../../shared/PageHeader";
 import Button from "../../shared/Button";
@@ -128,6 +128,11 @@ const OrderList: React.FC = () => {
       ...(totalFilter &&
         totalFilter !== "" && { total: parseFloat(totalFilter) }),
       ...(dateFilter && dateFilter !== "" && { date: dateFilter }),
+      // Convertir le filtre de livraison en boolean pour le serveur
+      ...(deliveryFilter &&
+        deliveryFilter !== "" && {
+          delivered: deliveryFilter === "delivered",
+        }),
     };
 
     // Construire les query params à partir du DTO
@@ -138,6 +143,9 @@ const OrderList: React.FC = () => {
     if (requestDTO.year) queryParams.set("year", String(requestDTO.year));
     if (requestDTO.total) queryParams.set("total", String(requestDTO.total));
     if (requestDTO.date) queryParams.set("date", requestDTO.date);
+    if (requestDTO.delivered !== undefined) {
+      queryParams.set("delivered", String(requestDTO.delivered));
+    }
 
     const json = await apiCall<{
       data?: { orders?: OrderPublicDTO[]; pagination?: any };
@@ -325,7 +333,15 @@ const OrderList: React.FC = () => {
       observer.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMore, isLoading, isLoadingMore, page, search, yearFilter]);
+  }, [
+    hasMore,
+    isLoading,
+    isLoadingMore,
+    page,
+    search,
+    yearFilter,
+    deliveryFilter,
+  ]);
 
   // Infinite scroll observer for credit notes
   useEffect(() => {
@@ -409,38 +425,7 @@ const OrderList: React.FC = () => {
     }
   };
 
-  const filteredOrders = useMemo(() => {
-    let filtered = orders;
-
-    // Filtre par recherche
-    if (search) {
-      const term = search.toLowerCase();
-      filtered = filtered.filter((o) => {
-        const customerName = `${o.customerFirstName || ""} ${
-          o.customerLastName || ""
-        }`.trim();
-        return (
-          String(o.id).includes(term) ||
-          customerName.toLowerCase().includes(term) ||
-          (o.customerEmail || "").toLowerCase().includes(term)
-        );
-      });
-    }
-
-    // Filtre par état de livraison
-    if (deliveryFilter) {
-      filtered = filtered.filter((o) => {
-        if (deliveryFilter === "delivered") {
-          return o.delivered === true;
-        } else if (deliveryFilter === "pending") {
-          return o.delivered === false;
-        }
-        return true;
-      });
-    }
-
-    return filtered;
-  }, [orders, search, deliveryFilter]);
+  // Le filtrage est maintenant fait côté serveur, plus besoin de useMemo
 
   return (
     <div>
@@ -472,7 +457,6 @@ const OrderList: React.FC = () => {
             borderRadius: "12px",
             marginBottom: "1.5rem",
             display: "flex",
-            justifyContent: "space-between",
             alignItems: "center",
             boxShadow: "0 4px 12px rgba(19, 104, 106, 0.3)",
           }}
@@ -480,15 +464,12 @@ const OrderList: React.FC = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
             <i className="fas fa-filter" style={{ fontSize: "1.2rem" }}></i>
             <span style={{ fontWeight: "600" }}>
-              {totalOrders !== null ? totalOrders : filteredOrders.length}{" "}
-              commande
-              {(totalOrders !== null ? totalOrders : filteredOrders.length) !==
-              1
+              {totalOrders !== null ? totalOrders : orders.length} commande
+              {(totalOrders !== null ? totalOrders : orders.length) !== 1
                 ? "s"
                 : ""}{" "}
               trouvée
-              {(totalOrders !== null ? totalOrders : filteredOrders.length) !==
-              1
+              {(totalOrders !== null ? totalOrders : orders.length) !== 1
                 ? "s"
                 : ""}
               {deliveryFilter && (
@@ -498,32 +479,6 @@ const OrderList: React.FC = () => {
               )}
             </span>
           </div>
-          <button
-            onClick={() => {
-              setSearch("");
-              setDeliveryFilter("");
-            }}
-            style={{
-              background: "rgba(255, 255, 255, 0.2)",
-              border: "none",
-              color: "white",
-              padding: "0.5rem 1rem",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "0.9rem",
-              fontWeight: "500",
-              transition: "all 0.2s ease",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
-            }}
-          >
-            <i className="fas fa-times" style={{ marginRight: "0.5rem" }}></i>
-            Effacer les filtres
-          </button>
         </div>
       )}
 
@@ -532,7 +487,7 @@ const OrderList: React.FC = () => {
         style={{ marginBottom: "2.5rem", height: "60vh", overflowY: "auto" }}
       >
         <OrderTable
-          orders={filteredOrders}
+          orders={orders}
           isLoading={isLoading}
           onView={openOrderDetail}
           onToggleDelivery={toggleDeliveryStatus}
