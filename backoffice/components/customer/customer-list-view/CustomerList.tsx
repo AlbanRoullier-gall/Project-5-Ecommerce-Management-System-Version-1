@@ -99,7 +99,9 @@ const CustomerList: React.FC = () => {
       }
 
       const data = await response.json();
-      setCustomers(data.customers || data || []);
+      const customersList: CustomerPublicDTO[] =
+        data.customers || (Array.isArray(data) ? data : []);
+      setCustomers(customersList);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du chargement"

@@ -81,29 +81,81 @@ const AddressForm: React.FC<AddressFormProps> = ({
     }
   };
 
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
+  const validate = async (): Promise<boolean> => {
+    try {
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
-    if (!formData.address?.trim()) {
-      newErrors.address = "L'adresse est requise";
+      // Préparer les données pour la validation (format AddressesCreateDTO)
+      const addressData = {
+        shipping: {
+          address: formData.address || "",
+          postalCode: formData.postalCode || "",
+          city: formData.city || "",
+          countryName: formData.countryName || "Belgique",
+        },
+        billing: {
+          address: formData.address || "",
+          postalCode: formData.postalCode || "",
+          city: formData.city || "",
+          countryName: formData.countryName || "Belgique",
+        },
+        useSameBillingAddress: true,
+      };
+
+      const response = await fetch(
+        `${API_URL}/api/customers/addresses/validate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(addressData),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!result.isValid) {
+        // Mapper les erreurs de l'API vers les champs du formulaire
+        const newErrors: Record<string, string> = {};
+        if (result.error) {
+          // Si l'erreur concerne l'adresse de livraison, l'afficher sur les champs correspondants
+          if (
+            result.error.includes("adresse") ||
+            result.error.includes("address")
+          ) {
+            newErrors.address = result.error;
+          } else if (
+            result.error.includes("code postal") ||
+            result.error.includes("postalCode")
+          ) {
+            newErrors.postalCode = result.error;
+          } else if (
+            result.error.includes("ville") ||
+            result.error.includes("city")
+          ) {
+            newErrors.city = result.error;
+          } else {
+            newErrors._general = result.error;
+          }
+        }
+        setErrors(newErrors);
+        return false;
+      }
+
+      setErrors({});
+      return true;
+    } catch (error) {
+      console.error("Erreur lors de la validation:", error);
+      setErrors({ _general: "Erreur lors de la validation" });
+      return false;
     }
-
-    if (!formData.postalCode?.trim()) {
-      newErrors.postalCode = "Le code postal est requis";
-    }
-
-    if (!formData.city?.trim()) {
-      newErrors.city = "La ville est requise";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validate()) {
+    const isValid = await validate();
+    if (!isValid) {
       return;
     }
 

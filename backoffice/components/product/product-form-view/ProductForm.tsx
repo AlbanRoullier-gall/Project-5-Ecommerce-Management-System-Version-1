@@ -144,34 +144,37 @@ const ProductForm: React.FC<ProductFormProps> = ({
   };
 
   /**
-   * Valide les données du formulaire
-   * @returns true si toutes les validations passent, false sinon
+   * Valide les données du formulaire via l'API backend
+   * @returns Promise<boolean> true si toutes les validations passent, false sinon
    */
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
+  const validate = async (): Promise<boolean> => {
+    try {
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+      const response = await fetch(`${API_URL}/api/products/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-    if (!formData.name || formData.name.trim().length === 0) {
-      newErrors.name = "Le nom du produit est requis";
+      const result = await response.json();
+
+      if (!result.isValid && result.errors) {
+        const newErrors: Record<string, string> = {};
+        result.errors.forEach((error: { field: string; message: string }) => {
+          newErrors[error.field] = error.message;
+        });
+        setErrors(newErrors);
+        return false;
+      }
+
+      setErrors({});
+      return true;
+    } catch (error) {
+      console.error("Erreur lors de la validation:", error);
+      setErrors({ _general: "Erreur lors de la validation" });
+      return false;
     }
-
-    if (!formData.price || formData.price <= 0) {
-      newErrors.price = "Le prix doit être supérieur à 0";
-    }
-
-    if (
-      formData.vatRate === undefined ||
-      formData.vatRate < 0 ||
-      formData.vatRate > 100
-    ) {
-      newErrors.vatRate = "Le taux de TVA doit être entre 0 et 100";
-    }
-
-    if (!formData.categoryId) {
-      newErrors.categoryId = "La catégorie est requise";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   /**
@@ -238,10 +241,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
    * Gère la soumission du formulaire
    * Valide les données et appelle le callback onSubmit
    */
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validate()) {
+    const isValid = await validate();
+    if (!isValid) {
       return;
     }
 

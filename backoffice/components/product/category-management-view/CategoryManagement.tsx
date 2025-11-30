@@ -89,21 +89,41 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
     }
   };
 
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
+  const validate = async (): Promise<boolean> => {
+    try {
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+      const response = await fetch(`${API_URL}/api/categories/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-    if (!formData.name || formData.name.trim().length === 0) {
-      newErrors.name = "Le nom de la catégorie est requis";
+      const result = await response.json();
+
+      if (!result.isValid && result.errors) {
+        const newErrors: Record<string, string> = {};
+        result.errors.forEach((error: { field: string; message: string }) => {
+          newErrors[error.field] = error.message;
+        });
+        setErrors(newErrors);
+        return false;
+      }
+
+      setErrors({});
+      return true;
+    } catch (error) {
+      console.error("Erreur lors de la validation:", error);
+      setErrors({ _general: "Erreur lors de la validation" });
+      return false;
     }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validate()) {
+    const isValid = await validate();
+    if (!isValid) {
       return;
     }
 

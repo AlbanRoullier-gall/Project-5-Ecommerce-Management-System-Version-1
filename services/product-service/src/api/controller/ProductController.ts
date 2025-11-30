@@ -329,4 +329,39 @@ export class ProductController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Valider les données produit (sans les créer)
+   * Retourne les erreurs structurées par champ
+   */
+  async validateProductData(req: Request, res: Response): Promise<void> {
+    try {
+      const productData: ProductCreateDTO | ProductUpdateDTO = req.body;
+
+      const validationResult =
+        this.productService.validateProductData(productData);
+
+      if (!validationResult.isValid) {
+        res.status(400).json({
+          success: false,
+          isValid: false,
+          errors: validationResult.errors,
+          timestamp: new Date().toISOString(),
+          status: 400,
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        isValid: true,
+        message: "Les données produit sont valides",
+        timestamp: new Date().toISOString(),
+        status: 200,
+      });
+    } catch (error: any) {
+      console.error("Validate product data error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

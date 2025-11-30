@@ -74,37 +74,46 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
   };
 
   /**
-   * Valide le formulaire
-   * @returns true si le formulaire est valide
+   * Valide le formulaire via l'API backend
+   * @returns Promise<boolean> true si le formulaire est valide
    */
-  const validate = (): boolean => {
+  const validate = async (): Promise<boolean> => {
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+      const response = await fetch(`${API_URL}/api/customers/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (!result.isValid && result.errors) {
     const newErrors: Record<string, string> = {};
+        result.errors.forEach((error: { field: string; message: string }) => {
+          newErrors[error.field] = error.message;
+        });
+        setErrors(newErrors);
+        return false;
+      }
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "Le prénom est requis";
+      setErrors({});
+      return true;
+    } catch (error) {
+      console.error("Erreur lors de la validation:", error);
+      setErrors({ _general: "Erreur lors de la validation" });
+      return false;
     }
-
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Le nom est requis";
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "L'email est requis";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "L'email n'est pas valide";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   /**
    * Gère la soumission du formulaire
    */
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validate()) {
+    const isValid = await validate();
+    if (!isValid) {
       return;
     }
 

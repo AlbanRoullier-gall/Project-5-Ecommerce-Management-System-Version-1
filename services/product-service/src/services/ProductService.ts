@@ -30,6 +30,78 @@ export default class ProductService {
   // ===== MÉTHODES PRODUIT =====
 
   /**
+   * Valider les données produit (sans les créer)
+   * Utilise les mêmes règles que Joi pour retourner des erreurs structurées par champ
+   * @param productData Données produit à valider
+   * @returns Résultat de validation avec erreurs par champ
+   */
+  validateProductData(productData: {
+    name?: string;
+    description?: string;
+    price?: number;
+    vatRate?: number;
+    categoryId?: number;
+    isActive?: boolean;
+  }): {
+    isValid: boolean;
+    errors: { field: string; message: string }[];
+  } {
+    const errors: { field: string; message: string }[] = [];
+
+    // Validation du nom (obligatoire)
+    if (!productData.name || productData.name.trim().length === 0) {
+      errors.push({
+        field: "name",
+        message: "Le nom du produit est requis",
+      });
+    } else if (productData.name.length > 255) {
+      errors.push({
+        field: "name",
+        message: "Le nom ne doit pas dépasser 255 caractères",
+      });
+    }
+
+    // Validation du prix (obligatoire)
+    if (productData.price === undefined || productData.price === null) {
+      errors.push({
+        field: "price",
+        message: "Le prix est requis",
+      });
+    } else if (productData.price <= 0) {
+      errors.push({
+        field: "price",
+        message: "Le prix doit être supérieur à 0",
+      });
+    }
+
+    // Validation du taux de TVA (obligatoire)
+    if (productData.vatRate === undefined || productData.vatRate === null) {
+      errors.push({
+        field: "vatRate",
+        message: "Le taux de TVA est requis",
+      });
+    } else if (productData.vatRate < 0 || productData.vatRate > 100) {
+      errors.push({
+        field: "vatRate",
+        message: "Le taux de TVA doit être entre 0 et 100",
+      });
+    }
+
+    // Validation de la catégorie (obligatoire)
+    if (!productData.categoryId || productData.categoryId <= 0) {
+      errors.push({
+        field: "categoryId",
+        message: "La catégorie est requise",
+      });
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+
+  /**
    * Créer un nouveau produit
    * @param {Partial<ProductData>} productData Données du produit
    * @returns {Promise<Product>} Produit créé
@@ -210,6 +282,37 @@ export default class ProductService {
   }
 
   // ===== MÉTHODES CATÉGORIE =====
+
+  /**
+   * Valider les données catégorie (sans les créer)
+   * Utilise les mêmes règles que Joi pour retourner des erreurs structurées par champ
+   * @param categoryData Données catégorie à valider
+   * @returns Résultat de validation avec erreurs par champ
+   */
+  validateCategoryData(categoryData: { name?: string; description?: string }): {
+    isValid: boolean;
+    errors: { field: string; message: string }[];
+  } {
+    const errors: { field: string; message: string }[] = [];
+
+    // Validation du nom (obligatoire)
+    if (!categoryData.name || categoryData.name.trim().length === 0) {
+      errors.push({
+        field: "name",
+        message: "Le nom de la catégorie est requis",
+      });
+    } else if (categoryData.name.length > 100) {
+      errors.push({
+        field: "name",
+        message: "Le nom ne doit pas dépasser 100 caractères",
+      });
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
 
   /**
    * Créer une nouvelle catégorie

@@ -218,4 +218,39 @@ export class CategoryController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Valider les données catégorie (sans les créer)
+   * Retourne les erreurs structurées par champ
+   */
+  async validateCategoryData(req: Request, res: Response): Promise<void> {
+    try {
+      const categoryData: CategoryCreateDTO | CategoryUpdateDTO = req.body;
+
+      const validationResult =
+        this.productService.validateCategoryData(categoryData);
+
+      if (!validationResult.isValid) {
+        res.status(400).json({
+          success: false,
+          isValid: false,
+          errors: validationResult.errors,
+          timestamp: new Date().toISOString(),
+          status: 400,
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        isValid: true,
+        message: "Les données catégorie sont valides",
+        timestamp: new Date().toISOString(),
+        status: 200,
+      });
+    } catch (error: any) {
+      console.error("Validate category data error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

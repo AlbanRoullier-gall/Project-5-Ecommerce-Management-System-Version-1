@@ -191,6 +191,12 @@ export class ApiRouter {
     // Ces routes nécessitent une authentification admin
     // Elles permettent la gestion complète des produits, catégories et images
     // === GESTION DES PRODUITS (ADMIN) ===
+    // Valider les données produit (publique, sans authentification)
+    // Note: Pas de middleware Joi ici car on veut retourner toutes les erreurs structurées par champ
+    app.post("/api/products/validate", (req: Request, res: Response) => {
+      this.productController.validateProductData(req, res);
+    });
+
     // Créer un nouveau produit (admin)
     app.post(
       "/api/admin/products",
@@ -276,6 +282,12 @@ export class ApiRouter {
     );
 
     // === GESTION DES CATÉGORIES (ADMIN) ===
+    // Valider les données catégorie (publique, sans authentification)
+    // Note: Pas de middleware Joi ici car on veut retourner toutes les erreurs structurées par champ
+    app.post("/api/categories/validate", (req: Request, res: Response) => {
+      this.categoryController.validateCategoryData(req, res);
+    });
+
     // Créer une nouvelle catégorie (admin)
     app.post(
       "/api/admin/categories",
