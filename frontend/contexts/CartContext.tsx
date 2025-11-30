@@ -327,6 +327,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       const response = await fetch(`${API_URL}/api/cart/items/${productId}`, {
         method: "DELETE",
         headers: buildCartHeaders(),
+        credentials: "include", // Important pour envoyer les cookies
       });
 
       // Le sessionId est maintenant géré automatiquement via cookie httpOnly
