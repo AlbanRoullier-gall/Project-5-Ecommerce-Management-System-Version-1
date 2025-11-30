@@ -78,6 +78,44 @@ class CreditNote {
   }
 
   /**
+   * Calculer les totaux HT et TTC à partir d'une liste d'items
+   * Méthode statique pour calculer les totaux depuis des items (réutilisable)
+   * @param {Array} items Liste d'items avec totalPriceHT et totalPriceTTC
+   * @param {number} fallbackHT Total HT par défaut si pas d'items (optionnel)
+   * @param {number} fallbackTTC Total TTC par défaut si pas d'items (optionnel)
+   * @returns {{totalHT: number, totalTTC: number}} Totaux calculés
+   */
+  static calculateTotalsFromItems(
+    items: Array<{
+      totalPriceHT: number;
+      totalPriceTTC: number;
+    }>,
+    fallbackHT: number = 0,
+    fallbackTTC: number = 0
+  ): { totalHT: number; totalTTC: number } {
+    if (!items || items.length === 0) {
+      return {
+        totalHT: Number(fallbackHT) || 0,
+        totalTTC: Number(fallbackTTC) || 0,
+      };
+    }
+
+    const totalHT = items.reduce(
+      (sum, item) => sum + parseFloat(String(item.totalPriceHT || 0)),
+      0
+    );
+    const totalTTC = items.reduce(
+      (sum, item) => sum + parseFloat(String(item.totalPriceTTC || 0)),
+      0
+    );
+
+    return {
+      totalHT: isNaN(totalHT) ? 0 : Number(totalHT),
+      totalTTC: isNaN(totalTTC) ? 0 : Number(totalTTC),
+    };
+  }
+
+  /**
    * Vérifier si l'avoir est valide
    */
   isValid(): boolean {

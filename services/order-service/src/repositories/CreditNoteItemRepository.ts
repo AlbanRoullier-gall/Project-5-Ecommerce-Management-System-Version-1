@@ -10,9 +10,12 @@ export default class CreditNoteItemRepository {
 
   /**
    * Créer un article d'avoir
+   * @param {CreditNoteItemData} creditNoteItemData Données de l'article d'avoir
+   * @param {any} client Client de transaction optionnel (pour les transactions)
    */
   async createCreditNoteItem(
-    creditNoteItemData: CreditNoteItemData
+    creditNoteItemData: CreditNoteItemData,
+    client?: any
   ): Promise<CreditNoteItem> {
     const query = `
       INSERT INTO credit_note_items (
@@ -35,7 +38,8 @@ export default class CreditNoteItemRepository {
       creditNoteItemData.total_price_ttc,
     ];
 
-    const result = await this.pool.query(query, values);
+    const executor = client || this.pool;
+    const result = await executor.query(query, values);
     return new CreditNoteItem(result.rows[0]);
   }
 

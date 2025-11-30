@@ -66,6 +66,8 @@ export interface OrderAddressPublicDTO {
 
 /**
  * DTO pour la création d'un avoir
+ * Si items est fourni, les totaux seront calculés automatiquement par le service
+ * Si items n'est pas fourni, totalAmountHT et totalAmountTTC sont requis
  */
 export interface CreditNoteCreateDTO {
   customerId: number;
@@ -74,9 +76,19 @@ export interface CreditNoteCreateDTO {
   description?: string;
   issueDate?: string; // ISO date string
   paymentMethod?: string;
-  totalAmountHT: number;
-  totalAmountTTC: number;
+  totalAmountHT?: number; // Optionnel si items est fourni
+  totalAmountTTC?: number; // Optionnel si items est fourni
   notes?: string;
+  items?: Array<{
+    productId: number;
+    productName: string;
+    quantity: number;
+    unitPriceHT: number;
+    unitPriceTTC: number;
+    vatRate: number;
+    totalPriceHT: number;
+    totalPriceTTC: number;
+  }>;
 }
 
 /**

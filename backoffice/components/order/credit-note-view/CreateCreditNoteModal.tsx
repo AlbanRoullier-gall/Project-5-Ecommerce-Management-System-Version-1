@@ -3,7 +3,6 @@ import { Button, Modal, ErrorAlert, ItemDisplayTable } from "../../shared";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
 import {
   CreditNoteCreateDTO,
-  CreditNoteItemCreateDTO,
   OrderPublicDTO,
   CreditNotePublicDTO,
   OrderItemPublicDTO,
@@ -158,15 +157,33 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
       const token = localStorage.getItem("auth_token");
       if (!token) throw new Error("Non authentifié");
 
+      // Utiliser le même endpoint avec le DTO unifié
       const payload: CreditNoteCreateDTO = {
         customerId: selectedOrder.customerId,
         orderId: selectedOrder.id,
         reason: reason.trim(),
         description: description.trim() || undefined,
         paymentMethod: paymentMethod || undefined,
-        totalAmountHT: Number(totalHT),
-        totalAmountTTC: Number(totalTTC),
         notes: notes.trim() || undefined,
+        // Si des items sont sélectionnés, les inclure (les totaux seront calculés automatiquement)
+        // Sinon, inclure les totaux fournis
+        ...(selectedItems.length > 0
+          ? {
+              items: selectedItems.map((it) => ({
+                productId: it.productId,
+                productName: it.productName,
+                quantity: it.quantity,
+                unitPriceHT: it.unitPriceHT,
+                unitPriceTTC: it.unitPriceTTC,
+                vatRate: it.vatRate,
+                totalPriceHT: it.totalPriceHT,
+                totalPriceTTC: it.totalPriceTTC,
+              })),
+            }
+          : {
+              totalAmountHT: Number(totalHT),
+              totalAmountTTC: Number(totalTTC),
+            }),
       };
 
       const res = await fetch(`${API_URL}/api/admin/credit-notes`, {
@@ -188,35 +205,8 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
       const created: CreditNotePublicDTO =
         json?.data?.creditNote || json?.creditNote || json;
 
-      if (selectedItems.length > 0) {
-        const itemPayloads: CreditNoteItemCreateDTO[] = selectedItems.map(
-          (it) => ({
-            creditNoteId: created.id,
-            productId: it.productId,
-            productName: it.productName,
-            quantity: it.quantity,
-            unitPriceHT: it.unitPriceHT,
-            unitPriceTTC: it.unitPriceTTC,
-            vatRate: it.vatRate,
-            totalPriceHT: it.totalPriceHT,
-            totalPriceTTC: it.totalPriceTTC,
-          })
-        );
-        await Promise.all(
-          itemPayloads.map((p) =>
-            fetch(`${API_URL}/api/admin/credit-note-items`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify(p),
-            })
-          )
-        );
-      }
-
       onCreated(created);
+
       resetForm();
       onClose();
     } catch (e) {

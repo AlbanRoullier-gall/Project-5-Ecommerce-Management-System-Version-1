@@ -17,7 +17,7 @@ import {
   CreditNoteItemPublicDTO,
 } from "../dto";
 import { OrderAddressPublicDTO } from "../dto";
-import { CreditNoteData } from "../../models/CreditNote";
+import CreditNote, { CreditNoteData } from "../../models/CreditNote";
 import { CreditNoteItemData } from "../../models/CreditNoteItem";
 
 /**
@@ -75,20 +75,45 @@ export class OrderMapper {
 
   /**
    * Convertir CreditNoteCreateDTO en CreditNoteData
+   * Si items est fourni, les totaux sont calculés automatiquement à partir des items
+   * Sinon, les totaux doivent être fournis dans le DTO
    */
   static creditNoteCreateDTOToCreditNoteData(
     dto: CreditNoteCreateDTO
-  ): Partial<CreditNoteData> {
+  ): CreditNoteData {
+    let totalAmountHT: number;
+    let totalAmountTTC: number;
+
+    // Si des items sont fournis, calculer les totaux via le modèle CreditNote
+    if (dto.items && dto.items.length > 0) {
+      const totals = CreditNote.calculateTotalsFromItems(dto.items);
+      totalAmountHT = totals.totalHT;
+      totalAmountTTC = totals.totalTTC;
+    } else {
+      // Sinon, utiliser les totaux fournis
+      if (!dto.totalAmountHT || !dto.totalAmountTTC) {
+        throw new Error(
+          "totalAmountHT and totalAmountTTC are required when items are not provided"
+        );
+      }
+      totalAmountHT = dto.totalAmountHT;
+      totalAmountTTC = dto.totalAmountTTC;
+    }
+
     return {
+      id: 0, // Sera défini par la base de données
       customer_id: dto.customerId,
       order_id: dto.orderId,
-      total_amount_ht: dto.totalAmountHT,
-      total_amount_ttc: dto.totalAmountTTC,
+      total_amount_ht: totalAmountHT,
+      total_amount_ttc: totalAmountTTC,
       reason: dto.reason,
       description: dto.description ?? null,
       issue_date: dto.issueDate ? new Date(dto.issueDate) : null,
       payment_method: dto.paymentMethod || "",
       notes: dto.notes ?? null,
+      status: "pending",
+      created_at: new Date(),
+      updated_at: new Date(),
     };
   }
 

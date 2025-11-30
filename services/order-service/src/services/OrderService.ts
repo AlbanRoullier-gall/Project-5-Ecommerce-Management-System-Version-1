@@ -126,11 +126,7 @@ export default class OrderService {
       // Harmonisation complète des données depuis Cart vers Order
       for (const item of data.cart.items || []) {
         // Validation que productName est présent et non vide
-        if (!item.productName || item.productName.trim().length === 0) {
-          throw new Error(
-            `Product name is required for product ID ${item.productId}`
-          );
-        }
+        this.validateProductName(item.productName, item.productId);
 
         const itemData: OrderItemData = {
           id: 0, // Sera défini par la base de données
@@ -405,9 +401,80 @@ export default class OrderService {
 
   /**
    * Créer un avoir
+   * Si items est fourni, tout est créé en transaction atomique
+   * Si items n'est pas fourni, création simple de l'avoir uniquement
    */
-  async createCreditNote(creditNoteData: CreditNoteData): Promise<CreditNote> {
-    return await this.creditNoteRepository.createCreditNote(creditNoteData);
+  async createCreditNote(
+    creditNoteData: CreditNoteData,
+    items?: Array<{
+      productId: number;
+      productName: string;
+      quantity: number;
+      unitPriceHT: number;
+      unitPriceTTC: number;
+      vatRate: number;
+      totalPriceHT: number;
+      totalPriceTTC: number;
+    }>
+  ): Promise<CreditNote> {
+    // Si des items sont fournis, utiliser une transaction pour créer l'avoir et ses items
+    if (items && items.length > 0) {
+      const client = await this.pool.connect();
+      try {
+        await client.query("BEGIN");
+
+        const creditNote = await this.creditNoteRepository.createCreditNote(
+          creditNoteData,
+          client
+        );
+
+        // Vérifier que l'ID de l'avoir a été généré
+        if (!creditNote.id) {
+          throw new Error("Credit note ID was not generated after creation");
+        }
+
+        const creditNoteId = creditNote.id;
+
+        // Créer les items via le repository avec le client de transaction
+        for (const item of items) {
+          // Validation que productName est présent et non vide
+          this.validateProductName(item.productName, item.productId);
+
+          const itemData: CreditNoteItemData = {
+            id: 0, // Sera défini par la base de données
+            credit_note_id: creditNoteId,
+            product_id: item.productId,
+            product_name: item.productName.trim(),
+            quantity: item.quantity,
+            unit_price_ht: item.unitPriceHT,
+            unit_price_ttc: item.unitPriceTTC,
+            vat_rate: item.vatRate,
+            total_price_ht: item.totalPriceHT,
+            total_price_ttc: item.totalPriceTTC,
+            created_at: new Date(),
+            updated_at: new Date(),
+          };
+          await this.creditNoteItemRepository.createCreditNoteItem(
+            itemData,
+            client
+          );
+        }
+
+        await client.query("COMMIT");
+        return creditNote;
+      } catch (error: any) {
+        await client.query("ROLLBACK");
+        console.error("Error creating credit note with items:", error);
+        throw new Error(
+          `Erreur lors de la création de l'avoir: ${error.message}`
+        );
+      } finally {
+        client.release();
+      }
+    } else {
+      // Comportement classique : création simple avec totaux fournis
+      return await this.creditNoteRepository.createCreditNote(creditNoteData);
+    }
   }
 
   /**
@@ -544,42 +611,21 @@ export default class OrderService {
     }
   }
 
-  // ===== MÉTHODES PRIVÉES POUR L'EXPORT =====
+  // ===== MÉTHODES PRIVÉES =====
 
   /**
-   * Calculer les totaux HT et TTC à partir d'une liste d'items
-   * @param {any[]} items Liste d'items avec totalPriceHT et totalPriceTTC
-   * @param {number} fallbackHT Total HT par défaut si pas d'items
-   * @param {number} fallbackTTC Total TTC par défaut si pas d'items
-   * @returns {{totalHT: number, totalTTC: number}} Totaux calculés
+   * Valider que le nom du produit est présent et non vide
+   * @param {string | undefined} productName Nom du produit
+   * @param {number} productId ID du produit (pour le message d'erreur)
+   * @throws {Error} Si le nom du produit est invalide
    */
-  private calculateTotalsFromItems(
-    items: any[],
-    fallbackHT: number = 0,
-    fallbackTTC: number = 0
-  ): { totalHT: number; totalTTC: number } {
-    if (!items || items.length === 0) {
-      return {
-        totalHT: Number(fallbackHT) || 0,
-        totalTTC: Number(fallbackTTC) || 0,
-      };
+  private validateProductName(
+    productName: string | undefined,
+    productId: number
+  ): void {
+    if (!productName || productName.trim().length === 0) {
+      throw new Error(`Product name is required for product ID ${productId}`);
     }
-
-    const totalHT = items.reduce(
-      (sum: number, item: any) =>
-        sum + parseFloat(String(item.totalPriceHT || 0)),
-      0
-    );
-    const totalTTC = items.reduce(
-      (sum: number, item: any) =>
-        sum + parseFloat(String(item.totalPriceTTC || 0)),
-      0
-    );
-
-    return {
-      totalHT: isNaN(totalHT) ? 0 : Number(totalHT),
-      totalTTC: isNaN(totalTTC) ? 0 : Number(totalTTC),
-    };
   }
 
   /**
@@ -614,7 +660,7 @@ export default class OrderService {
     items: OrderItem[],
     addresses: OrderAddress[]
   ): any {
-    const totals = this.calculateTotalsFromItems(
+    const totals = Order.calculateTotalsFromItems(
       items,
       order.totalAmountHT,
       order.totalAmountTTC
@@ -653,7 +699,7 @@ export default class OrderService {
     creditNote: CreditNote,
     items: CreditNoteItem[]
   ): any {
-    const totals = this.calculateTotalsFromItems(
+    const totals = CreditNote.calculateTotalsFromItems(
       items,
       creditNote.totalAmountHT,
       creditNote.totalAmountTTC
@@ -721,11 +767,8 @@ export default class OrderService {
       const ordersWithDetails = await Promise.all(
         orders.map(async (order) => {
           try {
-            const items = await this.orderItemRepository.getItemsByOrderId(
-              order.id
-            );
-            const addresses =
-              await this.orderAddressRepository.getAddressesByOrderId(order.id);
+            const items = await this.getOrderItemsByOrderId(order.id);
+            const addresses = await this.getOrderAddressesByOrderId(order.id);
             return this.mapOrderForExport(order, items, addresses);
           } catch (error) {
             console.error(
@@ -754,10 +797,9 @@ export default class OrderService {
       const creditNotesWithItems = await Promise.all(
         creditNotes.map(async (creditNote) => {
           try {
-            const items =
-              await this.creditNoteItemRepository.getItemsByCreditNoteId(
-                creditNote.id
-              );
+            const items = await this.getCreditNoteItemsByCreditNoteId(
+              creditNote.id
+            );
             console.log(`📋 Credit Note #${creditNote.id} items:`, {
               itemsCount: items?.length || 0,
             });

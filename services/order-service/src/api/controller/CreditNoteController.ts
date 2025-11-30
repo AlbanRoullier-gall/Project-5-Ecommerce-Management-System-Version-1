@@ -11,7 +11,6 @@
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
 import { CreditNoteCreateDTO, CreditNoteListRequestDTO } from "../dto";
-import { CreditNoteData } from "../../models/CreditNote";
 import { OrderMapper, ResponseMapper } from "../mapper";
 
 export class CreditNoteController {
@@ -23,17 +22,41 @@ export class CreditNoteController {
 
   /**
    * Créer un nouvel avoir
+   * Si items est fourni, les totaux sont calculés automatiquement et tout est créé en transaction
+   * Si items n'est pas fourni, les totaux doivent être fournis (comportement classique)
    */
   async createCreditNote(req: Request, res: Response): Promise<void> {
     try {
       const creditNoteCreateDTO: CreditNoteCreateDTO = req.body;
 
-      // Convertir le DTO en CreditNoteData
+      // Valider que soit items soit les totaux sont fournis
+      if (
+        (!creditNoteCreateDTO.items ||
+          creditNoteCreateDTO.items.length === 0) &&
+        (!creditNoteCreateDTO.totalAmountHT ||
+          !creditNoteCreateDTO.totalAmountTTC)
+      ) {
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              "Either items or totalAmountHT/totalAmountTTC must be provided"
+            )
+          );
+        return;
+      }
+
+      // Utiliser le mapper pour convertir DTO → CreditNoteData (avec calcul des totaux si items présent)
       const creditNoteData =
         OrderMapper.creditNoteCreateDTOToCreditNoteData(creditNoteCreateDTO);
 
+      // Extraire les items du DTO pour les passer séparément au service
+      const items = creditNoteCreateDTO.items;
+
+      // Passer les modèles au service (pas le DTO)
       const creditNote = await this.orderService.createCreditNote(
-        creditNoteData as CreditNoteData
+        creditNoteData,
+        items
       );
       const creditNoteDTO = OrderMapper.creditNoteToPublicDTO(creditNote);
 
@@ -44,7 +67,18 @@ export class CreditNoteController {
         res.status(409).json(ResponseMapper.conflictError(error.message));
         return;
       }
-      res.status(500).json(ResponseMapper.internalServerError());
+      const statusCode =
+        error.message.includes("required") ||
+        error.message.includes("must be provided")
+          ? 400
+          : 500;
+      res
+        .status(statusCode)
+        .json(
+          ResponseMapper.error(
+            error.message || "Erreur lors de la création de l'avoir"
+          )
+        );
     }
   }
 

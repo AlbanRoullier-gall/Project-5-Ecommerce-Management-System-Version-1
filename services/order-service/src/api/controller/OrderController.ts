@@ -11,6 +11,7 @@
 import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
 import { OrderMapper, ResponseMapper } from "../mapper";
+import Order from "../../models/Order";
 import {
   OrderFromCartDTO,
   OrderListRequestDTO,
@@ -46,16 +47,9 @@ export class OrderController {
           parseInt(id!)
         );
         if (Array.isArray(items) && items.length > 0) {
-          const sumHT = items.reduce(
-            (acc, it: any) => acc + Number(it.totalPriceHT || 0),
-            0
-          );
-          const sumTTC = items.reduce(
-            (acc, it: any) => acc + Number(it.totalPriceTTC || 0),
-            0
-          );
-          totalAmountHT = Number(sumHT.toFixed(2));
-          totalAmountTTC = Number(sumTTC.toFixed(2));
+          const totals = Order.calculateTotalsFromItems(items);
+          totalAmountHT = Number(totals.totalHT.toFixed(2));
+          totalAmountTTC = Number(totals.totalTTC.toFixed(2));
         }
       } catch (e) {
         // En cas d'erreur sur le chargement des articles, on garde les totaux d'origine

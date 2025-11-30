@@ -140,8 +140,13 @@ export default class CreditNoteRepository {
 
   /**
    * Créer un avoir
+   * @param {CreditNoteData} creditNoteData Données de l'avoir
+   * @param {any} client Client de transaction optionnel (pour les transactions)
    */
-  async createCreditNote(creditNoteData: CreditNoteData): Promise<CreditNote> {
+  async createCreditNote(
+    creditNoteData: CreditNoteData,
+    client?: any
+  ): Promise<CreditNote> {
     const query = `
       INSERT INTO credit_notes (
         customer_id, order_id, reason, description, 
@@ -161,7 +166,8 @@ export default class CreditNoteRepository {
       creditNoteData.notes,
     ];
 
-    const result = await this.pool.query(query, values);
+    const executor = client || this.pool;
+    const result = await executor.query(query, values);
     return new CreditNote(result.rows[0]);
   }
 

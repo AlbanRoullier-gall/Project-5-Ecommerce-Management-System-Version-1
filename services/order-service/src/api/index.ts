@@ -96,16 +96,32 @@ export class ApiRouter {
   private setupValidationSchemas() {
     return {
       // CreditNote schemas
+      // Schema unifié : accepte soit items (totaux calculés) soit totalAmountHT/totalAmountTTC
       creditNoteCreateSchema: Joi.object({
         customerId: Joi.number().integer().positive().required(),
-        orderId: Joi.number().integer().positive().optional(),
+        orderId: Joi.number().integer().positive().required(),
         reason: Joi.string().required(),
         description: Joi.string().optional(),
-        totalAmountHT: Joi.number().positive().required(),
-        totalAmountTTC: Joi.number().positive().required(),
-        paymentMethod: Joi.string().required(),
+        issueDate: Joi.string().optional(),
+        paymentMethod: Joi.string().optional(),
         notes: Joi.string().optional(),
-      }),
+        totalAmountHT: Joi.number().positive().optional(),
+        totalAmountTTC: Joi.number().positive().optional(),
+        items: Joi.array()
+          .items(
+            Joi.object({
+              productId: Joi.number().integer().positive().required(),
+              productName: Joi.string().required(),
+              quantity: Joi.number().integer().positive().required(),
+              unitPriceHT: Joi.number().positive().required(),
+              unitPriceTTC: Joi.number().positive().required(),
+              vatRate: Joi.number().positive().required(),
+              totalPriceHT: Joi.number().positive().required(),
+              totalPriceTTC: Joi.number().positive().required(),
+            })
+          )
+          .optional(),
+      }).or("items", "totalAmountHT", "totalAmountTTC"), // Au moins items ou les totaux doivent être fournis
 
       // CreditNoteItem schemas
       creditNoteItemCreateSchema: Joi.object({
