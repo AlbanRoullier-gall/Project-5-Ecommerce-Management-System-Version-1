@@ -313,14 +313,36 @@ export default class OrderService {
   }
 
   /**
+   * Génère la liste des années disponibles pour les statistiques
+   * Règle métier : de 2025 à l'année actuelle + 5
+   * @returns {number[]} Liste des années disponibles
+   */
+  generateAvailableYears(): number[] {
+    const currentYear = new Date().getFullYear();
+    const startYear = 2025;
+    const endYear = currentYear + 5;
+    const years: number[] = [];
+
+    for (let year = startYear; year <= endYear; year++) {
+      years.push(year);
+    }
+
+    return years;
+  }
+
+  /**
    * Obtenir les statistiques formatées pour le dashboard
    * @param {number} year Année pour filtrer les statistiques
-   * @returns {Promise<{ordersCount: number, totalRevenue: number, totalRevenueHT: number}>} Statistiques formatées
+   * @returns {Promise<DashboardStatisticsResponseDTO>} Statistiques formatées avec années disponibles
    */
   async getDashboardStatistics(year: number): Promise<{
-    ordersCount: number;
-    totalRevenue: number;
-    totalRevenueHT: number;
+    statistics: {
+      ordersCount: number;
+      totalRevenue: number;
+      totalRevenueHT: number;
+    };
+    year: number;
+    availableYears: number[];
   }> {
     try {
       const options: OrderListOptions = { year };
@@ -336,10 +358,17 @@ export default class OrderService {
       // Récupérer les totaux (revenus)
       const statistics = await this.getOrderStatistics(options);
 
+      // Générer les années disponibles
+      const availableYears = this.generateAvailableYears();
+
       return {
-        ordersCount,
-        totalRevenue: statistics.totalAmountTTC,
-        totalRevenueHT: statistics.totalAmountHT,
+        statistics: {
+          ordersCount,
+          totalRevenue: statistics.totalAmountTTC,
+          totalRevenueHT: statistics.totalAmountHT,
+        },
+        year,
+        availableYears,
       };
     } catch (error: any) {
       console.error("Error getting dashboard statistics:", error);

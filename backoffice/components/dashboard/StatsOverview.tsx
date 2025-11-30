@@ -26,6 +26,7 @@ const StatsOverview: React.FC = () => {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
   // Utilise le type year de OrderStatisticsRequestDTO pour cohérence
   const [selectedYear, setSelectedYear] = useState<
     OrderStatisticsRequestDTO["year"]
@@ -55,11 +56,16 @@ const StatsOverview: React.FC = () => {
       }
 
       const {
-        data: { statistics },
+        data: { statistics, availableYears: years },
       } = await response.json();
 
       if (!statistics) {
         throw new Error("Format de réponse invalide");
+      }
+
+      // Utiliser les années disponibles depuis l'API
+      if (years && Array.isArray(years)) {
+        setAvailableYears(years);
       }
 
       setStats({
@@ -103,13 +109,6 @@ const StatsOverview: React.FC = () => {
       </div>
     );
   }
-
-  // Générer les années disponibles (2025 à année actuelle + 5)
-  const currentYear = new Date().getFullYear();
-  const availableYears = Array.from(
-    { length: currentYear - 2019 },
-    (_, i) => 2025 + i
-  );
 
   return (
     <div

@@ -1,5 +1,6 @@
 import React from "react";
 import { SearchInput, FilterContainer, FilterSelect } from "../../shared";
+import { useAvailableYears } from "../../../hooks/useAvailableYears";
 
 interface OrderFiltersProps {
   searchTerm: string;
@@ -28,12 +29,8 @@ const OrderFilters: React.FC<OrderFiltersProps> = ({
   onDateFilterChange,
   onResetFilters,
 }) => {
-  // Générer les années disponibles (de 2025 à l'année actuelle + 5)
-  const currentYear = new Date().getFullYear();
-  const availableYears = [];
-  for (let year = 2025; year <= currentYear + 5; year++) {
-    availableYears.push(year);
-  }
+  // Récupérer les années disponibles depuis l'API
+  const availableYears = useAvailableYears();
 
   const yearOptions = availableYears.map((year) => ({
     value: year.toString(),

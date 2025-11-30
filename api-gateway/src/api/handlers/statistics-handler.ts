@@ -89,7 +89,11 @@ export const handleDashboardStatistics = async (
     // Extraire les statistiques (déjà formatées par les services)
     const productsStats = (productsStatsJson as any)?.data?.statistics || {};
     const customersStats = (customersStatsJson as any)?.data?.statistics || {};
-    const ordersStats = (ordersStatsJson as any)?.data?.statistics || {};
+    const ordersStatsData = (ordersStatsJson as any)?.data || {};
+    const ordersStats = ordersStatsData.statistics || {};
+
+    // Extraire les années disponibles depuis la réponse de order-service
+    const availableYears = ordersStatsData.availableYears || [];
 
     const statistics: DashboardStatistics = {
       productsCount: productsStats.productsCount || 0,
@@ -101,7 +105,7 @@ export const handleDashboardStatistics = async (
 
     res.json({
       success: true,
-      data: { statistics, year },
+      data: { statistics, year, availableYears },
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des statistiques:", error);

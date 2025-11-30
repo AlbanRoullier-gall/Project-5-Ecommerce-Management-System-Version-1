@@ -234,3 +234,22 @@ export interface OrderStatisticsRequestDTO {
   status?: string;
   year?: number;
 }
+
+/**
+ * DTO pour les statistiques du dashboard
+ */
+export interface DashboardStatisticsDTO {
+  ordersCount: number;
+  totalRevenue: number; // TTC
+  totalRevenueHT: number; // HT
+}
+
+/**
+ * DTO pour la réponse des statistiques du dashboard
+ * Inclut les statistiques, l'année sélectionnée et les années disponibles
+ */
+export interface DashboardStatisticsResponseDTO {
+  statistics: DashboardStatisticsDTO;
+  year: number;
+  availableYears: number[];
+}

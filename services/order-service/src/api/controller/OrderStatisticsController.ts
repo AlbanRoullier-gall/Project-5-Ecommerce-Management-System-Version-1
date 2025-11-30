@@ -48,6 +48,7 @@ export class OrderStatisticsController {
 
   /**
    * Obtenir les statistiques formatées pour le dashboard
+   * Retourne les statistiques, l'année sélectionnée et les années disponibles
    */
   async getDashboardStatistics(req: Request, res: Response): Promise<void> {
     try {
@@ -63,14 +64,11 @@ export class OrderStatisticsController {
         return;
       }
 
-      const statistics = await this.orderService.getDashboardStatistics(year);
+      const dashboardData = await this.orderService.getDashboardStatistics(year);
 
       res.json({
         success: true,
-        data: {
-          statistics,
-          year,
-        },
+        data: dashboardData,
         timestamp: new Date().toISOString(),
         status: 200,
       });
