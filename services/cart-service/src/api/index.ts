@@ -136,6 +136,22 @@ export class ApiRouter {
       }
     );
 
+    // ===== ROUTES CHECKOUT DATA =====
+    // Mettre à jour les données checkout
+    app.post("/api/cart/checkout-data", (req: Request, res: Response) => {
+      this.cartController.updateCheckoutData(req, res);
+    });
+
+    // Récupérer les données checkout
+    app.get("/api/cart/checkout-data", (req: Request, res: Response) => {
+      this.cartController.getCheckoutData(req, res);
+    });
+
+    // Supprimer les données checkout
+    app.delete("/api/cart/checkout-data", (req: Request, res: Response) => {
+      this.cartController.clearCheckoutData(req, res);
+    });
+
     // ===== GESTION DES ERREURS =====
     app.use((req: Request, res: Response) => {
       res.status(404).json(ResponseMapper.notFoundError("Route"));

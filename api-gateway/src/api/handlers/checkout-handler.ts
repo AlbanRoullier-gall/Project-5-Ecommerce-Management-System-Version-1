@@ -10,30 +10,10 @@ import { extractCartSessionId } from "../middleware/cart-session";
 
 /**
  * Interface pour les données de checkout reçues du frontend
- * Note: cartSessionId est maintenant extrait du header X-Cart-Session-ID
+ * Note: Les données checkout (customerData, addressData) sont maintenant récupérées depuis le cart-service
+ * Le frontend envoie uniquement les URLs de redirection
  */
 interface CheckoutCompleteRequest {
-  customerData: {
-    firstName?: string;
-    lastName?: string;
-    email: string;
-    phoneNumber?: string;
-  };
-  addressData: {
-    shipping: {
-      address?: string;
-      postalCode?: string;
-      city?: string;
-      countryName?: string;
-    };
-    billing?: {
-      address?: string;
-      postalCode?: string;
-      city?: string;
-      countryName?: string;
-    };
-    useSameBillingAddress: boolean;
-  };
   successUrl: string;
   cancelUrl: string;
 }
@@ -75,21 +55,46 @@ export const handleCheckoutComplete = async (
       return;
     }
 
-    if (!body.customerData?.email) {
+    if (!body.successUrl || !body.cancelUrl) {
       res
         .status(400)
         .json(
           createErrorResponse(
-            "Email requis",
-            "L'email du client est obligatoire"
+            "URLs requises",
+            "Les URLs de succès et d'annulation sont obligatoires"
           )
         );
       return;
     }
 
-    // 1. Récupérer le panier depuis cart-service
+    // 1. Récupérer le panier et les données checkout depuis cart-service
     let cart: CartPublicDTO;
+    let checkoutData: {
+      customerData?: {
+        firstName?: string;
+        lastName?: string;
+        email: string;
+        phoneNumber?: string;
+      } | null;
+      addressData?: {
+        shipping?: {
+          address?: string;
+          postalCode?: string;
+          city?: string;
+          countryName?: string;
+        };
+        billing?: {
+          address?: string;
+          postalCode?: string;
+          city?: string;
+          countryName?: string;
+        };
+        useSameBillingAddress?: boolean;
+      } | null;
+    } | null = null;
+
     try {
+      // Récupérer le panier (contient items + checkoutData)
       const cartResponse = await fetch(
         `${SERVICES.cart}/api/cart?sessionId=${cartSessionId}`,
         {
@@ -123,6 +128,20 @@ export const handleCheckoutComplete = async (
           .json(createErrorResponse("Panier vide", "Votre panier est vide"));
         return;
       }
+
+      // Vérifier que les données checkout sont présentes
+      checkoutData = cart.checkoutData || null;
+      if (!checkoutData || !checkoutData.customerData?.email) {
+        res
+          .status(400)
+          .json(
+            createErrorResponse(
+              "Données checkout manquantes",
+              "Veuillez compléter vos informations de checkout avant de finaliser la commande"
+            )
+          );
+        return;
+      }
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Cart Service:", error);
       res
@@ -137,6 +156,8 @@ export const handleCheckoutComplete = async (
     }
 
     // 2. Résoudre/créer le client via customer-service
+    // IMPORTANT: On résout le client ici pour garantir qu'il existe avant le paiement
+    // Le customerId sera stocké dans les métadonnées Stripe pour éviter la double résolution
     let customerId: number;
     try {
       const customerResponse = await fetch(
@@ -147,7 +168,7 @@ export const handleCheckoutComplete = async (
             "Content-Type": "application/json",
             "X-Service-Request": "api-gateway",
           },
-          body: JSON.stringify(body.customerData),
+          body: JSON.stringify(checkoutData.customerData),
         }
       );
 
@@ -180,22 +201,50 @@ export const handleCheckoutComplete = async (
     }
 
     // 3. Construire le payload pour payment-service
-    // payment-service construit customer.name à partir de customerData
+    // SIMPLIFICATION : On n'envoie que ce qui est nécessaire pour Stripe
+    // - Les items transformés (name, price, quantity)
+    // - L'email du client (pour customer_email Stripe)
+    // - Les métadonnées (customerId, cartSessionId)
+    // Le panier complet et checkoutData ne sont pas nécessaires ici
+    // (ils seront récupérés dans payment-finalize depuis cart-service)
+
+    // Transformer les items du panier en format Stripe
+    const stripeItems = cart.items.map((item) => ({
+      name: item.productName,
+      description: item.description || "",
+      price: Math.round(item.unitPriceTTC * 100), // Conversion en centimes
+      quantity: item.quantity,
+      currency: "eur",
+    }));
+
+    // Construire le nom du client depuis customerData
+    const customerName = checkoutData.customerData
+      ? `${checkoutData.customerData.firstName || ""} ${
+          checkoutData.customerData.lastName || ""
+        }`.trim()
+      : "";
+
     const paymentPayload = {
-      cart,
-      customerData: body.customerData,
+      items: stripeItems,
+      customer: {
+        email: checkoutData.customerData!.email,
+        name: customerName,
+        phone: checkoutData.customerData?.phoneNumber || "",
+      },
       successUrl: body.successUrl,
       cancelUrl: body.cancelUrl,
       metadata: {
-        customerId: customerId.toString(),
+        customerId: customerId.toString(), // TOUJOURS présent dans les métadonnées
         cartSessionId: cartSessionId,
       },
     };
 
-    // 4. Appeler payment-service pour créer la session
+    // 4. Appeler payment-service pour créer la session Stripe
+    // SIMPLIFICATION : Utilise l'endpoint /api/payment/create directement
+    // avec les items transformés (au lieu de /api/payment/create-from-cart avec le panier complet)
     try {
       const paymentResponse = await fetch(
-        `${SERVICES.payment}/api/payment/create-from-cart`,
+        `${SERVICES.payment}/api/payment/create`,
         {
           method: "POST",
           headers: {

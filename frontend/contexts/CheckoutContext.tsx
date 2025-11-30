@@ -84,11 +84,6 @@ const CheckoutContext = createContext<CheckoutContextType | undefined>(
 );
 
 /**
- * Clé pour le stockage dans sessionStorage
- */
-const STORAGE_KEY = "checkout_data";
-
-/**
  * URL de l'API depuis les variables d'environnement
  */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
@@ -110,16 +105,11 @@ interface CheckoutProviderProps {
 
 /**
  * Provider du contexte checkout
- * Gère l'état global du checkout avec persistance dans sessionStorage
+ * Gère l'état global du checkout avec persistance côté serveur (cart-service)
  */
 export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   children,
 }) => {
-  // Récupérer la sessionId depuis CartContext
-  // On utilise useCart pour accéder à la sessionId si disponible
-  // Pour l'instant, on va lire directement depuis localStorage pour rester indépendant
-  const [sessionId, setSessionId] = useState<string | null>(null);
-
   // États du checkout - Utilise les DTOs existants directement
   const [customerData, setCustomerData] = useState<CustomerResolveOrCreateDTO>({
     email: "",
@@ -130,132 +120,170 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
     useSameBillingAddress: true,
   });
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   /**
-   * Charge la sessionId depuis localStorage au montage
-   */
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedSessionId = localStorage.getItem("cart_session_id");
-      setSessionId(storedSessionId);
-    }
-  }, []);
-
-  /**
-   * Charge les données checkout depuis sessionStorage au montage
-   * Note: currentStep n'est jamais restauré - on commence toujours à l'étape 1
+   * Charge les données checkout depuis le serveur au montage
+   * Le sessionId est géré automatiquement via cookie httpOnly
    */
   useEffect(() => {
     if (typeof window === "undefined" || isInitialized) return;
 
-    // Charger les données une fois que sessionId est disponible
-    if (!sessionId) return;
+    const loadCheckoutData = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${API_URL}/api/cart/checkout-data`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include", // Important pour envoyer les cookies
+        });
 
-    try {
-      const stored = sessionStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed: CheckoutData = JSON.parse(stored);
-
-        // Vérifier que la sessionId correspond à celle stockée
-        const storedSessionId = localStorage.getItem("cart_session_id");
-        if (parsed && storedSessionId === sessionId) {
-          // Restaurer uniquement les données, pas l'étape (toujours commencer à 1)
-          setCustomerData(parsed.customerData || { email: "" });
-          setAddressData(
-            parsed.addressData || {
-              shipping: {},
-              billing: {},
-              useSameBillingAddress: true,
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            const checkoutData = result.data;
+            if (checkoutData.customerData) {
+              setCustomerData(checkoutData.customerData);
             }
-          );
-          // currentStep reste à 1 (valeur par défaut)
-        } else if (storedSessionId !== sessionId) {
-          // Si la sessionId a changé, nettoyer les données
-          sessionStorage.removeItem(STORAGE_KEY);
+            if (checkoutData.addressData) {
+              setAddressData(checkoutData.addressData);
+            }
+          }
         }
+      } catch (error) {
+        console.error("Error loading checkout data from server:", error);
+      } finally {
+        setIsLoading(false);
+        setIsInitialized(true);
       }
-    } catch (error) {
-      console.error("Error loading checkout data from sessionStorage:", error);
-    } finally {
-      setIsInitialized(true);
-    }
-  }, [sessionId, isInitialized]);
+    };
+
+    loadCheckoutData();
+  }, [isInitialized]);
 
   /**
-   * Sauvegarde les données checkout dans sessionStorage
+   * Sauvegarde les données checkout sur le serveur
+   * Le sessionId est géré automatiquement via cookie httpOnly
    */
-  const saveToStorage = useCallback((data: CheckoutData) => {
-    if (typeof window === "undefined") return;
-
+  const saveToServer = useCallback(async (data: CheckoutData) => {
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      await fetch(`${API_URL}/api/cart/checkout-data`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // Important pour envoyer les cookies
+        body: JSON.stringify(data),
+      });
     } catch (error) {
-      console.error("Error saving checkout data to sessionStorage:", error);
+      console.error("Error saving checkout data to server:", error);
     }
   }, []);
 
   /**
    * Met à jour les données client
    * Utilise CustomerResolveOrCreateDTO directement
+   * Sauvegarde automatiquement sur le serveur
    */
-  const updateCustomerData = useCallback((data: CustomerResolveOrCreateDTO) => {
-    setCustomerData((prev) => {
-      return { ...prev, ...data };
-    });
-  }, []);
+  const updateCustomerData = useCallback(
+    async (data: CustomerResolveOrCreateDTO) => {
+      const updated = { ...customerData, ...data };
+      setCustomerData(updated);
+      // Sauvegarder sur le serveur de manière asynchrone
+      if (isInitialized) {
+        await saveToServer({
+          customerData: updated,
+          addressData,
+        });
+      }
+    },
+    [customerData, addressData, isInitialized, saveToServer]
+  );
 
   /**
    * Met à jour un champ spécifique de l'adresse de livraison
    * Utilise AddressesCreateDTO directement
+   * Sauvegarde automatiquement sur le serveur
    */
-  const updateShippingField = useCallback((field: string, value: string) => {
-    setAddressData((prev) => {
-      const updatedShipping = {
-        ...prev.shipping,
-        [field]: value,
-        countryName: prev.shipping?.countryName || "Belgique",
-      };
-
-      return {
-        ...prev,
-        shipping: updatedShipping,
+  const updateShippingField = useCallback(
+    async (field: string, value: string) => {
+      const updated = {
+        ...addressData,
+        shipping: {
+          ...addressData.shipping,
+          [field]: value,
+          countryName: addressData.shipping?.countryName || "Belgique",
+        },
         // Si "même adresse", copier aussi dans billing
-        billing: prev.useSameBillingAddress ? updatedShipping : prev.billing,
+        billing: addressData.useSameBillingAddress
+          ? {
+              ...addressData.shipping,
+              [field]: value,
+              countryName: addressData.shipping?.countryName || "Belgique",
+            }
+          : addressData.billing,
       };
-    });
-  }, []);
+      setAddressData(updated);
+      // Sauvegarder sur le serveur de manière asynchrone
+      if (isInitialized) {
+        await saveToServer({
+          customerData,
+          addressData: updated,
+        });
+      }
+    },
+    [customerData, addressData, isInitialized, saveToServer]
+  );
 
   /**
    * Met à jour un champ spécifique de l'adresse de facturation
    * Utilise AddressesCreateDTO directement
+   * Sauvegarde automatiquement sur le serveur
    */
-  const updateBillingField = useCallback((field: string, value: string) => {
-    setAddressData((prev) => {
-      const updatedBilling = {
-        ...prev.billing,
-        [field]: value,
-        countryName: prev.billing?.countryName || "Belgique",
+  const updateBillingField = useCallback(
+    async (field: string, value: string) => {
+      const updated = {
+        ...addressData,
+        billing: {
+          ...addressData.billing,
+          [field]: value,
+          countryName: addressData.billing?.countryName || "Belgique",
+        },
       };
-
-      return {
-        ...prev,
-        billing: updatedBilling,
-      };
-    });
-  }, []);
+      setAddressData(updated);
+      // Sauvegarder sur le serveur de manière asynchrone
+      if (isInitialized) {
+        await saveToServer({
+          customerData,
+          addressData: updated,
+        });
+      }
+    },
+    [customerData, addressData, isInitialized, saveToServer]
+  );
 
   /**
    * Active/désactive l'utilisation de la même adresse pour la facturation
    * Utilise AddressesCreateDTO directement
+   * Sauvegarde automatiquement sur le serveur
    */
-  const setUseSameBillingAddress = useCallback((useSame: boolean) => {
-    setAddressData((prev) => ({
-      ...prev,
-      useSameBillingAddress: useSame,
-      // Si coché, copier l'adresse de livraison dans l'adresse de facturation
-      billing: useSame ? prev.shipping : prev.billing,
-    }));
-  }, []);
+  const setUseSameBillingAddress = useCallback(
+    async (useSame: boolean) => {
+      const updated = {
+        ...addressData,
+        useSameBillingAddress: useSame,
+        // Si coché, copier l'adresse de livraison dans l'adresse de facturation
+        billing: useSame ? addressData.shipping : addressData.billing,
+      };
+      setAddressData(updated);
+      // Sauvegarder sur le serveur de manière asynchrone
+      if (isInitialized) {
+        await saveToServer({
+          customerData,
+          addressData: updated,
+        });
+      }
+    },
+    [customerData, addressData, isInitialized, saveToServer]
+  );
 
   /**
    * Valide les adresses de livraison et de facturation
@@ -298,18 +326,15 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
    * Délègue la validation au service customer-service pour cohérence et sécurité
    * Retourne les erreurs structurées par champ
    */
-  const validateCustomerData = useCallback(
-    async (): Promise<CustomerValidationResult> => {
+  const validateCustomerData =
+    useCallback(async (): Promise<CustomerValidationResult> => {
       try {
-        const response = await fetch(
-          `${API_URL}/api/customers/validate`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include", // Important pour CORS avec credentials: true
-            body: JSON.stringify(customerData),
-          }
-        );
+        const response = await fetch(`${API_URL}/api/customers/validate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include", // Important pour CORS avec credentials: true
+          body: JSON.stringify(customerData),
+        });
 
         const result = await response.json();
 
@@ -318,21 +343,23 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
             isValid: false,
             errors: result.errors || [],
             generalError:
-              result.message || "Erreur lors de la validation des données client",
+              result.message ||
+              "Erreur lors de la validation des données client",
           };
         }
 
         return { isValid: true };
       } catch (error) {
-        console.error("Erreur lors de la validation des données client:", error);
+        console.error(
+          "Erreur lors de la validation des données client:",
+          error
+        );
         return {
           isValid: false,
           generalError: "Erreur lors de la validation des données client",
         };
       }
-    },
-    [customerData]
-  );
+    }, [customerData]);
 
   /**
    * Fonction principale pour finaliser la commande
@@ -354,16 +381,13 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         // Plus besoin de le récupérer depuis localStorage ou de l'envoyer dans le header
         // Le cookie sera envoyé automatiquement par le navigateur
 
-        // Appel unique vers l'endpoint d'orchestration du checkout
-        // Utilise les DTOs existants directement : CustomerResolveOrCreateDTO et AddressesCreateDTO
+        // Les données checkout sont déjà sauvegardées sur le serveur
+        // On envoie juste les URLs de redirection
+        // Le serveur récupérera les données checkout depuis le cart-service
         const checkoutPayload: {
-          customerData: CustomerResolveOrCreateDTO;
-          addressData: AddressesCreateDTO;
           successUrl: string;
           cancelUrl: string;
         } = {
-          customerData,
-          addressData,
           successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/checkout/cancel`,
         };
@@ -410,18 +434,8 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         };
       }
     },
-    [customerData, addressData]
+    []
   );
-
-  // Sauvegarder automatiquement quand les données changent (sans currentStep)
-  useEffect(() => {
-    if (isInitialized) {
-      saveToStorage({
-        customerData,
-        addressData,
-      });
-    }
-  }, [customerData, addressData, isInitialized, saveToStorage]);
 
   const value: CheckoutContextType = {
     customerData,

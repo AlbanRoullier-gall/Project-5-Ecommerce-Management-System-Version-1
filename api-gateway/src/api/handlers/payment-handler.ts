@@ -28,7 +28,7 @@ export const handleCreatePayment = async (req: Request, res: Response) => {
 
 export const handleFinalizePayment = async (req: Request, res: Response) => {
   try {
-    const { csid, checkoutData } = req.body || {};
+    const { csid } = req.body || {};
 
     // Extraire le cartSessionId du cookie (via le middleware)
     const cartSessionId =
@@ -57,20 +57,10 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    if (!checkoutData) {
-      return res
-        .status(400)
-        .json(
-          createErrorResponse(
-            "checkoutData requis",
-            "Les données de checkout sont obligatoires"
-          )
-        );
-    }
-
     // 1. Récupérer la session de paiement depuis payment-service
+    // On récupère le paymentIntentId et le customerId depuis les métadonnées
     let paymentIntentId: string | undefined;
-    let customerIdFromMetadata: string | undefined;
+    let customerId: number | undefined;
 
     try {
       const paymentResponse = await fetch(
@@ -83,27 +73,56 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         }
       );
 
-      if (paymentResponse.ok) {
-        const paymentData = (await paymentResponse.json()) as {
-          paymentIntentId?: string;
-          metadata?: {
-            customerId?: string;
-            cartSessionId?: string;
-          };
-        };
-        paymentIntentId = paymentData.paymentIntentId;
-        customerIdFromMetadata = paymentData.metadata?.customerId;
+      if (!paymentResponse.ok) {
+        return res
+          .status(404)
+          .json(
+            createErrorResponse(
+              "Session de paiement introuvable",
+              "La session de paiement Stripe n'existe pas"
+            )
+          );
+      }
+
+      const paymentResponseData = (await paymentResponse.json()) as {
+        success: boolean;
+        session: any; // Stripe.Checkout.Session
+        paymentIntentId?: string;
+      };
+
+      paymentIntentId = paymentResponseData.paymentIntentId;
+
+      // Les métadonnées sont dans session.metadata (structure Stripe)
+      const sessionMetadata = paymentResponseData.session?.metadata || {};
+
+      // Le customerId est TOUJOURS dans les métadonnées (garanti par checkout-complete)
+      if (sessionMetadata.customerId) {
+        customerId = parseInt(sessionMetadata.customerId, 10);
       } else {
-        console.warn("⚠️ Payment Service - session non trouvée");
+        // Si absent (cas d'erreur), on ne peut pas continuer
+        return res
+          .status(400)
+          .json(
+            createErrorResponse(
+              "Données de session invalides",
+              "Le customerId est manquant dans les métadonnées de paiement"
+            )
+          );
       }
     } catch (error) {
-      console.warn(
-        "⚠️ Erreur lors de l'appel au Payment Service:",
-        (error as any)?.message
-      );
+      console.error("❌ Erreur lors de l'appel au Payment Service:", error);
+      return res
+        .status(500)
+        .json(
+          createErrorResponse(
+            "Service de paiement indisponible",
+            "Veuillez réessayer plus tard"
+          )
+        );
     }
 
-    // 2. Récupérer le panier depuis cart-service
+    // 2. Récupérer le panier et les données checkout depuis cart-service
+    // Tout est dans le panier : items, totaux, et checkoutData
     let cart: CartPublicDTO;
 
     try {
@@ -139,6 +158,18 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
           .status(400)
           .json(createErrorResponse("Panier vide", "Le panier est vide"));
       }
+
+      // Vérifier que les données checkout sont présentes
+      if (!cart.checkoutData || !cart.checkoutData.customerData?.email) {
+        return res
+          .status(400)
+          .json(
+            createErrorResponse(
+              "Données checkout manquantes",
+              "Les données de checkout sont obligatoires"
+            )
+          );
+      }
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Cart Service:", error);
       return res
@@ -151,55 +182,21 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // 3. Extraire les données de checkout
-    const customerData = checkoutData.customerData || {};
-    const addressData = checkoutData.addressData || {};
-
-    // 4. Utiliser le customerId des métadonnées Stripe (évite la résolution en double)
-    let customerId: number | undefined;
-    if (customerIdFromMetadata) {
-      customerId = parseInt(customerIdFromMetadata, 10);
-    } else if (customerData.email) {
-      // Fallback uniquement si customerId n'est pas dans les métadonnées
-      try {
-        const customerResponse = await fetch(
-          `${SERVICES.customer}/api/customers/resolve-or-create`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Service-Request": "api-gateway",
-            },
-            body: JSON.stringify(customerData),
-          }
-        );
-
-        if (customerResponse.ok) {
-          const customerDataResponse = (await customerResponse.json()) as {
-            success: boolean;
-            customerId: number;
-          };
-          customerId = customerDataResponse.customerId;
-        }
-      } catch (error) {
-        console.warn(
-          "⚠️ Erreur lors de la résolution du customerId:",
-          (error as any)?.message
-        );
-      }
-    }
-
-    // 5. Construire le payload pour order-service (customerSnapshot sera construit dans le service)
+    // 3. Construire le payload pour order-service
+    // customerId est garanti (depuis les métadonnées Stripe)
+    // customerSnapshot sera construit dans order-service à partir de customerData
+    // SIMPLIFICATION : Utiliser directement checkoutData depuis le panier (déjà vérifié)
+    const checkoutData = cart.checkoutData!; // Garanti par la vérification ci-dessus
     const orderPayload = {
       cart,
-      customerId,
-      customerData,
-      addressData,
+      customerId, // Garanti depuis les métadonnées Stripe
+      customerData: checkoutData.customerData || {},
+      addressData: checkoutData.addressData || {},
       paymentIntentId,
       paymentMethod: "stripe",
     };
 
-    // 6. Appeler order-service pour créer la commande
+    // 5. Appeler order-service pour créer la commande
     let orderId: number;
 
     try {
@@ -246,9 +243,10 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // 7. Ajouter les adresses au customer-service (non-bloquant)
+    // 6. Ajouter les adresses au customer-service (non-bloquant)
     // Utilise le nouvel endpoint qui gère shipping + billing en une fois
-    if (customerId) {
+    // SIMPLIFICATION : Utiliser directement checkoutData depuis le panier
+    if (customerId && checkoutData.addressData) {
       try {
         await fetch(
           `${SERVICES.customer}/api/customers/${customerId}/addresses/bulk`,
@@ -259,9 +257,10 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
               "X-Service-Request": "api-gateway",
             },
             body: JSON.stringify({
-              shipping: addressData.shipping,
-              billing: addressData.billing,
-              useSameBillingAddress: addressData.useSameBillingAddress,
+              shipping: checkoutData.addressData.shipping,
+              billing: checkoutData.addressData.billing,
+              useSameBillingAddress:
+                checkoutData.addressData.useSameBillingAddress,
             }),
           }
         );
@@ -273,8 +272,9 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       }
     }
 
-    // 8. Appeler email-service pour envoyer l'email de confirmation (non-bloquant)
+    // 7. Appeler email-service pour envoyer l'email de confirmation (non-bloquant)
     // email-service construit les données à partir des données brutes
+    // SIMPLIFICATION : Utiliser directement checkoutData depuis le panier
     try {
       const emailResponse = await fetch(
         `${SERVICES.email}/api/email/order-confirmation`,
@@ -287,8 +287,8 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
           body: JSON.stringify({
             orderId,
             cart,
-            customerData,
-            addressData,
+            customerData: checkoutData.customerData || {},
+            addressData: checkoutData.addressData || {},
           }),
         }
       );
@@ -300,7 +300,8 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       console.warn("⚠️ Erreur lors de l'envoi de l'email:", error);
     }
 
-    // 9. Vider le panier après création réussie de la commande (non-bloquant)
+    // 8. Vider le panier et les données checkout après création réussie (non-bloquant)
+    // Le panier sera vidé automatiquement, ce qui supprime aussi les données checkout
     try {
       const clearCartResponse = await fetch(`${SERVICES.cart}/api/cart`, {
         method: "DELETE",
@@ -317,7 +318,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
           clearCartResponse.statusText
         );
       } else {
-        console.log("✅ Panier vidé avec succès");
+        console.log("✅ Panier et données checkout vidés avec succès");
       }
     } catch (error) {
       console.warn("⚠️ Erreur lors du vidage du panier:", error);

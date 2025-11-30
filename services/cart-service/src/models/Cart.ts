@@ -10,6 +10,33 @@
 
 import { CartItem } from "./CartItem";
 
+/**
+ * Données checkout temporaires associées au panier
+ */
+export interface CartCheckoutData {
+  customerData?: {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+  } | null;
+  addressData?: {
+    shipping?: {
+      address?: string;
+      postalCode?: string;
+      city?: string;
+      countryName?: string;
+    };
+    billing?: {
+      address?: string;
+      postalCode?: string;
+      city?: string;
+      countryName?: string;
+    };
+    useSameBillingAddress?: boolean;
+  } | null;
+}
+
 export interface CartData {
   id: string;
   session_id: string;
@@ -18,6 +45,7 @@ export interface CartData {
   tax: number;
   total: number;
   vat_breakdown?: Array<{ rate: number; amount: number }>; // Breakdown TVA par taux
+  checkout_data?: CartCheckoutData | null; // Données checkout temporaires
   created_at: Date;
   updated_at: Date;
   expires_at: Date;
@@ -31,6 +59,7 @@ export class Cart {
   public readonly tax: number;
   public readonly total: number;
   public readonly vatBreakdown: Array<{ rate: number; amount: number }>;
+  public readonly checkoutData: CartCheckoutData | null;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
   public readonly expiresAt: Date;
@@ -45,6 +74,7 @@ export class Cart {
     this.total = data.total;
     // Calculer le breakdown si non fourni (pour compatibilité avec anciennes données)
     this.vatBreakdown = data.vat_breakdown || this.calculateVatBreakdown(items);
+    this.checkoutData = data.checkout_data || null;
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
     this.expiresAt = data.expires_at;
@@ -122,6 +152,70 @@ export class Cart {
   }
 
   /**
+   * Mettre à jour les données checkout
+   */
+  updateCheckoutData(checkoutData: CartCheckoutData): Cart {
+    return new Cart({
+      id: this.id,
+      session_id: this.sessionId,
+      items: this.items.map((item) => ({
+        id: item.id,
+        product_id: item.productId,
+        product_name: item.productName,
+        description: item.description,
+        image_url: item.imageUrl,
+        quantity: item.quantity,
+        vat_rate: item.vatRate,
+        unit_price_ht: item.unitPriceHT,
+        unit_price_ttc: item.unitPriceTTC,
+        total_price_ht: item.totalPriceHT,
+        total_price_ttc: item.totalPriceTTC,
+        added_at: item.addedAt,
+      })),
+      subtotal: this.subtotal,
+      tax: this.tax,
+      total: this.total,
+      vat_breakdown: this.vatBreakdown,
+      checkout_data: checkoutData,
+      created_at: this.createdAt,
+      updated_at: new Date(),
+      expires_at: this.expiresAt,
+    });
+  }
+
+  /**
+   * Supprimer les données checkout
+   */
+  clearCheckoutData(): Cart {
+    return new Cart({
+      id: this.id,
+      session_id: this.sessionId,
+      items: this.items.map((item) => ({
+        id: item.id,
+        product_id: item.productId,
+        product_name: item.productName,
+        description: item.description,
+        image_url: item.imageUrl,
+        quantity: item.quantity,
+        vat_rate: item.vatRate,
+        unit_price_ht: item.unitPriceHT,
+        unit_price_ttc: item.unitPriceTTC,
+        total_price_ht: item.totalPriceHT,
+        total_price_ttc: item.totalPriceTTC,
+        added_at: item.addedAt,
+      })),
+      subtotal: this.subtotal,
+      tax: this.tax,
+      total: this.total,
+      vat_breakdown: this.vatBreakdown,
+      checkout_data: null,
+      created_at: this.createdAt,
+      updated_at: new Date(),
+      expires_at: this.expiresAt,
+    });
+  }
+
+  /**
    * Calculer le breakdown de la TVA par taux
    * @param items Les articles du panier
    * @returns Tableau trié par taux croissant avec le montant de TVA pour chaque taux
@@ -190,6 +284,7 @@ export class Cart {
       tax: taxRounded,
       total,
       vat_breakdown: vatBreakdown,
+      checkout_data: this.checkoutData,
       created_at: this.createdAt,
       updated_at: new Date(),
       expires_at: this.expiresAt,

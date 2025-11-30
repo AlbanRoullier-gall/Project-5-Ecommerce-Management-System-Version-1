@@ -10,7 +10,7 @@
 
 import { v4 as uuidv4 } from "uuid";
 import { CartRepository } from "../repositories/CartRepository";
-import { Cart } from "../models/Cart";
+import { Cart, CartCheckoutData } from "../models/Cart";
 import { CartMapper } from "../api/mapper/CartMapper";
 import * as DTO from "@tfe/shared-types/cart-service";
 
@@ -120,5 +120,47 @@ export default class CartService {
     await this.cartRepository.updateCart(clearedCart);
 
     return clearedCart;
+  }
+
+  /**
+   * Mettre à jour les données checkout
+   */
+  async updateCheckoutData(
+    sessionId: string,
+    checkoutData: CartCheckoutData
+  ): Promise<Cart> {
+    let cart = await this.getCart(sessionId);
+
+    if (!cart) {
+      cart = await this.createCart(sessionId);
+    }
+
+    const updatedCart = cart.updateCheckoutData(checkoutData);
+    await this.cartRepository.updateCart(updatedCart);
+
+    return updatedCart;
+  }
+
+  /**
+   * Récupérer les données checkout
+   */
+  async getCheckoutData(sessionId: string): Promise<CartCheckoutData | null> {
+    const cart = await this.getCart(sessionId);
+    return cart?.checkoutData || null;
+  }
+
+  /**
+   * Supprimer les données checkout
+   */
+  async clearCheckoutData(sessionId: string): Promise<Cart> {
+    const cart = await this.getCart(sessionId);
+    if (!cart) {
+      throw new Error("Panier non trouvé");
+    }
+
+    const updatedCart = cart.clearCheckoutData();
+    await this.cartRepository.updateCart(updatedCart);
+
+    return updatedCart;
   }
 }

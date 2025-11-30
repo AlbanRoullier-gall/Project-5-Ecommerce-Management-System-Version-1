@@ -7,7 +7,6 @@ import { useEffect, useState, useRef } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { useCart } from "../../contexts/CartContext";
-import { CustomerResolveOrCreateDTO, AddressesCreateDTO } from "../../dto";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
@@ -48,33 +47,18 @@ export default function CheckoutSuccessPage() {
 
     const finalize = async () => {
       try {
-        // Récupérer les données checkout depuis sessionStorage
-        const checkoutDataKey = "checkout_data";
-        const storedCheckoutData = sessionStorage.getItem(checkoutDataKey);
-
-        if (!storedCheckoutData) {
-          throw new Error("Données de checkout introuvables");
-        }
-
-        const checkoutData = JSON.parse(storedCheckoutData);
-
-        // Utilise les types existants directement
-        // checkoutData contient customerData (CustomerResolveOrCreateDTO) et addressData (AddressesCreateDTO)
-        // Le cartSessionId est maintenant géré automatiquement via cookie httpOnly
+        // Les données checkout sont maintenant récupérées depuis le cart-service
+        // Le cartSessionId est géré automatiquement via cookie httpOnly
         const finalizePayload: {
           csid: string;
-          checkoutData: {
-            customerData: CustomerResolveOrCreateDTO;
-            addressData: AddressesCreateDTO;
-          };
         } = {
           csid: sessionId,
-          checkoutData,
         };
 
         console.log("Finalizing payment with:", {
           csid: sessionId,
           // cartSessionId est maintenant dans le cookie httpOnly
+          // checkoutData sera récupéré depuis le cart-service
         });
         const response = await fetch(`${API_URL}/api/payment/finalize`, {
           method: "POST",

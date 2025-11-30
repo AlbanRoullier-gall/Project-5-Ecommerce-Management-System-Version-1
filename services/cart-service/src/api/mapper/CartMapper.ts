@@ -125,6 +125,7 @@ export class CartMapper {
       tax: cart.tax,
       total: cart.total,
       vatBreakdown: cart.vatBreakdown,
+      checkoutData: cart.checkoutData || null,
       createdAt: cart.createdAt,
       updatedAt: cart.updatedAt,
       expiresAt: cart.expiresAt,

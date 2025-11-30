@@ -201,4 +201,107 @@ export class CartController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  /**
+   * Mettre à jour les données checkout
+   */
+  async updateCheckoutData(req: Request, res: Response): Promise<void> {
+    try {
+      const cartRequest: CartRequestDTO = {
+        sessionId: req.query.sessionId as string,
+      };
+
+      if (!cartRequest.sessionId) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("sessionId is required"));
+        return;
+      }
+
+      const checkoutData = req.body;
+      const cart = await this.cartService.updateCheckoutData(
+        cartRequest.sessionId,
+        checkoutData
+      );
+
+      res.status(200).json(ResponseMapper.cartRetrieved(cart));
+    } catch (error: any) {
+      console.error("Update checkout data error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Récupérer les données checkout
+   */
+  async getCheckoutData(req: Request, res: Response): Promise<void> {
+    try {
+      const cartRequest: CartRequestDTO = {
+        sessionId: req.query.sessionId as string,
+      };
+
+      if (!cartRequest.sessionId) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("sessionId is required"));
+        return;
+      }
+
+      const checkoutData = await this.cartService.getCheckoutData(
+        cartRequest.sessionId
+      );
+
+      if (checkoutData === null) {
+        res.status(200).json({
+          success: true,
+          data: null,
+          message: "Aucune donnée checkout trouvée",
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: checkoutData,
+      });
+    } catch (error: any) {
+      console.error("Get checkout data error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Supprimer les données checkout
+   */
+  async clearCheckoutData(req: Request, res: Response): Promise<void> {
+    try {
+      const cartRequest: CartRequestDTO = {
+        sessionId: req.query.sessionId as string,
+      };
+
+      if (!cartRequest.sessionId) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("sessionId is required"));
+        return;
+      }
+
+      const cart = await this.cartService.clearCheckoutData(
+        cartRequest.sessionId
+      );
+
+      res.status(200).json({
+        success: true,
+        message: "Données checkout supprimées avec succès",
+        data: CartMapper.cartToPublicDTO(cart),
+      });
+    } catch (error: any) {
+      console.error("Clear checkout data error:", error);
+      if (error.message.includes("non trouvé")) {
+        res.status(404).json(ResponseMapper.notFoundError("Panier"));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

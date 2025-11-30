@@ -49,6 +49,60 @@ export interface VatBreakdownItem {
 }
 
 /**
+ * DTO pour les données checkout temporaires
+ */
+export interface CartCheckoutDataDTO {
+  customerData?: {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+  } | null;
+  addressData?: {
+    shipping?: {
+      address?: string;
+      postalCode?: string;
+      city?: string;
+      countryName?: string;
+    };
+    billing?: {
+      address?: string;
+      postalCode?: string;
+      city?: string;
+      countryName?: string;
+    };
+    useSameBillingAddress?: boolean;
+  } | null;
+}
+
+/**
+ * DTO pour mettre à jour les données checkout
+ */
+export interface CartCheckoutDataUpdateDTO {
+  customerData?: {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+  };
+  addressData?: {
+    shipping?: {
+      address?: string;
+      postalCode?: string;
+      city?: string;
+      countryName?: string;
+    };
+    billing?: {
+      address?: string;
+      postalCode?: string;
+      city?: string;
+      countryName?: string;
+    };
+    useSameBillingAddress?: boolean;
+  };
+}
+
+/**
  * DTO public pour un panier
  * Basé sur CartData avec articles
  */
@@ -60,6 +114,7 @@ export interface CartPublicDTO {
   tax: number;
   total: number;
   vatBreakdown: VatBreakdownItem[]; // Répartition de la TVA par taux
+  checkoutData?: CartCheckoutDataDTO | null; // Données checkout temporaires
   createdAt: Date;
   updatedAt: Date;
   expiresAt: Date;
