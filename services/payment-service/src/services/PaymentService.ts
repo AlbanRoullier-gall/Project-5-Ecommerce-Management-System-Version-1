@@ -259,5 +259,136 @@ export default class PaymentService {
       );
     }
   }
+
+  /**
+   * Transforme les items d'un panier en format Stripe
+   * Conversion des prix TTC en centimes pour Stripe
+   *
+   * @param cartItems - Items du panier (CartItemPublicDTO[])
+   * @returns Items formatés pour Stripe avec prix en centimes
+   */
+  transformCartItemsToStripeItems(
+    cartItems: Array<{
+      productName: string;
+      description?: string | null;
+      unitPriceTTC: number;
+      quantity: number;
+    }>
+  ): Array<{
+    name: string;
+    description: string;
+    price: number; // en centimes
+    quantity: number;
+    currency: string;
+  }> {
+    return cartItems.map((item) => ({
+      name: item.productName,
+      description: item.description || "",
+      price: Math.round(item.unitPriceTTC * 100), // Conversion en centimes
+      quantity: item.quantity,
+      currency: "eur",
+    }));
+  }
+
+  /**
+   * Extrait les métadonnées importantes d'une session Stripe
+   *
+   * @param session - Session Stripe
+   * @returns Métadonnées extraites (customerId, paymentIntentId)
+   */
+  extractSessionMetadata(session: Stripe.Checkout.Session): {
+    customerId?: number | undefined;
+    paymentIntentId?: string | undefined;
+    cartSessionId?: string | undefined;
+  } {
+    const metadata = session.metadata || {};
+    const paymentIntentId = this.extractPaymentIntentId(session);
+
+    let customerId: number | undefined = undefined;
+    if (metadata.customerId) {
+      const parsed = parseInt(metadata.customerId, 10);
+      if (!isNaN(parsed)) {
+        customerId = parsed;
+      }
+    }
+
+    return {
+      customerId,
+      paymentIntentId,
+      cartSessionId: metadata.cartSessionId,
+    };
+  }
+
+  /**
+   * Créer un paiement depuis un panier avec checkoutData
+   * Version simplifiée qui accepte directement le panier avec checkoutData
+   * et fait toute la transformation en interne
+   *
+   * @param data - Données contenant le panier avec checkoutData
+   * @returns Résultat du paiement
+   */
+  async createPaymentFromCartWithCheckout(data: {
+    cart: {
+      items: Array<{
+        productName: string;
+        description?: string | null;
+        unitPriceTTC: number;
+        quantity: number;
+      }>;
+    };
+    checkoutData: {
+      customerData: {
+        email: string;
+        firstName?: string;
+        lastName?: string;
+        phoneNumber?: string;
+      };
+    };
+    successUrl: string;
+    cancelUrl: string;
+    metadata?: Record<string, string>;
+  }): Promise<any> {
+    try {
+      // Valider que le panier n'est pas vide
+      if (!data.cart || !data.cart.items || data.cart.items.length === 0) {
+        throw new Error("Le panier est vide");
+      }
+
+      // Valider que checkoutData est présent
+      if (!data.checkoutData || !data.checkoutData.customerData?.email) {
+        throw new Error("Les données checkout sont obligatoires");
+      }
+
+      // Transformer les items du panier en format Stripe
+      const stripeItems = this.transformCartItemsToStripeItems(data.cart.items);
+
+      // Construire le nom du client
+      const customerName = data.checkoutData.customerData
+        ? `${data.checkoutData.customerData.firstName || ""} ${
+            data.checkoutData.customerData.lastName || ""
+          }`.trim()
+        : "";
+
+      // Créer le payload de paiement
+      const paymentData = {
+        items: stripeItems,
+        customer: {
+          email: data.checkoutData.customerData.email,
+          name: customerName,
+          phone: data.checkoutData.customerData.phoneNumber || "",
+        },
+        successUrl: data.successUrl,
+        cancelUrl: data.cancelUrl,
+        metadata: data.metadata || {},
+      };
+
+      return await this.createPayment(paymentData);
+    } catch (error: any) {
+      console.error("Error creating payment from cart with checkout:", error);
+      throw new Error(
+        `Erreur lors de la création du paiement: ${error.message}`
+      );
+    }
+  }
 }
 console.log("STRIPE_SECRET_KEY:", process.env.STRIPE_SECRET_KEY);

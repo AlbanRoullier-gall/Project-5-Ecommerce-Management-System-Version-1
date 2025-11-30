@@ -58,7 +58,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     }
 
     // 1. Récupérer la session de paiement depuis payment-service
-    // On récupère le paymentIntentId et le customerId depuis les métadonnées
+    // Le service extrait maintenant les métadonnées en interne
     let paymentIntentId: string | undefined;
     let customerId: number | undefined;
 
@@ -88,18 +88,20 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         success: boolean;
         session: any; // Stripe.Checkout.Session
         paymentIntentId?: string;
+        metadata?: {
+          customerId?: number;
+          paymentIntentId?: string;
+          cartSessionId?: string;
+        };
       };
 
-      paymentIntentId = paymentResponseData.paymentIntentId;
-
-      // Les métadonnées sont dans session.metadata (structure Stripe)
-      const sessionMetadata = paymentResponseData.session?.metadata || {};
+      paymentIntentId =
+        paymentResponseData.paymentIntentId ||
+        paymentResponseData.metadata?.paymentIntentId;
+      customerId = paymentResponseData.metadata?.customerId;
 
       // Le customerId est TOUJOURS dans les métadonnées (garanti par checkout-complete)
-      if (sessionMetadata.customerId) {
-        customerId = parseInt(sessionMetadata.customerId, 10);
-      } else {
-        // Si absent (cas d'erreur), on ne peut pas continuer
+      if (!customerId) {
         return res
           .status(400)
           .json(
@@ -182,33 +184,25 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // 3. Construire le payload pour order-service
-    // customerId est garanti (depuis les métadonnées Stripe)
-    // customerSnapshot sera construit dans order-service à partir de customerData
-    // SIMPLIFICATION : Utiliser directement checkoutData depuis le panier (déjà vérifié)
-    const checkoutData = cart.checkoutData!; // Garanti par la vérification ci-dessus
-    const orderPayload = {
-      cart,
-      customerId, // Garanti depuis les métadonnées Stripe
-      customerData: checkoutData.customerData || {},
-      addressData: checkoutData.addressData || {},
-      paymentIntentId,
-      paymentMethod: "stripe",
-    };
-
-    // 5. Appeler order-service pour créer la commande
+    // 3. Appeler order-service pour créer la commande
+    // Le service construit maintenant le payload en interne depuis le panier avec checkoutData
     let orderId: number;
 
     try {
       const orderResponse = await fetch(
-        `${SERVICES.order}/api/orders/create-from-cart`,
+        `${SERVICES.order}/api/orders/create-from-cart-checkout`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "X-Service-Request": "api-gateway",
           },
-          body: JSON.stringify(orderPayload),
+          body: JSON.stringify({
+            cart,
+            customerId, // Garanti depuis les métadonnées Stripe
+            paymentIntentId,
+            paymentMethod: "stripe",
+          }),
         }
       );
 
@@ -246,7 +240,8 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     // 6. Ajouter les adresses au customer-service (non-bloquant)
     // Utilise le nouvel endpoint qui gère shipping + billing en une fois
     // SIMPLIFICATION : Utiliser directement checkoutData depuis le panier
-    if (customerId && checkoutData.addressData) {
+    const checkoutData = cart.checkoutData;
+    if (customerId && checkoutData?.addressData) {
       try {
         await fetch(
           `${SERVICES.customer}/api/customers/${customerId}/addresses/bulk`,
@@ -287,8 +282,8 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
           body: JSON.stringify({
             orderId,
             cart,
-            customerData: checkoutData.customerData || {},
-            addressData: checkoutData.addressData || {},
+            customerData: checkoutData?.customerData || {},
+            addressData: checkoutData?.addressData || {},
           }),
         }
       );

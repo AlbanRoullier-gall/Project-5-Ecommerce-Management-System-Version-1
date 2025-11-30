@@ -13,7 +13,6 @@ import OrderService from "../../services/OrderService";
 import { OrderMapper, ResponseMapper } from "../mapper";
 import Order from "../../models/Order";
 import {
-  OrderFromCartDTO,
   OrderListRequestDTO,
   OrderUpdateDeliveryStatusDTO,
   OrderUpdateCreditNoteStatusDTO,
@@ -226,21 +225,21 @@ export class OrderController {
   }
 
   /**
-   * Créer une commande complète depuis un panier
-   * Accepte un panier complet et fait la transformation en interne
+   * Créer une commande depuis un panier avec checkoutData
+   * Accepte le panier avec checkoutData et construit le payload en interne
    */
   async createOrderFromCart(req: Request, res: Response): Promise<void> {
     try {
-      const orderFromCartDTO: OrderFromCartDTO = req.body;
-      const order = await this.orderService.createOrderFromCart(
-        orderFromCartDTO
-      );
+      const order = await this.orderService.createOrderFromCart(req.body);
       const orderDTO = OrderMapper.orderToPublicDTO(order);
 
       res.status(201).json(ResponseMapper.orderCreated(orderDTO));
     } catch (error: any) {
       console.error("Create order from cart error:", error);
-      if (error.message.includes("vide")) {
+      if (
+        error.message.includes("vide") ||
+        error.message.includes("obligatoires")
+      ) {
         res.status(400).json(ResponseMapper.validationError(error.message));
         return;
       }

@@ -200,58 +200,31 @@ export const handleCheckoutComplete = async (
       return;
     }
 
-    // 3. Construire le payload pour payment-service
-    // SIMPLIFICATION : On n'envoie que ce qui est nécessaire pour Stripe
-    // - Les items transformés (name, price, quantity)
-    // - L'email du client (pour customer_email Stripe)
-    // - Les métadonnées (customerId, cartSessionId)
-    // Le panier complet et checkoutData ne sont pas nécessaires ici
-    // (ils seront récupérés dans payment-finalize depuis cart-service)
-
-    // Transformer les items du panier en format Stripe
-    const stripeItems = cart.items.map((item) => ({
-      name: item.productName,
-      description: item.description || "",
-      price: Math.round(item.unitPriceTTC * 100), // Conversion en centimes
-      quantity: item.quantity,
-      currency: "eur",
-    }));
-
-    // Construire le nom du client depuis customerData
-    const customerName = checkoutData.customerData
-      ? `${checkoutData.customerData.firstName || ""} ${
-          checkoutData.customerData.lastName || ""
-        }`.trim()
-      : "";
-
-    const paymentPayload = {
-      items: stripeItems,
-      customer: {
-        email: checkoutData.customerData!.email,
-        name: customerName,
-        phone: checkoutData.customerData?.phoneNumber || "",
-      },
-      successUrl: body.successUrl,
-      cancelUrl: body.cancelUrl,
-      metadata: {
-        customerId: customerId.toString(), // TOUJOURS présent dans les métadonnées
-        cartSessionId: cartSessionId,
-      },
-    };
-
-    // 4. Appeler payment-service pour créer la session Stripe
-    // SIMPLIFICATION : Utilise l'endpoint /api/payment/create directement
-    // avec les items transformés (au lieu de /api/payment/create-from-cart avec le panier complet)
+    // 3. Appeler payment-service pour créer la session Stripe
+    // Le service fait maintenant la transformation des items en interne
     try {
       const paymentResponse = await fetch(
-        `${SERVICES.payment}/api/payment/create`,
+        `${SERVICES.payment}/api/payment/create-from-cart-checkout`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "X-Service-Request": "api-gateway",
           },
-          body: JSON.stringify(paymentPayload),
+          body: JSON.stringify({
+            cart: {
+              items: cart.items,
+            },
+            checkoutData: {
+              customerData: checkoutData.customerData,
+            },
+            successUrl: body.successUrl,
+            cancelUrl: body.cancelUrl,
+            metadata: {
+              customerId: customerId.toString(),
+              cartSessionId: cartSessionId,
+            },
+          }),
         }
       );
 

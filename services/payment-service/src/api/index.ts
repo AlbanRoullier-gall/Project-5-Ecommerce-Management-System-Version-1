@@ -115,6 +115,39 @@ export class ApiRouter {
         cancelUrl: Joi.string().required(),
         metadata: Joi.object().optional(),
       }).unknown(true),
+      // Schéma pour créer un paiement depuis un panier avec checkoutData
+      paymentCreateFromCartWithCheckoutSchema: Joi.object({
+        cart: Joi.object({
+          items: Joi.array()
+            .items(
+              Joi.object({
+                productName: Joi.string().required(),
+                description: Joi.any().optional(),
+                unitPriceTTC: Joi.number().positive().required(),
+                quantity: Joi.number().positive().required(),
+              }).unknown(true)
+            )
+            .min(1)
+            .required(),
+        })
+          .unknown(true)
+          .required(),
+        checkoutData: Joi.object({
+          customerData: Joi.object({
+            email: Joi.string().email().required(),
+            firstName: Joi.string().optional().allow(null, ""),
+            lastName: Joi.string().optional().allow(null, ""),
+            phoneNumber: Joi.string().optional().allow(null, ""),
+          })
+            .unknown(true)
+            .required(),
+        })
+          .unknown(true)
+          .required(),
+        successUrl: Joi.string().required(),
+        cancelUrl: Joi.string().required(),
+        metadata: Joi.object().optional(),
+      }).unknown(true),
     };
   }
 
@@ -206,6 +239,15 @@ export class ApiRouter {
     app.get("/api/payment/session/:csid", (req: Request, res: Response) => {
       this.paymentController.getSessionInfo(req, res);
     });
+
+    // Créer un paiement depuis un panier avec checkoutData (version simplifiée)
+    app.post(
+      "/api/payment/create-from-cart-checkout",
+      this.validateRequest(schemas.paymentCreateFromCartWithCheckoutSchema),
+      (req: Request, res: Response) => {
+        this.paymentController.createPaymentFromCartWithCheckout(req, res);
+      }
+    );
 
     // ===== GESTION DES ERREURS =====
     app.use((req: Request, res: Response) => {

@@ -40,12 +40,117 @@ export default class OrderService {
   // ===== CRÉATION DE COMMANDES =====
 
   /**
-   * Créer une commande complète depuis un panier
+   * Créer une commande depuis un panier avec checkoutData
+   * Accepte le panier avec checkoutData et construit le payload en interne
+   *
+   * @param data - Données contenant le panier avec checkoutData et les métadonnées de paiement
+   * @returns Commande créée
+   */
+  async createOrderFromCart(data: {
+    cart: {
+      items: Array<{
+        id: string;
+        productId: number;
+        productName: string;
+        description?: string | null;
+        imageUrl?: string | null;
+        quantity: number;
+        unitPriceHT: number;
+        unitPriceTTC: number;
+        vatRate: number;
+        totalPriceHT: number;
+        totalPriceTTC: number;
+      }>;
+      subtotal: number;
+      tax: number;
+      total: number;
+      checkoutData?: {
+        customerData?: {
+          email: string;
+          firstName?: string;
+          lastName?: string;
+          phoneNumber?: string;
+        } | null;
+        addressData?: {
+          shipping?: {
+            address?: string;
+            postalCode?: string;
+            city?: string;
+            countryName?: string;
+          };
+          billing?: {
+            address?: string;
+            postalCode?: string;
+            city?: string;
+            countryName?: string;
+          };
+          useSameBillingAddress?: boolean;
+        } | null;
+      } | null;
+    };
+    customerId: number;
+    paymentIntentId?: string;
+    paymentMethod?: string;
+  }): Promise<Order> {
+    // Valider que le panier n'est pas vide
+    if (!data.cart || !data.cart.items || data.cart.items.length === 0) {
+      throw new Error("Le panier est vide");
+    }
+
+    // Valider que checkoutData est présent
+    if (
+      !data.cart.checkoutData ||
+      !data.cart.checkoutData.customerData?.email
+    ) {
+      throw new Error("Les données checkout sont obligatoires");
+    }
+
+    // Extraire customerData et addressData depuis checkoutData
+    const checkoutData = data.cart.checkoutData;
+    const customerData = checkoutData.customerData!;
+    const addressData = checkoutData.addressData || {
+      shipping: {},
+      billing: {},
+      useSameBillingAddress: true,
+    };
+
+    // Construire le payload pour la méthode interne
+    const orderPayload = {
+      cart: data.cart,
+      customerId: data.customerId,
+      customerData: {
+        email: customerData.email,
+        ...(customerData.firstName !== undefined && {
+          firstName: customerData.firstName,
+        }),
+        ...(customerData.lastName !== undefined && {
+          lastName: customerData.lastName,
+        }),
+        ...(customerData.phoneNumber !== undefined && {
+          phoneNumber: customerData.phoneNumber,
+        }),
+      },
+      addressData: {
+        shipping: addressData.shipping || {},
+        billing: addressData.billing || {},
+        useSameBillingAddress: addressData.useSameBillingAddress ?? true,
+      },
+      ...(data.paymentIntentId !== undefined && {
+        paymentIntentId: data.paymentIntentId,
+      }),
+      paymentMethod: data.paymentMethod || "stripe",
+    };
+
+    return await this._createOrderFromCartInternal(orderPayload);
+  }
+
+  /**
+   * Méthode interne pour créer une commande complète depuis un panier
    * Transforme le panier en commande et crée tout en base de données avec une transaction
    * @param {Object} data Données contenant le panier et les informations de commande
    * @returns {Promise<Order>} Commande créée
    */
-  async createOrderFromCart(data: {
+  private async _createOrderFromCartInternal(data: {
     cart: any; // CartPublicDTO
     customerId?: number;
     customerSnapshot?: any; // Optionnel, sera construit à partir de customerData si non fourni

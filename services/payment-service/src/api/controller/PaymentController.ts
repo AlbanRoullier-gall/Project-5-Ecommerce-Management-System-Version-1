@@ -94,13 +94,55 @@ export class PaymentController {
       const { session, paymentIntentId } =
         await this.paymentService.getSessionInfo(csid);
 
-      res
-        .status(200)
-        .json(ResponseMapper.sessionRetrieved(session, paymentIntentId));
+      // Extraire les métadonnées importantes
+      const metadata = this.paymentService.extractSessionMetadata(session);
+
+      res.status(200).json({
+        success: true,
+        session,
+        paymentIntentId,
+        metadata,
+        timestamp: new Date().toISOString(),
+      });
     } catch (error: any) {
       console.error("Get session info error:", error);
       if (error.message.includes("non trouvée")) {
         res.status(404).json(ResponseMapper.notFoundError("Session Stripe"));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Créer un paiement depuis un panier avec checkoutData
+   * Version simplifiée qui accepte directement le panier avec checkoutData
+   */
+  async createPaymentFromCartWithCheckout(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      const result =
+        await this.paymentService.createPaymentFromCartWithCheckout(req.body);
+      res
+        .status(201)
+        .json(
+          ResponseMapper.paymentCreated(
+            PaymentMapper.stripePaymentIntentToPublicDTO(result)
+          )
+        );
+    } catch (error: any) {
+      console.error("Create payment from cart with checkout error:", error);
+      if (
+        error.message.includes("vide") ||
+        error.message.includes("obligatoires")
+      ) {
+        res.status(400).json(ResponseMapper.validationError(error.message));
+        return;
+      }
+      if (error.message.includes("card")) {
+        res.status(402).json(ResponseMapper.paymentError(error.message));
         return;
       }
       res.status(500).json(ResponseMapper.internalServerError());
