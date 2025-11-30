@@ -22,7 +22,8 @@ export class EmailController {
   }
 
   /**
-   * Envoyer un email au client
+   * Envoyer un email au client (formulaire de contact)
+   * Le destinataire est déterminé côté serveur depuis ADMIN_EMAIL
    */
   async sendClientEmail(req: Request, res: Response): Promise<void> {
     try {

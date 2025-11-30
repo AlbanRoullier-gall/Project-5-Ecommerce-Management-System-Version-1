@@ -39,16 +39,13 @@ export class ApiRouter {
   private setupValidationSchemas() {
     return {
       // Email client schema
+      // Le destinataire est déterminé côté serveur depuis ADMIN_EMAIL
       emailSendSchema: Joi.object({
-        to: Joi.object({
-          email: Joi.string().email().required(),
-          name: Joi.string().optional(),
-        }).required(),
         subject: Joi.string().max(255).required(),
         message: Joi.string().max(5000).required(),
         clientName: Joi.string().max(100).required(),
         clientEmail: Joi.string().email().required(),
-      }),
+      }).unknown(true),
 
       // Email reset password schema
       emailResetPasswordSchema: Joi.object({

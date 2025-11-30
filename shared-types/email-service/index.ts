@@ -22,17 +22,21 @@ export interface EmailSendDTO {
 
 /**
  * DTO pour l'envoi d'email client (contact form)
+ * Le destinataire est déterminé côté serveur depuis ADMIN_EMAIL
  */
 export interface EmailClientSendDTO {
-  to: {
-    email: string;
-    name?: string;
-  };
   subject: string;
   message: string;
   clientName: string;
   clientEmail: string;
 }
+
+/**
+ * DTO pour le formulaire de contact
+ * Alias de EmailClientSendDTO pour plus de clarté dans le frontend
+ * Le destinataire est déterminé automatiquement par le service depuis ADMIN_EMAIL
+ */
+export interface ContactFormDTO extends EmailClientSendDTO {}
 
 /**
  * DTO pour l'envoi d'email de réinitialisation de mot de passe

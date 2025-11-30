@@ -8,7 +8,7 @@ import {
   Button,
   Alert,
 } from "../shared";
-import { EmailClientSendDTO } from "../../dto";
+import { ContactFormDTO } from "../../dto";
 
 // URL de l'API pour l'envoi d'emails (depuis les variables d'environnement ou valeur par défaut)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
@@ -48,8 +48,8 @@ export default function ContactForm() {
 
     try {
       // Préparation des données à envoyer à l'API
-      const emailData: EmailClientSendDTO = {
-        to: { email: "u4999410740@gmail.com", name: "Nature de Pierre" },
+      // Le destinataire est déterminé côté serveur depuis ADMIN_EMAIL
+      const contactData: ContactFormDTO = {
         subject: formData.subject || "Nouveau message de contact",
         message: formData.message,
         clientName: formData.name,
@@ -57,11 +57,12 @@ export default function ContactForm() {
       };
 
       // Envoi de la requête POST à l'API d'envoi d'email
+      // Le destinataire sera déterminé côté serveur
       const response = await fetch(`${API_URL}/api/email/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // Important pour CORS avec credentials: true
-        body: JSON.stringify(emailData),
+        body: JSON.stringify(contactData),
       });
 
       const result = await response.json();

@@ -8,9 +8,11 @@ import nodemailer from "nodemailer";
 export default class EmailService {
   private transporter: nodemailer.Transporter | null = null;
   private adminEmail: string;
+  private adminName: string;
 
   constructor() {
     this.adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
+    this.adminName = process.env.ADMIN_NAME || "Nature de Pierre";
     this.initializeGmailTransporter();
   }
 
@@ -40,8 +42,9 @@ export default class EmailService {
   }
 
   /**
-   * Envoyer un email au client
-   * @param {Object} emailData Données de l'e-mail
+   * Envoyer un email au client (formulaire de contact)
+   * Le destinataire est déterminé depuis ADMIN_EMAIL (configuré côté serveur)
+   * @param {Object} emailData Données de l'e-mail (sans champ to)
    * @returns {Promise<Object>} Résultat d'envoi
    */
   async sendClientEmail(emailData: any): Promise<any> {
@@ -50,7 +53,7 @@ export default class EmailService {
       return {
         messageId: "mock-id",
         status: "failed",
-        recipient: emailData.to.email,
+        recipient: this.adminEmail,
         subject: emailData.subject,
         sentAt: null,
         error: "Gmail transporter not configured",
@@ -58,9 +61,10 @@ export default class EmailService {
     }
 
     try {
+      // Le destinataire est toujours déterminé depuis ADMIN_EMAIL
       const mailOptions = {
         from: process.env.GMAIL_USER,
-        to: emailData.to.email,
+        to: this.adminEmail,
         subject: emailData.subject,
         html: `
           <h2>Message de ${emailData.clientName}</h2>
@@ -87,7 +91,7 @@ export default class EmailService {
       return {
         messageId: result.messageId,
         status: "sent",
-        recipient: emailData.to.email,
+        recipient: this.adminEmail,
         subject: emailData.subject,
         sentAt: new Date(),
       };
@@ -742,5 +746,4 @@ export default class EmailService {
       throw error;
     }
   }
-
 }
