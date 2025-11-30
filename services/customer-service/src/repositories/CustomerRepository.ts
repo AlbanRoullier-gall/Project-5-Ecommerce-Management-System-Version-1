@@ -123,10 +123,26 @@ class CustomerRepository {
       const conditions: string[] = [];
 
       if (search) {
+        // Rechercher dans first_name, last_name, email, phone_number
+        // et aussi dans la concaténation first_name || ' ' || last_name (pour fullName)
+        const searchPattern = `%${search}%`;
         conditions.push(
-          `(c.first_name ILIKE $${++paramCount} OR c.last_name ILIKE $${paramCount} OR c.email ILIKE $${paramCount})`
+          `(
+            c.first_name ILIKE $${++paramCount} OR 
+            c.last_name ILIKE $${++paramCount} OR 
+            c.email ILIKE $${++paramCount} OR 
+            c.phone_number ILIKE $${++paramCount} OR
+            (c.first_name || ' ' || c.last_name) ILIKE $${++paramCount}
+          )`
         );
-        params.push(`%${search}%`);
+        // Utiliser le même pattern pour tous les champs
+        params.push(
+          searchPattern,
+          searchPattern,
+          searchPattern,
+          searchPattern,
+          searchPattern
+        );
       }
 
       if (conditions.length > 0) {

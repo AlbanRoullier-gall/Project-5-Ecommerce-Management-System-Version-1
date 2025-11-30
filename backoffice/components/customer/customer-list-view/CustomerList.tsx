@@ -28,11 +28,9 @@ const CustomerList: React.FC = () => {
 
   // États de données
   const [customers, setCustomers] = useState<CustomerPublicDTO[]>([]);
-  const [filteredCustomers, setFilteredCustomers] = useState<
-    CustomerPublicDTO[]
-  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [totalCustomers, setTotalCustomers] = useState<number>(0);
 
   // États des filtres
   const [searchTerm, setSearchTerm] = useState("");
@@ -43,39 +41,44 @@ const CustomerList: React.FC = () => {
   }, []);
 
   /**
-   * Effet de filtrage des clients
-   * Applique les filtres de recherche
+   * Effet : Recharger les clients quand le terme de recherche change
+   * Utilise un debounce pour éviter trop d'appels API
    */
   useEffect(() => {
-    let filtered = [...customers];
+    const timer = setTimeout(() => {
+      loadCustomers();
+    }, 300); // Debounce de 300ms
 
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (c) =>
-          c.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (c.phoneNumber &&
-            c.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    }
-
-    setFilteredCustomers(filtered);
-  }, [customers, searchTerm]);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
 
   const { apiCall } = useAuth();
 
   /**
-   * Charge la liste des clients depuis l'API
+   * Charge la liste des clients depuis l'API avec filtrage côté serveur
    * Gère les erreurs et met à jour l'état de chargement
    */
   const loadCustomers = async () => {
     setIsLoading(true);
     setError(null);
     try {
+      // Construire les paramètres de requête avec le terme de recherche
+      const queryParams = new URLSearchParams();
+      if (searchTerm) {
+        queryParams.set("search", searchTerm);
+      }
+
       const data = await apiCall<{
         customers?: CustomerPublicDTO[];
+        total?: number;
+        page?: number;
+        limit?: number;
+        totalPages?: number;
       }>({
-        url: "/api/admin/customers",
+        url: `/api/admin/customers${
+          queryParams.toString() ? `?${queryParams.toString()}` : ""
+        }`,
         method: "GET",
         requireAuth: true,
       });
@@ -83,6 +86,7 @@ const CustomerList: React.FC = () => {
       const customersList: CustomerPublicDTO[] =
         data.customers || (Array.isArray(data) ? data : []);
       setCustomers(customersList);
+      setTotalCustomers(data.total ?? customersList.length);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du chargement"
@@ -176,11 +180,11 @@ const CustomerList: React.FC = () => {
             fontWeight: "500",
           }}
         >
-          {filteredCustomers.length} client(s) trouvé(s)
+          {totalCustomers} client(s) trouvé(s)
         </p>
       </div>
       <CustomerTable
-        customers={filteredCustomers}
+        customers={customers}
         onEdit={handleEditCustomer}
         onDelete={handleDeleteCustomer}
         onManageAddresses={handleManageAddresses}
