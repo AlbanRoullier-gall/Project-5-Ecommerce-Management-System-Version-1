@@ -39,6 +39,11 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
   const [itemsLoading, setItemsLoading] = useState(false);
   const [itemsError, setItemsError] = useState<string | null>(null);
   const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
+  const [calculatedTotals, setCalculatedTotals] = useState<{
+    totalHT: number;
+    totalTTC: number;
+  }>({ totalHT: 0, totalTTC: 0 });
+  const [isCalculatingTotals, setIsCalculatingTotals] = useState(false);
 
   const selectedOrder: OrderPublicDTO | null = useMemo(() => {
     if (order) return order;
@@ -80,27 +85,77 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
     selectedItems.length,
   ]);
 
-  // Calcul des totaux pour l'affichage (prévisualisation)
-  // Utilise la même logique que CreditNote.calculateTotalsFromItems() du service
-  // Le service recalculera lors de la soumission pour garantir la cohérence
-  const calculatedTotals = useMemo(() => {
-    if (!selectedItems || selectedItems.length === 0) {
-      return { totalHT: 0, totalTTC: 0 };
-    }
+  // Calcul des totaux via l'API lorsque les items sélectionnés changent
+  React.useEffect(() => {
+    const calculateTotalsFromAPI = async () => {
+      if (!selectedItems || selectedItems.length === 0) {
+        setCalculatedTotals({ totalHT: 0, totalTTC: 0 });
+        return;
+      }
 
-    const totalHT = selectedItems.reduce(
-      (sum, item) => sum + parseFloat(String(item.totalPriceHT || 0)),
-      0
-    );
-    const totalTTC = selectedItems.reduce(
-      (sum, item) => sum + parseFloat(String(item.totalPriceTTC || 0)),
-      0
-    );
+      setIsCalculatingTotals(true);
+      try {
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+          setCalculatedTotals({ totalHT: 0, totalTTC: 0 });
+          return;
+        }
 
-    return {
-      totalHT: isNaN(totalHT) ? 0 : Number(totalHT),
-      totalTTC: isNaN(totalTTC) ? 0 : Number(totalTTC),
+        // Préparer les items pour l'API (seulement les propriétés nécessaires)
+        const itemsForCalculation = selectedItems.map((item) => ({
+          totalPriceHT: item.totalPriceHT || 0,
+          totalPriceTTC: item.totalPriceTTC || 0,
+        }));
+
+        const response = await fetch(
+          `${API_URL}/api/admin/credit-notes/calculate-totals`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ items: itemsForCalculation }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error(
+            "Erreur lors du calcul des totaux:",
+            response.status,
+            errorData
+          );
+          setCalculatedTotals({ totalHT: 0, totalTTC: 0 });
+          return;
+        }
+
+        const result = await response.json();
+        console.log("Réponse calcul totaux:", result);
+
+        // La réponse utilise ResponseMapper.success() qui retourne { message, data, status, timestamp }
+        if (
+          result.data &&
+          typeof result.data.totalHT !== "undefined" &&
+          typeof result.data.totalTTC !== "undefined"
+        ) {
+          setCalculatedTotals({
+            totalHT: result.data.totalHT || 0,
+            totalTTC: result.data.totalTTC || 0,
+          });
+        } else {
+          console.error("Format de réponse inattendu:", result);
+          setCalculatedTotals({ totalHT: 0, totalTTC: 0 });
+        }
+      } catch (error) {
+        console.error("Erreur lors du calcul des totaux:", error);
+        setCalculatedTotals({ totalHT: 0, totalTTC: 0 });
+      } finally {
+        setIsCalculatingTotals(false);
+      }
     };
+
+    calculateTotalsFromAPI();
   }, [selectedItems]);
 
   React.useEffect(() => {
@@ -603,9 +658,24 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                     fontSize: "0.75rem",
                     color: "#6b7280",
                     marginTop: "0.25rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
                   }}
                 >
-                  Calculé automatiquement à partir des articles sélectionnés
+                  {isCalculatingTotals ? (
+                    <>
+                      <i
+                        className="fas fa-spinner fa-spin"
+                        style={{ fontSize: "0.7rem" }}
+                      ></i>
+                      <span>Calcul en cours...</span>
+                    </>
+                  ) : (
+                    <span>
+                      Calculé automatiquement à partir des articles sélectionnés
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -657,9 +727,24 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                     fontSize: "0.75rem",
                     color: "#6b7280",
                     marginTop: "0.25rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
                   }}
                 >
-                  Calculé automatiquement à partir des articles sélectionnés
+                  {isCalculatingTotals ? (
+                    <>
+                      <i
+                        className="fas fa-spinner fa-spin"
+                        style={{ fontSize: "0.7rem" }}
+                      ></i>
+                      <span>Calcul en cours...</span>
+                    </>
+                  ) : (
+                    <span>
+                      Calculé automatiquement à partir des articles sélectionnés
+                    </span>
+                  )}
                 </div>
               )}
             </div>

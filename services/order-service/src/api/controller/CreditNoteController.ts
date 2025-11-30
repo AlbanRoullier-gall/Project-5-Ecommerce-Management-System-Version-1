@@ -12,6 +12,7 @@ import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
 import { CreditNoteCreateDTO, CreditNoteListRequestDTO } from "../dto";
 import { OrderMapper, ResponseMapper } from "../mapper";
+import CreditNote from "../../models/CreditNote";
 
 export class CreditNoteController {
   private orderService: OrderService;
@@ -179,6 +180,58 @@ export class CreditNoteController {
       res.json(ResponseMapper.success(result));
     } catch (error: any) {
       console.error("List credit notes error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Calculer les totaux HT et TTC à partir d'une liste d'items
+   * Utilise la logique métier du modèle CreditNote pour garantir la cohérence
+   */
+  async calculateTotals(req: Request, res: Response): Promise<void> {
+    try {
+      const { items } = req.body;
+
+      if (!items || !Array.isArray(items)) {
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              "Items array is required and must be an array"
+            )
+          );
+        return;
+      }
+
+      // Valider que chaque item a les propriétés nécessaires
+      for (const item of items) {
+        if (
+          typeof item.totalPriceHT === "undefined" ||
+          typeof item.totalPriceTTC === "undefined"
+        ) {
+          res
+            .status(400)
+            .json(
+              ResponseMapper.validationError(
+                "Each item must have totalPriceHT and totalPriceTTC properties"
+              )
+            );
+          return;
+        }
+      }
+
+      // Utiliser la méthode statique du modèle CreditNote pour calculer les totaux
+      const totals = CreditNote.calculateTotalsFromItems(items);
+
+      res.json(
+        ResponseMapper.success({
+          totalHT: totals.totalHT,
+          totalTTC: totals.totalTTC,
+          totalVAT: totals.totalTTC - totals.totalHT,
+        })
+      );
+    } catch (error: any) {
+      console.error("Calculate totals error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }

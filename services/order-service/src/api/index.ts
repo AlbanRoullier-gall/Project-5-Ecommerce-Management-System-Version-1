@@ -381,6 +381,14 @@ export class ApiRouter {
       }
     );
 
+    app.post(
+      "/api/admin/credit-notes/calculate-totals",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.creditNoteController.calculateTotals(req, res);
+      }
+    );
+
     app.get(
       "/api/admin/credit-notes",
       this.requireAuth,
