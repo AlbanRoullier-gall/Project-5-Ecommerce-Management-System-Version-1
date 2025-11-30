@@ -28,13 +28,18 @@ class Category {
   public readonly description: string;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
+  public readonly productCount: number | undefined; // Nombre de produits actifs dans cette catégorie
 
-  constructor(data: CategoryData) {
+  constructor(
+    data: CategoryData & { product_count?: number; productCount?: number }
+  ) {
     this.id = data.id;
     this.name = data.name;
     this.description = data.description || "";
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
+    // Support pour product_count (snake_case depuis SQL) et productCount (camelCase)
+    this.productCount = data.product_count ?? data.productCount;
   }
 
   /**

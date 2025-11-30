@@ -206,44 +206,15 @@ const ProductCatalog: React.FC = () => {
         categoriesData = data.categories;
       }
 
-      // Calculer le nombre de produits actifs par catégorie
-      const categoriesWithCount = categoriesData.map(
-        (cat: CategoryPublicDTO) => ({
-          ...cat,
-          productCount: 0, // Sera mis à jour après le chargement des produits
-        })
-      );
-
-      setCategories(categoriesWithCount);
+      // Le productCount est maintenant calculé côté serveur
+      setCategories(categoriesData);
     } catch (err) {
       console.error("Error loading categories:", err);
     }
   };
 
-  /**
-   * Met à jour le nombre de produits par catégorie
-   * Utilise useMemo pour éviter les re-renders inutiles
-   */
-  useEffect(() => {
-    if (products.length > 0 && categories.length > 0) {
-      // Vérifier si les comptages ont changé avant de mettre à jour
-      const needsUpdate = categories.some((cat) => {
-        const actualCount = products.filter(
-          (p) => p.categoryId === cat.id
-        ).length;
-        return cat.productCount !== actualCount;
-      });
-
-      if (needsUpdate) {
-        const categoriesWithCount = categories.map((cat) => ({
-          ...cat,
-          productCount: products.filter((p) => p.categoryId === cat.id).length,
-        }));
-        setCategories(categoriesWithCount);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products.length]);
+  // Le productCount est maintenant calculé côté serveur dans les requêtes SQL
+  // Plus besoin de calculer côté client
 
   /**
    * Gère le changement de catégorie

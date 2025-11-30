@@ -42,16 +42,24 @@ export class CategoryRepository {
   }
 
   /**
-   * Obtenir une catégorie par ID
+   * Obtenir une catégorie par ID avec le nombre de produits actifs
    * @param {number} id ID de la catégorie
    * @returns {Promise<Category|null>} Catégorie ou null si non trouvée
    */
   async getCategoryById(id: number): Promise<Category | null> {
     try {
       const query = `
-        SELECT id, name, description, created_at, updated_at
-        FROM categories 
-        WHERE id = $1
+        SELECT 
+          c.id, 
+          c.name, 
+          c.description, 
+          c.created_at, 
+          c.updated_at,
+          COUNT(p.id) FILTER (WHERE p.is_active = true) as product_count
+        FROM categories c
+        LEFT JOIN products p ON p.category_id = c.id
+        WHERE c.id = $1
+        GROUP BY c.id, c.name, c.description, c.created_at, c.updated_at
       `;
 
       const result = await this.pool.query(query, [id]);
@@ -60,7 +68,7 @@ export class CategoryRepository {
         return null;
       }
 
-      return new Category(result.rows[0] as CategoryData);
+      return new Category(result.rows[0]);
     } catch (error) {
       console.error(
         "Erreur lors de la récupération de la catégorie par ID:",
@@ -149,19 +157,27 @@ export class CategoryRepository {
   }
 
   /**
-   * Lister toutes les catégories
-   * @returns {Promise<Category[]>} Liste des catégories
+   * Lister toutes les catégories avec le nombre de produits actifs
+   * @returns {Promise<Category[]>} Liste des catégories avec productCount
    */
   async listCategories(): Promise<Category[]> {
     try {
       const query = `
-        SELECT id, name, description, created_at, updated_at
-        FROM categories 
-        ORDER BY name ASC
+        SELECT 
+          c.id, 
+          c.name, 
+          c.description, 
+          c.created_at, 
+          c.updated_at,
+          COUNT(p.id) FILTER (WHERE p.is_active = true) as product_count
+        FROM categories c
+        LEFT JOIN products p ON p.category_id = c.id
+        GROUP BY c.id, c.name, c.description, c.created_at, c.updated_at
+        ORDER BY c.name ASC
       `;
 
       const result = await this.pool.query(query);
-      return result.rows.map((row) => new Category(row as CategoryData));
+      return result.rows.map((row) => new Category(row));
     } catch (error) {
       console.error("Erreur lors de la liste des catégories:", error);
       throw error;
@@ -205,16 +221,17 @@ export class CategoryRepository {
         values.push(searchTerm, searchTerm);
       }
 
-      const whereClause =
+      // Construire la clause WHERE pour les catégories (avant le JOIN)
+      const categoryWhereClause =
         whereConditions.length > 0
           ? `WHERE ${whereConditions.join(" AND ")}`
           : "";
 
-      // Compter le total des catégories
+      // Compter le total des catégories (sans le JOIN pour éviter les doublons)
       const countQuery = `
-        SELECT COUNT(*) as total
-        FROM categories
-        ${whereClause}
+        SELECT COUNT(DISTINCT c.id) as total
+        FROM categories c
+        ${categoryWhereClause}
       `;
       const countResult = await this.pool.query(countQuery, values);
       const total = parseInt(countResult.rows[0].total);
@@ -235,11 +252,20 @@ export class CategoryRepository {
       const safeSortBy = allowedColumns.includes(sortBy) ? sortBy : "name";
       const orderClause = `ORDER BY ${safeSortBy} ${sortOrder.toUpperCase()}`;
 
-      // Obtenir les catégories
+      // Obtenir les catégories avec le nombre de produits actifs
+      // Appliquer les conditions WHERE sur les catégories avant le GROUP BY
       const query = `
-        SELECT id, name, description, created_at, updated_at
-        FROM categories
-        ${whereClause}
+        SELECT 
+          c.id, 
+          c.name, 
+          c.description, 
+          c.created_at, 
+          c.updated_at,
+          COUNT(p.id) FILTER (WHERE p.is_active = true) as product_count
+        FROM categories c
+        LEFT JOIN products p ON p.category_id = c.id
+        ${categoryWhereClause}
+        GROUP BY c.id, c.name, c.description, c.created_at, c.updated_at
         ${orderClause}
         LIMIT $${++paramCount} OFFSET $${++paramCount}
       `;
@@ -247,9 +273,7 @@ export class CategoryRepository {
       values.push(limit, offset);
       const result = await this.pool.query(query, values);
 
-      const categories = result.rows.map(
-        (row) => new Category(row as CategoryData)
-      );
+      const categories = result.rows.map((row) => new Category(row));
 
       return {
         categories,
