@@ -892,6 +892,22 @@ footer {
   .page-title {
     font-size: 2rem;
   }
+
+  /* Page Header Responsive */
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1.5rem !important;
+  }
+
+  .page-header-title {
+    font-size: 2rem !important;
+  }
+
+  .page-header-actions {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -934,7 +950,20 @@ footer {
   .error-message-text,
   .success-message-text {
     font-size: 0.9rem;
-    line-height: 1.5;
+  }
+
+  /* Page Header Responsive - Small screens */
+  .page-header-title {
+    font-size: 1.75rem !important;
+  }
+
+  .page-header-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .page-header-actions button {
+    width: 100% !important;
   }
 
   /* Styles spécifiques pour les champs de formulaire sur iPhone */
