@@ -56,11 +56,22 @@ export class ResponseMapper {
 
   /**
    * Réponse de liste de produits
+   * Format standardisé avec data et pagination
    */
   static productListed(result: any) {
     return {
-      products: result.products,
-      pagination: result.pagination,
+      message: "Liste des produits récupérée avec succès",
+      data: {
+        products: result.products || [],
+        pagination: result.pagination || {
+          page: 1,
+          limit: 10,
+          total: 0,
+          pages: 0,
+        },
+      },
+      timestamp: new Date().toISOString(),
+      status: 200,
     };
   }
 
@@ -116,10 +127,7 @@ export class ResponseMapper {
   /**
    * Réponse de liste de catégories avec pagination (CategorySearchDTO)
    */
-  static categoryListedWithPagination(
-    categories: any[],
-    pagination: any
-  ) {
+  static categoryListedWithPagination(categories: any[], pagination: any) {
     return {
       categories,
       pagination,

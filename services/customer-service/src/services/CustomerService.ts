@@ -356,7 +356,7 @@ class CustomerService {
           address: addressData.shipping.address,
           postalCode: addressData.shipping.postalCode || "",
           city: addressData.shipping.city || "",
-          countryName: addressData.shipping.countryName,
+          countryName: addressData.shipping.countryName || BELGIUM_COUNTRY_NAME,
           isDefault: true, // L'adresse de livraison est par défaut
         };
 
@@ -381,7 +381,7 @@ class CustomerService {
           address: addressData.billing.address,
           postalCode: addressData.billing.postalCode || "",
           city: addressData.billing.city || "",
-          countryName: addressData.billing.countryName,
+          countryName: addressData.billing.countryName || BELGIUM_COUNTRY_NAME,
           isDefault: false, // L'adresse de facturation n'est pas par défaut
         };
 

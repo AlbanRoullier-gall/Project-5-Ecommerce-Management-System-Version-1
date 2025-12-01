@@ -211,17 +211,18 @@ export class CustomerController {
         search: options.search ?? "",
       });
 
-      const response = {
-        customers: CustomerMapper.customersToPublicDTOs(result.customers),
-        total: result.pagination.total || 0,
-        page: result.pagination.page || 1,
-        limit: result.pagination.limit || 10,
-        totalPages: Math.ceil(
-          (result.pagination.total || 0) / (result.pagination.limit || 10)
-        ),
-      };
+      // Mapper les clients vers CustomerPublicDTO
+      const customersDTO = CustomerMapper.customersToPublicDTOs(
+        result.customers
+      );
 
-      res.json(response);
+      // Utiliser ResponseMapper pour standardiser la réponse
+      res.json(
+        ResponseMapper.customersListed({
+          customers: customersDTO,
+          pagination: result.pagination,
+        })
+      );
     } catch (error: any) {
       console.error("List customers error:", error);
       res.status(500).json(ResponseMapper.internalServerError());

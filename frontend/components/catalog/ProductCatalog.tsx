@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   ProductPublicDTO,
   CategoryPublicDTO,
-  ProductListDTO,
   CategoryListDTO,
   ProductSearchDTO,
   CategorySearchDTO,
@@ -118,39 +117,46 @@ const ProductCatalog: React.FC = () => {
       if (searchParams.sortOrder)
         queryParams.set("sortOrder", searchParams.sortOrder);
 
-      const response = await fetch(
+      const fetchResponse = await fetch(
         `${API_URL}/api/products?${queryParams.toString()}`,
         {
           credentials: "include", // Important pour CORS avec credentials: true
         }
       );
 
-      if (!response.ok) {
+      if (!fetchResponse.ok) {
         throw new Error("Erreur lors du chargement des produits");
       }
 
-      const data = (await response.json()) as
-        | ProductListDTO
-        | { products: ProductPublicDTO[]; pagination?: any }
-        | ProductPublicDTO[];
+      const response = (await fetchResponse.json()) as {
+        data?: {
+          products: ProductPublicDTO[];
+          pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+          };
+        };
+        products?: ProductPublicDTO[]; // Fallback pour compatibilité
+        pagination?: {
+          page: number;
+          limit: number;
+          total: number;
+          pages: number;
+        };
+        message?: string;
+        timestamp?: string;
+        status?: number;
+      };
 
-      // Gérer différents formats de réponse
-      if (Array.isArray(data)) {
-        setProducts(data);
-        setTotalProducts(data.length);
-      } else if ("products" in data) {
-        setProducts(data.products);
-        if ("pagination" in data && data.pagination) {
-          setTotalProducts(data.pagination.total || data.products.length);
-        } else if ("total" in data) {
-          setTotalProducts((data as ProductListDTO).total);
-        } else {
-          setTotalProducts(data.products.length);
-        }
-      } else {
-        setProducts([]);
-        setTotalProducts(0);
-      }
+      // Format standardisé : { data: { products: [], pagination: {} }, ... }
+      // Support du nouveau format et de l'ancien format pour compatibilité
+      const products = response.data?.products || response.products || [];
+      const pagination = response.data?.pagination || response.pagination;
+
+      setProducts(products);
+      setTotalProducts(pagination?.total || products.length);
     } catch (err) {
       setError(
         err instanceof Error

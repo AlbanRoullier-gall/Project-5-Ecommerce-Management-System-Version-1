@@ -217,6 +217,10 @@ export default class OrderRepository {
 
       const countResult = await this.pool.query(countQuery, countParams);
 
+      const totalCount = parseInt(countResult.rows[0].count);
+      const pages = Math.ceil(totalCount / limit);
+      const hasMore = page < pages;
+
       return {
         orders: result.rows.map((row) => {
           const order = new Order(row as OrderData);
@@ -228,8 +232,9 @@ export default class OrderRepository {
         pagination: {
           page,
           limit,
-          total: parseInt(countResult.rows[0].count),
-          pages: Math.ceil(parseInt(countResult.rows[0].count) / limit),
+          total: totalCount,
+          pages,
+          hasMore, // Indique s'il y a une page suivante
         },
       };
     } catch (error) {

@@ -58,6 +58,7 @@ export class Cart {
   public readonly subtotal: number;
   public readonly tax: number;
   public readonly total: number;
+  public readonly itemCount: number; // Nombre total d'articles (somme des quantités)
   public readonly vatBreakdown: Array<{ rate: number; amount: number }>;
   public readonly checkoutData: CartCheckoutData | null;
   public readonly createdAt: Date;
@@ -72,6 +73,8 @@ export class Cart {
     this.subtotal = data.subtotal;
     this.tax = data.tax;
     this.total = data.total;
+    // Calculer le nombre total d'articles (somme des quantités)
+    this.itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
     // Calculer le breakdown si non fourni (pour compatibilité avec anciennes données)
     this.vatBreakdown = data.vat_breakdown || this.calculateVatBreakdown(items);
     this.checkoutData = data.checkout_data || null;

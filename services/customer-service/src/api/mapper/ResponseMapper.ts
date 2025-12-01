@@ -61,6 +61,28 @@ export class ResponseMapper {
   }
 
   /**
+   * Réponse de liste de clients
+   * Format standardisé avec data et pagination
+   */
+  static customersListed(result: any) {
+    return {
+      message: "Liste des clients récupérée avec succès",
+      data: {
+        customers: result.customers || [],
+        pagination: result.pagination || {
+          page: 1,
+          limit: 10,
+          total: 0,
+          pages: 0,
+          hasMore: false,
+        },
+      },
+      timestamp: new Date().toISOString(),
+      status: 200,
+    };
+  }
+
+  /**
    * Réponse d'adresse créée
    */
   static addressCreated(address: any) {

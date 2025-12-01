@@ -86,6 +86,34 @@ export default class OrderItemRepository {
   }
 
   /**
+   * Récupérer plusieurs articles par leurs IDs
+   * @param {number[]} itemIds IDs des articles
+   * @returns {Promise<OrderItem[]>} Liste des articles
+   */
+  async getOrderItemsByIds(itemIds: number[]): Promise<OrderItem[]> {
+    try {
+      if (!itemIds || itemIds.length === 0) {
+        return [];
+      }
+
+      const query = `
+        SELECT id, order_id, product_id, product_name, description, image_url, quantity, 
+               unit_price_ht, unit_price_ttc, vat_rate, total_price_ht, total_price_ttc, 
+               created_at, updated_at
+        FROM order_items 
+        WHERE id = ANY($1::int[])
+        ORDER BY id
+      `;
+
+      const result = await this.pool.query(query, [itemIds]);
+      return result.rows.map((row) => new OrderItem(row as OrderItemData));
+    } catch (error) {
+      console.error("Error getting order items by IDs:", error);
+      throw new Error("Failed to retrieve order items");
+    }
+  }
+
+  /**
    * Récupérer les articles d'une commande
    * @param {number} orderId ID de la commande
    * @returns {Promise<any[]>} Liste des articles

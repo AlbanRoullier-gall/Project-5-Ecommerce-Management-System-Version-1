@@ -69,12 +69,20 @@ const CustomerList: React.FC = () => {
         queryParams.set("search", searchTerm);
       }
 
-      const data = await apiCall<{
-        customers?: CustomerPublicDTO[];
-        total?: number;
-        page?: number;
-        limit?: number;
-        totalPages?: number;
+      const response = await apiCall<{
+        data: {
+          customers: CustomerPublicDTO[];
+          pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+            hasMore: boolean;
+          };
+        };
+        message: string;
+        timestamp: string;
+        status: number;
       }>({
         url: `/api/admin/customers${
           queryParams.toString() ? `?${queryParams.toString()}` : ""
@@ -83,10 +91,11 @@ const CustomerList: React.FC = () => {
         requireAuth: true,
       });
 
-      const customersList: CustomerPublicDTO[] =
-        data.customers || (Array.isArray(data) ? data : []);
+      const customersList = response.data?.customers || [];
+      const pagination = response.data?.pagination;
+
       setCustomers(customersList);
-      setTotalCustomers(data.total ?? customersList.length);
+      setTotalCustomers(pagination?.total || customersList.length);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du chargement"

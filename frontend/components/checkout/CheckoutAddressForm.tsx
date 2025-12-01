@@ -56,7 +56,7 @@ const AddressFields: React.FC<AddressFieldsProps> = ({ address, onChange }) => {
       <FormInput
         name="countryName"
         label="Pays"
-        value={address.countryName || "Belgique"}
+        value={address.countryName || ""}
         onChange={handleInputChange}
         readOnly
         gridColumn="1 / -1"

@@ -8,8 +8,6 @@ import OrderFilters from "./OrderFilters";
 import {
   OrderPublicDTO,
   CreditNotePublicDTO,
-  OrderListRequestDTO,
-  CreditNoteListRequestDTO,
   OrderUpdateDeliveryStatusDTO,
   OrderUpdateCreditNoteStatusDTO,
 } from "../../../dto";
@@ -44,7 +42,7 @@ const OrderList: React.FC = () => {
     setPage(1);
     // Recharger les commandes après réinitialisation
     try {
-      await loadOrdersPage(1, false);
+      await loadOrdersPage(1);
     } catch (err) {
       console.error("Error reloading orders after reset:", err);
     }
@@ -118,119 +116,126 @@ const OrderList: React.FC = () => {
     }
   };
 
-  const loadOrdersPage = async (targetPage: number, append: boolean) => {
-    // Construire le DTO de requête avec typage explicite
-    const requestDTO: Partial<OrderListRequestDTO> = {
-      page: targetPage,
-      limit: limit,
-      ...(search && { search }),
-      ...(yearFilter && { year: parseInt(yearFilter) }),
-      ...(totalFilter &&
-        totalFilter !== "" && { total: parseFloat(totalFilter) }),
-      ...(dateFilter && dateFilter !== "" && { date: dateFilter }),
-      // Convertir le filtre de livraison en boolean pour le serveur
-      ...(deliveryFilter &&
-        deliveryFilter !== "" && {
-          delivered: deliveryFilter === "delivered",
-        }),
-    };
-
-    // Construire les query params à partir du DTO
+  const loadOrdersPage = async (targetPage: number) => {
+    // Construire les query params directement avec les valeurs brutes
+    // Le service order-service fera le parsing et la validation
     const queryParams = new URLSearchParams();
-    if (requestDTO.page) queryParams.set("page", String(requestDTO.page));
-    if (requestDTO.limit) queryParams.set("limit", String(requestDTO.limit));
-    if (requestDTO.search) queryParams.set("search", requestDTO.search);
-    if (requestDTO.year) queryParams.set("year", String(requestDTO.year));
-    if (requestDTO.total) queryParams.set("total", String(requestDTO.total));
-    if (requestDTO.date) queryParams.set("date", requestDTO.date);
-    if (requestDTO.delivered !== undefined) {
-      queryParams.set("delivered", String(requestDTO.delivered));
+    queryParams.set("page", String(targetPage));
+    queryParams.set("limit", String(limit));
+    if (search) queryParams.set("search", search);
+    // Envoyer les valeurs brutes - le service fera le parsing
+    if (yearFilter && yearFilter !== "") {
+      queryParams.set("year", yearFilter);
+    }
+    if (totalFilter && totalFilter !== "") {
+      queryParams.set("total", totalFilter);
+    }
+    if (dateFilter && dateFilter !== "") {
+      queryParams.set("date", dateFilter);
+    }
+    // Envoyer la valeur brute - le service convertira en boolean
+    if (deliveryFilter && deliveryFilter !== "") {
+      queryParams.set("delivered", deliveryFilter);
     }
 
-    const json = await apiCall<{
-      data?: { orders?: OrderPublicDTO[]; pagination?: any };
-      orders?: OrderPublicDTO[];
-      pagination?: any;
+    const response = await apiCall<{
+      data: {
+        orders: OrderPublicDTO[];
+        pagination: {
+          page: number;
+          limit: number;
+          total: number;
+          pages: number;
+          hasMore: boolean; // Calculé côté serveur
+        };
+      };
+      message: string;
+      timestamp: string;
+      status: number;
     }>({
       url: `/api/admin/orders?${queryParams.toString()}`,
       method: "GET",
       requireAuth: true,
     });
-    const ordersList: OrderPublicDTO[] =
-      json?.data?.orders ?? json?.orders ?? (Array.isArray(json) ? json : []);
 
-    const pagination = json?.data?.pagination ?? json?.pagination ?? null;
+    // Format standardisé : { data: { orders: [], pagination: {} }, ... }
+    const ordersList = response.data?.orders || [];
+    const pagination = response.data?.pagination;
 
+    // Pour l'infinite scroll : append les nouvelles données
+    // Le serveur garantit l'unicité des données entre les pages, pas besoin de déduplication
     setOrders((prev) => {
-      if (!append) return ordersList;
-      const map = new Map<number, OrderPublicDTO>();
-      for (const o of prev) map.set(o.id, o);
-      for (const o of ordersList) map.set(o.id, o);
-      return Array.from(map.values());
+      if (targetPage === 1) {
+        // Première page : remplacer
+        return ordersList;
+      }
+      // Pages suivantes : append (le serveur garantit l'unicité)
+      return [...prev, ...ordersList];
     });
 
+    // Utiliser les métadonnées de pagination du serveur
     if (pagination) {
-      const hasNext = targetPage < (pagination.pages ?? targetPage);
-      setHasMore(hasNext);
-      // Stocker le total de la pagination
-      if (pagination.total !== undefined) {
-        setTotalOrders(pagination.total);
-      }
+      setHasMore(pagination.hasMore);
+      setTotalOrders(pagination.total);
     } else {
-      // If no pagination info, assume no more when we received empty page
-      setHasMore(ordersList.length > 0);
-      // Si pas de pagination, utiliser le nombre de commandes chargées
-      if (!append) {
-        setTotalOrders(ordersList.length);
-      }
+      setHasMore(false);
+      setTotalOrders(ordersList.length);
     }
 
     setPage(targetPage);
   };
 
-  const loadCreditNotesPage = async (targetPage: number, append: boolean) => {
-    // Construire le DTO de requête avec typage explicite
-    const requestDTO: Partial<CreditNoteListRequestDTO> = {
-      page: targetPage,
-      limit: limit,
-      ...(yearFilter && { year: parseInt(yearFilter) }),
-    };
-
-    // Construire les query params à partir du DTO
+  const loadCreditNotesPage = async (targetPage: number) => {
+    // Construire les query params directement avec les valeurs brutes
+    // Le service order-service fera le parsing et la validation
     const queryParams = new URLSearchParams();
-    if (requestDTO.page) queryParams.set("page", String(requestDTO.page));
-    if (requestDTO.limit) queryParams.set("limit", String(requestDTO.limit));
-    if (requestDTO.year) queryParams.set("year", String(requestDTO.year));
+    queryParams.set("page", String(targetPage));
+    queryParams.set("limit", String(limit));
+    // Envoyer la valeur brute - le service fera le parsing
+    if (yearFilter && yearFilter !== "") {
+      queryParams.set("year", yearFilter);
+    }
 
-    const json = await apiCall<{
-      data?: { creditNotes?: CreditNotePublicDTO[]; pagination?: any };
-      creditNotes?: CreditNotePublicDTO[];
-      pagination?: any;
+    const response = await apiCall<{
+      data: {
+        creditNotes: CreditNotePublicDTO[];
+        pagination: {
+          page: number;
+          limit: number;
+          total: number;
+          pages: number;
+          hasMore: boolean; // Calculé côté serveur
+        };
+      };
+      message: string;
+      timestamp: string;
+      status: number;
     }>({
       url: `/api/admin/credit-notes?${queryParams.toString()}`,
       method: "GET",
       requireAuth: true,
     });
-    const creditNotesList: CreditNotePublicDTO[] =
-      json?.data?.creditNotes ??
-      json?.creditNotes ??
-      (Array.isArray(json) ? json : []);
 
-    const pagination = json?.data?.pagination ?? json?.pagination ?? null;
+    // Format standardisé : { data: { creditNotes: [], pagination: {} }, ... }
+    const creditNotesList = response.data?.creditNotes || [];
+    const pagination = response.data?.pagination;
 
+    // Pour l'infinite scroll : append les nouvelles données
+    // Le serveur garantit l'unicité des données entre les pages, pas besoin de déduplication
     setCreditNotes((prev) => {
-      if (!append) return creditNotesList;
-      const map = new Map<number, CreditNotePublicDTO>();
-      for (const c of prev) map.set(c.id, c);
-      for (const c of creditNotesList) map.set(c.id, c);
-      return Array.from(map.values());
+      if (targetPage === 1) {
+        // Première page : remplacer
+        return creditNotesList;
+      }
+      // Pages suivantes : append (le serveur garantit l'unicité)
+      return [...prev, ...creditNotesList];
     });
 
+    // Utiliser les métadonnées de pagination du serveur
     if (pagination) {
-      const hasNext = targetPage < (pagination.pages ?? targetPage);
-      setHasMoreCreditNotes(hasNext);
+      setHasMoreCreditNotes(pagination.hasMore);
     } else {
-      setHasMoreCreditNotes(creditNotesList.length > 0);
+      setHasMoreCreditNotes(false);
     }
 
     setCreditNotesPage(targetPage);
@@ -240,8 +245,8 @@ const OrderList: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await loadOrdersPage(1, false);
-      await loadCreditNotesPage(1, false);
+      await loadOrdersPage(1);
+      await loadCreditNotesPage(1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur lors du chargement");
     } finally {
@@ -318,7 +323,7 @@ const OrderList: React.FC = () => {
         const first = entries[0];
         if (first && first.isIntersecting) {
           setIsLoadingMore(true);
-          loadOrdersPage(page + 1, true)
+          loadOrdersPage(page + 1)
             .catch(() => {
               /* noop, error handled elsewhere via setError if needed */
             })
@@ -351,7 +356,7 @@ const OrderList: React.FC = () => {
         const first = entries[0];
         if (first && first.isIntersecting) {
           setIsLoadingMoreCreditNotes(true);
-          loadCreditNotesPage(creditNotesPage + 1, true)
+          loadCreditNotesPage(creditNotesPage + 1)
             .catch(() => {
               /* noop, error handled elsewhere via setError if needed */
             })
@@ -419,7 +424,7 @@ const OrderList: React.FC = () => {
     try {
       setHasMoreCreditNotes(true);
       setCreditNotesPage(1);
-      await loadCreditNotesPage(1, false);
+      await loadCreditNotesPage(1);
     } catch (e) {
       // Silent reload failure
     }

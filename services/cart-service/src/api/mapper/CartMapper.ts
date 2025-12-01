@@ -124,6 +124,7 @@ export class CartMapper {
       subtotal: cart.subtotal,
       tax: cart.tax,
       total: cart.total,
+      itemCount: cart.itemCount, // Nombre total d'articles calculé côté serveur
       vatBreakdown: cart.vatBreakdown,
       checkoutData: cart.checkoutData || null,
       createdAt: cart.createdAt,

@@ -142,10 +142,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   }, [sessionId]);
 
   /**
-   * Calcule le nombre total d'articles dans le panier
+   * Utilise le nombre total d'articles calculé côté serveur
+   * Le cart-service calcule déjà itemCount (somme des quantités)
    */
-  const itemCount =
-    cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const itemCount = cart?.itemCount || 0;
 
   /**
    * Construit les headers pour les requêtes cart

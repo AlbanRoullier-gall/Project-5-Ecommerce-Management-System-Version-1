@@ -160,24 +160,89 @@ export class CreditNoteController {
 
   /**
    * Lister tous les avoirs (admin)
+   * Parse et valide les query params côté serveur
    */
   async listCreditNotes(req: Request, res: Response): Promise<void> {
     try {
-      const options: Partial<CreditNoteListRequestDTO> = {
-        ...(req.query.page && { page: parseInt(req.query.page as string) }),
-        ...(req.query.limit && { limit: parseInt(req.query.limit as string) }),
-        ...(req.query.customerId && {
-          customerId: parseInt(req.query.customerId as string),
-        }),
-        ...(req.query.year && { year: parseInt(req.query.year as string) }),
-        ...(req.query.startDate && {
-          startDate: req.query.startDate as string,
-        }),
-        ...(req.query.endDate && { endDate: req.query.endDate as string }),
-      };
+      const options: Partial<CreditNoteListRequestDTO> = {};
+
+      // Parser et valider page
+      if (req.query.page) {
+        const page = parseInt(req.query.page as string);
+        if (isNaN(page) || page < 1) {
+          res
+            .status(400)
+            .json(ResponseMapper.badRequestError("Invalid page parameter"));
+          return;
+        }
+        options.page = page;
+      }
+
+      // Parser et valider limit
+      if (req.query.limit) {
+        const limit = parseInt(req.query.limit as string);
+        if (isNaN(limit) || limit < 1) {
+          res
+            .status(400)
+            .json(ResponseMapper.badRequestError("Invalid limit parameter"));
+          return;
+        }
+        options.limit = limit;
+      }
+
+      // Parser et valider customerId
+      if (req.query.customerId) {
+        const customerId = parseInt(req.query.customerId as string);
+        if (isNaN(customerId) || customerId < 1) {
+          res
+            .status(400)
+            .json(
+              ResponseMapper.badRequestError("Invalid customerId parameter")
+            );
+          return;
+        }
+        options.customerId = customerId;
+      }
+
+      // Parser et valider year
+      if (req.query.year && req.query.year !== "") {
+        const year = parseInt(req.query.year as string);
+        if (isNaN(year) || year < 1900 || year > 2100) {
+          res
+            .status(400)
+            .json(ResponseMapper.badRequestError("Invalid year parameter"));
+          return;
+        }
+        options.year = year;
+      }
+
+      // Parser et valider startDate (string)
+      if (req.query.startDate && req.query.startDate !== "") {
+        options.startDate = req.query.startDate as string;
+      }
+
+      // Parser et valider endDate (string)
+      if (req.query.endDate && req.query.endDate !== "") {
+        options.endDate = req.query.endDate as string;
+      }
 
       const result = await this.orderService.listCreditNotes(options);
-      res.json(ResponseMapper.success(result));
+      // Format standardisé : { data: { creditNotes: [], pagination: {} }, ... }
+      res.json(
+        ResponseMapper.success(
+          {
+            creditNotes: result.creditNotes || [],
+            pagination: result.pagination || {
+              page: 1,
+              limit: 10,
+              total: 0,
+              pages: 0,
+              hasMore: false,
+            },
+          },
+          "Liste des avoirs récupérée avec succès"
+        )
+      );
     } catch (error: any) {
       console.error("List credit notes error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
@@ -185,43 +250,78 @@ export class CreditNoteController {
   }
 
   /**
-   * Calculer les totaux HT et TTC à partir d'une liste d'items
+   * Calculer les totaux HT et TTC à partir d'une liste d'IDs d'items
+   * Récupère les items depuis la base de données et calcule les totaux
    * Utilise la logique métier du modèle CreditNote pour garantir la cohérence
    */
   async calculateTotals(req: Request, res: Response): Promise<void> {
     try {
-      const { items } = req.body;
+      const { itemIds } = req.body;
 
-      if (!items || !Array.isArray(items)) {
+      // Valider que itemIds est un tableau
+      if (!itemIds || !Array.isArray(itemIds)) {
         res
           .status(400)
           .json(
             ResponseMapper.validationError(
-              "Items array is required and must be an array"
+              "itemIds array is required and must be an array"
             )
           );
         return;
       }
 
-      // Valider que chaque item a les propriétés nécessaires
-      for (const item of items) {
-        if (
-          typeof item.totalPriceHT === "undefined" ||
-          typeof item.totalPriceTTC === "undefined"
-        ) {
-          res
-            .status(400)
-            .json(
-              ResponseMapper.validationError(
-                "Each item must have totalPriceHT and totalPriceTTC properties"
-              )
-            );
-          return;
-        }
+      // Valider que tous les IDs sont des nombres valides
+      const validItemIds = itemIds
+        .map((id) => parseInt(String(id)))
+        .filter((id) => !isNaN(id) && id > 0);
+
+      if (validItemIds.length === 0) {
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              "At least one valid item ID is required"
+            )
+          );
+        return;
       }
 
+      // Récupérer les items depuis la base de données
+      const orderItems = await this.orderService.getOrderItemsByIds(
+        validItemIds
+      );
+
+      if (orderItems.length === 0) {
+        res
+          .status(404)
+          .json(
+            ResponseMapper.validationError(
+              "No order items found for the provided IDs"
+            )
+          );
+        return;
+      }
+
+      // Vérifier que tous les IDs ont été trouvés
+      if (orderItems.length !== validItemIds.length) {
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              "Some item IDs were not found in the database"
+            )
+          );
+        return;
+      }
+
+      // Préparer les items pour le calcul (utiliser les prix depuis la base)
+      const itemsForCalculation = orderItems.map((item) => ({
+        totalPriceHT: item.totalPriceHT,
+        totalPriceTTC: item.totalPriceTTC,
+      }));
+
       // Utiliser la méthode statique du modèle CreditNote pour calculer les totaux
-      const totals = CreditNote.calculateTotalsFromItems(items);
+      const totals = CreditNote.calculateTotalsFromItems(itemsForCalculation);
 
       res.json(
         ResponseMapper.success({

@@ -113,6 +113,7 @@ export class CustomerMapper {
 
   /**
    * Convertir un CustomerAddress en AddressPublicDTO
+   * Garantit toujours que countryName est retourné (avec valeur par défaut si nécessaire)
    */
   static addressToPublicDTO(address: CustomerAddress): AddressPublicDTO {
     return {
@@ -122,7 +123,7 @@ export class CustomerMapper {
       address: address.address,
       postalCode: address.postalCode,
       city: address.city,
-      countryName: address.countryName,
+      countryName: address.countryName || BELGIUM_COUNTRY_NAME,
       isDefault: address.isDefault,
     };
   }

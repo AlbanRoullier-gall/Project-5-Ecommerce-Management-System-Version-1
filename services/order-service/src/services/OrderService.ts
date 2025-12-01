@@ -502,6 +502,13 @@ export default class OrderService {
     return await this.orderItemRepository.getOrderItemsByOrderId(orderId);
   }
 
+  /**
+   * Récupérer plusieurs articles par leurs IDs
+   */
+  async getOrderItemsByIds(itemIds: number[]): Promise<OrderItem[]> {
+    return await this.orderItemRepository.getOrderItemsByIds(itemIds);
+  }
+
   // ===== GESTION DES AVOIRS =====
 
   /**

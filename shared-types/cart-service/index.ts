@@ -113,6 +113,7 @@ export interface CartPublicDTO {
   subtotal: number;
   tax: number;
   total: number;
+  itemCount: number; // Nombre total d'articles (somme des quantités) - calculé côté serveur
   vatBreakdown: VatBreakdownItem[]; // Répartition de la TVA par taux
   checkoutData?: CartCheckoutDataDTO | null; // Données checkout temporaires
   createdAt: Date;

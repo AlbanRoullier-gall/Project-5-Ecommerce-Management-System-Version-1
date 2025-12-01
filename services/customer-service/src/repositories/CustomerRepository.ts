@@ -18,6 +18,7 @@ export interface CustomerListResult {
     limit: number;
     total: number;
     pages: number;
+    hasMore: boolean;
   };
 }
 
@@ -169,6 +170,9 @@ class CustomerRepository {
         params.slice(0, -2)
       );
 
+      const totalCount = parseInt(countResult.rows[0].count);
+      const pages = Math.ceil(totalCount / limit);
+
       return {
         customers: result.rows.map((row) => {
           const customerData: CustomerData = {
@@ -185,8 +189,9 @@ class CustomerRepository {
         pagination: {
           page: parseInt(page.toString()),
           limit: parseInt(limit.toString()),
-          total: parseInt(countResult.rows[0].count),
-          pages: Math.ceil(countResult.rows[0].count / limit),
+          total: totalCount,
+          pages: pages,
+          hasMore: page < pages,
         },
       };
     } catch (error) {

@@ -87,35 +87,111 @@ export class OrderController {
 
   /**
    * Lister les commandes avec pagination
+   * Parse et valide les query params côté serveur
    */
   async listOrders(req: Request, res: Response): Promise<void> {
     try {
-      const options: Partial<OrderListRequestDTO> = {
-        ...(req.query.page && { page: parseInt(req.query.page as string) }),
-        ...(req.query.limit && { limit: parseInt(req.query.limit as string) }),
-        ...(req.query.search && { search: req.query.search as string }),
-        ...(req.query.customerId && {
-          customerId: parseInt(req.query.customerId as string),
-        }),
-        ...(req.query.year && { year: parseInt(req.query.year as string) }),
-        ...(req.query.total &&
-          req.query.total !== "" && {
-            total: parseFloat(req.query.total as string),
-          }),
-        ...(req.query.date &&
-          req.query.date !== "" && {
-            date: req.query.date as string,
-          }),
-        ...(req.query.delivered !== undefined &&
-          req.query.delivered !== "" && {
-            delivered:
-              req.query.delivered === "true" ||
-              req.query.delivered === "delivered",
-          }),
-      };
+      const options: Partial<OrderListRequestDTO> = {};
+
+      // Parser et valider page
+      if (req.query.page) {
+        const page = parseInt(req.query.page as string);
+        if (isNaN(page) || page < 1) {
+          res
+            .status(400)
+            .json(ResponseMapper.badRequestError("Invalid page parameter"));
+          return;
+        }
+        options.page = page;
+      }
+
+      // Parser et valider limit
+      if (req.query.limit) {
+        const limit = parseInt(req.query.limit as string);
+        if (isNaN(limit) || limit < 1) {
+          res
+            .status(400)
+            .json(ResponseMapper.badRequestError("Invalid limit parameter"));
+          return;
+        }
+        options.limit = limit;
+      }
+
+      // Parser et valider search (string)
+      if (req.query.search) {
+        options.search = req.query.search as string;
+      }
+
+      // Parser et valider customerId
+      if (req.query.customerId) {
+        const customerId = parseInt(req.query.customerId as string);
+        if (isNaN(customerId) || customerId < 1) {
+          res
+            .status(400)
+            .json(
+              ResponseMapper.badRequestError("Invalid customerId parameter")
+            );
+          return;
+        }
+        options.customerId = customerId;
+      }
+
+      // Parser et valider year
+      if (req.query.year && req.query.year !== "") {
+        const year = parseInt(req.query.year as string);
+        if (isNaN(year) || year < 1900 || year > 2100) {
+          res
+            .status(400)
+            .json(ResponseMapper.badRequestError("Invalid year parameter"));
+          return;
+        }
+        options.year = year;
+      }
+
+      // Parser et valider total
+      if (req.query.total && req.query.total !== "") {
+        const total = parseFloat(req.query.total as string);
+        if (isNaN(total) || total < 0) {
+          res
+            .status(400)
+            .json(ResponseMapper.badRequestError("Invalid total parameter"));
+          return;
+        }
+        options.total = total;
+      }
+
+      // Parser et valider date (string)
+      if (req.query.date && req.query.date !== "") {
+        options.date = req.query.date as string;
+      }
+
+      // Parser et valider delivered (boolean)
+      if (req.query.delivered !== undefined && req.query.delivered !== "") {
+        const deliveredParam = req.query.delivered as string;
+        // Accepter "true", "delivered", "1" comme true, sinon false
+        options.delivered =
+          deliveredParam === "true" ||
+          deliveredParam === "delivered" ||
+          deliveredParam === "1";
+      }
 
       const result = await this.orderService.listOrders(options);
-      res.json(ResponseMapper.success(result));
+      // Format standardisé : { data: { orders: [], pagination: {} }, ... }
+      res.json(
+        ResponseMapper.success(
+          {
+            orders: result.orders || [],
+            pagination: result.pagination || {
+              page: 1,
+              limit: 10,
+              total: 0,
+              pages: 0,
+              hasMore: false,
+            },
+          },
+          "Liste des commandes récupérée avec succès"
+        )
+      );
     } catch (error: any) {
       console.error("List orders error:", error);
       res.status(500).json(ResponseMapper.internalServerError());

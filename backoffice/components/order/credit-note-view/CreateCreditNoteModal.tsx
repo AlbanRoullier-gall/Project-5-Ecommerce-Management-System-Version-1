@@ -95,21 +95,20 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
 
       setIsCalculatingTotals(true);
       try {
-        // Préparer les items pour l'API (seulement les propriétés nécessaires)
-        const itemsForCalculation = selectedItems.map((item) => ({
-          totalPriceHT: item.totalPriceHT || 0,
-          totalPriceTTC: item.totalPriceTTC || 0,
-        }));
+        // Envoyer uniquement les IDs des items sélectionnés
+        // Le service récupérera les items depuis la base et calculera les totaux
+        const itemIds = selectedItems.map((item) => item.id);
 
         const result = await apiCall<{
           data: {
             totalHT?: number;
             totalTTC?: number;
+            totalVAT?: number;
           };
         }>({
           url: "/api/admin/credit-notes/calculate-totals",
           method: "POST",
-          body: { items: itemsForCalculation },
+          body: { itemIds },
           requireAuth: true,
         });
 

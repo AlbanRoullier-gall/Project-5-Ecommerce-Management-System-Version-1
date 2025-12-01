@@ -74,13 +74,18 @@ export default class CreditNoteRepository {
     }
     const countResult = await this.pool.query(countQuery, params.slice(0, -2));
 
+    const total = parseInt(countResult.rows[0].count);
+    const pages = Math.ceil(total / limit);
+    const hasMore = page < pages;
+
     return {
       creditNotes: result.rows.map((row) => new CreditNote(row)),
       pagination: {
         page,
         limit,
-        total: parseInt(countResult.rows[0].count),
-        pages: Math.ceil(parseInt(countResult.rows[0].count) / limit),
+        total,
+        pages,
+        hasMore, // Indique s'il y a une page suivante
       },
     };
   }

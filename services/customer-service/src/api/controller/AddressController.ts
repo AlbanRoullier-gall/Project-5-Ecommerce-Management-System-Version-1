@@ -12,6 +12,7 @@ import { Request, Response } from "express";
 import CustomerService from "../../services/CustomerService";
 import { AddressCreateDTO, AddressUpdateDTO, AddressesCreateDTO } from "../dto";
 import { CustomerMapper, ResponseMapper } from "../mapper";
+import { BELGIUM_COUNTRY_NAME } from "../../constants/CountryConstants";
 
 export class AddressController {
   constructor(private customerService: CustomerService) {}
@@ -159,9 +160,8 @@ export class AddressController {
               address: addressesCreateDTO.shipping.address || "",
               postalCode: addressesCreateDTO.shipping.postalCode || "",
               city: addressesCreateDTO.shipping.city || "",
-              ...(addressesCreateDTO.shipping.countryName && {
-                countryName: addressesCreateDTO.shipping.countryName,
-              }),
+              countryName:
+                addressesCreateDTO.shipping.countryName || BELGIUM_COUNTRY_NAME,
             },
           }),
           ...(addressesCreateDTO.billing && {
@@ -169,9 +169,8 @@ export class AddressController {
               address: addressesCreateDTO.billing.address || "",
               postalCode: addressesCreateDTO.billing.postalCode || "",
               city: addressesCreateDTO.billing.city || "",
-              ...(addressesCreateDTO.billing.countryName && {
-                countryName: addressesCreateDTO.billing.countryName,
-              }),
+              countryName:
+                addressesCreateDTO.billing.countryName || BELGIUM_COUNTRY_NAME,
             },
           }),
           ...(addressesCreateDTO.useSameBillingAddress !== undefined && {

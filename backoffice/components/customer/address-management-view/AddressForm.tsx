@@ -87,18 +87,19 @@ const AddressForm: React.FC<AddressFormProps> = ({
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
       // Préparer les données pour la validation (format AddressesCreateDTO)
+      // countryName sera géré automatiquement par le service si non fourni
       const addressData = {
         shipping: {
           address: formData.address || "",
           postalCode: formData.postalCode || "",
           city: formData.city || "",
-          countryName: formData.countryName || "Belgique",
+          ...(formData.countryName && { countryName: formData.countryName }),
         },
         billing: {
           address: formData.address || "",
           postalCode: formData.postalCode || "",
           city: formData.city || "",
-          countryName: formData.countryName || "Belgique",
+          ...(formData.countryName && { countryName: formData.countryName }),
         },
         useSameBillingAddress: true,
       };

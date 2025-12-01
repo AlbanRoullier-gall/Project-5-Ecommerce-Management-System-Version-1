@@ -163,7 +163,7 @@ export class CartRepository {
         const cart = new Cart(JSON.parse(data));
         totalCarts++;
         totalValue += cart.total;
-        totalItems += cart.items.reduce((sum, item) => sum + item.quantity, 0);
+        totalItems += cart.itemCount; // Utiliser itemCount calculé côté serveur
       }
     }
 
@@ -174,7 +174,7 @@ export class CartRepository {
         const cart = new Cart(JSON.parse(data));
         totalCarts++;
         totalValue += cart.total;
-        totalItems += cart.items.reduce((sum, item) => sum + item.quantity, 0);
+        totalItems += cart.itemCount; // Utiliser itemCount calculé côté serveur
       }
     }
 

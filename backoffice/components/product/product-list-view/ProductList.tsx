@@ -8,7 +8,6 @@ import Button from "../../shared/Button";
 import {
   ProductPublicDTO,
   CategoryPublicDTO,
-  ProductListDTO,
   CategoryListDTO,
   ProductSearchDTO,
   ProductFilterDTO,
@@ -169,33 +168,39 @@ const ProductList: React.FC = () => {
         }
       }
 
-      const data = await apiCall<
-        | ProductListDTO
-        | { products: ProductPublicDTO[]; pagination?: any }
-        | ProductPublicDTO[]
-      >({
+      const response = await apiCall<{
+        data?: {
+          products: ProductPublicDTO[];
+          pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+          };
+        };
+        products?: ProductPublicDTO[]; // Fallback pour compatibilité
+        pagination?: {
+          page: number;
+          limit: number;
+          total: number;
+          pages: number;
+        };
+        message?: string;
+        timestamp?: string;
+        status?: number;
+      }>({
         url: `/api/admin/products?${queryParams.toString()}`,
         method: "GET",
         requireAuth: true,
       });
 
-      // Gérer différents formats de réponse
-      if (Array.isArray(data)) {
-        setProducts(data);
-        setTotalProducts(data.length);
-      } else if ("products" in data) {
-        setProducts(data.products);
-        if ("pagination" in data && data.pagination) {
-          setTotalProducts(data.pagination.total || data.products.length);
-        } else if ("total" in data) {
-          setTotalProducts((data as ProductListDTO).total);
-        } else {
-          setTotalProducts(data.products.length);
-        }
-      } else {
-        setProducts([]);
-        setTotalProducts(0);
-      }
+      // Format standardisé : { data: { products: [], pagination: {} }, ... }
+      // Support du nouveau format et de l'ancien format pour compatibilité
+      const products = response.data?.products || response.products || [];
+      const pagination = response.data?.pagination || response.pagination;
+
+      setProducts(products);
+      setTotalProducts(pagination?.total || products.length);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du chargement"
@@ -290,10 +295,6 @@ const ProductList: React.FC = () => {
         method: "POST",
         requireAuth: true,
       });
-
-      if (!response.ok) {
-        throw new Error("Erreur lors du changement de statut");
-      }
 
       await loadProducts();
     } catch (err) {

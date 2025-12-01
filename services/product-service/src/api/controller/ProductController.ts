@@ -214,38 +214,43 @@ export class ProductController {
 
       const result = await this.productService.listProducts(options);
 
-      // Mapper les produits vers ProductPublicDTO et ajouter les images
-      if (result.products) {
-        const mappedProducts = await Promise.all(
-          result.products.map(async (product) => {
-            // Mapper le produit vers DTO (inclut maintenant priceTTC)
-            const productDTO = ProductMapper.productToPublicDTO(product);
-            // Ajouter les images
-            try {
-              const images = await this.productService.listImages(product.id!);
-              productDTO.images = images.map((image) =>
-                ProductMapper.productImageToPublicDTO(image)
-              );
-            } catch (imageError) {
-              console.error(
-                `Erreur lors du chargement des images pour le produit ${product.id}:`,
-                imageError
-              );
-              productDTO.images = [];
-            }
-            return productDTO;
-          })
-        );
+      // S'assurer que result a toujours products et pagination
+      const products = result.products || [];
+      const pagination = result.pagination || {
+        page: options.page || 1,
+        limit: options.limit || 10,
+        total: 0,
+        pages: 0,
+      };
 
-        res.json(
-          ResponseMapper.productListed({
-            ...result,
-            products: mappedProducts,
-          })
-        );
-      } else {
-        res.json(ResponseMapper.productListed(result));
-      }
+      // Mapper les produits vers ProductPublicDTO et ajouter les images
+      const mappedProducts = await Promise.all(
+        products.map(async (product) => {
+          // Mapper le produit vers DTO (inclut maintenant priceTTC)
+          const productDTO = ProductMapper.productToPublicDTO(product);
+          // Ajouter les images
+          try {
+            const images = await this.productService.listImages(product.id!);
+            productDTO.images = images.map((image) =>
+              ProductMapper.productImageToPublicDTO(image)
+            );
+          } catch (imageError) {
+            console.error(
+              `Erreur lors du chargement des images pour le produit ${product.id}:`,
+              imageError
+            );
+            productDTO.images = [];
+          }
+          return productDTO;
+        })
+      );
+
+      res.json(
+        ResponseMapper.productListed({
+          products: mappedProducts,
+          pagination,
+        })
+      );
     } catch (error: any) {
       console.error("Erreur lors de la liste des produits:", error);
       res.status(500).json(ResponseMapper.internalServerError());

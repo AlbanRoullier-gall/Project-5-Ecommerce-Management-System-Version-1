@@ -210,16 +210,13 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         shipping: {
           ...addressData.shipping,
           [field]: value,
-          countryName: addressData.shipping?.countryName || "Belgique",
+          // countryName sera géré automatiquement par le service si non fourni
+          ...(addressData.shipping?.countryName && {
+            countryName: addressData.shipping.countryName,
+          }),
         },
-        // Si "même adresse", copier aussi dans billing
-        billing: addressData.useSameBillingAddress
-          ? {
-              ...addressData.shipping,
-              [field]: value,
-              countryName: addressData.shipping?.countryName || "Belgique",
-            }
-          : addressData.billing,
+        // Ne pas copier automatiquement vers billing - la copie se fait uniquement via setUseSameBillingAddress
+        billing: addressData.billing,
       };
       setAddressData(updated);
       // Sauvegarder sur le serveur de manière asynchrone
@@ -245,7 +242,10 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         billing: {
           ...addressData.billing,
           [field]: value,
-          countryName: addressData.billing?.countryName || "Belgique",
+          // countryName sera géré automatiquement par le service si non fourni
+          ...(addressData.billing?.countryName && {
+            countryName: addressData.billing.countryName,
+          }),
         },
       };
       setAddressData(updated);
@@ -263,6 +263,8 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   /**
    * Active/désactive l'utilisation de la même adresse pour la facturation
    * Utilise AddressesCreateDTO directement
+   * Le flag useSameBillingAddress est un indicateur uniquement
+   * L'affichage utilisera l'adresse de livraison si le flag est coché
    * Sauvegarde automatiquement sur le serveur
    */
   const setUseSameBillingAddress = useCallback(
@@ -270,8 +272,9 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
       const updated = {
         ...addressData,
         useSameBillingAddress: useSame,
-        // Si coché, copier l'adresse de livraison dans l'adresse de facturation
-        billing: useSame ? addressData.shipping : addressData.billing,
+        // Ne pas copier l'adresse - le flag est juste un indicateur
+        // L'affichage utilisera shipping si useSameBillingAddress est true
+        billing: addressData.billing,
       };
       setAddressData(updated);
       // Sauvegarder sur le serveur de manière asynchrone
