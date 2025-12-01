@@ -64,5 +64,6 @@ export interface UserPublicDTO {
   isActive: boolean;
   isBackofficeApproved: boolean;
   isBackofficeRejected: boolean;
+  isSuperAdmin: boolean;
   createdAt?: string; // Format ISO 8601
 }

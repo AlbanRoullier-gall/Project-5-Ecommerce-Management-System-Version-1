@@ -21,6 +21,7 @@ export interface UserData {
   is_active: boolean;
   is_backoffice_approved: boolean;
   is_backoffice_rejected: boolean;
+  is_super_admin: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -46,6 +47,7 @@ export class User {
   public readonly isActive: boolean;
   public readonly isBackofficeApproved: boolean;
   public readonly isBackofficeRejected: boolean;
+  public readonly isSuperAdmin: boolean;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -58,6 +60,7 @@ export class User {
     this.isActive = data.is_active;
     this.isBackofficeApproved = data.is_backoffice_approved;
     this.isBackofficeRejected = data.is_backoffice_rejected;
+    this.isSuperAdmin = data.is_super_admin;
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
   }

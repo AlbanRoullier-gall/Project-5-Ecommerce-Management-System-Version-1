@@ -4,7 +4,8 @@
  */
 
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../../config";
+import { Request, Response, NextFunction } from "express";
+import { JWT_SECRET, SERVICES } from "../../config";
 
 // ===== TYPES =====
 
@@ -40,9 +41,17 @@ export const extractToken = (authHeader: string | undefined): string | null => {
 
 /**
  * Middleware Express pour vérifier l'authentification JWT
- * Ajoute req.user si le token est valide, sinon retourne 401
+ * Vérifie :
+ * 1. La présence et validité du token JWT
+ * 2. L'existence de l'utilisateur dans la base de données (sécurité : empêche l'accès si l'utilisateur a été supprimé)
+ *
+ * Ajoute req.user si tout est valide, sinon retourne 401
  */
-export const requireAuth = (req: any, res: any, next: any): void => {
+export const requireAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   const token = extractToken(req.headers["authorization"]);
 
   if (!token) {
@@ -65,6 +74,55 @@ export const requireAuth = (req: any, res: any, next: any): void => {
     return;
   }
 
-  req.user = user;
-  next();
+  // Vérifier que l'utilisateur existe encore dans la base de données
+  // Cela empêche l'accès si l'utilisateur a été supprimé entre-temps
+  try {
+    const response = await fetch(
+      `${SERVICES.auth}/api/admin/users/${user.userId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Service-Request": "api-gateway",
+          "x-user-id": String(user.userId),
+          "x-user-email": user.email,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        // L'utilisateur n'existe plus (a été supprimé)
+        res.status(401).json({
+          error: "Utilisateur introuvable",
+          message:
+            "Votre compte n'existe plus ou a été supprimé. Veuillez vous reconnecter.",
+          code: "USER_NOT_FOUND",
+        });
+        return;
+      }
+      // Autre erreur du service auth
+      console.error(
+        `Error verifying user existence: ${response.status} ${response.statusText}`
+      );
+      res.status(500).json({
+        error: "Erreur de vérification",
+        message: "Impossible de vérifier votre authentification",
+        code: "VERIFICATION_ERROR",
+      });
+      return;
+    }
+
+    // L'utilisateur existe, continuer
+    (req as any).user = user;
+    next();
+  } catch (error) {
+    console.error("Error in requireAuth middleware:", error);
+    res.status(500).json({
+      error: "Erreur interne du serveur",
+      message:
+        "Une erreur est survenue lors de la vérification de l'authentification",
+      code: "INTERNAL_ERROR",
+    });
+  }
 };

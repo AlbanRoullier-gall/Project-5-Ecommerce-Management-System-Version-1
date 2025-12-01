@@ -20,7 +20,7 @@ import { useAuth } from "../contexts/AuthContext";
  */
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
 
   /**
    * Déconnecte l'utilisateur et redirige vers la page de connexion
@@ -83,6 +83,12 @@ const Header: React.FC = () => {
             <i className="fas fa-shopping-bag"></i>
             <span>COMMANDES</span>
           </Link>
+          {user?.isSuperAdmin && (
+            <Link href="/users/management" className="nav-item">
+              <i className="fas fa-user-shield"></i>
+              <span>UTILISATEURS</span>
+            </Link>
+          )}
           {/* Website content link removed */}
         </div>
       </nav>
@@ -122,6 +128,16 @@ const Header: React.FC = () => {
             <i className="fas fa-shopping-bag"></i>
             <span>COMMANDES</span>
           </Link>
+          {user?.isSuperAdmin && (
+            <Link
+              href="/users/management"
+              className="mobile-nav-item"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <i className="fas fa-user-shield"></i>
+              <span>UTILISATEURS</span>
+            </Link>
+          )}
           {/* Website content link removed from mobile nav */}
         </nav>
       )}

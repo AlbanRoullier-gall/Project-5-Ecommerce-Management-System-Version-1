@@ -258,6 +258,55 @@ export class ApiRouter {
       }
     );
 
+    // ===== ROUTES GESTION UTILISATEURS (SUPER ADMIN) =====
+    app.get(
+      "/api/admin/users/pending",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.authController.getPendingUsers(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/users",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.authController.getAllUsers(req, res);
+      }
+    );
+
+    app.get(
+      "/api/admin/users/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.authController.getUserById(req, res);
+      }
+    );
+
+    app.post(
+      "/api/admin/users/:id/approve",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.authController.approveUser(req, res);
+      }
+    );
+
+    app.post(
+      "/api/admin/users/:id/reject",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.authController.rejectUser(req, res);
+      }
+    );
+
+    app.delete(
+      "/api/admin/users/:id",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.authController.deleteUser(req, res);
+      }
+    );
+
     // ===== GESTION DES ERREURS GLOBALES =====
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       console.error(err.stack);

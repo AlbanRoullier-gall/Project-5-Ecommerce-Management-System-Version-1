@@ -9,8 +9,12 @@ import { LoadingSpinner } from "../components/shared";
  * Page racine du backoffice (/)
  *
  * Redirection simple :
- * - Si authentifié → Redirige vers /dashboard (AuthGuard gérera les cas rejeté/pending)
+ * - Si authentifié → Redirige vers /dashboard
  * - Sinon → Redirige vers /auth/login
+ *
+ * Note: La vérification de l'approbation backoffice est gérée par le service
+ * d'authentification lors du login. Si un utilisateur a un token valide,
+ * c'est qu'il était approuvé au moment de la connexion.
  *
  * Affiche un loader pendant la vérification
  * Cette page ne doit jamais être vue directement par l'utilisateur
@@ -26,7 +30,6 @@ export default function Home() {
     }
 
     // Redirection simple : authentifié → dashboard, sinon → login
-    // AuthGuard sur /dashboard gérera les cas rejeté/pending
     if (isAuthenticated) {
       router.push("/dashboard");
     } else {

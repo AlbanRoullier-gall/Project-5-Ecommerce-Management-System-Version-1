@@ -322,4 +322,211 @@ export class AuthController {
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
+
+  // ===== GESTION DES UTILISATEURS (SUPER ADMIN) =====
+
+  /**
+   * Récupérer tous les utilisateurs en attente d'approbation
+   */
+  async getPendingUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const users = await this.authService.getPendingUsers();
+      const usersDTO = users.map((user) => UserMapper.userToPublicDTO(user));
+
+      res.json({
+        success: true,
+        data: {
+          users: usersDTO,
+          count: usersDTO.length,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Get pending users error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Récupérer tous les utilisateurs
+   */
+  async getAllUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const users = await this.authService.getAllUsers();
+      const usersDTO = users.map((user) => UserMapper.userToPublicDTO(user));
+
+      res.json({
+        success: true,
+        data: {
+          users: usersDTO,
+          count: usersDTO.length,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Get all users error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Récupérer un utilisateur par ID
+   */
+  async getUserById(req: Request, res: Response): Promise<void> {
+    try {
+      const idParam = req.params["id"];
+      if (!idParam) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("ID utilisateur manquant"));
+        return;
+      }
+      const userId = parseInt(idParam);
+      if (isNaN(userId)) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("ID utilisateur invalide"));
+        return;
+      }
+
+      const user = await this.authService.getUserById(userId);
+      if (!user) {
+        res
+          .status(404)
+          .json(ResponseMapper.error("Utilisateur non trouvé", 404));
+        return;
+      }
+
+      const userDTO = UserMapper.userToPublicDTO(user);
+      res.json({
+        success: true,
+        data: { user: userDTO },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Get user by ID error:", error);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Approuver un utilisateur
+   */
+  async approveUser(req: Request, res: Response): Promise<void> {
+    try {
+      const idParam = req.params["id"];
+      if (!idParam) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("ID utilisateur manquant"));
+        return;
+      }
+      const userId = parseInt(idParam);
+      if (isNaN(userId)) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("ID utilisateur invalide"));
+        return;
+      }
+
+      const user = await this.authService.approveBackofficeAccess(userId);
+      const userDTO = UserMapper.userToPublicDTO(user);
+
+      res.json({
+        success: true,
+        message: "Utilisateur approuvé avec succès",
+        data: { user: userDTO },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Approve user error:", error);
+      if (error.message.includes("non trouvé")) {
+        res.status(404).json(ResponseMapper.error(error.message, 404));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Rejeter un utilisateur
+   */
+  async rejectUser(req: Request, res: Response): Promise<void> {
+    try {
+      const idParam = req.params["id"];
+      if (!idParam) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("ID utilisateur manquant"));
+        return;
+      }
+      const userId = parseInt(idParam);
+      if (isNaN(userId)) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("ID utilisateur invalide"));
+        return;
+      }
+
+      const user = await this.authService.rejectBackofficeAccess(userId);
+      const userDTO = UserMapper.userToPublicDTO(user);
+
+      res.json({
+        success: true,
+        message: "Utilisateur rejeté avec succès",
+        data: { user: userDTO },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Reject user error:", error);
+      if (error.message.includes("non trouvé")) {
+        res.status(404).json(ResponseMapper.error(error.message, 404));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
+   * Supprimer un utilisateur
+   */
+  async deleteUser(req: Request, res: Response): Promise<void> {
+    try {
+      const idParam = req.params["id"];
+      if (!idParam) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("ID utilisateur manquant"));
+        return;
+      }
+      const userId = parseInt(idParam);
+      if (isNaN(userId)) {
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("ID utilisateur invalide"));
+        return;
+      }
+
+      const deleted = await this.authService.deleteUser(userId);
+      if (!deleted) {
+        res
+          .status(404)
+          .json(ResponseMapper.error("Utilisateur non trouvé", 404));
+        return;
+      }
+
+      res.json({
+        success: true,
+        message: "Utilisateur supprimé avec succès",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Delete user error:", error);
+      if (error.message.includes("non trouvé")) {
+        res.status(404).json(ResponseMapper.error(error.message, 404));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
 }

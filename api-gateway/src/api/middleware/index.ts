@@ -10,6 +10,9 @@ export {
   AuthenticatedUser,
 } from "./auth";
 
+// Middlewares d'autorisation
+export { requireSuperAdmin } from "./authorization";
+
 // Middlewares communs (sécurité et gestion d'erreurs)
 export {
   corsMiddleware,

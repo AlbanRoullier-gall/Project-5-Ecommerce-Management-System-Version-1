@@ -9,21 +9,22 @@ import { LoadingSpinner } from "../shared";
  * Props du composant AuthGuard
  */
 interface AuthGuardProps {
-  /** Contenu à protéger (affiché uniquement si authentifié et approuvé) */
+  /** Contenu à protéger (affiché uniquement si authentifié) */
   children: React.ReactNode;
 }
 
 /**
  * Composant de protection des routes
  *
- * Vérifie l'authentification et l'approbation backoffice de l'utilisateur
- * avant d'afficher le contenu protégé
+ * Vérifie l'authentification de l'utilisateur avant d'afficher le contenu protégé.
+ *
+ * Note: La vérification de l'approbation backoffice est gérée par le service d'authentification
+ * lors du login. Si un utilisateur a un token valide, c'est qu'il était approuvé au moment
+ * de la connexion.
  *
  * Scénarios de redirection :
  * - Pas de token → /auth/login
- * - Token mais rejeté → /access-rejected
- * - Token mais pas approuvé → /pending-approval
- * - Token et approuvé → Affiche le contenu protégé
+ * - Token valide → Affiche le contenu protégé
  *
  * Affiche un loader pendant la vérification
  *
@@ -34,7 +35,7 @@ interface AuthGuardProps {
  */
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const router = useRouter();
-  const { isLoading, isAuthenticated, user } = useAuth();
+  const { isLoading, isAuthenticated } = useAuth();
 
   useEffect(() => {
     // Ne faire les redirections que lorsque le chargement est terminé
@@ -47,34 +48,15 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
       router.push("/auth/login");
       return;
     }
-
-    // Vérifier le statut d'approbation backoffice
-    if (user) {
-      // Rediriger si l'accès a été rejeté
-      if (user.isBackofficeRejected) {
-        router.push("/access-rejected");
-        return;
-      }
-
-      // Rediriger si l'accès n'est pas encore approuvé
-      if (!user.isBackofficeApproved) {
-        router.push("/pending-approval");
-        return;
-      }
-    }
-  }, [isLoading, isAuthenticated, user, router]);
+  }, [isLoading, isAuthenticated, router]);
 
   // Afficher un loader pendant la vérification
   if (isLoading) {
     return <LoadingSpinner message="Vérification de l'authentification..." />;
   }
 
-  // Si authentifié et approuvé, afficher le contenu protégé
-  if (
-    isAuthenticated &&
-    user?.isBackofficeApproved &&
-    !user?.isBackofficeRejected
-  ) {
+  // Si authentifié, afficher le contenu protégé
+  if (isAuthenticated) {
     return <>{children}</>;
   }
 

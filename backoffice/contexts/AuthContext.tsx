@@ -67,8 +67,6 @@ interface AuthState {
   isLoading: boolean;
   /** Indique si l'utilisateur est authentifié */
   isAuthenticated: boolean;
-  /** Indique si l'utilisateur est approuvé pour le backoffice */
-  isApproved: boolean;
 }
 
 /**
@@ -579,19 +577,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Calculer les valeurs dérivées
   const isAuthenticated = !!token;
-  const isApproved = !!(
-    token &&
-    user &&
-    user.isBackofficeApproved &&
-    !user.isBackofficeRejected
-  );
 
   const value: AuthContextType = {
     token,
     user,
     isLoading,
     isAuthenticated,
-    isApproved,
     API_URL,
     login,
     logout,

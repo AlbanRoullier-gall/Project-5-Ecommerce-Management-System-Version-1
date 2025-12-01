@@ -103,6 +103,7 @@ export class AuthService {
         is_active: true,
         is_backoffice_approved: false, // Par défaut, pas approuvé pour le backoffice
         is_backoffice_rejected: false, // Par défaut, pas refusé
+        is_super_admin: false, // Par défaut, pas super admin
         created_at: new Date(),
         updated_at: new Date(),
       });
@@ -310,17 +311,17 @@ export class AuthService {
     userId: number,
     approved: boolean
   ): Promise<User> {
-      const user = await this.userRepository.getById(userId);
-      if (!user) {
-        throw new Error("Utilisateur non trouvé");
-      }
+    const user = await this.userRepository.getById(userId);
+    if (!user) {
+      throw new Error("Utilisateur non trouvé");
+    }
 
-      const updatedUser = this.userRepository.createUserWithMerge(user, {
+    const updatedUser = this.userRepository.createUserWithMerge(user, {
       is_backoffice_approved: approved,
       is_backoffice_rejected: !approved,
-      });
+    });
 
-      return await this.userRepository.update(updatedUser);
+    return await this.userRepository.update(updatedUser);
   }
 
   /**
@@ -380,6 +381,64 @@ export class AuthService {
     } catch (error) {
       console.error("Error verifying approval token:", error);
       return null;
+    }
+  }
+
+  // ===== GESTION SUPER ADMIN =====
+
+  /**
+   * Vérifier si un utilisateur est super admin
+   */
+  async isSuperAdmin(userId: number): Promise<boolean> {
+    try {
+      const user = await this.userRepository.getById(userId);
+      return user?.isSuperAdmin ?? false;
+    } catch (error) {
+      console.error("Error checking super admin status:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Récupérer tous les utilisateurs en attente d'approbation
+   */
+  async getPendingUsers(): Promise<User[]> {
+    try {
+      return await this.userRepository.getPendingUsers();
+    } catch (error) {
+      console.error("Error getting pending users:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Récupérer tous les utilisateurs
+   */
+  async getAllUsers(): Promise<User[]> {
+    try {
+      return await this.userRepository.getAllUsers();
+    } catch (error) {
+      console.error("Error getting all users:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Supprimer un utilisateur
+   */
+  async deleteUser(userId: number): Promise<boolean> {
+    try {
+      // Vérifier que l'utilisateur existe
+      const user = await this.userRepository.getById(userId);
+      if (!user) {
+        throw new Error("Utilisateur non trouvé");
+      }
+
+      // Supprimer l'utilisateur
+      return await this.userRepository.deleteById(userId);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      throw error;
     }
   }
 }

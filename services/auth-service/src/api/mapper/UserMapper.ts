@@ -37,6 +37,7 @@ export class UserMapper {
       isActive: user.isActive,
       isBackofficeApproved: user.isBackofficeApproved,
       isBackofficeRejected: user.isBackofficeRejected,
+      isSuperAdmin: user.isSuperAdmin,
       createdAt: user.createdAt.toISOString(),
     };
   }

@@ -9,6 +9,7 @@ import express from "express";
 import { ServiceName } from "../config";
 import { proxyRequest } from "./proxy";
 import { requireAuth } from "./middleware/auth";
+import { requireSuperAdmin } from "./middleware/authorization";
 import {
   corsMiddleware,
   helmetMiddleware,
@@ -157,6 +158,62 @@ export class ApiRouter {
 
     // ===== PROXY AUTOMATIQUE POUR TOUTES LES AUTRES ROUTES =====
     // IMPORTANT: L'ordre est crucial - les routes spécifiques doivent être enregistrées AVANT les routes génériques
+
+    // Routes de gestion des utilisateurs (SUPER ADMIN UNIQUEMENT)
+    // Doivent être AVANT la route générique /api/admin/*
+    app.get(
+      "/api/admin/users/pending",
+      requireAuth,
+      requireSuperAdmin,
+      async (req, res) => {
+        await proxyRequest(req, res, "auth");
+      }
+    );
+
+    app.get(
+      "/api/admin/users",
+      requireAuth,
+      requireSuperAdmin,
+      async (req, res) => {
+        await proxyRequest(req, res, "auth");
+      }
+    );
+
+    app.get(
+      "/api/admin/users/:id",
+      requireAuth,
+      requireSuperAdmin,
+      async (req, res) => {
+        await proxyRequest(req, res, "auth");
+      }
+    );
+
+    app.post(
+      "/api/admin/users/:id/approve",
+      requireAuth,
+      requireSuperAdmin,
+      async (req, res) => {
+        await proxyRequest(req, res, "auth");
+      }
+    );
+
+    app.post(
+      "/api/admin/users/:id/reject",
+      requireAuth,
+      requireSuperAdmin,
+      async (req, res) => {
+        await proxyRequest(req, res, "auth");
+      }
+    );
+
+    app.delete(
+      "/api/admin/users/:id",
+      requireAuth,
+      requireSuperAdmin,
+      async (req, res) => {
+        await proxyRequest(req, res, "auth");
+      }
+    );
 
     // Routes admin spécifiques avec paramètres (AVANT la route générique /api/admin/*)
     app.post("/api/admin/products/:id/activate", requireAuth, (req, res) =>
