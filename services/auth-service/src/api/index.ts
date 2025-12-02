@@ -120,6 +120,9 @@ export class ApiRouter {
           "string.empty": "Le mot de passe est requis",
           "any.required": "Le mot de passe est requis",
         }),
+        confirmPassword: Joi.string()
+          .optional()
+          .label("Confirmation du mot de passe"),
       }),
 
       resetPasswordSchema: Joi.object({
@@ -239,7 +242,6 @@ export class ApiRouter {
         this.authController.confirmResetPassword(req, res);
       }
     );
-
 
     // ===== ROUTES ADMIN (AVEC AUTHENTIFICATION) =====
     app.post(

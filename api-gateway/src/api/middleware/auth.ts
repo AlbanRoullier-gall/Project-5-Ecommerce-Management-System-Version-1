@@ -1,11 +1,13 @@
 /**
  * Module d'authentification pour l'API Gateway
  * Gère la vérification JWT et la protection des routes
+ * Utilise des cookies httpOnly pour la sécurité
  */
 
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 import { JWT_SECRET, SERVICES } from "../../config";
+import { extractAuthToken } from "./auth-session";
 
 // ===== TYPES =====
 
@@ -30,13 +32,11 @@ export const verifyToken = (token: string): AuthenticatedUser | null => {
 };
 
 /**
- * Extrait le token d'authentification depuis les headers
- * Format attendu : "Bearer <token>"
+ * Extrait le token d'authentification depuis le cookie httpOnly
+ * Plus de fallback sur le header Authorization
  */
-export const extractToken = (authHeader: string | undefined): string | null => {
-  if (!authHeader) return null;
-  const parts = authHeader.split(" ");
-  return parts.length === 2 && parts[0] === "Bearer" ? parts[1] || null : null;
+export const extractToken = (req: Request): string | null => {
+  return extractAuthToken(req);
 };
 
 /**
@@ -52,13 +52,12 @@ export const requireAuth = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const token = extractToken(req.headers["authorization"]);
+  const token = extractToken(req);
 
   if (!token) {
     res.status(401).json({
       error: "Token d'accès requis",
-      message:
-        "Vous devez fournir un token d'authentification pour accéder à cette ressource",
+      message: "Vous devez être authentifié pour accéder à cette ressource",
       code: "MISSING_TOKEN",
     });
     return;

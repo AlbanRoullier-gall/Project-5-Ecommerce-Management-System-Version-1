@@ -74,23 +74,17 @@ const OrderList: React.FC = () => {
     setIsExporting(true);
     try {
       // Appeler directement l'endpoint d'export qui récupère TOUTES les commandes de l'année
-      // Pour les fichiers binaires, on doit utiliser fetch directement
-      const token = localStorage.getItem("auth_token");
-      if (!token) {
-        alert("Non authentifié");
-        return;
-      }
-
+      // Pour les fichiers binaires, on doit utiliser fetch directement avec credentials
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
       const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020"
-        }/api/admin/exports/orders-year/${yearFilter}`,
+        `${API_URL}/api/admin/exports/orders-year/${yearFilter}`,
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`,
             Accept: "application/pdf",
           },
+          credentials: "include", // Important pour envoyer les cookies httpOnly
         }
       );
 

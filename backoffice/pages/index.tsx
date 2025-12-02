@@ -13,8 +13,7 @@ import { LoadingSpinner } from "../components/shared";
  * - Sinon → Redirige vers /auth/login
  *
  * Note: La vérification de l'approbation backoffice est gérée par le service
- * d'authentification lors du login. Si un utilisateur a un token valide,
- * c'est qu'il était approuvé au moment de la connexion.
+ * d'authentification lors du login. L'authentification est vérifiée via un cookie httpOnly.
  *
  * Affiche un loader pendant la vérification
  * Cette page ne doit jamais être vue directement par l'utilisateur

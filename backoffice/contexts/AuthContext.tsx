@@ -44,7 +44,6 @@ export interface AuthOperationResult {
   error?: string;
   message?: string;
   user?: UserPublicDTO;
-  token?: string;
 }
 
 /**
@@ -59,7 +58,7 @@ export interface PasswordValidationResult {
  * État d'authentification
  */
 interface AuthState {
-  /** Token d'authentification */
+  /** Flag d'authentification (le token est dans un cookie httpOnly) */
   token: string | null;
   /** Données utilisateur */
   user: UserPublicDTO | null;
@@ -89,13 +88,13 @@ export interface ApiCallOptions extends RequestInit {
 interface AuthContextType extends AuthState {
   /** URL de l'API */
   API_URL: string;
-  /** Connecte l'utilisateur (sauvegarde token et user) */
+  /** Connecte l'utilisateur (le token est dans un cookie httpOnly) */
   login: (token: string, user: UserPublicDTO) => void;
   /** Déconnecte l'utilisateur */
   logout: () => void;
-  /** Vérifie l'authentification depuis localStorage */
+  /** Vérifie l'authentification depuis le serveur (cookie httpOnly) */
   checkAuth: () => void;
-  /** Récupère le token (helper) */
+  /** Récupère le flag d'authentification (le token est dans un cookie httpOnly) */
   getAuthToken: () => string | null;
   /**
    * Fait un appel API avec le token d'authentification automatiquement ajouté
@@ -149,10 +148,9 @@ interface AuthProviderProps {
  * Provider d'authentification
  *
  * Gère l'état d'authentification global de l'application :
- * - Token et données utilisateur
- * - Vérification d'authentification au démarrage
+ * - Données utilisateur (le token est dans un cookie httpOnly)
+ * - Vérification d'authentification au démarrage via API
  * - Méthodes de login/logout
- * - Synchronisation avec localStorage
  */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const router = useRouter();
@@ -161,69 +159,85 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   /**
-   * Vérifie l'authentification depuis localStorage
+   * Vérifie l'authentification depuis le serveur (cookie httpOnly)
    */
-  const checkAuth = useCallback(() => {
-    const storedToken = localStorage.getItem("auth_token");
-    const userStr = localStorage.getItem("user");
+  const checkAuth = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/auth/verify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Important pour envoyer les cookies
+      });
 
-    if (!storedToken) {
-      setToken(null);
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
+      const data = (await response.json()) as {
+        success: boolean;
+        isAuthenticated: boolean;
+        user?: UserPublicDTO;
+      };
 
-    if (userStr) {
-      try {
-        const parsedUser = JSON.parse(userStr) as UserPublicDTO;
-        setToken(storedToken);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error(
-          "Erreur lors de la lecture des données utilisateur:",
-          error
-        );
-        // En cas d'erreur, nettoyer le localStorage
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("user");
+      if (data.success && data.isAuthenticated && data.user) {
+        setUser(data.user);
+        setToken("authenticated"); // Flag pour indiquer qu'on est authentifié (le token est dans le cookie)
+      } else {
         setToken(null);
         setUser(null);
       }
-    } else {
-      setToken(storedToken);
+    } catch (error) {
+      console.error(
+        "Erreur lors de la vérification de l'authentification:",
+        error
+      );
+      setToken(null);
       setUser(null);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }, []);
 
   /**
    * Connecte l'utilisateur
+   * Le token est maintenant dans un cookie httpOnly, on met juste à jour l'état
    */
-  const login = useCallback((newToken: string, newUser: UserPublicDTO) => {
-    localStorage.setItem("auth_token", newToken);
-    localStorage.setItem("user", JSON.stringify(newUser));
-    setToken(newToken);
+  const login = useCallback((_newToken: string, newUser: UserPublicDTO) => {
+    // Le token est dans le cookie httpOnly, on ne le stocke plus dans localStorage
+    setToken("authenticated"); // Flag pour indiquer qu'on est authentifié
     setUser(newUser);
     setIsLoading(false);
   }, []);
 
   /**
    * Déconnecte l'utilisateur
+   * Appelle l'API pour supprimer le cookie
    */
-  const logout = useCallback(() => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("user");
-    setToken(null);
-    setUser(null);
-    router.push("/auth/login");
+  const logout = useCallback(async () => {
+    try {
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Important pour envoyer les cookies
+      });
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+    } finally {
+      // Mettre à jour l'état local même si l'appel API échoue
+      setToken(null);
+      setUser(null);
+      router.push("/auth/login");
+    }
   }, [router]);
 
   /**
    * Récupère le token (helper)
+   * Le token est maintenant dans un cookie httpOnly, on retourne un flag
    */
   const getAuthToken = useCallback(() => {
+    // Le token est dans le cookie httpOnly, on ne peut pas le récupérer depuis JavaScript
+    // On retourne un flag pour indiquer qu'on est authentifié
     return token;
   }, [token]);
 
@@ -250,14 +264,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         ...headers,
       };
 
-      // Ajouter le token si requis
-      if (requireAuth) {
-        const authToken = token || localStorage.getItem("auth_token");
-        if (!authToken) {
-          throw new Error("Token d'authentification requis");
-        }
-        requestHeaders["Authorization"] = `Bearer ${authToken}`;
-      }
+      // Le token est maintenant dans un cookie httpOnly
+      // Le navigateur l'envoie automatiquement avec credentials: "include"
+      // Plus besoin d'ajouter le header Authorization manuellement
 
       // Préparer le body
       let requestBody: string | undefined;
@@ -269,12 +278,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
 
-      // Faire l'appel
+      // Faire l'appel avec credentials pour envoyer les cookies
       const response = await fetch(fullUrl, {
         ...fetchOptions,
         method: fetchOptions.method || "GET",
         headers: requestHeaders,
         body: requestBody,
+        credentials: "include", // Important pour envoyer les cookies httpOnly
       });
 
       // Parser la réponse
@@ -309,30 +319,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return (await response.text()) as T;
       }
     },
-    [token]
+    [] // Plus besoin de token dans les dépendances
   );
 
   /**
    * Valide un mot de passe via l'API backend
-   * La validation de correspondance (confirmPassword) reste côté client
+   * La validation de correspondance (confirmPassword) est gérée côté serveur
    */
   const validatePassword = useCallback(
     async (
       password: string,
       confirmPassword?: string
     ): Promise<PasswordValidationResult> => {
-      // Validation de correspondance côté client
-      if (confirmPassword !== undefined && password !== confirmPassword) {
-        return {
-          isValid: false,
-          error: AUTH_ERROR_MESSAGES.PASSWORD_MISMATCH,
-        };
-      }
-
-      // Validation de force du mot de passe via l'API backend
+      // Validation complète (force + correspondance) via l'API backend
       try {
         const validationRequest: PasswordValidationDTO = {
           password,
+          ...(confirmPassword !== undefined && { confirmPassword }),
         };
 
         const response = await fetch(`${API_URL}/api/auth/validate-password`, {
@@ -340,6 +343,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           body: JSON.stringify(validationRequest),
         });
 
@@ -395,24 +399,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include", // Important pour recevoir les cookies
           body: JSON.stringify(loginRequest),
         });
 
         const data = (await response.json()) as {
           success: boolean;
           user: UserPublicDTO;
-          token: string;
           message?: string;
         };
 
         if (response.ok) {
-          // Utiliser le contexte pour stocker le token et les données utilisateur
-          login(data.token, data.user);
+          // Le token est maintenant dans un cookie httpOnly
+          // On stocke juste les données utilisateur
+          login("authenticated", data.user);
 
           return {
             success: true,
             user: data.user,
-            token: data.token,
             message: data.message,
           };
         } else {
@@ -442,21 +446,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include", // Important pour recevoir les cookies
           body: JSON.stringify(userData),
         });
 
         const data = (await response.json()) as {
           success: boolean;
           user: UserPublicDTO;
-          token: string;
           message?: string;
         };
 
         if (response.ok) {
+          // Le token est maintenant dans un cookie httpOnly
           return {
             success: true,
             user: data.user,
-            token: data.token,
             message:
               data.message ||
               "Compte créé avec succès ! Un administrateur doit approuver votre accès au backoffice.",
@@ -488,6 +492,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           body: JSON.stringify({ email }),
         });
 
@@ -537,6 +542,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             headers: {
               "Content-Type": "application/json",
             },
+            credentials: "include",
             body: JSON.stringify(resetRequest),
           }
         );
@@ -574,7 +580,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [checkAuth]);
 
   // Calculer les valeurs dérivées
-  const isAuthenticated = !!token;
+  // Le token est maintenant un flag "authenticated" si on est connecté
+  const isAuthenticated = token === "authenticated" && !!user;
 
   const value: AuthContextType = {
     token,

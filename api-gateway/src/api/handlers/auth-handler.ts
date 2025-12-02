@@ -6,6 +6,7 @@
 
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
+import { clearAuthTokenCookie } from "../middleware/auth-session";
 
 /**
  * Helper pour créer une réponse d'erreur standardisée
@@ -148,6 +149,46 @@ export const handlePasswordResetConfirm = async (
 };
 
 /**
+ * Handler pour la connexion
+ * Le service auth définit déjà le cookie, on transmet juste la réponse
+ */
+export const handleLogin = async (req: Request, res: Response) => {
+  try {
+    // Appel direct au Auth Service
+    const authResponse = await fetch(`${SERVICES.auth}/api/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Service-Request": "api-gateway",
+      },
+      body: JSON.stringify(req.body),
+    });
+
+    const authData = (await authResponse.json()) as any;
+
+    if (!authResponse.ok) {
+      return res.status(authResponse.status).json(authData);
+    }
+
+    // Le service auth a déjà défini le cookie, on transmet juste la réponse
+    // Copier les cookies Set-Cookie depuis la réponse du service
+    const setCookieHeader = authResponse.headers.get("set-cookie");
+    if (setCookieHeader) {
+      res.setHeader("Set-Cookie", setCookieHeader);
+    }
+
+    return res.status(200).json(authData);
+  } catch (error) {
+    console.error("❌ Login error:", error);
+    return res.status(500).json({
+      error: "Erreur interne du serveur",
+      message: "Veuillez réessayer plus tard",
+      timestamp: new Date().toISOString(),
+    });
+  }
+};
+
+/**
  * Handler pour l'inscription avec envoi d'email d'approbation
  * Orchestre l'appel entre Auth Service et Email Service
  */
@@ -169,6 +210,13 @@ export const handleRegister = async (req: Request, res: Response) => {
       return res.status(authResponse.status).json(authData);
     }
 
+    // Le service auth a déjà défini le cookie, on transmet juste la réponse
+    // Copier les cookies Set-Cookie depuis la réponse du service
+    const setCookieHeader = authResponse.headers.get("set-cookie");
+    if (setCookieHeader) {
+      res.setHeader("Set-Cookie", setCookieHeader);
+    }
+
     // 2. Retourner la réponse au client
     return res.status(201).json(authData);
   } catch (error) {
@@ -177,6 +225,112 @@ export const handleRegister = async (req: Request, res: Response) => {
       error: "Erreur interne du serveur",
       message: "Veuillez réessayer plus tard",
       timestamp: new Date().toISOString(),
+    });
+  }
+};
+
+/**
+ * Handler pour vérifier l'authentification
+ * Vérifie la présence et validité du token depuis le cookie
+ * Utilise le middleware requireAuth pour vérifier le token, puis récupère les infos utilisateur
+ */
+export const handleVerifyAuth = async (req: Request, res: Response) => {
+  try {
+    // Extraire le token depuis le cookie
+    const { extractAuthToken } = await import("../middleware/auth-session");
+    const { verifyToken } = await import("../middleware/auth");
+
+    const token = extractAuthToken(req);
+
+    if (!token) {
+      return res.json({
+        success: false,
+        isAuthenticated: false,
+      });
+    }
+
+    // Vérifier le token
+    const user = verifyToken(token);
+
+    if (!user) {
+      return res.json({
+        success: false,
+        isAuthenticated: false,
+      });
+    }
+
+    // Vérifier que l'utilisateur existe encore dans la base de données
+    const authResponse = await fetch(
+      `${SERVICES.auth}/api/admin/users/${user.userId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Service-Request": "api-gateway",
+          "x-user-id": String(user.userId),
+          "x-user-email": user.email,
+        },
+      }
+    );
+
+    if (!authResponse.ok) {
+      return res.json({
+        success: false,
+        isAuthenticated: false,
+      });
+    }
+
+    const authData = (await authResponse.json()) as any;
+    return res.json({
+      success: true,
+      isAuthenticated: true,
+      user: authData.data?.user || user,
+    });
+  } catch (error) {
+    console.error("❌ Verify auth error:", error);
+    return res.json({
+      success: false,
+      isAuthenticated: false,
+    });
+  }
+};
+
+/**
+ * Handler pour la déconnexion
+ * Supprime le cookie d'authentification
+ */
+export const handleLogout = async (req: Request, res: Response) => {
+  try {
+    // Appel au Auth Service pour logout
+    const authResponse = await fetch(`${SERVICES.auth}/api/auth/logout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Service-Request": "api-gateway",
+        Cookie: req.headers.cookie || "",
+      },
+    });
+
+    // Supprimer le cookie côté API Gateway aussi
+    clearAuthTokenCookie(res);
+
+    if (!authResponse.ok) {
+      // Même en cas d'erreur, supprimer le cookie localement
+      return res.status(200).json({
+        success: true,
+        message: "Déconnexion réussie",
+      });
+    }
+
+    const authData = (await authResponse.json()) as any;
+    return res.json(authData);
+  } catch (error) {
+    console.error("❌ Logout error:", error);
+    // Même en cas d'erreur, supprimer le cookie localement
+    clearAuthTokenCookie(res);
+    return res.status(200).json({
+      success: true,
+      message: "Déconnexion réussie",
     });
   }
 };

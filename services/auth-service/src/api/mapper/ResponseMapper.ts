@@ -18,27 +18,23 @@ export class ResponseMapper {
 
   /**
    * Réponse d'inscription réussie
+   * Le token est dans un cookie httpOnly, pas dans la réponse
    */
-  static registerSuccess(
-    user: UserPublicDTO,
-    token: string,
-    customMessage?: string
-  ) {
+  static registerSuccess(user: UserPublicDTO, customMessage?: string) {
     return {
       message: customMessage || "Inscription réussie",
       user,
-      token,
     };
   }
 
   /**
    * Réponse de connexion réussie
+   * Le token est dans un cookie httpOnly, pas dans la réponse
    */
-  static loginSuccess(user: UserPublicDTO, token: string) {
+  static loginSuccess(user: UserPublicDTO) {
     return {
       message: "Connexion réussie",
       user,
-      token,
     };
   }
 

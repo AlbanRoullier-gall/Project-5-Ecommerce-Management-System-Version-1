@@ -33,6 +33,7 @@ export interface UserLoginDTO {
  */
 export interface PasswordValidationDTO {
   password: string;
+  confirmPassword?: string;
 }
 
 /**

@@ -17,14 +17,15 @@ interface AuthGuardProps {
  * Composant de protection des routes
  *
  * Vérifie l'authentification de l'utilisateur avant d'afficher le contenu protégé.
+ * L'authentification est vérifiée via un cookie httpOnly géré par le serveur.
  *
  * Note: La vérification de l'approbation backoffice est gérée par le service d'authentification
- * lors du login. Si un utilisateur a un token valide, c'est qu'il était approuvé au moment
+ * lors du login. Si un utilisateur est authentifié, c'est qu'il était approuvé au moment
  * de la connexion.
  *
  * Scénarios de redirection :
- * - Pas de token → /auth/login
- * - Token valide → Affiche le contenu protégé
+ * - Non authentifié → /auth/login
+ * - Authentifié → Affiche le contenu protégé
  *
  * Affiche un loader pendant la vérification
  *
@@ -44,7 +45,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     }
 
     if (!isAuthenticated) {
-      // Pas de token, rediriger vers la page de connexion
+      // Non authentifié, rediriger vers la page de connexion
       router.push("/auth/login");
       return;
     }

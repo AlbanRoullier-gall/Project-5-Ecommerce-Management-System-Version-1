@@ -24,6 +24,7 @@ export class AuthController {
 
   /**
    * Inscription d'un nouvel utilisateur
+   * Définit le token JWT dans un cookie httpOnly pour la sécurité
    */
   async register(req: Request, res: Response): Promise<void> {
     try {
@@ -41,8 +42,19 @@ export class AuthController {
 
       // Convertir en DTO de réponse
       const userPublicDTO = UserMapper.userToPublicDTO(user);
-      const response = ResponseMapper.registerSuccess(userPublicDTO, token);
 
+      // Définir le cookie httpOnly avec le token
+      const isProduction = process.env["NODE_ENV"] === "production";
+      res.cookie("auth_token", token, {
+        httpOnly: true, // Non accessible depuis JavaScript (sécurité XSS)
+        secure: isProduction, // HTTPS uniquement en production
+        sameSite: "lax", // Protection CSRF
+        maxAge: 24 * 60 * 60 * 1000, // 24 heures (aligné avec l'expiration du JWT)
+        path: "/", // Disponible sur tout le site
+      });
+
+      // Retourner la réponse sans le token dans le body (sécurité)
+      const response = ResponseMapper.registerSuccess(userPublicDTO);
       res.status(201).json(response);
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -60,6 +72,7 @@ export class AuthController {
 
   /**
    * Connexion d'un utilisateur
+   * Définit le token JWT dans un cookie httpOnly pour la sécurité
    */
   async login(req: Request, res: Response): Promise<void> {
     try {
@@ -73,8 +86,19 @@ export class AuthController {
 
       // Convertir en DTO de réponse
       const userPublicDTO = UserMapper.userToPublicDTO(user);
-      const response = ResponseMapper.loginSuccess(userPublicDTO, token);
 
+      // Définir le cookie httpOnly avec le token
+      const isProduction = process.env["NODE_ENV"] === "production";
+      res.cookie("auth_token", token, {
+        httpOnly: true, // Non accessible depuis JavaScript (sécurité XSS)
+        secure: isProduction, // HTTPS uniquement en production
+        sameSite: "lax", // Protection CSRF
+        maxAge: 24 * 60 * 60 * 1000, // 24 heures (aligné avec l'expiration du JWT)
+        path: "/", // Disponible sur tout le site
+      });
+
+      // Retourner la réponse sans le token dans le body (sécurité)
+      const response = ResponseMapper.loginSuccess(userPublicDTO);
       res.json(response);
     } catch (error: any) {
       console.error("Login error:", error);
@@ -99,15 +123,28 @@ export class AuthController {
   /**
    * Validation d'un mot de passe
    * Utilise PasswordValidationDTO et la validation du modèle User
+   * Vérifie également la correspondance avec confirmPassword si fourni
    */
   async validatePassword(req: Request, res: Response): Promise<void> {
     try {
       const passwordValidationDTO: PasswordValidationDTO = req.body;
+      const { password, confirmPassword } = passwordValidationDTO;
+
+      // Vérifier la correspondance des mots de passe si confirmPassword est fourni
+      if (confirmPassword !== undefined && password !== confirmPassword) {
+        const response = {
+          success: true,
+          valid: false,
+          isValid: false,
+          errors: ["Les mots de passe ne correspondent pas"],
+          message: "Les mots de passe ne correspondent pas",
+        };
+        res.json(response);
+        return;
+      }
 
       // Utiliser la validation du modèle User (8 caractères, majuscule, minuscule, chiffre, caractère spécial)
-      const validationResult = User.validatePassword(
-        passwordValidationDTO.password
-      );
+      const validationResult = User.validatePassword(password);
 
       const response = {
         success: true,
@@ -196,20 +233,26 @@ export class AuthController {
 
   /**
    * Déconnexion de l'utilisateur
+   * Supprime le cookie d'authentification
    */
   async logout(_req: Request, res: Response): Promise<void> {
     try {
-      // Dans une architecture JWT stateless, la déconnexion se fait côté client
-      // en supprimant le token. Ici on retourne juste un message de succès.
-      const response = ResponseMapper.logoutSuccess();
+      // Supprimer le cookie d'authentification
+      const isProduction = process.env["NODE_ENV"] === "production";
+      res.clearCookie("auth_token", {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "lax",
+        path: "/",
+      });
 
+      const response = ResponseMapper.logoutSuccess();
       res.json(response);
     } catch (error: any) {
       console.error("Logout error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
-
 
   // ===== GESTION DES UTILISATEURS (SUPER ADMIN) =====
 

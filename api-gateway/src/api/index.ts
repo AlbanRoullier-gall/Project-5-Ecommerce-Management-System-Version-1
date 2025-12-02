@@ -18,9 +18,12 @@ import {
   errorHandler,
 } from "./middleware/common";
 import {
+  handleLogin,
   handleRegister,
   handlePasswordReset,
   handlePasswordResetConfirm,
+  handleVerifyAuth,
+  handleLogout,
 } from "./handlers/auth-handler";
 import {
   handleCreatePayment,
@@ -113,7 +116,10 @@ export class ApiRouter {
     // ===== ROUTES AVEC ORCHESTRATION (handlers spéciaux) =====
 
     // Auth - Routes orchestrées
+    app.post("/api/auth/login", handleLogin);
     app.post("/api/auth/register", handleRegister);
+    app.post("/api/auth/verify", handleVerifyAuth);
+    app.post("/api/auth/logout", handleLogout);
     app.post("/api/auth/reset-password", handlePasswordReset);
     app.post("/api/auth/reset-password/confirm", handlePasswordResetConfirm);
 

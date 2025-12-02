@@ -74,7 +74,8 @@ docker run -p 3020:3020 api-gateway
 
 ## 🔐 Authentification
 
-Les routes `/admin/*` nécessitent un token JWT valide dans le header `Authorization: Bearer <token>`.
+Les routes `/admin/*` nécessitent un token JWT valide dans un cookie httpOnly `auth_token`.
+Le token est géré automatiquement par le navigateur et n'est pas accessible depuis JavaScript.
 
 ## 📊 Monitoring
 
