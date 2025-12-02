@@ -449,8 +449,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           success: boolean;
           user: UserPublicDTO;
           token: string;
-          approvalToken?: string;
-          rejectionToken?: string;
           message?: string;
         };
 
@@ -461,7 +459,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             token: data.token,
             message:
               data.message ||
-              "Compte créé avec succès ! Un email de demande d'approbation a été envoyé à l'administrateur. Vous recevrez une notification une fois votre accès approuvé.",
+              "Compte créé avec succès ! Un administrateur doit approuver votre accès au backoffice.",
           };
         } else {
           return {

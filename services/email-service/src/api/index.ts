@@ -55,48 +55,6 @@ export class ApiRouter {
         resetUrl: Joi.string().uri().required(),
       }),
 
-      // Backoffice approval request schema
-      // Accepte soit userFullName/userEmail (compatibilité), soit user object (nouveau format)
-      backofficeApprovalRequestSchema: Joi.alternatives().try(
-        Joi.object({
-          userFullName: Joi.string().max(200).required(),
-          userEmail: Joi.string().email().required(),
-          approvalUrl: Joi.string().uri().required(),
-          rejectionUrl: Joi.string().uri().required(),
-        }).unknown(true),
-        Joi.object({
-          user: Joi.object({
-            firstName: Joi.string().optional(),
-            lastName: Joi.string().optional(),
-            email: Joi.string().email().required(),
-          })
-            .unknown(true)
-            .required(),
-          approvalUrl: Joi.string().uri().required(),
-          rejectionUrl: Joi.string().uri().required(),
-        }).unknown(true)
-      ),
-
-      // Backoffice approval confirmation schema
-      // Accepte soit userFullName/userEmail (compatibilité), soit user object (nouveau format)
-      backofficeApprovalConfirmationSchema: Joi.alternatives().try(
-        Joi.object({
-          userEmail: Joi.string().email().required(),
-          userFullName: Joi.string().max(200).required(),
-          backofficeUrl: Joi.string().uri().required(),
-        }).unknown(true),
-        Joi.object({
-          user: Joi.object({
-            firstName: Joi.string().optional(),
-            lastName: Joi.string().optional(),
-            email: Joi.string().email().required(),
-          })
-            .unknown(true)
-            .required(),
-          backofficeUrl: Joi.string().uri().required(),
-        }).unknown(true)
-      ),
-
       // Backoffice rejection notification schema
       // Accepte soit userFullName/userEmail (compatibilité), soit user object (nouveau format)
       backofficeRejectionNotificationSchema: Joi.alternatives().try(
@@ -187,7 +145,7 @@ export class ApiRouter {
   /**
    * Middleware de validation
    */
-  private validateRequest = (schema: Joi.ObjectSchema) => {
+  private validateRequest = (schema: Joi.Schema) => {
     return (req: Request, res: Response, next: NextFunction): void => {
       const { error } = schema.validate(req.body);
       if (error) {
@@ -240,24 +198,6 @@ export class ApiRouter {
     );
 
     // ===== ROUTES BACKOFFICE =====
-    // Envoyer une demande d'approbation backoffice
-    app.post(
-      "/api/email/backoffice-approval-request",
-      this.validateRequest(schemas.backofficeApprovalRequestSchema),
-      (req: Request, res: Response) => {
-        this.emailController.sendBackofficeApprovalRequest(req, res);
-      }
-    );
-
-    // Envoyer une confirmation d'approbation backoffice
-    app.post(
-      "/api/email/backoffice-approval-confirmation",
-      this.validateRequest(schemas.backofficeApprovalConfirmationSchema),
-      (req: Request, res: Response) => {
-        this.emailController.sendBackofficeApprovalConfirmation(req, res);
-      }
-    );
-
     // Envoyer une notification de rejet backoffice
     app.post(
       "/api/email/backoffice-rejection-notification",

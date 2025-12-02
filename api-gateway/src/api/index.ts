@@ -21,8 +21,6 @@ import {
   handleRegister,
   handlePasswordReset,
   handlePasswordResetConfirm,
-  handleApproveBackofficeAccess,
-  handleRejectBackofficeAccess,
 } from "./handlers/auth-handler";
 import {
   handleCreatePayment,
@@ -118,8 +116,6 @@ export class ApiRouter {
     app.post("/api/auth/register", handleRegister);
     app.post("/api/auth/reset-password", handlePasswordReset);
     app.post("/api/auth/reset-password/confirm", handlePasswordResetConfirm);
-    app.get("/api/auth/approve-backoffice", handleApproveBackofficeAccess);
-    app.get("/api/auth/reject-backoffice", handleRejectBackofficeAccess);
 
     // Payment - Routes avec transformation/orchestration
     app.post("/api/payment/create", handleCreatePayment);

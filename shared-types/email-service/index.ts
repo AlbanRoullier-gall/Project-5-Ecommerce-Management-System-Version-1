@@ -49,37 +49,6 @@ export interface EmailResetPasswordDTO {
 }
 
 /**
- * DTO pour l'envoi d'email de demande d'approbation backoffice
- */
-export interface EmailBackofficeApprovalRequestDTO {
-  userFullName: string;
-  userEmail: string;
-  user: {
-    userId: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-  };
-  approvalUrl: string;
-  rejectionUrl: string;
-}
-
-/**
- * DTO pour l'envoi d'email de confirmation d'approbation backoffice
- */
-export interface EmailBackofficeApprovalConfirmationDTO {
-  userEmail: string;
-  userFullName: string;
-  user: {
-    userId: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-  };
-  backofficeUrl: string;
-}
-
-/**
  * DTO pour l'envoi d'email de rejet backoffice
  */
 export interface EmailBackofficeRejectionDTO {

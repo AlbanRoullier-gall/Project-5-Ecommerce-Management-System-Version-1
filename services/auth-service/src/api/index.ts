@@ -240,14 +240,6 @@ export class ApiRouter {
       }
     );
 
-    // ===== ROUTES D'APPROBATION BACKOFFICE =====
-    app.get("/api/auth/approve-backoffice", (req: Request, res: Response) => {
-      this.authController.approveBackofficeAccess(req, res);
-    });
-
-    app.get("/api/auth/reject-backoffice", (req: Request, res: Response) => {
-      this.authController.rejectBackofficeAccess(req, res);
-    });
 
     // ===== ROUTES ADMIN (AVEC AUTHENTIFICATION) =====
     app.post(

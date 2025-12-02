@@ -120,7 +120,7 @@ export class AuthService {
         user: savedUser,
         token,
         message:
-          "Votre compte a été créé avec succès. Un email de demande d'approbation a été envoyé à l'administrateur. Vous recevrez une notification une fois votre accès approuvé.",
+          "Votre compte a été créé avec succès. Un administrateur doit approuver votre accès au backoffice.",
       };
     } catch (error) {
       console.error("Error registering user:", error);
@@ -164,7 +164,7 @@ export class AuthService {
 
       if (!user.isBackofficeApproved) {
         throw new Error(
-          "Votre accès au backoffice n'a pas encore été approuvé. Vous recevrez un email une fois votre demande traitée."
+          "Votre accès au backoffice n'a pas encore été approuvé par un administrateur."
         );
       }
 
@@ -348,41 +348,6 @@ export class AuthService {
     }
   }
 
-  /**
-   * Générer un token d'approbation
-   * Note: Utilisé par l'API Gateway pour créer des liens d'approbation/rejet
-   */
-  generateApprovalToken(
-    userId: number,
-    action: "approve" | "reject" = "approve"
-  ): string {
-    const payload = {
-      userId,
-      action,
-      timestamp: Date.now(),
-    };
-
-    return this.generateToken(payload, "24h");
-  }
-
-  /**
-   * Vérifier un token d'approbation
-   */
-  verifyApprovalToken(
-    token: string
-  ): { userId: number; action: string; timestamp: number } | null {
-    try {
-      const decoded = jwt.verify(token, this.jwtSecret) as any;
-      return {
-        userId: decoded.userId,
-        action: decoded.action,
-        timestamp: decoded.timestamp,
-      };
-    } catch (error) {
-      console.error("Error verifying approval token:", error);
-      return null;
-    }
-  }
 
   // ===== GESTION SUPER ADMIN =====
 

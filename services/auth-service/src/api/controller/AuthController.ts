@@ -39,24 +39,9 @@ export class AuthController {
         userRegistrationDTO.confirmPassword
       );
 
-      // Générer les tokens d'approbation/rejet pour l'API Gateway
-      const approvalToken = this.authService.generateApprovalToken(
-        user.userId,
-        "approve"
-      );
-      const rejectionToken = this.authService.generateApprovalToken(
-        user.userId,
-        "reject"
-      );
-
       // Convertir en DTO de réponse
       const userPublicDTO = UserMapper.userToPublicDTO(user);
-      const response = {
-        ...ResponseMapper.registerSuccess(userPublicDTO, token),
-        // Ajouter les tokens pour l'API Gateway
-        approvalToken,
-        rejectionToken,
-      };
+      const response = ResponseMapper.registerSuccess(userPublicDTO, token);
 
       res.status(201).json(response);
     } catch (error: any) {
@@ -225,103 +210,6 @@ export class AuthController {
     }
   }
 
-  /**
-   * Approbation d'accès au backoffice via email
-   */
-  async approveBackofficeAccess(req: Request, res: Response): Promise<void> {
-    try {
-      const { token } = req.query;
-
-      if (!token || typeof token !== "string") {
-        res.status(400).json(ResponseMapper.validationError("Token manquant"));
-        return;
-      }
-
-      // Vérifier le token d'approbation
-      const decoded = this.authService.verifyApprovalToken(token);
-
-      if (!decoded || decoded.action !== "approve") {
-        res.status(400).json(ResponseMapper.validationError("Token invalide"));
-        return;
-      }
-
-      // Approuver l'accès
-      await this.authService.approveBackofficeAccess(decoded.userId);
-
-      // Récupérer les informations utilisateur
-      const user = await this.authService.getUserById(decoded.userId);
-
-      // Convertir en DTO public
-      const userPublicDTO = UserMapper.userToPublicDTO(user);
-
-      // Retourner les informations - L'API Gateway se chargera d'envoyer l'email
-      res.json({
-        success: true,
-        message: "Accès au backoffice approuvé avec succès",
-        user: userPublicDTO,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      console.error("Approve backoffice access error:", error);
-      if (
-        error.message.includes("invalide") ||
-        error.message.includes("expiré")
-      ) {
-        res.status(400).json(ResponseMapper.validationError(error.message));
-        return;
-      }
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Rejet d'accès au backoffice via email
-   */
-  async rejectBackofficeAccess(req: Request, res: Response): Promise<void> {
-    try {
-      const { token } = req.query;
-
-      if (!token || typeof token !== "string") {
-        res.status(400).json(ResponseMapper.validationError("Token manquant"));
-        return;
-      }
-
-      // Vérifier le token d'approbation
-      const decoded = this.authService.verifyApprovalToken(token);
-
-      if (!decoded || decoded.action !== "reject") {
-        res.status(400).json(ResponseMapper.validationError("Token invalide"));
-        return;
-      }
-
-      // Rejeter l'accès
-      await this.authService.rejectBackofficeAccess(decoded.userId);
-
-      // Récupérer les informations utilisateur
-      const user = await this.authService.getUserById(decoded.userId);
-
-      // Convertir en DTO public
-      const userPublicDTO = UserMapper.userToPublicDTO(user);
-
-      // Retourner les informations - L'API Gateway se chargera d'envoyer l'email
-      res.json({
-        success: true,
-        message: "Accès au backoffice rejeté",
-        user: userPublicDTO,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      console.error("Reject backoffice access error:", error);
-      if (
-        error.message.includes("invalide") ||
-        error.message.includes("expiré")
-      ) {
-        res.status(400).json(ResponseMapper.validationError(error.message));
-        return;
-      }
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
 
   // ===== GESTION DES UTILISATEURS (SUPER ADMIN) =====
 
