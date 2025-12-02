@@ -25,11 +25,13 @@ export const handleDashboardStatistics = async (
 ): Promise<void> => {
   try {
     const user = (req as any).user as AuthenticatedUser; // requireAuth garantit que user existe
+    // Si pas d'année fournie, on laisse order-service déterminer l'année par défaut
     const year = req.query["year"]
       ? parseInt(req.query["year"] as string)
-      : new Date().getFullYear();
+      : undefined;
 
-    if (isNaN(year) || year < 2025) {
+    // Si une année est fournie, valider qu'elle est valide
+    if (year !== undefined && (isNaN(year) || year < 2025)) {
       res.status(400).json({
         error: "Année invalide",
         message: "L'année doit être >= 2025",
@@ -47,7 +49,9 @@ export const handleDashboardStatistics = async (
     const [productsStatsRes, customersStatsRes, ordersStatsRes] =
       await Promise.all([
         fetch(
-          `${SERVICES.product}/api/admin/statistics/dashboard?year=${year}`,
+          `${SERVICES.product}/api/admin/statistics/dashboard${
+            year ? `?year=${year}` : ""
+          }`,
           {
             headers,
           }
@@ -55,9 +59,14 @@ export const handleDashboardStatistics = async (
         fetch(`${SERVICES.customer}/api/admin/statistics/dashboard`, {
           headers,
         }),
-        fetch(`${SERVICES.order}/api/admin/statistics/dashboard?year=${year}`, {
-          headers,
-        }),
+        fetch(
+          `${SERVICES.order}/api/admin/statistics/dashboard${
+            year ? `?year=${year}` : ""
+          }`,
+          {
+            headers,
+          }
+        ),
       ]);
 
     // Vérifier et parser les réponses
@@ -92,8 +101,9 @@ export const handleDashboardStatistics = async (
     const ordersStatsData = (ordersStatsJson as any)?.data || {};
     const ordersStats = ordersStatsData.statistics || {};
 
-    // Extraire les années disponibles depuis la réponse de order-service
+    // Extraire les années disponibles et l'année par défaut depuis la réponse de order-service
     const availableYears = ordersStatsData.availableYears || [];
+    const defaultYear = ordersStatsData.defaultYear || year;
 
     const statistics: DashboardStatistics = {
       productsCount: productsStats.productsCount || 0,
@@ -105,7 +115,7 @@ export const handleDashboardStatistics = async (
 
     res.json({
       success: true,
-      data: { statistics, year, availableYears },
+      data: { statistics, year, availableYears, defaultYear },
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des statistiques:", error);

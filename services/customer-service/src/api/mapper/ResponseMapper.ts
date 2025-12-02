@@ -16,6 +16,46 @@ export class ResponseMapper {
   }
 
   /**
+   * Réponse de succès avec données (format standardisé)
+   */
+  static successWithData<T>(
+    data: T,
+    message: string = "Success"
+  ): {
+    message: string;
+    data: T;
+    timestamp: string;
+    status: number;
+  } {
+    return {
+      message,
+      data,
+      timestamp: new Date().toISOString(),
+      status: 200,
+    };
+  }
+
+  /**
+   * Réponse de création avec données (format standardisé)
+   */
+  static createdWithData<T>(
+    data: T,
+    message: string = "Created successfully"
+  ): {
+    message: string;
+    data: T;
+    timestamp: string;
+    status: number;
+  } {
+    return {
+      message,
+      data,
+      timestamp: new Date().toISOString(),
+      status: 201,
+    };
+  }
+
+  /**
    * Réponse de client créé
    */
   static customerCreated(customer: any) {

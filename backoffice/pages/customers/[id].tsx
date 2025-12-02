@@ -42,13 +42,20 @@ const EditCustomerPage: React.FC = () => {
     try {
       try {
         const data = await apiCall<{
-          customer?: CustomerPublicDTO;
+          data: { customer: CustomerPublicDTO };
+          message?: string;
+          timestamp?: string;
+          status?: number;
         }>({
           url: `/api/admin/customers/${id}`,
           method: "GET",
           requireAuth: true,
         });
-        setCustomer(data.customer || data);
+        // Format standardisé : { data: { customer }, ... }
+        if (!data.data || !data.data.customer) {
+          throw new Error("Format de réponse invalide pour le client");
+        }
+        setCustomer(data.data.customer);
       } catch (err: any) {
         if (err.status === 404) {
           throw new Error("Client introuvable");

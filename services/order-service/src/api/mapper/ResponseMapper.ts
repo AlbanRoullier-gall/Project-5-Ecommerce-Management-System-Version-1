@@ -288,6 +288,7 @@ export class ResponseMapper {
    */
   static validationError(message: string) {
     return {
+      error: "Erreur de validation",
       message,
       timestamp: new Date().toISOString(),
       status: 400,
@@ -299,6 +300,7 @@ export class ResponseMapper {
    */
   static notFoundError(resource: string) {
     return {
+      error: "Ressource non trouvée",
       message: `${resource} not found`,
       timestamp: new Date().toISOString(),
       status: 404,
@@ -310,6 +312,7 @@ export class ResponseMapper {
    */
   static conflictError(message: string) {
     return {
+      error: "Conflit",
       message,
       timestamp: new Date().toISOString(),
       status: 409,
@@ -321,6 +324,7 @@ export class ResponseMapper {
    */
   static internalServerError() {
     return {
+      error: "Erreur interne du serveur",
       message: "Internal server error",
       timestamp: new Date().toISOString(),
       status: 500,
@@ -332,6 +336,7 @@ export class ResponseMapper {
    */
   static unauthorizedError(message: string = "Unauthorized") {
     return {
+      error: "Non autorisé",
       message,
       timestamp: new Date().toISOString(),
       status: 401,
@@ -343,6 +348,7 @@ export class ResponseMapper {
    */
   static forbiddenError(message: string = "Forbidden") {
     return {
+      error: "Interdit",
       message,
       timestamp: new Date().toISOString(),
       status: 403,
@@ -354,6 +360,7 @@ export class ResponseMapper {
    */
   static badRequestError(message: string = "Bad request") {
     return {
+      error: "Requête invalide",
       message,
       timestamp: new Date().toISOString(),
       status: 400,
@@ -365,6 +372,7 @@ export class ResponseMapper {
    */
   static methodNotAllowedError(message: string = "Method not allowed") {
     return {
+      error: "Méthode non autorisée",
       message,
       timestamp: new Date().toISOString(),
       status: 405,
@@ -376,6 +384,7 @@ export class ResponseMapper {
    */
   static timeoutError(message: string = "Request timeout") {
     return {
+      error: "Timeout de requête",
       message,
       timestamp: new Date().toISOString(),
       status: 408,
@@ -387,6 +396,7 @@ export class ResponseMapper {
    */
   static serviceUnavailableError(message: string = "Service unavailable") {
     return {
+      error: "Service indisponible",
       message,
       timestamp: new Date().toISOString(),
       status: 503,
@@ -398,6 +408,7 @@ export class ResponseMapper {
    */
   static gatewayTimeoutError(message: string = "Gateway timeout") {
     return {
+      error: "Timeout de passerelle",
       message,
       timestamp: new Date().toISOString(),
       status: 504,
@@ -423,7 +434,8 @@ export class ResponseMapper {
       status: "unhealthy",
       timestamp: new Date().toISOString(),
       service: "order-service",
-      error: "Service unavailable",
+      error: "Service indisponible",
+      message: "Service indisponible",
     };
   }
 
@@ -432,7 +444,8 @@ export class ResponseMapper {
    */
   static error(message: string, status: number = 500) {
     return {
-      message,
+      error: message || "Une erreur est survenue",
+      message: message || "Une erreur est survenue",
       timestamp: new Date().toISOString(),
       status,
     };

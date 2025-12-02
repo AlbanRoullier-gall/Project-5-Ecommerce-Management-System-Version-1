@@ -32,14 +32,15 @@ export class AddressController {
       const addresses = await this.customerService.listCustomerAddresses(
         parseInt(customerId)
       );
-      const response = {
-        message: "Adresses récupérées avec succès",
-        addresses: CustomerMapper.addressesToPublicDTOs(addresses),
-        timestamp: new Date().toISOString(),
-        status: 200,
-      };
+      const addressesDTO = CustomerMapper.addressesToPublicDTOs(addresses);
 
-      res.json(response);
+      // Format standardisé : { data: { addresses }, ... }
+      res.json(
+        ResponseMapper.successWithData(
+          { addresses: addressesDTO },
+          "Adresses récupérées avec succès"
+        )
+      );
     } catch (error: any) {
       console.error("Get addresses error:", error);
       res.status(500).json(ResponseMapper.internalServerError());

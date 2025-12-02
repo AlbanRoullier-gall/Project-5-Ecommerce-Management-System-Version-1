@@ -58,7 +58,13 @@ export class OrderController {
       (orderDTO as any).totalAmountHT = totalAmountHT;
       (orderDTO as any).totalAmountTTC = totalAmountTTC;
 
-      res.json(ResponseMapper.orderRetrieved(orderDTO));
+      // Format standardisé : { data: { order }, ... }
+      res.json(
+        ResponseMapper.success(
+          { order: orderDTO },
+          "Order retrieved successfully"
+        )
+      );
     } catch (error: any) {
       console.error("Get order error:", error);
       res.status(500).json(ResponseMapper.internalServerError());

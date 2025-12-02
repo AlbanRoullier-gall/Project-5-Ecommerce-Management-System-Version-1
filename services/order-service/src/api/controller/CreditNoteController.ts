@@ -61,7 +61,15 @@ export class CreditNoteController {
       );
       const creditNoteDTO = OrderMapper.creditNoteToPublicDTO(creditNote);
 
-      res.status(201).json(ResponseMapper.creditNoteCreated(creditNoteDTO));
+      // Format standardisé : { data: { creditNote }, ... }
+      res
+        .status(201)
+        .json(
+          ResponseMapper.created(
+            { creditNote: creditNoteDTO },
+            "Credit note created successfully"
+          )
+        );
     } catch (error: any) {
       console.error("Create credit note error:", error);
       if (error.message.includes("already exists")) {
@@ -99,7 +107,13 @@ export class CreditNoteController {
       }
 
       const creditNoteDTO = OrderMapper.creditNoteToPublicDTO(creditNote);
-      res.json(ResponseMapper.creditNoteRetrieved(creditNoteDTO));
+      // Format standardisé : { data: { creditNote }, ... }
+      res.json(
+        ResponseMapper.success(
+          { creditNote: creditNoteDTO },
+          "Credit note retrieved successfully"
+        )
+      );
     } catch (error: any) {
       console.error("Get credit note error:", error);
       res.status(500).json(ResponseMapper.internalServerError());

@@ -21,14 +21,21 @@ const StatsOverview: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   // Utilise le type year de OrderStatisticsRequestDTO pour cohérence
+  // Initialisé à undefined, sera défini par defaultYear de l'API au premier chargement
   const [selectedYear, setSelectedYear] = useState<
-    OrderStatisticsRequestDTO["year"]
-  >(new Date().getFullYear());
+    OrderStatisticsRequestDTO["year"] | undefined
+  >(undefined);
 
   const loadStats = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
+      // Construire l'URL : si selectedYear n'est pas défini, ne pas inclure le paramètre year
+      const url =
+        selectedYear !== undefined
+          ? `/api/admin/statistics/dashboard?year=${selectedYear}`
+          : `/api/admin/statistics/dashboard`;
+
       const response = await apiCall<{
         data: {
           statistics: {
@@ -39,14 +46,21 @@ const StatsOverview: React.FC = () => {
             totalRevenueHT?: number;
           };
           availableYears?: number[];
+          defaultYear?: number;
+          year?: number;
         };
       }>({
-        url: `/api/admin/statistics/dashboard?year=${selectedYear}`,
+        url,
         method: "GET",
         requireAuth: true,
       });
 
-      const { statistics, availableYears: years } = response.data;
+      const {
+        statistics,
+        availableYears: years,
+        defaultYear,
+        year: responseYear,
+      } = response.data;
 
       if (!statistics) {
         throw new Error("Format de réponse invalide");
@@ -55,6 +69,17 @@ const StatsOverview: React.FC = () => {
       // Utiliser les années disponibles depuis l'API
       if (years && Array.isArray(years)) {
         setAvailableYears(years);
+      }
+
+      // Au premier chargement (selectedYear undefined), utiliser defaultYear de l'API
+      // Ne pas recharger les stats car on vient déjà de les charger
+      if (selectedYear === undefined) {
+        const yearToUse =
+          defaultYear !== undefined ? defaultYear : responseYear;
+        if (yearToUse !== undefined) {
+          setSelectedYear(yearToUse);
+          // Les stats sont déjà chargées, pas besoin de recharger
+        }
       }
 
       setStats({
@@ -133,8 +158,9 @@ const StatsOverview: React.FC = () => {
         </label>
         <select
           id="year-select"
-          value={selectedYear}
+          value={selectedYear || ""}
           onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+          disabled={!selectedYear}
           style={{
             padding: "0.5rem 1rem",
             border: "2px solid #13686a",

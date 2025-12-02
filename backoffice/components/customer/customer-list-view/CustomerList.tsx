@@ -91,8 +91,13 @@ const CustomerList: React.FC = () => {
         requireAuth: true,
       });
 
-      const customersList = response.data?.customers || [];
-      const pagination = response.data?.pagination;
+      // Format standardisé : { data: { customers: [], pagination: {} }, ... }
+      if (!response.data || !Array.isArray(response.data.customers)) {
+        throw new Error("Format de réponse invalide pour les clients");
+      }
+
+      const customersList = response.data.customers;
+      const pagination = response.data.pagination;
 
       setCustomers(customersList);
       setTotalCustomers(pagination?.total || customersList.length);

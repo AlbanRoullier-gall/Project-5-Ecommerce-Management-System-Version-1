@@ -135,6 +135,8 @@ export default class CartService {
       cart = await this.createCart(sessionId);
     }
 
+    // Le cart-service stocke simplement les données checkout telles qu'elles sont
+    // Le backend (customer-service) garantira le pays lors de la création des adresses
     const updatedCart = cart.updateCheckoutData(checkoutData);
     await this.cartRepository.updateCart(updatedCart);
 
@@ -143,6 +145,8 @@ export default class CartService {
 
   /**
    * Récupérer les données checkout
+   * Retourne les données telles qu'elles sont stockées
+   * Le backend (customer-service) garantira le pays lors de la création des adresses
    */
   async getCheckoutData(sessionId: string): Promise<CartCheckoutData | null> {
     const cart = await this.getCart(sessionId);

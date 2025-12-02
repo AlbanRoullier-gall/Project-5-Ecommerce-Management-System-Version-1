@@ -199,11 +199,12 @@ export class CategoryController {
           ProductMapper.categoryToPublicDTO(category)
         );
 
+        // Format standardisé : même format que productListed
         res.json(
-          ResponseMapper.categoryListedWithPagination(
-            categoriesDTO,
-            result.pagination
-          )
+          ResponseMapper.categoryListed({
+            categories: categoriesDTO,
+            pagination: result.pagination,
+          })
         );
       } else {
         // Comportement par défaut : retourner toutes les catégories
@@ -211,7 +212,18 @@ export class CategoryController {
         const categoriesDTO = categories.map((category) =>
           ProductMapper.categoryToPublicDTO(category)
         );
-        res.json(ResponseMapper.categoryListed(categoriesDTO));
+        // Format standardisé : même format que productListed
+        res.json(
+          ResponseMapper.categoryListed({
+            categories: categoriesDTO,
+            pagination: {
+              page: 1,
+              limit: categoriesDTO.length,
+              total: categoriesDTO.length,
+              pages: 1,
+            },
+          })
+        );
       }
     } catch (error: any) {
       console.error("Erreur lors de la liste des catégories:", error);

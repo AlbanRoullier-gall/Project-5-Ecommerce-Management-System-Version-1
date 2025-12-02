@@ -16,6 +16,46 @@ export class ResponseMapper {
   }
 
   /**
+   * Réponse de succès avec données (format standardisé)
+   */
+  static successWithData<T>(
+    data: T,
+    message: string = "Success"
+  ): {
+    message: string;
+    data: T;
+    timestamp: string;
+    status: number;
+  } {
+    return {
+      message,
+      data,
+      timestamp: new Date().toISOString(),
+      status: 200,
+    };
+  }
+
+  /**
+   * Réponse de création avec données (format standardisé)
+   */
+  static createdWithData<T>(
+    data: T,
+    message: string = "Created successfully"
+  ): {
+    message: string;
+    data: T;
+    timestamp: string;
+    status: number;
+  } {
+    return {
+      message,
+      data,
+      timestamp: new Date().toISOString(),
+      status: 201,
+    };
+  }
+
+  /**
    * Réponse de produit créé
    */
   static productCreated(product: any) {
@@ -116,21 +156,22 @@ export class ResponseMapper {
 
   /**
    * Réponse de liste de catégories
+   * Format standardisé avec data et pagination (même format que productListed)
    */
-  static categoryListed(categories: any[]) {
+  static categoryListed(result: any) {
     return {
       message: "Liste des catégories récupérée avec succès",
-      categories,
-    };
-  }
-
-  /**
-   * Réponse de liste de catégories avec pagination (CategorySearchDTO)
-   */
-  static categoryListedWithPagination(categories: any[], pagination: any) {
-    return {
-      categories,
-      pagination,
+      data: {
+        categories: result.categories || [],
+        pagination: result.pagination || {
+          page: 1,
+          limit: 10,
+          total: result.categories?.length || 0,
+          pages: 1,
+        },
+      },
+      timestamp: new Date().toISOString(),
+      status: 200,
     };
   }
 
@@ -201,7 +242,8 @@ export class ResponseMapper {
    */
   static error(message: string, status: number = 500) {
     return {
-      error: message,
+      error: message || "Une erreur est survenue",
+      message: message || "Une erreur est survenue",
       timestamp: new Date().toISOString(),
       status,
     };
@@ -264,6 +306,7 @@ export class ResponseMapper {
       timestamp: new Date().toISOString(),
       service: "product-service",
       error: "Service indisponible",
+      message: "Service indisponible",
     };
   }
 }

@@ -40,13 +40,20 @@ const OrderDetailPage: React.FC = () => {
     try {
       try {
         const data = await apiCall<{
-          order?: OrderPublicDTO;
+          data: { order: OrderPublicDTO };
+          message?: string;
+          timestamp?: string;
+          status?: number;
         }>({
           url: `/api/admin/orders/${id}`,
           method: "GET",
           requireAuth: true,
         });
-        setOrder(data.order || data);
+        // Format standardisé : { data: { order }, ... }
+        if (!data.data || !data.data.order) {
+          throw new Error("Format de réponse invalide pour la commande");
+        }
+        setOrder(data.data.order);
       } catch (err: any) {
         if (err.status === 404) {
           throw new Error("Commande introuvable");

@@ -57,8 +57,17 @@ export default function ProductPage() {
       if (!response.ok) {
         throw new Error("Produit non trouvé");
       }
-      const data = await response.json();
-      const productData = data.product || data;
+      const data = (await response.json()) as {
+        data: { product: ProductPublicDTO };
+        message?: string;
+        timestamp?: string;
+        status?: number;
+      };
+      // Format standardisé : { data: { product }, ... }
+      if (!data.data || !data.data.product) {
+        throw new Error("Format de réponse invalide pour le produit");
+      }
+      const productData = data.data.product;
       if (!productData.isActive) {
         throw new Error("Ce produit n'est plus disponible");
       }

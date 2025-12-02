@@ -50,15 +50,21 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiCall<
-        { addresses?: AddressPublicDTO[] } | AddressPublicDTO[]
-      >({
+      const data = await apiCall<{
+        data: { addresses: AddressPublicDTO[] };
+        message?: string;
+        timestamp?: string;
+        status?: number;
+      }>({
         url: `/api/admin/customers/${customer.customerId}/addresses`,
         method: "GET",
         requireAuth: true,
       });
-      const addressesList = Array.isArray(data) ? data : data.addresses || [];
-      setAddresses(addressesList);
+      // Format standardisé : { data: { addresses: [] }, ... }
+      if (!data.data || !Array.isArray(data.data.addresses)) {
+        throw new Error("Format de réponse invalide pour les adresses");
+      }
+      setAddresses(data.data.addresses);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du chargement"

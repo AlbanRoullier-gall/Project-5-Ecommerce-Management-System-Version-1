@@ -8,7 +8,6 @@ import Button from "../../shared/Button";
 import {
   ProductPublicDTO,
   CategoryPublicDTO,
-  CategoryListDTO,
   ProductSearchDTO,
   ProductFilterDTO,
   CategorySearchDTO,
@@ -169,7 +168,7 @@ const ProductList: React.FC = () => {
       }
 
       const response = await apiCall<{
-        data?: {
+        data: {
           products: ProductPublicDTO[];
           pagination: {
             page: number;
@@ -177,13 +176,6 @@ const ProductList: React.FC = () => {
             total: number;
             pages: number;
           };
-        };
-        products?: ProductPublicDTO[]; // Fallback pour compatibilité
-        pagination?: {
-          page: number;
-          limit: number;
-          total: number;
-          pages: number;
         };
         message?: string;
         timestamp?: string;
@@ -195,9 +187,12 @@ const ProductList: React.FC = () => {
       });
 
       // Format standardisé : { data: { products: [], pagination: {} }, ... }
-      // Support du nouveau format et de l'ancien format pour compatibilité
-      const products = response.data?.products || response.products || [];
-      const pagination = response.data?.pagination || response.pagination;
+      if (!response.data || !Array.isArray(response.data.products)) {
+        throw new Error("Format de réponse invalide pour les produits");
+      }
+
+      const products = response.data.products;
+      const pagination = response.data.pagination;
 
       setProducts(products);
       setTotalProducts(pagination?.total || products.length);
@@ -230,23 +225,31 @@ const ProductList: React.FC = () => {
       if (categorySearchParams.sortOrder)
         queryParams.set("sortOrder", categorySearchParams.sortOrder);
 
-      const data = await apiCall<
-        | CategoryListDTO
-        | { categories: CategoryPublicDTO[]; pagination?: any }
-        | CategoryPublicDTO[]
-      >({
+      const response = await apiCall<{
+        data: {
+          categories: CategoryPublicDTO[];
+          pagination?: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+          };
+        };
+        message?: string;
+        timestamp?: string;
+        status?: number;
+      }>({
         url: `/api/admin/categories?${queryParams.toString()}`,
         method: "GET",
         requireAuth: true,
       });
-      // Gérer différents formats de réponse
-      if (Array.isArray(data)) {
-        setCategories(data);
-      } else if ("categories" in data) {
-        setCategories(data.categories);
-      } else {
-        setCategories([]);
+
+      // Format standardisé : { data: { categories: [], pagination: {} }, ... }
+      if (!response.data || !Array.isArray(response.data.categories)) {
+        throw new Error("Format de réponse invalide pour les catégories");
       }
+
+      setCategories(response.data.categories);
     } catch (err) {
       console.error("Error loading categories:", err);
     }

@@ -153,8 +153,12 @@ const OrderList: React.FC = () => {
     });
 
     // Format standardisé : { data: { orders: [], pagination: {} }, ... }
-    const ordersList = response.data?.orders || [];
-    const pagination = response.data?.pagination;
+    if (!response.data || !Array.isArray(response.data.orders)) {
+      throw new Error("Format de réponse invalide pour les commandes");
+    }
+
+    const ordersList = response.data.orders;
+    const pagination = response.data.pagination;
 
     // Pour l'infinite scroll : append les nouvelles données
     // Le serveur garantit l'unicité des données entre les pages, pas besoin de déduplication
@@ -211,8 +215,12 @@ const OrderList: React.FC = () => {
     });
 
     // Format standardisé : { data: { creditNotes: [], pagination: {} }, ... }
-    const creditNotesList = response.data?.creditNotes || [];
-    const pagination = response.data?.pagination;
+    if (!response.data || !Array.isArray(response.data.creditNotes)) {
+      throw new Error("Format de réponse invalide pour les avoirs");
+    }
+
+    const creditNotesList = response.data.creditNotes;
+    const pagination = response.data.pagination;
 
     // Pour l'infinite scroll : append les nouvelles données
     // Le serveur garantit l'unicité des données entre les pages, pas besoin de déduplication
@@ -573,16 +581,21 @@ const OrderList: React.FC = () => {
           }}
           onView={async (creditNoteId) => {
             try {
+              // Format standardisé : { data: { creditNote }, ... }
               const json = await apiCall<{
-                data?: { creditNote?: any };
-                creditNote?: any;
+                data: { creditNote: any };
+                message?: string;
+                timestamp?: string;
+                status?: number;
               }>({
                 url: `/api/admin/credit-notes/${creditNoteId}`,
                 method: "GET",
                 requireAuth: true,
               });
-              const creditNote =
-                json?.data?.creditNote || json?.creditNote || json;
+              if (!json.data || !json.data.creditNote) {
+                throw new Error("Format de réponse invalide pour l'avoir");
+              }
+              const creditNote = json.data.creditNote;
               setDetailCreditNote(creditNote);
               setIsCreditNoteDetailOpen(true);
             } catch (e) {

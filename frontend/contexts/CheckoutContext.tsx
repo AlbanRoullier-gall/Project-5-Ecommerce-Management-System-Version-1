@@ -146,6 +146,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
               setCustomerData(checkoutData.customerData);
             }
             if (checkoutData.addressData) {
+              // Le backend garantit toujours countryName = "Belgique"
               setAddressData(checkoutData.addressData);
             }
           }

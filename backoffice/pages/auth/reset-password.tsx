@@ -4,7 +4,7 @@ import Head from "next/head";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { useAuth, AUTH_ERROR_MESSAGES } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 /**
  * Page de réinitialisation de mot de passe
@@ -151,7 +151,7 @@ const ResetPasswordPage: React.FC = () => {
     const tokenFromUrl = urlParams.get("token");
 
     if (!tokenFromUrl) {
-      setError(AUTH_ERROR_MESSAGES.TOKEN_MISSING);
+      setError("Token de réinitialisation manquant");
       setIsLoading(false);
       return;
     }

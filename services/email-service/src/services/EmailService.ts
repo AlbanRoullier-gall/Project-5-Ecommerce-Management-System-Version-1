@@ -323,7 +323,7 @@ export default class EmailService {
       address: data.addressData.shipping?.address || "",
       city: data.addressData.shipping?.city || "",
       postalCode: data.addressData.shipping?.postalCode || "",
-      country: data.addressData.shipping?.countryName || "Belgique",
+      country: data.addressData.shipping?.countryName || "",
     };
 
     // Appeler la méthode existante avec les données formatées

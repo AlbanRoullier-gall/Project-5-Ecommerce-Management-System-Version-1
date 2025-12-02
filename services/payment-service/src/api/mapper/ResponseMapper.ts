@@ -36,7 +36,8 @@ export class ResponseMapper {
    */
   static error(message: string, status: number = 500) {
     return {
-      error: message,
+      error: message || "Une erreur est survenue",
+      message: message || "Une erreur est survenue",
       timestamp: new Date().toISOString(),
       status,
     };
@@ -99,6 +100,7 @@ export class ResponseMapper {
       timestamp: new Date().toISOString(),
       service: "payment-service",
       error: "Service indisponible",
+      message: "Service indisponible",
     };
   }
 

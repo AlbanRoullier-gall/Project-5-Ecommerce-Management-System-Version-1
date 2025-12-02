@@ -14,7 +14,6 @@ import {
   ProductPublicDTO,
   ProductUpdateDTO,
   CategoryPublicDTO,
-  CategoryListDTO,
   ProductImageUploadResponseDTO,
   ProductImageUploadDTO,
 } from "../../dto";
@@ -51,13 +50,20 @@ const EditProductPage: React.FC = () => {
     try {
       try {
         const data = await apiCall<{
-          product?: ProductPublicDTO;
+          data: { product: ProductPublicDTO };
+          message?: string;
+          timestamp?: string;
+          status?: number;
         }>({
           url: `/api/admin/products/${id}`,
           method: "GET",
           requireAuth: true,
         });
-        setProduct(data.product || data);
+        // Format standardisé : { data: { product }, ... }
+        if (!data.data || !data.data.product) {
+          throw new Error("Format de réponse invalide pour le produit");
+        }
+        setProduct(data.data.product);
       } catch (err: any) {
         if (err.status === 404) {
           throw new Error("Produit introuvable");
@@ -76,23 +82,30 @@ const EditProductPage: React.FC = () => {
 
   const loadCategories = async () => {
     try {
-      const data = await apiCall<
-        | CategoryListDTO
-        | { categories: CategoryPublicDTO[] }
-        | CategoryPublicDTO[]
-      >({
+      const response = await apiCall<{
+        data: {
+          categories: CategoryPublicDTO[];
+          pagination?: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+          };
+        };
+        message?: string;
+        timestamp?: string;
+        status?: number;
+      }>({
         url: "/api/admin/categories",
         method: "GET",
         requireAuth: true,
       });
-      // Gérer différents formats de réponse
-      if (Array.isArray(data)) {
-        setCategories(data);
-      } else if ("categories" in data) {
-        setCategories(data.categories);
-      } else {
-        setCategories([]);
+      // Format standardisé : { data: { categories: [], pagination: {} }, ... }
+      if (!response.data || !Array.isArray(response.data.categories)) {
+        throw new Error("Format de réponse invalide pour les catégories");
       }
+
+      setCategories(response.data.categories);
     } catch (err) {
       console.error("Error loading categories:", err);
     }

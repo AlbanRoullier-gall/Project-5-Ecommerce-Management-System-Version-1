@@ -14,7 +14,6 @@ import {
   CategoryPublicDTO,
   CategoryCreateDTO,
   CategoryUpdateDTO,
-  CategoryListDTO,
 } from "../../dto";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -42,23 +41,30 @@ const CategoriesPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiCall<
-        | CategoryListDTO
-        | { categories: CategoryPublicDTO[] }
-        | CategoryPublicDTO[]
-      >({
+      const response = await apiCall<{
+        data: {
+          categories: CategoryPublicDTO[];
+          pagination?: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+          };
+        };
+        message?: string;
+        timestamp?: string;
+        status?: number;
+      }>({
         url: "/api/admin/categories",
         method: "GET",
         requireAuth: true,
       });
-      // Gérer différents formats de réponse
-      if (Array.isArray(data)) {
-        setCategories(data);
-      } else if ("categories" in data) {
-        setCategories(data.categories);
-      } else {
-        setCategories([]);
+      // Format standardisé : { data: { categories: [], pagination: {} }, ... }
+      if (!response.data || !Array.isArray(response.data.categories)) {
+        throw new Error("Format de réponse invalide pour les catégories");
       }
+
+      setCategories(response.data.categories);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du chargement"

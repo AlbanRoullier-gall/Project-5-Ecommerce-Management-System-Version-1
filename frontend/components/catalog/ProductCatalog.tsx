@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   ProductPublicDTO,
   CategoryPublicDTO,
-  CategoryListDTO,
   ProductSearchDTO,
   CategorySearchDTO,
 } from "../../dto";
@@ -129,7 +128,7 @@ const ProductCatalog: React.FC = () => {
       }
 
       const response = (await fetchResponse.json()) as {
-        data?: {
+        data: {
           products: ProductPublicDTO[];
           pagination: {
             page: number;
@@ -138,22 +137,18 @@ const ProductCatalog: React.FC = () => {
             pages: number;
           };
         };
-        products?: ProductPublicDTO[]; // Fallback pour compatibilité
-        pagination?: {
-          page: number;
-          limit: number;
-          total: number;
-          pages: number;
-        };
         message?: string;
         timestamp?: string;
         status?: number;
       };
 
       // Format standardisé : { data: { products: [], pagination: {} }, ... }
-      // Support du nouveau format et de l'ancien format pour compatibilité
-      const products = response.data?.products || response.products || [];
-      const pagination = response.data?.pagination || response.pagination;
+      if (!response.data || !Array.isArray(response.data.products)) {
+        throw new Error("Format de réponse invalide pour les produits");
+      }
+
+      const products = response.data.products;
+      const pagination = response.data.pagination;
 
       setProducts(products);
       setTotalProducts(pagination?.total || products.length);
@@ -188,32 +183,38 @@ const ProductCatalog: React.FC = () => {
       if (categorySearchParams.sortOrder)
         queryParams.set("sortOrder", categorySearchParams.sortOrder);
 
-      const response = await fetch(
+      const fetchResponse = await fetch(
         `${API_URL}/api/categories?${queryParams.toString()}`,
         {
           credentials: "include", // Important pour CORS avec credentials: true
         }
       );
 
-      if (!response.ok) {
+      if (!fetchResponse.ok) {
         throw new Error("Erreur lors du chargement des catégories");
       }
 
-      const data = (await response.json()) as
-        | CategoryListDTO
-        | { categories: CategoryPublicDTO[]; pagination?: any }
-        | CategoryPublicDTO[];
+      const response = (await fetchResponse.json()) as {
+        data: {
+          categories: CategoryPublicDTO[];
+          pagination?: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+          };
+        };
+        message?: string;
+        timestamp?: string;
+        status?: number;
+      };
 
-      // Gérer différents formats de réponse
-      let categoriesData: CategoryPublicDTO[] = [];
-      if (Array.isArray(data)) {
-        categoriesData = data;
-      } else if ("categories" in data) {
-        categoriesData = data.categories;
+      // Format standardisé : { data: { categories: [], pagination: {} }, ... }
+      if (!response.data || !Array.isArray(response.data.categories)) {
+        throw new Error("Format de réponse invalide pour les catégories");
       }
 
-      // Le productCount est maintenant calculé côté serveur
-      setCategories(categoriesData);
+      setCategories(response.data.categories);
     } catch (err) {
       console.error("Error loading categories:", err);
     }

@@ -76,7 +76,13 @@ export class ProductController {
         ),
       };
 
-      res.json(ResponseMapper.productRetrieved(productWithImages));
+      // Format standardisé : { data: { product }, ... }
+      res.json(
+        ResponseMapper.successWithData(
+          { product: productWithImages },
+          "Produit récupéré avec succès"
+        )
+      );
     } catch (error: any) {
       console.error("Erreur lors de la récupération du produit:", error);
       res.status(500).json(ResponseMapper.internalServerError());

@@ -23,20 +23,6 @@ export const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
 
 /**
- * Messages d'erreur centralisés
- */
-export const AUTH_ERROR_MESSAGES = {
-  SERVER_ERROR: "Erreur de connexion au serveur",
-  LOGIN_ERROR: "Erreur de connexion",
-  REGISTER_ERROR: "Erreur lors de la création du compte",
-  RESET_PASSWORD_ERROR: "Erreur lors de l'envoi de l'email",
-  CONFIRM_RESET_ERROR: "Erreur lors de la réinitialisation",
-  PASSWORD_MISMATCH: "Les mots de passe ne correspondent pas",
-  PASSWORD_TOO_SHORT: "Le mot de passe doit contenir au moins 6 caractères",
-  TOKEN_MISSING: "Token de réinitialisation manquant",
-} as const;
-
-/**
  * Résultat d'une opération d'authentification
  */
 export interface AuthOperationResult {
@@ -369,14 +355,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           return {
             isValid: false,
-            error: data.message || AUTH_ERROR_MESSAGES.SERVER_ERROR,
+            error:
+              data.message || "Erreur lors de la validation du mot de passe",
           };
         }
       } catch (error) {
         console.error("Password validation error:", error);
         return {
           isValid: false,
-          error: AUTH_ERROR_MESSAGES.SERVER_ERROR,
+          error: "Erreur de connexion au serveur",
         };
       }
     },
@@ -422,13 +409,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           return {
             success: false,
-            error: data.message || AUTH_ERROR_MESSAGES.LOGIN_ERROR,
+            error: data.message || "Erreur de connexion",
           };
         }
       } catch (error) {
         return {
           success: false,
-          error: AUTH_ERROR_MESSAGES.SERVER_ERROR,
+          error: "Erreur de connexion au serveur",
         };
       }
     },
@@ -468,13 +455,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           return {
             success: false,
-            error: data.message || AUTH_ERROR_MESSAGES.REGISTER_ERROR,
+            error: data.message || "Erreur lors de la création du compte",
           };
         }
       } catch (error) {
         return {
           success: false,
-          error: AUTH_ERROR_MESSAGES.SERVER_ERROR,
+          error: "Erreur de connexion au serveur",
         };
       }
     },
@@ -506,7 +493,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const data = await response.json();
           return {
             success: false,
-            error: data.message || AUTH_ERROR_MESSAGES.RESET_PASSWORD_ERROR,
+            error: data.message || "Erreur lors de l'envoi de l'email",
           };
         }
       } catch (error) {
@@ -561,13 +548,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           return {
             success: false,
-            error: data.message || AUTH_ERROR_MESSAGES.CONFIRM_RESET_ERROR,
+            error: data.message || "Erreur lors de la réinitialisation",
           };
         }
       } catch (error) {
         return {
           success: false,
-          error: AUTH_ERROR_MESSAGES.SERVER_ERROR,
+          error: "Erreur de connexion au serveur",
         };
       }
     },

@@ -65,7 +65,8 @@ export class ResponseMapper {
    */
   static error(message: string, status: number = 500) {
     return {
-      error: message,
+      error: message || "Une erreur est survenue",
+      message: message || "Une erreur est survenue",
       timestamp: new Date().toISOString(),
       status,
     };
@@ -77,7 +78,7 @@ export class ResponseMapper {
   static validationError(message: string) {
     return {
       error: "Erreur de validation",
-      message,
+      message: message || "Les données fournies sont invalides",
       timestamp: new Date().toISOString(),
       status: 400,
     };
@@ -101,7 +102,7 @@ export class ResponseMapper {
   static conflictError(message: string) {
     return {
       error: "Conflit",
-      message,
+      message: message || "Cette ressource existe déjà",
       timestamp: new Date().toISOString(),
       status: 409,
     };
@@ -128,6 +129,7 @@ export class ResponseMapper {
       timestamp: new Date().toISOString(),
       service: "auth-service",
       error: "Service indisponible",
+      message: "Service indisponible",
     };
   }
 }

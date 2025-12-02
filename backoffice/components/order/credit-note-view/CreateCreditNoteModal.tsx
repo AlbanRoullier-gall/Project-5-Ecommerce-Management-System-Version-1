@@ -121,8 +121,8 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
           typeof result.data.totalTTC !== "undefined"
         ) {
           setCalculatedTotals({
-            totalHT: result.data.totalHT || 0,
-            totalTTC: result.data.totalTTC || 0,
+            totalHT: result.data.totalHT,
+            totalTTC: result.data.totalTTC,
           });
         } else {
           console.error("Format de réponse inattendu:", result);
@@ -159,8 +159,13 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
           method: "GET",
           requireAuth: true,
         });
-        const list: OrderItemPublicDTO[] =
-          json?.data?.orderItems || json?.orderItems || [];
+        // Format standardisé : { data: { orderItems: [], count } }, ... }
+        if (!json.data || !Array.isArray(json.data.orderItems)) {
+          throw new Error(
+            "Format de réponse invalide pour les articles de commande"
+          );
+        }
+        const list: OrderItemPublicDTO[] = json.data.orderItems;
         setOrderItems(list);
       } catch (e) {
         setItemsError(
@@ -236,8 +241,10 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
       };
 
       const json = await apiCall<{
-        data?: CreditNotePublicDTO;
-        creditNote?: CreditNotePublicDTO;
+        data: { creditNote: CreditNotePublicDTO };
+        message?: string;
+        timestamp?: string;
+        status?: number;
       }>({
         url: "/api/admin/credit-notes",
         method: "POST",
@@ -245,10 +252,11 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
         requireAuth: true,
       });
 
-      const created: CreditNotePublicDTO =
-        (json?.data as CreditNotePublicDTO) ||
-        json?.creditNote ||
-        (json as CreditNotePublicDTO);
+      // Format standardisé : { data: { creditNote }, ... }
+      if (!json.data || !json.data.creditNote) {
+        throw new Error("Format de réponse invalide pour l'avoir créé");
+      }
+      const created: CreditNotePublicDTO = json.data.creditNote;
 
       onCreated(created);
 

@@ -58,12 +58,23 @@ export class AuthController {
       res.status(201).json(response);
     } catch (error: any) {
       console.error("Registration error:", error);
-      if (error.message.includes("existe déjà")) {
-        res.status(409).json(ResponseMapper.conflictError(error.message));
+      const errorMessage = error?.message || "";
+      if (errorMessage.includes("existe déjà")) {
+        res
+          .status(409)
+          .json(
+            ResponseMapper.conflictError(
+              errorMessage || "Cet email est déjà utilisé"
+            )
+          );
         return;
       }
-      if (error.message.includes("invalide")) {
-        res.status(400).json(ResponseMapper.validationError(error.message));
+      if (errorMessage.includes("invalide")) {
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(errorMessage || "Données invalides")
+          );
         return;
       }
       res.status(500).json(ResponseMapper.internalServerError());
@@ -102,18 +113,29 @@ export class AuthController {
       res.json(response);
     } catch (error: any) {
       console.error("Login error:", error);
+      const errorMessage = error?.message || "";
       if (
-        error.message.includes("invalides") ||
-        error.message.includes("désactivé")
+        errorMessage.includes("invalides") ||
+        errorMessage.includes("désactivé")
       ) {
-        res.status(401).json(ResponseMapper.authenticationError(error.message));
+        res
+          .status(401)
+          .json(
+            ResponseMapper.authenticationError(
+              errorMessage || "Identifiants invalides"
+            )
+          );
         return;
       }
       if (
-        error.message.includes("approuvé") ||
-        error.message.includes("refusé")
+        errorMessage.includes("approuvé") ||
+        errorMessage.includes("refusé")
       ) {
-        res.status(403).json(ResponseMapper.authenticationError(error.message));
+        res
+          .status(403)
+          .json(
+            ResponseMapper.authenticationError(errorMessage || "Accès refusé")
+          );
         return;
       }
       res.status(500).json(ResponseMapper.internalServerError());
@@ -187,10 +209,13 @@ export class AuthController {
       res.json(response);
     } catch (error: any) {
       console.error("Reset password error:", error);
-      if (error.message.includes("non trouvé")) {
+      const errorMessage = error?.message || "";
+      if (errorMessage.includes("non trouvé")) {
         res
           .status(404)
-          .json(ResponseMapper.error("Utilisateur non trouvé", 404));
+          .json(
+            ResponseMapper.error(errorMessage || "Utilisateur non trouvé", 404)
+          );
         return;
       }
       res.status(500).json(ResponseMapper.internalServerError());
@@ -220,11 +245,18 @@ export class AuthController {
       res.json(response);
     } catch (error: any) {
       console.error("Confirm reset password error:", error);
+      const errorMessage = error?.message || "";
       if (
-        error.message.includes("invalide") ||
-        error.message.includes("expiré")
+        errorMessage.includes("invalide") ||
+        errorMessage.includes("expiré")
       ) {
-        res.status(400).json(ResponseMapper.validationError(error.message));
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              errorMessage || "Token invalide ou expiré"
+            )
+          );
         return;
       }
       res.status(500).json(ResponseMapper.internalServerError());
@@ -259,7 +291,7 @@ export class AuthController {
   /**
    * Récupérer tous les utilisateurs en attente d'approbation
    */
-  async getPendingUsers(req: Request, res: Response): Promise<void> {
+  async getPendingUsers(_req: Request, res: Response): Promise<void> {
     try {
       const users = await this.authService.getPendingUsers();
       const usersDTO = users.map((user) => UserMapper.userToPublicDTO(user));
@@ -281,7 +313,7 @@ export class AuthController {
   /**
    * Récupérer tous les utilisateurs
    */
-  async getAllUsers(req: Request, res: Response): Promise<void> {
+  async getAllUsers(_req: Request, res: Response): Promise<void> {
     try {
       const users = await this.authService.getAllUsers();
       const usersDTO = users.map((user) => UserMapper.userToPublicDTO(user));

@@ -270,7 +270,7 @@ export default class OrderService {
             address: shippingAddressData.address || "",
             city: shippingAddressData.city || "",
             postalCode: shippingAddressData.postalCode || "",
-            country: shippingAddressData.countryName || "Belgique",
+            country: shippingAddressData.countryName || "",
             phone: data.customerData.phoneNumber || "",
           },
           created_at: new Date(),
@@ -294,7 +294,7 @@ export default class OrderService {
             address: billingAddressData.address || "",
             city: billingAddressData.city || "",
             postalCode: billingAddressData.postalCode || "",
-            country: billingAddressData.countryName || "Belgique",
+            country: billingAddressData.countryName || "",
             phone: data.customerData.phoneNumber || "",
           },
           created_at: new Date(),
@@ -432,6 +432,49 @@ export default class OrderService {
   }
 
   /**
+   * Calcule l'année par défaut recommandée pour les statistiques
+   * Logique : année courante si elle a des données, sinon année la plus récente avec des données
+   * @param availableYears Liste des années disponibles
+   * @returns Année par défaut recommandée
+   */
+  private async calculateDefaultYear(
+    availableYears: number[]
+  ): Promise<number> {
+    const currentYear = new Date().getFullYear();
+
+    // Si l'année courante est disponible et a des données, l'utiliser
+    if (availableYears.includes(currentYear)) {
+      const currentYearOptions: OrderListOptions = { year: currentYear };
+      const currentYearOrders = await this.orderRepository.listOrders({
+        ...currentYearOptions,
+        page: 1,
+        limit: 1,
+      });
+      if ((currentYearOrders.pagination?.total || 0) > 0) {
+        return currentYear;
+      }
+    }
+
+    // Sinon, trouver l'année la plus récente avec des données
+    // Parcourir les années en ordre décroissant
+    const sortedYears = [...availableYears].sort((a, b) => b - a);
+    for (const year of sortedYears) {
+      const yearOptions: OrderListOptions = { year };
+      const yearOrders = await this.orderRepository.listOrders({
+        ...yearOptions,
+        page: 1,
+        limit: 1,
+      });
+      if ((yearOrders.pagination?.total || 0) > 0) {
+        return year;
+      }
+    }
+
+    // Fallback : année courante si aucune année n'a de données
+    return currentYear;
+  }
+
+  /**
    * Obtenir les statistiques formatées pour le dashboard
    * @param {number} year Année pour filtrer les statistiques
    * @returns {Promise<DashboardStatisticsResponseDTO>} Statistiques formatées avec années disponibles
@@ -444,6 +487,7 @@ export default class OrderService {
     };
     year: number;
     availableYears: number[];
+    defaultYear: number;
   }> {
     try {
       const options: OrderListOptions = { year };
@@ -462,6 +506,9 @@ export default class OrderService {
       // Générer les années disponibles
       const availableYears = this.generateAvailableYears();
 
+      // Calculer l'année par défaut recommandée
+      const defaultYear = await this.calculateDefaultYear(availableYears);
+
       return {
         statistics: {
           ordersCount,
@@ -470,6 +517,7 @@ export default class OrderService {
         },
         year,
         availableYears,
+        defaultYear,
       };
     } catch (error: any) {
       console.error("Error getting dashboard statistics:", error);

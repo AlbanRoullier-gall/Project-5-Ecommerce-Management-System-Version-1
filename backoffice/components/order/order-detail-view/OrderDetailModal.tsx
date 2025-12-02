@@ -50,8 +50,13 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           method: "GET",
           requireAuth: true,
         });
-        const list: OrderItemPublicDTO[] =
-          json?.data?.orderItems || json?.orderItems || [];
+        // Format standardisé : { data: { orderItems: [], count } }, ... }
+        if (!json.data || !Array.isArray(json.data.orderItems)) {
+          throw new Error(
+            "Format de réponse invalide pour les articles de commande"
+          );
+        }
+        const list: OrderItemPublicDTO[] = json.data.orderItems;
         setItems(list);
       } catch (e) {
         setItemsError(
@@ -80,8 +85,13 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           method: "GET",
           requireAuth: true,
         });
-        const list: OrderAddressPublicDTO[] =
-          json?.data?.orderAddresses || json?.orderAddresses || [];
+        // Format standardisé : { data: { orderAddresses: [], count } }, ... }
+        if (!json.data || !Array.isArray(json.data.orderAddresses)) {
+          throw new Error(
+            "Format de réponse invalide pour les adresses de commande"
+          );
+        }
+        const list: OrderAddressPublicDTO[] = json.data.orderAddresses;
         setAddresses(list);
       } catch (e) {
         setAddressesError(

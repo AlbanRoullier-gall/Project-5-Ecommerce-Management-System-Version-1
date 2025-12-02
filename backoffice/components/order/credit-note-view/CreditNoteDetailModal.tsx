@@ -44,8 +44,13 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
           method: "GET",
           requireAuth: true,
         });
-        const list: CreditNoteItemPublicDTO[] =
-          json?.data?.creditNoteItems || json?.creditNoteItems || [];
+        // Format standardisé : { data: { creditNoteItems: [], count } }, ... }
+        if (!json.data || !Array.isArray(json.data.creditNoteItems)) {
+          throw new Error(
+            "Format de réponse invalide pour les articles d'avoir"
+          );
+        }
+        const list: CreditNoteItemPublicDTO[] = json.data.creditNoteItems;
         setItems(list);
       } catch (e) {
         setItemsError(
