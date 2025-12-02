@@ -47,8 +47,6 @@ const ProductCatalog: React.FC = () => {
 
   // Paramètres de recherche côté serveur pour les produits
   const [searchParams, setSearchParams] = useState<Partial<ProductSearchDTO>>({
-    page: 1,
-    limit: 20,
     search: undefined,
     categoryId: undefined,
     isActive: true, // Seulement les produits actifs pour le frontend
@@ -60,8 +58,6 @@ const ProductCatalog: React.FC = () => {
   const [categorySearchParams, setCategorySearchParams] = useState<
     Partial<CategorySearchDTO>
   >({
-    page: 1,
-    limit: 100, // Charger toutes les catégories pour les filtres
     search: undefined,
     sortBy: "name",
     sortOrder: "asc",
@@ -81,7 +77,6 @@ const ProductCatalog: React.FC = () => {
   useEffect(() => {
     setSearchParams((prevParams) => ({
       ...prevParams,
-      page: 1, // Réinitialiser la page
       categoryId: selectedCategoryId === 0 ? undefined : selectedCategoryId,
     }));
   }, [selectedCategoryId]);
@@ -104,9 +99,6 @@ const ProductCatalog: React.FC = () => {
     try {
       // Construire les paramètres de requête à partir de ProductSearchDTO
       const queryParams = new URLSearchParams();
-      if (searchParams.page) queryParams.set("page", String(searchParams.page));
-      if (searchParams.limit)
-        queryParams.set("limit", String(searchParams.limit));
       if (searchParams.search) queryParams.set("search", searchParams.search);
       if (searchParams.categoryId)
         queryParams.set("categoryId", String(searchParams.categoryId));
@@ -130,28 +122,21 @@ const ProductCatalog: React.FC = () => {
       const response = (await fetchResponse.json()) as {
         data: {
           products: ProductPublicDTO[];
-          pagination: {
-            page: number;
-            limit: number;
-            total: number;
-            pages: number;
-          };
         };
         message?: string;
         timestamp?: string;
         status?: number;
       };
 
-      // Format standardisé : { data: { products: [], pagination: {} }, ... }
+      // Format standardisé : { data: { products: [] }, ... }
       if (!response.data || !Array.isArray(response.data.products)) {
         throw new Error("Format de réponse invalide pour les produits");
       }
 
       const products = response.data.products;
-      const pagination = response.data.pagination;
 
       setProducts(products);
-      setTotalProducts(pagination?.total || products.length);
+      setTotalProducts(products.length);
     } catch (err) {
       setError(
         err instanceof Error
@@ -166,16 +151,12 @@ const ProductCatalog: React.FC = () => {
 
   /**
    * Charge la liste des catégories depuis l'API publique
-   * Utilise CategorySearchDTO pour la recherche et pagination côté serveur
+   * Utilise CategorySearchDTO pour la recherche côté serveur
    */
   const loadCategories = async () => {
     try {
       // Construire les paramètres de requête à partir de CategorySearchDTO
       const queryParams = new URLSearchParams();
-      if (categorySearchParams.page)
-        queryParams.set("page", String(categorySearchParams.page));
-      if (categorySearchParams.limit)
-        queryParams.set("limit", String(categorySearchParams.limit));
       if (categorySearchParams.search)
         queryParams.set("search", categorySearchParams.search);
       if (categorySearchParams.sortBy)
@@ -197,19 +178,13 @@ const ProductCatalog: React.FC = () => {
       const response = (await fetchResponse.json()) as {
         data: {
           categories: CategoryPublicDTO[];
-          pagination?: {
-            page: number;
-            limit: number;
-            total: number;
-            pages: number;
-          };
         };
         message?: string;
         timestamp?: string;
         status?: number;
       };
 
-      // Format standardisé : { data: { categories: [], pagination: {} }, ... }
+      // Format standardisé : { data: { categories: [] }, ... }
       if (!response.data || !Array.isArray(response.data.categories)) {
         throw new Error("Format de réponse invalide pour les catégories");
       }

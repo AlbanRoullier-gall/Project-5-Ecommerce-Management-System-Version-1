@@ -99,14 +99,14 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   /**
    * Extrait les totaux directement depuis le panier fourni par le cart-service
-   * Le cart-service calcule déjà tous les totaux (subtotal, tax, total, vatBreakdown)
+   * Le cart-service garantit toujours ces valeurs (subtotal, tax, total, vatBreakdown)
    */
   const totals: CartTotals = cart
     ? {
-        totalHT: cart.subtotal || 0,
-        totalTTC: cart.total || 0,
-        vatAmount: cart.tax || 0,
-        breakdown: cart.vatBreakdown || [],
+        totalHT: cart.subtotal,
+        totalTTC: cart.total,
+        vatAmount: cart.tax,
+        breakdown: cart.vatBreakdown,
       }
     : {
         totalHT: 0,

@@ -22,7 +22,12 @@ import { FormInput, FormContainer, Button, FormHeader, Alert } from "../shared";
  */
 export default function CheckoutCustomerForm() {
   const router = useRouter();
-  const { customerData, updateCustomerData, validateCustomerData } = useCheckout();
+  const {
+    customerData,
+    updateCustomerData,
+    validateCustomerData,
+    saveCheckoutData,
+  } = useCheckout();
   // État local du composant
   const [isLoading, setIsLoading] = useState(false); // Indicateur de chargement
   const [errors, setErrors] = useState<{ [key: string]: string }>({}); // Erreurs par champ
@@ -87,6 +92,16 @@ export default function CheckoutCustomerForm() {
           setGeneralError(validationResult.generalError);
         }
 
+        setIsLoading(false);
+        return;
+      }
+
+      // Sauvegarder les données avant de naviguer vers l'étape suivante
+      try {
+        await saveCheckoutData();
+      } catch (error) {
+        console.error("Erreur lors de la sauvegarde:", error);
+        setGeneralError("Erreur lors de la sauvegarde des données");
         setIsLoading(false);
         return;
       }

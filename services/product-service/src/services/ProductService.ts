@@ -199,8 +199,6 @@ export default class ProductService {
    * @returns {Promise<Object>} Produits avec informations de pagination
    */
   async listProducts(options: {
-    page: number;
-    limit: number;
     categoryId?: number;
     categories?: number[]; // Support pour multi-catégories (ProductFilterDTO)
     search?: string;
@@ -209,15 +207,7 @@ export default class ProductService {
     maxPrice?: number; // Support pour plage de prix (ProductFilterDTO)
     sortBy?: string;
     sortOrder?: "asc" | "desc";
-  }): Promise<{
-    products: Product[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      pages: number;
-    };
-  }> {
+  }): Promise<Product[]> {
     return await this.productRepository.listProducts(options);
   }
 
@@ -233,11 +223,8 @@ export default class ProductService {
       // Récupérer le nombre de produits pour l'année
       // Note: Le filtrage par année n'est pas encore implémenté dans listProducts
       // Pour l'instant, on retourne le total de tous les produits
-      const productsList = await this.productRepository.listProducts({
-        page: 1,
-        limit: 1, // On n'a besoin que de la pagination
-      });
-      const productsCount = productsList.pagination?.total || 0;
+      const productsList = await this.productRepository.listProducts({});
+      const productsCount = productsList.length;
 
       return {
         productsCount,
@@ -400,20 +387,10 @@ export default class ProductService {
    * @returns {Promise<Object>} Catégories avec informations de pagination
    */
   async listCategoriesWithSearch(options: {
-    page?: number;
-    limit?: number;
     search?: string;
     sortBy?: "name" | "createdAt";
     sortOrder?: "asc" | "desc";
-  }): Promise<{
-    categories: Category[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      pages: number;
-    };
-  }> {
+  }): Promise<Category[]> {
     return await this.categoryRepository.listCategoriesWithSearch(options);
   }
 

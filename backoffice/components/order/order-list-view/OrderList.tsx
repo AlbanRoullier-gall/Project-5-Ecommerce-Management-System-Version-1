@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import PageHeader from "../../shared/PageHeader";
 import Button from "../../shared/Button";
@@ -24,14 +24,12 @@ const OrderList: React.FC = () => {
   const [orders, setOrders] = useState<OrderPublicDTO[]>([]);
   const [creditNotes, setCreditNotes] = useState<CreditNotePublicDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [deliveryFilter, setDeliveryFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
   const [totalFilter, setTotalFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
-  const [page, setPage] = useState(1);
 
   const handleResetFilters = async () => {
     setSearch("");
@@ -39,31 +37,18 @@ const OrderList: React.FC = () => {
     setYearFilter("");
     setTotalFilter("");
     setDateFilter("");
-    setPage(1);
     // Recharger les commandes après réinitialisation
     try {
-      await loadOrdersPage(1);
+      await loadOrders();
     } catch (err) {
       console.error("Error reloading orders after reset:", err);
     }
   };
-  const [limit] = useState(20);
-  const [hasMore, setHasMore] = useState(true);
-  const [totalOrders, setTotalOrders] = useState<number | null>(null);
 
-  // États pour la pagination des avoirs
-  const [creditNotesPage, setCreditNotesPage] = useState(1);
-  const [hasMoreCreditNotes, setHasMoreCreditNotes] = useState(true);
-  const [isLoadingMoreCreditNotes, setIsLoadingMoreCreditNotes] =
-    useState(false);
   const [isCreateCreditNoteOpen, setIsCreateCreditNoteOpen] = useState(false);
   const [isCreditNoteDetailOpen, setIsCreditNoteDetailOpen] = useState(false);
   const [detailCreditNote, setDetailCreditNote] = useState<any | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const creditNotesSentinelRef = useRef<HTMLDivElement | null>(null);
-  const creditNotesContainerRef = useRef<HTMLDivElement | null>(null);
 
   const handleExportPDF = async () => {
     if (!yearFilter) {
@@ -110,14 +95,10 @@ const OrderList: React.FC = () => {
     }
   };
 
-  const loadOrdersPage = async (targetPage: number) => {
-    // Construire les query params directement avec les valeurs brutes
-    // Le service order-service fera le parsing et la validation
+  const loadOrders = async () => {
+    // Construire les query params
     const queryParams = new URLSearchParams();
-    queryParams.set("page", String(targetPage));
-    queryParams.set("limit", String(limit));
     if (search) queryParams.set("search", search);
-    // Envoyer les valeurs brutes - le service fera le parsing
     if (yearFilter && yearFilter !== "") {
       queryParams.set("year", yearFilter);
     }
@@ -127,7 +108,6 @@ const OrderList: React.FC = () => {
     if (dateFilter && dateFilter !== "") {
       queryParams.set("date", dateFilter);
     }
-    // Envoyer la valeur brute - le service convertira en boolean
     if (deliveryFilter && deliveryFilter !== "") {
       queryParams.set("delivered", deliveryFilter);
     }
@@ -135,61 +115,29 @@ const OrderList: React.FC = () => {
     const response = await apiCall<{
       data: {
         orders: OrderPublicDTO[];
-        pagination: {
-          page: number;
-          limit: number;
-          total: number;
-          pages: number;
-          hasMore: boolean; // Calculé côté serveur
-        };
       };
       message: string;
       timestamp: string;
       status: number;
     }>({
-      url: `/api/admin/orders?${queryParams.toString()}`,
+      url: `/api/admin/orders${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`,
       method: "GET",
       requireAuth: true,
     });
 
-    // Format standardisé : { data: { orders: [], pagination: {} }, ... }
+    // Format standardisé : { data: { orders: [] }, ... }
     if (!response.data || !Array.isArray(response.data.orders)) {
       throw new Error("Format de réponse invalide pour les commandes");
     }
 
-    const ordersList = response.data.orders;
-    const pagination = response.data.pagination;
-
-    // Pour l'infinite scroll : append les nouvelles données
-    // Le serveur garantit l'unicité des données entre les pages, pas besoin de déduplication
-    setOrders((prev) => {
-      if (targetPage === 1) {
-        // Première page : remplacer
-        return ordersList;
-      }
-      // Pages suivantes : append (le serveur garantit l'unicité)
-      return [...prev, ...ordersList];
-    });
-
-    // Utiliser les métadonnées de pagination du serveur
-    if (pagination) {
-      setHasMore(pagination.hasMore);
-      setTotalOrders(pagination.total);
-    } else {
-      setHasMore(false);
-      setTotalOrders(ordersList.length);
-    }
-
-    setPage(targetPage);
+    setOrders(response.data.orders);
   };
 
-  const loadCreditNotesPage = async (targetPage: number) => {
-    // Construire les query params directement avec les valeurs brutes
-    // Le service order-service fera le parsing et la validation
+  const loadCreditNotes = async () => {
+    // Construire les query params
     const queryParams = new URLSearchParams();
-    queryParams.set("page", String(targetPage));
-    queryParams.set("limit", String(limit));
-    // Envoyer la valeur brute - le service fera le parsing
     if (yearFilter && yearFilter !== "") {
       queryParams.set("year", yearFilter);
     }
@@ -197,58 +145,32 @@ const OrderList: React.FC = () => {
     const response = await apiCall<{
       data: {
         creditNotes: CreditNotePublicDTO[];
-        pagination: {
-          page: number;
-          limit: number;
-          total: number;
-          pages: number;
-          hasMore: boolean; // Calculé côté serveur
-        };
       };
       message: string;
       timestamp: string;
       status: number;
     }>({
-      url: `/api/admin/credit-notes?${queryParams.toString()}`,
+      url: `/api/admin/credit-notes${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`,
       method: "GET",
       requireAuth: true,
     });
 
-    // Format standardisé : { data: { creditNotes: [], pagination: {} }, ... }
+    // Format standardisé : { data: { creditNotes: [] }, ... }
     if (!response.data || !Array.isArray(response.data.creditNotes)) {
       throw new Error("Format de réponse invalide pour les avoirs");
     }
 
-    const creditNotesList = response.data.creditNotes;
-    const pagination = response.data.pagination;
-
-    // Pour l'infinite scroll : append les nouvelles données
-    // Le serveur garantit l'unicité des données entre les pages, pas besoin de déduplication
-    setCreditNotes((prev) => {
-      if (targetPage === 1) {
-        // Première page : remplacer
-        return creditNotesList;
-      }
-      // Pages suivantes : append (le serveur garantit l'unicité)
-      return [...prev, ...creditNotesList];
-    });
-
-    // Utiliser les métadonnées de pagination du serveur
-    if (pagination) {
-      setHasMoreCreditNotes(pagination.hasMore);
-    } else {
-      setHasMoreCreditNotes(false);
-    }
-
-    setCreditNotesPage(targetPage);
+    setCreditNotes(response.data.creditNotes);
   };
 
   const loadInitial = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      await loadOrdersPage(1);
-      await loadCreditNotesPage(1);
+      await loadOrders();
+      await loadCreditNotes();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur lors du chargement");
     } finally {
@@ -260,131 +182,29 @@ const OrderList: React.FC = () => {
     loadInitial();
   }, []);
 
-  // Reload when search changes (debounced behavior kept simple)
+  // Reload when search changes (debounced)
   useEffect(() => {
     const timer = setTimeout(() => {
-      setHasMore(true);
-      setPage(1);
-      setTotalOrders(null); // Réinitialiser le total
-      setHasMoreCreditNotes(true);
-      setCreditNotesPage(1);
       loadInitial();
     }, 300);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
-  // Reload when delivery filter changes
+  // Reload when filters change
   useEffect(() => {
-    setHasMore(true);
-    setPage(1);
-    setTotalOrders(null); // Réinitialiser le total
-    setHasMoreCreditNotes(true);
-    setCreditNotesPage(1);
     loadInitial();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deliveryFilter]);
+  }, [deliveryFilter, yearFilter, dateFilter]);
 
-  // Reload when year filter changes
-  useEffect(() => {
-    setHasMore(true);
-    setPage(1);
-    setTotalOrders(null); // Réinitialiser le total
-    setHasMoreCreditNotes(true);
-    setCreditNotesPage(1);
-    loadInitial();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [yearFilter]);
-
-  // Reload when total filter changes
+  // Reload when total filter changes (debounced)
   useEffect(() => {
     const timer = setTimeout(() => {
-      setHasMore(true);
-      setPage(1);
-      setTotalOrders(null);
       loadInitial();
     }, 300);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalFilter]);
-
-  // Reload when date filter changes
-  useEffect(() => {
-    setHasMore(true);
-    setPage(1);
-    setTotalOrders(null);
-    loadInitial();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateFilter]);
-
-  // Infinite scroll observer
-  useEffect(() => {
-    if (!hasMore || isLoading || isLoadingMore) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const first = entries[0];
-        if (first && first.isIntersecting) {
-          setIsLoadingMore(true);
-          loadOrdersPage(page + 1)
-            .catch(() => {
-              /* noop, error handled elsewhere via setError if needed */
-            })
-            .finally(() => setIsLoadingMore(false));
-        }
-      },
-      { root: containerRef.current, rootMargin: "200px", threshold: 0 }
-    );
-    const node = sentinelRef.current;
-    if (node) observer.observe(node);
-    return () => {
-      observer.disconnect();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    hasMore,
-    isLoading,
-    isLoadingMore,
-    page,
-    search,
-    yearFilter,
-    deliveryFilter,
-  ]);
-
-  // Infinite scroll observer for credit notes
-  useEffect(() => {
-    if (!hasMoreCreditNotes || isLoading || isLoadingMoreCreditNotes) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const first = entries[0];
-        if (first && first.isIntersecting) {
-          setIsLoadingMoreCreditNotes(true);
-          loadCreditNotesPage(creditNotesPage + 1)
-            .catch(() => {
-              /* noop, error handled elsewhere via setError if needed */
-            })
-            .finally(() => setIsLoadingMoreCreditNotes(false));
-        }
-      },
-      {
-        root: creditNotesContainerRef.current,
-        rootMargin: "200px",
-        threshold: 0,
-      }
-    );
-    const node = creditNotesSentinelRef.current;
-    if (node) observer.observe(node);
-    return () => {
-      observer.disconnect();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    hasMoreCreditNotes,
-    isLoading,
-    isLoadingMoreCreditNotes,
-    creditNotesPage,
-    search,
-    yearFilter,
-  ]);
 
   const toggleDeliveryStatus = async (orderId: number, delivered: boolean) => {
     try {
@@ -422,11 +242,9 @@ const OrderList: React.FC = () => {
   };
 
   const handleCreditNoteCreated = async () => {
-    // Reload credit notes list with pagination
+    // Reload credit notes list
     try {
-      setHasMoreCreditNotes(true);
-      setCreditNotesPage(1);
-      await loadCreditNotesPage(1);
+      await loadCreditNotes();
     } catch (e) {
       // Silent reload failure
     }
@@ -471,14 +289,8 @@ const OrderList: React.FC = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
             <i className="fas fa-filter" style={{ fontSize: "1.2rem" }}></i>
             <span style={{ fontWeight: "600" }}>
-              {totalOrders !== null ? totalOrders : orders.length} commande
-              {(totalOrders !== null ? totalOrders : orders.length) !== 1
-                ? "s"
-                : ""}{" "}
-              trouvée
-              {(totalOrders !== null ? totalOrders : orders.length) !== 1
-                ? "s"
-                : ""}
+              {orders.length} commande{orders.length !== 1 ? "s" : ""} trouvée
+              {orders.length !== 1 ? "s" : ""}
               {deliveryFilter && (
                 <span style={{ marginLeft: "0.5rem", opacity: 0.9 }}>
                   • {deliveryFilter === "delivered" ? "Livrées" : "En attente"}
@@ -489,24 +301,13 @@ const OrderList: React.FC = () => {
         </div>
       )}
 
-      <div
-        ref={containerRef}
-        style={{ marginBottom: "2.5rem", height: "60vh", overflowY: "auto" }}
-      >
+      <div style={{ marginBottom: "2.5rem" }}>
         <OrderTable
           orders={orders}
           isLoading={isLoading}
           onView={openOrderDetail}
           onToggleDelivery={toggleDeliveryStatus}
         />
-        {isLoadingMore && (
-          <div
-            style={{ padding: "1rem", textAlign: "center", color: "#6b7280" }}
-          >
-            Chargement...
-          </div>
-        )}
-        <div ref={sentinelRef} />
       </div>
 
       <PageHeader title="Avoirs" />
@@ -527,10 +328,7 @@ const OrderList: React.FC = () => {
           Créer un avoir
         </Button>
       </div>
-      <div
-        ref={creditNotesContainerRef}
-        style={{ marginBottom: "2.5rem", height: "60vh", overflowY: "auto" }}
-      >
+      <div style={{ marginBottom: "2.5rem" }}>
         <CreditNoteTable
           creditNotes={creditNotes}
           isLoading={isLoading}
@@ -616,14 +414,6 @@ const OrderList: React.FC = () => {
             }
           }}
         />
-        {isLoadingMoreCreditNotes && (
-          <div
-            style={{ padding: "1rem", textAlign: "center", color: "#6b7280" }}
-          >
-            Chargement...
-          </div>
-        )}
-        <div ref={creditNotesSentinelRef} />
       </div>
 
       {/* Section Export - Après les avoirs */}

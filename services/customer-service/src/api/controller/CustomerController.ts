@@ -9,6 +9,7 @@
  */
 
 import { Request, Response } from "express";
+import Joi from "joi";
 import CustomerService from "../../services/CustomerService";
 import type {
   CustomerCreateDTO,
@@ -199,28 +200,47 @@ export class CustomerController {
    */
   async listCustomers(req: Request, res: Response): Promise<void> {
     try {
-      const options: Partial<CustomerListRequestDTO> = {
-        ...(req.query.page && { page: parseInt(req.query.page as string) }),
-        ...(req.query.limit && { limit: parseInt(req.query.limit as string) }),
-        ...(req.query.search && { search: req.query.search as string }),
+      // Schéma de validation Joi pour les query params
+      const customerListQuerySchema = Joi.object({
+        search: Joi.string().max(255).optional().allow(""),
+      }).unknown(true);
+
+      // Valider les query params
+      const { error, value } = customerListQuerySchema.validate(req.query, {
+        abortEarly: false,
+        stripUnknown: true,
+      });
+
+      if (error) {
+        const messages = error.details
+          .map((detail) => detail.message)
+          .join("; ");
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              `Paramètres de recherche invalides: ${messages}`
+            )
+          );
+        return;
+      }
+
+      // Construire le DTO à partir des valeurs validées
+      const options: CustomerListRequestDTO = {
+        ...(value.search && { search: value.search }),
       };
 
-      const result = await this.customerService.listCustomers({
-        page: options.page ?? 1,
-        limit: options.limit ?? 10,
+      const customers = await this.customerService.listCustomers({
         search: options.search ?? "",
       });
 
       // Mapper les clients vers CustomerPublicDTO
-      const customersDTO = CustomerMapper.customersToPublicDTOs(
-        result.customers
-      );
+      const customersDTO = CustomerMapper.customersToPublicDTOs(customers);
 
       // Utiliser ResponseMapper pour standardiser la réponse
       res.json(
         ResponseMapper.customersListed({
           customers: customersDTO,
-          pagination: result.pagination,
         })
       );
     } catch (error: any) {

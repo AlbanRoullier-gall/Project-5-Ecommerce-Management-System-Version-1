@@ -63,6 +63,7 @@ interface CheckoutContextType {
 
   // Actions générales
   updateCustomerData: (data: CustomerResolveOrCreateDTO) => void;
+  saveCheckoutData: () => Promise<void>;
 
   // Actions spécifiques aux adresses
   updateShippingField: (field: string, value: string) => void;
@@ -85,8 +86,17 @@ const CheckoutContext = createContext<CheckoutContextType | undefined>(
 
 /**
  * URL de l'API depuis les variables d'environnement
+ * OBLIGATOIRE : La variable NEXT_PUBLIC_API_URL doit être définie dans .env.local ou .env.production
  */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+const API_URL = (() => {
+  const url = process.env.NEXT_PUBLIC_API_URL;
+  if (!url) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL n'est pas définie. Veuillez configurer cette variable d'environnement."
+    );
+  }
+  return url;
+})();
 
 /**
  * Hook pour utiliser le contexte checkout
@@ -176,36 +186,44 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
       });
     } catch (error) {
       console.error("Error saving checkout data to server:", error);
+      throw error; // Propager l'erreur pour que l'appelant puisse la gérer
     }
   }, []);
 
   /**
+   * Sauvegarde explicite des données checkout actuelles
+   * À appeler avant la navigation entre étapes du checkout
+   */
+  const saveCheckoutData = useCallback(async () => {
+    if (!isInitialized) {
+      return; // Ne pas sauvegarder si le contexte n'est pas encore initialisé
+    }
+    await saveToServer({
+      customerData,
+      addressData,
+    });
+  }, [customerData, addressData, isInitialized, saveToServer]);
+
+  /**
    * Met à jour les données client
    * Utilise CustomerResolveOrCreateDTO directement
-   * Sauvegarde automatiquement sur le serveur
+   * Ne sauvegarde plus automatiquement - la sauvegarde se fait lors de la navigation entre étapes
    */
   const updateCustomerData = useCallback(
-    async (data: CustomerResolveOrCreateDTO) => {
+    (data: CustomerResolveOrCreateDTO) => {
       const updated = { ...customerData, ...data };
       setCustomerData(updated);
-      // Sauvegarder sur le serveur de manière asynchrone
-      if (isInitialized) {
-        await saveToServer({
-          customerData: updated,
-          addressData,
-        });
-      }
     },
-    [customerData, addressData, isInitialized, saveToServer]
+    [customerData]
   );
 
   /**
    * Met à jour un champ spécifique de l'adresse de livraison
    * Utilise AddressesCreateDTO directement
-   * Sauvegarde automatiquement sur le serveur
+   * Ne sauvegarde plus automatiquement - la sauvegarde se fait lors de la navigation entre étapes
    */
   const updateShippingField = useCallback(
-    async (field: string, value: string) => {
+    (field: string, value: string) => {
       const updated = {
         ...addressData,
         shipping: {
@@ -220,24 +238,17 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         billing: addressData.billing,
       };
       setAddressData(updated);
-      // Sauvegarder sur le serveur de manière asynchrone
-      if (isInitialized) {
-        await saveToServer({
-          customerData,
-          addressData: updated,
-        });
-      }
     },
-    [customerData, addressData, isInitialized, saveToServer]
+    [addressData]
   );
 
   /**
    * Met à jour un champ spécifique de l'adresse de facturation
    * Utilise AddressesCreateDTO directement
-   * Sauvegarde automatiquement sur le serveur
+   * Ne sauvegarde plus automatiquement - la sauvegarde se fait lors de la navigation entre étapes
    */
   const updateBillingField = useCallback(
-    async (field: string, value: string) => {
+    (field: string, value: string) => {
       const updated = {
         ...addressData,
         billing: {
@@ -250,15 +261,8 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         },
       };
       setAddressData(updated);
-      // Sauvegarder sur le serveur de manière asynchrone
-      if (isInitialized) {
-        await saveToServer({
-          customerData,
-          addressData: updated,
-        });
-      }
     },
-    [customerData, addressData, isInitialized, saveToServer]
+    [addressData]
   );
 
   /**
@@ -266,10 +270,10 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
    * Utilise AddressesCreateDTO directement
    * Le flag useSameBillingAddress est un indicateur uniquement
    * L'affichage utilisera l'adresse de livraison si le flag est coché
-   * Sauvegarde automatiquement sur le serveur
+   * Ne sauvegarde plus automatiquement - la sauvegarde se fait lors de la navigation entre étapes
    */
   const setUseSameBillingAddress = useCallback(
-    async (useSame: boolean) => {
+    (useSame: boolean) => {
       const updated = {
         ...addressData,
         useSameBillingAddress: useSame,
@@ -278,15 +282,8 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         billing: addressData.billing,
       };
       setAddressData(updated);
-      // Sauvegarder sur le serveur de manière asynchrone
-      if (isInitialized) {
-        await saveToServer({
-          customerData,
-          addressData: updated,
-        });
-      }
     },
-    [customerData, addressData, isInitialized, saveToServer]
+    [addressData]
   );
 
   /**
@@ -445,6 +442,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
     customerData,
     addressData,
     updateCustomerData,
+    saveCheckoutData,
     updateShippingField,
     updateBillingField,
     setUseSameBillingAddress,

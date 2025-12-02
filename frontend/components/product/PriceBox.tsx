@@ -1,6 +1,5 @@
 import React from "react";
 import { ProductPublicDTO } from "../../dto";
-import { formatPrice } from "../shared";
 
 interface PriceBoxProps {
   product: ProductPublicDTO;
@@ -101,7 +100,7 @@ const PriceBox: React.FC<PriceBoxProps> = ({ product }) => {
               textAlign: "right",
             }}
           >
-            {formatPrice(priceWithVat)}
+            {Number(priceWithVat).toFixed(2)} €
           </div>
         </div>
 
@@ -122,7 +121,7 @@ const PriceBox: React.FC<PriceBoxProps> = ({ product }) => {
               className="fas fa-receipt"
               style={{ marginRight: "0.5rem", color: "#13686a" }}
             ></i>
-            HT : {formatPrice(product.price)}
+            HT : {Number(product.price).toFixed(2)} €
           </span>
           {/* Taux de TVA */}
           <span>

@@ -7,8 +7,19 @@ import Button from "../../shared/Button";
 import { CustomerPublicDTO } from "../../../dto";
 import { useAuth } from "../../../contexts/AuthContext";
 
-/** URL de l'API depuis les variables d'environnement */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+/**
+ * URL de l'API depuis les variables d'environnement
+ * OBLIGATOIRE : La variable NEXT_PUBLIC_API_URL doit être définie dans .env.local ou .env.production
+ */
+const API_URL = (() => {
+  const url = process.env.NEXT_PUBLIC_API_URL;
+  if (!url) {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL n'est pas définie. Veuillez configurer cette variable d'environnement."
+    );
+  }
+  return url;
+})();
 
 /**
  * Composant de liste des clients
@@ -72,13 +83,6 @@ const CustomerList: React.FC = () => {
       const response = await apiCall<{
         data: {
           customers: CustomerPublicDTO[];
-          pagination: {
-            page: number;
-            limit: number;
-            total: number;
-            pages: number;
-            hasMore: boolean;
-          };
         };
         message: string;
         timestamp: string;
@@ -91,16 +95,15 @@ const CustomerList: React.FC = () => {
         requireAuth: true,
       });
 
-      // Format standardisé : { data: { customers: [], pagination: {} }, ... }
+      // Format standardisé : { data: { customers: [] }, ... }
       if (!response.data || !Array.isArray(response.data.customers)) {
         throw new Error("Format de réponse invalide pour les clients");
       }
 
       const customersList = response.data.customers;
-      const pagination = response.data.pagination;
 
       setCustomers(customersList);
-      setTotalCustomers(pagination?.total || customersList.length);
+      setTotalCustomers(customersList.length);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du chargement"

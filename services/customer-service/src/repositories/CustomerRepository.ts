@@ -102,16 +102,13 @@ class CustomerRepository {
   }
 
   /**
-   * Lister les clients avec pagination et recherche
-   * @param {Object} options Options de pagination et de recherche
-   * @returns {Promise<Object>} Clients et informations de pagination
+   * Lister les clients avec recherche
+   * @param {Object} options Options de recherche
+   * @returns {Promise<Customer[]>} Liste des clients
    */
-  async listAll(
-    options: CustomerListOptions = {}
-  ): Promise<CustomerListResult> {
+  async listAll(options: CustomerListOptions = {}): Promise<Customer[]> {
     try {
-      const { page = 1, limit = 10, search = "" } = options;
-      const offset = (page - 1) * limit;
+      const { search = "" } = options;
 
       let query = `
         SELECT c.customer_id, c.first_name, c.last_name, c.email, 
@@ -150,50 +147,22 @@ class CustomerRepository {
         query += ` WHERE ${conditions.join(" AND ")}`;
       }
 
-      query += ` ORDER BY c.created_at DESC LIMIT $${++paramCount} OFFSET $${++paramCount}`;
-      params.push(limit, offset);
+      query += ` ORDER BY c.created_at DESC`;
 
       const result = await this.pool.query(query, params);
 
-      // Obtenir le nombre total
-      let countQuery = `
-        SELECT COUNT(*) 
-        FROM customers c
-      `;
-
-      if (conditions.length > 0) {
-        countQuery += ` WHERE ${conditions.join(" AND ")}`;
-      }
-
-      const countResult = await this.pool.query(
-        countQuery,
-        params.slice(0, -2)
-      );
-
-      const totalCount = parseInt(countResult.rows[0].count);
-      const pages = Math.ceil(totalCount / limit);
-
-      return {
-        customers: result.rows.map((row) => {
-          const customerData: CustomerData = {
-            customerId: row.customer_id,
-            firstName: row.first_name,
-            lastName: row.last_name,
-            email: row.email,
-            phoneNumber: row.phone_number,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-          };
-          return new Customer(customerData);
-        }),
-        pagination: {
-          page: parseInt(page.toString()),
-          limit: parseInt(limit.toString()),
-          total: totalCount,
-          pages: pages,
-          hasMore: page < pages,
-        },
-      };
+      return result.rows.map((row) => {
+        const customerData: CustomerData = {
+          customerId: row.customer_id,
+          firstName: row.first_name,
+          lastName: row.last_name,
+          email: row.email,
+          phoneNumber: row.phone_number,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        };
+        return new Customer(customerData);
+      });
     } catch (error) {
       console.error("Error listing customers:", error);
       throw new Error("Failed to list customers");

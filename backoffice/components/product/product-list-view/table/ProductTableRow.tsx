@@ -17,7 +17,6 @@ interface ProductTableRowProps {
   /** Callback appelé pour changer le statut du produit */
   onToggleStatus: (productId: number, currentStatus: boolean) => void;
   /** Fonction de formatage du prix */
-  formatPrice: (price: number) => string;
   /** Fonction de formatage de la date */
   formatDate: (date: Date | string) => string;
 }
@@ -40,7 +39,6 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
   onEdit,
   onDelete,
   onToggleStatus,
-  formatPrice,
   formatDate,
 }) => {
   return (
@@ -144,7 +142,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
             color: "#13686a",
           }}
         >
-          {formatPrice(product.price)}
+          {Number(product.price).toFixed(2)} €
         </span>
       </TableCell>
       <TableCell className="mobile-hide" align="center">

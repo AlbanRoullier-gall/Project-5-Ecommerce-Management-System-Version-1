@@ -49,18 +49,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
   onToggleStatus,
 }) => {
   /**
-   * Formate un prix en euros (fr-BE)
-   * @param price - Prix à formater
-   * @returns Prix formaté avec symbole €
-   */
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("fr-BE", {
-      style: "currency",
-      currency: "EUR",
-    }).format(price);
-  };
-
-  /**
    * Formate une date au format DD/MM/YYYY (fr-BE)
    * @param date - Date à formater
    * @returns Date formatée
@@ -105,7 +93,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
           onEdit={onEdit}
           onDelete={onDelete}
           onToggleStatus={onToggleStatus}
-          formatPrice={formatPrice}
           formatDate={formatDate}
         />
       ))}

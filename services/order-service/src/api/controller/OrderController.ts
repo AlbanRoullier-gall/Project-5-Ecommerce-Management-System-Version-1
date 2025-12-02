@@ -9,6 +9,7 @@
  */
 
 import { Request, Response } from "express";
+import Joi from "joi";
 import OrderService from "../../services/OrderService";
 import { OrderMapper, ResponseMapper } from "../mapper";
 import Order from "../../models/Order";
@@ -47,16 +48,23 @@ export class OrderController {
         );
         if (Array.isArray(items) && items.length > 0) {
           const totals = Order.calculateTotalsFromItems(items);
-          totalAmountHT = Number(totals.totalHT.toFixed(2));
-          totalAmountTTC = Number(totals.totalTTC.toFixed(2));
+          totalAmountHT = parseFloat(totals.totalHT.toFixed(2));
+          totalAmountTTC = parseFloat(totals.totalTTC.toFixed(2));
         }
       } catch (e) {
         // En cas d'erreur sur le chargement des articles, on garde les totaux d'origine
+        console.error("Error calculating totals from items:", e);
       }
 
-      const orderDTO = OrderMapper.orderToPublicDTO(order);
-      (orderDTO as any).totalAmountHT = totalAmountHT;
-      (orderDTO as any).totalAmountTTC = totalAmountTTC;
+      // Utiliser les totaux calculés si disponibles, sinon ceux de la commande
+      const finalTotalAmountHT = totalAmountHT !== undefined ? totalAmountHT : order.totalAmountHT;
+      const finalTotalAmountTTC = totalAmountTTC !== undefined ? totalAmountTTC : order.totalAmountTTC;
+
+      const orderDTO = OrderMapper.orderToPublicDTO({
+        ...order,
+        totalAmountHT: finalTotalAmountHT,
+        totalAmountTTC: finalTotalAmountTTC,
+      });
 
       // Format standardisé : { data: { order }, ... }
       res.json(
@@ -95,105 +103,65 @@ export class OrderController {
    * Lister les commandes avec pagination
    * Parse et valide les query params côté serveur
    */
+  /**
+   * Lister les commandes
+   */
   async listOrders(req: Request, res: Response): Promise<void> {
     try {
-      const options: Partial<OrderListRequestDTO> = {};
+      // Schéma de validation Joi pour les query params
+      const orderListQuerySchema = Joi.object({
+        search: Joi.string().max(255).optional().allow(""),
+        customerId: Joi.number().integer().positive().optional(),
+        year: Joi.number().integer().min(1900).max(2100).optional(),
+        total: Joi.number().min(0).optional(),
+        date: Joi.string().optional().allow(""),
+        delivered: Joi.string()
+          .valid("true", "false", "delivered", "1", "0", "")
+          .optional(),
+      }).unknown(true);
 
-      // Parser et valider page
-      if (req.query.page) {
-        const page = parseInt(req.query.page as string);
-        if (isNaN(page) || page < 1) {
-          res
-            .status(400)
-            .json(ResponseMapper.badRequestError("Invalid page parameter"));
-          return;
-        }
-        options.page = page;
+      // Valider les query params
+      const { error, value } = orderListQuerySchema.validate(req.query, {
+        abortEarly: false,
+        stripUnknown: true,
+      });
+
+      if (error) {
+        const messages = error.details
+          .map((detail) => detail.message)
+          .join("; ");
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              `Paramètres de recherche invalides: ${messages}`
+            )
+          );
+        return;
       }
 
-      // Parser et valider limit
-      if (req.query.limit) {
-        const limit = parseInt(req.query.limit as string);
-        if (isNaN(limit) || limit < 1) {
-          res
-            .status(400)
-            .json(ResponseMapper.badRequestError("Invalid limit parameter"));
-          return;
-        }
-        options.limit = limit;
-      }
+      // Construire le DTO à partir des valeurs validées
+      const options: OrderListRequestDTO = {
+        ...(value.search && { search: value.search }),
+        ...(value.customerId && { customerId: value.customerId }),
+        ...(value.year && { year: value.year }),
+        ...(value.total !== undefined && { total: value.total }),
+        ...(value.date && { date: value.date }),
+        ...(value.delivered !== undefined &&
+          value.delivered !== "" && {
+            delivered:
+              value.delivered === "true" ||
+              value.delivered === "delivered" ||
+              value.delivered === "1",
+          }),
+      };
 
-      // Parser et valider search (string)
-      if (req.query.search) {
-        options.search = req.query.search as string;
-      }
-
-      // Parser et valider customerId
-      if (req.query.customerId) {
-        const customerId = parseInt(req.query.customerId as string);
-        if (isNaN(customerId) || customerId < 1) {
-          res
-            .status(400)
-            .json(
-              ResponseMapper.badRequestError("Invalid customerId parameter")
-            );
-          return;
-        }
-        options.customerId = customerId;
-      }
-
-      // Parser et valider year
-      if (req.query.year && req.query.year !== "") {
-        const year = parseInt(req.query.year as string);
-        if (isNaN(year) || year < 1900 || year > 2100) {
-          res
-            .status(400)
-            .json(ResponseMapper.badRequestError("Invalid year parameter"));
-          return;
-        }
-        options.year = year;
-      }
-
-      // Parser et valider total
-      if (req.query.total && req.query.total !== "") {
-        const total = parseFloat(req.query.total as string);
-        if (isNaN(total) || total < 0) {
-          res
-            .status(400)
-            .json(ResponseMapper.badRequestError("Invalid total parameter"));
-          return;
-        }
-        options.total = total;
-      }
-
-      // Parser et valider date (string)
-      if (req.query.date && req.query.date !== "") {
-        options.date = req.query.date as string;
-      }
-
-      // Parser et valider delivered (boolean)
-      if (req.query.delivered !== undefined && req.query.delivered !== "") {
-        const deliveredParam = req.query.delivered as string;
-        // Accepter "true", "delivered", "1" comme true, sinon false
-        options.delivered =
-          deliveredParam === "true" ||
-          deliveredParam === "delivered" ||
-          deliveredParam === "1";
-      }
-
-      const result = await this.orderService.listOrders(options);
-      // Format standardisé : { data: { orders: [], pagination: {} }, ... }
+      const orders = await this.orderService.listOrders(options);
+      // Format standardisé : { data: { orders: [] }, ... }
       res.json(
         ResponseMapper.success(
           {
-            orders: result.orders || [],
-            pagination: result.pagination || {
-              page: 1,
-              limit: 10,
-              total: 0,
-              pages: 0,
-              hasMore: false,
-            },
+            orders: orders || [],
           },
           "Liste des commandes récupérée avec succès"
         )

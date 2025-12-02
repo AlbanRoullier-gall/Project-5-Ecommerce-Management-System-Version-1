@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { ProductPublicDTO } from "../../dto";
 import { useCart } from "../../contexts/CartContext";
-import { formatPrice } from "../shared";
+import { PLACEHOLDER_IMAGE_PATH } from "../shared";
 
 /**
  * URL de l'API depuis les variables d'environnement
@@ -51,7 +51,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       // Utiliser le même format que le backoffice : filePath directement
       return `${API_URL}/${firstImage.filePath}`;
     }
-    return "/images/placeholder.svg"; // Image par défaut
+    return PLACEHOLDER_IMAGE_PATH;
   };
 
   /**
@@ -174,7 +174,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             }}
             onError={(e) => {
               // Si l'image ne charge pas, utiliser le placeholder
-              (e.target as HTMLImageElement).src = "/images/placeholder.svg";
+              (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE_PATH;
             }}
           />
         </div>
@@ -280,7 +280,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                       letterSpacing: "-0.01em",
                     }}
                   >
-                    {formatPrice(product.price)}
+                    {Number(product.price).toFixed(2)} €
                   </span>
                 </div>
 
@@ -320,7 +320,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                       transform: isHovered ? "translateY(-1px)" : "none",
                     }}
                   >
-                    {formatPrice(priceWithVat)}
+                    {Number(priceWithVat).toFixed(2)} €
                   </span>
                 </div>
               </div>

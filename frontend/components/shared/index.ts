@@ -27,5 +27,7 @@ export type { SummaryRowVariant } from "./SummaryRow";
 // Composants d'affichage
 export { default as ItemDisplay } from "./ItemDisplay";
 
+// Constantes
+export { PLACEHOLDER_IMAGE_PATH } from "./constants";
+
 // Utilitaires
-export { formatPrice, formatAmount, formatCurrency } from "./utils/formatPrice";

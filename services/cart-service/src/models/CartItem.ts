@@ -78,9 +78,17 @@ export class CartItem {
       throw new Error("La quantité doit être positive");
     }
 
+    // Arrondir à 2 décimales
+    const roundTo2Decimals = (value: number | null | undefined): number => {
+      if (value === null || value === undefined || isNaN(value)) {
+        return 0;
+      }
+      return parseFloat(Number(value).toFixed(2));
+    };
+
     // Recalculer les totaux avec la nouvelle quantité
-    const newTotalPriceHT = this.unitPriceHT * newQuantity;
-    const newTotalPriceTTC = this.unitPriceTTC * newQuantity;
+    const newTotalPriceHT = roundTo2Decimals(this.unitPriceHT * newQuantity);
+    const newTotalPriceTTC = roundTo2Decimals(this.unitPriceTTC * newQuantity);
 
     const itemData: CartItemData = {
       id: this.id,

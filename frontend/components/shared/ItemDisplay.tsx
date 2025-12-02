@@ -6,7 +6,7 @@
 import React from "react";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
 import QuantitySelector from "./QuantitySelector";
-import { formatPrice } from "./utils/formatPrice";
+import { PLACEHOLDER_IMAGE_PATH } from "./constants";
 
 /**
  * URL de l'API depuis les variables d'environnement
@@ -55,7 +55,7 @@ const ItemDisplay: React.FC<ItemDisplayProps> = ({
   variant = "cart",
 }) => {
   const quantity = currentQuantity ?? item.quantity;
-  const productImage = item.imageUrl || "/images/placeholder.svg";
+  const productImage = item.imageUrl || PLACEHOLDER_IMAGE_PATH;
 
   const handleQuantityChange = async (newQuantity: number) => {
     if (newQuantity < 1 || !onQuantityChange) return;
@@ -117,7 +117,7 @@ const ItemDisplay: React.FC<ItemDisplayProps> = ({
                 backgroundColor: "#fff",
               }}
               onError={(e) => {
-                (e.target as HTMLImageElement).src = "/images/placeholder.svg";
+                (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE_PATH;
               }}
             />
           </div>
@@ -173,7 +173,7 @@ const ItemDisplay: React.FC<ItemDisplayProps> = ({
                 fontWeight: 600,
               }}
             >
-              {formatPrice(item.unitPriceHT)} HTVA / unité
+              {Number(item.unitPriceHT).toFixed(2)} € HTVA / unité
             </div>
             <div
               style={{
@@ -233,7 +233,7 @@ const ItemDisplay: React.FC<ItemDisplayProps> = ({
                 whiteSpace: "nowrap",
               }}
             >
-              {formatPrice(item.totalPriceTTC)}
+              {Number(item.totalPriceTTC).toFixed(2)} €
             </div>
             <div
               style={{

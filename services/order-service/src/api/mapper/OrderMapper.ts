@@ -25,15 +25,30 @@ import { CreditNoteItemData } from "../../models/CreditNoteItem";
  */
 export class OrderMapper {
   /**
+   * Arrondir un nombre à 2 décimales
+   */
+  private static roundTo2Decimals(value: number | null | undefined): number {
+    if (value === null || value === undefined || isNaN(value)) {
+      return 0;
+    }
+    return parseFloat(Number(value).toFixed(2));
+  }
+
+  /**
    * Convertir le modèle Order en OrderPublicDTO
    */
   static orderToPublicDTO(order: any): OrderPublicDTO {
+    const totalAmountHT = this.roundTo2Decimals(order.totalAmountHT);
+    const totalAmountTTC = this.roundTo2Decimals(order.totalAmountTTC);
+    const totalVAT = this.roundTo2Decimals(totalAmountTTC - totalAmountHT);
+
     return {
       id: order.id,
       customerId: order.customerId,
       customerSnapshot: order.customerSnapshot,
-      totalAmountHT: order.totalAmountHT,
-      totalAmountTTC: order.totalAmountTTC,
+      totalAmountHT,
+      totalAmountTTC,
+      totalVAT,
       paymentMethod: order.paymentMethod,
       notes: order.notes,
       delivered: order.delivered ?? false,
@@ -62,10 +77,10 @@ export class OrderMapper {
       imageUrl: orderItem.imageUrl ?? null,
       quantity: orderItem.quantity,
       vatRate: orderItem.vatRate || 21,
-      unitPriceHT: orderItem.unitPriceHT,
-      unitPriceTTC: orderItem.unitPriceTTC,
-      totalPriceHT: orderItem.totalPriceHT,
-      totalPriceTTC: orderItem.totalPriceTTC,
+      unitPriceHT: this.roundTo2Decimals(orderItem.unitPriceHT),
+      unitPriceTTC: this.roundTo2Decimals(orderItem.unitPriceTTC),
+      totalPriceHT: this.roundTo2Decimals(orderItem.totalPriceHT),
+      totalPriceTTC: this.roundTo2Decimals(orderItem.totalPriceTTC),
       createdAt: orderItem.createdAt,
       updatedAt: orderItem.updatedAt, // Spécifique à Order
     };
@@ -121,12 +136,17 @@ export class OrderMapper {
    * Convertir le modèle CreditNote en CreditNotePublicDTO
    */
   static creditNoteToPublicDTO(creditNote: any): CreditNotePublicDTO {
+    const totalAmountHT = this.roundTo2Decimals(creditNote.totalAmountHT);
+    const totalAmountTTC = this.roundTo2Decimals(creditNote.totalAmountTTC);
+    const totalVAT = this.roundTo2Decimals(totalAmountTTC - totalAmountHT);
+
     return {
       id: creditNote.id,
       customerId: creditNote.customerId,
       orderId: creditNote.orderId,
-      totalAmountHT: creditNote.totalAmountHT,
-      totalAmountTTC: creditNote.totalAmountTTC,
+      totalAmountHT,
+      totalAmountTTC,
+      totalVAT,
       reason: creditNote.reason,
       description: creditNote.description,
       issueDate: creditNote.issueDate,
@@ -174,10 +194,10 @@ export class OrderMapper {
       productId: creditNoteItem.productId,
       productName: creditNoteItem.productName,
       quantity: creditNoteItem.quantity,
-      unitPriceHT: creditNoteItem.unitPriceHT,
-      unitPriceTTC: creditNoteItem.unitPriceTTC,
-      totalPriceHT: creditNoteItem.totalPriceHT,
-      totalPriceTTC: creditNoteItem.totalPriceTTC,
+      unitPriceHT: this.roundTo2Decimals(creditNoteItem.unitPriceHT),
+      unitPriceTTC: this.roundTo2Decimals(creditNoteItem.unitPriceTTC),
+      totalPriceHT: this.roundTo2Decimals(creditNoteItem.totalPriceHT),
+      totalPriceTTC: this.roundTo2Decimals(creditNoteItem.totalPriceTTC),
       createdAt: creditNoteItem.createdAt,
       updatedAt: creditNoteItem.updatedAt,
     };

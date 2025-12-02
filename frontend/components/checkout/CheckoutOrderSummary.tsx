@@ -21,7 +21,6 @@ import { useRouter } from "next/router";
 import { useCart, CartItemPublicDTO } from "../../contexts/CartContext";
 import { useCheckout } from "../../contexts/CheckoutContext";
 import { FormHeader, Alert, SummaryRow, ItemDisplay } from "../shared";
-import { formatAmount } from "../shared/utils/formatPrice";
 
 /**
  * Composant récapitulatif de commande et paiement
@@ -294,7 +293,7 @@ export default function CheckoutOrderSummary() {
                 }}
               >
                 <span>TVA ({b.rate}%)</span>
-                <span>{formatAmount(b.amount)}</span>
+                <span>{Number(b.amount).toFixed(2)} €</span>
               </div>
             ))}
 
@@ -304,7 +303,7 @@ export default function CheckoutOrderSummary() {
             {/* Total TTC (montant final à payer) */}
             <SummaryRow
               label="Total TTC"
-              value={cart?.total || 0}
+              value={totals.totalTTC}
               variant="total"
             />
           </div>

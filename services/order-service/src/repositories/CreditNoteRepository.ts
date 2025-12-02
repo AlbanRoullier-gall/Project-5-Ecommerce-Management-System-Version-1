@@ -10,22 +10,18 @@ export default class CreditNoteRepository {
   }
 
   /**
-   * Lister tous les avoirs avec pagination et recherche
-   * @param {Object} options Options de pagination et recherche
-   * @returns {Promise<Object>} Avoirs et informations de pagination
+   * Lister tous les avoirs avec recherche
+   * @param {Object} options Options de recherche
+   * @returns {Promise<CreditNote[]>} Liste des avoirs
    */
-  async listAll(options: OrderListOptions = {}): Promise<any> {
+  async listAll(options: OrderListOptions = {}): Promise<CreditNote[]> {
     const {
-      page = 1,
-      limit = 10,
       customerId,
       year,
       startDate,
       endDate,
       sort = "created_at DESC",
     } = options;
-
-    const offset = (page - 1) * limit;
     const params: any[] = [];
     let paramCount = 0;
     const conditions: string[] = [];
@@ -60,34 +56,12 @@ export default class CreditNoteRepository {
              reason, description, issue_date, payment_method, notes, COALESCE(status, 'pending') as status, created_at, updated_at
       FROM credit_notes 
       ${whereClause}
-      ORDER BY ${sort} 
-      LIMIT $${++paramCount} OFFSET $${++paramCount}
+      ORDER BY ${sort}
     `;
 
-    params.push(limit, offset);
     const result = await this.pool.query(query, params);
 
-    // Obtenir le nombre total
-    let countQuery = "SELECT COUNT(*) FROM credit_notes";
-    if (conditions.length > 0) {
-      countQuery += ` WHERE ${conditions.join(" AND ")}`;
-    }
-    const countResult = await this.pool.query(countQuery, params.slice(0, -2));
-
-    const total = parseInt(countResult.rows[0].count);
-    const pages = Math.ceil(total / limit);
-    const hasMore = page < pages;
-
-    return {
-      creditNotes: result.rows.map((row) => new CreditNote(row)),
-      pagination: {
-        page,
-        limit,
-        total,
-        pages,
-        hasMore, // Indique s'il y a une page suivante
-      },
-    };
+    return result.rows.map((row) => new CreditNote(row));
   }
 
   /**

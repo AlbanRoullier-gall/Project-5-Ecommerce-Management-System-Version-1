@@ -7,16 +7,6 @@
 import React from "react";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
 
-/**
- * Formate un prix en euros (format belge)
- */
-const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat("fr-BE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(price);
-};
-
 interface ItemDisplayTableProps {
   items: BaseItemDTO[];
   // Options d'affichage
@@ -286,7 +276,7 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
                       textAlign: "right",
                     }}
                   >
-                    {formatPrice(item.unitPriceHT)}
+                    {Number(item.unitPriceHT).toFixed(2)} €
                   </td>
                 )}
                 {columns.vatRate && (
@@ -308,7 +298,7 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
                       fontWeight: 600,
                     }}
                   >
-                    {formatPrice(item.totalPriceHT)}
+                    {Number(item.totalPriceHT).toFixed(2)} €
                   </td>
                 )}
                 {columns.totalPriceTTC && (
@@ -320,7 +310,7 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
                       color: "#13686a",
                     }}
                   >
-                    {formatPrice(item.totalPriceTTC)}
+                    {Number(item.totalPriceTTC).toFixed(2)} €
                   </td>
                 )}
               </tr>

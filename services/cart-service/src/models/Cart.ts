@@ -238,11 +238,17 @@ export class Cart {
     }
 
     // Trier par taux croissant et arrondir les montants
+    const roundTo2Decimals = (value: number | null | undefined): number => {
+      if (value === null || value === undefined || isNaN(value)) {
+        return 0;
+      }
+      return parseFloat(Number(value).toFixed(2));
+    };
     return Array.from(vatByRate.entries())
       .sort((a, b) => a[0] - b[0])
       .map(([rate, amount]) => ({
         rate,
-        amount: Math.round(amount * 100) / 100,
+        amount: roundTo2Decimals(amount),
       }));
   }
 
@@ -259,9 +265,15 @@ export class Cart {
     const tax = totalTTC - subtotalHT;
 
     // Arrondir à 2 décimales de manière cohérente
-    const subtotal = Math.round(subtotalHT * 100) / 100;
-    const total = Math.round(totalTTC * 100) / 100;
-    const taxRounded = Math.round(tax * 100) / 100;
+    const roundTo2Decimals = (value: number | null | undefined): number => {
+      if (value === null || value === undefined || isNaN(value)) {
+        return 0;
+      }
+      return parseFloat(Number(value).toFixed(2));
+    };
+    const subtotal = roundTo2Decimals(subtotalHT);
+    const total = roundTo2Decimals(totalTTC);
+    const taxRounded = roundTo2Decimals(tax);
 
     // Calculer le breakdown TVA
     const vatBreakdown = this.calculateVatBreakdown(items);

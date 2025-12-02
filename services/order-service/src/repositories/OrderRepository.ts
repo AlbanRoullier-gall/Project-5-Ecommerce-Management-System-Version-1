@@ -80,22 +80,9 @@ export default class OrderRepository {
    * @param {OrderListOptions} options Options de filtrage et pagination
    * @returns {Promise<{orders: Order[], pagination: any}>} Liste des commandes et pagination
    */
-  async listOrders(
-    options: OrderListOptions = {}
-  ): Promise<{ orders: Order[]; pagination: any }> {
+  async listOrders(options: OrderListOptions = {}): Promise<Order[]> {
     try {
-      const {
-        page = 1,
-        limit = 10,
-        search,
-        customerId,
-        year,
-        total,
-        date,
-        delivered,
-      } = options;
-
-      const offset = (page - 1) * limit;
+      const { search, customerId, year, total, date, delivered } = options;
       const conditions = [];
       const params = [];
       let paramCount = 0;
@@ -204,39 +191,17 @@ export default class OrderRepository {
         FROM orders o
         ${whereClause}
         ORDER BY o.created_at DESC
-        LIMIT $${++paramCount} OFFSET $${++paramCount}
       `;
-
-      params.push(limit, offset);
 
       const result = await this.pool.query(query, params);
 
-      // Compter le total - construire les paramètres sans LIMIT et OFFSET
-      const countParams = params.slice(0, -2);
-      const countQuery = `SELECT COUNT(*) as count FROM orders o ${whereClause}`;
-
-      const countResult = await this.pool.query(countQuery, countParams);
-
-      const totalCount = parseInt(countResult.rows[0].count);
-      const pages = Math.ceil(totalCount / limit);
-      const hasMore = page < pages;
-
-      return {
-        orders: result.rows.map((row) => {
-          const order = new Order(row as OrderData);
-          order.customerFirstName = (row as any).first_name;
-          order.customerLastName = (row as any).last_name;
-          order.customerEmail = (row as any).email;
-          return order;
-        }),
-        pagination: {
-          page,
-          limit,
-          total: totalCount,
-          pages,
-          hasMore, // Indique s'il y a une page suivante
-        },
-      };
+      return result.rows.map((row) => {
+        const order = new Order(row as OrderData);
+        order.customerFirstName = (row as any).first_name;
+        order.customerLastName = (row as any).last_name;
+        order.customerEmail = (row as any).email;
+        return order;
+      });
     } catch (error) {
       console.error("Error listing orders:", error);
       throw new Error("Failed to retrieve orders");

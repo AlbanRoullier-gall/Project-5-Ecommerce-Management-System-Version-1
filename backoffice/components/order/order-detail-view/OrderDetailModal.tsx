@@ -5,7 +5,6 @@ import {
   OrderAddressPublicDTO,
 } from "../../../dto";
 import { Button, Modal, ItemDisplayTable } from "../../shared";
-import { formatAmount } from "../../shared/utils/formatPrice";
 import { CreateCreditNoteModal } from "../credit-note-view";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -498,7 +497,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                       fontWeight: "700",
                     }}
                   >
-                    {formatAmount(order.totalAmountHT || 0)}
+                    {Number(order.totalAmountHT || 0).toFixed(2)} €
                   </div>
                 </div>
                 <div
@@ -526,7 +525,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                       fontWeight: "700",
                     }}
                   >
-                    {formatAmount(order.totalAmountTTC || 0)}
+                    {Number(order.totalAmountTTC || 0).toFixed(2)} €
                   </div>
                 </div>
                 <div
@@ -554,9 +553,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                       fontWeight: "700",
                     }}
                   >
-                    {formatAmount(
-                      (order.totalAmountTTC || 0) - (order.totalAmountHT || 0)
-                    )}
+                    {Number(order.totalVAT || 0).toFixed(2)} €
                   </div>
                 </div>
               </div>

@@ -103,12 +103,6 @@ export class ResponseMapper {
       message: "Liste des produits récupérée avec succès",
       data: {
         products: result.products || [],
-        pagination: result.pagination || {
-          page: 1,
-          limit: 10,
-          total: 0,
-          pages: 0,
-        },
       },
       timestamp: new Date().toISOString(),
       status: 200,
@@ -163,12 +157,6 @@ export class ResponseMapper {
       message: "Liste des catégories récupérée avec succès",
       data: {
         categories: result.categories || [],
-        pagination: result.pagination || {
-          page: 1,
-          limit: 10,
-          total: result.categories?.length || 0,
-          pages: 1,
-        },
       },
       timestamp: new Date().toISOString(),
       status: 200,

@@ -185,30 +185,16 @@ export class CategoryRepository {
   }
 
   /**
-   * Lister les catégories avec pagination et recherche (CategorySearchDTO)
+   * Lister les catégories avec recherche
    * @param {Object} options Options de recherche
-   * @returns {Promise<Object>} Catégories avec informations de pagination
+   * @returns {Promise<Category[]>} Liste des catégories
    */
   async listCategoriesWithSearch(options: {
-    page?: number;
-    limit?: number;
     search?: string;
     sortBy?: "name" | "createdAt";
     sortOrder?: "asc" | "desc";
-  }): Promise<{
-    categories: Category[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      pages: number;
-    };
-  }> {
+  }): Promise<Category[]> {
     try {
-      const page = options.page || 1;
-      const limit = options.limit || 10;
-      const offset = (page - 1) * limit;
-
       const whereConditions = [];
       const values = [];
       let paramCount = 0;
@@ -226,15 +212,6 @@ export class CategoryRepository {
         whereConditions.length > 0
           ? `WHERE ${whereConditions.join(" AND ")}`
           : "";
-
-      // Compter le total des catégories (sans le JOIN pour éviter les doublons)
-      const countQuery = `
-        SELECT COUNT(DISTINCT c.id) as total
-        FROM categories c
-        ${categoryWhereClause}
-      `;
-      const countResult = await this.pool.query(countQuery, values);
-      const total = parseInt(countResult.rows[0].total);
 
       // Mapper les noms de colonnes camelCase vers snake_case
       const sortByMapping: Record<string, string> = {
@@ -267,23 +244,13 @@ export class CategoryRepository {
         ${categoryWhereClause}
         GROUP BY c.id, c.name, c.description, c.created_at, c.updated_at
         ${orderClause}
-        LIMIT $${++paramCount} OFFSET $${++paramCount}
       `;
 
-      values.push(limit, offset);
       const result = await this.pool.query(query, values);
 
       const categories = result.rows.map((row) => new Category(row));
 
-      return {
-        categories,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit),
-        },
-      };
+      return categories;
     } catch (error) {
       console.error(
         "Erreur lors de la liste des catégories avec recherche:",

@@ -4,7 +4,6 @@ import React, { useEffect, useState, useCallback } from "react";
 import { StatCard } from "../shared";
 import { OrderStatisticsRequestDTO } from "../../dto";
 import { useAuth } from "../../contexts/AuthContext";
-import { formatCurrency } from "../shared/utils/formatPrice";
 
 interface StatsData {
   productsCount: number;
@@ -193,7 +192,7 @@ const StatsOverview: React.FC = () => {
         <StatCard title="Commandes" value={stats?.ordersCount ?? 0} />
         <StatCard
           title="Chiffre d'Affaires"
-          value={formatCurrency(stats?.totalRevenueHT ?? 0)}
+          value={`${stats?.totalRevenueHT ?? 0} €`}
         />
       </div>
     </div>

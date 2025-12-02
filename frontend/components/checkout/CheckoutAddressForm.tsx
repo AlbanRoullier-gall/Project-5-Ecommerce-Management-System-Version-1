@@ -43,7 +43,6 @@ const AddressFields: React.FC<AddressFieldsProps> = ({ address, onChange }) => {
         value={address.postalCode || ""}
         onChange={handleInputChange}
         required
-        placeholder="1000"
       />
       <FormInput
         name="city"
@@ -51,7 +50,6 @@ const AddressFields: React.FC<AddressFieldsProps> = ({ address, onChange }) => {
         value={address.city || ""}
         onChange={handleInputChange}
         required
-        placeholder="Bruxelles"
       />
       <FormInput
         name="countryName"
@@ -77,6 +75,7 @@ export default function CheckoutAddressForm() {
     updateBillingField,
     setUseSameBillingAddress,
     validateAddresses,
+    saveCheckoutData,
   } = useCheckout();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -113,13 +112,24 @@ export default function CheckoutAddressForm() {
 
     setIsLoading(true);
     const validation = await validateAddresses();
-    setIsLoading(false);
 
     if (!validation.isValid) {
+      setIsLoading(false);
       alert(validation.error);
       return;
     }
 
+    // Sauvegarder les données avant de naviguer vers l'étape suivante
+    try {
+      await saveCheckoutData();
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde:", error);
+      alert("Erreur lors de la sauvegarde des données");
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(false);
     // Rediriger vers la page de récapitulatif si la validation réussit
     router.push("/checkout/summary");
   };

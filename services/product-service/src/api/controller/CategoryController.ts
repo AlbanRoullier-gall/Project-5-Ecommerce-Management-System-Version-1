@@ -9,6 +9,7 @@
  */
 
 import { Request, Response } from "express";
+import Joi from "joi";
 import ProductService from "../../services/ProductService";
 import { ProductMapper, ResponseMapper } from "../mapper";
 import {
@@ -151,51 +152,78 @@ export class CategoryController {
    */
   async listCategories(req: Request, res: Response): Promise<void> {
     try {
-      // Vérifier si des paramètres de recherche sont présents (CategorySearchDTO)
+      // Schéma de validation Joi pour les query params
+      const categorySearchQuerySchema = Joi.object({
+        search: Joi.string().max(255).optional().allow(""),
+        sortBy: Joi.string()
+          .valid("name", "createdAt", "created_at")
+          .optional(),
+        sortOrder: Joi.string().valid("asc", "desc").optional(),
+      }).unknown(true);
+
+      // Valider les query params
+      const { error, value } = categorySearchQuerySchema.validate(req.query, {
+        abortEarly: false,
+        stripUnknown: true,
+      });
+
+      if (error) {
+        const messages = error.details
+          .map((detail) => detail.message)
+          .join("; ");
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              `Paramètres de recherche invalides: ${messages}`
+            )
+          );
+        return;
+      }
+
+      // Construire le DTO à partir des valeurs validées
+      const searchParams: CategorySearchDTO = {
+        ...(value.search && { search: value.search }),
+        ...(value.sortBy && {
+          sortBy: value.sortBy as "name" | "createdAt" | "created_at",
+        }),
+        ...(value.sortOrder && {
+          sortOrder: value.sortOrder as "asc" | "desc",
+        }),
+      };
+
+      // Vérifier si des paramètres de recherche sont présents
       const hasSearchParams =
-        req.query.page ||
-        req.query.limit ||
-        req.query.search ||
-        req.query.sortBy ||
-        req.query.sortOrder;
+        searchParams.search || searchParams.sortBy || searchParams.sortOrder;
 
       if (hasSearchParams) {
-        // Utiliser la recherche avec pagination
+        // Utiliser la recherche
         const sortByMapping: Record<string, string> = {
           name: "name",
           createdAt: "createdAt",
           created_at: "createdAt",
         };
 
-        const sortByParam = (req.query.sortBy as string) || "name";
+        const sortByParam = searchParams.sortBy || "name";
         const sortBy = sortByMapping[sortByParam] || sortByParam;
 
-        // Construire le DTO de recherche
+        // Utiliser le DTO validé avec valeurs par défaut
         const searchDTO: CategorySearchDTO = {
-          ...(req.query.page && { page: parseInt(req.query.page as string) }),
-          ...(req.query.limit && {
-            limit: parseInt(req.query.limit as string),
-          }),
-          ...(req.query.search && { search: req.query.search as string }),
+          ...searchParams,
           sortBy: sortBy as "name" | "createdAt",
-          ...(req.query.sortOrder && {
-            sortOrder: req.query.sortOrder as "asc" | "desc",
-          }),
         };
 
         const searchOptions = {
-          ...(searchDTO.page && { page: searchDTO.page }),
-          ...(searchDTO.limit && { limit: searchDTO.limit }),
           ...(searchDTO.search && { search: searchDTO.search }),
           ...(searchDTO.sortBy && { sortBy: searchDTO.sortBy }),
-          ...(searchDTO.sortOrder && { sortOrder: searchDTO.sortOrder }),
+          sortOrder: searchDTO.sortOrder || "asc",
         };
 
-        const result = await this.productService.listCategoriesWithSearch(
+        const categories = await this.productService.listCategoriesWithSearch(
           searchOptions
         );
 
-        const categoriesDTO = result.categories.map((category) =>
+        const categoriesDTO = categories.map((category) =>
           ProductMapper.categoryToPublicDTO(category)
         );
 
@@ -203,25 +231,18 @@ export class CategoryController {
         res.json(
           ResponseMapper.categoryListed({
             categories: categoriesDTO,
-            pagination: result.pagination,
           })
         );
       } else {
         // Comportement par défaut : retourner toutes les catégories
         const categories = await this.productService.listCategories();
-        const categoriesDTO = categories.map((category) =>
+        const categoriesDTO = categories.map((category: any) =>
           ProductMapper.categoryToPublicDTO(category)
         );
         // Format standardisé : même format que productListed
         res.json(
           ResponseMapper.categoryListed({
             categories: categoriesDTO,
-            pagination: {
-              page: 1,
-              limit: categoriesDTO.length,
-              total: categoriesDTO.length,
-              pages: 1,
-            },
           })
         );
       }

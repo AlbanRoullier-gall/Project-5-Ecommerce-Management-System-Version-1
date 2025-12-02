@@ -9,6 +9,7 @@
  */
 
 import { Request, Response } from "express";
+import Joi from "joi";
 import OrderService from "../../services/OrderService";
 import { OrderStatisticsRequestDTO } from "../dto";
 import { ResponseMapper } from "../mapper";
@@ -52,29 +53,56 @@ export class OrderStatisticsController {
    */
   async getDashboardStatistics(req: Request, res: Response): Promise<void> {
     try {
-      // Si une année est fournie, la valider et l'utiliser
-      // Sinon, on utilisera l'année par défaut calculée par le service
-      const yearParam = req.query.year
-        ? parseInt(req.query.year as string)
-        : undefined;
+      // Schéma de validation Joi pour les query params
+      const orderStatisticsQuerySchema = Joi.object({
+        year: Joi.number().integer().min(1900).max(2100).optional(),
+        startDate: Joi.string().optional(),
+        endDate: Joi.string().optional(),
+        customerId: Joi.number().integer().positive().optional(),
+        status: Joi.string().optional(),
+      }).unknown(true);
 
-      if (yearParam !== undefined && (isNaN(yearParam) || yearParam < 2025)) {
-        res.status(400).json({
-          error: "Année invalide",
-          message: "L'année doit être >= 2025",
-        });
+      // Valider les query params
+      const { error, value } = orderStatisticsQuerySchema.validate(req.query, {
+        abortEarly: false,
+        stripUnknown: true,
+      });
+
+      if (error) {
+        const messages = error.details
+          .map((detail) => detail.message)
+          .join("; ");
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              `Paramètres de recherche invalides: ${messages}`
+            )
+          );
         return;
       }
 
-      // Utiliser l'année fournie ou une année temporaire (sera remplacée par defaultYear)
-      const year = yearParam || new Date().getFullYear();
+      // Construire le DTO à partir des valeurs validées
+      const searchParams: OrderStatisticsRequestDTO = {
+        ...(value.year && { year: value.year }),
+        ...(value.startDate && { startDate: value.startDate }),
+        ...(value.endDate && { endDate: value.endDate }),
+        ...(value.customerId && { customerId: value.customerId }),
+        ...(value.status && { status: value.status }),
+      };
+
+      const yearParam = searchParams.year;
+
+      // Utiliser l'année fournie ou une valeur temporaire (le service calculera defaultYear)
+      // Le service accepte un number, mais on passera une valeur temporaire si undefined
+      const tempYear = yearParam || new Date().getFullYear();
       const dashboardData = await this.orderService.getDashboardStatistics(
-        year
+        tempYear
       );
 
       // Si aucune année n'était fournie, utiliser defaultYear comme année sélectionnée
       const finalYear =
-        yearParam !== undefined ? year : dashboardData.defaultYear;
+        yearParam !== undefined ? yearParam : dashboardData.defaultYear;
 
       res.json({
         success: true,

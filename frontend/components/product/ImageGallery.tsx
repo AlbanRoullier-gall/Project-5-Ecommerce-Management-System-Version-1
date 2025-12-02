@@ -1,5 +1,6 @@
 import React from "react";
 import { ProductPublicDTO } from "../../dto";
+import { PLACEHOLDER_IMAGE_PATH } from "../shared";
 
 /**
  * URL de l'API depuis les variables d'environnement
@@ -120,14 +121,14 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             }}
             onError={(e) => {
               // Si l'image ne charge pas, utiliser le placeholder
-              (e.target as HTMLImageElement).src = "/images/placeholder.svg";
+              (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE_PATH;
             }}
           />
         ) : (
           // Image placeholder si aucune image n'est disponible
           <img
             className="main-product-image"
-            src="/images/placeholder.svg"
+            src={PLACEHOLDER_IMAGE_PATH}
             alt="Pas d'image"
             style={{
               width: "100%",
@@ -222,7 +223,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                 onError={(e) => {
                   // Si l'image ne charge pas, utiliser le placeholder
                   (e.target as HTMLImageElement).src =
-                    "/images/placeholder.svg";
+                    PLACEHOLDER_IMAGE_PATH;
                 }}
               />
             </button>

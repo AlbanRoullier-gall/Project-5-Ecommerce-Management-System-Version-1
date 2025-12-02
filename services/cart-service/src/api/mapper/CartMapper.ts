@@ -41,6 +41,16 @@ function validateAndSanitizeItemData(data: {
   };
 }
 
+/**
+ * Arrondir un nombre à 2 décimales
+ */
+function roundTo2Decimals(value: number | null | undefined): number {
+  if (value === null || value === undefined || isNaN(value)) {
+    return 0;
+  }
+  return parseFloat(Number(value).toFixed(2));
+}
+
 function calculateItemTotals(
   unitPriceHT: number,
   unitPriceTTC: number,
@@ -55,9 +65,9 @@ function calculateItemTotals(
   const totalVAT = totalPriceTTC - totalPriceHT;
 
   return {
-    totalPriceHT: Math.round(totalPriceHT * 100) / 100,
-    totalPriceTTC: Math.round(totalPriceTTC * 100) / 100,
-    totalVAT: Math.round(totalVAT * 100) / 100,
+    totalPriceHT: roundTo2Decimals(totalPriceHT),
+    totalPriceTTC: roundTo2Decimals(totalPriceTTC),
+    totalVAT: roundTo2Decimals(totalVAT),
   };
 }
 
@@ -114,6 +124,16 @@ export class CartMapper {
   }
 
   /**
+   * Arrondir un nombre à 2 décimales
+   */
+  private static roundTo2Decimals(value: number | null | undefined): number {
+    if (value === null || value === undefined || isNaN(value)) {
+      return 0;
+    }
+    return parseFloat(Number(value).toFixed(2));
+  }
+
+  /**
    * Convertir le modèle Cart en CartPublicDTO
    */
   static cartToPublicDTO(cart: Cart): DTO.CartPublicDTO {
@@ -121,11 +141,14 @@ export class CartMapper {
       id: cart.id,
       sessionId: cart.sessionId,
       items: cart.items.map((item) => this.cartItemToPublicDTO(item)),
-      subtotal: cart.subtotal,
-      tax: cart.tax,
-      total: cart.total,
+      subtotal: this.roundTo2Decimals(cart.subtotal),
+      tax: this.roundTo2Decimals(cart.tax),
+      total: this.roundTo2Decimals(cart.total),
       itemCount: cart.itemCount, // Nombre total d'articles calculé côté serveur
-      vatBreakdown: cart.vatBreakdown,
+      vatBreakdown: cart.vatBreakdown.map((item) => ({
+        rate: item.rate,
+        amount: this.roundTo2Decimals(item.amount),
+      })),
       checkoutData: cart.checkoutData || null,
       createdAt: cart.createdAt,
       updatedAt: cart.updatedAt,
@@ -147,10 +170,10 @@ export class CartMapper {
       imageUrl: item.imageUrl ?? null,
       quantity: item.quantity,
       vatRate: item.vatRate,
-      unitPriceHT: item.unitPriceHT,
-      unitPriceTTC: item.unitPriceTTC,
-      totalPriceHT: item.totalPriceHT,
-      totalPriceTTC: item.totalPriceTTC,
+      unitPriceHT: this.roundTo2Decimals(item.unitPriceHT),
+      unitPriceTTC: this.roundTo2Decimals(item.unitPriceTTC),
+      totalPriceHT: this.roundTo2Decimals(item.totalPriceHT),
+      totalPriceTTC: this.roundTo2Decimals(item.totalPriceTTC),
       createdAt: item.addedAt, // Mapper addedAt vers createdAt pour harmonisation
     };
   }

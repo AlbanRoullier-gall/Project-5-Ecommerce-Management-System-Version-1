@@ -9,6 +9,7 @@
  */
 
 import { Request, Response } from "express";
+import Joi from "joi";
 import OrderService from "../../services/OrderService";
 import { CreditNoteCreateDTO, CreditNoteListRequestDTO } from "../dto";
 import { OrderMapper, ResponseMapper } from "../mapper";
@@ -176,83 +177,53 @@ export class CreditNoteController {
    * Lister tous les avoirs (admin)
    * Parse et valide les query params côté serveur
    */
+  /**
+   * Lister les avoirs
+   */
   async listCreditNotes(req: Request, res: Response): Promise<void> {
     try {
-      const options: Partial<CreditNoteListRequestDTO> = {};
+      // Schéma de validation Joi pour les query params
+      const creditNoteListQuerySchema = Joi.object({
+        customerId: Joi.number().integer().positive().optional(),
+        year: Joi.number().integer().min(1900).max(2100).optional(),
+        startDate: Joi.string().optional(),
+        endDate: Joi.string().optional(),
+      }).unknown(true);
 
-      // Parser et valider page
-      if (req.query.page) {
-        const page = parseInt(req.query.page as string);
-        if (isNaN(page) || page < 1) {
-          res
-            .status(400)
-            .json(ResponseMapper.badRequestError("Invalid page parameter"));
-          return;
-        }
-        options.page = page;
+      // Valider les query params
+      const { error, value } = creditNoteListQuerySchema.validate(req.query, {
+        abortEarly: false,
+        stripUnknown: true,
+      });
+
+      if (error) {
+        const messages = error.details
+          .map((detail) => detail.message)
+          .join("; ");
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              `Paramètres de recherche invalides: ${messages}`
+            )
+          );
+        return;
       }
 
-      // Parser et valider limit
-      if (req.query.limit) {
-        const limit = parseInt(req.query.limit as string);
-        if (isNaN(limit) || limit < 1) {
-          res
-            .status(400)
-            .json(ResponseMapper.badRequestError("Invalid limit parameter"));
-          return;
-        }
-        options.limit = limit;
-      }
+      // Construire le DTO à partir des valeurs validées
+      const options: CreditNoteListRequestDTO = {
+        ...(value.customerId && { customerId: value.customerId }),
+        ...(value.year && { year: value.year }),
+        ...(value.startDate && { startDate: value.startDate }),
+        ...(value.endDate && { endDate: value.endDate }),
+      };
 
-      // Parser et valider customerId
-      if (req.query.customerId) {
-        const customerId = parseInt(req.query.customerId as string);
-        if (isNaN(customerId) || customerId < 1) {
-          res
-            .status(400)
-            .json(
-              ResponseMapper.badRequestError("Invalid customerId parameter")
-            );
-          return;
-        }
-        options.customerId = customerId;
-      }
-
-      // Parser et valider year
-      if (req.query.year && req.query.year !== "") {
-        const year = parseInt(req.query.year as string);
-        if (isNaN(year) || year < 1900 || year > 2100) {
-          res
-            .status(400)
-            .json(ResponseMapper.badRequestError("Invalid year parameter"));
-          return;
-        }
-        options.year = year;
-      }
-
-      // Parser et valider startDate (string)
-      if (req.query.startDate && req.query.startDate !== "") {
-        options.startDate = req.query.startDate as string;
-      }
-
-      // Parser et valider endDate (string)
-      if (req.query.endDate && req.query.endDate !== "") {
-        options.endDate = req.query.endDate as string;
-      }
-
-      const result = await this.orderService.listCreditNotes(options);
-      // Format standardisé : { data: { creditNotes: [], pagination: {} }, ... }
+      const creditNotes = await this.orderService.listCreditNotes(options);
+      // Format standardisé : { data: { creditNotes: [] }, ... }
       res.json(
         ResponseMapper.success(
           {
-            creditNotes: result.creditNotes || [],
-            pagination: result.pagination || {
-              page: 1,
-              limit: 10,
-              total: 0,
-              pages: 0,
-              hasMore: false,
-            },
+            creditNotes: creditNotes || [],
           },
           "Liste des avoirs récupérée avec succès"
         )

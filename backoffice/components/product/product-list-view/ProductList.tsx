@@ -43,8 +43,6 @@ const ProductList: React.FC = () => {
 
   // États des filtres avec DTOs
   const [searchParams, setSearchParams] = useState<Partial<ProductSearchDTO>>({
-    page: 1,
-    limit: 20,
     search: undefined,
     categoryId: undefined,
     isActive: undefined,
@@ -61,8 +59,6 @@ const ProductList: React.FC = () => {
   const [categorySearchParams, setCategorySearchParams] = useState<
     Partial<CategorySearchDTO>
   >({
-    page: 1,
-    limit: 100, // Charger toutes les catégories pour les filtres
     search: undefined,
     sortBy: "name",
     sortOrder: "asc",
@@ -88,7 +84,6 @@ const ProductList: React.FC = () => {
       setSearchParams((prevParams) => {
         const newSearchParams: Partial<ProductSearchDTO> = {
           ...prevParams,
-          page: 1, // Réinitialiser la page à 1 lors d'un nouveau filtre
           search: searchTerm || undefined,
           categoryId: selectedCategory ? parseInt(selectedCategory) : undefined,
           isActive:
@@ -136,9 +131,6 @@ const ProductList: React.FC = () => {
     try {
       // Construire les paramètres de requête à partir de ProductSearchDTO et ProductFilterDTO
       const queryParams = new URLSearchParams();
-      if (searchParams.page) queryParams.set("page", String(searchParams.page));
-      if (searchParams.limit)
-        queryParams.set("limit", String(searchParams.limit));
       if (searchParams.search) queryParams.set("search", searchParams.search);
       if (searchParams.categoryId)
         queryParams.set("categoryId", String(searchParams.categoryId));
@@ -170,32 +162,27 @@ const ProductList: React.FC = () => {
       const response = await apiCall<{
         data: {
           products: ProductPublicDTO[];
-          pagination: {
-            page: number;
-            limit: number;
-            total: number;
-            pages: number;
-          };
         };
         message?: string;
         timestamp?: string;
         status?: number;
       }>({
-        url: `/api/admin/products?${queryParams.toString()}`,
+        url: `/api/admin/products${
+          queryParams.toString() ? `?${queryParams.toString()}` : ""
+        }`,
         method: "GET",
         requireAuth: true,
       });
 
-      // Format standardisé : { data: { products: [], pagination: {} }, ... }
+      // Format standardisé : { data: { products: [] }, ... }
       if (!response.data || !Array.isArray(response.data.products)) {
         throw new Error("Format de réponse invalide pour les produits");
       }
 
       const products = response.data.products;
-      const pagination = response.data.pagination;
 
       setProducts(products);
-      setTotalProducts(pagination?.total || products.length);
+      setTotalProducts(products.length);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du chargement"
@@ -214,10 +201,6 @@ const ProductList: React.FC = () => {
     try {
       // Construire les paramètres de requête à partir de CategorySearchDTO
       const queryParams = new URLSearchParams();
-      if (categorySearchParams.page)
-        queryParams.set("page", String(categorySearchParams.page));
-      if (categorySearchParams.limit)
-        queryParams.set("limit", String(categorySearchParams.limit));
       if (categorySearchParams.search)
         queryParams.set("search", categorySearchParams.search);
       if (categorySearchParams.sortBy)
@@ -228,18 +211,14 @@ const ProductList: React.FC = () => {
       const response = await apiCall<{
         data: {
           categories: CategoryPublicDTO[];
-          pagination?: {
-            page: number;
-            limit: number;
-            total: number;
-            pages: number;
-          };
         };
         message?: string;
         timestamp?: string;
         status?: number;
       }>({
-        url: `/api/admin/categories?${queryParams.toString()}`,
+        url: `/api/admin/categories${
+          queryParams.toString() ? `?${queryParams.toString()}` : ""
+        }`,
         method: "GET",
         requireAuth: true,
       });

@@ -190,13 +190,11 @@ export class ProductRepository {
   }
 
   /**
-   * Lister les produits avec pagination et filtrage
+   * Lister les produits avec filtrage
    * @param {Object} options Options de liste
-   * @returns {Promise<Object>} Produits avec informations de pagination
+   * @returns {Promise<Product[]>} Liste des produits
    */
   async listProducts(options: {
-    page: number;
-    limit: number;
     categoryId?: number;
     categories?: number[]; // Support pour multi-catégories (ProductFilterDTO)
     search?: string;
@@ -205,17 +203,8 @@ export class ProductRepository {
     maxPrice?: number; // Support pour plage de prix (ProductFilterDTO)
     sortBy?: string;
     sortOrder?: "asc" | "desc";
-  }): Promise<{
-    products: Product[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      pages: number;
-    };
-  }> {
+  }): Promise<Product[]> {
     try {
-      const offset = (options.page - 1) * options.limit;
       const whereConditions = [];
       const values = [];
       let paramCount = 0;
@@ -262,16 +251,6 @@ export class ProductRepository {
           ? `WHERE ${whereConditions.join(" AND ")}`
           : "";
 
-      // Compter le total des produits
-      const countQuery = `
-        SELECT COUNT(*) as total
-        FROM products p
-        ${whereClause}
-      `;
-      const countResult = await this.pool.query(countQuery, values);
-      const total = parseInt(countResult.rows[0].total);
-
-      // Obtenir les produits
       // Mapper les noms de colonnes camelCase vers snake_case pour la base de données
       const sortByMapping: Record<string, string> = {
         name: "name",
@@ -298,10 +277,8 @@ export class ProductRepository {
         LEFT JOIN categories c ON p.category_id = c.id
         ${whereClause}
         ${orderClause}
-        LIMIT $${++paramCount} OFFSET $${++paramCount}
       `;
 
-      values.push(options.limit, offset);
       const result = await this.pool.query(query, values);
 
       const products = result.rows.map((row) => {
@@ -310,15 +287,7 @@ export class ProductRepository {
         return product;
       });
 
-      return {
-        products,
-        pagination: {
-          page: options.page,
-          limit: options.limit,
-          total,
-          pages: Math.ceil(total / options.limit),
-        },
-      };
+      return products;
     } catch (error) {
       console.error("Erreur lors de la liste des produits:", error);
       throw error;

@@ -369,9 +369,7 @@ export default class OrderService {
    * @param {OrderListOptions} options Options de filtrage et pagination
    * @returns {Promise<{orders: Order[], pagination: any}>} Liste des commandes et pagination
    */
-  async listOrders(
-    options: OrderListOptions = {}
-  ): Promise<{ orders: Order[]; pagination: any }> {
+  async listOrders(options: OrderListOptions = {}): Promise<Order[]> {
     try {
       return await this.orderRepository.listOrders(options);
     } catch (error: any) {
@@ -399,11 +397,15 @@ export default class OrderService {
       // Revenus nets = Commandes - Avoirs
       const totalAmountHT = Math.max(
         0,
-        Number((ordersTotals.totalHT - creditNotesTotals.totalHT).toFixed(2))
+        parseFloat(
+          (ordersTotals.totalHT - creditNotesTotals.totalHT).toFixed(2)
+        )
       );
       const totalAmountTTC = Math.max(
         0,
-        Number((ordersTotals.totalTTC - creditNotesTotals.totalTTC).toFixed(2))
+        parseFloat(
+          (ordersTotals.totalTTC - creditNotesTotals.totalTTC).toFixed(2)
+        )
       );
 
       return { totalAmountHT, totalAmountTTC };
@@ -445,12 +447,10 @@ export default class OrderService {
     // Si l'année courante est disponible et a des données, l'utiliser
     if (availableYears.includes(currentYear)) {
       const currentYearOptions: OrderListOptions = { year: currentYear };
-      const currentYearOrders = await this.orderRepository.listOrders({
-        ...currentYearOptions,
-        page: 1,
-        limit: 1,
-      });
-      if ((currentYearOrders.pagination?.total || 0) > 0) {
+      const currentYearOrders = await this.orderRepository.listOrders(
+        currentYearOptions
+      );
+      if (currentYearOrders.length > 0) {
         return currentYear;
       }
     }
@@ -460,12 +460,8 @@ export default class OrderService {
     const sortedYears = [...availableYears].sort((a, b) => b - a);
     for (const year of sortedYears) {
       const yearOptions: OrderListOptions = { year };
-      const yearOrders = await this.orderRepository.listOrders({
-        ...yearOptions,
-        page: 1,
-        limit: 1,
-      });
-      if ((yearOrders.pagination?.total || 0) > 0) {
+      const yearOrders = await this.orderRepository.listOrders(yearOptions);
+      if (yearOrders.length > 0) {
         return year;
       }
     }
@@ -493,12 +489,8 @@ export default class OrderService {
       const options: OrderListOptions = { year };
 
       // Récupérer le nombre de commandes pour l'année
-      const ordersList = await this.orderRepository.listOrders({
-        ...options,
-        page: 1,
-        limit: 1, // On n'a besoin que de la pagination
-      });
-      const ordersCount = ordersList.pagination?.total || 0;
+      const ordersList = await this.orderRepository.listOrders(options);
+      const ordersCount = ordersList.length;
 
       // Récupérer les totaux (revenus)
       const statistics = await this.getOrderStatistics(options);
@@ -640,9 +632,7 @@ export default class OrderService {
   /**
    * Lister les avoirs avec pagination/filtre (admin)
    */
-  async listCreditNotes(
-    options: OrderListOptions = {}
-  ): Promise<{ creditNotes: CreditNote[]; pagination: any }> {
+  async listCreditNotes(options: OrderListOptions = {}): Promise<CreditNote[]> {
     return await this.creditNoteRepository.listAll(options);
   }
 

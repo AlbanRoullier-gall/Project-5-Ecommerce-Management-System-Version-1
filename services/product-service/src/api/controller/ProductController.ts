@@ -9,6 +9,7 @@
  */
 
 import { Request, Response } from "express";
+import Joi from "joi";
 import ProductService from "../../services/ProductService";
 import { ProductMapper, ResponseMapper } from "../mapper";
 import {
@@ -154,6 +155,63 @@ export class ProductController {
    */
   async listProducts(req: Request, res: Response): Promise<void> {
     try {
+      // Schéma de validation Joi pour les query params
+      const productListQuerySchema = Joi.object({
+        search: Joi.string().max(255).optional().allow(""),
+        categoryId: Joi.number().integer().positive().optional(),
+        categories: Joi.string().optional(), // Format: "1,2,3"
+        activeOnly: Joi.string().valid("true", "false").optional(),
+        minPrice: Joi.number().min(0).optional(),
+        maxPrice: Joi.number().min(0).optional(),
+        sortBy: Joi.string()
+          .valid("name", "price", "createdAt", "created_at")
+          .optional(),
+        sortOrder: Joi.string().valid("asc", "desc").optional(),
+      }).unknown(true);
+
+      // Valider les query params
+      const { error, value } = productListQuerySchema.validate(req.query, {
+        abortEarly: false,
+        stripUnknown: true,
+      });
+
+      if (error) {
+        const messages = error.details
+          .map((detail) => detail.message)
+          .join("; ");
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              `Paramètres de recherche invalides: ${messages}`
+            )
+          );
+        return;
+      }
+
+      // Construire le DTO à partir des valeurs validées
+      const listRequestDTO: ProductListRequestDTO = {
+        ...(value.search && { search: value.search }),
+        ...(value.categoryId && { categoryId: value.categoryId }),
+        ...(value.categories && {
+          categories: value.categories
+            .split(",")
+            .map((id: string) => parseInt(id.trim()))
+            .filter((id: number) => !isNaN(id) && id > 0),
+        }),
+        ...(value.activeOnly !== undefined && {
+          activeOnly: value.activeOnly === "true",
+        }),
+        ...(value.minPrice !== undefined && { minPrice: value.minPrice }),
+        ...(value.maxPrice !== undefined && { maxPrice: value.maxPrice }),
+        ...(value.sortBy && {
+          sortBy: value.sortBy as "name" | "price" | "createdAt" | "created_at",
+        }),
+        ...(value.sortOrder && {
+          sortOrder: value.sortOrder as "asc" | "desc",
+        }),
+      };
+
       // Mapper les noms de colonnes camelCase vers snake_case pour la base de données
       const sortByMapping: Record<string, string> = {
         name: "name",
@@ -162,46 +220,10 @@ export class ProductController {
         created_at: "created_at",
       };
 
-      const sortByParam = (req.query.sortBy as string) || "created_at";
+      const sortByParam = listRequestDTO.sortBy || "created_at";
       const sortBy = sortByMapping[sortByParam] || sortByParam;
 
-      // Parser les catégories multiples si présentes
-      let categories: number[] | undefined;
-      if (req.query.categories) {
-        const categoriesParam = req.query.categories as string;
-        categories = categoriesParam
-          .split(",")
-          .map((id) => parseInt(id.trim()))
-          .filter((id) => !isNaN(id));
-      }
-
-      // Construire le DTO de requête
-      const listRequestDTO: ProductListRequestDTO = {
-        ...(req.query.page && { page: parseInt(req.query.page as string) }),
-        ...(req.query.limit && { limit: parseInt(req.query.limit as string) }),
-        ...(req.query.search && { search: req.query.search as string }),
-        ...(req.query.categoryId && {
-          categoryId: parseInt(req.query.categoryId as string),
-        }),
-        ...(categories && categories.length > 0 && { categories }),
-        ...(req.query.activeOnly !== undefined && {
-          activeOnly: String(req.query.activeOnly) === "true",
-        }),
-        ...(req.query.minPrice && {
-          minPrice: parseFloat(req.query.minPrice as string),
-        }),
-        ...(req.query.maxPrice && {
-          maxPrice: parseFloat(req.query.maxPrice as string),
-        }),
-        sortBy: sortBy as "name" | "price" | "createdAt" | "created_at",
-        ...(req.query.sortOrder && {
-          sortOrder: req.query.sortOrder as "asc" | "desc",
-        }),
-      };
-
       const options = {
-        page: listRequestDTO.page || 1,
-        limit: listRequestDTO.limit || 10,
         ...(listRequestDTO.categoryId && {
           categoryId: listRequestDTO.categoryId,
         }),
@@ -215,19 +237,10 @@ export class ProductController {
         ...(listRequestDTO.minPrice && { minPrice: listRequestDTO.minPrice }),
         ...(listRequestDTO.maxPrice && { maxPrice: listRequestDTO.maxPrice }),
         sortBy: sortBy,
-        sortOrder: listRequestDTO.sortOrder || "asc",
+        sortOrder: listRequestDTO.sortOrder || "desc",
       };
 
-      const result = await this.productService.listProducts(options);
-
-      // S'assurer que result a toujours products et pagination
-      const products = result.products || [];
-      const pagination = result.pagination || {
-        page: options.page || 1,
-        limit: options.limit || 10,
-        total: 0,
-        pages: 0,
-      };
+      const products = await this.productService.listProducts(options);
 
       // Mapper les produits vers ProductPublicDTO et ajouter les images
       const mappedProducts = await Promise.all(
@@ -254,7 +267,6 @@ export class ProductController {
       res.json(
         ResponseMapper.productListed({
           products: mappedProducts,
-          pagination,
         })
       );
     } catch (error: any) {

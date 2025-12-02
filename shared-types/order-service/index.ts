@@ -17,6 +17,7 @@ export interface OrderPublicDTO {
   customerSnapshot: any | null;
   totalAmountHT: number;
   totalAmountTTC: number;
+  totalVAT: number;
   paymentMethod: string | null;
   notes: string | null;
   delivered: boolean;
@@ -104,6 +105,7 @@ export interface CreditNotePublicDTO {
   paymentMethod: string | null;
   totalAmountHT: number;
   totalAmountTTC: number;
+  totalVAT: number;
   notes: string | null;
   status: string;
   createdAt: Date;

@@ -1,6 +1,4 @@
 import React from "react";
-import { formatAmount } from "./utils/formatPrice";
-
 /**
  * Variante de ligne de résumé
  */
@@ -37,7 +35,7 @@ const SummaryRow: React.FC<SummaryRowProps> = ({
   const formattedValue = formatValue
     ? formatValue(value)
     : typeof value === "number"
-    ? formatAmount(value)
+    ? `${Number(value).toFixed(2)} €`
     : value;
 
   const isTotal = variant === "total";

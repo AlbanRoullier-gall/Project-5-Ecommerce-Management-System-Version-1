@@ -59,13 +59,23 @@ export class ProductMapper {
   }
 
   /**
+   * Arrondir un nombre à 2 décimales
+   */
+  private static roundTo2Decimals(value: number | null | undefined): number {
+    if (value === null || value === undefined || isNaN(value)) {
+      return 0;
+    }
+    return parseFloat(Number(value).toFixed(2));
+  }
+
+  /**
    * Convertir le modèle Product vers ProductPublicDTO
    * Calcule le prix TTC côté serveur pour garantir la cohérence et la sécurité
    */
   static productToPublicDTO(product: any): ProductPublicDTO {
-    const price = product.price || 0;
+    const price = this.roundTo2Decimals(product.price || 0);
     const vatRate = product.vatRate || 0;
-    const priceTTC = Math.round(price * (1 + vatRate / 100) * 100) / 100;
+    const priceTTC = this.roundTo2Decimals(price * (1 + vatRate / 100));
 
     return {
       id: product.id,
