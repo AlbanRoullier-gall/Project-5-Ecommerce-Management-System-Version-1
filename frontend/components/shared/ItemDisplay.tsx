@@ -8,18 +8,7 @@ import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
 import QuantitySelector from "./QuantitySelector";
 import { PLACEHOLDER_IMAGE_PATH } from "./constants";
 
-/**
- * URL de l'API depuis les variables d'environnement
- */
-const API_URL = (() => {
-  const url = process.env.NEXT_PUBLIC_API_URL;
-  if (!url) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL n'est pas définie. Veuillez configurer cette variable d'environnement."
-    );
-  }
-  return url;
-})();
+import { apiClient } from "../../services/apiClient";
 
 interface ItemDisplayProps {
   item: BaseItemDTO;

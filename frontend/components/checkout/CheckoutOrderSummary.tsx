@@ -16,55 +16,34 @@
  * - Affiche les erreurs éventuelles à l'utilisateur
  */
 
-import { useState } from "react";
-import { useRouter } from "next/router";
-import { useCart, CartItemPublicDTO } from "../../contexts/CartContext";
-import { useCheckout } from "../../contexts/CheckoutContext";
+import { CartItemPublicDTO } from "../../contexts/CartContext";
 import { FormHeader, Alert, SummaryRow, ItemDisplay } from "../shared";
+import { useCheckoutOrderSummary } from "../../hooks/useCheckoutOrderSummary";
 
 /**
  * Composant récapitulatif de commande et paiement
  * Utilise CheckoutContext et CartContext pour gérer l'état
  */
+/**
+ * Composant de présentation pur pour le récapitulatif de commande
+ */
 export default function CheckoutOrderSummary() {
-  const router = useRouter();
-
-  // Consolider les appels de hooks - une seule fois chacun
-  const { cart, totals } = useCart();
-  const { customerData, addressData, completeOrder } = useCheckout();
+  const {
+    cart,
+    totals,
+    customerData,
+    addressData,
+    shippingAddress,
+    billingAddress,
+    isProcessing,
+    error,
+    handleCompleteOrder,
+    handleBack,
+    clearError,
+  } = useCheckoutOrderSummary();
 
   // Les items du cart
   const cartItems = (cart?.items || []) as CartItemPublicDTO[];
-
-  // Utiliser les adresses depuis le contexte
-  const shippingAddress = addressData.shipping;
-  const billingAddress = addressData.useSameBillingAddress
-    ? addressData.shipping
-    : addressData.billing;
-
-  // État local du composant
-  const [isProcessing, setIsProcessing] = useState(false); // Indicateur de traitement en cours
-  const [error, setError] = useState<string | null>(null); // Message d'erreur éventuel
-
-  /**
-   * Fonction pour finaliser la commande
-   * Utilise la fonction du contexte CheckoutContext
-   */
-  const handleCompleteOrder = async () => {
-    setIsProcessing(true);
-    setError(null);
-
-    const result = await completeOrder(cart);
-
-    if (result.success && result.paymentUrl) {
-      // Rediriger vers la page de paiement Stripe
-      window.location.href = result.paymentUrl;
-    } else {
-      // Afficher l'erreur
-      setError(result.error || "Une erreur est survenue");
-      setIsProcessing(false);
-    }
-  };
 
   return (
     <div
@@ -80,9 +59,7 @@ export default function CheckoutOrderSummary() {
       <FormHeader stepNumber={3} title="Récapitulatif et paiement" />
 
       {/* Affichage des erreurs éventuelles */}
-      {error && (
-        <Alert type="error" message={error} onClose={() => setError(null)} />
-      )}
+      {error && <Alert type="error" message={error} onClose={clearError} />}
 
       {/* Grille principale : informations client à gauche, commande à droite */}
       <div
@@ -358,7 +335,7 @@ export default function CheckoutOrderSummary() {
         {/* Bouton retour */}
         <button
           type="button"
-          onClick={() => router.push("/checkout/address")}
+          onClick={handleBack}
           disabled={isProcessing}
           style={{
             padding: "1.2rem 3rem",

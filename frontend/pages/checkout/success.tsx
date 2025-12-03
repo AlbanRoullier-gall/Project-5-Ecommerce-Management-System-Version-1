@@ -2,100 +2,20 @@
 
 import Head from "next/head";
 import Link from "next/link";
-import { useRouter } from "next/router";
-import { useEffect, useState, useRef } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { useCart } from "../../contexts/CartContext";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+import { usePaymentFinalization } from "../../hooks/usePaymentFinalization";
 
 /**
  * Page de confirmation de commande réussie
  */
 export default function CheckoutSuccessPage() {
-  const router = useRouter();
-  const { csid } = router.query;
-  const { clearCart, cart } = useCart();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const hasFinalized = useRef(false);
-
-  // Finaliser le paiement : créer la commande, envoyer l'email de confirmation et vider le panier
-  // Cette finalisation se fait depuis cette page après la redirection Stripe
-  useEffect(() => {
-    // Attendre que le router soit prêt pour accéder aux query params
-    if (!router.isReady) {
-      return;
-    }
-
-    // Stripe ajoute session_id dans les query params, pas csid
-    const sessionId =
-      (router.query.session_id as string) || (router.query.csid as string);
-
-    // Éviter les appels multiples
-    if (!sessionId || isProcessing || hasFinalized.current) {
-      return;
-    }
-
-    // Note: Le cartSessionId est maintenant géré automatiquement via cookie httpOnly
-    // Plus besoin de le récupérer depuis localStorage - le serveur l'extrait du cookie
-    // Note: On ne vérifie pas si le cart est vide car après un paiement réussi,
-    // le cart peut être vide. La finalisation utilise le cartSessionId depuis le cookie.
-
-    setIsProcessing(true);
-    hasFinalized.current = true;
-
-    const finalize = async () => {
-      try {
-        // Les données checkout sont maintenant récupérées depuis le cart-service
-        // Le cartSessionId est géré automatiquement via cookie httpOnly
-        const finalizePayload: {
-          csid: string;
-        } = {
-          csid: sessionId,
-        };
-
-        console.log("Finalizing payment with:", {
-          csid: sessionId,
-          // cartSessionId est maintenant dans le cookie httpOnly
-          // checkoutData sera récupéré depuis le cart-service
-        });
-        const response = await fetch(`${API_URL}/api/payment/finalize`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include", // Important pour envoyer les cookies
-          body: JSON.stringify(finalizePayload),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error("Finalize payment error:", errorData);
-          throw new Error(errorData.message || "Failed to finalize payment");
-        }
-
-        const result = await response.json();
-        console.log("Payment finalized successfully:", result);
-        return result;
-      } catch (e) {
-        console.error("Finalize payment exception:", e);
-        // Réinitialiser hasFinalized en cas d'erreur pour permettre un retry
-        hasFinalized.current = false;
-        throw e;
-      }
-    };
-
-    Promise.resolve()
-      .then(finalize)
-      .then(() => {
-        console.log("Clearing cart after successful payment");
-        clearCart();
-      })
-      .catch((error) => {
-        console.error("Failed to finalize payment:", error);
-        // Ne pas vider le panier si la finalisation échoue
-      })
-      .finally(() => setIsProcessing(false));
-  }, [router.isReady, router.query.session_id, router.query.csid, clearCart]);
+  const { clearCart } = useCart();
+  const { isProcessing, error } = usePaymentFinalization(() => {
+    // Callback appelé après succès de la finalisation
+    clearCart();
+  });
 
   return (
     <>

@@ -1,26 +1,8 @@
 import React from "react";
 import Link from "next/link";
 import { ProductPublicDTO } from "../../dto";
-import { useCart } from "../../contexts/CartContext";
 import { PLACEHOLDER_IMAGE_PATH } from "../shared";
-
-/**
- * URL de l'API depuis les variables d'environnement
- * OBLIGATOIRE : La variable NEXT_PUBLIC_API_URL doit être définie dans .env.local ou .env.production
- *
- * Exemples :
- * - Développement : NEXT_PUBLIC_API_URL=http://localhost:3020
- * - Production : NEXT_PUBLIC_API_URL=https://api.votre-domaine.com
- */
-const API_URL = (() => {
-  const url = process.env.NEXT_PUBLIC_API_URL;
-  if (!url) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL n'est pas définie. Veuillez configurer cette variable d'environnement."
-    );
-  }
-  return url;
-})();
+import { useProductCard } from "../../hooks/useProductCard";
 
 /**
  * Props du composant ProductCard
@@ -33,91 +15,27 @@ interface ProductCardProps {
 /**
  * Composant carte produit pour le frontend public
  * Affiche un produit avec son image, nom, prix et des contrôles pour le panier
+ * Composant pur de présentation qui utilise le hook useProductCard pour la logique
  *
  * @example
  * <ProductCard product={product} />
  */
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const [isHovered, setIsHovered] = React.useState(false);
-  const { cart, addToCart, updateQuantity, removeFromCart, isLoading } =
-    useCart();
-
-  /**
-   * Récupère l'URL de la première image du produit
-   */
-  const getImageUrl = () => {
-    if (product.images && product.images.length > 0) {
-      const firstImage = product.images[0];
-      // Utiliser le même format que le backoffice : filePath directement
-      return `${API_URL}/${firstImage.filePath}`;
-    }
-    return PLACEHOLDER_IMAGE_PATH;
-  };
+  const {
+    quantityInCart,
+    isLoading,
+    isHovered,
+    setIsHovered,
+    handleAddToCart,
+    handleIncrement,
+    handleDecrement,
+    getImageUrl,
+  } = useProductCard(product);
 
   /**
    * Utilise le prix TTC calculé côté serveur (garantit la cohérence et la sécurité)
    */
   const priceWithVat = product.priceTTC;
-
-  /**
-   * Trouve l'article dans le panier s'il existe
-   */
-  const cartItem = cart?.items?.find((item) => item.productId === product.id);
-  const quantityInCart = cartItem?.quantity || 0;
-
-  /**
-   * Gère l'ajout au panier
-   */
-  const handleAddToCart = async () => {
-    try {
-      const imageUrl =
-        product.images && product.images.length > 0
-          ? `${API_URL}/${product.images[0].filePath}`
-          : undefined;
-      await addToCart(
-        product.id,
-        1,
-        priceWithVat,
-        product.vatRate,
-        product.name,
-        product.description || undefined,
-        imageUrl
-      );
-    } catch (error) {
-      console.error("Erreur lors de l'ajout au panier:", error);
-    }
-  };
-
-  /**
-   * Gère l'augmentation de la quantité
-   */
-  const handleIncrement = async () => {
-    try {
-      await updateQuantity(product.id, quantityInCart + 1);
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour:", error);
-    }
-  };
-
-  /**
-   * Gère la diminution de la quantité
-   */
-  const handleDecrement = async () => {
-    if (quantityInCart <= 1) {
-      // Si quantité = 1, on supprime l'article
-      try {
-        await removeFromCart(product.id);
-      } catch (error) {
-        console.error("Erreur lors de la suppression:", error);
-      }
-    } else {
-      try {
-        await updateQuantity(product.id, quantityInCart - 1);
-      } catch (error) {
-        console.error("Erreur lors de la mise à jour:", error);
-      }
-    }
-  };
 
   return (
     <div

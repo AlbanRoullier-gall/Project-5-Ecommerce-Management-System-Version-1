@@ -1,119 +1,37 @@
 /**
  * Composant formulaire informations client
  *
- * Ce composant gère la première étape du processus de checkout.
+ * Composant de présentation pur pour la première étape du processus de checkout.
  * Il permet de saisir les informations personnelles du client :
  * - Prénom (obligatoire)
  * - Nom (obligatoire)
  * - Email (obligatoire)
  * - Téléphone (optionnel)
- *
- * Le formulaire valide que tous les champs obligatoires sont remplis avant de passer à l'étape suivante.
  */
 
-import React, { useState } from "react";
-import { useRouter } from "next/router";
-import { useCheckout } from "../../contexts/CheckoutContext";
 import { FormInput, FormContainer, Button, FormHeader, Alert } from "../shared";
+import { useCheckoutCustomerForm } from "../../hooks/useCheckoutCustomerForm";
 
 /**
- * Composant formulaire informations client
- * Utilise CheckoutContext pour gérer l'état du formulaire
+ * Props du composant CheckoutCustomerForm
+ */
+interface CheckoutCustomerFormProps {
+  // Toutes les props sont gérées par le hook, pas besoin de props externes
+}
+
+/**
+ * Composant de présentation pur pour le formulaire informations client
  */
 export default function CheckoutCustomerForm() {
-  const router = useRouter();
   const {
     customerData,
-    updateCustomerData,
-    validateCustomerData,
-    saveCheckoutData,
-  } = useCheckout();
-  // État local du composant
-  const [isLoading, setIsLoading] = useState(false); // Indicateur de chargement
-  const [errors, setErrors] = useState<{ [key: string]: string }>({}); // Erreurs par champ
-  const [generalError, setGeneralError] = useState<string | null>(null); // Erreur générale
-
-  /**
-   * Gère les changements dans les champs du formulaire
-   * Met à jour le contexte checkout et efface l'erreur du champ modifié
-   * @param e - Événement de changement sur un input
-   */
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    updateCustomerData({
-      ...customerData,
-      [name]: value,
-    });
-
-    // Effacer l'erreur du champ modifié
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-
-    // Effacer l'erreur générale si présente
-    if (generalError) {
-      setGeneralError(null);
-    }
-  };
-
-  /**
-   * Gère la soumission du formulaire
-   * Valide les données via l'API avant de continuer
-   * @param e - Événement de soumission du formulaire
-   */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Réinitialiser les erreurs
-    setErrors({});
-    setGeneralError(null);
-    setIsLoading(true);
-
-    try {
-      // Validation côté serveur
-      const validationResult = await validateCustomerData();
-
-      if (!validationResult.isValid) {
-        // Afficher les erreurs par champ
-        if (validationResult.errors && validationResult.errors.length > 0) {
-          const fieldErrors: { [key: string]: string } = {};
-          validationResult.errors.forEach((error) => {
-            fieldErrors[error.field] = error.message;
-          });
-          setErrors(fieldErrors);
-        }
-
-        // Afficher l'erreur générale si présente
-        if (validationResult.generalError) {
-          setGeneralError(validationResult.generalError);
-        }
-
-        setIsLoading(false);
-        return;
-      }
-
-      // Sauvegarder les données avant de naviguer vers l'étape suivante
-      try {
-        await saveCheckoutData();
-      } catch (error) {
-        console.error("Erreur lors de la sauvegarde:", error);
-        setGeneralError("Erreur lors de la sauvegarde des données");
-        setIsLoading(false);
-        return;
-      }
-
-      // Si la validation réussit, rediriger vers la page d'adresse
-      router.push("/checkout/address");
-    } catch (error) {
-      console.error("Erreur lors de la validation:", error);
-      setGeneralError("Une erreur est survenue lors de la validation");
-      setIsLoading(false);
-    }
-  };
+    isLoading,
+    errors,
+    generalError,
+    handleChange,
+    handleSubmit,
+    clearError,
+  } = useCheckoutCustomerForm();
 
   return (
     <FormContainer>
@@ -121,11 +39,7 @@ export default function CheckoutCustomerForm() {
 
       {/* Affichage de l'erreur générale */}
       {generalError && (
-        <Alert
-          type="error"
-          message={generalError}
-          onClose={() => setGeneralError(null)}
-        />
+        <Alert type="error" message={generalError} onClose={clearError} />
       )}
 
       <form onSubmit={handleSubmit}>
@@ -253,37 +167,6 @@ export default function CheckoutCustomerForm() {
           }}
         >
           {/* Pas de bouton retour sur la première étape */}
-          {false && (
-            <button
-              type="button"
-              onClick={() => router.push("/checkout/information")}
-              style={{
-                padding: "1.2rem 3rem",
-                fontSize: "1.4rem",
-                fontWeight: "600",
-                border: "2px solid #ddd",
-                background: "white",
-                color: "#666",
-                borderRadius: "8px",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.borderColor = "#13686a";
-                e.currentTarget.style.color = "#13686a";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.borderColor = "#ddd";
-                e.currentTarget.style.color = "#666";
-              }}
-            >
-              <i
-                className="fas fa-arrow-left"
-                style={{ marginRight: "0.8rem" }}
-              ></i>
-              Retour
-            </button>
-          )}
           {/* Bouton continuer */}
           <Button
             type="submit"

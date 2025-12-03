@@ -8,49 +8,25 @@ import React, {
 } from "react";
 import { CustomerResolveOrCreateDTO, AddressesCreateDTO } from "../dto";
 import { CartItemPublicDTO } from "./CartContext";
+import {
+  getCheckoutData,
+  saveCheckoutData as saveCheckoutDataService,
+  validateAddresses as validateAddressesService,
+  validateCustomerData as validateCustomerDataService,
+  completeCheckout,
+  type CheckoutData,
+  type AddressValidationResult,
+  type CustomerValidationResult,
+  type CompleteOrderResult,
+} from "../services/checkoutService";
+import { logger } from "../services/logger";
 
-/**
- * Structure des données checkout stockées (sans currentStep - toujours initialisé à 1)
- * Utilise les DTOs existants directement
- */
-interface CheckoutData {
-  customerData: CustomerResolveOrCreateDTO;
-  addressData: AddressesCreateDTO;
-}
-
-/**
- * Résultat de validation d'adresse
- */
-export interface AddressValidationResult {
-  isValid: boolean;
-  error?: string;
-}
-
-/**
- * Erreur de validation par champ
- */
-export interface FieldValidationError {
-  field: string;
-  message: string;
-}
-
-/**
- * Résultat de validation des données client
- */
-export interface CustomerValidationResult {
-  isValid: boolean;
-  errors?: FieldValidationError[];
-  generalError?: string;
-}
-
-/**
- * Résultat de la finalisation de commande
- */
-export interface CompleteOrderResult {
-  success: boolean;
-  error?: string;
-  paymentUrl?: string;
-}
+// Réexporter les types pour faciliter l'utilisation dans les composants
+export type {
+  AddressValidationResult,
+  CustomerValidationResult,
+  CompleteOrderResult,
+};
 
 /**
  * Type du contexte Checkout
@@ -83,20 +59,6 @@ interface CheckoutContextType {
 const CheckoutContext = createContext<CheckoutContextType | undefined>(
   undefined
 );
-
-/**
- * URL de l'API depuis les variables d'environnement
- * OBLIGATOIRE : La variable NEXT_PUBLIC_API_URL doit être définie dans .env.local ou .env.production
- */
-const API_URL = (() => {
-  const url = process.env.NEXT_PUBLIC_API_URL;
-  if (!url) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL n'est pas définie. Veuillez configurer cette variable d'environnement."
-    );
-  }
-  return url;
-})();
 
 /**
  * Hook pour utiliser le contexte checkout
@@ -142,27 +104,18 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
     const loadCheckoutData = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`${API_URL}/api/cart/checkout-data`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include", // Important pour envoyer les cookies
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.data) {
-            const checkoutData = result.data;
-            if (checkoutData.customerData) {
-              setCustomerData(checkoutData.customerData);
-            }
-            if (checkoutData.addressData) {
-              // Le backend garantit toujours countryName = "Belgique"
-              setAddressData(checkoutData.addressData);
-            }
+        const checkoutData = await getCheckoutData();
+        if (checkoutData) {
+          if (checkoutData.customerData) {
+            setCustomerData(checkoutData.customerData);
+          }
+          if (checkoutData.addressData) {
+            // Le backend garantit toujours countryName = "Belgique"
+            setAddressData(checkoutData.addressData);
           }
         }
       } catch (error) {
-        console.error("Error loading checkout data from server:", error);
+        logger.error("Error loading checkout data from server", error);
       } finally {
         setIsLoading(false);
         setIsInitialized(true);
@@ -178,14 +131,9 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
    */
   const saveToServer = useCallback(async (data: CheckoutData) => {
     try {
-      await fetch(`${API_URL}/api/cart/checkout-data`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Important pour envoyer les cookies
-        body: JSON.stringify(data),
-      });
+      await saveCheckoutDataService(data);
     } catch (error) {
-      console.error("Error saving checkout data to server:", error);
+      logger.error("Error saving checkout data to server", error);
       throw error; // Propager l'erreur pour que l'appelant puisse la gérer
     }
   }, []);
@@ -292,34 +240,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
    */
   const validateAddresses =
     useCallback(async (): Promise<AddressValidationResult> => {
-      try {
-        const response = await fetch(
-          `${API_URL}/api/customers/addresses/validate`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include", // Important pour CORS avec credentials: true
-            body: JSON.stringify(addressData),
-          }
-        );
-
-        const result = await response.json();
-
-        if (!response.ok || !result.isValid) {
-          return {
-            isValid: false,
-            error: result.error || "Erreur lors de la validation des adresses",
-          };
-        }
-
-        return { isValid: true };
-      } catch (error) {
-        console.error("Erreur lors de la validation des adresses:", error);
-        return {
-          isValid: false,
-          error: "Erreur lors de la validation des adresses",
-        };
-      }
+      return validateAddressesService(addressData);
     }, [addressData]);
 
   /**
@@ -329,37 +250,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
    */
   const validateCustomerData =
     useCallback(async (): Promise<CustomerValidationResult> => {
-      try {
-        const response = await fetch(`${API_URL}/api/customers/validate`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include", // Important pour CORS avec credentials: true
-          body: JSON.stringify(customerData),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok || !result.isValid) {
-          return {
-            isValid: false,
-            errors: result.errors || [],
-            generalError:
-              result.message ||
-              "Erreur lors de la validation des données client",
-          };
-        }
-
-        return { isValid: true };
-      } catch (error) {
-        console.error(
-          "Erreur lors de la validation des données client:",
-          error
-        );
-        return {
-          isValid: false,
-          generalError: "Erreur lors de la validation des données client",
-        };
-      }
+      return validateCustomerDataService(customerData);
     }, [customerData]);
 
   /**
@@ -377,63 +268,22 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         };
       }
 
-      try {
-        // Le cartSessionId est maintenant géré automatiquement via cookie httpOnly
-        // Plus besoin de le récupérer depuis localStorage ou de l'envoyer dans le header
-        // Le cookie sera envoyé automatiquement par le navigateur
+      // Le cartSessionId est maintenant géré automatiquement via cookie httpOnly
+      // Plus besoin de le récupérer depuis localStorage ou de l'envoyer dans le header
+      // Le cookie sera envoyé automatiquement par le navigateur
 
-        // Les données checkout sont déjà sauvegardées sur le serveur
-        // On envoie juste les URLs de redirection
-        // Le serveur récupérera les données checkout depuis le cart-service
-        const checkoutPayload: {
-          successUrl: string;
-          cancelUrl: string;
-        } = {
-          successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: `${window.location.origin}/checkout/cancel`,
-        };
+      // Les données checkout sont déjà sauvegardées sur le serveur
+      // On envoie juste les URLs de redirection
+      // Le serveur récupérera les données checkout depuis le cart-service
+      const checkoutPayload: {
+        successUrl: string;
+        cancelUrl: string;
+      } = {
+        successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${window.location.origin}/checkout/cancel`,
+      };
 
-        const response = await fetch(`${API_URL}/api/checkout/complete`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            // Le cookie sera envoyé automatiquement par le navigateur
-          },
-          credentials: "include", // Important pour envoyer les cookies
-          body: JSON.stringify(checkoutPayload),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          return {
-            success: false,
-            error:
-              errorData.message ||
-              errorData.error ||
-              "Erreur lors de la finalisation de la commande",
-          };
-        }
-
-        const data = await response.json();
-
-        if (data.success && data.paymentUrl) {
-          return {
-            success: true,
-            paymentUrl: data.paymentUrl,
-          };
-        } else {
-          return {
-            success: false,
-            error: "URL de paiement non reçue",
-          };
-        }
-      } catch (err) {
-        console.error("Error completing order:", err);
-        return {
-          success: false,
-          error: err instanceof Error ? err.message : "Une erreur est survenue",
-        };
-      }
+      return completeCheckout(checkoutPayload);
     },
     []
   );

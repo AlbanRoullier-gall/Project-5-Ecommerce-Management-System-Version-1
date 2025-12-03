@@ -1,88 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { ProductPublicDTO } from "../dto";
-import { useCart } from "../contexts/CartContext";
+import { useProduct } from "../hooks/useProduct";
+import { useProductPage } from "../hooks/useProductPage";
 import {
   ProductImageGallery,
   ProductInfo,
   ProductPriceBox,
 } from "../components/product";
 
-const API_URL = (() => {
-  const url = process.env.NEXT_PUBLIC_API_URL;
-  if (!url) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL n'est pas définie. Veuillez configurer cette variable d'environnement."
-    );
-  }
-  return url;
-})();
-
 export default function ProductPage() {
   const router = useRouter();
   const { productId } = router.query;
+  const { product, isLoading, error } = useProduct(
+    productId as string | number | undefined
+  );
   const {
-    cart,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
+    quantityInCart,
     isLoading: cartLoading,
-  } = useCart();
-
-  const [product, setProduct] = useState<ProductPublicDTO | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-
-  useEffect(() => {
-    if (productId) {
-      loadProduct();
-    }
-  }, [productId]);
-
-  // Plus de synchronisation de quantité locale: on s'aligne sur le comportement du catalogue
-
-  const loadProduct = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API_URL}/api/products/${productId}`, {
-        credentials: "include", // Important pour CORS avec credentials: true
-      });
-      if (!response.ok) {
-        throw new Error("Produit non trouvé");
-      }
-      const data = (await response.json()) as {
-        data: { product: ProductPublicDTO };
-        message?: string;
-        timestamp?: string;
-        status?: number;
-      };
-      // Format standardisé : { data: { product }, ... }
-      if (!data.data || !data.data.product) {
-        throw new Error("Format de réponse invalide pour le produit");
-      }
-      const productData = data.data.product;
-      if (!productData.isActive) {
-        throw new Error("Ce produit n'est plus disponible");
-      }
-      setProduct(productData);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Erreur lors du chargement du produit"
-      );
-      console.error("Error loading product:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    selectedImageIndex,
+    setSelectedImageIndex,
+    handleAddToCart,
+    handleIncrement,
+    handleDecrement,
+    handleGoHome,
+  } = useProductPage(product);
 
   if (isLoading) {
     return (
@@ -140,7 +85,7 @@ export default function ProductPage() {
             {error || "Produit non trouvé"}
             <br />
             <button
-              onClick={() => router.push("/")}
+              onClick={handleGoHome}
               style={{
                 marginTop: "2rem",
                 padding: "1rem 2rem",
@@ -161,10 +106,6 @@ export default function ProductPage() {
       </>
     );
   }
-
-  // Récupérer la quantité du produit dans le panier
-  const quantityInCart =
-    cart?.items?.find((item) => item.productId === product.id)?.quantity || 0;
 
   return (
     <>
@@ -263,23 +204,7 @@ export default function ProductPage() {
                         e.currentTarget.style.boxShadow =
                           "0 2px 8px rgba(19, 104, 106, 0.2)";
                       }}
-                      onClick={async () => {
-                        // Utiliser le prix TTC calculé côté serveur (garantit la cohérence et la sécurité)
-                        const priceWithVat = product.priceTTC;
-                        const imageUrl =
-                          product.images && product.images.length > 0
-                            ? `${API_URL}/${product.images[0].filePath}`
-                            : undefined;
-                        await addToCart(
-                          product.id,
-                          1,
-                          priceWithVat,
-                          product.vatRate,
-                          product.name,
-                          product.description || undefined,
-                          imageUrl
-                        );
-                      }}
+                      onClick={handleAddToCart}
                       disabled={cartLoading}
                     >
                       <i
@@ -317,16 +242,7 @@ export default function ProductPage() {
                           alignItems: "center",
                           justifyContent: "center",
                         }}
-                        onClick={async () => {
-                          if (quantityInCart <= 1) {
-                            await removeFromCart(product.id);
-                          } else {
-                            await updateQuantity(
-                              product.id,
-                              quantityInCart - 1
-                            );
-                          }
-                        }}
+                        onClick={handleDecrement}
                         disabled={cartLoading}
                         onMouseEnter={(e) => {
                           if (!cartLoading) {
@@ -376,9 +292,7 @@ export default function ProductPage() {
                           alignItems: "center",
                           justifyContent: "center",
                         }}
-                        onClick={async () => {
-                          await updateQuantity(product.id, quantityInCart + 1);
-                        }}
+                        onClick={handleIncrement}
                         disabled={cartLoading}
                         onMouseEnter={(e) => {
                           if (!cartLoading) {

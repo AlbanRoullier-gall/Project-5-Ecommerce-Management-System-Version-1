@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   FormInput,
   FormTextarea,
@@ -8,98 +7,22 @@ import {
   Button,
   Alert,
 } from "../shared";
-import { ContactFormDTO } from "../../dto";
-
-// URL de l'API pour l'envoi d'emails (depuis les variables d'environnement ou valeur par défaut)
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+import { useContactForm } from "../../hooks/useContactForm";
 
 /**
- * Composant formulaire de contact
- * Permet aux utilisateurs d'envoyer un message via le formulaire
- * Gère l'état du formulaire, la soumission et l'affichage des messages de statut
+ * Composant de présentation du formulaire de contact
+ * Utilise le hook useContactForm pour gérer la logique
  */
 export default function ContactForm() {
-  // État du formulaire : stocke les valeurs des champs
-  const [formData, setFormData] = useState({
-    email: "",
-    name: "",
-    subject: "",
-    message: "",
-  });
-
-  // État de soumission : indique si le formulaire est en cours d'envoi
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // État du statut de soumission : message de succès ou d'erreur
-  const [submitStatus, setSubmitStatus] = useState<{
-    type: "success" | "error" | null;
-    message: string;
-  }>({ type: null, message: "" });
-
-  /**
-   * Gère la soumission du formulaire
-   * Envoie les données du formulaire à l'API d'envoi d'email
-   * Affiche un message de succès ou d'erreur selon le résultat
-   */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Empêche le rechargement de la page
-    setIsSubmitting(true); // Active l'état de chargement
-    setSubmitStatus({ type: null, message: "" }); // Réinitialise le statut
-
-    try {
-      // Préparation des données à envoyer à l'API
-      // Le destinataire est déterminé côté serveur depuis ADMIN_EMAIL
-      const contactData: ContactFormDTO = {
-        subject: formData.subject || "Nouveau message de contact",
-        message: formData.message,
-        clientName: formData.name,
-        clientEmail: formData.email,
-      };
-
-      // Envoi de la requête POST à l'API d'envoi d'email
-      // Le destinataire sera déterminé côté serveur
-      const response = await fetch(`${API_URL}/api/email/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Important pour CORS avec credentials: true
-        body: JSON.stringify(contactData),
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message || "Erreur d'envoi");
-
-      // Succès : affichage du message de confirmation et réinitialisation du formulaire
-      setSubmitStatus({
-        type: "success",
-        message:
-          "Votre message a été envoyé avec succès ! Nous vous répondrons bientôt.",
-      });
-      setFormData({ email: "", name: "", subject: "", message: "" });
-    } catch (error: any) {
-      // Erreur : affichage du message d'erreur
-      setSubmitStatus({
-        type: "error",
-        message:
-          error.message ||
-          "Une erreur s'est produite lors de l'envoi du message. Veuillez réessayer.",
-      });
-    } finally {
-      setIsSubmitting(false); // Désactive l'état de chargement
-    }
-  };
-
-  /**
-   * Gère les changements dans les champs du formulaire
-   * Met à jour l'état formData avec la nouvelle valeur du champ modifié
-   */
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
+  const {
+    formData,
+    isSubmitting,
+    submitStatus,
+    handleInputChange,
+    handleTextareaChange,
+    handleSubmit,
+    resetForm,
+  } = useContactForm();
   return (
     <FormContainer className="contact-form-container">
       {/* Titre du formulaire */}
@@ -120,7 +43,7 @@ export default function ContactForm() {
         <Alert
           type={submitStatus.type}
           message={submitStatus.message}
-          onClose={() => setSubmitStatus({ type: null, message: "" })}
+          onClose={resetForm}
         />
       )}
 

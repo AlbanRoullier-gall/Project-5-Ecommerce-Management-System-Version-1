@@ -4,8 +4,18 @@ import Head from "next/head";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ProductCatalog from "../components/catalog/ProductCatalog";
+import { useCatalog } from "../hooks/useCatalog";
 
 export default function Home() {
+  const {
+    selectedCategoryId,
+    setSelectedCategoryId,
+    products,
+    isLoading,
+    error,
+    categories,
+  } = useCatalog();
+
   return (
     <>
       <Head>
@@ -22,7 +32,14 @@ export default function Home() {
         <Header />
 
         {/* PRODUCT CATALOG */}
-        <ProductCatalog />
+        <ProductCatalog
+          products={products}
+          categories={categories}
+          isLoading={isLoading}
+          error={error}
+          selectedCategoryId={selectedCategoryId}
+          onCategoryChange={setSelectedCategoryId}
+        />
 
         {/* FOOTER */}
         <Footer />

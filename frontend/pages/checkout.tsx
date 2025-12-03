@@ -1,17 +1,15 @@
 "use client";
 
 import Head from "next/head";
-import { useEffect } from "react";
-import { useRouter } from "next/router";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { useCart } from "../contexts/CartContext";
-import { useCheckout } from "../contexts/CheckoutContext";
 import {
   CheckoutCustomerForm,
   CheckoutAddressForm,
   CheckoutOrderSummary,
 } from "../components/checkout";
+import { useCheckoutStep } from "../hooks/useCheckoutStep";
+import { useCheckoutPageGuard } from "../hooks/useCheckoutPageGuard";
 
 /**
  * Page de passage de commande (checkout)
@@ -19,32 +17,8 @@ import {
  * Utilise CheckoutContext pour gérer l'état du checkout
  */
 export default function CheckoutPage() {
-  const router = useRouter();
-  const { cart, isLoading } = useCart();
-  const { customerData, addressData } = useCheckout();
-
-  // Déterminer l'étape courante selon la route
-  const currentPath = router.pathname;
-  let currentStep = 1;
-  if (currentPath.includes("/checkout/address")) {
-    currentStep = 2;
-  } else if (currentPath.includes("/checkout/summary")) {
-    currentStep = 3;
-  }
-
-  // Vérifier si le panier est vide
-  useEffect(() => {
-    if (!isLoading && (!cart || !cart.items || cart.items.length === 0)) {
-      router.push("/cart");
-    }
-  }, [cart, isLoading, router]);
-
-  // Indicateur de progression
-  const steps = [
-    { number: 1, label: "Informations", icon: "fa-user" },
-    { number: 2, label: "Adresses", icon: "fa-map-marker-alt" },
-    { number: 3, label: "Paiement", icon: "fa-credit-card" },
-  ];
+  const { currentStep, steps } = useCheckoutStep();
+  const { isLoading } = useCheckoutPageGuard();
 
   if (isLoading) {
     return (

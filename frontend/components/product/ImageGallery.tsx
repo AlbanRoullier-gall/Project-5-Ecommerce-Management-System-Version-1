@@ -2,23 +2,7 @@ import React from "react";
 import { ProductPublicDTO } from "../../dto";
 import { PLACEHOLDER_IMAGE_PATH } from "../shared";
 
-/**
- * URL de l'API depuis les variables d'environnement
- * OBLIGATOIRE : La variable NEXT_PUBLIC_API_URL doit être définie dans .env.local ou .env.production
- *
- * Exemples :
- * - Développement : NEXT_PUBLIC_API_URL=http://localhost:3020
- * - Production : NEXT_PUBLIC_API_URL=https://api.votre-domaine.com
- */
-const API_URL = (() => {
-  const url = process.env.NEXT_PUBLIC_API_URL;
-  if (!url) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL n'est pas définie. Veuillez configurer cette variable d'environnement."
-    );
-  }
-  return url;
-})();
+import { apiClient } from "../../services/apiClient";
 
 /**
  * Props du composant ImageGallery
@@ -59,9 +43,9 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   const getImageUrl = (imageId: number) => {
     const image = product?.images?.find((img) => img.id === imageId);
     if (image) {
-      return `${API_URL}/${image.filePath}`;
+      return apiClient.getImageUrl(image.filePath);
     }
-    return `${API_URL}/api/images/${imageId}`;
+    return apiClient.getImageUrl(`/api/images/${imageId}`);
   };
 
   return (
@@ -222,8 +206,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                 }}
                 onError={(e) => {
                   // Si l'image ne charge pas, utiliser le placeholder
-                  (e.target as HTMLImageElement).src =
-                    PLACEHOLDER_IMAGE_PATH;
+                  (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE_PATH;
                 }}
               />
             </button>

@@ -1,53 +1,20 @@
-import React, { useState } from "react";
-import { useCart, CartItemPublicDTO } from "../../contexts/CartContext";
+import React from "react";
+import { CartItemPublicDTO } from "../../contexts/CartContext";
 import { ItemDisplay } from "../shared";
+import { useCartItem } from "../../hooks/useCartItem";
 
 interface CartItemProps {
   item: CartItemPublicDTO;
 }
 
 /**
- * Composant pour afficher un article du panier
+ * Composant de présentation pur pour afficher un article du panier
  * Utilise le composant générique ItemDisplay
  * Permet de modifier la quantité ou supprimer l'article
  */
 const CartItem: React.FC<CartItemProps> = ({ item }) => {
-  const { updateQuantity, removeFromCart } = useCart();
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [quantity, setQuantity] = useState(item.quantity);
-
-  /**
-   * Met à jour la quantité
-   */
-  const handleQuantityChange = async (newQuantity: number) => {
-    if (newQuantity < 1) return;
-
-    setQuantity(newQuantity);
-    setIsUpdating(true);
-
-    try {
-      await updateQuantity(item.productId, newQuantity);
-    } catch (err) {
-      // Restaurer l'ancienne quantité en cas d'erreur
-      setQuantity(item.quantity);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  /**
-   * Supprime l'article du panier
-   */
-  const handleRemove = async () => {
-    setIsUpdating(true);
-    try {
-      await removeFromCart(item.productId);
-    } catch (err) {
-      console.error("Error removing item:", err);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+  const { quantity, isUpdating, handleQuantityChange, handleRemove } =
+    useCartItem(item);
 
   return (
     <ItemDisplay

@@ -1,14 +1,13 @@
 /**
  * Composant formulaire adresses de livraison et facturation
  *
- * Ce composant gère la saisie de l'adresse de livraison lors du processus de checkout.
+ * Composant de présentation pur pour la saisie des adresses lors du processus de checkout.
  */
 
-import React, { useState } from "react";
-import { useRouter } from "next/router";
+import React from "react";
 import { AddressCreateDTO } from "../../dto";
-import { useCheckout } from "../../contexts/CheckoutContext";
-import { FormInput, FormContainer, Button, FormHeader } from "../shared";
+import { FormInput, FormContainer, Button, FormHeader, Alert } from "../shared";
+import { useCheckoutAddressForm } from "../../hooks/useCheckoutAddressForm";
 
 /**
  * Props pour le composant AddressFields
@@ -64,80 +63,28 @@ const AddressFields: React.FC<AddressFieldsProps> = ({ address, onChange }) => {
 };
 
 /**
- * Composant formulaire adresses de livraison et facturation
- * Utilise CheckoutContext pour gérer l'état du formulaire
+ * Composant de présentation pur pour le formulaire adresses
  */
 export default function CheckoutAddressForm() {
-  const router = useRouter();
   const {
     addressData,
-    updateShippingField,
-    updateBillingField,
-    setUseSameBillingAddress,
-    validateAddresses,
-    saveCheckoutData,
-  } = useCheckout();
-  const [isLoading, setIsLoading] = useState(false);
-
-  /**
-   * Gère les changements dans les champs d'adresse
-   * @param addressType - "shipping" ou "billing"
-   */
-  const handleAddressChange = (
-    addressType: "shipping" | "billing",
-    field: string,
-    value: string
-  ) => {
-    if (addressType === "shipping") {
-      updateShippingField(field, value);
-    } else {
-      updateBillingField(field, value);
-    }
-  };
-
-  /**
-   * Gère le changement du checkbox "Même adresse de facturation"
-   */
-  const handleUseSameBillingAddressChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setUseSameBillingAddress(e.target.checked);
-  };
-
-  /**
-   * Gère la soumission du formulaire
-   */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    setIsLoading(true);
-    const validation = await validateAddresses();
-
-    if (!validation.isValid) {
-      setIsLoading(false);
-      alert(validation.error);
-      return;
-    }
-
-    // Sauvegarder les données avant de naviguer vers l'étape suivante
-    try {
-      await saveCheckoutData();
-    } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
-      alert("Erreur lors de la sauvegarde des données");
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(false);
-    // Rediriger vers la page de récapitulatif si la validation réussit
-    router.push("/checkout/summary");
-  };
+    isLoading,
+    error,
+    handleShippingFieldChange,
+    handleBillingFieldChange,
+    handleUseSameBillingAddressChange,
+    handleSubmit,
+    handleBack,
+    clearError,
+  } = useCheckoutAddressForm();
 
   return (
     <FormContainer>
       {/* En-tête du formulaire avec numéro d'étape */}
       <FormHeader stepNumber={2} title="Adresse de livraison" />
+
+      {/* Affichage des erreurs éventuelles */}
+      {error && <Alert type="error" message={error} onClose={clearError} />}
 
       <form onSubmit={handleSubmit}>
         {/* Section adresse de livraison */}
@@ -166,9 +113,7 @@ export default function CheckoutAddressForm() {
           >
             <AddressFields
               address={addressData?.shipping || {}}
-              onChange={(field, value) =>
-                handleAddressChange("shipping", field, value)
-              }
+              onChange={handleShippingFieldChange}
             />
           </div>
         </div>
@@ -197,7 +142,9 @@ export default function CheckoutAddressForm() {
             <input
               type="checkbox"
               checked={addressData?.useSameBillingAddress ?? true}
-              onChange={handleUseSameBillingAddressChange}
+              onChange={(e) =>
+                handleUseSameBillingAddressChange(e.target.checked)
+              }
               style={{
                 width: "20px",
                 height: "20px",
@@ -242,9 +189,7 @@ export default function CheckoutAddressForm() {
             >
               <AddressFields
                 address={addressData?.billing || {}}
-                onChange={(field, value) =>
-                  handleAddressChange("billing", field, value)
-                }
+                onChange={handleBillingFieldChange}
               />
             </div>
           </div>
@@ -261,11 +206,7 @@ export default function CheckoutAddressForm() {
             borderTop: "2px solid #e0e0e0",
           }}
         >
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push("/checkout/information")}
-          >
+          <Button type="button" variant="outline" onClick={handleBack}>
             <i
               className="fas fa-arrow-left"
               style={{ marginRight: "0.8rem" }}
