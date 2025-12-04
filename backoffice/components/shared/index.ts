@@ -3,6 +3,8 @@ export {
   ActionButtonsContainer,
 } from "./ActionButton";
 export { default as Button } from "./Button";
+export { default as Alert } from "./Alert";
+export type { AlertType } from "./Alert";
 export { default as ErrorAlert } from "./ErrorAlert";
 export { default as LoadingSpinner } from "./LoadingSpinner";
 export { default as PageHeader } from "./PageHeader";

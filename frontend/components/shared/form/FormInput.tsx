@@ -10,7 +10,7 @@ interface FormInputProps {
   /** Type d'input */
   type?: string;
   /** Valeur du champ */
-  value: string;
+  value: string | number;
   /** Callback appelé lors du changement */
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   /** Label du champ */
@@ -25,11 +25,18 @@ interface FormInputProps {
   error?: string;
   /** Largeur de la colonne dans la grille (ex: "1 / -1" pour full width) */
   gridColumn?: string;
+  /** Incrément pour les inputs de type number */
+  step?: string;
+  /** Valeur minimale pour les inputs de type number */
+  min?: string;
+  /** Valeur maximale pour les inputs de type number */
+  max?: string;
 }
 
 /**
  * Composant d'input de formulaire réutilisable
- * Style uniforme pour tous les inputs du frontend
+ * Style uniforme pour tous les inputs avec label, validation et gestion des erreurs
+ * Supporte les états focus/blur avec animation et affiche les messages d'erreur
  *
  * @example
  * <FormInput
@@ -52,46 +59,59 @@ const FormInput: React.FC<FormInputProps> = ({
   readOnly = false,
   error,
   gridColumn,
+  step,
+  min,
+  max,
 }) => {
   const labelStyle: React.CSSProperties = {
     display: "block",
-    marginBottom: "0.8rem",
-    fontSize: "1.3rem",
+    fontSize: "1.1rem",
     fontWeight: "600",
-    color: "#333",
+    color: "#13686a",
+    marginBottom: "0.75rem",
   };
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
-    padding: "1.2rem",
-    fontSize: "1.3rem",
-    border: error ? "2px solid #c33" : "2px solid #ddd",
-    borderRadius: "8px",
-    transition: "border-color 0.3s ease",
-    backgroundColor: readOnly ? "#f8f9fa" : "white",
+    padding: "1rem 1.25rem",
+    border: `2px solid ${error ? "#dc2626" : "#e1e5e9"}`,
+    borderRadius: "10px",
+    fontSize: "1rem",
+    transition: "all 0.3s ease",
+    background: readOnly ? "#f8f9fa" : "#f8f9fa",
     color: readOnly ? "#666" : "#333",
+    fontFamily: "inherit",
+    boxSizing: "border-box",
+    maxWidth: "100%",
     cursor: readOnly ? "not-allowed" : "text",
   };
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (!readOnly) {
+    if (!readOnly && !error) {
       e.currentTarget.style.borderColor = "#13686a";
+      e.currentTarget.style.background = "white";
+      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(19, 104, 106, 0.1)";
     }
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.borderColor = error ? "#c33" : "#ddd";
+    e.currentTarget.style.borderColor = error ? "#dc2626" : "#e1e5e9";
+    e.currentTarget.style.background = readOnly ? "#f8f9fa" : "#f8f9fa";
+    e.currentTarget.style.boxShadow = "none";
+  };
+
+  const containerStyle: React.CSSProperties = {
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    ...(gridColumn ? { gridColumn } : {}),
   };
 
   return (
-    <div
-      className="checkout-form-group"
-      style={gridColumn ? { gridColumn } : undefined}
-    >
+    <div style={containerStyle}>
       {label && (
         <label htmlFor={id || name} style={labelStyle}>
-          {label}
-          {required && <span style={{ color: "#c33" }}> *</span>}
+          {label} {required && <span style={{ color: "#dc2626" }}>*</span>}
         </label>
       )}
       <input
@@ -104,20 +124,22 @@ const FormInput: React.FC<FormInputProps> = ({
         required={required}
         readOnly={readOnly}
         style={inputStyle}
+        step={step}
+        min={min}
+        max={max}
         onFocus={handleFocus}
         onBlur={handleBlur}
       />
       {error && (
-        <span
+        <p
           style={{
-            color: "#c33",
-            fontSize: "1rem",
             marginTop: "0.5rem",
-            display: "block",
+            fontSize: "0.9rem",
+            color: "#dc2626",
           }}
         >
-          {error}
-        </span>
+          ⚠️ {error}
+        </p>
       )}
     </div>
   );

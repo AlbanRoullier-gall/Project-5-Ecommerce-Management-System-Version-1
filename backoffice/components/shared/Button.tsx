@@ -1,51 +1,72 @@
 import React from "react";
 
 /**
+ * Variante de bouton
+ */
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "gold"
+  | "outline"
+  | "danger";
+
+/**
  * Props du composant Button
  */
 interface ButtonProps {
-  /** Fonction appelée au clic */
-  onClick?: () => void;
   /** Type de bouton HTML */
   type?: "button" | "submit" | "reset";
   /** Variante de style du bouton */
-  variant?: "primary" | "secondary" | "gold" | "danger";
-  /** État désactivé du bouton */
-  disabled?: boolean;
+  variant?: ButtonVariant;
   /** Contenu du bouton */
   children: React.ReactNode;
-  /** Classe d'icône FontAwesome (optionnel) */
+  /** Callback appelé lors du clic */
+  onClick?: () => void;
+  /** Indique si le bouton est désactivé */
+  disabled?: boolean;
+  /** Indique si le bouton est en chargement */
+  isLoading?: boolean;
+  /** Icône FontAwesome (optionnelle) */
   icon?: string;
+  /** Taille du bouton */
+  size?: "small" | "medium" | "large";
+  /** Largeur complète */
+  fullWidth?: boolean;
 }
 
 /**
- * Composant bouton réutilisable avec plusieurs variantes de style
- * Supporte les icônes FontAwesome et les états hover/disabled
+ * Composant de bouton réutilisable
+ * Style uniforme pour tous les boutons avec plusieurs variantes
+ * Supporte les icônes FontAwesome, les états hover/disabled et le chargement
  *
  * @example
- * <Button variant="primary" icon="fas fa-plus" onClick={handleClick}>
+ * <Button variant="primary" icon="fas fa-plus" onClick={handleClick} isLoading={loading}>
  *   Nouveau produit
  * </Button>
  */
 const Button: React.FC<ButtonProps> = ({
-  onClick,
   type = "button",
   variant = "primary",
-  disabled = false,
   children,
+  onClick,
+  disabled = false,
+  isLoading = false,
   icon,
+  size = "medium",
+  fullWidth = false,
 }) => {
   /**
    * Retourne les styles CSS selon la variante du bouton
    * @returns Objet de styles CSS
    */
-  const getVariantStyles = () => {
+  const getVariantStyles = (): React.CSSProperties => {
     switch (variant) {
       case "primary":
         return {
           background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
           color: "white",
           boxShadow: "0 4px 12px rgba(19, 104, 106, 0.2)",
+          border: "none",
         };
       case "secondary":
         return {
@@ -59,37 +80,72 @@ const Button: React.FC<ButtonProps> = ({
           background: "linear-gradient(135deg, #d9b970 0%, #f4d03f 100%)",
           color: "#13686a",
           boxShadow: "0 4px 12px rgba(217, 185, 112, 0.2)",
+          border: "none",
+        };
+      case "outline":
+        return {
+          background: "transparent",
+          color: "#13686a",
+          border: "2px solid #13686a",
+          boxShadow: "none",
         };
       case "danger":
         return {
           background: "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)",
           color: "white",
           boxShadow: "0 4px 12px rgba(220, 38, 38, 0.25)",
+          border: "none",
+        };
+      default:
+        return {
+          background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+          color: "white",
+          boxShadow: "0 4px 12px rgba(19, 104, 106, 0.2)",
+          border: "none",
         };
     }
+  };
+
+  /**
+   * Retourne les styles CSS selon la taille du bouton
+   * @returns Objet de styles CSS
+   */
+  const getSizeStyles = (): React.CSSProperties => {
+    switch (size) {
+      case "small":
+        return { padding: "0.8rem 1.5rem", fontSize: "1rem" };
+      case "medium":
+        return { padding: "1rem 2rem", fontSize: "1.1rem" };
+      case "large":
+        return { padding: "1.2rem 2.5rem", fontSize: "1.2rem" };
+      default:
+        return { padding: "1rem 2rem", fontSize: "1.1rem" };
+    }
+  };
+
+  const baseStyle: React.CSSProperties = {
+    ...getVariantStyles(),
+    ...getSizeStyles(),
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "0.75rem",
+    borderRadius: "12px",
+    fontWeight: "600",
+    cursor: disabled || isLoading ? "not-allowed" : "pointer",
+    transition: "all 0.3s ease",
+    opacity: disabled || isLoading ? 0.6 : 1,
+    width: fullWidth ? "100%" : "auto",
   };
 
   return (
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "0.75rem",
-        padding: "1rem 2rem",
-        border: "none",
-        borderRadius: "12px",
-        fontSize: "1.1rem",
-        fontWeight: "600",
-        cursor: disabled ? "not-allowed" : "pointer",
-        transition: "all 0.3s ease",
-        opacity: disabled ? 0.5 : 1,
-        ...getVariantStyles(),
-      }}
+      disabled={disabled || isLoading}
+      style={baseStyle}
       onMouseOver={(e) => {
-        if (!disabled) {
+        if (!disabled && !isLoading) {
           e.currentTarget.style.transform = "translateY(-2px)";
           if (variant === "primary") {
             e.currentTarget.style.boxShadow =
@@ -100,6 +156,9 @@ const Button: React.FC<ButtonProps> = ({
           } else if (variant === "danger") {
             e.currentTarget.style.boxShadow =
               "0 8px 24px rgba(220, 38, 38, 0.35)";
+          } else if (variant === "outline") {
+            e.currentTarget.style.boxShadow =
+              "0 4px 12px rgba(19, 104, 106, 0.15)";
           } else {
             e.currentTarget.style.borderColor = "#13686a";
             e.currentTarget.style.color = "#13686a";
@@ -118,8 +177,20 @@ const Button: React.FC<ButtonProps> = ({
         }
       }}
     >
-      {icon && <i className={icon} style={{ fontSize: "1.1rem" }}></i>}
-      <span>{children}</span>
+      {isLoading ? (
+        <>
+          <i
+            className="fas fa-spinner fa-spin"
+            style={{ fontSize: "1.1rem" }}
+          ></i>
+          <span>Chargement...</span>
+        </>
+      ) : (
+        <>
+          {icon && <i className={icon} style={{ fontSize: "1.1rem" }}></i>}
+          <span>{children}</span>
+        </>
+      )}
     </button>
   );
 };

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Hero from "./Hero";
 import { useHeader } from "../hooks/useHeader";
 
@@ -19,7 +20,7 @@ const Header: React.FC<HeaderProps> = ({ hero: customHero }) => {
         <div className="header-container">
           <div className="brand-section">
             <Link href="/" className="brand-link">
-              <img
+              <Image
                 className="logo"
                 src="/images/logoNatureDePierreIcon.svg"
                 alt="Logo Nature de Pierre"
