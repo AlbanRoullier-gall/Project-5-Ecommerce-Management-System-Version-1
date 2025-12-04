@@ -5,7 +5,7 @@ import Link from "next/link";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { useCart } from "../../contexts/CartContext";
-import { usePaymentFinalization } from "../../hooks/usePaymentFinalization";
+import { usePaymentFinalization } from "../../hooks";
 
 /**
  * Page de confirmation de commande réussie

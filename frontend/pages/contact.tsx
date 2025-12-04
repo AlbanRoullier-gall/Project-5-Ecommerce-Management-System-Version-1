@@ -4,8 +4,7 @@
 import Head from "next/head";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import ContactInfo from "../components/contact/ContactInfo";
-import ContactForm from "../components/contact/ContactForm";
+import { ContactInfo, ContactForm } from "../components/contact";
 
 /**
  * Page de contact principale

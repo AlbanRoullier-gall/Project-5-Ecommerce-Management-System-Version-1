@@ -3,11 +3,11 @@
 import { useRouter } from "next/router";
 import { CustomerForm } from "../../components/customer/customer-form-view";
 import { PageLayout } from "../../components/shared";
-import { useEditCustomerPage } from "../../hooks";
+import { useCustomerFormPage } from "../../hooks";
 
 /**
  * Page d'édition d'un client
- * Orchestrateur léger - toute la logique est dans useEditCustomerPage
+ * Orchestrateur léger - toute la logique est dans useCustomerFormPage
  */
 const EditCustomerPage: React.FC = () => {
   const router = useRouter();
@@ -17,10 +17,10 @@ const EditCustomerPage: React.FC = () => {
     isLoading,
     isSaving,
     error,
-    handleUpdateCustomer,
+    handleSaveCustomer,
     handleCancel,
     setError,
-  } = useEditCustomerPage(id);
+  } = useCustomerFormPage(id);
 
   const customerName = customer
     ? `${customer.firstName} ${customer.lastName}`
@@ -28,8 +28,16 @@ const EditCustomerPage: React.FC = () => {
 
   return (
     <PageLayout
-      title={isLoading ? "Chargement..." : customer ? `Modifier le client : ${customerName}` : "Client introuvable"}
-      description={customer ? "Modifier les informations d'un client" : undefined}
+      title={
+        isLoading
+          ? "Chargement..."
+          : customer
+          ? `Modifier le client : ${customerName}`
+          : "Client introuvable"
+      }
+      description={
+        customer ? "Modifier les informations d'un client" : undefined
+      }
       error={error || undefined}
       onErrorClose={() => setError(null)}
       pageTitle={customer ? `Modifier le client : ${customerName}` : undefined}
@@ -43,7 +51,7 @@ const EditCustomerPage: React.FC = () => {
       {customer && (
         <CustomerForm
           customer={customer}
-          onSubmit={handleUpdateCustomer}
+          onSubmit={handleSaveCustomer}
           onCancel={handleCancel}
           isLoading={isSaving}
         />

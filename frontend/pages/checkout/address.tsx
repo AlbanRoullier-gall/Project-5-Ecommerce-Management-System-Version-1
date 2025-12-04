@@ -4,7 +4,7 @@ import {
   CheckoutPageLayout,
   CheckoutAddressForm,
 } from "../../components/checkout";
-import { useCheckoutPageGuard } from "../../hooks/useCheckoutPageGuard";
+import { useCheckoutPageGuard } from "../../hooks";
 
 /**
  * Page d'adresses du checkout

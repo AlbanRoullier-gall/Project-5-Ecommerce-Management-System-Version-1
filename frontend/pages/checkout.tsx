@@ -8,8 +8,7 @@ import {
   CheckoutAddressForm,
   CheckoutOrderSummary,
 } from "../components/checkout";
-import { useCheckoutStep } from "../hooks/useCheckoutStep";
-import { useCheckoutPageGuard } from "../hooks/useCheckoutPageGuard";
+import { useCheckoutStep, useCheckoutPageGuard } from "../hooks";
 
 /**
  * Page de passage de commande (checkout)

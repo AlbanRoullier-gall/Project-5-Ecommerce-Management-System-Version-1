@@ -3,9 +3,11 @@
 import Head from "next/head";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import ValuesSection from "../components/philosophy/ValuesSection";
-import SustainabilitySection from "../components/philosophy/SustainabilitySection";
-import CraftSection from "../components/philosophy/CraftSection";
+import {
+  ValuesSection,
+  SustainabilitySection,
+  CraftSection,
+} from "../components/philosophy";
 
 export default function PhilosophyPage() {
   return (

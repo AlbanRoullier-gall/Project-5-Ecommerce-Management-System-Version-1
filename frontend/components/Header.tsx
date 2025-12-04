@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Hero from "./Hero";
-import { useHeader } from "../hooks/useHeader";
+import { useHeader } from "../hooks";
 
 interface HeaderProps {
   hero?: React.ReactNode;

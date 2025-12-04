@@ -1,6 +1,6 @@
 import React from "react";
 import { SearchInput, FilterContainer, FilterSelect } from "../../shared";
-import { useAvailableYears } from "../../../hooks/useAvailableYears";
+import { useAvailableYears } from "../../../hooks";
 
 interface OrderFiltersProps {
   searchTerm: string;

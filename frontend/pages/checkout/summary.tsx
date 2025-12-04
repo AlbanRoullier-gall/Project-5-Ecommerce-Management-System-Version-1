@@ -4,7 +4,7 @@ import {
   CheckoutPageLayout,
   CheckoutOrderSummary,
 } from "../../components/checkout";
-import { useCheckoutPageGuard } from "../../hooks/useCheckoutPageGuard";
+import { useCheckoutPageGuard } from "../../hooks";
 
 /**
  * Page de récapitulatif et paiement du checkout

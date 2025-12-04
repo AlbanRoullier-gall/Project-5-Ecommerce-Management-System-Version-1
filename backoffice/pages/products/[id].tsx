@@ -3,11 +3,11 @@
 import { useRouter } from "next/router";
 import { ProductForm } from "../../components/product/product-form-view";
 import { PageLayout } from "../../components/shared";
-import { useEditProductPage } from "../../hooks";
+import { useProductFormPage } from "../../hooks";
 
 /**
  * Page d'édition d'un produit
- * Orchestrateur léger - toute la logique est dans useEditProductPage
+ * Orchestrateur léger - toute la logique est dans useProductFormPage
  */
 const EditProductPage: React.FC = () => {
   const router = useRouter();
@@ -18,10 +18,10 @@ const EditProductPage: React.FC = () => {
     isLoading,
     isSaving,
     error,
-    handleUpdateProduct,
+    handleSaveProduct,
     handleCancel,
     setError,
-  } = useEditProductPage(id);
+  } = useProductFormPage(id);
 
   return (
     <PageLayout
@@ -49,7 +49,7 @@ const EditProductPage: React.FC = () => {
         <ProductForm
           product={product}
           categories={categories}
-          onSubmit={handleUpdateProduct}
+          onSubmit={handleSaveProduct}
           onCancel={handleCancel}
           isLoading={isSaving}
         />

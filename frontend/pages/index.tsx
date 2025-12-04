@@ -3,8 +3,8 @@
 import Head from "next/head";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import ProductCatalog from "../components/catalog/ProductCatalog";
-import { useCatalog } from "../hooks/useCatalog";
+import { ProductCatalog } from "../components/product";
+import { useCatalog } from "../hooks";
 
 export default function Home() {
   const {

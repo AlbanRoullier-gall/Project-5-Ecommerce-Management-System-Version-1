@@ -2,22 +2,22 @@
 
 import { ProductForm } from "../../components/product/product-form-view";
 import { PageLayout } from "../../components/shared";
-import { useCreateProductPage } from "../../hooks";
+import { useProductFormPage } from "../../hooks";
 
 /**
  * Page de création d'un nouveau produit
- * Orchestrateur léger - toute la logique est dans useCreateProductPage
+ * Orchestrateur léger - toute la logique est dans useProductFormPage
  */
 const NewProductPage: React.FC = () => {
   const {
     categories,
-    categoriesLoading,
-    isLoading,
+    isLoading: categoriesLoading,
+    isSaving: isLoading,
     error,
-    handleCreateProduct,
+    handleSaveProduct,
     handleCancel,
     setError,
-  } = useCreateProductPage();
+  } = useProductFormPage();
 
   return (
     <PageLayout
@@ -34,7 +34,7 @@ const NewProductPage: React.FC = () => {
         <ProductForm
           product={null}
           categories={categories}
-          onSubmit={handleCreateProduct}
+          onSubmit={handleSaveProduct}
           onCancel={handleCancel}
           isLoading={isLoading}
         />

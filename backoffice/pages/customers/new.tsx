@@ -2,15 +2,20 @@
 
 import { CustomerForm } from "../../components/customer/customer-form-view";
 import { PageLayout } from "../../components/shared";
-import { useCreateCustomerPage } from "../../hooks";
+import { useCustomerFormPage } from "../../hooks";
 
 /**
  * Page de création d'un nouveau client
- * Orchestrateur léger - toute la logique est dans useCreateCustomerPage
+ * Orchestrateur léger - toute la logique est dans useCustomerFormPage
  */
 const NewCustomerPage: React.FC = () => {
-  const { isLoading, error, handleCreateCustomer, handleCancel, setError } =
-    useCreateCustomerPage();
+  const {
+    isSaving: isLoading,
+    error,
+    handleSaveCustomer,
+    handleCancel,
+    setError,
+  } = useCustomerFormPage();
 
   return (
     <PageLayout
@@ -23,7 +28,7 @@ const NewCustomerPage: React.FC = () => {
     >
       <CustomerForm
         customer={null}
-        onSubmit={handleCreateCustomer}
+        onSubmit={handleSaveCustomer}
         onCancel={handleCancel}
         isLoading={isLoading}
       />
