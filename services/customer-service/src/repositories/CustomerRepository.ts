@@ -280,6 +280,22 @@ class CustomerRepository {
   }
 
   /**
+   * Compter le nombre total de clients
+   * @returns {Promise<number>} Nombre total de clients
+   */
+  async count(): Promise<number> {
+    try {
+      const result = await this.pool.query(
+        "SELECT COUNT(*) as total FROM customers"
+      );
+      return parseInt(result.rows[0].total, 10);
+    } catch (error) {
+      console.error("Error counting customers:", error);
+      throw new Error("Failed to count customers");
+    }
+  }
+
+  /**
    * Vérifier si l'email existe
    * @param {string} email Email à vérifier
    * @param {number|null} excludeId ID du client à exclure de la vérification (pour les mises à jour)

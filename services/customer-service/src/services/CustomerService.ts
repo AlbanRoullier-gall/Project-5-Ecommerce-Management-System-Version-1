@@ -237,11 +237,7 @@ class CustomerService {
   }> {
     try {
       // Récupérer le nombre de clients
-      const customersList = await this.customerRepository.listAll({
-        page: 1,
-        limit: 1, // On n'a besoin que de la pagination
-      });
-      const customersCount = customersList.pagination?.total || 0;
+      const customersCount = await this.customerRepository.count();
 
       return {
         customersCount,
