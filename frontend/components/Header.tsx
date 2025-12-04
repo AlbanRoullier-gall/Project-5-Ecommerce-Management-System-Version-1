@@ -1,38 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
-import { useCart } from "../contexts/CartContext";
 import Hero from "./Hero";
+import { useHeader } from "../hooks/useHeader";
 
 interface HeaderProps {
   hero?: React.ReactNode;
 }
 
-// Configuration des Hero par route
-const HERO_CONFIG: Record<string, { title: string; subtitle: string }> = {
-  "/": {
-    title: "NATURE DE PIERRE",
-    subtitle: "Découvrez notre collection exclusive de pierres naturelles",
-  },
-  "/philosophy": {
-    title: "NOTRE PHILOSOPHIE",
-    subtitle: "Une vision artisanale, durable et respectueuse de la nature.",
-  },
-  "/contact": {
-    title: "CONTACTEZ-NOUS",
-    subtitle: "Notre équipe est à votre disposition pour tous vos projets",
-  },
-};
-
 const Header: React.FC<HeaderProps> = ({ hero: customHero }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { itemCount } = useCart();
-  const router = useRouter();
-
-  // Détection automatique de la Hero selon la route
-  const heroConfig = HERO_CONFIG[router.pathname];
+  const { isMenuOpen, toggleMenu, closeMenu, itemCount, heroConfig } =
+    useHeader();
 
   return (
     <>
@@ -64,10 +43,7 @@ const Header: React.FC<HeaderProps> = ({ hero: customHero }) => {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            className="mobile-menu-btn"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
+          <button className="mobile-menu-btn" onClick={toggleMenu}>
             <i className={`fas ${isMenuOpen ? "fa-times" : "fa-bars"}`}></i>
           </button>
         </div>
@@ -96,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({ hero: customHero }) => {
             <Link
               href="/#catalog"
               className="mobile-nav-item"
-              onClick={() => setIsMenuOpen(false)}
+              onClick={closeMenu}
             >
               <i className="fas fa-th-large"></i>
               <span>CATALOGUE</span>
@@ -104,7 +80,7 @@ const Header: React.FC<HeaderProps> = ({ hero: customHero }) => {
             <Link
               href="/philosophy"
               className="mobile-nav-item"
-              onClick={() => setIsMenuOpen(false)}
+              onClick={closeMenu}
             >
               <i className="fas fa-leaf"></i>
               <span>PHILOSOPHIE</span>
@@ -112,7 +88,7 @@ const Header: React.FC<HeaderProps> = ({ hero: customHero }) => {
             <Link
               href="/contact"
               className="mobile-nav-item"
-              onClick={() => setIsMenuOpen(false)}
+              onClick={closeMenu}
             >
               <i className="fas fa-envelope"></i>
               <span>CONTACT</span>

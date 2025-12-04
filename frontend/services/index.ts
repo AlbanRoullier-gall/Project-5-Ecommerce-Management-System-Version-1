@@ -12,3 +12,4 @@ export * from "./paymentService";
 export * from "./cartService";
 export * from "./checkoutService";
 export { logger } from "./logger";
+export { imageService } from "./imageService";

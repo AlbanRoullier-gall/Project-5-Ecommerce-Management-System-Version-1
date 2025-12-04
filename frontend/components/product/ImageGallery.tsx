@@ -1,8 +1,8 @@
 import React from "react";
 import { ProductPublicDTO } from "../../dto";
 import { PLACEHOLDER_IMAGE_PATH } from "../shared";
-
-import { apiClient } from "../../services/apiClient";
+import { imageService } from "../../services/imageService";
+import { useHover } from "../../hooks/useHover";
 
 /**
  * Props du composant ImageGallery
@@ -33,9 +33,9 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   setSelectedImageIndex,
 }) => {
   /**
-   * État pour gérer l'effet hover sur l'image principale
+   * Hook pour gérer l'effet hover sur l'image principale
    */
-  const [imageHovered, setImageHovered] = React.useState(false);
+  const { isHovered: imageHovered, hoverProps } = useHover();
 
   /**
    * Récupère l'URL complète d'une image à partir de son ID
@@ -43,9 +43,9 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   const getImageUrl = (imageId: number) => {
     const image = product?.images?.find((img) => img.id === imageId);
     if (image) {
-      return apiClient.getImageUrl(image.filePath);
+      return imageService.getImageUrl(image.filePath);
     }
-    return apiClient.getImageUrl(`/api/images/${imageId}`);
+    return imageService.getImageUrlById(imageId);
   };
 
   return (
@@ -72,8 +72,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           position: "relative",
           transform: imageHovered ? "translateY(-4px)" : "translateY(0)",
         }}
-        onMouseEnter={() => setImageHovered(true)}
-        onMouseLeave={() => setImageHovered(false)}
+        {...hoverProps}
       >
         {/* Barre décorative en haut lors du hover */}
         {imageHovered && (

@@ -17,3 +17,6 @@ export { useProductCard } from "./useProductCard";
 export { useCheckoutStep } from "./useCheckoutStep";
 export { useCheckoutPageGuard } from "./useCheckoutPageGuard";
 export { useProductPage } from "./useProductPage";
+export { useHeader } from "./useHeader";
+export { useHover } from "./useHover";
+export { useToggle } from "./useToggle";

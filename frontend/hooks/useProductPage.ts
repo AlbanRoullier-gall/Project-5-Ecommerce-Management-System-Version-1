@@ -7,7 +7,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { ProductPublicDTO } from "../dto";
 import { useCart } from "../contexts/CartContext";
-import { apiClient } from "../services/apiClient";
+import { imageService } from "../services/imageService";
 import { logger } from "../services/logger";
 
 interface UseProductPageResult {
@@ -50,7 +50,7 @@ export function useProductPage(
       const priceWithVat = product.priceTTC;
       const imageUrl =
         product.images && product.images.length > 0
-          ? apiClient.getImageUrl(product.images[0].filePath)
+          ? imageService.getImageUrl(product.images[0].filePath)
           : undefined;
       await addToCart(
         product.id,

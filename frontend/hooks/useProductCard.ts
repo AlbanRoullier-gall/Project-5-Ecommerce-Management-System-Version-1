@@ -6,7 +6,7 @@
 import { useState, useCallback } from "react";
 import { ProductPublicDTO } from "../dto";
 import { useCart } from "../contexts/CartContext";
-import { apiClient } from "../services/apiClient";
+import { imageService } from "../services/imageService";
 import { logger } from "../services/logger";
 
 interface UseProductCardResult {
@@ -36,7 +36,7 @@ export function useProductCard(
   const getImageUrl = useCallback(() => {
     if (product.images && product.images.length > 0) {
       const firstImage = product.images[0];
-      return apiClient.getImageUrl(firstImage.filePath);
+      return imageService.getImageUrl(firstImage.filePath);
     }
     return "/images/placeholder.svg";
   }, [product.images]);
@@ -54,7 +54,7 @@ export function useProductCard(
     try {
       const imageUrl =
         product.images && product.images.length > 0
-          ? apiClient.getImageUrl(product.images[0].filePath)
+          ? imageService.getImageUrl(product.images[0].filePath)
           : undefined;
       await addToCart(
         product.id,

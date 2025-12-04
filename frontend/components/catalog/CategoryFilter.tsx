@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { CategoryPublicDTO } from "../../dto";
+import { useToggle } from "../../hooks/useToggle";
 
 /**
  * Props du composant CategoryFilter
@@ -29,7 +30,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   selectedCategoryId,
   onCategoryChange,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, toggle, close } = useToggle(false);
 
   /**
    * Trouve la catégorie sélectionnée dans la liste
@@ -50,7 +51,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
    */
   const handleSelect = (categoryId: number) => {
     onCategoryChange(categoryId);
-    setIsOpen(false);
+    close();
   };
 
   return (
@@ -62,7 +63,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
             {/* Bouton principal du dropdown */}
             <button
               className={`dropdown-button ${isOpen ? "is-open" : ""}`}
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={toggle}
               style={{
                 width: "100%",
                 padding: "0.8rem 1.2rem",
