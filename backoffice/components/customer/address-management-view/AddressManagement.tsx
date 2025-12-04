@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   CustomerPublicDTO,
   AddressPublicDTO,
@@ -9,7 +9,7 @@ import Button from "../../shared/Button";
 import ErrorAlert from "../../shared/ErrorAlert";
 import AddressForm from "./AddressForm";
 import AddressTable from "./AddressTable";
-import { useAuth } from "../../../contexts/AuthContext";
+import { useCustomerAddresses } from "../../../hooks";
 
 /**
  * Props du composant AddressManagement
@@ -22,153 +22,27 @@ interface AddressManagementProps {
 }
 
 /**
- * Composant de gestion des adresses d'un client
- * Permet de visualiser, ajouter, modifier et supprimer les adresses
+ * Composant d'affichage de la gestion des adresses d'un client
+ * Toute la logique métier est gérée par le hook useCustomerAddresses
  */
 const AddressManagement: React.FC<AddressManagementProps> = ({
   customer,
   onClose,
 }) => {
-  const { apiCall } = useAuth();
-  const [addresses, setAddresses] = useState<AddressPublicDTO[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<AddressPublicDTO | null>(
     null
   );
 
-  // Charger les adresses au montage du composant
-  useEffect(() => {
-    loadAddresses();
-  }, [customer.customerId]);
-
-  /**
-   * Charge la liste des adresses du client
-   */
-  const loadAddresses = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await apiCall<{
-        data: { addresses: AddressPublicDTO[] };
-        message?: string;
-        timestamp?: string;
-        status?: number;
-      }>({
-        url: `/api/admin/customers/${customer.customerId}/addresses`,
-        method: "GET",
-        requireAuth: true,
-      });
-      // Format standardisé : { data: { addresses: [] }, ... }
-      if (!data.data || !Array.isArray(data.data.addresses)) {
-        throw new Error("Format de réponse invalide pour les adresses");
-      }
-      setAddresses(data.data.addresses);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erreur lors du chargement"
-      );
-      console.error("Error loading addresses:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Crée une nouvelle adresse
-   */
-  const handleCreateAddress = async (
-    data: AddressCreateDTO | AddressUpdateDTO
-  ) => {
-    // S'assurer que les données sont de type AddressCreateDTO
-    const createData: AddressCreateDTO = {
-      addressType: (data as AddressCreateDTO).addressType || "shipping",
-      address: (data as AddressCreateDTO).address || "",
-      postalCode: (data as AddressCreateDTO).postalCode || "",
-      city: (data as AddressCreateDTO).city || "",
-      countryName: (data as AddressCreateDTO).countryName,
-      isDefault: (data as AddressCreateDTO).isDefault || false,
-    };
-    setIsLoading(true);
-    setError(null);
-    try {
-      await apiCall({
-        url: `/api/admin/customers/${customer.customerId}/addresses`,
-        method: "POST",
-        body: createData,
-        requireAuth: true,
-      });
-
-      await loadAddresses();
-      setShowAddressForm(false);
-      setEditingAddress(null);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erreur lors de la création"
-      );
-      console.error("Error creating address:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Met à jour une adresse existante
-   */
-  const handleUpdateAddress = async (data: AddressUpdateDTO) => {
-    if (!editingAddress) return;
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      await apiCall({
-        url: `/api/admin/customers/${customer.customerId}/addresses/${editingAddress.addressId}`,
-        method: "PUT",
-        body: data,
-        requireAuth: true,
-      });
-
-      await loadAddresses();
-      setShowAddressForm(false);
-      setEditingAddress(null);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erreur lors de la mise à jour"
-      );
-      console.error("Error updating address:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Supprime une adresse
-   */
-  const handleDeleteAddress = async (addressId: number) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cette adresse ?")) {
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      await apiCall({
-        url: `/api/admin/customers/${customer.customerId}/addresses/${addressId}`,
-        method: "DELETE",
-        requireAuth: true,
-      });
-
-      await loadAddresses();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erreur lors de la suppression"
-      );
-      console.error("Error deleting address:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    addresses,
+    isLoading,
+    error,
+    handleCreateAddress,
+    handleUpdateAddress,
+    handleDeleteAddress,
+    setError,
+  } = useCustomerAddresses(customer.customerId);
 
   /**
    * Ouvre le formulaire d'édition d'une adresse
@@ -192,6 +66,57 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
   const handleCancelForm = () => {
     setShowAddressForm(false);
     setEditingAddress(null);
+  };
+
+  /**
+   * Gère la création d'une adresse
+   */
+  const handleCreate = async (data: AddressCreateDTO | AddressUpdateDTO) => {
+    const createData: AddressCreateDTO = {
+      addressType: (data as AddressCreateDTO).addressType || "shipping",
+      address: (data as AddressCreateDTO).address || "",
+      postalCode: (data as AddressCreateDTO).postalCode || "",
+      city: (data as AddressCreateDTO).city || "",
+      countryName: (data as AddressCreateDTO).countryName,
+      isDefault: (data as AddressCreateDTO).isDefault || false,
+    };
+
+    try {
+      await handleCreateAddress(createData);
+      setShowAddressForm(false);
+      setEditingAddress(null);
+    } catch (error) {
+      console.error("Error creating address:", error);
+    }
+  };
+
+  /**
+   * Gère la mise à jour d'une adresse
+   */
+  const handleUpdate = async (data: AddressUpdateDTO) => {
+    if (!editingAddress) return;
+
+    try {
+      await handleUpdateAddress(editingAddress.addressId, data);
+      setShowAddressForm(false);
+      setEditingAddress(null);
+    } catch (error) {
+      console.error("Error updating address:", error);
+    }
+  };
+
+  /**
+   * Gère la suppression d'une adresse avec confirmation
+   */
+  const handleDelete = async (addressId: number) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cette adresse ?")) {
+      return;
+    }
+    try {
+      await handleDeleteAddress(addressId);
+    } catch (error) {
+      console.error("Error deleting address:", error);
+    }
   };
 
   return (
@@ -253,7 +178,7 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
       {showAddressForm && (
         <AddressForm
           address={editingAddress}
-          onSubmit={editingAddress ? handleUpdateAddress : handleCreateAddress}
+          onSubmit={editingAddress ? handleUpdate : handleCreate}
           onCancel={handleCancelForm}
           isLoading={isLoading}
         />
@@ -263,7 +188,7 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
         <AddressTable
           addresses={addresses}
           onEdit={handleEditAddress}
-          onDelete={handleDeleteAddress}
+          onDelete={handleDelete}
         />
       )}
     </div>

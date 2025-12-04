@@ -1,103 +1,22 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React from "react";
 import { StatCard } from "../shared";
-import { OrderStatisticsRequestDTO } from "../../dto";
-import { useAuth } from "../../contexts/AuthContext";
+import { useDashboardStats } from "../../hooks";
 
-interface StatsData {
-  productsCount: number;
-  customersCount: number;
-  ordersCount: number;
-  totalRevenue: number; // TTC
-  totalRevenueHT: number; // HT (admin)
-}
-
+/**
+ * Composant d'affichage des statistiques du dashboard
+ * Toute la logique métier est gérée par le hook useDashboardStats
+ */
 const StatsOverview: React.FC = () => {
-  const { apiCall } = useAuth();
-  const [stats, setStats] = useState<StatsData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [availableYears, setAvailableYears] = useState<number[]>([]);
-  // Utilise le type year de OrderStatisticsRequestDTO pour cohérence
-  // Initialisé à undefined, sera défini par defaultYear de l'API au premier chargement
-  const [selectedYear, setSelectedYear] = useState<
-    OrderStatisticsRequestDTO["year"] | undefined
-  >(undefined);
-
-  const loadStats = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // Construire l'URL : si selectedYear n'est pas défini, ne pas inclure le paramètre year
-      const url =
-        selectedYear !== undefined
-          ? `/api/admin/statistics/dashboard?year=${selectedYear}`
-          : `/api/admin/statistics/dashboard`;
-
-      const response = await apiCall<{
-        data: {
-          statistics: {
-            productsCount?: number;
-            customersCount?: number;
-            ordersCount?: number;
-            totalRevenue?: number;
-            totalRevenueHT?: number;
-          };
-          availableYears?: number[];
-          defaultYear?: number;
-          year?: number;
-        };
-      }>({
-        url,
-        method: "GET",
-        requireAuth: true,
-      });
-
-      const {
-        statistics,
-        availableYears: years,
-        defaultYear,
-        year: responseYear,
-      } = response.data;
-
-      if (!statistics) {
-        throw new Error("Format de réponse invalide");
-      }
-
-      // Utiliser les années disponibles depuis l'API
-      if (years && Array.isArray(years)) {
-        setAvailableYears(years);
-      }
-
-      // Au premier chargement (selectedYear undefined), utiliser defaultYear de l'API
-      // Ne pas recharger les stats car on vient déjà de les charger
-      if (selectedYear === undefined) {
-        const yearToUse =
-          defaultYear !== undefined ? defaultYear : responseYear;
-        if (yearToUse !== undefined) {
-          setSelectedYear(yearToUse);
-          // Les stats sont déjà chargées, pas besoin de recharger
-        }
-      }
-
-      setStats({
-        productsCount: statistics.productsCount ?? 0,
-        customersCount: statistics.customersCount ?? 0,
-        ordersCount: statistics.ordersCount ?? 0,
-        totalRevenue: statistics.totalRevenue ?? 0,
-        totalRevenueHT: statistics.totalRevenueHT ?? 0,
-      });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur lors du chargement");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedYear, apiCall]);
-
-  useEffect(() => {
-    loadStats();
-  }, [loadStats]);
+  const {
+    stats,
+    isLoading,
+    error,
+    availableYears,
+    selectedYear,
+    setSelectedYear,
+  } = useDashboardStats();
 
   if (isLoading) {
     return (

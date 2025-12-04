@@ -1,13 +1,9 @@
-import React, { useEffect, useState } from "react";
-import {
-  OrderPublicDTO,
-  OrderItemPublicDTO,
-  OrderAddressPublicDTO,
-} from "../../../dto";
+import React, { useState } from "react";
+import { OrderPublicDTO } from "../../../dto";
 import { Button, Modal, ItemDisplayTable } from "../../shared";
 import { CreateCreditNoteModal } from "../credit-note-view";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
-import { useAuth } from "../../../contexts/AuthContext";
+import { useOrderDetail } from "../../../hooks";
 
 interface OrderDetailModalProps {
   isOpen: boolean;
@@ -17,6 +13,10 @@ interface OrderDetailModalProps {
   onClose: () => void;
 }
 
+/**
+ * Composant d'affichage du détail d'une commande
+ * Toute la logique métier est gérée par le hook useOrderDetail
+ */
 const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   isOpen,
   order,
@@ -24,85 +24,16 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   error = null,
   onClose,
 }) => {
-  const { apiCall } = useAuth();
-  const [items, setItems] = useState<OrderItemPublicDTO[]>([]);
-  const [itemsLoading, setItemsLoading] = useState(false);
-  const [itemsError, setItemsError] = useState<string | null>(null);
-  const [addresses, setAddresses] = useState<OrderAddressPublicDTO[]>([]);
-  const [addressesLoading, setAddressesLoading] = useState(false);
-  const [addressesError, setAddressesError] = useState<string | null>(null);
   const [isCreateCreditNoteOpen, setIsCreateCreditNoteOpen] = useState(false);
 
-  useEffect(() => {
-    const loadItems = async () => {
-      if (!order?.id) return;
-      setItems([]);
-      setItemsError(null);
-      setItemsLoading(true);
-      try {
-        // Admin path proxied to service items list
-        const json = await apiCall<{
-          data?: { orderItems?: OrderItemPublicDTO[] };
-          orderItems?: OrderItemPublicDTO[];
-        }>({
-          url: `/api/admin/orders/${order.id}/items`,
-          method: "GET",
-          requireAuth: true,
-        });
-        // Format standardisé : { data: { orderItems: [], count } }, ... }
-        if (!json.data || !Array.isArray(json.data.orderItems)) {
-          throw new Error(
-            "Format de réponse invalide pour les articles de commande"
-          );
-        }
-        const list: OrderItemPublicDTO[] = json.data.orderItems;
-        setItems(list);
-      } catch (e) {
-        setItemsError(
-          e instanceof Error ? e.message : "Erreur chargement des articles"
-        );
-      } finally {
-        setItemsLoading(false);
-      }
-    };
-
-    loadItems();
-  }, [order?.id, apiCall]);
-
-  useEffect(() => {
-    const loadAddresses = async () => {
-      if (!order?.id) return;
-      setAddresses([]);
-      setAddressesError(null);
-      setAddressesLoading(true);
-      try {
-        const json = await apiCall<{
-          data?: { orderAddresses?: OrderAddressPublicDTO[] };
-          orderAddresses?: OrderAddressPublicDTO[];
-        }>({
-          url: `/api/admin/orders/${order.id}/addresses`,
-          method: "GET",
-          requireAuth: true,
-        });
-        // Format standardisé : { data: { orderAddresses: [], count } }, ... }
-        if (!json.data || !Array.isArray(json.data.orderAddresses)) {
-          throw new Error(
-            "Format de réponse invalide pour les adresses de commande"
-          );
-        }
-        const list: OrderAddressPublicDTO[] = json.data.orderAddresses;
-        setAddresses(list);
-      } catch (e) {
-        setAddressesError(
-          e instanceof Error ? e.message : "Erreur chargement des adresses"
-        );
-      } finally {
-        setAddressesLoading(false);
-      }
-    };
-
-    loadAddresses();
-  }, [order?.id, apiCall]);
+  const {
+    items,
+    itemsLoading,
+    itemsError,
+    addresses,
+    addressesLoading,
+    addressesError,
+  } = useOrderDetail(order?.id || null);
 
   const customerName = (() => {
     if (!order) return "";
@@ -567,7 +498,6 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
         order={order}
         onClose={() => setIsCreateCreditNoteOpen(false)}
         onCreated={() => {
-          // No-op: parent page will reload the credit notes list
           setIsCreateCreditNoteOpen(false);
         }}
       />

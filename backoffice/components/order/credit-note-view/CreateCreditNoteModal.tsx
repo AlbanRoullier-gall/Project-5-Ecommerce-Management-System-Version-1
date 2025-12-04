@@ -1,13 +1,12 @@
-import React, { useMemo, useState } from "react";
+import React from "react";
 import { Button, Modal, ErrorAlert, ItemDisplayTable } from "../../shared";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
 import {
-  CreditNoteCreateDTO,
   OrderPublicDTO,
   CreditNotePublicDTO,
   OrderItemPublicDTO,
 } from "../../../dto";
-import { useAuth } from "../../../contexts/AuthContext";
+import { useCreateCreditNote } from "../../../hooks";
 
 interface CreateCreditNoteModalProps {
   isOpen: boolean;
@@ -24,181 +23,54 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
   onClose,
   onCreated,
 }) => {
-  const { apiCall } = useAuth();
-  const [reason, setReason] = useState("");
-  const [description, setDescription] = useState("");
-  const [issueDate, setIssueDate] = useState<string>("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("");
-  const [totalHT, setTotalHT] = useState<string>("");
-  const [totalTTC, setTotalTTC] = useState<string>("");
-  const [notes, setNotes] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedOrderId, setSelectedOrderId] = useState<string>("");
-  const [orderItems, setOrderItems] = useState<OrderItemPublicDTO[]>([]);
-  const [itemsLoading, setItemsLoading] = useState(false);
-  const [itemsError, setItemsError] = useState<string | null>(null);
-  const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
-  const [calculatedTotals, setCalculatedTotals] = useState<{
-    totalHT: number;
-    totalTTC: number;
-  }>({ totalHT: 0, totalTTC: 0 });
-  const [isCalculatingTotals, setIsCalculatingTotals] = useState(false);
-
-  const selectedOrder: OrderPublicDTO | null = useMemo(() => {
-    if (order) return order;
-    const id = Number(selectedOrderId);
-    if (!Number.isFinite(id)) return null;
-    return orders.find((o) => o.id === id) || null;
-  }, [order, orders, selectedOrderId]);
-
-  const selectedItems = useMemo(() => {
-    const set = new Set(selectedItemIds);
-    return orderItems.filter((it) => set.has(it.id));
-  }, [orderItems, selectedItemIds]);
-
-  const canSubmit = useMemo(() => {
-    if (!selectedOrder) return false;
-
-    // Si des items sont sélectionnés, les totaux seront calculés par le service
-    if (selectedItems.length > 0) {
-      return reason.trim().length > 0 && paymentMethod.trim().length > 0;
-    }
-
-    // Sinon, les totaux doivent être fournis manuellement
-    const nHT = Number(totalHT);
-    const nTTC = Number(totalTTC);
-    return (
-      reason.trim().length > 0 &&
-      paymentMethod.trim().length > 0 &&
-      Number.isFinite(nHT) &&
-      Number.isFinite(nTTC) &&
-      nHT > 0 &&
-      nTTC > 0
-    );
-  }, [
-    selectedOrder,
+  const {
+    // Form state
     reason,
+    description,
+    issueDate,
     paymentMethod,
     totalHT,
     totalTTC,
-    selectedItems.length,
-  ]);
+    notes,
+    selectedOrderId,
 
-  // Calcul des totaux via l'API lorsque les items sélectionnés changent
-  React.useEffect(() => {
-    const calculateTotalsFromAPI = async () => {
-      if (!selectedItems || selectedItems.length === 0) {
-        setCalculatedTotals({ totalHT: 0, totalTTC: 0 });
-        return;
-      }
+    // Setters
+    setReason,
+    setDescription,
+    setIssueDate,
+    setPaymentMethod,
+    setTotalHT,
+    setTotalTTC,
+    setNotes,
+    setSelectedOrderId,
 
-      setIsCalculatingTotals(true);
-      try {
-        // Envoyer uniquement les IDs des items sélectionnés
-        // Le service récupérera les items depuis la base et calculera les totaux
-        const itemIds = selectedItems.map((item) => item.id);
+    // Selected order
+    selectedOrder,
 
-        const result = await apiCall<{
-          data: {
-            totalHT?: number;
-            totalTTC?: number;
-            totalVAT?: number;
-          };
-        }>({
-          url: "/api/admin/credit-notes/calculate-totals",
-          method: "POST",
-          body: { itemIds },
-          requireAuth: true,
-        });
+    // Order items
+    orderItems,
+    itemsLoading,
+    itemsError,
 
-        console.log("Réponse calcul totaux:", result);
+    // Selected items
+    selectedItemIds,
+    selectedItems,
+    handleSelectionChange,
 
-        // La réponse utilise ResponseMapper.success() qui retourne { message, data, status, timestamp }
-        if (
-          result.data &&
-          typeof result.data.totalHT !== "undefined" &&
-          typeof result.data.totalTTC !== "undefined"
-        ) {
-          setCalculatedTotals({
-            totalHT: result.data.totalHT,
-            totalTTC: result.data.totalTTC,
-          });
-        } else {
-          console.error("Format de réponse inattendu:", result);
-          setCalculatedTotals({ totalHT: 0, totalTTC: 0 });
-        }
-      } catch (error) {
-        console.error("Erreur lors du calcul des totaux:", error);
-        setCalculatedTotals({ totalHT: 0, totalTTC: 0 });
-      } finally {
-        setIsCalculatingTotals(false);
-      }
-    };
+    // Calculated totals
+    calculatedTotals,
+    isCalculatingTotals,
 
-    calculateTotalsFromAPI();
-  }, [selectedItems]);
+    // Submission
+    isSubmitting,
+    error,
+    canSubmit,
 
-  React.useEffect(() => {
-    const loadItems = async () => {
-      if (!selectedOrder) {
-        setOrderItems([]);
-        setSelectedItemIds([]);
-        return;
-      }
-      setItemsLoading(true);
-      setItemsError(null);
-      setOrderItems([]);
-      setSelectedItemIds([]);
-      try {
-        const json = await apiCall<{
-          data?: { orderItems?: OrderItemPublicDTO[] };
-          orderItems?: OrderItemPublicDTO[];
-        }>({
-          url: `/api/admin/orders/${selectedOrder.id}/items`,
-          method: "GET",
-          requireAuth: true,
-        });
-        // Format standardisé : { data: { orderItems: [], count } }, ... }
-        if (!json.data || !Array.isArray(json.data.orderItems)) {
-          throw new Error(
-            "Format de réponse invalide pour les articles de commande"
-          );
-        }
-        const list: OrderItemPublicDTO[] = json.data.orderItems;
-        setOrderItems(list);
-      } catch (e) {
-        setItemsError(
-          e instanceof Error ? e.message : "Erreur chargement des articles"
-        );
-      } finally {
-        setItemsLoading(false);
-      }
-    };
-    loadItems();
-  }, [selectedOrder?.id]);
-
-  const resetForm = () => {
-    setReason("");
-    setDescription("");
-    setIssueDate("");
-    setPaymentMethod("");
-    setTotalHT("");
-    setTotalTTC("");
-    setNotes("");
-    setError(null);
-    setSelectedOrderId("");
-    setOrderItems([]);
-    setSelectedItemIds([]);
-    setItemsError(null);
-  };
-
-  React.useEffect(() => {
-    if (isOpen) {
-      const today = new Date().toISOString().slice(0, 10);
-      setIssueDate(today);
-    }
-  }, [isOpen]);
+    // Actions
+    handleSubmit,
+    resetForm,
+    setError,
+  } = useCreateCreditNote({ order, orders, isOpen });
 
   const handleClose = () => {
     if (isSubmitting) return;
@@ -206,67 +78,11 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
     onClose();
   };
 
-  const handleSubmit = async () => {
-    if (!selectedOrder || !canSubmit) return;
-    setIsSubmitting(true);
-    setError(null);
-    try {
-      // Utiliser le même endpoint avec le DTO unifié
-      const payload: CreditNoteCreateDTO = {
-        customerId: selectedOrder.customerId,
-        orderId: selectedOrder.id,
-        reason: reason.trim(),
-        description: description.trim() || undefined,
-        paymentMethod: paymentMethod || undefined,
-        notes: notes.trim() || undefined,
-        // Si des items sont sélectionnés, les inclure (les totaux seront calculés automatiquement)
-        // Sinon, inclure les totaux fournis
-        ...(selectedItems.length > 0
-          ? {
-              items: selectedItems.map((it) => ({
-                productId: it.productId,
-                productName: it.productName,
-                quantity: it.quantity,
-                unitPriceHT: it.unitPriceHT,
-                unitPriceTTC: it.unitPriceTTC,
-                vatRate: it.vatRate,
-                totalPriceHT: it.totalPriceHT,
-                totalPriceTTC: it.totalPriceTTC,
-              })),
-            }
-          : {
-              totalAmountHT: Number(totalHT),
-              totalAmountTTC: Number(totalTTC),
-            }),
-      };
-
-      const json = await apiCall<{
-        data: { creditNote: CreditNotePublicDTO };
-        message?: string;
-        timestamp?: string;
-        status?: number;
-      }>({
-        url: "/api/admin/credit-notes",
-        method: "POST",
-        body: payload,
-        requireAuth: true,
-      });
-
-      // Format standardisé : { data: { creditNote }, ... }
-      if (!json.data || !json.data.creditNote) {
-        throw new Error("Format de réponse invalide pour l'avoir créé");
-      }
-      const created: CreditNotePublicDTO = json.data.creditNote;
-
+  const onSubmit = async () => {
+    await handleSubmit((created) => {
       onCreated(created);
-
-      resetForm();
       onClose();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur réseau");
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
   return (
@@ -287,7 +103,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
           <Button
             variant="primary"
             icon="fas fa-file-invoice-dollar"
-            onClick={handleSubmit}
+            onClick={onSubmit}
             disabled={!canSubmit || isSubmitting}
           >
             {isSubmitting ? "Création…" : "Créer l'avoir"}
@@ -392,22 +208,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({
                 }}
                 selectedItemIds={selectedItemIds}
                 getItemId={(item) => (item as OrderItemPublicDTO).id}
-                onSelectionChange={(itemId, checked) => {
-                  setSelectedItemIds((prev) => {
-                    const set = new Set(prev);
-                    const numId =
-                      typeof itemId === "number" ? itemId : Number(itemId);
-                    if (checked) set.add(numId);
-                    else set.delete(numId);
-                    const newSelection = Array.from(set);
-                    // Si des items sont sélectionnés, vider les totaux manuels (seront calculés par le service)
-                    if (newSelection.length > 0) {
-                      setTotalHT("");
-                      setTotalTTC("");
-                    }
-                    return newSelection;
-                  });
-                }}
+                onSelectionChange={handleSelectionChange}
               />
             )}
           </div>

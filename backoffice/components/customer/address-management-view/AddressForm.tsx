@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   AddressPublicDTO,
   AddressCreateDTO,
@@ -7,6 +7,7 @@ import {
 import FormInput from "../../shared/form/FormInput";
 import FormCheckbox from "../../shared/form/FormCheckbox";
 import FormActions from "../../shared/form/FormActions";
+import { useAddressForm } from "../../../hooks";
 
 /**
  * Props du composant AddressForm
@@ -24,6 +25,7 @@ interface AddressFormProps {
 
 /**
  * Formulaire de création/édition d'adresse
+ * Composant présentatif uniquement - toute la logique est dans useAddressForm
  */
 const AddressForm: React.FC<AddressFormProps> = ({
   address,
@@ -31,162 +33,13 @@ const AddressForm: React.FC<AddressFormProps> = ({
   onCancel,
   isLoading,
 }) => {
-  const [formData, setFormData] = useState<Partial<AddressCreateDTO>>({
-    address: "",
-    postalCode: "",
-    city: "",
-    countryName: "",
-    isDefault: false,
+  const { formData, errors, handleChange, handleSubmit } = useAddressForm({
+    address,
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (address) {
-      setFormData({
-        address: address.address,
-        postalCode: address.postalCode,
-        city: address.city,
-        countryName: address.countryName,
-        isDefault: address.isDefault,
-      });
-    } else {
-      setFormData({
-        address: "",
-        postalCode: "",
-        city: "",
-        countryName: "",
-        isDefault: false,
-      });
-    }
-  }, [address]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
-
-  const validate = async (): Promise<boolean> => {
-    try {
-      const API_URL =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
-
-      // Préparer les données pour la validation (format AddressesCreateDTO)
-      // countryName sera géré automatiquement par le service si non fourni
-      const addressData = {
-        shipping: {
-          address: formData.address || "",
-          postalCode: formData.postalCode || "",
-          city: formData.city || "",
-          ...(formData.countryName && { countryName: formData.countryName }),
-        },
-        billing: {
-          address: formData.address || "",
-          postalCode: formData.postalCode || "",
-          city: formData.city || "",
-          ...(formData.countryName && { countryName: formData.countryName }),
-        },
-        useSameBillingAddress: true,
-      };
-
-      const response = await fetch(
-        `${API_URL}/api/customers/addresses/validate`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(addressData),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!result.isValid) {
-        // Mapper les erreurs de l'API vers les champs du formulaire
-        const newErrors: Record<string, string> = {};
-        if (result.error) {
-          // Si l'erreur concerne l'adresse de livraison, l'afficher sur les champs correspondants
-          if (
-            result.error.includes("adresse") ||
-            result.error.includes("address")
-          ) {
-            newErrors.address = result.error;
-          } else if (
-            result.error.includes("code postal") ||
-            result.error.includes("postalCode")
-          ) {
-            newErrors.postalCode = result.error;
-          } else if (
-            result.error.includes("ville") ||
-            result.error.includes("city")
-          ) {
-            newErrors.city = result.error;
-          } else {
-            newErrors._general = result.error;
-          }
-        }
-        setErrors(newErrors);
-        return false;
-      }
-
-      setErrors({});
-      return true;
-    } catch (error) {
-      console.error("Erreur lors de la validation:", error);
-      setErrors({ _general: "Erreur lors de la validation" });
-      return false;
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const onSubmitHandler = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const isValid = await validate();
-    if (!isValid) {
-      return;
-    }
-
-    if (address) {
-      const updateData: AddressUpdateDTO = {};
-      if (formData.address !== address.address) {
-        updateData.address = formData.address;
-      }
-      if (formData.postalCode !== address.postalCode) {
-        updateData.postalCode = formData.postalCode;
-      }
-      if (formData.city !== address.city) {
-        updateData.city = formData.city;
-      }
-      if (formData.isDefault !== address.isDefault) {
-        updateData.isDefault = formData.isDefault;
-      }
-
-      onSubmit(updateData);
-    } else {
-      const createData: AddressCreateDTO = {
-        addressType: "shipping",
-        address: formData.address || "",
-        postalCode: formData.postalCode || "",
-        city: formData.city || "",
-        countryName: formData.countryName,
-        isDefault: formData.isDefault || false,
-      };
-      onSubmit(createData);
-    }
+    await handleSubmit(onSubmit);
   };
 
   return (
@@ -210,7 +63,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
         {address ? "Modifier l'adresse" : "Nouvelle adresse"}
       </h3>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={onSubmitHandler}>
         <div
           style={{
             display: "grid",

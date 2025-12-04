@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   ProductPublicDTO,
   ProductCreateDTO,
@@ -13,6 +13,7 @@ import FormActions from "../../shared/form/FormActions";
 import ImageUploadZone from "./image/ImageUploadZone";
 import ExistingImagesList from "./image/ExistingImagesList";
 import NewImagesList from "./image/NewImagesList";
+import { useProductForm } from "../../../hooks";
 
 /**
  * Props du composant ProductForm
@@ -65,208 +66,25 @@ const ProductForm: React.FC<ProductFormProps> = ({
   onCancel,
   isLoading = false,
 }) => {
-  // État du formulaire
-  const [formData, setFormData] = useState<ProductCreateDTO | ProductUpdateDTO>(
-    {
-      name: product?.name || "",
-      description: product?.description || "",
-      price: product?.price || 0,
-      vatRate: product?.vatRate || 21,
-      categoryId: product?.categoryId || categories[0]?.id || 0,
-      isActive: product?.isActive ?? true,
-    }
-  );
+  const {
+    formData,
+    errors,
+    selectedImages,
+    imagePreviewUrls,
+    imagesToDelete,
+    remainingSlots,
+    categoryOptions,
+    handleChange,
+    handleImageChange,
+    handleRemoveImage,
+    handleMarkImageForDeletion,
+    handleSubmit,
+  } = useProductForm({ product: product || null, categories });
 
-  // États de validation et images
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
-  const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
-
-  /**
-   * Effet : réinitialise le formulaire quand le produit change
-   * Utile en mode édition pour charger les données du produit
-   */
-  useEffect(() => {
-    if (product) {
-      setFormData({
-        name: product.name,
-        description: product.description || "",
-        price: product.price,
-        vatRate: product.vatRate,
-        categoryId: product.categoryId,
-        isActive: product.isActive,
-      });
-      setSelectedImages([]);
-      setImagePreviewUrls([]);
-      setImagesToDelete([]);
-    }
-  }, [product]);
-
-  /**
-   * Effet de nettoyage : libère les URLs de prévisualisation
-   * Évite les fuites mémoire avec les object URLs
-   */
-  useEffect(() => {
-    return () => {
-      imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [imagePreviewUrls]);
-
-  /**
-   * Gère les changements de valeurs dans les champs du formulaire
-   * Convertit automatiquement les valeurs numériques et booléennes
-   */
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    const { name, value, type } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        type === "number"
-          ? parseFloat(value) || 0
-          : type === "checkbox"
-          ? (e.target as HTMLInputElement).checked
-          : value,
-    }));
-
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
-
-  /**
-   * Valide les données du formulaire via l'API backend
-   * @returns Promise<boolean> true si toutes les validations passent, false sinon
-   */
-  const validate = async (): Promise<boolean> => {
-    try {
-      const API_URL =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
-      const response = await fetch(`${API_URL}/api/products/validate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await response.json();
-
-      if (!result.isValid && result.errors) {
-        const newErrors: Record<string, string> = {};
-        result.errors.forEach((error: { field: string; message: string }) => {
-          newErrors[error.field] = error.message;
-        });
-        setErrors(newErrors);
-        return false;
-      }
-
-      setErrors({});
-      return true;
-    } catch (error) {
-      console.error("Erreur lors de la validation:", error);
-      setErrors({ _general: "Erreur lors de la validation" });
-      return false;
-    }
-  };
-
-  /**
-   * Gère l'ajout de nouvelles images
-   * Valide le type, la taille et le nombre maximum d'images
-   */
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-
-    const existingCount = product?.images?.length || 0;
-    const totalImages = existingCount + selectedImages.length + files.length;
-
-    if (totalImages > 5) {
-      alert(
-        `Vous ne pouvez avoir que 5 images maximum. Vous avez déjà ${
-          existingCount + selectedImages.length
-        } image(s).`
-      );
-      return;
-    }
-
-    for (const file of files) {
-      if (!file.type.startsWith("image/")) {
-        alert(`${file.name} n'est pas une image valide`);
-        return;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        alert(`${file.name} est trop volumineux (max 10MB)`);
-        return;
-      }
-    }
-
-    setSelectedImages((prev) => [...prev, ...files]);
-
-    files.forEach((file) => {
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreviewUrls((prev) => [...prev, previewUrl]);
-    });
-
-    e.target.value = "";
-  };
-
-  /**
-   * Retire une nouvelle image de la sélection
-   * @param index - Index de l'image à retirer
-   */
-  const handleRemoveImage = (index: number) => {
-    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
-    URL.revokeObjectURL(imagePreviewUrls[index]);
-    setImagePreviewUrls((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  /**
-   * Marque une image existante pour suppression
-   * @param imageId - ID de l'image à supprimer
-   */
-  const handleMarkImageForDeletion = (imageId: number) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette image ?")) {
-      setImagesToDelete((prev) => [...prev, imageId]);
-    }
-  };
-
-  /**
-   * Gère la soumission du formulaire
-   * Valide les données et appelle le callback onSubmit
-   */
-  const handleSubmit = async (e: React.FormEvent) => {
+  const onSubmitHandler = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const isValid = await validate();
-    if (!isValid) {
-      return;
-    }
-
-    onSubmit(
-      formData,
-      selectedImages.length > 0 ? selectedImages : undefined,
-      imagesToDelete.length > 0 ? imagesToDelete : undefined
-    );
+    await handleSubmit(onSubmit);
   };
-
-  // Prépare les options pour le select de catégories
-  const categoryOptions = categories.map((cat) => ({
-    value: cat.id,
-    label: cat.name,
-  }));
-
-  // Calcule le nombre d'emplacements restants pour les images
-  const existingCount = product?.images
-    ? product.images.filter((img) => !imagesToDelete.includes(img.id)).length
-    : 0;
-  const remainingSlots = 5 - existingCount - selectedImages.length;
 
   return (
     <div
@@ -296,7 +114,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       </h2>
 
       <form
-        onSubmit={handleSubmit}
+        onSubmit={onSubmitHandler}
         style={{
           display: "grid",
           gap: "1.5rem",

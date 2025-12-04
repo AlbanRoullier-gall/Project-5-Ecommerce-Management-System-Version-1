@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { UserPublicDTO } from "../../../dto";
 import { UserTable } from "./";
 import ErrorAlert from "../../shared/ErrorAlert";
 import LoadingSpinner from "../../shared/LoadingSpinner";
-import { useAuth } from "../../../contexts/AuthContext";
+import { useUsers } from "../../../hooks";
 
 /**
  * Props du composant UserList
@@ -14,88 +14,42 @@ interface UserListProps {
 }
 
 /**
- * Composant de liste des utilisateurs
- *
- * Fonctionnalités :
- * - Affichage de la liste des utilisateurs (en attente ou tous)
- * - Actions : approuver, rejeter, supprimer
- * - Gestion des erreurs et chargement
+ * Composant d'affichage de la liste des utilisateurs
+ * Toute la logique métier est gérée par le hook useUsers
  */
 const UserList: React.FC<UserListProps> = ({ mode }) => {
-  const { apiCall } = useAuth();
-
-  // États de données
-  const [users, setUsers] = useState<UserPublicDTO[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Charger les données au montage du composant
-  useEffect(() => {
-    loadUsers();
-  }, [mode]);
+  const {
+    users,
+    isLoading,
+    error,
+    handleApprove,
+    handleReject,
+    handleDelete,
+    setError,
+  } = useUsers(mode);
 
   /**
-   * Charge la liste des utilisateurs depuis l'API
+   * Gère l'approbation d'un utilisateur avec confirmation
    */
-  const loadUsers = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const endpoint =
-        mode === "pending" ? "/api/admin/users/pending" : "/api/admin/users";
-      const data = await apiCall<{
-        success: boolean;
-        data: {
-          users: UserPublicDTO[];
-          count: number;
-        };
-      }>({
-        url: endpoint,
-        method: "GET",
-        requireAuth: true,
-      });
-
-      if (data.success && data.data?.users) {
-        setUsers(data.data.users);
-      } else {
-        setError("Format de réponse invalide");
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur lors du chargement");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Approuve un utilisateur
-   */
-  const handleApprove = async (user: UserPublicDTO) => {
+  const handleApproveUser = async (user: UserPublicDTO) => {
     if (!confirm(`Êtes-vous sûr de vouloir approuver ${user.fullName} ?`)) {
       return;
     }
-
     try {
-      await apiCall({
-        url: `/api/admin/users/${user.userId}/approve`,
-        method: "POST",
-        requireAuth: true,
-      });
-      // Recharger la liste
-      await loadUsers();
-    } catch (e) {
+      await handleApprove(user);
+    } catch (error) {
       alert(
-        e instanceof Error
-          ? e.message
+        error instanceof Error
+          ? error.message
           : "Erreur lors de l'approbation de l'utilisateur"
       );
     }
   };
 
   /**
-   * Rejette un utilisateur
+   * Gère le rejet d'un utilisateur avec confirmation
    */
-  const handleReject = async (user: UserPublicDTO) => {
+  const handleRejectUser = async (user: UserPublicDTO) => {
     if (
       !confirm(
         `Êtes-vous sûr de vouloir rejeter ${user.fullName} ? Cette action est irréversible.`
@@ -103,26 +57,21 @@ const UserList: React.FC<UserListProps> = ({ mode }) => {
     ) {
       return;
     }
-
     try {
-      await apiCall({
-        url: `/api/admin/users/${user.userId}/reject`,
-        method: "POST",
-        requireAuth: true,
-      });
-      // Recharger la liste
-      await loadUsers();
-    } catch (e) {
+      await handleReject(user);
+    } catch (error) {
       alert(
-        e instanceof Error ? e.message : "Erreur lors du rejet de l'utilisateur"
+        error instanceof Error
+          ? error.message
+          : "Erreur lors du rejet de l'utilisateur"
       );
     }
   };
 
   /**
-   * Supprime un utilisateur
+   * Gère la suppression d'un utilisateur avec confirmation
    */
-  const handleDelete = async (userId: number) => {
+  const handleDeleteUser = async (userId: number) => {
     if (
       !confirm(
         "Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible."
@@ -130,19 +79,12 @@ const UserList: React.FC<UserListProps> = ({ mode }) => {
     ) {
       return;
     }
-
     try {
-      await apiCall({
-        url: `/api/admin/users/${userId}`,
-        method: "DELETE",
-        requireAuth: true,
-      });
-      // Recharger la liste
-      await loadUsers();
-    } catch (e) {
+      await handleDelete(userId);
+    } catch (error) {
       alert(
-        e instanceof Error
-          ? e.message
+        error instanceof Error
+          ? error.message
           : "Erreur lors de la suppression de l'utilisateur"
       );
     }
@@ -159,9 +101,9 @@ const UserList: React.FC<UserListProps> = ({ mode }) => {
       <UserTable
         users={users}
         mode={mode}
-        onApprove={mode === "pending" ? handleApprove : undefined}
-        onReject={mode === "pending" ? handleReject : undefined}
-        onDelete={mode === "all" ? handleDelete : undefined}
+        onApprove={mode === "pending" ? handleApproveUser : undefined}
+        onReject={mode === "pending" ? handleRejectUser : undefined}
+        onDelete={mode === "all" ? handleDeleteUser : undefined}
       />
     </div>
   );

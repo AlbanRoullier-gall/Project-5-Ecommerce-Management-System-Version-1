@@ -1,151 +1,31 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useRouter } from "next/router";
 import { CustomerFilters, CustomerTable } from "./";
 import ErrorAlert from "../../shared/ErrorAlert";
 import PageHeader from "../../shared/PageHeader";
 import Button from "../../shared/Button";
 import { CustomerPublicDTO } from "../../../dto";
-import { useAuth } from "../../../contexts/AuthContext";
+import { useCustomerList } from "../../../hooks";
 
 /**
- * URL de l'API depuis les variables d'environnement
- * OBLIGATOIRE : La variable NEXT_PUBLIC_API_URL doit être définie dans .env.local ou .env.production
- */
-const API_URL = (() => {
-  const url = process.env.NEXT_PUBLIC_API_URL;
-  if (!url) {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL n'est pas définie. Veuillez configurer cette variable d'environnement."
-    );
-  }
-  return url;
-})();
-
-/**
- * Composant de liste des clients
- *
- * Fonctionnalités :
- * - Affichage de la liste des clients avec filtres (recherche)
- * - Navigation vers les pages de création, édition et gestion des adresses
- * - Suppression de clients
- *
- * États gérés :
- * - Liste des clients
- * - Filtres de recherche
- * - Gestion des erreurs et chargement
+ * Composant d'affichage de la liste des clients
+ * Toute la logique métier est gérée par le hook useCustomerList
  */
 const CustomerList: React.FC = () => {
   const router = useRouter();
-
-  // États de données
-  const [customers, setCustomers] = useState<CustomerPublicDTO[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [totalCustomers, setTotalCustomers] = useState<number>(0);
-
-  // États des filtres
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // Charger les données au montage du composant
-  useEffect(() => {
-    loadCustomers();
-  }, []);
-
-  /**
-   * Effet : Recharger les clients quand le terme de recherche change
-   * Utilise un debounce pour éviter trop d'appels API
-   */
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      loadCustomers();
-    }, 300); // Debounce de 300ms
-
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]);
-
-  const { apiCall } = useAuth();
-
-  /**
-   * Charge la liste des clients depuis l'API avec filtrage côté serveur
-   * Gère les erreurs et met à jour l'état de chargement
-   */
-  const loadCustomers = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // Construire les paramètres de requête avec le terme de recherche
-      const queryParams = new URLSearchParams();
-      if (searchTerm) {
-        queryParams.set("search", searchTerm);
-      }
-
-      const response = await apiCall<{
-        data: {
-          customers: CustomerPublicDTO[];
-        };
-        message: string;
-        timestamp: string;
-        status: number;
-      }>({
-        url: `/api/admin/customers${
-          queryParams.toString() ? `?${queryParams.toString()}` : ""
-        }`,
-        method: "GET",
-        requireAuth: true,
-      });
-
-      // Format standardisé : { data: { customers: [] }, ... }
-      if (!response.data || !Array.isArray(response.data.customers)) {
-        throw new Error("Format de réponse invalide pour les clients");
-      }
-
-      const customersList = response.data.customers;
-
-      setCustomers(customersList);
-      setTotalCustomers(customersList.length);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erreur lors du chargement"
-      );
-      console.error("Error loading customers:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Supprime un client
-   * @param customerId - ID du client à supprimer
-   */
-  const handleDeleteCustomer = async (customerId: number) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce client ?")) {
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      await apiCall({
-        url: `/api/admin/customers/${customerId}`,
-        method: "DELETE",
-        requireAuth: true,
-      });
-
-      await loadCustomers();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erreur lors de la suppression"
-      );
-      console.error("Error deleting customer:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    customers,
+    totalCustomers,
+    isLoading,
+    error,
+    searchTerm,
+    setSearchTerm,
+    handleDeleteCustomer,
+    setError,
+  } = useCustomerList();
 
   /**
    * Navigue vers la page d'édition d'un client
-   * @param customer - Client à éditer
    */
   const handleEditCustomer = (customer: CustomerPublicDTO) => {
     router.push(`/customers/${customer.customerId}`);
@@ -160,10 +40,23 @@ const CustomerList: React.FC = () => {
 
   /**
    * Navigue vers la page de gestion des adresses d'un client
-   * @param customer - Client dont on veut gérer les adresses
    */
   const handleManageAddresses = (customer: CustomerPublicDTO) => {
     router.push(`/customers/${customer.customerId}/addresses`);
+  };
+
+  /**
+   * Gère la suppression d'un client avec confirmation
+   */
+  const handleDelete = async (customerId: number) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce client ?")) {
+      return;
+    }
+    try {
+      await handleDeleteCustomer(customerId);
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+    }
   };
 
   return (
@@ -203,7 +96,7 @@ const CustomerList: React.FC = () => {
       <CustomerTable
         customers={customers}
         onEdit={handleEditCustomer}
-        onDelete={handleDeleteCustomer}
+        onDelete={handleDelete}
         onManageAddresses={handleManageAddresses}
       />
     </div>

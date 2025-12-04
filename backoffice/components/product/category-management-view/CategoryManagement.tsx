@@ -7,6 +7,7 @@ import {
 import CategoryForm from "./category/CategoryForm";
 import CategoryTable from "./category/CategoryTable";
 import Button from "../../shared/Button";
+import { useCategoryForm } from "../../../hooks";
 
 /**
  * Props du composant CategoryManagement
@@ -56,91 +57,38 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] =
     useState<CategoryPublicDTO | null>(null);
-  const [formData, setFormData] = useState<
-    CategoryCreateDTO | CategoryUpdateDTO
-  >({
-    name: "",
-    description: "",
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const {
+    formData,
+    errors,
+    handleChange,
+    handleSubmit: handleFormSubmit,
+    resetForm,
+  } = useCategoryForm({ editingCategory });
+
+  // Ouvrir le formulaire quand on édite une catégorie
   useEffect(() => {
     if (editingCategory) {
-      setFormData({
-        name: editingCategory.name,
-        description: editingCategory.description || "",
-      });
       setIsFormOpen(true);
     }
   }, [editingCategory]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
-
-  const validate = async (): Promise<boolean> => {
-    try {
-      const API_URL =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
-      const response = await fetch(`${API_URL}/api/categories/validate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await response.json();
-
-      if (!result.isValid && result.errors) {
-        const newErrors: Record<string, string> = {};
-        result.errors.forEach((error: { field: string; message: string }) => {
-          newErrors[error.field] = error.message;
-        });
-        setErrors(newErrors);
-        return false;
-      }
-
-      setErrors({});
-      return true;
-    } catch (error) {
-      console.error("Erreur lors de la validation:", error);
-      setErrors({ _general: "Erreur lors de la validation" });
-      return false;
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const isValid = await validate();
-    if (!isValid) {
-      return;
-    }
-
-    if (editingCategory) {
-      onUpdateCategory(editingCategory.id, formData);
-    } else {
-      onAddCategory(formData as CategoryCreateDTO);
-    }
-
-    handleCancel();
+    await handleFormSubmit((data, isEdit) => {
+      if (isEdit && editingCategory) {
+        onUpdateCategory(editingCategory.id, data);
+      } else {
+        onAddCategory(data as CategoryCreateDTO);
+      }
+      handleCancel();
+    });
   };
 
   const handleCancel = () => {
     setIsFormOpen(false);
     setEditingCategory(null);
-    setFormData({ name: "", description: "" });
-    setErrors({});
+    resetForm();
   };
 
   const handleEdit = (category: CategoryPublicDTO) => {

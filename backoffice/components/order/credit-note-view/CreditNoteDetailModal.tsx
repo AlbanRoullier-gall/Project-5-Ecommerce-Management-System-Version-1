@@ -1,12 +1,8 @@
 import React from "react";
 import { Button, Modal, ItemDisplayTable } from "../../shared";
-import {
-  CreditNotePublicDTO,
-  CreditNoteItemPublicDTO,
-  OrderPublicDTO,
-} from "../../../dto";
+import { CreditNotePublicDTO, OrderPublicDTO } from "../../../dto";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
-import { useAuth } from "../../../contexts/AuthContext";
+import { useCreditNoteDetail } from "../../../hooks";
 
 interface CreditNoteDetailModalProps {
   isOpen: boolean;
@@ -16,6 +12,10 @@ interface CreditNoteDetailModalProps {
   onDelete?: (creditNoteId: number) => void;
 }
 
+/**
+ * Composant d'affichage du détail d'un avoir
+ * Toute la logique métier est gérée par le hook useCreditNoteDetail
+ */
 const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
   isOpen,
   creditNote,
@@ -23,46 +23,9 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
   onClose,
   onDelete,
 }) => {
-  const { apiCall } = useAuth();
-  const [items, setItems] = React.useState<CreditNoteItemPublicDTO[]>([]);
-  const [itemsLoading, setItemsLoading] = React.useState(false);
-  const [itemsError, setItemsError] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    const loadItems = async () => {
-      if (!creditNote?.id) return;
-      setItems([]);
-      setItemsError(null);
-      setItemsLoading(true);
-      try {
-        const json = await apiCall<{
-          data?: { creditNoteItems?: CreditNoteItemPublicDTO[] };
-          creditNoteItems?: CreditNoteItemPublicDTO[];
-        }>({
-          url: `/api/admin/credit-notes/${creditNote.id}/items`,
-          method: "GET",
-          requireAuth: true,
-        });
-        // Format standardisé : { data: { creditNoteItems: [], count } }, ... }
-        if (!json.data || !Array.isArray(json.data.creditNoteItems)) {
-          throw new Error(
-            "Format de réponse invalide pour les articles d'avoir"
-          );
-        }
-        const list: CreditNoteItemPublicDTO[] = json.data.creditNoteItems;
-        setItems(list);
-      } catch (e) {
-        setItemsError(
-          e instanceof Error
-            ? e.message
-            : "Erreur chargement des articles d'avoir"
-        );
-      } finally {
-        setItemsLoading(false);
-      }
-    };
-    loadItems();
-  }, [creditNote?.id, apiCall]);
+  const { items, itemsLoading, itemsError } = useCreditNoteDetail(
+    creditNote?.id || null
+  );
 
   if (!isOpen || !creditNote) return null;
 

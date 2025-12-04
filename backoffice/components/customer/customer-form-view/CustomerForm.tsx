@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   CustomerPublicDTO,
   CustomerCreateDTO,
@@ -6,6 +6,7 @@ import {
 } from "../../../dto";
 import FormInput from "../../shared/form/FormInput";
 import FormActions from "../../shared/form/FormActions";
+import { useCustomerForm } from "../../../hooks";
 
 /**
  * Props du composant CustomerForm
@@ -23,7 +24,7 @@ interface CustomerFormProps {
 
 /**
  * Composant formulaire de création/édition de client
- * Gère la validation et la soumission des données
+ * Composant présentatif uniquement - toute la logique est dans useCustomerForm
  */
 const CustomerForm: React.FC<CustomerFormProps> = ({
   customer,
@@ -31,116 +32,13 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
   onCancel,
   isLoading,
 }) => {
-  const [formData, setFormData] = useState<CustomerCreateDTO>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phoneNumber: "",
+  const { formData, errors, handleChange, handleSubmit } = useCustomerForm({
+    customer,
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Initialiser le formulaire avec les données du client en édition
-  useEffect(() => {
-    if (customer) {
-      setFormData({
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        email: customer.email,
-        phoneNumber: customer.phoneNumber || "",
-      });
-    }
-  }, [customer]);
-
-  /**
-   * Gère les changements dans les champs du formulaire
-   */
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    // Effacer l'erreur du champ modifié
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
-
-  /**
-   * Valide le formulaire via l'API backend
-   * @returns Promise<boolean> true si le formulaire est valide
-   */
-  const validate = async (): Promise<boolean> => {
-    try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
-      const response = await fetch(`${API_URL}/api/customers/validate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await response.json();
-
-      if (!result.isValid && result.errors) {
-    const newErrors: Record<string, string> = {};
-        result.errors.forEach((error: { field: string; message: string }) => {
-          newErrors[error.field] = error.message;
-        });
-        setErrors(newErrors);
-        return false;
-      }
-
-      setErrors({});
-      return true;
-    } catch (error) {
-      console.error("Erreur lors de la validation:", error);
-      setErrors({ _general: "Erreur lors de la validation" });
-      return false;
-    }
-  };
-
-  /**
-   * Gère la soumission du formulaire
-   */
-  const handleSubmit = async (e: React.FormEvent) => {
+  const onSubmitHandler = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const isValid = await validate();
-    if (!isValid) {
-      return;
-    }
-
-    if (customer) {
-      // Mode édition : envoyer seulement les champs modifiés
-      const updateData: CustomerUpdateDTO = {};
-      if (formData.firstName !== customer.firstName) {
-        updateData.firstName = formData.firstName;
-      }
-      if (formData.lastName !== customer.lastName) {
-        updateData.lastName = formData.lastName;
-      }
-      if (formData.email !== customer.email) {
-        updateData.email = formData.email;
-      }
-      if (formData.phoneNumber !== customer.phoneNumber) {
-        updateData.phoneNumber = formData.phoneNumber || undefined;
-      }
-
-      onSubmit(updateData);
-    } else {
-      // Mode création : envoyer tous les champs
-      onSubmit({
-        ...formData,
-        phoneNumber: formData.phoneNumber || undefined,
-      });
-    }
+    await handleSubmit(onSubmit);
   };
 
   return (
@@ -171,7 +69,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
       </h2>
 
       <form
-        onSubmit={handleSubmit}
+        onSubmit={onSubmitHandler}
         style={{
           display: "grid",
           gap: "1.5rem",
