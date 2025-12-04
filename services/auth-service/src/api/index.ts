@@ -138,14 +138,15 @@ export class ApiRouter {
           "string.empty": "Le token est requis",
           "any.required": "Le token est requis",
         }),
-        password: Joi.string()
+        newPassword: Joi.string()
           .min(8)
           .required()
-          .label("Mot de passe")
+          .label("Nouveau mot de passe")
           .messages({
-            "string.empty": "Le mot de passe est requis",
-            "string.min": "Le mot de passe doit contenir au moins 8 caractères",
-            "any.required": "Le mot de passe est requis",
+            "string.empty": "Le nouveau mot de passe est requis",
+            "string.min":
+              "Le nouveau mot de passe doit contenir au moins 8 caractères",
+            "any.required": "Le nouveau mot de passe est requis",
           }),
       }),
     };

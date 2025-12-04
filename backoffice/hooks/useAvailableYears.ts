@@ -4,14 +4,14 @@
  */
 
 import { useState, useEffect } from "react";
-import { useAuth } from "../contexts/AuthContext";
+import { apiClient } from "../services/apiClient";
+import { ApiResponse } from "../services/apiClient";
 
 /**
  * Hook pour récupérer les années disponibles depuis l'API
  * @returns {number[]} Liste des années disponibles
  */
 export const useAvailableYears = (): number[] => {
-  const { apiCall } = useAuth();
   const [availableYears, setAvailableYears] = useState<number[]>([]);
 
   useEffect(() => {
@@ -19,13 +19,11 @@ export const useAvailableYears = (): number[] => {
       try {
         // Récupérer les années depuis l'endpoint dashboard avec l'année actuelle
         const currentYear = new Date().getFullYear();
-        const response = await apiCall<{
-          data: {
+        const response = await apiClient.get<
+          ApiResponse<{
             availableYears?: number[];
-          };
-        }>({
-          url: `/api/admin/statistics/dashboard?year=${currentYear}`,
-          method: "GET",
+          }>
+        >(`/api/admin/statistics/dashboard?year=${currentYear}`, {
           requireAuth: true,
         });
 
@@ -41,7 +39,7 @@ export const useAvailableYears = (): number[] => {
     };
 
     fetchAvailableYears();
-  }, [apiCall]);
+  }, []);
 
   return availableYears;
 };

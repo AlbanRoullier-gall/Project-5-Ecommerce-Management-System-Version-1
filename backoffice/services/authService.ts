@@ -11,7 +11,6 @@ import {
   PasswordResetDTO,
   PasswordValidationDTO,
 } from "../dto";
-import { ApiResponse } from "./apiClient";
 
 /**
  * Résultat d'une opération d'authentification
@@ -98,6 +97,7 @@ export async function verifyAuth(): Promise<{
 
 /**
  * Connecte l'utilisateur avec email et mot de passe
+ * L'API Gateway retourne directement { message, user } depuis le service auth
  */
 export async function login(
   email: string,
@@ -109,24 +109,22 @@ export async function login(
       password,
     };
 
-    const response = await apiClient.post<
-      ApiResponse<{
-        success: boolean;
-        user: UserPublicDTO;
-        message?: string;
-      }>
-    >(`/api/auth/login`, loginRequest, { requireAuth: false });
+    // L'API Gateway retourne directement { message, user } (pas de wrapper ApiResponse)
+    const response = await apiClient.post<{
+      message: string;
+      user: UserPublicDTO;
+    }>(`/api/auth/login`, loginRequest, { requireAuth: false });
 
-    if (response.data && response.data.user) {
+    if (response.user) {
       return {
         success: true,
-        user: response.data.user,
-        message: response.data.message,
+        user: response.user,
+        message: response.message,
       };
     } else {
       return {
         success: false,
-        error: response.data?.message || "Erreur de connexion",
+        error: response.message || "Erreur de connexion",
       };
     }
   } catch (error: any) {
@@ -146,31 +144,30 @@ export async function logout(): Promise<void> {
 
 /**
  * Inscrit un nouvel utilisateur
+ * L'API Gateway retourne directement { message, user } depuis le service auth
  */
 export async function register(
   userData: UserCreateDTO
 ): Promise<AuthOperationResult> {
   try {
-    const response = await apiClient.post<
-      ApiResponse<{
-        success: boolean;
-        user: UserPublicDTO;
-        message?: string;
-      }>
-    >(`/api/auth/register`, userData, { requireAuth: false });
+    // L'API Gateway retourne directement { message, user } (pas de wrapper ApiResponse)
+    const response = await apiClient.post<{
+      message: string;
+      user: UserPublicDTO;
+    }>(`/api/auth/register`, userData, { requireAuth: false });
 
-    if (response.data && response.data.user) {
+    if (response.user) {
       return {
         success: true,
-        user: response.data.user,
+        user: response.user,
         message:
-          response.data.message ||
+          response.message ||
           "Compte créé avec succès ! Un administrateur doit approuver votre accès au backoffice.",
       };
     } else {
       return {
         success: false,
-        error: response.data?.message || "Erreur lors de la création du compte",
+        error: response.message || "Erreur lors de la création du compte",
       };
     }
   } catch (error: any) {
@@ -213,6 +210,7 @@ export async function requestPasswordReset(
 
 /**
  * Confirme la réinitialisation de mot de passe
+ * L'API Gateway retourne directement { success, message } depuis le service auth
  */
 export async function confirmPasswordReset(
   token: string,
@@ -224,25 +222,25 @@ export async function confirmPasswordReset(
       newPassword,
     };
 
-    const response = await apiClient.post<
-      ApiResponse<{
-        success: boolean;
-        message?: string;
-      }>
-    >(`/api/auth/reset-password/confirm`, resetRequest, {
+    // L'API Gateway retourne directement { success, message } (pas de wrapper ApiResponse)
+    const response = await apiClient.post<{
+      success: boolean;
+      message?: string;
+    }>(`/api/auth/reset-password/confirm`, resetRequest, {
       requireAuth: false,
     });
 
-    if (response.data && response.data.success) {
+    if (response.success) {
       return {
         success: true,
         message:
+          response.message ||
           "Mot de passe réinitialisé avec succès ! Vous pouvez maintenant vous connecter.",
       };
     } else {
       return {
         success: false,
-        error: response.data?.message || "Erreur lors de la réinitialisation",
+        error: response.message || "Erreur lors de la réinitialisation",
       };
     }
   } catch (error: any) {
@@ -255,6 +253,7 @@ export async function confirmPasswordReset(
 
 /**
  * Valide un mot de passe via l'API backend
+ * L'API retourne directement { success, valid, isValid, errors, message }
  */
 export async function validatePassword(
   password: string,
@@ -266,24 +265,23 @@ export async function validatePassword(
       ...(confirmPassword !== undefined && { confirmPassword }),
     };
 
-    const response = await apiClient.post<
-      ApiResponse<{
-        success: boolean;
-        valid: boolean;
-        isValid: boolean;
-        errors?: string[];
-        message?: string;
-      }>
-    >(`/api/auth/validate-password`, validationRequest, {
+    // L'API retourne directement { success, valid, isValid, errors, message } (pas de wrapper ApiResponse)
+    const response = await apiClient.post<{
+      success: boolean;
+      valid: boolean;
+      isValid: boolean;
+      errors?: string[];
+      message?: string;
+    }>(`/api/auth/validate-password`, validationRequest, {
       requireAuth: false,
     });
 
-    if (response.data && response.data.success) {
-      const isValid = response.data.valid ?? response.data.isValid ?? false;
+    if (response.success) {
+      const isValid = response.valid ?? response.isValid ?? false;
       const errorMessage =
-        response.data.errors && response.data.errors.length > 0
-          ? response.data.errors.join("; ")
-          : response.data.message || "Mot de passe invalide";
+        response.errors && response.errors.length > 0
+          ? response.errors.join("; ")
+          : response.message || "Mot de passe invalide";
 
       return {
         isValid,
@@ -293,8 +291,7 @@ export async function validatePassword(
       return {
         isValid: false,
         error:
-          response.data?.message ||
-          "Erreur lors de la validation du mot de passe",
+          response.message || "Erreur lors de la validation du mot de passe",
       };
     }
   } catch (error: any) {

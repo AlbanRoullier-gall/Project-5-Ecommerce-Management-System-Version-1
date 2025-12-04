@@ -111,6 +111,7 @@ export const handlePasswordResetConfirm = async (
     }
 
     // Appel direct au Auth Service (la validation du mot de passe est gérée par le service)
+    // Le DTO attend { token, newPassword } et non { token, password }
     const authResponse = await fetch(
       `${SERVICES.auth}/api/auth/reset-password/confirm`,
       {
@@ -119,7 +120,7 @@ export const handlePasswordResetConfirm = async (
           "Content-Type": "application/json",
           "X-Service-Request": "api-gateway",
         },
-        body: JSON.stringify({ token, password: newPassword }),
+        body: JSON.stringify({ token, newPassword }),
       }
     );
 

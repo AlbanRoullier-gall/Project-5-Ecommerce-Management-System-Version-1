@@ -51,14 +51,29 @@ export interface ApiResponse<T = any> {
 }
 
 /**
+ * Callback pour gérer les erreurs 401 (non autorisé)
+ * Permet de forcer une déconnexion quand l'utilisateur n'est plus autorisé
+ */
+export type OnUnauthorizedCallback = () => void | Promise<void>;
+
+/**
  * Client API avec gestion centralisée des erreurs et headers
  * Gère l'authentification via cookies httpOnly
  */
 class ApiClient {
   private baseUrl: string;
+  private onUnauthorizedCallback: OnUnauthorizedCallback | null = null;
 
   constructor() {
     this.baseUrl = getBaseUrl();
+  }
+
+  /**
+   * Configure le callback appelé en cas d'erreur 401 (utilisateur non autorisé)
+   * Utile pour forcer une déconnexion quand l'utilisateur a été supprimé
+   */
+  setOnUnauthorized(callback: OnUnauthorizedCallback | null): void {
+    this.onUnauthorizedCallback = callback;
   }
 
   /**
@@ -104,6 +119,7 @@ class ApiClient {
 
   /**
    * Gère les erreurs HTTP
+   * En cas d'erreur 401, appelle le callback de déconnexion si configuré
    */
   private async handleError(response: Response): Promise<never> {
     let errorData: any = {};
@@ -116,6 +132,16 @@ class ApiClient {
       }
     } catch {
       errorData = { message: "Erreur inconnue" };
+    }
+
+    // Si erreur 401 (non autorisé), appeler le callback de déconnexion
+    // Cela permet de forcer une déconnexion si l'utilisateur a été supprimé
+    if (response.status === 401 && this.onUnauthorizedCallback) {
+      try {
+        await this.onUnauthorizedCallback();
+      } catch (callbackError) {
+        console.error("Error in onUnauthorized callback:", callbackError);
+      }
     }
 
     const error = new Error(

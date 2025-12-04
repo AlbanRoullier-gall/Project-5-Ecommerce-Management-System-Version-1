@@ -14,3 +14,4 @@ export function categoriesToOptions(categories: CategoryPublicDTO[]) {
     label: cat.name,
   }));
 }
+

@@ -202,7 +202,7 @@ export default class EmailService {
     try {
       const subject =
         "Réinitialisation de votre mot de passe - Nature de Pierre";
-      const message = `
+      const htmlMessage = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #13686a;">Réinitialisation de votre mot de passe</h2>
           <p>Bonjour ${data.userName},</p>
@@ -224,15 +224,35 @@ export default class EmailService {
         </div>
       `;
 
-      const emailData = {
-        to: { email: data.email, name: data.userName },
-        subject,
-        message,
-        clientName: "Nature de Pierre",
-        clientEmail: "admin@naturedepierre.com",
+      const textMessage = `
+Réinitialisation de votre mot de passe - Nature de Pierre
+
+Bonjour ${data.userName},
+
+Vous avez demandé la réinitialisation de votre mot de passe pour votre compte Nature de Pierre.
+
+Pour réinitialiser votre mot de passe, cliquez sur le lien ci-dessous :
+${data.resetUrl}?token=${data.token}
+
+Ce lien est valide pendant 15 minutes.
+
+Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.
+
+---
+Nature de Pierre - Interface d'administration
+Cet email a été envoyé automatiquement, merci de ne pas y répondre.
+      `;
+
+      // Envoyer directement à l'utilisateur (pas via sendClientEmail qui envoie à l'admin)
+      const mailOptions = {
+        from: process.env.GMAIL_USER,
+        to: data.email, // Envoyer à l'adresse de l'utilisateur qui demande la réinitialisation
+        subject: subject,
+        html: htmlMessage,
+        text: textMessage,
       };
 
-      const result = await this.sendClientEmail(emailData);
+      const result = await this.transporter.sendMail(mailOptions);
 
       return {
         messageId: result.messageId,

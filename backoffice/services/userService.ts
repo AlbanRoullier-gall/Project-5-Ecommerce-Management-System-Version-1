@@ -53,3 +53,4 @@ export async function rejectUser(userId: number): Promise<void> {
 export async function deleteUser(userId: number): Promise<void> {
   await apiClient.delete(`/api/admin/users/${userId}`);
 }
+
