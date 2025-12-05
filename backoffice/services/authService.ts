@@ -139,7 +139,7 @@ export async function login(
  * Déconnecte l'utilisateur
  */
 export async function logout(): Promise<void> {
-  await apiClient.post(`/api/admin/auth/logout`);
+  await apiClient.post(`/api/auth/logout`, undefined, { requireAuth: false });
 }
 
 /**

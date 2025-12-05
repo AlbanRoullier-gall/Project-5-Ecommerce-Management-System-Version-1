@@ -14,7 +14,6 @@ import {
   validateAddresses as validateAddressesService,
   validateCustomerData as validateCustomerDataService,
   completeCheckout,
-  type CheckoutData,
   type AddressValidationResult,
   type CustomerValidationResult,
   type CompleteOrderResult,
@@ -36,6 +35,7 @@ interface CheckoutContextType {
   // Données
   customerData: CustomerResolveOrCreateDTO;
   addressData: AddressesCreateDTO;
+  isLoading: boolean;
 
   // Actions générales
   updateCustomerData: (data: CustomerResolveOrCreateDTO) => void;
@@ -126,31 +126,24 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   }, [isInitialized]);
 
   /**
-   * Sauvegarde les données checkout sur le serveur
-   * Le sessionId est géré automatiquement via cookie httpOnly
-   */
-  const saveToServer = useCallback(async (data: CheckoutData) => {
-    try {
-      await saveCheckoutDataService(data);
-    } catch (error) {
-      logger.error("Error saving checkout data to server", error);
-      throw error; // Propager l'erreur pour que l'appelant puisse la gérer
-    }
-  }, []);
-
-  /**
    * Sauvegarde explicite des données checkout actuelles
    * À appeler avant la navigation entre étapes du checkout
+   * Le sessionId est géré automatiquement via cookie httpOnly
    */
   const saveCheckoutData = useCallback(async () => {
     if (!isInitialized) {
       return; // Ne pas sauvegarder si le contexte n'est pas encore initialisé
     }
-    await saveToServer({
-      customerData,
-      addressData,
-    });
-  }, [customerData, addressData, isInitialized, saveToServer]);
+    try {
+      await saveCheckoutDataService({
+        customerData,
+        addressData,
+      });
+    } catch (error) {
+      logger.error("Error saving checkout data to server", error);
+      throw error; // Propager l'erreur pour que l'appelant puisse la gérer
+    }
+  }, [customerData, addressData, isInitialized]);
 
   /**
    * Met à jour les données client
@@ -166,28 +159,50 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   );
 
   /**
+   * Fonction utilitaire pour préserver countryName lors de la mise à jour d'une adresse
+   * Le countryName sera géré automatiquement par le service si non fourni
+   */
+  const preserveCountryName = useCallback(
+    (currentAddress: Record<string, any> | undefined): Record<string, any> => {
+      return currentAddress?.countryName
+        ? { countryName: currentAddress.countryName }
+        : {};
+    },
+    []
+  );
+
+  /**
+   * Met à jour un champ d'une adresse (livraison ou facturation)
+   * Centralise la logique pour éviter la duplication
+   */
+  const updateAddressField = useCallback(
+    (type: "shipping" | "billing", field: string, value: string) => {
+      const currentAddress = addressData[type];
+      const updated = {
+        ...addressData,
+        [type]: {
+          ...currentAddress,
+          [field]: value,
+          ...preserveCountryName(currentAddress),
+        },
+        // Ne pas modifier l'autre adresse
+        ...(type === "shipping" && { billing: addressData.billing }),
+      };
+      setAddressData(updated);
+    },
+    [addressData, preserveCountryName]
+  );
+
+  /**
    * Met à jour un champ spécifique de l'adresse de livraison
    * Utilise AddressesCreateDTO directement
    * Ne sauvegarde plus automatiquement - la sauvegarde se fait lors de la navigation entre étapes
    */
   const updateShippingField = useCallback(
     (field: string, value: string) => {
-      const updated = {
-        ...addressData,
-        shipping: {
-          ...addressData.shipping,
-          [field]: value,
-          // countryName sera géré automatiquement par le service si non fourni
-          ...(addressData.shipping?.countryName && {
-            countryName: addressData.shipping.countryName,
-          }),
-        },
-        // Ne pas copier automatiquement vers billing - la copie se fait uniquement via setUseSameBillingAddress
-        billing: addressData.billing,
-      };
-      setAddressData(updated);
+      updateAddressField("shipping", field, value);
     },
-    [addressData]
+    [updateAddressField]
   );
 
   /**
@@ -197,20 +212,9 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
    */
   const updateBillingField = useCallback(
     (field: string, value: string) => {
-      const updated = {
-        ...addressData,
-        billing: {
-          ...addressData.billing,
-          [field]: value,
-          // countryName sera géré automatiquement par le service si non fourni
-          ...(addressData.billing?.countryName && {
-            countryName: addressData.billing.countryName,
-          }),
-        },
-      };
-      setAddressData(updated);
+      updateAddressField("billing", field, value);
     },
-    [addressData]
+    [updateAddressField]
   );
 
   /**
@@ -291,6 +295,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   const value: CheckoutContextType = {
     customerData,
     addressData,
+    isLoading,
     updateCustomerData,
     saveCheckoutData,
     updateShippingField,

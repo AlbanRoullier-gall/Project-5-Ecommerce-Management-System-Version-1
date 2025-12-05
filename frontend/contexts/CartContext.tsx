@@ -3,6 +3,8 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useCallback,
+  useMemo,
   ReactNode,
 } from "react";
 import {
@@ -76,183 +78,171 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [cart, setCart] = useState<CartPublicDTO | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   /**
    * Extrait les totaux directement depuis le panier fourni par le cart-service
    * Le cart-service garantit toujours ces valeurs (subtotal, tax, total, vatBreakdown)
+   * Mémorisé pour éviter les recalculs inutiles
    */
-  const totals: CartTotals = cart
-    ? {
-        totalHT: cart.subtotal,
-        totalTTC: cart.total,
-        vatAmount: cart.tax,
-        breakdown: cart.vatBreakdown,
-      }
-    : {
-        totalHT: 0,
-        totalTTC: 0,
-        vatAmount: 0,
-        breakdown: [],
-      };
-
-  /**
-   * Initialise la session du panier
-   * Le sessionId est maintenant géré automatiquement via cookie httpOnly
-   * Plus besoin de localStorage ou de génération côté client
-   * Le premier appel API créera automatiquement le cookie
-   */
-  useEffect(() => {
-    // S'assurer qu'on est bien côté client
-    if (typeof window === "undefined") return;
-
-    // Le sessionId sera géré automatiquement par le cookie httpOnly
-    // On peut charger le panier directement - le middleware créera le cookie si nécessaire
-    // On utilise un flag pour indiquer que la session est initialisée
-    setSessionId("initialized"); // Flag pour indiquer que c'est prêt
-  }, []);
-
-  /**
-   * Charge le panier au montage
-   * Le sessionId est géré automatiquement via cookie httpOnly
-   */
-  useEffect(() => {
-    if (sessionId === "initialized") {
-      refreshCart();
-    }
-  }, [sessionId]);
+  const totals: CartTotals = useMemo(
+    () =>
+      cart
+        ? {
+            totalHT: cart.subtotal,
+            totalTTC: cart.total,
+            vatAmount: cart.tax,
+            breakdown: cart.vatBreakdown,
+          }
+        : {
+            totalHT: 0,
+            totalTTC: 0,
+            vatAmount: 0,
+            breakdown: [],
+          },
+    [cart]
+  );
 
   /**
    * Utilise le nombre total d'articles calculé côté serveur
    * Le cart-service calcule déjà itemCount (somme des quantités)
+   * Mémorisé pour éviter les recalculs inutiles
    */
-  const itemCount = cart?.itemCount || 0;
+  const itemCount = useMemo(() => cart?.itemCount || 0, [cart]);
+
+  /**
+   * Fonction utilitaire pour exécuter une opération avec gestion du loading et des erreurs
+   * Centralise la logique répétitive de gestion d'état
+   */
+  const executeWithLoading = useCallback(
+    async <T,>(
+      operation: () => Promise<T>,
+      errorMessage: string
+    ): Promise<T> => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        return await operation();
+      } catch (err) {
+        logger.error(errorMessage, err);
+        const errorMsg = err instanceof Error ? err.message : errorMessage;
+        setError(errorMsg);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
 
   /**
    * Récupère le panier depuis l'API
    * Le sessionId est géré automatiquement via cookie httpOnly
    */
-  const refreshCart = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const refreshCart = useCallback(async () => {
+    await executeWithLoading(async () => {
       const cart = await getCart();
       setCart(cart);
-    } catch (err) {
-      logger.error("Erreur lors du chargement du panier", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Erreur lors du chargement du panier"
-      );
-    } finally {
-      setIsLoading(false);
+    }, "Erreur lors du chargement du panier");
+  }, [executeWithLoading]);
+
+  /**
+   * Initialise la session du panier au montage
+   * Le sessionId est géré automatiquement via cookie httpOnly
+   */
+  useEffect(() => {
+    // S'assurer qu'on est bien côté client
+    if (typeof window === "undefined") return;
+
+    setIsInitialized(true);
+  }, []);
+
+  /**
+   * Charge le panier au montage une fois initialisé
+   * Le sessionId est géré automatiquement via cookie httpOnly
+   */
+  useEffect(() => {
+    if (isInitialized) {
+      refreshCart();
     }
-  };
+  }, [isInitialized, refreshCart]);
 
   /**
    * Ajoute un article au panier
    * Le sessionId est géré automatiquement via cookie httpOnly
    */
-  const addToCart = async (
-    productId: number,
-    quantity: number,
-    priceTTC: number,
-    vatRate: number,
-    productName: string, // Requis et non vide
-    description?: string,
-    imageUrl?: string
-  ) => {
-    setIsLoading(true);
-    setError(null);
+  const addToCart = useCallback(
+    async (
+      productId: number,
+      quantity: number,
+      priceTTC: number,
+      vatRate: number,
+      productName: string, // Requis et non vide
+      description?: string,
+      imageUrl?: string
+    ) => {
+      await executeWithLoading(async () => {
+        // Créer le DTO pour l'ajout d'article
+        const itemData: CartItemCreateDTO = {
+          productId,
+          productName,
+          description,
+          imageUrl,
+          quantity,
+          unitPriceTTC: priceTTC,
+          vatRate,
+        };
 
-    try {
-      // Créer le DTO pour l'ajout d'article
-      const itemData: CartItemCreateDTO = {
-        productId,
-        productName,
-        description,
-        imageUrl,
-        quantity,
-        unitPriceTTC: priceTTC,
-        vatRate,
-      };
-
-      // Le service gère automatiquement la réponse et le rechargement si nécessaire
-      const updatedCart = await addCartItem(itemData);
-      setCart(updatedCart);
-    } catch (err) {
-      logger.error("Erreur lors de l'ajout au panier", err);
-      setError(
-        err instanceof Error ? err.message : "Erreur lors de l'ajout au panier"
-      );
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        // Le service gère automatiquement la réponse et le rechargement si nécessaire
+        const updatedCart = await addCartItem(itemData);
+        setCart(updatedCart);
+      }, "Erreur lors de l'ajout au panier");
+    },
+    [executeWithLoading]
+  );
 
   /**
    * Met à jour la quantité d'un article
    * Le sessionId est géré automatiquement via cookie httpOnly
    */
-  const updateQuantity = async (productId: number, quantity: number) => {
-    setIsLoading(true);
-    setError(null);
+  const updateQuantity = useCallback(
+    async (productId: number, quantity: number) => {
+      await executeWithLoading(async () => {
+        // Créer le DTO pour la mise à jour d'article
+        const updateData: CartItemUpdateDTO = {
+          quantity,
+        };
 
-    try {
-      // Créer le DTO pour la mise à jour d'article
-      const updateData: CartItemUpdateDTO = {
-        quantity,
-      };
-
-      // Le service recharge automatiquement le panier
-      const updatedCart = await updateCartItem(productId, updateData);
-      setCart(updatedCart);
-    } catch (err) {
-      logger.error("Erreur lors de la mise à jour de la quantité", err);
-      setError(
-        err instanceof Error ? err.message : "Erreur lors de la mise à jour"
-      );
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        // Le service recharge automatiquement le panier
+        const updatedCart = await updateCartItem(productId, updateData);
+        setCart(updatedCart);
+      }, "Erreur lors de la mise à jour de la quantité");
+    },
+    [executeWithLoading]
+  );
 
   /**
    * Supprime un article du panier
    * Le sessionId est géré automatiquement via cookie httpOnly
    */
-  const removeFromCart = async (productId: number) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await removeCartItem(productId);
-      // Recharger le panier après suppression
-      await refreshCart();
-    } catch (err) {
-      logger.error("Erreur lors de la suppression de l'article", err);
-      setError(
-        err instanceof Error ? err.message : "Erreur lors de la suppression"
-      );
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const removeFromCart = useCallback(
+    async (productId: number) => {
+      await executeWithLoading(async () => {
+        await removeCartItem(productId);
+        // Recharger le panier après suppression
+        await refreshCart();
+      }, "Erreur lors de la suppression de l'article");
+    },
+    [executeWithLoading, refreshCart]
+  );
 
   /**
    * Vide complètement le panier
    * Le sessionId est géré automatiquement via cookie httpOnly
    */
-  const clearCart = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const clearCart = useCallback(async () => {
+    await executeWithLoading(async () => {
       // Créer le DTO pour le vidage de panier (le sessionId sera extrait du cookie par le serveur)
       const clearData: CartClearDTO = {
         sessionId: "", // Sera ignoré côté serveur, extrait du cookie httpOnly
@@ -260,16 +250,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
       await clearCartService(clearData);
       setCart(null);
-    } catch (err) {
-      logger.error("Erreur lors du vidage du panier", err);
-      setError(
-        err instanceof Error ? err.message : "Erreur lors du vidage du panier"
-      );
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    }, "Erreur lors du vidage du panier");
+  }, [executeWithLoading]);
 
   const value: CartContextType = {
     cart,

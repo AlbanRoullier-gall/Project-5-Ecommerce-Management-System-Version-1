@@ -6,6 +6,8 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useMemo,
+  useRef,
 } from "react";
 import { useRouter } from "next/router";
 import { UserPublicDTO, UserCreateDTO } from "../dto";
@@ -21,25 +23,20 @@ import {
   type PasswordValidationResult,
 } from "../services/authService";
 import { apiClient } from "../services/apiClient";
+import { API_URL } from "../config/api";
+export type {
+  AuthOperationResult,
+  PasswordValidationResult,
+} from "../config/api";
 
-/**
- * URL de l'API centralisée (exporté pour compatibilité)
- */
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
-
-/**
- * Réexporter les types pour compatibilité
- */
-export type { AuthOperationResult, PasswordValidationResult };
+// Réexporter API_URL pour compatibilité
+export { API_URL };
 
 /**
  * État d'authentification
  */
 interface AuthState {
-  /** Flag d'authentification (le token est dans un cookie httpOnly) */
-  token: string | null;
-  /** Données utilisateur */
+  /** Données utilisateur (null si non authentifié, le token est dans un cookie httpOnly) */
   user: UserPublicDTO | null;
   /** État de chargement */
   isLoading: boolean;
@@ -52,13 +49,11 @@ interface AuthState {
  */
 interface AuthContextType extends AuthState {
   /** Connecte l'utilisateur (met à jour l'état local) */
-  login: (token: string, user: UserPublicDTO) => void;
+  login: (user: UserPublicDTO) => void;
   /** Déconnecte l'utilisateur */
   logout: () => void;
   /** Vérifie l'authentification depuis le serveur (cookie httpOnly) */
   checkAuth: () => void;
-  /** Récupère le flag d'authentification */
-  getAuthToken: () => string | null;
   /** Connecte l'utilisateur avec email et mot de passe (appel API) */
   loginWithCredentials: (
     email: string,
@@ -103,9 +98,38 @@ interface AuthProviderProps {
  */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const router = useRouter();
-  const [token, setToken] = useState<string | null>(null);
+  const routerRef = useRef(router);
+  const userRef = useRef<UserPublicDTO | null>(null);
   const [user, setUser] = useState<UserPublicDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Garder une référence stable du router pour le callback
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
+
+  // Garder une référence stable de l'utilisateur pour le callback
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  /**
+   * Nettoie l'état d'authentification
+   * Centralise la logique de nettoyage pour éviter la duplication
+   */
+  const clearAuthState = useCallback(() => {
+    setUser(null);
+    userRef.current = null;
+  }, []);
+
+  /**
+   * Met à jour l'utilisateur et sa référence
+   * Centralise la logique de mise à jour pour éviter la duplication
+   */
+  const setUserAndRef = useCallback((newUser: UserPublicDTO | null) => {
+    setUser(newUser);
+    userRef.current = newUser;
+  }, []);
 
   /**
    * Vérifie l'authentification depuis le serveur (cookie httpOnly)
@@ -116,33 +140,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const data = await verifyAuth();
 
       if (data.success && data.isAuthenticated && data.user) {
-        setUser(data.user);
-        setToken("authenticated"); // Flag pour indiquer qu'on est authentifié
+        setUserAndRef(data.user);
       } else {
-        setToken(null);
-        setUser(null);
+        clearAuthState();
       }
     } catch (error) {
       console.error(
         "Erreur lors de la vérification de l'authentification:",
         error
       );
-      setToken(null);
-      setUser(null);
+      clearAuthState();
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setUserAndRef, clearAuthState]);
 
   /**
    * Connecte l'utilisateur (met à jour l'état local)
    * Le token est dans un cookie httpOnly, on met juste à jour l'état
    */
-  const login = useCallback((_newToken: string, newUser: UserPublicDTO) => {
-    setToken("authenticated"); // Flag pour indiquer qu'on est authentifié
-    setUser(newUser);
-    setIsLoading(false);
-  }, []);
+  const login = useCallback(
+    (newUser: UserPublicDTO) => {
+      setUserAndRef(newUser);
+      setIsLoading(false);
+    },
+    [setUserAndRef]
+  );
 
   /**
    * Déconnecte l'utilisateur
@@ -155,18 +178,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error("Erreur lors de la déconnexion:", error);
     } finally {
       // Mettre à jour l'état local même si l'appel API échoue
-      setToken(null);
-      setUser(null);
-      router.push("/auth/login");
+      clearAuthState();
+      routerRef.current.push("/auth/login");
     }
-  }, [router]);
-
-  /**
-   * Récupère le flag d'authentification
-   */
-  const getAuthToken = useCallback(() => {
-    return token;
-  }, [token]);
+  }, [clearAuthState]);
 
   /**
    * Connecte l'utilisateur avec email et mot de passe (appel API)
@@ -177,7 +192,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (result.success && result.user) {
         // Mettre à jour l'état local après connexion réussie
-        login("authenticated", result.user);
+        login(result.user);
       }
 
       return result;
@@ -233,37 +248,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Configurer le callback de déconnexion pour les erreurs 401
   // Cela permet de forcer une déconnexion si l'utilisateur a été supprimé
+  // Ne se déclenche que si l'utilisateur était authentifié avant
   useEffect(() => {
     apiClient.setOnUnauthorized(() => {
+      // Ne déclencher la déconnexion que si l'utilisateur était authentifié
+      // Cela évite de déconnecter lors du chargement initial ou si l'utilisateur n'était pas connecté
+      if (!userRef.current) {
+        return; // L'utilisateur n'était pas connecté, ne rien faire
+      }
+
       // Forcer la déconnexion en cas d'erreur 401
-      setToken(null);
-      setUser(null);
-      router.push("/auth/login");
+      // Nettoyer uniquement l'état local (ne pas appeler logoutService pour éviter une boucle)
+      clearAuthState();
+      routerRef.current.push("/auth/login");
     });
 
     // Nettoyer le callback au démontage
     return () => {
       apiClient.setOnUnauthorized(null);
     };
-  }, [router]);
+  }, [clearAuthState]);
 
   // Vérifier l'authentification au montage
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  // Calculer les valeurs dérivées
-  const isAuthenticated = token === "authenticated" && !!user;
+  // Calculer les valeurs dérivées (mémorisé pour éviter les recalculs inutiles)
+  const isAuthenticated = useMemo(() => !!user, [user]);
 
   const value: AuthContextType = {
-    token,
     user,
     isLoading,
     isAuthenticated,
     login,
     logout,
     checkAuth,
-    getAuthToken,
     loginWithCredentials,
     register,
     requestPasswordReset,
@@ -281,7 +301,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
  * @returns Le contexte d'authentification
  *
  * @example
- * const { token, user, isAuthenticated, logout } = useAuth();
+ * const { user, isAuthenticated, logout } = useAuth();
  */
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
