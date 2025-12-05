@@ -110,7 +110,6 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
             setCustomerData(checkoutData.customerData);
           }
           if (checkoutData.addressData) {
-            // Le backend garantit toujours countryName = "Belgique"
             setAddressData(checkoutData.addressData);
           }
         }
@@ -148,55 +147,31 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   /**
    * Met à jour les données client
    * Utilise CustomerResolveOrCreateDTO directement
-   * Ne sauvegarde plus automatiquement - la sauvegarde se fait lors de la navigation entre étapes
    */
-  const updateCustomerData = useCallback(
-    (data: CustomerResolveOrCreateDTO) => {
-      const updated = { ...customerData, ...data };
-      setCustomerData(updated);
-    },
-    [customerData]
-  );
+  const updateCustomerData = useCallback((data: CustomerResolveOrCreateDTO) => {
+    setCustomerData((prev) => ({ ...prev, ...data }));
+  }, []);
 
   /**
-   * Fonction utilitaire pour préserver countryName lors de la mise à jour d'une adresse
-   * Le countryName sera géré automatiquement par le service si non fourni
+   * Met à jour un champ d'une adresse (livraison ou facturation)
+   * Centralise la logique pour éviter la duplication
+   * Le countryName est géré automatiquement par le backend (toujours "Belgique")
    */
-  const preserveCountryName = useCallback(
-    (currentAddress: Record<string, any> | undefined): Record<string, any> => {
-      return currentAddress?.countryName
-        ? { countryName: currentAddress.countryName }
-        : {};
+  const updateAddressField = useCallback(
+    (type: "shipping" | "billing", field: string, value: string) => {
+      setAddressData((prev) => ({
+        ...prev,
+        [type]: {
+          ...prev[type],
+          [field]: value,
+        },
+      }));
     },
     []
   );
 
   /**
-   * Met à jour un champ d'une adresse (livraison ou facturation)
-   * Centralise la logique pour éviter la duplication
-   */
-  const updateAddressField = useCallback(
-    (type: "shipping" | "billing", field: string, value: string) => {
-      const currentAddress = addressData[type];
-      const updated = {
-        ...addressData,
-        [type]: {
-          ...currentAddress,
-          [field]: value,
-          ...preserveCountryName(currentAddress),
-        },
-        // Ne pas modifier l'autre adresse
-        ...(type === "shipping" && { billing: addressData.billing }),
-      };
-      setAddressData(updated);
-    },
-    [addressData, preserveCountryName]
-  );
-
-  /**
    * Met à jour un champ spécifique de l'adresse de livraison
-   * Utilise AddressesCreateDTO directement
-   * Ne sauvegarde plus automatiquement - la sauvegarde se fait lors de la navigation entre étapes
    */
   const updateShippingField = useCallback(
     (field: string, value: string) => {
@@ -207,8 +182,6 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
 
   /**
    * Met à jour un champ spécifique de l'adresse de facturation
-   * Utilise AddressesCreateDTO directement
-   * Ne sauvegarde plus automatiquement - la sauvegarde se fait lors de la navigation entre étapes
    */
   const updateBillingField = useCallback(
     (field: string, value: string) => {
@@ -219,24 +192,15 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
 
   /**
    * Active/désactive l'utilisation de la même adresse pour la facturation
-   * Utilise AddressesCreateDTO directement
    * Le flag useSameBillingAddress est un indicateur uniquement
    * L'affichage utilisera l'adresse de livraison si le flag est coché
-   * Ne sauvegarde plus automatiquement - la sauvegarde se fait lors de la navigation entre étapes
    */
-  const setUseSameBillingAddress = useCallback(
-    (useSame: boolean) => {
-      const updated = {
-        ...addressData,
-        useSameBillingAddress: useSame,
-        // Ne pas copier l'adresse - le flag est juste un indicateur
-        // L'affichage utilisera shipping si useSameBillingAddress est true
-        billing: addressData.billing,
-      };
-      setAddressData(updated);
-    },
-    [addressData]
-  );
+  const setUseSameBillingAddress = useCallback((useSame: boolean) => {
+    setAddressData((prev) => ({
+      ...prev,
+      useSameBillingAddress: useSame,
+    }));
+  }, []);
 
   /**
    * Valide les adresses de livraison et de facturation

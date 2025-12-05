@@ -148,22 +148,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   }, [executeWithLoading]);
 
   /**
-   * Initialise la session du panier au montage
+   * Charge le panier au montage
    * Le sessionId est géré automatiquement via cookie httpOnly
    */
   useEffect(() => {
     // S'assurer qu'on est bien côté client
     if (typeof window === "undefined") return;
 
-    setIsInitialized(true);
-  }, []);
-
-  /**
-   * Charge le panier au montage une fois initialisé
-   * Le sessionId est géré automatiquement via cookie httpOnly
-   */
-  useEffect(() => {
-    if (isInitialized) {
+    if (!isInitialized) {
+      setIsInitialized(true);
       refreshCart();
     }
   }, [isInitialized, refreshCart]);
