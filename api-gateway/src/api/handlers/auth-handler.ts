@@ -175,7 +175,19 @@ export const handleLogin = async (req: Request, res: Response) => {
     // Copier les cookies Set-Cookie depuis la réponse du service
     const setCookieHeader = authResponse.headers.get("set-cookie");
     if (setCookieHeader) {
-      res.setHeader("Set-Cookie", setCookieHeader);
+      // Extraire le token depuis le cookie Set-Cookie
+      const cookieMatch = setCookieHeader.match(/auth_token=([^;]+)/);
+      if (cookieMatch && cookieMatch[1]) {
+        const token = cookieMatch[1];
+        // Redéfinir le cookie côté API Gateway pour que le domaine soit correct
+        const { setAuthTokenCookie } = await import(
+          "../middleware/auth-session"
+        );
+        setAuthTokenCookie(res, token);
+      } else {
+        // Fallback: copier le cookie tel quel si on ne peut pas extraire le token
+        res.setHeader("Set-Cookie", setCookieHeader);
+      }
     }
 
     return res.status(200).json(authData);

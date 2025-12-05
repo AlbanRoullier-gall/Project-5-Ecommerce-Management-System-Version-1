@@ -178,12 +178,21 @@ class ApiClient {
 
     try {
       // Les cookies httpOnly sont envoyés automatiquement avec credentials: "include"
+      // IMPORTANT: Pour le login/register/verify, on doit utiliser "include" même si requireAuth est false
+      // pour recevoir/envoyer le cookie d'authentification
+      const needsCredentials =
+        requireAuth ||
+        endpoint.includes("/auth/login") ||
+        endpoint.includes("/auth/register") ||
+        endpoint.includes("/auth/verify") ||
+        endpoint.includes("/auth/logout");
+
       const response = await fetch(url, {
         ...fetchOptions,
         method: fetchOptions.method || "GET",
         headers: requestHeaders,
         body: requestBody,
-        credentials: requireAuth ? "include" : "omit", // Important pour envoyer les cookies
+        credentials: needsCredentials ? "include" : "omit", // Important pour envoyer/recevoir les cookies
       });
 
       if (!response.ok) {
