@@ -161,19 +161,21 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
           {formatDate(product.createdAt)}
         </span>
       </TableCell>
-      <TableCell align="right">
-        <ActionButtons
-          onEdit={() => onEdit(product)}
-          onDelete={() => {
-            if (
-              window.confirm(
-                `Êtes-vous sûr de vouloir supprimer le produit "${product.name}" ?`
-              )
-            ) {
-              onDelete(product.id);
-            }
-          }}
-        />
+      <TableCell align="right" width="160px">
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <ActionButtons
+            onEdit={() => onEdit(product)}
+            onDelete={() => {
+              if (
+                window.confirm(
+                  `Êtes-vous sûr de vouloir supprimer le produit "${product.name}" ?`
+                )
+              ) {
+                onDelete(product.id);
+              }
+            }}
+          />
+        </div>
       </TableCell>
     </TableRow>
   );

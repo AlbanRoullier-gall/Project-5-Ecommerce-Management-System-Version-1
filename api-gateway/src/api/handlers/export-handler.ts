@@ -9,7 +9,114 @@ import {
   YearExportRequestDTO,
   OrderExportData,
   CreditNoteExportData,
+  OrderInvoiceRequestDTO,
 } from "../../../../shared-types/pdf-export-service";
+
+/**
+ * Exporte une facture pour une commande spécifique
+ * Appels directs aux services sans transformations
+ */
+export const handleExportOrderInvoice = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const orderId = parseInt(id || "");
+    if (isNaN(orderId) || orderId <= 0) {
+      res.status(400).json({
+        error: "ID de commande invalide",
+      });
+      return;
+    }
+
+    const user = (req as any).user; // requireAuth garantit que user existe
+
+    // 1. Appel direct au Order Service pour récupérer les données d'export
+
+    const orderServiceResponse = await fetch(
+      `${SERVICES.order}/api/admin/orders/${orderId}/export-data`,
+      {
+        headers: {
+          "x-user-id": String(user.userId),
+          "x-user-email": user.email,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!orderServiceResponse.ok) {
+      const errorData = await orderServiceResponse.json();
+      res.status(orderServiceResponse.status).json(errorData);
+      return;
+    }
+
+    const orderData = (await orderServiceResponse.json()) as {
+      success: boolean;
+      data: {
+        order: OrderExportData;
+      };
+    };
+
+    if (!orderData.success || !orderData.data.order) {
+      res.status(500).json({
+        error: "Erreur lors de la récupération des données de la commande",
+      });
+      return;
+    }
+
+    // 2. Appel direct au PDF Export Service
+
+    const invoiceRequest: OrderInvoiceRequestDTO = {
+      order: orderData.data.order,
+    };
+
+    const pdfServiceResponse = await fetch(
+      `${SERVICES["pdf-export"]}/api/admin/export/order-invoice`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": String(user.userId),
+          "x-user-email": user.email,
+        },
+        body: JSON.stringify(invoiceRequest),
+      }
+    );
+
+    if (!pdfServiceResponse.ok) {
+      const errorText = await pdfServiceResponse.text();
+      console.error(
+        `❌ Erreur du service pdf-export (${pdfServiceResponse.status}):`,
+        errorText
+      );
+      res.status(500).json({
+        error: "Erreur lors de la génération de la facture",
+        details: errorText.substring(0, 500), // Limiter la taille de l'erreur
+      });
+      return;
+    }
+
+    // 3. Retourner le HTML au client
+    const htmlBuffer = await pdfServiceResponse.arrayBuffer();
+
+    res.setHeader("Content-Type", "text/html");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="facture-commande-${orderId}.html"`
+    );
+    res.setHeader("Content-Length", htmlBuffer.byteLength.toString());
+
+    res.send(Buffer.from(htmlBuffer));
+  } catch (error) {
+    console.error("Erreur lors de l'export de la facture:", error);
+    res.status(500).json({
+      error: "Erreur interne du serveur",
+      message: error instanceof Error ? error.message : "Erreur inconnue",
+    });
+  }
+};
 
 /**
  * Exporte les commandes et avoirs pour une année spécifique

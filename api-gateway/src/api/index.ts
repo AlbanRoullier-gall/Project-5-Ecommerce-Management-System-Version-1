@@ -29,7 +29,10 @@ import {
   handleCreatePayment,
   handleFinalizePayment,
 } from "./handlers/payment-handler";
-import { handleExportOrdersYear } from "./handlers/export-handler";
+import {
+  handleExportOrdersYear,
+  handleExportOrderInvoice,
+} from "./handlers/export-handler";
 import { handleDashboardStatistics } from "./handlers/statistics-handler";
 import { handleCheckoutComplete } from "./handlers/checkout-handler";
 import {
@@ -144,7 +147,13 @@ export class ApiRouter {
     // Utile si on veut forcer la création d'une nouvelle session
     app.post("/api/cart/session", handleCreateCartSession);
 
-    // Export - Route orchestrée
+    // Export - Routes orchestrées
+    app.get(
+      "/api/admin/exports/order/:id/invoice",
+      requireAuth,
+      handleExportOrderInvoice
+    );
+
     app.get(
       "/api/admin/exports/orders-year/:year",
       requireAuth,

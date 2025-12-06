@@ -29,3 +29,5 @@ export { default as FormSelect } from "./form/FormSelect";
 export { default as FormCheckbox } from "./form/FormCheckbox";
 export { default as FormActions } from "./form/FormActions";
 export { default as ItemDisplayTable } from "./ItemDisplayTable";
+export { default as ManagementSectionHeader } from "./ManagementSectionHeader";
+export { default as ManagementSection } from "./ManagementSection";

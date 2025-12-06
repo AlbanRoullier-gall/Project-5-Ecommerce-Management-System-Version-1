@@ -321,6 +321,14 @@ export class ApiRouter {
     );
 
     app.get(
+      "/api/admin/orders/:id/export-data",
+      this.requireAuth,
+      (req: Request, res: Response) => {
+        this.orderController.getOrderExportData(req, res);
+      }
+    );
+
+    app.get(
       "/api/admin/orders/year/:year/export-data",
       this.requireAuth,
       (req: Request, res: Response) => {

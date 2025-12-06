@@ -61,9 +61,19 @@ const AddressTable: React.FC<AddressTableProps> = ({
         overflow: "hidden",
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
         border: "2px solid rgba(19, 104, 106, 0.1)",
+        display: "flex",
+        flexDirection: "column",
+        maxHeight: "600px",
       }}
     >
-      <div className="table-responsive" style={{ overflowX: "auto" }}>
+      <div
+        className="table-responsive"
+        style={{
+          overflowX: "auto",
+          overflowY: "auto",
+          flex: 1,
+        }}
+      >
         <table
           style={{
             width: "100%",
@@ -80,18 +90,86 @@ const AddressTable: React.FC<AddressTableProps> = ({
             }}
           >
             <tr>
-              <th style={headerCellStyle}>Adresse</th>
-              <th style={{ ...headerCellStyle, textAlign: "center" }}>
+              <th
+                style={{
+                  ...headerCellStyle,
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  background:
+                    "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                  color: "white",
+                }}
+              >
+                Adresse
+              </th>
+              <th
+                style={{
+                  ...headerCellStyle,
+                  textAlign: "center",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  background:
+                    "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                  color: "white",
+                }}
+              >
                 Code postal
               </th>
-              <th style={headerCellStyle}>Ville</th>
-              <th className="mobile-hide" style={headerCellStyle}>
+              <th
+                style={{
+                  ...headerCellStyle,
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  background:
+                    "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                  color: "white",
+                }}
+              >
+                Ville
+              </th>
+              <th
+                className="mobile-hide"
+                style={{
+                  ...headerCellStyle,
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  background:
+                    "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                  color: "white",
+                }}
+              >
                 Pays
               </th>
-              <th style={{ ...headerCellStyle, textAlign: "center" }}>
+              <th
+                style={{
+                  ...headerCellStyle,
+                  textAlign: "center",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  background:
+                    "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                  color: "white",
+                }}
+              >
                 Par défaut
               </th>
-              <th style={{ ...headerCellStyle, textAlign: "center" }}>
+              <th
+                style={{
+                  ...headerCellStyle,
+                  textAlign: "center",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  background:
+                    "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                  color: "white",
+                }}
+              >
                 Actions
               </th>
             </tr>

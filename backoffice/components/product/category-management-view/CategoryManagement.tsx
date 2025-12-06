@@ -6,7 +6,7 @@ import {
 } from "../../../dto";
 import CategoryForm from "./category/CategoryForm";
 import CategoryTable from "./category/CategoryTable";
-import Button from "../../shared/Button";
+import { ManagementSection } from "../../shared";
 import { useCategoryForm } from "../../../hooks";
 
 /**
@@ -106,59 +106,13 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
   };
 
   return (
-    <div
-      style={{
-        background: "white",
-        borderRadius: "16px",
-        padding: "2rem",
-        marginBottom: "2rem",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-        border: "2px solid rgba(19, 104, 106, 0.1)",
-      }}
-    >
-      <div
-        className="category-header"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "2rem",
-          paddingBottom: "1rem",
-          borderBottom: "3px solid #d9b970",
-          flexWrap: "wrap",
-          gap: "1rem",
-        }}
-      >
-        <h2
-          style={{
-            fontSize: "2rem",
-            fontWeight: "bold",
-            color: "#13686a",
-            margin: 0,
-          }}
-        >
-          🏷️ Catégories
-        </h2>
-        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-          {!isFormOpen && (
-            <Button
-              onClick={() => setIsFormOpen(true)}
-              variant="primary"
-              icon="fas fa-plus"
-            >
-              Nouvelle catégorie
-            </Button>
-          )}
-          {onClose && (
-            <Button onClick={onClose} variant="gold" icon="fas fa-times">
-              Fermer
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Formulaire */}
-      {isFormOpen && (
+    <ManagementSection
+      title="🏷️ Catégories"
+      addButtonText="Nouvelle catégorie"
+      onAdd={() => setIsFormOpen(true)}
+      onClose={onClose}
+      isFormOpen={isFormOpen}
+      formContent={
         <CategoryForm
           formData={formData}
           errors={errors}
@@ -168,15 +122,15 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
           onChange={handleChange}
           onCancel={handleCancel}
         />
-      )}
-
-      {/* Liste des catégories */}
-      <CategoryTable
-        categories={categories}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-    </div>
+      }
+      listContent={
+        <CategoryTable
+          categories={categories}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      }
+    />
   );
 };
 

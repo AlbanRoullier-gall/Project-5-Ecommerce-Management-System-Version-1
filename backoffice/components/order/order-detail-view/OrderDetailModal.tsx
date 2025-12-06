@@ -4,6 +4,7 @@ import { Button, Modal, ItemDisplayTable } from "../../shared";
 import { CreateCreditNoteModal } from "../credit-note-view";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
 import { useOrderDetail } from "../../../hooks";
+import { exportOrderInvoice } from "../../../services/orderService";
 
 interface OrderDetailModalProps {
   isOpen: boolean;
@@ -25,6 +26,8 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   onClose,
 }) => {
   const [isCreateCreditNoteOpen, setIsCreateCreditNoteOpen] = useState(false);
+  const [isExportingInvoice, setIsExportingInvoice] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const {
     items,
@@ -50,6 +53,30 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
     return `${first} ${last}`.trim();
   })();
 
+  const handleExportInvoice = async () => {
+    if (!order) return;
+
+    setIsExportingInvoice(true);
+    setExportError(null);
+
+    try {
+      const blob = await exportOrderInvoice(order.id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `facture-commande-${order.id}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("Erreur lors de l'export de la facture:", err);
+      setExportError(err.message || "Erreur lors de l'export de la facture");
+    } finally {
+      setIsExportingInvoice(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -62,14 +89,24 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
         onClose={onClose}
         maxWidth="900px"
         headerActions={
-          <Button
-            variant="primary"
-            icon="fas fa-file-invoice-dollar"
-            onClick={() => setIsCreateCreditNoteOpen(true)}
-            disabled={!order}
-          >
-            Créer un avoir
-          </Button>
+          <>
+            <Button
+              variant="secondary"
+              icon="fas fa-file-pdf"
+              onClick={handleExportInvoice}
+              disabled={!order || isExportingInvoice}
+            >
+              {isExportingInvoice ? "Export..." : "Exporter la facture"}
+            </Button>
+            <Button
+              variant="primary"
+              icon="fas fa-file-invoice-dollar"
+              onClick={() => setIsCreateCreditNoteOpen(true)}
+              disabled={!order}
+            >
+              Créer un avoir
+            </Button>
+          </>
         }
       >
         {isLoading && (
@@ -87,6 +124,21 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             }}
           >
             {error}
+          </div>
+        )}
+
+        {exportError && (
+          <div
+            style={{
+              background: "#FEF2F2",
+              color: "#B91C1C",
+              border: "1px solid #FECACA",
+              padding: "0.75rem 1rem",
+              borderRadius: 12,
+              marginBottom: "1rem",
+            }}
+          >
+            {exportError}
           </div>
         )}
 

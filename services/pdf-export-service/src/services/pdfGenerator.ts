@@ -1,8 +1,16 @@
-import { YearExportRequestDTO } from "../api/dto";
+import { YearExportRequestDTO, OrderInvoiceRequestDTO } from "../api/dto";
 
 export class PDFGenerator {
   async generateOrdersYearExport(data: YearExportRequestDTO): Promise<Buffer> {
     const html = this.generateHTML(data);
+
+    // Pour l'instant, retournons du HTML au lieu d'un PDF
+    // Cela évite les problèmes avec Puppeteer
+    return Buffer.from(html, "utf-8");
+  }
+
+  async generateOrderInvoice(data: OrderInvoiceRequestDTO): Promise<Buffer> {
+    const html = this.generateInvoiceHTML(data.order);
 
     // Pour l'instant, retournons du HTML au lieu d'un PDF
     // Cela évite les problèmes avec Puppeteer
@@ -47,7 +55,7 @@ export class PDFGenerator {
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>Export Commandes ${year} - Nature de Pierre</title>
+        <title>Export Factures ${year} - Nature de Pierre</title>
         <style>
           body {
             font-family: Arial, sans-serif;
@@ -207,7 +215,7 @@ export class PDFGenerator {
       <body>
         <div class="header">
           <h1>Nature de Pierre</h1>
-          <h2>Export des Commandes et Avoirs - Année ${year}</h2>
+          <h2>Export des Factures et Avoirs - Année ${year}</h2>
         </div>
 
         <div class="summary">
@@ -215,7 +223,7 @@ export class PDFGenerator {
           <div class="summary-grid">
             <div class="summary-item">
               <div class="number">${orders.length}</div>
-              <div class="label">Commandes</div>
+              <div class="label">Factures</div>
             </div>
             <div class="summary-item">
               <div class="number">${creditNotes.length}</div>
@@ -223,7 +231,7 @@ export class PDFGenerator {
             </div>
             <div class="summary-item">
               <div class="number">${totalOrdersAmount.toFixed(2)} €</div>
-              <div class="label">Total Commandes</div>
+              <div class="label">Total Factures</div>
             </div>
             <div class="summary-item">
               <div class="number">${totalCreditNotesAmount.toFixed(2)} €</div>
@@ -233,7 +241,7 @@ export class PDFGenerator {
         </div>
 
         <div class="section">
-          <h2>Détails des Commandes de ${year}</h2>
+          <h2>Détails des Factures de ${year}</h2>
           ${ordersHTML}
         </div>
 
@@ -319,12 +327,12 @@ export class PDFGenerator {
 
     return `
       <div class="order-details">
-        <h2>Commande #${order.id}</h2>
+        <h2>Facture #${order.id}</h2>
         
         <div class="order-info">
           <h3>Informations générales</h3>
           <table class="info-table">
-            <tr><td><strong>ID Commande:</strong></td><td>${order.id}</td></tr>
+            <tr><td><strong>ID Facture:</strong></td><td>${order.id}</td></tr>
             <tr><td><strong>Client:</strong></td><td>${customerFirstName} ${customerLastName}</td></tr>
             <tr><td><strong>Email:</strong></td><td>${customerEmail}</td></tr>
             <tr><td><strong>Date de création:</strong></td><td>${new Date(
@@ -351,7 +359,7 @@ export class PDFGenerator {
         </div>
 
         <div class="order-items">
-          <h3>Articles commandés</h3>
+          <h3>Articles facturés</h3>
           <table class="items-table">
             <thead>
               <tr>
@@ -479,6 +487,302 @@ export class PDFGenerator {
 
         <hr class="credit-note-separator">
       </div>
+    `;
+  }
+
+  private generateInvoiceHTML(order: any): string {
+    const customerSnapshot = order.customerSnapshot || {};
+    const customerFirstName = customerSnapshot.firstName || "N/A";
+    const customerLastName = customerSnapshot.lastName || "N/A";
+    const customerEmail = customerSnapshot.email || "N/A";
+
+    // Generate order items HTML
+    const orderItemsHTML =
+      order.items && order.items.length > 0
+        ? order.items
+            .map((item: any) => {
+              const vatRate = parseFloat(item.vatRate || 0);
+              const totalVAT =
+                parseFloat(item.totalPriceTTC || 0) -
+                parseFloat(item.totalPriceHT || 0);
+              return `
+          <tr>
+            <td>${item.productName || "N/A"}</td>
+            <td>${item.quantity}</td>
+            <td>${parseFloat(item.unitPriceHT || 0).toFixed(2)} €</td>
+            <td>${vatRate.toFixed(2)} %</td>
+            <td>${totalVAT.toFixed(2)} €</td>
+            <td>${parseFloat(item.unitPriceTTC || 0).toFixed(2)} €</td>
+            <td>${parseFloat(item.totalPriceHT || 0).toFixed(2)} €</td>
+            <td>${parseFloat(item.totalPriceTTC || 0).toFixed(2)} €</td>
+          </tr>
+        `;
+            })
+            .join("")
+        : '<tr><td colspan="8">Aucun article</td></tr>';
+
+    // Generate addresses HTML
+    const addressesHTML =
+      order.addresses && order.addresses.length > 0
+        ? order.addresses
+            .map((address: any) => {
+              // Gérer les deux structures possibles
+              const addressData = address.addressSnapshot || address;
+              const addressType = address.addressType || address.type;
+
+              return `
+          <div class="address-block">
+            <h4>${
+              addressType === "billing"
+                ? "Adresse de facturation"
+                : "Adresse de livraison"
+            }</h4>
+            <p>${addressData.firstName} ${addressData.lastName}</p>
+            <p>${addressData.address || addressData.addressLine1}</p>
+            ${
+              addressData.addressLine2
+                ? `<p>${addressData.addressLine2}</p>`
+                : ""
+            }
+            <p>${addressData.postalCode} ${addressData.city}</p>
+            <p>${addressData.country}</p>
+            ${addressData.phone ? `<p>Tél: ${addressData.phone}</p>` : ""}
+            ${addressData.email ? `<p>Email: ${addressData.email}</p>` : ""}
+          </div>
+        `;
+            })
+            .join("")
+        : "<p>Aucune adresse</p>";
+
+    const totalVAT =
+      parseFloat(order.totalAmountTTC || 0) -
+      parseFloat(order.totalAmountHT || 0);
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Facture Commande #${order.id} - Nature de Pierre</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #13686a;
+            padding-bottom: 20px;
+          }
+          .header h1 {
+            color: #13686a;
+            margin: 0;
+          }
+          .header h2 {
+            color: #666;
+            margin: 10px 0 0 0;
+            font-weight: normal;
+          }
+          .invoice-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+          }
+          .invoice-info-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+          }
+          .invoice-info-section h3 {
+            color: #13686a;
+            margin-top: 0;
+            margin-bottom: 15px;
+          }
+          .order-details {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            background-color: #fafafa;
+          }
+          .order-details h2 {
+            color: #13686a;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+          }
+          .order-info, .order-items, .order-addresses {
+            margin-bottom: 20px;
+          }
+          .order-info h3, .order-items h3, .order-addresses h3 {
+            color: #13686a;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+          }
+          .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+          }
+          .info-table td {
+            padding: 8px;
+            border: 1px solid #e0e0e0;
+          }
+          .info-table td:first-child {
+            background-color: #f5f5f5;
+            font-weight: bold;
+            width: 30%;
+          }
+          .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+          }
+          .items-table th, .items-table td {
+            padding: 8px;
+            border: 1px solid #e0e0e0;
+            text-align: left;
+          }
+          .items-table th {
+            background-color: #13686a;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+          }
+          .address-block {
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: white;
+          }
+          .address-block h4 {
+            color: #13686a;
+            margin-top: 0;
+            margin-bottom: 10px;
+          }
+          .totals-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+          }
+          .totals-table {
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            border-collapse: collapse;
+          }
+          .totals-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+          }
+          .totals-table td:first-child {
+            font-weight: bold;
+          }
+          .totals-table td:last-child {
+            text-align: right;
+          }
+          .totals-table tr:last-child td {
+            border-top: 2px solid #13686a;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #13686a;
+          }
+          .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Nature de Pierre</h1>
+          <h2>Facture - Commande #${order.id}</h2>
+        </div>
+
+        <div class="invoice-info">
+          <div class="invoice-info-section">
+            <h3>Informations client</h3>
+            <p><strong>${customerFirstName} ${customerLastName}</strong></p>
+            <p>${customerEmail}</p>
+          </div>
+          <div class="invoice-info-section">
+            <h3>Informations facture</h3>
+            <p><strong>Numéro de commande:</strong> #${order.id}</p>
+            <p><strong>Date:</strong> ${new Date(
+              order.createdAt
+            ).toLocaleDateString("fr-FR")}</p>
+            <p><strong>Méthode de paiement:</strong> ${
+              order.paymentMethod || "N/A"
+            }</p>
+            <p><strong>Statut:</strong> ${
+              order.delivered ? "Livrée" : "En attente"
+            }</p>
+          </div>
+        </div>
+
+        <div class="order-details">
+          <div class="order-items">
+            <h3>Articles commandés</h3>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Produit</th>
+                  <th>Quantité</th>
+                  <th>Prix unitaire HT</th>
+                  <th>TVA (%)</th>
+                  <th>Montant TVA</th>
+                  <th>Prix unitaire TTC</th>
+                  <th>Total HT</th>
+                  <th>Total TTC</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${orderItemsHTML}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="totals-section">
+            <table class="totals-table">
+              <tr>
+                <td>Total HT</td>
+                <td>${parseFloat(order.totalAmountHT || 0).toFixed(2)} €</td>
+              </tr>
+              <tr>
+                <td>TVA</td>
+                <td>${totalVAT.toFixed(2)} €</td>
+              </tr>
+              <tr>
+                <td>Total TTC</td>
+                <td>${parseFloat(order.totalAmountTTC || 0).toFixed(2)} €</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="order-addresses">
+            <h3>Adresses</h3>
+            ${addressesHTML}
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>Facture générée le ${new Date().toLocaleDateString(
+            "fr-FR"
+          )} à ${new Date().toLocaleTimeString("fr-FR")}</p>
+          <p>Nature de Pierre - Système de gestion</p>
+        </div>
+      </body>
+      </html>
     `;
   }
 }

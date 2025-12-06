@@ -5,10 +5,9 @@ import {
   AddressCreateDTO,
   AddressUpdateDTO,
 } from "../../../dto";
-import Button from "../../shared/Button";
-import ErrorAlert from "../../shared/ErrorAlert";
 import AddressForm from "./AddressForm";
 import AddressTable from "./AddressTable";
+import { ManagementSection } from "../../shared";
 import { useCustomerAddresses } from "../../../hooks";
 
 /**
@@ -120,78 +119,30 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
   };
 
   return (
-    <div
-      style={{
-        background: "white",
-        borderRadius: "16px",
-        padding: "2rem",
-        marginBottom: "2rem",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-        border: "2px solid rgba(19, 104, 106, 0.1)",
-      }}
-    >
-      {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
-
-      <div
-        className="address-management-header"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "2rem",
-          flexWrap: "wrap",
-          gap: "1rem",
-        }}
-      >
-        <div>
-          <h2
-            style={{
-              fontSize: "1.8rem",
-              fontWeight: "700",
-              color: "#13686a",
-              marginBottom: "0.5rem",
-            }}
-          >
-            Adresses de {customer.fullName}
-          </h2>
-          <p style={{ color: "#6b7280", fontSize: "1rem" }}>
-            {addresses.length} adresse(s) enregistrée(s)
-          </p>
-        </div>
-        <div
-          className="address-management-actions"
-          style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}
-        >
-          <Button
-            onClick={handleNewAddress}
-            variant="primary"
-            icon="fas fa-plus"
-          >
-            Nouvelle adresse
-          </Button>
-          <Button onClick={onClose} variant="secondary" icon="fas fa-times">
-            Fermer
-          </Button>
-        </div>
-      </div>
-
-      {showAddressForm && (
+    <ManagementSection
+      title={`📍 Adresses de ${customer.fullName}`}
+      addButtonText="Nouvelle adresse"
+      onAdd={handleNewAddress}
+      onClose={onClose}
+      isFormOpen={showAddressForm}
+      error={error}
+      onErrorClose={() => setError(null)}
+      formContent={
         <AddressForm
           address={editingAddress}
           onSubmit={editingAddress ? handleUpdate : handleCreate}
           onCancel={handleCancelForm}
           isLoading={isLoading}
         />
-      )}
-
-      {!showAddressForm && (
+      }
+      listContent={
         <AddressTable
           addresses={addresses}
           onEdit={handleEditAddress}
           onDelete={handleDelete}
         />
-      )}
-    </div>
+      }
+    />
   );
 };
 

@@ -6,13 +6,59 @@
 import { Request, Response } from "express";
 import { PDFGenerator } from "../../services/pdfGenerator";
 import { ResponseMapper } from "../mapper/index";
-import { YearExportRequestDTO } from "../dto";
+import { YearExportRequestDTO, OrderInvoiceRequestDTO } from "../dto";
 
 export class ExportController {
   private pdfGenerator: PDFGenerator;
 
   constructor() {
     this.pdfGenerator = new PDFGenerator();
+  }
+
+  /**
+   * Générer une facture PDF pour une seule commande
+   */
+  async generateOrderInvoice(req: Request, res: Response): Promise<void> {
+    try {
+      console.log("📥 Réception de la requête d'export de facture...");
+      const invoiceData = req.body as OrderInvoiceRequestDTO;
+
+      if (!invoiceData.order) {
+        res.status(400).json({
+          error: "Données de commande manquantes",
+        });
+        return;
+      }
+
+      console.log("📊 Données de facture reçues:", {
+        orderId: invoiceData.order.id,
+        hasItems: !!invoiceData.order.items,
+        itemsCount: invoiceData.order.items?.length || 0,
+        hasAddresses: !!invoiceData.order.addresses,
+        addressesCount: invoiceData.order.addresses?.length || 0,
+      });
+
+      console.log("🔄 Génération du HTML...");
+      const htmlBuffer = await this.pdfGenerator.generateOrderInvoice(
+        invoiceData
+      );
+      console.log(
+        `✅ HTML généré: ${(htmlBuffer.length / 1024).toFixed(2)} KB`
+      );
+
+      res.setHeader("Content-Type", "text/html");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="facture-commande-${invoiceData.order.id}.html"`
+      );
+      console.log("📤 Envoi de la réponse...");
+      res.send(htmlBuffer);
+      console.log("✅ Réponse envoyée avec succès");
+    } catch (error: any) {
+      console.error("❌ Invoice generation error:", error);
+      console.error("❌ Stack trace:", error.stack);
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
   }
 
   /**

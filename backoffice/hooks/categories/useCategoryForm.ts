@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import {
   CategoryPublicDTO,
   CategoryCreateDTO,
@@ -29,15 +29,21 @@ interface UseCategoryFormReturn {
 export function useCategoryForm({
   editingCategory,
 }: UseCategoryFormProps): UseCategoryFormReturn {
-  const initialValues: CategoryCreateDTO = {
-    name: "",
-    description: "",
-  };
+  const initialValues: CategoryCreateDTO = useMemo(
+    () => ({
+      name: "",
+      description: "",
+    }),
+    []
+  );
 
-  const { formData, errors, handleChange, handleSubmit: baseHandleSubmit, resetForm } = useForm<
-    CategoryCreateDTO,
-    CategoryPublicDTO
-  >({
+  const {
+    formData,
+    errors,
+    handleChange,
+    handleSubmit: baseHandleSubmit,
+    resetForm,
+  } = useForm<CategoryCreateDTO, CategoryPublicDTO>({
     original: editingCategory || null,
     initialValues,
     validateFn: validateCategory,
@@ -52,7 +58,10 @@ export function useCategoryForm({
       ) => void
     ) => {
       await baseHandleSubmit((data) => {
-        onSubmit(data as CategoryCreateDTO | CategoryUpdateDTO, !!editingCategory);
+        onSubmit(
+          data as CategoryCreateDTO | CategoryUpdateDTO,
+          !!editingCategory
+        );
       });
     },
     [baseHandleSubmit, editingCategory]

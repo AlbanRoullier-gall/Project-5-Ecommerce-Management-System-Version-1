@@ -212,3 +212,31 @@ export async function exportOrdersYear(year: number): Promise<Blob> {
 
   return response.blob();
 }
+
+/**
+ * Exporte la facture d'une commande en HTML
+ */
+export async function exportOrderInvoice(orderId: number): Promise<Blob> {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+  const response = await fetch(
+    `${API_URL}/api/admin/exports/order/${orderId}/invoice`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "text/html",
+      },
+      credentials: "include",
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Erreur lors de l'export de la facture: ${
+        errorText || response.statusText
+      }`
+    );
+  }
+
+  return response.blob();
+}

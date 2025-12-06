@@ -60,7 +60,8 @@ export function useForm<
   const [formData, setFormData] = useState<TFormData>(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Réinitialiser le formulaire quand original ou initialValues changent
+  // Réinitialiser le formulaire quand original change
+  // Note: initialValues est mémorisé dans les hooks qui utilisent useForm
   useEffect(() => {
     if (original) {
       // Mode édition : utiliser les valeurs de original
@@ -70,7 +71,8 @@ export function useForm<
       setFormData(initialValues);
     }
     setErrors({});
-  }, [original, initialValues]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [original]);
 
   const handleChange = useCallback(
     (

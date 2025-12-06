@@ -94,3 +94,10 @@ export interface YearExportRequestDTO {
   orders: OrderExportData[];
   creditNotes: CreditNoteExportData[];
 }
+
+/**
+ * DTO pour la requête d'export d'une seule commande (facture)
+ */
+export interface OrderInvoiceRequestDTO {
+  order: OrderExportData;
+}

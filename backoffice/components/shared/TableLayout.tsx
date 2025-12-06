@@ -65,9 +65,19 @@ const TableLayout: React.FC<TableLayoutProps> = ({
         overflow: "hidden",
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
         border: "2px solid rgba(19, 104, 106, 0.1)",
+        display: "flex",
+        flexDirection: "column",
+        maxHeight: "600px",
       }}
     >
-      <div className="table-responsive" style={{ overflowX: "auto" }}>
+      <div
+        className="table-responsive"
+        style={{
+          overflowX: "auto",
+          overflowY: "auto",
+          flex: 1,
+        }}
+      >
         <table
           style={{
             width: "100%",
@@ -87,6 +97,10 @@ const TableLayout: React.FC<TableLayoutProps> = ({
                     ...headerStyleBase,
                     textAlign: h.align || "left",
                     width: h.width,
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 10,
+                    ...gradientMap[headerGradient],
                   }}
                   className={h.className}
                 >

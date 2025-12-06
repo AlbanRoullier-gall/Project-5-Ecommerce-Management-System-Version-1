@@ -57,8 +57,10 @@ export class OrderController {
       }
 
       // Utiliser les totaux calculés si disponibles, sinon ceux de la commande
-      const finalTotalAmountHT = totalAmountHT !== undefined ? totalAmountHT : order.totalAmountHT;
-      const finalTotalAmountTTC = totalAmountTTC !== undefined ? totalAmountTTC : order.totalAmountTTC;
+      const finalTotalAmountHT =
+        totalAmountHT !== undefined ? totalAmountHT : order.totalAmountHT;
+      const finalTotalAmountTTC =
+        totalAmountTTC !== undefined ? totalAmountTTC : order.totalAmountTTC;
 
       const orderDTO = OrderMapper.orderToPublicDTO({
         ...order,
@@ -239,6 +241,37 @@ export class OrderController {
       res.status(500).json({
         success: false,
         error: "Erreur lors de la mise à jour du statut de l'avoir",
+      });
+    }
+  }
+
+  /**
+   * Obtenir les données d'export d'une seule commande
+   */
+  async getOrderExportData(req: Request, res: Response): Promise<void> {
+    try {
+      const orderId = parseInt(req.params.id);
+
+      if (isNaN(orderId) || orderId <= 0) {
+        res.status(400).json({
+          success: false,
+          error: "ID de commande invalide",
+        });
+        return;
+      }
+
+      const data = await this.orderService.getOrderExportData(orderId);
+
+      res.json({
+        success: true,
+        data: { order: data },
+      });
+    } catch (error: any) {
+      console.error("Get order export data error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Erreur lors de la récupération des données d'export",
+        message: error.message,
       });
     }
   }

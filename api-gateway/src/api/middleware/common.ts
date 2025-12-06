@@ -49,11 +49,7 @@ export const corsMiddleware: RequestHandler = cors({
   },
   credentials: true, // Nécessaire pour les cookies httpOnly
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: [
-    "Content-Type",
-    "X-Requested-With",
-    "Accept",
-  ],
+  allowedHeaders: ["Content-Type", "X-Requested-With", "Accept"],
 });
 
 /**

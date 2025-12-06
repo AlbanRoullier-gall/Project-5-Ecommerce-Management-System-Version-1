@@ -68,7 +68,14 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
   }
 
   return (
-    <div className="table-responsive" style={{ overflowX: "auto" }}>
+    <div
+      className="table-responsive"
+      style={{
+        overflowX: "auto",
+        overflowY: "auto",
+        maxHeight: "500px",
+      }}
+    >
       <table
         style={{
           width: "100%",
@@ -97,6 +104,14 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                   fontSize: "0.85rem",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  background:
+                    variant === "credit-note"
+                      ? "#f3f4f6"
+                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                  color: variant === "credit-note" ? "#374151" : "white",
                 }}
               >
                 Sélection
@@ -111,6 +126,14 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                   fontSize: "0.85rem",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  background:
+                    variant === "credit-note"
+                      ? "#f3f4f6"
+                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                  color: variant === "credit-note" ? "#374151" : "white",
                 }}
               >
                 Produit
@@ -125,6 +148,14 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                   fontSize: "0.85rem",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  background:
+                    variant === "credit-note"
+                      ? "#f3f4f6"
+                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                  color: variant === "credit-note" ? "#374151" : "white",
                 }}
               >
                 Qté
@@ -140,6 +171,14 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                   fontSize: "0.85rem",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  background:
+                    variant === "credit-note"
+                      ? "#f3f4f6"
+                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                  color: variant === "credit-note" ? "#374151" : "white",
                 }}
               >
                 Prix unit. HT
@@ -155,6 +194,14 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                   fontSize: "0.85rem",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  background:
+                    variant === "credit-note"
+                      ? "#f3f4f6"
+                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                  color: variant === "credit-note" ? "#374151" : "white",
                 }}
               >
                 TVA
@@ -168,6 +215,14 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  background:
+                    variant === "credit-note"
+                      ? "#f3f4f6"
+                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                  color: variant === "credit-note" ? "#374151" : "white",
                 }}
               >
                 Total HT
@@ -181,6 +236,14 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  background:
+                    variant === "credit-note"
+                      ? "#f3f4f6"
+                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
+                  color: variant === "credit-note" ? "#374151" : "white",
                 }}
               >
                 Total TTC

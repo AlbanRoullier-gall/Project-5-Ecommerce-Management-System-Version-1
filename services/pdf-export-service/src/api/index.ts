@@ -42,6 +42,10 @@ export class ApiRouter {
         orders: Joi.array().items(Joi.object()).required(),
         creditNotes: Joi.array().items(Joi.object()).required(),
       }),
+      // Schéma d'export de facture (simplifié)
+      orderInvoiceSchema: Joi.object({
+        order: Joi.object().required(),
+      }),
     };
   }
 
@@ -111,6 +115,16 @@ export class ApiRouter {
     });
 
     // ===== ROUTES D'EXPORT =====
+    // Export d'une facture pour une commande (ROUTE ADMIN)
+    app.post(
+      "/api/admin/export/order-invoice",
+      this.requireAuth,
+      this.validateRequest(schemas.orderInvoiceSchema),
+      (req: Request, res: Response) => {
+        this.exportController.generateOrderInvoice(req, res);
+      }
+    );
+
     // Export des commandes par année (ROUTE ADMIN)
     app.post(
       "/api/admin/export/orders-year",
