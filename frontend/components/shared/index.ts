@@ -16,6 +16,7 @@ export type { ButtonVariant } from "./Button";
 export { default as LoadingSpinner } from "./LoadingSpinner";
 export { default as Alert } from "./Alert";
 export type { AlertType } from "./Alert";
+export { default as FieldError } from "./FieldError";
 export { default as StepIndicator } from "./StepIndicator";
 export type { Step } from "./StepIndicator";
 export { default as StepBadge } from "./StepBadge";

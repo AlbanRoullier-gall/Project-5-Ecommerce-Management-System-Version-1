@@ -74,71 +74,50 @@ export class ApiRouter {
       ),
 
       // Order confirmation email schema
-      // Accepte soit le format formaté (compatibilité), soit le format brut (orderId, cart, customerData, addressData)
-      orderConfirmationEmailSchema: Joi.alternatives().try(
-        // Nouveau format : données brutes
-        Joi.object({
-          orderId: Joi.number().integer().positive().required(),
-          cart: Joi.object({
-            items: Joi.array().min(1).required(),
-            subtotal: Joi.number().required(),
-            tax: Joi.number().required(),
-            total: Joi.number().required(),
-          })
-            .unknown(true)
-            .required(),
-          customerData: Joi.object({
-            firstName: Joi.string().optional().allow(null, ""),
-            lastName: Joi.string().optional().allow(null, ""),
-            email: Joi.string().email().required(),
-            phoneNumber: Joi.string().optional().allow(null, ""),
-          })
-            .unknown(true)
-            .required(),
-          addressData: Joi.object({
-            shipping: Joi.object({
-              address: Joi.string().optional().allow(null, ""),
-              postalCode: Joi.string().optional().allow(null, ""),
-              city: Joi.string().optional().allow(null, ""),
-              countryName: Joi.string().optional().allow(null, ""),
-            })
-              .unknown(true)
-              .optional(),
-          })
-            .unknown(true)
-            .required(),
-        }).unknown(true),
-        // Ancien format : données formatées (compatibilité)
-        Joi.object({
-          customerEmail: Joi.string().email().required(),
-          customerName: Joi.string().max(200).required(),
-          orderId: Joi.number().integer().positive().required(),
-          orderDate: Joi.date().optional(),
+      // Format simplifié : orderId, cart, customerData, addressData
+      // Les items peuvent avoir des champs supplémentaires (productId, unitPriceHT, etc.)
+      orderConfirmationEmailSchema: Joi.object({
+        orderId: Joi.number().integer().positive().required(),
+        cart: Joi.object({
           items: Joi.array()
             .items(
               Joi.object({
-                name: Joi.string().required(),
+                productName: Joi.string().required(),
                 quantity: Joi.number().integer().positive().required(),
-                unitPrice: Joi.number().positive().required(),
-                totalPrice: Joi.number().positive().required(),
-                vatRate: Joi.number().min(0).max(100).optional(),
-              })
+                unitPriceTTC: Joi.number().positive().required(),
+                totalPriceTTC: Joi.number().positive().required(),
+                vatRate: Joi.number().min(0).max(100).required(),
+              }).unknown(true) // Accepter les champs supplémentaires (productId, unitPriceHT, totalPriceHT, etc.)
             )
             .min(1)
             .required(),
-          subtotal: Joi.number().positive().required(),
-          tax: Joi.number().min(0).required(),
-          total: Joi.number().positive().required(),
-          shippingAddress: Joi.object({
-            firstName: Joi.string().required(),
-            lastName: Joi.string().required(),
-            address: Joi.string().required(),
-            city: Joi.string().required(),
-            postalCode: Joi.string().required(),
-            country: Joi.string().required(),
-          }).required(),
-        }).unknown(true)
-      ),
+          subtotal: Joi.number().required(),
+          tax: Joi.number().required(),
+          total: Joi.number().required(),
+        })
+          .unknown(true)
+          .required(),
+        customerData: Joi.object({
+          firstName: Joi.string().optional().allow(null, ""),
+          lastName: Joi.string().optional().allow(null, ""),
+          email: Joi.string().email().required(),
+          phoneNumber: Joi.string().optional().allow(null, ""),
+        })
+          .unknown(true)
+          .required(),
+        addressData: Joi.object({
+          shipping: Joi.object({
+            address: Joi.string().optional().allow(null, ""),
+            postalCode: Joi.string().optional().allow(null, ""),
+            city: Joi.string().optional().allow(null, ""),
+            countryName: Joi.string().optional().allow(null, ""),
+          })
+            .unknown(true)
+            .optional(),
+        })
+          .unknown(true)
+          .required(),
+      }).unknown(true),
     };
   }
 

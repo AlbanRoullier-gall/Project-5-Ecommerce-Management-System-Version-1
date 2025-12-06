@@ -9,7 +9,14 @@
  * - Téléphone (optionnel)
  */
 
-import { FormInput, FormContainer, Button, FormHeader, Alert } from "../../shared";
+import {
+  FormInput,
+  FormContainer,
+  Button,
+  FormHeader,
+  Alert,
+  FieldError,
+} from "../../shared";
 import { useCheckoutCustomerForm } from "../../../hooks";
 
 /**
@@ -65,18 +72,7 @@ export default function CheckoutCustomerForm() {
               required
               placeholder="Votre prénom"
             />
-            {errors.firstName && (
-              <p
-                style={{
-                  color: "#ef4444",
-                  fontSize: "1.2rem",
-                  marginTop: "0.5rem",
-                  marginBottom: 0,
-                }}
-              >
-                {errors.firstName}
-              </p>
-            )}
+            {errors.firstName && <FieldError message={errors.firstName} />}
           </div>
 
           {/* Champ nom */}
@@ -89,18 +85,7 @@ export default function CheckoutCustomerForm() {
               required
               placeholder="Votre nom"
             />
-            {errors.lastName && (
-              <p
-                style={{
-                  color: "#ef4444",
-                  fontSize: "1.2rem",
-                  marginTop: "0.5rem",
-                  marginBottom: 0,
-                }}
-              >
-                {errors.lastName}
-              </p>
-            )}
+            {errors.lastName && <FieldError message={errors.lastName} />}
           </div>
 
           {/* Champ email */}
@@ -114,18 +99,7 @@ export default function CheckoutCustomerForm() {
               required
               placeholder="votre.email@exemple.com"
             />
-            {errors.email && (
-              <p
-                style={{
-                  color: "#ef4444",
-                  fontSize: "1.2rem",
-                  marginTop: "0.5rem",
-                  marginBottom: 0,
-                }}
-              >
-                {errors.email}
-              </p>
-            )}
+            {errors.email && <FieldError message={errors.email} />}
           </div>
 
           {/* Champ téléphone (optionnel) */}
@@ -138,18 +112,7 @@ export default function CheckoutCustomerForm() {
               onChange={handleChange}
               placeholder="+32 123 45 67 89"
             />
-            {errors.phoneNumber && (
-              <p
-                style={{
-                  color: "#ef4444",
-                  fontSize: "1.2rem",
-                  marginTop: "0.5rem",
-                  marginBottom: 0,
-                }}
-              >
-                {errors.phoneNumber}
-              </p>
-            )}
+            {errors.phoneNumber && <FieldError message={errors.phoneNumber} />}
           </div>
 
           {/* Date de naissance supprimée */}

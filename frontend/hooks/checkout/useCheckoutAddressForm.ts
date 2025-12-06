@@ -15,12 +15,13 @@ interface UseCheckoutAddressFormResult {
   };
   isLoading: boolean;
   error: string | null;
+  fieldErrors: { [key: string]: string };
   handleShippingFieldChange: (field: string, value: string) => void;
   handleBillingFieldChange: (field: string, value: string) => void;
   handleUseSameBillingAddressChange: (checked: boolean) => void;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   handleBack: () => void;
-  clearError: () => void;
+  clearError: (fieldName?: string) => void;
 }
 
 /**
@@ -39,19 +40,46 @@ export function useCheckoutAddressForm(): UseCheckoutAddressFormResult {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   const handleShippingFieldChange = useCallback(
     (field: string, value: string) => {
       updateShippingField(field, value);
+      // Effacer l'erreur du champ modifié
+      const errorKey = `shipping.${field}`;
+      if (fieldErrors[errorKey]) {
+        setFieldErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[errorKey];
+          return newErrors;
+        });
+      }
+      // Effacer l'erreur générale si présente
+      if (error) {
+        setError(null);
+      }
     },
-    [updateShippingField]
+    [updateShippingField, fieldErrors, error]
   );
 
   const handleBillingFieldChange = useCallback(
     (field: string, value: string) => {
       updateBillingField(field, value);
+      // Effacer l'erreur du champ modifié
+      const errorKey = `billing.${field}`;
+      if (fieldErrors[errorKey]) {
+        setFieldErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[errorKey];
+          return newErrors;
+        });
+      }
+      // Effacer l'erreur générale si présente
+      if (error) {
+        setError(null);
+      }
     },
-    [updateBillingField]
+    [updateBillingField, fieldErrors, error]
   );
 
   const handleUseSameBillingAddressChange = useCallback(
@@ -67,12 +95,20 @@ export function useCheckoutAddressForm(): UseCheckoutAddressFormResult {
 
       setIsLoading(true);
       setError(null);
+      setFieldErrors({});
 
       const validation = await validateAddresses();
 
       if (!validation.isValid) {
         setIsLoading(false);
-        setError(validation.error || "Erreur de validation des adresses");
+
+        // Si on a des erreurs par champ, les afficher
+        if ((validation as any).fieldErrors) {
+          setFieldErrors((validation as any).fieldErrors);
+        } else {
+          // Sinon afficher l'erreur générale
+          setError(validation.error || "Erreur de validation des adresses");
+        }
         return;
       }
 
@@ -97,14 +133,23 @@ export function useCheckoutAddressForm(): UseCheckoutAddressFormResult {
     router.push("/checkout/information");
   }, [router]);
 
-  const clearError = useCallback(() => {
-    setError(null);
+  const clearError = useCallback((fieldName?: string) => {
+    if (fieldName) {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
+    } else {
+      setError(null);
+    }
   }, []);
 
   return {
     addressData,
     isLoading,
     error,
+    fieldErrors,
     handleShippingFieldChange,
     handleBillingFieldChange,
     handleUseSameBillingAddressChange,
@@ -113,4 +158,3 @@ export function useCheckoutAddressForm(): UseCheckoutAddressFormResult {
     clearError,
   };
 }
-

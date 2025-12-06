@@ -268,49 +268,28 @@ Cet email a été envoyé automatiquement, merci de ne pas y répondre.
   }
 
   /**
-   * Valider les données de confirmation de commande
+   * Envoyer un email de confirmation de commande
+   * Format simplifié : accepte directement les données brutes depuis l'API Gateway
    */
-  private validateOrderConfirmationData(data: any): void {
-    if (
-      !data.customerEmail ||
-      !data.customerName ||
-      !data.orderId ||
-      !data.items ||
-      !data.shippingAddress
-    ) {
-      throw new Error(
-        "Données manquantes pour l'envoi de l'email de confirmation"
-      );
-    }
-
-    if (!Array.isArray(data.items) || data.items.length === 0) {
-      throw new Error("La liste des articles ne peut pas être vide");
-    }
-
-    if (
-      !data.shippingAddress.firstName ||
-      !data.shippingAddress.lastName ||
-      !data.shippingAddress.address ||
-      !data.shippingAddress.city ||
-      !data.shippingAddress.postalCode ||
-      !data.shippingAddress.country
-    ) {
-      throw new Error("L'adresse de livraison est incomplète");
-    }
-  }
-
-  /**
-   * Envoyer un email de confirmation de commande depuis des données brutes
-   * Construit les données formatées en interne
-   */
-  async sendOrderConfirmationEmailFromData(data: {
+  async sendOrderConfirmationEmail(data: {
     orderId: number;
-    cart: any; // CartPublicDTO
+    cart: {
+      items: Array<{
+        productName: string;
+        quantity: number;
+        unitPriceTTC: number;
+        totalPriceTTC: number;
+        vatRate: number;
+        [key: string]: any; // Accepter les champs supplémentaires
+      }>;
+      subtotal: number;
+      tax: number;
+      total: number;
+    };
     customerData: {
+      email: string;
       firstName?: string;
       lastName?: string;
-      email: string;
-      phoneNumber?: string;
     };
     addressData: {
       shipping?: {
@@ -321,170 +300,166 @@ Cet email a été envoyé automatiquement, merci de ne pas y répondre.
       };
     };
   }): Promise<any> {
-    // Construire customerName à partir de customerData
-    const customerName =
-      `${data.customerData.firstName || ""} ${
-        data.customerData.lastName || ""
-      }`.trim() || "Client";
-
-    // Transformer les items du panier en items formatés
-    const items = data.cart.items.map((item: any) => ({
-      name: item.productName,
-      quantity: item.quantity,
-      unitPrice: item.unitPriceTTC,
-      totalPrice: item.totalPriceTTC,
-      vatRate: item.vatRate,
-    }));
-
-    // Construire shippingAddress
-    const shippingAddress = {
-      firstName: data.customerData.firstName || "",
-      lastName: data.customerData.lastName || "",
-      address: data.addressData.shipping?.address || "",
-      city: data.addressData.shipping?.city || "",
-      postalCode: data.addressData.shipping?.postalCode || "",
-      country: data.addressData.shipping?.countryName || "",
-    };
-
-    // Appeler la méthode existante avec les données formatées
-    return await this.sendOrderConfirmationEmail({
-      customerEmail: data.customerData.email,
-      customerName,
-      orderId: data.orderId,
-      orderDate: new Date(),
-      items,
-      subtotal: data.cart.subtotal,
-      tax: data.cart.tax,
-      total: data.cart.total,
-      shippingAddress,
-    });
-  }
-
-  /**
-   * Envoyer un email de confirmation de commande
-   */
-  async sendOrderConfirmationEmail(data: {
-    customerEmail: string;
-    customerName: string;
-    orderId: number;
-    orderDate: Date;
-    items: Array<{
-      name: string;
-      quantity: number;
-      unitPrice: number;
-      totalPrice: number;
-      vatRate?: number; // taux de TVA (%) optionnel
-    }>;
-    subtotal: number;
-    tax: number;
-    total: number;
-    shippingAddress: {
-      firstName: string;
-      lastName: string;
-      address: string;
-      city: string;
-      postalCode: string;
-      country: string;
-    };
-  }): Promise<any> {
     if (!this.transporter) {
-      console.error("Gmail transporter not configured");
       throw new Error("Gmail transporter not configured");
     }
 
-    // Valider les données
-    this.validateOrderConfirmationData(data);
+    // Validation basique
+    if (
+      !data.customerData?.email ||
+      !data.orderId ||
+      !data.cart?.items?.length
+    ) {
+      console.error("❌ Validation failed - missing data:", {
+        hasEmail: !!data.customerData?.email,
+        hasOrderId: !!data.orderId,
+        hasItems: !!data.cart?.items?.length,
+        itemsCount: data.cart?.items?.length || 0,
+      });
+      throw new Error(
+        "Données manquantes pour l'envoi de l'email de confirmation"
+      );
+    }
 
     try {
-      // Générer les lignes HTML pour les articles (affichage HT/TVA/TTC)
-      const itemsHtml = data.items
-        .map((item) => {
-          const rawVatAny: any = (item as any).vatRate;
-          const parsedVat = Number(rawVatAny);
-          const vatRate =
-            Number.isFinite(parsedVat) && parsedVat >= 0 ? parsedVat : 21;
+      // Construire les données formatées
+      const customerName =
+        `${data.customerData.firstName || ""} ${
+          data.customerData.lastName || ""
+        }`.trim() || "Client";
+      const customerEmail = data.customerData.email;
+      const shipping = data.addressData.shipping || {};
+
+      // Générer les lignes HTML pour les articles
+      const itemsHtml = data.cart.items
+        .map((item, index) => {
+          const vatRate = Number(item.vatRate) || 21;
           const multiplier = 1 + vatRate / 100;
-          const unitPriceHT = Number(item.unitPrice) / multiplier;
-          const totalPriceHT = Number(item.totalPrice) / multiplier;
+          const unitPriceHT = Number(item.unitPriceTTC) / multiplier;
+          const totalPriceHT = Number(item.totalPriceTTC) / multiplier;
+          const isLast = index === data.cart.items.length - 1;
 
           return `
-          <tr>
-            <td style="padding: 12px; border-bottom: 1px solid #eee;">${
-              item.name
-            }</td>
-            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${
-              item.quantity
-            }</td>
-            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${unitPriceHT.toFixed(
-              2
-            )} €</td>
-            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${vatRate.toFixed(
-              0
-            )}%</td>
-            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${totalPriceHT.toFixed(
-              2
-            )} €</td>
-            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${Number(
-              item.totalPrice
-            ).toFixed(2)} €</td>
-          </tr>
-        `;
+            <tr style="background-color: ${
+              index % 2 === 0 ? "#ffffff" : "#fafafa"
+            };">
+              <td style="padding: 15px; border-bottom: ${
+                isLast ? "none" : "1px solid #e0e0e0"
+              }; border-right: 1px solid #e0e0e0; color: #333; font-size: 14px;">${
+            item.productName
+          }</td>
+              <td style="padding: 15px; border-bottom: ${
+                isLast ? "none" : "1px solid #e0e0e0"
+              }; border-right: 1px solid #e0e0e0; text-align: center; color: #333; font-size: 14px;">${
+            item.quantity
+          }</td>
+              <td style="padding: 15px; border-bottom: ${
+                isLast ? "none" : "1px solid #e0e0e0"
+              }; border-right: 1px solid #e0e0e0; text-align: right; color: #333; font-size: 14px;">${unitPriceHT.toFixed(
+            2
+          )} €</td>
+              <td style="padding: 15px; border-bottom: ${
+                isLast ? "none" : "1px solid #e0e0e0"
+              }; border-right: 1px solid #e0e0e0; text-align: right; color: #333; font-size: 14px;">${vatRate.toFixed(
+            0
+          )}%</td>
+              <td style="padding: 15px; border-bottom: ${
+                isLast ? "none" : "1px solid #e0e0e0"
+              }; border-right: 1px solid #e0e0e0; text-align: right; color: #333; font-size: 14px;">${totalPriceHT.toFixed(
+            2
+          )} €</td>
+              <td style="padding: 15px; border-bottom: ${
+                isLast ? "none" : "1px solid #e0e0e0"
+              }; text-align: right; color: #333; font-size: 14px; font-weight: 600;">${Number(
+            item.totalPriceTTC
+          ).toFixed(2)} €</td>
+            </tr>
+          `;
         })
         .join("");
 
+      const orderDate = new Date();
+      const subtotal = Number(data.cart.subtotal);
+      const tax = Number(data.cart.tax);
+      const total = Number(data.cart.total);
+
+      const formattedDate = orderDate.toLocaleDateString("fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
       const mailOptions = {
         from: process.env.GMAIL_USER,
-        to: data.customerEmail,
-        subject: `Confirmation de commande #${data.orderId} - Nature de Pierre`,
+        to: customerEmail,
+        subject: `Facture #${data.orderId} - Confirmation de commande - Nature de Pierre`,
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #f5f5f5; padding: 20px;">
-            <!-- En-tête -->
-            <div style="background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-              <h1 style="margin: 0; font-size: 28px;">Merci pour votre commande !</h1>
-              <p style="margin: 10px 0 0 0; font-size: 16px;">Commande #${
-                data.orderId
-              }</p>
-            </div>
-            
-            <!-- Contenu -->
-            <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px;">
-              <!-- Message de bienvenue -->
-              <p style="font-size: 16px; color: #333; margin-bottom: 20px;">
-                Bonjour <strong>${data.customerName}</strong>,
-              </p>
-              <p style="font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 30px;">
-                Nous avons bien reçu votre commande et nous vous remercions de votre confiance. 
-                Votre paiement a été confirmé et votre commande est en cours de préparation.
-              </p>
-
-              <!-- Informations de commande -->
-              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                <h2 style="color: #13686a; font-size: 18px; margin: 0 0 15px 0;">📋 Détails de la commande</h2>
-                <p style="margin: 5px 0; color: #666;"><strong>Numéro de commande:</strong> #${
-                  data.orderId
-                }</p>
-                <p style="margin: 5px 0; color: #666;"><strong>Date:</strong> ${new Date(
-                  data.orderDate
-                ).toLocaleDateString("fr-FR", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}</p>
+          <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; background-color: #ffffff; padding: 0;">
+            <!-- En-tête de facture -->
+            <div style="background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%); color: white; padding: 40px 40px 30px 40px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+                <div>
+                  <h1 style="margin: 0; font-size: 32px; font-weight: bold;">Nature de Pierre</h1>
+                  <p style="margin: 8px 0 0 0; font-size: 14px; opacity: 0.9;">Vente de pierres naturelles et minéraux</p>
+                </div>
+                <div style="text-align: right; background: rgba(255,255,255,0.2); padding: 15px 25px; border-radius: 8px;">
+                  <div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px;">FACTURE</div>
+                  <div style="font-size: 24px; font-weight: bold;">#${
+                    data.orderId
+                  }</div>
+                </div>
               </div>
+            </div>
 
-              <!-- Articles commandés -->
-              <h2 style="color: #13686a; font-size: 18px; margin: 0 0 15px 0;">🛍️ Articles commandés</h2>
-              <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+            <!-- Informations facture -->
+            <div style="padding: 30px 40px; background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">
+              <div style="display: flex; justify-content: space-between; gap: 40px;">
+                <div style="flex: 1;">
+                  <h3 style="color: #13686a; font-size: 14px; text-transform: uppercase; margin: 0 0 15px 0; letter-spacing: 1px;">Facturé à</h3>
+                  <div style="color: #333; font-size: 14px; line-height: 1.8;">
+                    <p style="margin: 0 0 5px 0; font-weight: bold;">${customerName}</p>
+                    <p style="margin: 0 0 5px 0;">${customerEmail}</p>
+                    ${
+                      shipping.address
+                        ? `
+                        <p style="margin: 10px 0 0 0; padding-top: 10px; border-top: 1px solid #ddd;">
+                          ${shipping.address}<br>
+                          ${shipping.postalCode || ""} ${
+                            shipping.city || ""
+                          }<br>
+                          ${shipping.countryName || ""}
+                        </p>
+                        `
+                        : ""
+                    }
+                  </div>
+                </div>
+                <div style="flex: 1; text-align: right;">
+                  <h3 style="color: #13686a; font-size: 14px; text-transform: uppercase; margin: 0 0 15px 0; letter-spacing: 1px;">Informations</h3>
+                  <div style="color: #333; font-size: 14px; line-height: 1.8;">
+                    <p style="margin: 0 0 5px 0;"><strong>Date d'émission:</strong><br>${formattedDate}</p>
+                    <p style="margin: 10px 0 0 0;"><strong>Date de commande:</strong><br>${formattedDate}</p>
+                    <p style="margin: 10px 0 0 0; padding-top: 10px; border-top: 1px solid #ddd;">
+                      <strong>Statut:</strong><br>
+                      <span style="color: #10b981; font-weight: bold;">✓ Paiement confirmé</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Corps de la facture -->
+            <div style="padding: 40px; background: white;">
+              <!-- Tableau des articles -->
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; border: 1px solid #e0e0e0;">
                 <thead>
-                  <tr style="background-color: #f8f9fa;">
-                    <th style="padding: 12px; text-align: left; color: #13686a; font-size: 14px;">PRODUIT</th>
-                    <th style="padding: 12px; text-align: center; color: #13686a; font-size: 14px;">QTÉ</th>
-                    <th style="padding: 12px; text-align: right; color: #13686a; font-size: 14px;">PRIX UNIT. HT</th>
-                    <th style="padding: 12px; text-align: right; color: #13686a; font-size: 14px;">TVA</th>
-                    <th style="padding: 12px; text-align: right; color: #13686a; font-size: 14px;">TOTAL HT</th>
-                    <th style="padding: 12px; text-align: right; color: #13686a; font-size: 14px;">TOTAL TTC</th>
+                  <tr style="background-color: #13686a; color: white;">
+                    <th style="padding: 15px; text-align: left; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-right: 1px solid rgba(255,255,255,0.2);">Désignation</th>
+                    <th style="padding: 15px; text-align: center; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-right: 1px solid rgba(255,255,255,0.2);">Qté</th>
+                    <th style="padding: 15px; text-align: right; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-right: 1px solid rgba(255,255,255,0.2);">Prix unit. HT</th>
+                    <th style="padding: 15px; text-align: right; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-right: 1px solid rgba(255,255,255,0.2);">TVA</th>
+                    <th style="padding: 15px; text-align: right; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-right: 1px solid rgba(255,255,255,0.2);">Total HT</th>
+                    <th style="padding: 15px; text-align: right; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Total TTC</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -493,112 +468,118 @@ Cet email a été envoyé automatiquement, merci de ne pas y répondre.
               </table>
 
               <!-- Totaux -->
-              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                <table style="width: 100%; border-collapse: collapse;">
+              <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
+                <table style="width: 300px; border-collapse: collapse;">
                   <tr>
-                    <td style="padding: 8px 0; color: #666; font-size: 14px;">Sous-total HT:</td>
-                    <td style="padding: 8px 0; text-align: right; color: #666; font-size: 14px;">${Number(
-                      data.subtotal
-                    ).toFixed(2)} €</td>
+                    <td style="padding: 10px 15px; text-align: right; color: #666; font-size: 14px; border-bottom: 1px solid #e0e0e0;">Sous-total HT</td>
+                    <td style="padding: 10px 15px; text-align: right; color: #333; font-size: 14px; font-weight: 500; border-bottom: 1px solid #e0e0e0;">${subtotal.toFixed(
+                      2
+                    )} €</td>
                   </tr>
                   <tr>
-                    <td style="padding: 8px 0; color: #666; font-size: 14px;">TVA:</td>
-                    <td style="padding: 8px 0; text-align: right; color: #666; font-size: 14px;">${Number(
-                      Number(data.total) - Number(data.subtotal)
-                    ).toFixed(2)} €</td>
+                    <td style="padding: 10px 15px; text-align: right; color: #666; font-size: 14px; border-bottom: 1px solid #e0e0e0;">TVA</td>
+                    <td style="padding: 10px 15px; text-align: right; color: #333; font-size: 14px; font-weight: 500; border-bottom: 1px solid #e0e0e0;">${tax.toFixed(
+                      2
+                    )} €</td>
                   </tr>
-                  <tr style="border-top: 2px solid #13686a;">
-                    <td style="padding: 12px 0; color: #13686a; font-size: 18px; font-weight: bold;">Total TTC:</td>
-                    <td style="padding: 12px 0; text-align: right; color: #13686a; font-size: 18px; font-weight: bold;">${Number(
-                      data.total
-                    ).toFixed(2)} €</td>
+                  <tr style="background-color: #f8f9fa;">
+                    <td style="padding: 15px; text-align: right; color: #13686a; font-size: 18px; font-weight: bold; border: 2px solid #13686a; border-right: none;">TOTAL TTC</td>
+                    <td style="padding: 15px; text-align: right; color: #13686a; font-size: 18px; font-weight: bold; border: 2px solid #13686a; border-left: none;">${total.toFixed(
+                      2
+                    )} €</td>
                   </tr>
                 </table>
               </div>
 
-              <!-- Adresse de livraison -->
-              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                <h2 style="color: #13686a; font-size: 18px; margin: 0 0 15px 0;">🚚 Adresse de livraison</h2>
-                <p style="margin: 5px 0; color: #666;">${
-                  data.shippingAddress.firstName
-                } ${data.shippingAddress.lastName}</p>
-                <p style="margin: 5px 0; color: #666;">${
-                  data.shippingAddress.address
-                }</p>
-                <p style="margin: 5px 0; color: #666;">${
-                  data.shippingAddress.postalCode
-                } ${data.shippingAddress.city}</p>
-                <p style="margin: 5px 0; color: #666;">${
-                  data.shippingAddress.country
-                }</p>
-              </div>
-
-              <!-- Prochaines étapes -->
-              <div style="background: #e8f5f5; border-left: 4px solid #13686a; padding: 20px; margin-bottom: 30px;">
-                <h3 style="color: #13686a; font-size: 16px; margin: 0 0 10px 0;">📦 Que se passe-t-il maintenant ?</h3>
-                <ul style="margin: 0; padding-left: 20px; color: #666; line-height: 1.8;">
-                  <li>Nous préparons votre commande avec soin</li>
-                  <li>Votre commande sera expédiée dans les meilleurs délais</li>
-                  <li>Nous vous contacterons si nous avons besoin d'informations complémentaires</li>
-                  <li>Notre équipe reste à votre disposition pour toute question</li>
-                </ul>
-              </div>
-
-              <!-- Contact -->
-              <div style="text-align: center; padding: 20px; border-top: 2px solid #eee;">
-                <p style="color: #666; font-size: 14px; margin: 10px 0;">
-                  Une question ? Contactez-nous à <a href="mailto:contact@naturedepierre.com" style="color: #13686a;">contact@naturedepierre.com</a>
+              <!-- Message de confirmation -->
+              <div style="background: #e8f5f5; border-left: 4px solid #13686a; padding: 20px; margin-bottom: 30px; border-radius: 4px;">
+                <p style="margin: 0 0 10px 0; color: #13686a; font-size: 15px; font-weight: 600;">
+                  ✓ Paiement reçu et confirmé
                 </p>
-                <p style="color: #999; font-size: 12px; margin: 10px 0;">
-                  Nature de Pierre - Vente de pierres naturelles et minéraux
+                <p style="margin: 0; color: #666; font-size: 14px; line-height: 1.6;">
+                  Votre commande est en cours de préparation et sera expédiée dans les meilleurs délais. 
+                </p>
+              </div>
+
+              <!-- Mentions légales -->
+              <div style="border-top: 2px solid #e0e0e0; padding-top: 30px; margin-top: 40px;">
+                <p style="color: #999; font-size: 12px; line-height: 1.6; margin: 0 0 10px 0;">
+                  <strong>Nature de Pierre</strong><br>
+                  Vente de pierres naturelles et minéraux<br>
+                  Email: <a href="mailto:contact@naturedepierre.com" style="color: #13686a;">contact@naturedepierre.com</a>
+                </p>
+                <p style="color: #999; font-size: 11px; line-height: 1.6; margin: 15px 0 0 0; font-style: italic;">
+                  Cette facture est générée automatiquement suite à votre commande en ligne. 
+                  Elle fait office de confirmation de commande et de justificatif de paiement.
                 </p>
               </div>
             </div>
           </div>
         `,
         text: `
-          Confirmation de commande #${data.orderId} - Nature de Pierre
-          
-          Bonjour ${data.customerName},
-          
-          Nous avons bien reçu votre commande et nous vous remercions de votre confiance.
-          Votre paiement a été confirmé et votre commande est en cours de préparation.
-          
-          DÉTAILS DE LA COMMANDE
-          Numéro: #${data.orderId}
-          Date: ${new Date(data.orderDate).toLocaleDateString("fr-FR")}
-          
-          ARTICLES COMMANDÉS
-          ${data.items
-            .map(
-              (item) =>
-                `- ${item.name} x${item.quantity} : ${Number(
-                  item.totalPrice
-                ).toFixed(2)} €`
-            )
-            .join("\n")}
-          
-          TOTAUX
-          Sous-total HT: ${Number(data.subtotal).toFixed(2)} €
-          TVA : ${Number(Number(data.total) - Number(data.subtotal)).toFixed(
-            2
-          )} €
-          Total TTC: ${Number(data.total).toFixed(2)} €
-          
-          ADRESSE DE LIVRAISON
-          ${data.shippingAddress.firstName} ${data.shippingAddress.lastName}
-          ${data.shippingAddress.address}
-          ${data.shippingAddress.postalCode} ${data.shippingAddress.city}
-          ${data.shippingAddress.country}
-          
-          PROCHAINES ÉTAPES
-          - Nous préparons votre commande avec soin
-          - Votre commande sera expédiée dans les meilleurs délais
-          - Notre équipe reste à votre disposition pour toute question
-          
-          Une question ? Contactez-nous à contact@naturedepierre.com
-          
-          Nature de Pierre - Vente de pierres naturelles et minéraux
+═══════════════════════════════════════════════════════════════
+                    FACTURE #${data.orderId}
+                    Nature de Pierre
+═══════════════════════════════════════════════════════════════
+
+Date d'émission: ${formattedDate}
+Date de commande: ${formattedDate}
+Statut: ✓ Paiement confirmé
+
+───────────────────────────────────────────────────────────────
+FACTURÉ À
+───────────────────────────────────────────────────────────────
+${customerName}
+${customerEmail}
+${
+  shipping.address
+    ? `
+${shipping.address}
+${shipping.postalCode || ""} ${shipping.city || ""}
+${shipping.countryName || ""}
+`
+    : ""
+}
+
+───────────────────────────────────────────────────────────────
+DÉTAILS DE LA FACTURE
+───────────────────────────────────────────────────────────────
+
+${data.cart.items
+  .map((item, index) => {
+    const vatRate = Number(item.vatRate) || 21;
+    const multiplier = 1 + vatRate / 100;
+    const unitPriceHT = Number(item.unitPriceTTC) / multiplier;
+    const totalPriceHT = Number(item.totalPriceTTC) / multiplier;
+    return `${index + 1}. ${item.productName}
+   Quantité: ${item.quantity}
+   Prix unitaire HT: ${unitPriceHT.toFixed(2)} €
+   TVA: ${vatRate.toFixed(0)}%
+   Total HT: ${totalPriceHT.toFixed(2)} €
+   Total TTC: ${Number(item.totalPriceTTC).toFixed(2)} €`;
+  })
+  .join("\n\n")}
+
+───────────────────────────────────────────────────────────────
+TOTAUX
+───────────────────────────────────────────────────────────────
+Sous-total HT: ${subtotal.toFixed(2)} €
+TVA: ${tax.toFixed(2)} €
+───────────────────────────────────────────────────────────────
+TOTAL TTC: ${total.toFixed(2)} €
+───────────────────────────────────────────────────────────────
+
+✓ Paiement reçu et confirmé
+Votre commande est en cours de préparation et sera expédiée dans les meilleurs délais.
+
+───────────────────────────────────────────────────────────────
+Nature de Pierre
+Vente de pierres naturelles et minéraux
+Email: contact@naturedepierre.com
+
+Cette facture est générée automatiquement suite à votre commande en ligne.
+Elle fait office de confirmation de commande et de justificatif de paiement.
+═══════════════════════════════════════════════════════════════
         `,
       };
 
@@ -607,7 +588,7 @@ Cet email a été envoyé automatiquement, merci de ne pas y répondre.
       return {
         messageId: result.messageId,
         status: "sent",
-        recipient: data.customerEmail,
+        recipient: customerEmail,
         subject: mailOptions.subject,
         sentAt: new Date(),
       };

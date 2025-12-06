@@ -19,6 +19,10 @@ import {
   type CompleteOrderResult,
 } from "../services/checkoutService";
 import { logger } from "../services/logger";
+import {
+  validateBelgianAddressFields,
+  validateBelgianCustomerData,
+} from "../utils/belgiumValidation";
 
 // Réexporter les types pour faciliter l'utilisation dans les composants
 export type {
@@ -97,6 +101,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   /**
    * Charge les données checkout depuis le serveur au montage
    * Le sessionId est géré automatiquement via cookie httpOnly
+   * Le countryName vient uniquement du backend
    */
   useEffect(() => {
     if (typeof window === "undefined" || isInitialized) return;
@@ -128,6 +133,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
    * Sauvegarde explicite des données checkout actuelles
    * À appeler avant la navigation entre étapes du checkout
    * Le sessionId est géré automatiquement via cookie httpOnly
+   * Le countryName vient uniquement du backend
    */
   const saveCheckoutData = useCallback(async () => {
     if (!isInitialized) {
@@ -155,7 +161,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   /**
    * Met à jour un champ d'une adresse (livraison ou facturation)
    * Centralise la logique pour éviter la duplication
-   * Le countryName est géré automatiquement par le backend (toujours "Belgique")
+   * Le countryName vient uniquement du backend
    */
   const updateAddressField = useCallback(
     (type: "shipping" | "billing", field: string, value: string) => {
@@ -204,20 +210,71 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
 
   /**
    * Valide les adresses de livraison et de facturation
-   * Délègue la validation au service customer-service pour cohérence et sécurité
+   * Effectue d'abord une validation locale (format belge), puis délègue au backend
+   * Retourne les erreurs par champ pour affichage sous chaque champ
    */
-  const validateAddresses =
-    useCallback(async (): Promise<AddressValidationResult> => {
-      return validateAddressesService(addressData);
-    }, [addressData]);
+  const validateAddresses = useCallback(async (): Promise<
+    AddressValidationResult & { fieldErrors?: Record<string, string> }
+  > => {
+    // Validation locale pour la Belgique
+    const shippingValidation = validateBelgianAddressFields(
+      addressData.shipping || {}
+    );
+    const billingValidation = addressData.useSameBillingAddress
+      ? { isValid: true, errors: {} }
+      : validateBelgianAddressFields(addressData.billing || {});
+
+    // Si validation locale échoue, retourner les erreurs par champ
+    if (!shippingValidation.isValid || !billingValidation.isValid) {
+      const fieldErrors: Record<string, string> = {};
+
+      // Erreurs de shipping
+      Object.keys(shippingValidation.errors).forEach((key) => {
+        fieldErrors[`shipping.${key}`] = shippingValidation.errors[key];
+      });
+
+      // Erreurs de billing
+      Object.keys(billingValidation.errors).forEach((key) => {
+        fieldErrors[`billing.${key}`] = billingValidation.errors[key];
+      });
+
+      return {
+        isValid: false,
+        error: Object.values(fieldErrors).join(", "),
+        fieldErrors,
+      };
+    }
+
+    // Si validation locale réussit, valider côté serveur
+    const serverValidation = await validateAddressesService(addressData);
+
+    // Si le serveur retourne une erreur générale, on la garde
+    // Sinon on retourne le résultat tel quel
+    return serverValidation;
+  }, [addressData]);
 
   /**
    * Valide les données client
-   * Délègue la validation au service customer-service pour cohérence et sécurité
+   * Effectue d'abord une validation locale (format belge), puis délègue au backend
    * Retourne les erreurs structurées par champ
    */
   const validateCustomerData =
     useCallback(async (): Promise<CustomerValidationResult> => {
+      // Validation locale pour la Belgique
+      const localValidation = validateBelgianCustomerData(customerData);
+
+      // Si validation locale échoue, retourner les erreurs
+      if (!localValidation.isValid) {
+        return {
+          isValid: false,
+          errors: Object.keys(localValidation.errors).map((field) => ({
+            field,
+            message: localValidation.errors[field],
+          })),
+        };
+      }
+
+      // Si validation locale réussit, valider côté serveur
       return validateCustomerDataService(customerData);
     }, [customerData]);
 

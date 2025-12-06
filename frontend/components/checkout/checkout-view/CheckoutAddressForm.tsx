@@ -6,7 +6,14 @@
 
 import React from "react";
 import { AddressCreateDTO } from "../../../dto";
-import { FormInput, FormContainer, Button, FormHeader, Alert } from "../../shared";
+import {
+  FormInput,
+  FormContainer,
+  Button,
+  FormHeader,
+  Alert,
+  FieldError,
+} from "../../shared";
 import { useCheckoutAddressForm } from "../../../hooks";
 
 /**
@@ -15,49 +22,77 @@ import { useCheckoutAddressForm } from "../../../hooks";
 interface AddressFieldsProps {
   address: Partial<AddressCreateDTO>;
   onChange: (field: string, value: string) => void;
+  errors?: { [key: string]: string };
+  prefix?: string; // "shipping" ou "billing" pour les clés d'erreur
 }
 
 /**
  * Composant réutilisable pour afficher les champs d'adresse
  */
-const AddressFields: React.FC<AddressFieldsProps> = ({ address, onChange }) => {
+const AddressFields: React.FC<AddressFieldsProps> = ({
+  address,
+  onChange,
+  errors = {},
+  prefix = "",
+}) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e.target.name, e.target.value);
   };
 
+  const getError = (fieldName: string): string | undefined => {
+    const errorKey = prefix ? `${prefix}.${fieldName}` : fieldName;
+    return errors[errorKey];
+  };
+
   return (
     <>
-      <FormInput
-        name="address"
-        label="Adresse complète"
-        value={address.address || ""}
-        onChange={handleInputChange}
-        required
-        placeholder="Numéro et nom de rue"
-        gridColumn="1 / -1"
-      />
-      <FormInput
-        name="postalCode"
-        label="Code postal"
-        value={address.postalCode || ""}
-        onChange={handleInputChange}
-        required
-      />
-      <FormInput
-        name="city"
-        label="Ville"
-        value={address.city || ""}
-        onChange={handleInputChange}
-        required
-      />
-      <FormInput
-        name="countryName"
-        label="Pays"
-        value={address.countryName || ""}
-        onChange={handleInputChange}
-        readOnly
-        gridColumn="1 / -1"
-      />
+      <div>
+        <FormInput
+          name="address"
+          label="Adresse complète"
+          value={address.address || ""}
+          onChange={handleInputChange}
+          required
+          placeholder="Numéro et nom de rue"
+          gridColumn="1 / -1"
+        />
+        {getError("address") && <FieldError message={getError("address")!} />}
+      </div>
+      <div>
+        <FormInput
+          name="postalCode"
+          label="Code postal"
+          value={address.postalCode || ""}
+          onChange={handleInputChange}
+          required
+        />
+        {getError("postalCode") && (
+          <FieldError message={getError("postalCode")!} />
+        )}
+      </div>
+      <div>
+        <FormInput
+          name="city"
+          label="Ville"
+          value={address.city || ""}
+          onChange={handleInputChange}
+          required
+        />
+        {getError("city") && <FieldError message={getError("city")!} />}
+      </div>
+      <div>
+        <FormInput
+          name="countryName"
+          label="Pays"
+          value={address.countryName || ""}
+          onChange={handleInputChange}
+          readOnly
+          gridColumn="1 / -1"
+        />
+        {getError("countryName") && (
+          <FieldError message={getError("countryName")!} />
+        )}
+      </div>
     </>
   );
 };
@@ -70,6 +105,7 @@ export default function CheckoutAddressForm() {
     addressData,
     isLoading,
     error,
+    fieldErrors,
     handleShippingFieldChange,
     handleBillingFieldChange,
     handleUseSameBillingAddressChange,
@@ -83,8 +119,10 @@ export default function CheckoutAddressForm() {
       {/* En-tête du formulaire avec numéro d'étape */}
       <FormHeader stepNumber={2} title="Adresse de livraison" />
 
-      {/* Affichage des erreurs éventuelles */}
-      {error && <Alert type="error" message={error} onClose={clearError} />}
+      {/* Affichage de l'erreur générale (si pas d'erreurs par champ) */}
+      {error && Object.keys(fieldErrors).length === 0 && (
+        <Alert type="error" message={error} onClose={clearError} />
+      )}
 
       <form onSubmit={handleSubmit}>
         {/* Section adresse de livraison */}
@@ -114,6 +152,8 @@ export default function CheckoutAddressForm() {
             <AddressFields
               address={addressData?.shipping || {}}
               onChange={handleShippingFieldChange}
+              errors={fieldErrors}
+              prefix="shipping"
             />
           </div>
         </div>
@@ -190,6 +230,8 @@ export default function CheckoutAddressForm() {
               <AddressFields
                 address={addressData?.billing || {}}
                 onChange={handleBillingFieldChange}
+                errors={fieldErrors}
+                prefix="billing"
               />
             </div>
           </div>

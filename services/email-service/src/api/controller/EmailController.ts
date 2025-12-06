@@ -111,58 +111,28 @@ export class EmailController {
 
   /**
    * Envoyer un email de confirmation de commande
-   * Accepte soit le format formaté (compatibilité), soit le format brut (orderId, cart, customerData, addressData)
+   * Format simplifié : orderId, cart, customerData, addressData
    */
   async sendOrderConfirmationEmail(req: Request, res: Response): Promise<void> {
     try {
-      const body = req.body;
+      console.log("📧 EmailController: Starting sendOrderConfirmationEmail");
+      console.log("📧 Request body:", JSON.stringify(req.body, null, 2));
 
-      // Détecter le format : si cart est présent, utiliser le nouveau format
-      let result;
-      if (body.cart && body.customerData && body.addressData) {
-        // Nouveau format : données brutes, le service construit tout
-        result = await this.emailService.sendOrderConfirmationEmailFromData({
-          orderId: body.orderId,
-          cart: body.cart,
-          customerData: body.customerData,
-          addressData: body.addressData,
-        });
-      } else {
-        // Ancien format : données déjà formatées (compatibilité)
-        const {
-          orderId,
-          customerEmail,
-          customerName,
-          items,
-          subtotal,
-          tax,
-          total,
-          shippingAddress,
-        } = body;
+      const result = await this.emailService.sendOrderConfirmationEmail(
+        req.body
+      );
 
-        result = await this.emailService.sendOrderConfirmationEmail({
-          customerEmail,
-          customerName: customerName || "Client",
-          orderId,
-          orderDate: new Date(),
-          items,
-          subtotal,
-          tax,
-          total,
-          shippingAddress,
-        });
-      }
+      console.log("📧 Order confirmation email sent:", result);
 
-      const response = {
+      res.status(201).json({
         success: true,
         messageId: result.messageId,
         message: "Email de confirmation de commande envoyé avec succès",
         timestamp: new Date().toISOString(),
-      };
-
-      res.status(201).json(response);
+      });
     } catch (error: any) {
-      console.error("Send order confirmation email error:", error);
+      console.error("❌ Send order confirmation email error:", error);
+      console.error("❌ Error stack:", error.stack);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
