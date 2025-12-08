@@ -4,12 +4,11 @@
 -- Description: Met à jour l'utilisateur avec l'email alban-roullier-gall@hotmail.com comme super admin
 
 -- Mettre à jour l'utilisateur existant pour le rendre super admin
--- IMPORTANT: Il faut aussi approuver l'utilisateur (is_backoffice_approved = TRUE)
+-- IMPORTANT: Il faut aussi approuver l'utilisateur (backoffice_status = 'approved')
 -- car le login vérifie cette condition même pour les super admins
 UPDATE users 
 SET is_super_admin = TRUE,
-    is_backoffice_approved = TRUE,
-    is_backoffice_rejected = FALSE,
+    backoffice_status = 'approved',
     updated_at = NOW()
 WHERE email = 'alban-roullier-gall@hotmail.com';
 

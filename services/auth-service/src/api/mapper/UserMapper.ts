@@ -34,9 +34,7 @@ export class UserMapper {
       firstName: user.firstName,
       lastName: user.lastName,
       fullName: `${user.firstName} ${user.lastName}`,
-      isActive: user.isActive,
-      isBackofficeApproved: user.isBackofficeApproved,
-      isBackofficeRejected: user.isBackofficeRejected,
+      backofficeStatus: user.backofficeStatus,
       isSuperAdmin: user.isSuperAdmin,
       createdAt: user.createdAt.toISOString(),
     };

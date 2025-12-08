@@ -114,10 +114,7 @@ export class AuthController {
     } catch (error: any) {
       console.error("Login error:", error);
       const errorMessage = error?.message || "";
-      if (
-        errorMessage.includes("invalides") ||
-        errorMessage.includes("désactivé")
-      ) {
+      if (errorMessage.includes("invalides")) {
         res
           .status(401)
           .json(

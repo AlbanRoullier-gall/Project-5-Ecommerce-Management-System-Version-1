@@ -7,60 +7,60 @@
  * Utilise les noms camelCase pour l'API REST
  */
 export interface UserCreateDTO {
-    email: string;
-    password: string;
-    confirmPassword?: string;
-    firstName: string;
-    lastName: string;
+  email: string;
+  password: string;
+  confirmPassword?: string;
+  firstName: string;
+  lastName: string;
 }
 /**
  * DTO pour la connexion d'utilisateur
  * Basé sur UserData avec ajout du mot de passe
  */
 export interface UserLoginDTO {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 }
 /**
  * DTO pour la mise à jour du profil utilisateur
  * Utilise les noms camelCase pour l'API REST
  */
 export interface UserUpdateDTO {
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    isActive?: boolean;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
 }
 /**
  * DTO pour la validation de mot de passe
  */
 export interface PasswordValidationDTO {
-    password: string;
+  password: string;
 }
 /**
  * DTO pour le changement de mot de passe
  */
 export interface PasswordChangeDTO {
-    currentPassword: string;
-    newPassword: string;
+  currentPassword: string;
+  newPassword: string;
 }
 /**
  * DTO pour la réinitialisation de mot de passe
  */
 export interface PasswordResetDTO {
-    token: string;
-    newPassword: string;
+  token: string;
+  newPassword: string;
 }
 /**
  * DTO public pour les informations utilisateur
  * (sans données sensibles comme le mot de passe)
  */
 export interface UserPublicDTO {
-    userId: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-    fullName: string;
-    isActive: boolean;
+  userId: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  backofficeStatus: BackofficeStatus;
+  isSuperAdmin: boolean;
 }
 //# sourceMappingURL=index.d.ts.map

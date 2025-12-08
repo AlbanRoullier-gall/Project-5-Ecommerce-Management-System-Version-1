@@ -56,15 +56,15 @@ export interface PasswordResetDTO {
  * (sans données sensibles comme le mot de passe)
  * Inclut tous les champs nécessaires pour le frontend
  */
+export type BackofficeStatus = "pending" | "approved" | "rejected";
+
 export interface UserPublicDTO {
   userId: number;
   email: string;
   firstName: string;
   lastName: string;
   fullName: string;
-  isActive: boolean;
-  isBackofficeApproved: boolean;
-  isBackofficeRejected: boolean;
+  backofficeStatus: BackofficeStatus;
   isSuperAdmin: boolean;
   createdAt?: string; // Format ISO 8601
 }

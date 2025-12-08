@@ -10,6 +10,11 @@
 import bcrypt from "bcryptjs";
 
 /**
+ * Type pour le statut d'approbation backoffice
+ */
+export type BackofficeStatus = "pending" | "approved" | "rejected";
+
+/**
  * Interface correspondant exactement à la table users
  */
 export interface UserData {
@@ -18,9 +23,7 @@ export interface UserData {
   password_hash: string;
   first_name: string;
   last_name: string;
-  is_active: boolean;
-  is_backoffice_approved: boolean;
-  is_backoffice_rejected: boolean;
+  backoffice_status: BackofficeStatus;
   is_super_admin: boolean;
   created_at: Date;
   updated_at: Date;
@@ -44,9 +47,7 @@ export class User {
   public readonly passwordHash: string;
   public readonly firstName: string;
   public readonly lastName: string;
-  public readonly isActive: boolean;
-  public readonly isBackofficeApproved: boolean;
-  public readonly isBackofficeRejected: boolean;
+  public readonly backofficeStatus: BackofficeStatus;
   public readonly isSuperAdmin: boolean;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
@@ -57,12 +58,39 @@ export class User {
     this.passwordHash = data.password_hash;
     this.firstName = data.first_name;
     this.lastName = data.last_name;
-    this.isActive = data.is_active;
-    this.isBackofficeApproved = data.is_backoffice_approved;
-    this.isBackofficeRejected = data.is_backoffice_rejected;
+    this.backofficeStatus = data.backoffice_status;
     this.isSuperAdmin = data.is_super_admin;
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
+  }
+
+  /**
+   * Vérifier si l'utilisateur est actif (peut se connecter)
+   * Un utilisateur est actif si son statut backoffice est 'approved'
+   */
+  get isActive(): boolean {
+    return this.backofficeStatus === "approved";
+  }
+
+  /**
+   * Vérifier si l'utilisateur est approuvé pour le backoffice
+   */
+  get isBackofficeApproved(): boolean {
+    return this.backofficeStatus === "approved";
+  }
+
+  /**
+   * Vérifier si l'utilisateur est rejeté pour le backoffice
+   */
+  get isBackofficeRejected(): boolean {
+    return this.backofficeStatus === "rejected";
+  }
+
+  /**
+   * Vérifier si l'utilisateur est en attente d'approbation
+   */
+  get isBackofficePending(): boolean {
+    return this.backofficeStatus === "pending";
   }
 
   /**

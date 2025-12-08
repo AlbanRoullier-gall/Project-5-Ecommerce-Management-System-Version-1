@@ -1,0 +1,32 @@
+@startuml Auth Database Schema (auth_db)
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "auth_db" {
+    
+    class User {
+        - userId: Integer {PK}
+        - email: String {UNIQUE}
+        - passwordHash: String
+        - firstName: String
+        - lastName: String
+        - backofficeStatus: Enum {pending, approved, rejected}
+        - isSuperAdmin: Boolean
+        - createdAt: DateTime
+        - updatedAt: DateTime
+    }
+    
+    class PasswordReset {
+        - resetId: Integer {PK}
+        - userId: Integer {FK}
+        - resetToken: String
+        - expiresAt: DateTime
+        - createdAt: DateTime
+    }
+    
+    ' Relations
+    User ||--o{ PasswordReset : "can request password reset"
+}
+
+@enduml

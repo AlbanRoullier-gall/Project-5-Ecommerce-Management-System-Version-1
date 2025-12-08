@@ -54,13 +54,15 @@ const UserTable: React.FC<UserTableProps> = ({
   };
 
   const getStatusBadge = (user: UserPublicDTO) => {
-    if (user.isBackofficeRejected) {
-      return <Badge type="error" label="Rejeté" />;
+    switch (user.backofficeStatus) {
+      case "rejected":
+        return <Badge type="error" label="Rejeté" />;
+      case "approved":
+        return <Badge type="success" label="Approuvé" />;
+      case "pending":
+      default:
+        return <Badge type="warning" label="En attente" />;
     }
-    if (user.isBackofficeApproved) {
-      return <Badge type="success" label="Approuvé" />;
-    }
-    return <Badge type="warning" label="En attente" />;
   };
 
   const headers: TableHeader[] = [

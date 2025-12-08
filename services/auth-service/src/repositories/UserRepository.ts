@@ -24,7 +24,7 @@ export class UserRepository {
     try {
       const query = `
         SELECT user_id, email, password_hash, first_name, last_name, 
-               is_active, is_backoffice_approved, is_backoffice_rejected, is_super_admin, created_at, updated_at
+               backoffice_status, is_super_admin, created_at, updated_at
         FROM users 
         WHERE user_id = $1
       `;
@@ -48,7 +48,7 @@ export class UserRepository {
     try {
       const query = `
         SELECT user_id, email, password_hash, first_name, last_name, 
-               is_active, is_backoffice_approved, is_backoffice_rejected, is_super_admin, created_at, updated_at
+               backoffice_status, is_super_admin, created_at, updated_at
         FROM users 
         WHERE email = $1
       `;
@@ -71,10 +71,10 @@ export class UserRepository {
   async save(user: User): Promise<User> {
     try {
       const query = `
-        INSERT INTO users (email, password_hash, first_name, last_name, is_active, is_backoffice_approved, is_backoffice_rejected, is_super_admin)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO users (email, password_hash, first_name, last_name, backoffice_status, is_super_admin)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING user_id, email, password_hash, first_name, last_name, 
-                  is_active, is_backoffice_approved, is_backoffice_rejected, is_super_admin, created_at, updated_at
+                  backoffice_status, is_super_admin, created_at, updated_at
       `;
 
       const values = [
@@ -82,9 +82,7 @@ export class UserRepository {
         user.passwordHash,
         user.firstName,
         user.lastName,
-        user.isActive,
-        user.isBackofficeApproved,
-        user.isBackofficeRejected,
+        user.backofficeStatus,
         user.isSuperAdmin,
       ];
 
@@ -104,10 +102,10 @@ export class UserRepository {
       const query = `
         UPDATE users 
         SET email = $1, password_hash = $2, first_name = $3, last_name = $4, 
-            is_active = $5, is_backoffice_approved = $6, is_backoffice_rejected = $7, is_super_admin = $8
-        WHERE user_id = $9
+            backoffice_status = $5, is_super_admin = $6
+        WHERE user_id = $7
         RETURNING user_id, email, password_hash, first_name, last_name, 
-                  is_active, is_backoffice_approved, is_backoffice_rejected, is_super_admin, created_at, updated_at
+                  backoffice_status, is_super_admin, created_at, updated_at
       `;
 
       const values = [
@@ -115,9 +113,7 @@ export class UserRepository {
         user.passwordHash,
         user.firstName,
         user.lastName,
-        user.isActive,
-        user.isBackofficeApproved,
-        user.isBackofficeRejected,
+        user.backofficeStatus,
         user.isSuperAdmin,
         user.userId,
       ];
@@ -154,11 +150,8 @@ export class UserRepository {
       password_hash: updateData.password_hash ?? existingUser.passwordHash,
       first_name: updateData.first_name ?? existingUser.firstName,
       last_name: updateData.last_name ?? existingUser.lastName,
-      is_active: updateData.is_active ?? existingUser.isActive,
-      is_backoffice_approved:
-        updateData.is_backoffice_approved ?? existingUser.isBackofficeApproved,
-      is_backoffice_rejected:
-        updateData.is_backoffice_rejected ?? existingUser.isBackofficeRejected,
+      backoffice_status:
+        updateData.backoffice_status ?? existingUser.backofficeStatus,
       is_super_admin: updateData.is_super_admin ?? existingUser.isSuperAdmin,
       created_at: existingUser.createdAt,
       updated_at: new Date(),
@@ -187,10 +180,9 @@ export class UserRepository {
     try {
       const query = `
         SELECT user_id, email, password_hash, first_name, last_name, 
-               is_active, is_backoffice_approved, is_backoffice_rejected, is_super_admin, created_at, updated_at
+               backoffice_status, is_super_admin, created_at, updated_at
         FROM users 
-        WHERE is_backoffice_approved = FALSE 
-          AND is_backoffice_rejected = FALSE
+        WHERE backoffice_status = 'pending'
           AND is_super_admin = FALSE
         ORDER BY created_at DESC
       `;
@@ -210,7 +202,7 @@ export class UserRepository {
     try {
       const query = `
         SELECT user_id, email, password_hash, first_name, last_name, 
-               is_active, is_backoffice_approved, is_backoffice_rejected, is_super_admin, created_at, updated_at
+               backoffice_status, is_super_admin, created_at, updated_at
         FROM users 
         WHERE is_super_admin = FALSE
         ORDER BY created_at DESC

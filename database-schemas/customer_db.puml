@@ -1,0 +1,35 @@
+@startuml Customer Database Schema (customer_db)
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "customer_db" {
+    
+    class Customer {
+        - customerId: Integer {PK}
+        - firstName: String
+        - lastName: String
+        - email: String {UNIQUE}
+        - phoneNumber: String {nullable}
+        - createdAt: DateTime
+        - updatedAt: DateTime
+    }
+    
+    class CustomerAddress {
+        - addressId: Integer {PK}
+        - customerId: Integer {FK}
+        - addressType: Enum {shipping, billing}
+        - address: String
+        - postalCode: String
+        - city: String
+        - countryName: String
+        - isDefault: Boolean
+        - createdAt: DateTime
+        - updatedAt: DateTime
+    }
+    
+    ' Relations
+    Customer ||--o{ CustomerAddress : "has addresses"
+}
+
+@enduml

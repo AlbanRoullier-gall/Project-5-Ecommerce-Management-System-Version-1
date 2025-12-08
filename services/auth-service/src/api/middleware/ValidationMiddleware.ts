@@ -70,7 +70,6 @@ export class ValidationMiddleware {
           "string.max": "Le nom ne doit pas dépasser 100 caractères",
           "any.required": "Le nom est requis",
         }),
-        role: Joi.string().valid("customer").optional().label("Rôle"),
       }),
 
       loginSchema: Joi.object({

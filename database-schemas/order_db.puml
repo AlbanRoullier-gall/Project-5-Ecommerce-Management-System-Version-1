@@ -1,0 +1,86 @@
+@startuml Order Database Schema (order_db)
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "order_db" {
+    
+    class Order {
+        - id: Integer {PK}
+        - customerId: Integer
+        - customerSnapshot: JSONB {nullable}
+        - totalAmountHT: Decimal(10,2)
+        - totalAmountTTC: Decimal(10,2)
+        - paymentMethod: String {nullable}
+        - paymentIntentId: String {nullable, UNIQUE}
+        - notes: String {nullable}
+        - delivered: Boolean
+        - createdAt: DateTime
+        - updatedAt: DateTime
+    }
+    
+    class OrderItem {
+        - id: Integer {PK}
+        - orderId: Integer {FK}
+        - productId: Integer
+        - productName: String
+        - description: String {nullable}
+        - imageUrl: String {nullable}
+        - quantity: Integer
+        - unitPriceHT: Decimal(10,2)
+        - unitPriceTTC: Decimal(10,2)
+        - vatRate: Decimal(5,2)
+        - totalPriceHT: Decimal(10,2)
+        - totalPriceTTC: Decimal(10,2)
+        - createdAt: DateTime
+        - updatedAt: DateTime
+    }
+    
+    class CreditNote {
+        - id: Integer {PK}
+        - customerId: Integer
+        - orderId: Integer {FK}
+        - totalAmountHT: Decimal(10,2)
+        - totalAmountTTC: Decimal(10,2)
+        - reason: String
+        - description: String {nullable}
+        - issueDate: Date {nullable}
+        - paymentMethod: String
+        - notes: String {nullable}
+        - status: Enum {pending, refunded}
+        - createdAt: DateTime
+        - updatedAt: DateTime
+    }
+    
+    class CreditNoteItem {
+        - id: Integer {PK}
+        - creditNoteId: Integer {FK}
+        - productId: Integer
+        - productName: String {nullable}
+        - quantity: Integer
+        - unitPriceHT: Decimal(10,2)
+        - unitPriceTTC: Decimal(10,2)
+        - vatRate: Decimal(5,2)
+        - totalPriceHT: Decimal(10,2)
+        - totalPriceTTC: Decimal(10,2)
+        - createdAt: DateTime
+        - updatedAt: DateTime
+    }
+    
+    class OrderAddress {
+        - id: Integer {PK}
+        - orderId: Integer {FK}
+        - addressType: Enum {shipping, billing}
+        - addressSnapshot: JSONB
+        - createdAt: DateTime
+        - updatedAt: DateTime
+    }
+    
+    ' Relations
+    Order ||--o{ OrderItem : "contains items"
+    Order ||--o{ OrderAddress : "has addresses"
+    Order ||--o{ CreditNote : "can have credit notes"
+    CreditNote ||--o{ CreditNoteItem : "contains items"
+}
+
+@enduml

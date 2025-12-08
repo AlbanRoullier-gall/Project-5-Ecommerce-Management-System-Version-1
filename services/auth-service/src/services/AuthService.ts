@@ -100,9 +100,7 @@ export class AuthService {
         password_hash: passwordHash,
         first_name: first_name,
         last_name: last_name,
-        is_active: true,
-        is_backoffice_approved: false, // Par défaut, pas approuvé pour le backoffice
-        is_backoffice_rejected: false, // Par défaut, pas refusé
+        backoffice_status: "pending", // Par défaut, en attente d'approbation
         is_super_admin: false, // Par défaut, pas super admin
         created_at: new Date(),
         updated_at: new Date(),
@@ -144,11 +142,6 @@ export class AuthService {
         throw new Error("Identifiants invalides");
       }
 
-      // Vérifier si le compte est actif
-      if (!user.isActive) {
-        throw new Error("Le compte est désactivé");
-      }
-
       // Vérifier le mot de passe
       const isPasswordValid = await user.verifyPassword(password);
       if (!isPasswordValid) {
@@ -156,13 +149,13 @@ export class AuthService {
       }
 
       // Vérifier l'approbation backoffice
-      if (user.isBackofficeRejected) {
+      if (user.backofficeStatus === "rejected") {
         throw new Error(
           "Votre accès au backoffice a été refusé. Si vous pensez qu'il s'agit d'une erreur, veuillez contacter l'administrateur."
         );
       }
 
-      if (!user.isBackofficeApproved) {
+      if (user.backofficeStatus !== "approved") {
         throw new Error(
           "Votre accès au backoffice n'a pas encore été approuvé par un administrateur."
         );
@@ -317,8 +310,7 @@ export class AuthService {
     }
 
     const updatedUser = this.userRepository.createUserWithMerge(user, {
-      is_backoffice_approved: approved,
-      is_backoffice_rejected: !approved,
+      backoffice_status: approved ? "approved" : "rejected",
     });
 
     return await this.userRepository.update(updatedUser);
@@ -347,7 +339,6 @@ export class AuthService {
       throw error;
     }
   }
-
 
   // ===== GESTION SUPER ADMIN =====
 
