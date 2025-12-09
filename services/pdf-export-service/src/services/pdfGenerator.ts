@@ -262,10 +262,9 @@ export class PDFGenerator {
   }
 
   private generateOrderDetailsHTML(order: any): string {
-    const customerSnapshot = order.customerSnapshot || {};
-    const customerFirstName = customerSnapshot.firstName || "N/A";
-    const customerLastName = customerSnapshot.lastName || "N/A";
-    const customerEmail = customerSnapshot.email || "N/A";
+    const customerFirstName = order.customerFirstName || "N/A";
+    const customerLastName = order.customerLastName || "N/A";
+    const customerEmail = order.customerEmail || "N/A";
 
     // Generate order items HTML
     const orderItemsHTML =
@@ -297,8 +296,6 @@ export class PDFGenerator {
       order.addresses && order.addresses.length > 0
         ? order.addresses
             .map((address: any) => {
-              // Gérer les deux structures possibles
-              const addressData = address.addressSnapshot || address;
               const addressType = address.addressType || address.type;
 
               return `
@@ -308,17 +305,11 @@ export class PDFGenerator {
                 ? "Adresse de facturation"
                 : "Adresse de livraison"
             }</h4>
-            <p>${addressData.firstName} ${addressData.lastName}</p>
-            <p>${addressData.address || addressData.addressLine1}</p>
-            ${
-              addressData.addressLine2
-                ? `<p>${addressData.addressLine2}</p>`
-                : ""
-            }
-            <p>${addressData.postalCode} ${addressData.city}</p>
-            <p>${addressData.country}</p>
-            ${addressData.phone ? `<p>Tél: ${addressData.phone}</p>` : ""}
-            ${addressData.email ? `<p>Email: ${addressData.email}</p>` : ""}
+            <p>${address.firstName} ${address.lastName}</p>
+            <p>${address.address}</p>
+            <p>${address.postalCode} ${address.city}</p>
+            <p>${address.countryName}</p>
+            ${address.phone ? `<p>Tél: ${address.phone}</p>` : ""}
           </div>
         `;
             })
@@ -491,10 +482,9 @@ export class PDFGenerator {
   }
 
   private generateInvoiceHTML(order: any): string {
-    const customerSnapshot = order.customerSnapshot || {};
-    const customerFirstName = customerSnapshot.firstName || "N/A";
-    const customerLastName = customerSnapshot.lastName || "N/A";
-    const customerEmail = customerSnapshot.email || "N/A";
+    const customerFirstName = order.customerFirstName || "N/A";
+    const customerLastName = order.customerLastName || "N/A";
+    const customerEmail = order.customerEmail || "N/A";
 
     // Generate order items HTML
     const orderItemsHTML =
@@ -526,8 +516,6 @@ export class PDFGenerator {
       order.addresses && order.addresses.length > 0
         ? order.addresses
             .map((address: any) => {
-              // Gérer les deux structures possibles
-              const addressData = address.addressSnapshot || address;
               const addressType = address.addressType || address.type;
 
               return `
@@ -537,17 +525,11 @@ export class PDFGenerator {
                 ? "Adresse de facturation"
                 : "Adresse de livraison"
             }</h4>
-            <p>${addressData.firstName} ${addressData.lastName}</p>
-            <p>${addressData.address || addressData.addressLine1}</p>
-            ${
-              addressData.addressLine2
-                ? `<p>${addressData.addressLine2}</p>`
-                : ""
-            }
-            <p>${addressData.postalCode} ${addressData.city}</p>
-            <p>${addressData.country}</p>
-            ${addressData.phone ? `<p>Tél: ${addressData.phone}</p>` : ""}
-            ${addressData.email ? `<p>Email: ${addressData.email}</p>` : ""}
+            <p>${address.firstName} ${address.lastName}</p>
+            <p>${address.address}</p>
+            <p>${address.postalCode} ${address.city}</p>
+            <p>${address.countryName}</p>
+            ${address.phone ? `<p>Tél: ${address.phone}</p>` : ""}
           </div>
         `;
             })

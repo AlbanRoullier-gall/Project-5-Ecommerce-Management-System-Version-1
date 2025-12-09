@@ -13,17 +13,17 @@ import { BaseItemDTO } from "../common/BaseItemDTO";
  */
 export interface OrderPublicDTO {
   id: number;
-  customerId: number;
-  customerSnapshot: any | null;
+  customerId: number | null;
+  customerFirstName: string | null;
+  customerLastName: string | null;
+  customerEmail: string | null;
+  customerPhoneNumber: string | null;
   totalAmountHT: number;
   totalAmountTTC: number;
   totalVAT: number;
   paymentMethod: string | null;
   notes: string | null;
   delivered: boolean;
-  customerFirstName?: string;
-  customerLastName?: string;
-  customerEmail?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,15 +50,13 @@ export interface OrderAddressPublicDTO {
   id: number;
   orderId: number;
   addressType: "shipping" | "billing";
-  addressSnapshot: {
-    firstName: string;
-    lastName: string;
-    address: string;
-    city: string;
-    postalCode: string;
-    country: string;
-    phone?: string;
-  };
+  firstName: string;
+  lastName: string;
+  address: string;
+  postalCode: string | null;
+  city: string;
+  countryName: string;
+  phone: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

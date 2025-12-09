@@ -7,8 +7,11 @@ package "order_db" {
     
     class Order {
         - id: Integer {PK}
-        - customerId: Integer
-        - customerSnapshot: JSONB {nullable}
+        - customerId: Integer {nullable}
+        - customerFirstName: String {nullable}
+        - customerLastName: String {nullable}
+        - customerEmail: String {nullable}
+        - customerPhoneNumber: String {nullable}
         - totalAmountHT: Decimal(10,2)
         - totalAmountTTC: Decimal(10,2)
         - paymentMethod: String {nullable}
@@ -71,7 +74,13 @@ package "order_db" {
         - id: Integer {PK}
         - orderId: Integer {FK}
         - addressType: Enum {shipping, billing}
-        - addressSnapshot: JSONB
+        - firstName: String
+        - lastName: String
+        - address: String
+        - postalCode: String {nullable}
+        - city: String
+        - countryName: String
+        - phone: String {nullable}
         - createdAt: DateTime
         - updatedAt: DateTime
     }

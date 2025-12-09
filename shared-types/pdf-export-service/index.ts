@@ -10,8 +10,11 @@
  */
 export interface OrderExportData {
   id: number;
-  customerId: number;
-  customerSnapshot: any | null;
+  customerId: number | null;
+  customerFirstName: string | null;
+  customerLastName: string | null;
+  customerEmail: string | null;
+  customerPhoneNumber: string | null;
   totalAmountHT: number;
   totalAmountTTC: number;
   paymentMethod: string | null;
@@ -40,15 +43,14 @@ export interface OrderItemExportData {
  */
 export interface AddressExportData {
   type: "billing" | "shipping";
+  addressType?: "billing" | "shipping";
   firstName: string;
   lastName: string;
-  addressLine1: string;
-  addressLine2?: string | null;
-  postalCode: string;
+  address: string;
+  postalCode: string | null;
   city: string;
-  country: string;
+  countryName: string;
   phone?: string | null;
-  email?: string | null;
 }
 
 // ===== TYPES BASÉS SUR CreditNoteExportData =====

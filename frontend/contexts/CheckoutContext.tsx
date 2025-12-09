@@ -91,8 +91,12 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
     email: "",
   });
   const [addressData, setAddressData] = useState<AddressesCreateDTO>({
-    shipping: {},
-    billing: {},
+    shipping: {
+      countryName: "Belgique",
+    },
+    billing: {
+      countryName: "Belgique",
+    },
     useSameBillingAddress: true,
   });
   const [isInitialized, setIsInitialized] = useState(false);
@@ -115,8 +119,33 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
             setCustomerData(checkoutData.customerData);
           }
           if (checkoutData.addressData) {
-            setAddressData(checkoutData.addressData);
+            // S'assurer que "Belgique" est toujours défini pour les adresses
+            setAddressData({
+              shipping: {
+                ...checkoutData.addressData.shipping,
+                countryName:
+                  checkoutData.addressData.shipping?.countryName || "Belgique",
+              },
+              billing: {
+                ...checkoutData.addressData.billing,
+                countryName:
+                  checkoutData.addressData.billing?.countryName || "Belgique",
+              },
+              useSameBillingAddress:
+                checkoutData.addressData.useSameBillingAddress ?? true,
+            });
           }
+        } else {
+          // Si pas de données, s'assurer que "Belgique" est défini
+          setAddressData({
+            shipping: {
+              countryName: "Belgique",
+            },
+            billing: {
+              countryName: "Belgique",
+            },
+            useSameBillingAddress: true,
+          });
         }
       } catch (error) {
         logger.error("Error loading checkout data from server", error);
@@ -200,11 +229,22 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
    * Active/désactive l'utilisation de la même adresse pour la facturation
    * Le flag useSameBillingAddress est un indicateur uniquement
    * L'affichage utilisera l'adresse de livraison si le flag est coché
+   * Si on active "même adresse", on copie l'adresse de livraison vers facturation avec "Belgique"
    */
   const setUseSameBillingAddress = useCallback((useSame: boolean) => {
     setAddressData((prev) => ({
       ...prev,
       useSameBillingAddress: useSame,
+      // Si on active "même adresse", copier l'adresse de livraison vers facturation
+      billing: useSame
+        ? {
+            ...prev.shipping,
+            countryName: prev.shipping?.countryName || "Belgique",
+          }
+        : {
+            ...prev.billing,
+            countryName: prev.billing?.countryName || "Belgique",
+          },
     }));
   }, []);
 

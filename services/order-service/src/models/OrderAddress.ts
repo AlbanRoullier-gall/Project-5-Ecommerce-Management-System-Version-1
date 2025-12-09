@@ -17,7 +17,13 @@ export interface OrderAddressData {
   id: number;
   order_id: number;
   address_type: AddressType;
-  address_snapshot: any;
+  first_name: string;
+  last_name: string;
+  address: string;
+  postal_code: string | null;
+  city: string;
+  country_name: string;
+  phone: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -34,7 +40,13 @@ class OrderAddress {
   public readonly id: number;
   public readonly orderId: number;
   public readonly addressType: AddressType;
-  public readonly addressSnapshot: any;
+  public readonly firstName: string;
+  public readonly lastName: string;
+  public readonly address: string;
+  public readonly postalCode: string | null;
+  public readonly city: string;
+  public readonly countryName: string;
+  public readonly phone: string | null;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -42,7 +54,13 @@ class OrderAddress {
     this.id = data.id;
     this.orderId = data.order_id;
     this.addressType = data.address_type;
-    this.addressSnapshot = data.address_snapshot;
+    this.firstName = data.first_name;
+    this.lastName = data.last_name;
+    this.address = data.address;
+    this.postalCode = data.postal_code;
+    this.city = data.city;
+    this.countryName = data.country_name;
+    this.phone = data.phone;
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
   }
@@ -54,7 +72,16 @@ class OrderAddress {
     return (
       this.orderId > 0 &&
       this.addressType !== null &&
-      this.addressSnapshot !== null &&
+      this.firstName !== null &&
+      this.firstName.length > 0 &&
+      this.lastName !== null &&
+      this.lastName.length > 0 &&
+      this.address !== null &&
+      this.address.length > 0 &&
+      this.city !== null &&
+      this.city.length > 0 &&
+      this.countryName !== null &&
+      this.countryName.length > 0 &&
       (this.addressType === AddressType.BILLING ||
         this.addressType === AddressType.SHIPPING)
     );
@@ -75,8 +102,24 @@ class OrderAddress {
       errors.push("Address type is required");
     }
 
-    if (!this.addressSnapshot || typeof this.addressSnapshot !== "object") {
-      errors.push("Address snapshot is required and must be an object");
+    if (!this.firstName || this.firstName.trim().length === 0) {
+      errors.push("First name is required");
+    }
+
+    if (!this.lastName || this.lastName.trim().length === 0) {
+      errors.push("Last name is required");
+    }
+
+    if (!this.address || this.address.trim().length === 0) {
+      errors.push("Address is required");
+    }
+
+    if (!this.city || this.city.trim().length === 0) {
+      errors.push("City is required");
+    }
+
+    if (!this.countryName || this.countryName.trim().length === 0) {
+      errors.push("Country name is required");
     }
 
     if (

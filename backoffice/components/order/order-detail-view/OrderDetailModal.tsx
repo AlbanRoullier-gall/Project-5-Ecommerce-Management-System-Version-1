@@ -40,16 +40,8 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
 
   const customerName = (() => {
     if (!order) return "";
-    const first =
-      (order as any).customerFirstName ||
-      (order as any).customerSnapshot?.firstName ||
-      (order as any).customerSnapshot?.first_name ||
-      "";
-    const last =
-      (order as any).customerLastName ||
-      (order as any).customerSnapshot?.lastName ||
-      (order as any).customerSnapshot?.last_name ||
-      "";
+    const first = order.customerFirstName || "";
+    const last = order.customerLastName || "";
     return `${first} ${last}`.trim();
   })();
 
@@ -171,18 +163,14 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                     {customerName}
                   </div>
                 )}
-                {(order.customerEmail ||
-                  (order as any)?.customerSnapshot?.email) && (
+                {order.customerEmail && (
                   <div style={{ fontSize: "0.95rem", color: "#6b7280" }}>
-                    {order.customerEmail ||
-                      (order as any).customerSnapshot.email}
+                    {order.customerEmail}
                   </div>
                 )}
-                {((order as any)?.customerSnapshot?.phoneNumber ||
-                  (order as any)?.customerSnapshot?.phone) && (
+                {order.customerPhoneNumber && (
                   <div style={{ fontSize: "0.95rem", color: "#6b7280" }}>
-                    {(order as any).customerSnapshot.phoneNumber ||
-                      (order as any).customerSnapshot.phone}
+                    {order.customerPhoneNumber}
                   </div>
                 )}
               </div>
@@ -302,8 +290,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           fontSize: "0.85rem",
                         }}
                       >
-                        {addr.addressSnapshot.firstName}{" "}
-                        {addr.addressSnapshot.lastName}
+                        {addr.firstName} {addr.lastName}
                       </div>
                       <div
                         style={{
@@ -312,7 +299,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           fontSize: "0.8rem",
                         }}
                       >
-                        {addr.addressSnapshot.address}
+                        {addr.address}
                       </div>
                       <div
                         style={{
@@ -321,8 +308,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           fontSize: "0.8rem",
                         }}
                       >
-                        {addr.addressSnapshot.postalCode}{" "}
-                        {addr.addressSnapshot.city}
+                        {addr.postalCode} {addr.city}
                       </div>
                       <div
                         style={{
@@ -331,11 +317,11 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           fontSize: "0.8rem",
                         }}
                       >
-                        {addr.addressSnapshot.country}
+                        {addr.countryName}
                       </div>
-                      {addr.addressSnapshot.phone && (
+                      {addr.phone && (
                         <div style={{ color: "#6b7280", fontSize: "0.8rem" }}>
-                          {addr.addressSnapshot.phone}
+                          {addr.phone}
                         </div>
                       )}
                     </div>

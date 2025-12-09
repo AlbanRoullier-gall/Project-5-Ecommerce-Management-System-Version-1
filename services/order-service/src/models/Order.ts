@@ -13,8 +13,11 @@
  */
 export interface OrderData {
   id: number;
-  customer_id: number;
-  customer_snapshot: any | null;
+  customer_id: number | null;
+  customer_first_name: string | null;
+  customer_last_name: string | null;
+  customer_email: string | null;
+  customer_phone_number: string | null;
   total_amount_ht: number;
   total_amount_ttc: number;
   payment_method: string | null;
@@ -26,8 +29,11 @@ export interface OrderData {
 
 class Order {
   public readonly id: number;
-  public readonly customerId: number;
-  public readonly customerSnapshot: any | null;
+  public readonly customerId: number | null;
+  public readonly customerFirstName: string | null;
+  public readonly customerLastName: string | null;
+  public readonly customerEmail: string | null;
+  public readonly customerPhoneNumber: string | null;
   public readonly totalAmountHT: number;
   public readonly totalAmountTTC: number;
   public readonly paymentMethod: string | null;
@@ -36,15 +42,13 @@ class Order {
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
-  // Additional fields for joins
-  public customerFirstName?: string;
-  public customerLastName?: string;
-  public customerEmail?: string;
-
   constructor(data: OrderData) {
     this.id = data.id;
     this.customerId = data.customer_id;
-    this.customerSnapshot = data.customer_snapshot;
+    this.customerFirstName = data.customer_first_name;
+    this.customerLastName = data.customer_last_name;
+    this.customerEmail = data.customer_email;
+    this.customerPhoneNumber = data.customer_phone_number;
     this.totalAmountHT = data.total_amount_ht;
     this.totalAmountTTC = data.total_amount_ttc;
     this.paymentMethod = data.payment_method;
@@ -59,12 +63,14 @@ class Order {
    */
   isValid(): boolean {
     return (
-      this.customerId > 0 &&
-      this.totalAmountHT >= 0 &&
-      this.totalAmountTTC >= 0 &&
-      this.totalAmountTTC >= this.totalAmountHT &&
-      this.paymentMethod !== null &&
-      this.paymentMethod.length > 0
+      (this.customerId !== null && this.customerId > 0) ||
+      (this.customerFirstName !== null &&
+        this.customerEmail !== null &&
+        this.totalAmountHT >= 0 &&
+        this.totalAmountTTC >= 0 &&
+        this.totalAmountTTC >= this.totalAmountHT &&
+        this.paymentMethod !== null &&
+        this.paymentMethod.length > 0)
     );
   }
 

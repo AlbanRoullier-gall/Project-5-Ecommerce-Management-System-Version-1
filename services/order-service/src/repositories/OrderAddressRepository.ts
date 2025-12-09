@@ -16,15 +16,23 @@ export default class OrderAddressRepository {
    */
   async save(address: OrderAddress, client?: any): Promise<OrderAddress> {
     const query = `
-      INSERT INTO order_addresses (order_id, type, address_snapshot, created_at, updated_at)
-      VALUES ($1, $2, $3, NOW(), NOW())
-      RETURNING id, order_id, type AS address_type, address_snapshot, created_at, updated_at
+      INSERT INTO order_addresses (order_id, type, first_name, last_name, address, 
+                                   postal_code, city, country_name, phone, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+      RETURNING id, order_id, type AS address_type, first_name, last_name, address, 
+                postal_code, city, country_name, phone, created_at, updated_at
     `;
 
     const values = [
       address.orderId,
       address.addressType,
-      address.addressSnapshot,
+      address.firstName,
+      address.lastName,
+      address.address,
+      address.postalCode,
+      address.city,
+      address.countryName,
+      address.phone,
     ];
 
     const executor = client || this.pool;
@@ -36,7 +44,9 @@ export default class OrderAddressRepository {
    * Obtenir une adresse de commande par ID
    */
   async getOrderAddressById(id: number): Promise<OrderAddress | null> {
-    const query = `SELECT id, order_id, type AS address_type, address_snapshot, created_at, updated_at FROM order_addresses WHERE id = $1`;
+    const query = `SELECT id, order_id, type AS address_type, first_name, last_name, address, 
+                          postal_code, city, country_name, phone, created_at, updated_at 
+                   FROM order_addresses WHERE id = $1`;
     const result = await this.pool.query(query, [id]);
 
     if (result.rows.length === 0) {
@@ -60,7 +70,8 @@ export default class OrderAddressRepository {
    */
   async getOrderAddressesByOrderId(orderId: number): Promise<OrderAddress[]> {
     const query = `
-      SELECT id, order_id, type AS address_type, address_snapshot, created_at, updated_at
+      SELECT id, order_id, type AS address_type, first_name, last_name, address, 
+             postal_code, city, country_name, phone, created_at, updated_at
       FROM order_addresses 
       WHERE order_id = $1 
       ORDER BY created_at
@@ -79,18 +90,24 @@ export default class OrderAddressRepository {
     try {
       const query = `
         SELECT 
-          oa.id, oa.type, oa.address_snapshot as "addressSnapshot"
+          oa.id, oa.type, oa.first_name, oa.last_name, oa.address, 
+          oa.postal_code, oa.city, oa.country_name, oa.phone
         FROM order_addresses oa
         WHERE oa.order_id = $1
         ORDER BY oa.id
       `;
 
       const result = await this.pool.query(query, [orderId]);
-      // Analyser le JSON address_snapshot pour chaque adresse
       return result.rows.map((row) => ({
         id: row.id,
         type: row.type,
-        ...(row.addressSnapshot || {}),
+        firstName: row.first_name,
+        lastName: row.last_name,
+        address: row.address,
+        postalCode: row.postal_code,
+        city: row.city,
+        country: row.country_name,
+        phone: row.phone,
       }));
     } catch (error) {
       console.error("Error getting order addresses by order ID:", error);

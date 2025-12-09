@@ -40,7 +40,8 @@ export default class OrderRepository {
   async getOrderById(id: number): Promise<Order | null> {
     try {
       const query = `
-        SELECT id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+        SELECT id, customer_id, customer_first_name, customer_last_name, customer_email, 
+               customer_phone_number, total_amount_ht, total_amount_ttc, 
                payment_method, notes, delivered, created_at, updated_at
         FROM orders 
         WHERE id = $1
@@ -103,28 +104,14 @@ export default class OrderRepository {
 
         // Recherche dans le nom et prénom du client
         searchParts.push(
-          `COALESCE(
-            o.customer_snapshot->>'first_name',
-            o.customer_snapshot->>'firstName',
-            o.customer_snapshot->>'firstname',
-            ''
-          ) ILIKE $${++paramCount}`,
-          `COALESCE(
-            o.customer_snapshot->>'last_name',
-            o.customer_snapshot->>'lastName',
-            o.customer_snapshot->>'lastname',
-            ''
-          ) ILIKE $${++paramCount}`
+          `COALESCE(o.customer_first_name, '') ILIKE $${++paramCount}`,
+          `COALESCE(o.customer_last_name, '') ILIKE $${++paramCount}`
         );
         params.push(searchTerm, searchTerm);
 
         // Recherche dans l'email
         searchParts.push(
-          `COALESCE(
-            o.customer_snapshot->>'email',
-            o.customer_snapshot->>'emailAddress',
-            ''
-          ) ILIKE $${++paramCount}`
+          `COALESCE(o.customer_email, '') ILIKE $${++paramCount}`
         );
         params.push(searchTerm);
 
@@ -166,28 +153,17 @@ export default class OrderRepository {
         SELECT 
           o.id, 
           o.customer_id, 
-          o.customer_snapshot, 
+          o.customer_first_name, 
+          o.customer_last_name, 
+          o.customer_email, 
+          o.customer_phone_number,
           o.total_amount_ht, 
           o.total_amount_ttc, 
           o.payment_method, 
           o.notes, 
           o.delivered,
           o.created_at, 
-          o.updated_at,
-          COALESCE(
-            o.customer_snapshot->>'first_name',
-            o.customer_snapshot->>'firstName',
-            o.customer_snapshot->>'firstname'
-          ) AS first_name,
-          COALESCE(
-            o.customer_snapshot->>'last_name',
-            o.customer_snapshot->>'lastName',
-            o.customer_snapshot->>'lastname'
-          ) AS last_name,
-          COALESCE(
-            o.customer_snapshot->>'email',
-            o.customer_snapshot->>'emailAddress'
-          ) AS email
+          o.updated_at
         FROM orders o
         ${whereClause}
         ORDER BY o.created_at DESC
@@ -195,13 +171,7 @@ export default class OrderRepository {
 
       const result = await this.pool.query(query, params);
 
-      return result.rows.map((row) => {
-        const order = new Order(row as OrderData);
-        order.customerFirstName = (row as any).first_name;
-        order.customerLastName = (row as any).last_name;
-        order.customerEmail = (row as any).email;
-        return order;
-      });
+      return result.rows.map((row) => new Order(row as OrderData));
     } catch (error) {
       console.error("Error listing orders:", error);
       throw new Error("Failed to retrieve orders");
@@ -281,7 +251,8 @@ export default class OrderRepository {
         UPDATE orders 
         SET delivered = $1, updated_at = NOW()
         WHERE id = $2
-        RETURNING id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+        RETURNING id, customer_id, customer_first_name, customer_last_name, customer_email, 
+                  customer_phone_number, total_amount_ht, total_amount_ttc, 
                   payment_method, notes, delivered, created_at, updated_at
       `;
 
@@ -388,7 +359,11 @@ export default class OrderRepository {
       const endOfYear = `${year + 1}-01-01 00:00:00`;
       const query = `
         SELECT 
-          o.id, o.customer_id as "customerId", o.customer_snapshot as "customerSnapshot",
+          o.id, o.customer_id as "customerId", 
+          o.customer_first_name as "customerFirstName",
+          o.customer_last_name as "customerLastName",
+          o.customer_email as "customerEmail",
+          o.customer_phone_number as "customerPhoneNumber",
           o.total_amount_ht as "totalAmountHT", o.total_amount_ttc as "totalAmountTTC",
           o.payment_method as "paymentMethod", o.notes, o.delivered,
           o.created_at as "createdAt", o.updated_at as "updatedAt"
@@ -439,17 +414,22 @@ export default class OrderRepository {
     client?: any
   ): Promise<Order> {
     const query = `
-      INSERT INTO orders (customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+      INSERT INTO orders (customer_id, customer_first_name, customer_last_name, customer_email, 
+                         customer_phone_number, total_amount_ht, total_amount_ttc, 
                          payment_method, notes, payment_intent_id, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
       ON CONFLICT (payment_intent_id) WHERE payment_intent_id IS NOT NULL DO UPDATE SET updated_at = NOW()
-      RETURNING id, customer_id, customer_snapshot, total_amount_ht, total_amount_ttc, 
+      RETURNING id, customer_id, customer_first_name, customer_last_name, customer_email, 
+                customer_phone_number, total_amount_ht, total_amount_ttc, 
                 payment_method, notes, created_at, updated_at
     `;
 
     const values = [
       orderData.customer_id || null,
-      orderData.customer_snapshot || null,
+      orderData.customer_first_name || null,
+      orderData.customer_last_name || null,
+      orderData.customer_email || null,
+      orderData.customer_phone_number || null,
       orderData.total_amount_ht,
       orderData.total_amount_ttc,
       orderData.payment_method,

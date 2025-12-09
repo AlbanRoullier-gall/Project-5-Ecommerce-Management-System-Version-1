@@ -187,28 +187,55 @@ export default class OrderService {
         throw new Error("Le panier est vide");
       }
 
-      // Construire le customerSnapshot à partir de customerData si non fourni
-      let customerSnapshot = data.customerSnapshot;
-      if (!customerSnapshot && data.customerData) {
-        customerSnapshot = {
-          firstName: data.customerData.firstName || "",
-          lastName: data.customerData.lastName || "",
-          email: data.customerData.email,
-          phoneNumber: data.customerData.phoneNumber || null,
-        };
+      // Extraire les informations client depuis customerSnapshot ou customerData
+      let customerFirstName: string | null = null;
+      let customerLastName: string | null = null;
+      let customerEmail: string | null = null;
+      let customerPhoneNumber: string | null = null;
+
+      if (data.customerSnapshot) {
+        customerFirstName =
+          data.customerSnapshot.firstName ||
+          data.customerSnapshot.first_name ||
+          data.customerSnapshot.firstname ||
+          null;
+        customerLastName =
+          data.customerSnapshot.lastName ||
+          data.customerSnapshot.last_name ||
+          data.customerSnapshot.lastname ||
+          null;
+        customerEmail =
+          data.customerSnapshot.email ||
+          data.customerSnapshot.emailAddress ||
+          null;
+        customerPhoneNumber =
+          data.customerSnapshot.phoneNumber ||
+          data.customerSnapshot.phone_number ||
+          data.customerSnapshot.phone ||
+          null;
+      } else if (data.customerData) {
+        customerFirstName = data.customerData.firstName || null;
+        customerLastName = data.customerData.lastName || null;
+        customerEmail = data.customerData.email || null;
+        customerPhoneNumber = data.customerData.phoneNumber || null;
       }
 
       // Validation
-      if (!data.customerId && !customerSnapshot) {
-        throw new Error("Customer ID or customer snapshot is required");
+      if (!data.customerId && (!customerFirstName || !customerEmail)) {
+        throw new Error(
+          "Customer ID or customer info (firstName and email) is required"
+        );
       }
 
       // Créer la commande via le repository avec le client de transaction
       const orderData: Partial<OrderData> & {
         payment_intent_id?: string | null;
       } = {
-        customer_id: data.customerId || 0, // 0 sera traité comme null par le repository
-        customer_snapshot: customerSnapshot || null,
+        customer_id: data.customerId || null,
+        customer_first_name: customerFirstName,
+        customer_last_name: customerLastName,
+        customer_email: customerEmail,
+        customer_phone_number: customerPhoneNumber,
         total_amount_ht: data.cart.subtotal,
         total_amount_ttc: data.cart.total,
         payment_method: data.paymentMethod,
@@ -264,15 +291,13 @@ export default class OrderService {
           id: 0, // Sera défini par la base de données
           order_id: orderId,
           address_type: "shipping" as any,
-          address_snapshot: {
-            firstName: data.customerData.firstName || "",
-            lastName: data.customerData.lastName || "",
-            address: shippingAddressData.address || "",
-            city: shippingAddressData.city || "",
-            postalCode: shippingAddressData.postalCode || "",
-            country: shippingAddressData.countryName || "",
-            phone: data.customerData.phoneNumber || "",
-          },
+          first_name: data.customerData.firstName || "",
+          last_name: data.customerData.lastName || "",
+          address: shippingAddressData.address || "",
+          city: shippingAddressData.city || "",
+          postal_code: shippingAddressData.postalCode || null,
+          country_name: shippingAddressData.countryName || "",
+          phone: data.customerData.phoneNumber || null,
           created_at: new Date(),
           updated_at: new Date(),
         });
@@ -288,15 +313,13 @@ export default class OrderService {
           id: 0, // Sera défini par la base de données
           order_id: orderId,
           address_type: "billing" as any,
-          address_snapshot: {
-            firstName: data.customerData.firstName || "",
-            lastName: data.customerData.lastName || "",
-            address: billingAddressData.address || "",
-            city: billingAddressData.city || "",
-            postalCode: billingAddressData.postalCode || "",
-            country: billingAddressData.countryName || "",
-            phone: data.customerData.phoneNumber || "",
-          },
+          first_name: data.customerData.firstName || "",
+          last_name: data.customerData.lastName || "",
+          address: billingAddressData.address || "",
+          city: billingAddressData.city || "",
+          postal_code: billingAddressData.postalCode || null,
+          country_name: billingAddressData.countryName || "",
+          phone: data.customerData.phoneNumber || null,
           created_at: new Date(),
           updated_at: new Date(),
         });
@@ -819,7 +842,10 @@ export default class OrderService {
     return {
       id: order.id,
       customerId: order.customerId,
-      customerSnapshot: order.customerSnapshot,
+      customerFirstName: order.customerFirstName,
+      customerLastName: order.customerLastName,
+      customerEmail: order.customerEmail,
+      customerPhoneNumber: order.customerPhoneNumber,
       totalAmountHT: parseFloat(totals.totalHT.toFixed(2)),
       totalAmountTTC: parseFloat(totals.totalTTC.toFixed(2)),
       paymentMethod: order.paymentMethod,
@@ -833,7 +859,13 @@ export default class OrderService {
             id: address.id,
             orderId: address.orderId,
             addressType: address.addressType || address.type,
-            addressSnapshot: address.addressSnapshot || address,
+            firstName: address.firstName,
+            lastName: address.lastName,
+            address: address.address,
+            postalCode: address.postalCode,
+            city: address.city,
+            countryName: address.countryName,
+            phone: address.phone,
           }))
         : [],
     };
@@ -896,6 +928,43 @@ export default class OrderService {
     }
 
     return serializedData;
+  }
+
+  /**
+   * Obtenir les données d'export d'une seule commande
+   * @param {number} orderId ID de la commande
+   * @returns {Promise<any>} Données d'export de la commande
+   */
+  async getOrderExportData(orderId: number): Promise<any> {
+    try {
+      console.log(
+        `📊 Récupération des données d'export pour la commande ${orderId}`
+      );
+
+      // Récupérer la commande
+      const order = await this.getOrderById(orderId);
+      if (!order) {
+        throw new Error(`Commande ${orderId} introuvable`);
+      }
+
+      // Récupérer les items et adresses
+      const items = await this.getOrderItemsByOrderId(orderId);
+      const addresses = await this.getOrderAddressesByOrderId(orderId);
+
+      console.log(
+        `📊 Commande ${orderId}: ${items.length} items, ${addresses.length} adresses`
+      );
+
+      // Mapper pour l'export
+      const exportData = this.mapOrderForExport(order, items, addresses);
+
+      return exportData;
+    } catch (error: any) {
+      console.error("Error getting order export data:", error);
+      throw new Error(
+        `Erreur lors de la récupération des données d'export: ${error.message}`
+      );
+    }
   }
 
   /**
