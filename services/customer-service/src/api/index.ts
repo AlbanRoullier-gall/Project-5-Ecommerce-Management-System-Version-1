@@ -9,12 +9,8 @@
  * - Validation des requêtes
  */
 
-import express, { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { Pool } from "pg";
-import cors from "cors";
-import helmet from "helmet";
-import Joi from "joi";
-import morgan from "morgan";
 import CustomerService from "../services/CustomerService";
 import {
   HealthController,
@@ -22,6 +18,11 @@ import {
   AddressController,
 } from "./controller";
 import { ResponseMapper } from "./mapper";
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const Joi = require("joi");
+const morgan = require("morgan");
 // Les routes sont maintenant définies directement dans la méthode setupRoutes
 
 export class ApiRouter {

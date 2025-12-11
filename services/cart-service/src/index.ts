@@ -8,12 +8,13 @@
  * - Health checks
  */
 
-import express from "express";
-import dotenv from "dotenv";
 import { ApiRouter } from "./api";
 
 // Load environment variables
-dotenv.config();
+require("dotenv").config();
+
+// Import express with require to avoid TypeScript compilation issues
+const express = require("express");
 
 // Configuration
 const PORT = process.env.PORT || 3004;

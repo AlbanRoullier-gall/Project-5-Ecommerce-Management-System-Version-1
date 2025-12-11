@@ -9,7 +9,6 @@
  */
 
 import { Request, Response } from "express";
-import Joi from "joi";
 import ProductService from "../../services/ProductService";
 import { ProductMapper, ResponseMapper } from "../mapper";
 import {
@@ -17,6 +16,7 @@ import {
   CategoryUpdateDTO,
   CategorySearchDTO,
 } from "../dto";
+const Joi = require("joi");
 
 export class CategoryController {
   private productService: ProductService;

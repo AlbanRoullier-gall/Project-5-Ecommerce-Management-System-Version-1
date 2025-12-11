@@ -4,7 +4,7 @@
  * Utilise des cookies httpOnly pour la sécurité
  */
 
-import jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
 import { Request, Response, NextFunction } from "express";
 import { JWT_SECRET, SERVICES } from "../../config";
 import { extractAuthToken } from "./auth-session";

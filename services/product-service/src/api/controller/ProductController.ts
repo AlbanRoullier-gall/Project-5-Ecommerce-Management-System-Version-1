@@ -9,7 +9,6 @@
  */
 
 import { Request, Response } from "express";
-import Joi from "joi";
 import ProductService from "../../services/ProductService";
 import { ProductMapper, ResponseMapper } from "../mapper";
 import {
@@ -17,6 +16,7 @@ import {
   ProductUpdateDTO,
   ProductListRequestDTO,
 } from "../dto";
+const Joi = require("joi");
 
 export class ProductController {
   private productService: ProductService;
@@ -177,7 +177,7 @@ export class ProductController {
 
       if (error) {
         const messages = error.details
-          .map((detail) => detail.message)
+          .map((detail: any) => detail.message)
           .join("; ");
         res
           .status(400)

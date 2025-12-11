@@ -9,7 +9,6 @@
  */
 
 import { Request, Response } from "express";
-import Joi from "joi";
 import OrderService from "../../services/OrderService";
 import { OrderMapper, ResponseMapper } from "../mapper";
 import Order from "../../models/Order";
@@ -18,6 +17,7 @@ import {
   OrderUpdateDeliveryStatusDTO,
   OrderUpdateCreditNoteStatusDTO,
 } from "../dto";
+const Joi = require("joi");
 
 export class OrderController {
   private orderService: OrderService;

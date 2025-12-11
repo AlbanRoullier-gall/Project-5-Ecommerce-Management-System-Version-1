@@ -8,13 +8,14 @@
  * - Automatic migrations
  * - API Router configuration
  */
-import express from "express";
 import { Pool } from "pg";
 import { ApiRouter } from "./api";
 import runMigrations from "./migrations/migrate";
-import dotenv from "dotenv";
 
-dotenv.config();
+require("dotenv").config();
+
+// Import express with require to avoid TypeScript compilation issues
+const express = require("express");
 
 const app = express();
 const PORT = process.env.PORT || 3003;

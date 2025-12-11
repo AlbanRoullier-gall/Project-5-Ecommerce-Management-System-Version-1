@@ -9,14 +9,15 @@
  * - Vérifications de santé
  */
 
-import express from "express";
 import { Pool } from "pg";
-import dotenv from "dotenv";
 import { ApiRouter } from "./api";
 import runMigrations from "./migrations/migrate";
 
 // Charger les variables d'environnement
-dotenv.config();
+require("dotenv").config();
+
+// Import express with require to avoid TypeScript compilation issues
+const express = require("express");
 
 // Configuration
 const PORT = process.env.PORT || 3002;

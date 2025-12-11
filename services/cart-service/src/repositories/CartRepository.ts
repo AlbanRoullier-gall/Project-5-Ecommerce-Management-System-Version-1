@@ -16,15 +16,25 @@ export class CartRepository {
   private ttl: number;
 
   constructor() {
-    const redisConfig: any = {
-      host: process.env.REDIS_HOST || "localhost",
-      port: parseInt(process.env.REDIS_PORT || "6379"),
-      db: parseInt(process.env.REDIS_DB || "0"),
-      maxRetriesPerRequest: 3,
-    };
+    // Support pour REDIS_URL ou REDIS_HOST/REDIS_PORT
+    let redisConfig: any;
 
-    if (process.env.REDIS_PASSWORD) {
-      redisConfig.password = process.env.REDIS_PASSWORD;
+    if (process.env.REDIS_URL) {
+      // Utiliser l'URL Redis directement (format: redis://host:port)
+      redisConfig = process.env.REDIS_URL;
+    } else {
+      // Configuration par host/port
+      redisConfig = {
+        host: process.env.REDIS_HOST || "localhost",
+        port: parseInt(process.env.REDIS_PORT || "6379"),
+        db: parseInt(process.env.REDIS_DB || "0"),
+        maxRetriesPerRequest: 3,
+        family: 4, // Forcer IPv4 pour éviter les problèmes avec ::1
+      };
+
+      if (process.env.REDIS_PASSWORD) {
+        redisConfig.password = process.env.REDIS_PASSWORD;
+      }
     }
 
     this.redis = new Redis(redisConfig);

@@ -4,9 +4,9 @@
  */
 
 import { Request, Response, NextFunction, RequestHandler } from "express";
-import cors from "cors";
-import helmet from "helmet";
-import cookieParser from "cookie-parser";
+const cors = require("cors");
+const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
 
 // ===== MIDDLEWARES DE SÉCURITÉ =====
 
@@ -16,7 +16,10 @@ import cookieParser from "cookie-parser";
  * Il faut spécifier explicitement les origines autorisées
  */
 export const corsMiddleware: RequestHandler = cors({
-  origin: (origin, callback) => {
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void
+  ) => {
     // Récupérer la liste des origines autorisées depuis les variables d'environnement
     const allowedOriginsEnv = process.env["ALLOWED_ORIGINS"];
 
@@ -25,10 +28,12 @@ export const corsMiddleware: RequestHandler = cors({
     if (!allowedOriginsEnv) {
       // Valeurs par défaut pour le développement local
       allowedOrigins = [
-        "http://localhost:3000", // Frontend Next.js
+        "http://localhost:3000", // API Gateway (pour les tests)
         "http://localhost:3009", // Backoffice Next.js
+        "http://localhost:3010", // Frontend Next.js
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3009",
+        "http://127.0.0.1:3010",
       ];
     } else {
       allowedOrigins = allowedOriginsEnv.split(",").map((o) => o.trim());

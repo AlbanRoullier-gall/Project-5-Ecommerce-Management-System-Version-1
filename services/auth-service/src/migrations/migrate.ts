@@ -13,12 +13,9 @@
 
 // ===== IMPORTS =====
 import { Pool } from "pg"; // Client PostgreSQL pour la connexion à la DB
-import fs from "fs"; // Système de fichiers pour lire les fichiers SQL
-import path from "path"; // Utilitaires pour les chemins de fichiers
-import dotenv from "dotenv"; // Chargement des variables d'environnement
-
-// Charger les variables d'environnement depuis le fichier .env
-dotenv.config();
+import * as fs from "fs"; // Système de fichiers pour lire les fichiers SQL
+import * as path from "path"; // Utilitaires pour les chemins de fichiers
+// Note: dotenv.config() est appelé dans index.ts avant l'import de ce module
 
 // ===== CONFIGURATION DE LA CONNEXION À LA BASE DE DONNÉES =====
 const pool = new Pool({

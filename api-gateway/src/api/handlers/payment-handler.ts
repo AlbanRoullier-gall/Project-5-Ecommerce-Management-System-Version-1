@@ -6,8 +6,45 @@
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
 import { proxyRequest } from "../proxy";
-import { CartPublicDTO } from "../../../../shared-types/cart-service";
 import { extractCartSessionId } from "../middleware/cart-session";
+
+// Type CartPublicDTO défini localement pour éviter les problèmes de résolution TypeScript
+interface CartPublicDTO {
+  id: string;
+  sessionId: string;
+  items: any[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  itemCount: number;
+  vatBreakdown: Array<{ rate: number; amount: number }>;
+  checkoutData?: {
+    customerData?: {
+      email: string;
+      firstName?: string;
+      lastName?: string;
+      phoneNumber?: string;
+    } | null;
+    addressData?: {
+      shipping?: {
+        address?: string;
+        postalCode?: string;
+        city?: string;
+        countryName?: string;
+      };
+      billing?: {
+        address?: string;
+        postalCode?: string;
+        city?: string;
+        countryName?: string;
+      };
+      useSameBillingAddress?: boolean;
+    } | null;
+  } | null;
+  createdAt: Date;
+  updatedAt: Date;
+  expiresAt: Date;
+}
 
 /**
  * Helper pour créer une réponse d'erreur standardisée

@@ -22,9 +22,9 @@ export default class CartService {
   }
 
   /**
-   * Créer un nouveau panier (méthode interne)
+   * Créer un nouveau panier
    */
-  private async createCart(sessionId: string): Promise<Cart> {
+  async createCart(sessionId: string): Promise<Cart> {
     const cartId = uuidv4();
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 1 jour
@@ -50,6 +50,18 @@ export default class CartService {
    */
   async getCart(sessionId: string): Promise<Cart | null> {
     return await this.cartRepository.getCart(sessionId);
+  }
+
+  /**
+   * Récupérer un panier ou en créer un nouveau s'il n'existe pas
+   * Utile pour retourner toujours un panier valide au frontend
+   */
+  async getOrCreateCart(sessionId: string): Promise<Cart> {
+    let cart = await this.getCart(sessionId);
+    if (!cart) {
+      cart = await this.createCart(sessionId);
+    }
+    return cart;
   }
 
   /**

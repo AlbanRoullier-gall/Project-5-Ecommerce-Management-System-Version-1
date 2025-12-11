@@ -5,7 +5,7 @@
  */
 
 import { Request, Response, NextFunction } from "express";
-import { v4 as uuidv4 } from "uuid";
+import * as crypto from "crypto";
 
 /**
  * Nom du cookie pour la session du panier
@@ -22,7 +22,7 @@ const COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 jours en millisecondes
  * Format: cart_session_<uuid>
  */
 export function generateCartSessionId(): string {
-  return `cart_session_${uuidv4()}`;
+  return `cart_session_${crypto.randomUUID()}`;
 }
 
 /**

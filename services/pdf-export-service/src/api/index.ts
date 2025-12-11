@@ -3,11 +3,12 @@
  * Configuration centralisée des routes pour pdf-export-service
  */
 
-import express, { Request, Response, NextFunction } from "express";
-import cors from "cors";
-import helmet from "helmet";
-import Joi from "joi";
-import morgan from "morgan";
+import { Request, Response, NextFunction } from "express";
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const Joi = require("joi");
+const morgan = require("morgan");
 import { HealthController, ExportController } from "./controller/index";
 import { ResponseMapper } from "./mapper/index";
 

@@ -50,8 +50,14 @@ export class CartController {
 
       const cart = await this.cartService.getCart(cartRequest.sessionId);
 
+      // Si le panier n'existe pas, retourner un panier vide au lieu d'un 404
+      // Cela permet au frontend de toujours avoir une structure de panier valide
       if (!cart) {
-        res.status(404).json(ResponseMapper.notFoundError("Panier"));
+        // Créer un panier vide pour cette session
+        const emptyCart = await this.cartService.getOrCreateCart(
+          cartRequest.sessionId
+        );
+        res.status(200).json(ResponseMapper.cartRetrieved(emptyCart));
         return;
       }
 

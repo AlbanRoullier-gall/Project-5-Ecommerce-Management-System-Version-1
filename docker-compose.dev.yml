@@ -8,6 +8,7 @@ services:
       - "3000:3020"
     environment:
       - NODE_ENV=development
+      - DOCKER_ENV=true
       - JWT_SECRET=your-jwt-secret-key
     volumes:
       - ./api-gateway/src:/app/src
@@ -28,6 +29,7 @@ services:
       email-service:
         condition: service_healthy
       auth-service:
+        condition: service_healthy
       pdf-export-service:
         condition: service_healthy
       redis:
@@ -73,11 +75,13 @@ services:
       - "3002:3002"
     environment:
       - NODE_ENV=development
+      - DOCKER_ENV=true
       - DATABASE_URL=postgresql://product_user:product_password@product-db:5432/product_db
       - JWT_SECRET=your-jwt-secret-key
     volumes:
       - ./services/product-service/src:/app/src
       - ./shared-types:/app/shared-types
+      - ./services/product-service/uploads:/app/uploads
       - /app/node_modules
     depends_on:
       product-db:
@@ -126,6 +130,8 @@ services:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://cart_user:cart_password@cart-db:5432/cart_db
       - REDIS_URL=redis://redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - JWT_SECRET=your-jwt-secret-key
     volumes:
       - ./services/cart-service/src:/app/src
@@ -213,12 +219,19 @@ services:
       - NODE_ENV=development
       - WATCHPACK_POLLING=true
     volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-      - ./frontend/styles:/app/styles
       - ./frontend/pages:/app/pages
       - ./frontend/components:/app/components
-      - ./frontend/lib:/app/lib
+      - ./frontend/contexts:/app/contexts
+      - ./frontend/hooks:/app/hooks
+      - ./frontend/services:/app/services
+      - ./frontend/utils:/app/utils
+      - ./frontend/dto:/app/dto
+      - ./frontend/styles:/app/styles
+      - ./frontend/public:/app/public
+      - ./frontend/next.config.js:/app/next.config.js
+      - ./frontend/postcss.config.js:/app/postcss.config.js
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/tsconfig.json:/app/tsconfig.json
       - ./shared-types:/app/shared-types
       - /app/node_modules
       - /app/.next
@@ -231,7 +244,7 @@ services:
       context: .
       dockerfile: ./backoffice/Dockerfile.dev
     ports:
-      - "3009:3000"
+      - "3009:3009"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:3000
       - NODE_ENV=development
@@ -239,9 +252,24 @@ services:
       - WEBPACK_DISABLE_CACHE=1
       - NODE_OPTIONS=--max-old-space-size=4096
     volumes:
-      - ./backoffice:/app
+      - ./backoffice/pages:/app/pages
+      - ./backoffice/components:/app/components
+      - ./backoffice/contexts:/app/contexts
+      - ./backoffice/hooks:/app/hooks
+      - ./backoffice/services:/app/services
+      - ./backoffice/utils:/app/utils
+      - ./backoffice/config:/app/config
+      - ./backoffice/dto:/app/dto
+      - ./backoffice/styles:/app/styles
+      - ./backoffice/public:/app/public
+      - ./backoffice/next.config.js:/app/next.config.js
+      - ./backoffice/postcss.config.js:/app/postcss.config.js
+      - ./backoffice/tailwind.config.js:/app/tailwind.config.js
+      - ./backoffice/tsconfig.json:/app/tsconfig.json
       - ./shared-types:/app/shared-types
       - /app/node_modules
+      - /app/.next
+      - /app/tsconfig.tsbuildinfo
     depends_on:
       - api-gateway
 
@@ -385,9 +413,10 @@ services:
       - PORT=3040
     volumes:
       - ./services/pdf-export-service/src:/app/src
+      - ./shared-types:/app/shared-types
       - /app/node_modules
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3040/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3040/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3

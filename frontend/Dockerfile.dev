@@ -9,6 +9,11 @@ RUN npm install
 # Copy only source files, not node_modules
 COPY frontend/pages/ ./pages/
 COPY frontend/components/ ./components/
+COPY frontend/contexts/ ./contexts/
+COPY frontend/hooks/ ./hooks/
+COPY frontend/services/ ./services/
+COPY frontend/utils/ ./utils/
+COPY frontend/dto/ ./dto/
 COPY frontend/styles/ ./styles/
 COPY frontend/public/ ./public/
 COPY frontend/next.config.js ./

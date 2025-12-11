@@ -5,12 +5,59 @@
 
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
-import {
-  YearExportRequestDTO,
-  OrderExportData,
-  CreditNoteExportData,
-  OrderInvoiceRequestDTO,
-} from "../../../../shared-types/pdf-export-service";
+
+// Types définis localement pour éviter les problèmes de résolution TypeScript
+interface YearExportRequestDTO {
+  year: number;
+  orders: OrderExportData[];
+  creditNotes: CreditNoteExportData[];
+}
+
+interface OrderExportData {
+  id: number;
+  orderNumber: string;
+  customerId: number;
+  customerEmail: string;
+  customerFirstName?: string;
+  customerLastName?: string;
+  total: number;
+  subtotal: number;
+  tax: number;
+  status: string;
+  createdAt: Date;
+  items: Array<{
+    id: number;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    vatRate: number;
+  }>;
+  address?: {
+    shipping?: any;
+    billing?: any;
+  };
+}
+
+interface CreditNoteExportData {
+  id: number;
+  creditNoteNumber: string;
+  orderId: number;
+  total: number;
+  reason?: string;
+  createdAt: Date;
+  items: Array<{
+    id: number;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+  }>;
+}
+
+interface OrderInvoiceRequestDTO {
+  order: OrderExportData;
+}
 
 /**
  * Exporte une facture pour une commande spécifique

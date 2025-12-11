@@ -3,16 +3,17 @@
  * Centralise les variables d'environnement et URLs des services
  */
 
-import dotenv from "dotenv";
-dotenv.config();
+require("dotenv").config();
 
 // ===== VARIABLES D'ENVIRONNEMENT =====
 
 /**
  * Détection automatique de l'environnement
+ * - En Docker : utilise les noms de services Docker (product-service:3002)
+ * - En développement local (start-dev.sh) : utilise localhost avec ports (localhost:3002)
  */
 export const isDevelopment =
-  process.env["NODE_ENV"] === "development" || !process.env["DOCKER_ENV"];
+  process.env["NODE_ENV"] === "development" && !process.env["DOCKER_ENV"];
 
 /**
  * Port du serveur API Gateway

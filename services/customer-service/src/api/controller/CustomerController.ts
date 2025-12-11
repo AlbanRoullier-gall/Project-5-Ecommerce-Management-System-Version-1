@@ -9,7 +9,6 @@
  */
 
 import { Request, Response } from "express";
-import Joi from "joi";
 import CustomerService from "../../services/CustomerService";
 import type {
   CustomerCreateDTO,
@@ -18,6 +17,7 @@ import type {
   CustomerResolveOrCreateDTO,
 } from "../dto";
 import { CustomerMapper, ResponseMapper } from "../mapper";
+const Joi = require("joi");
 
 export class CustomerController {
   constructor(private customerService: CustomerService) {}

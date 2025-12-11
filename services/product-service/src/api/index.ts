@@ -8,15 +8,8 @@
  * - Validation des requêtes
  */
 
-import express, { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { Pool } from "pg";
-import cors from "cors";
-import helmet from "helmet";
-import Joi from "joi";
-import morgan from "morgan";
-// multer n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
-import path from "path";
-import fs from "fs";
 import ProductService from "../services/ProductService";
 import {
   HealthController,
@@ -26,6 +19,14 @@ import {
 } from "./controller";
 import { ResponseMapper, ProductMapper } from "./mapper";
 import { ProductImageData } from "../models/ProductImage";
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const Joi = require("joi");
+const morgan = require("morgan");
+// multer n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
+const path = require("path");
+const fs = require("fs");
 
 export class ApiRouter {
   private healthController: HealthController;
@@ -47,7 +48,7 @@ export class ApiRouter {
   /**
    * Configuration des middlewares
    */
-  private setupMiddlewares(app: express.Application): void {
+  private setupMiddlewares(app: any): void {
     app.use(helmet());
     app.use(cors());
     app.use(morgan("combined"));
@@ -99,7 +100,7 @@ export class ApiRouter {
   /**
    * Middleware de validation
    */
-  private validateRequest = (schema: Joi.ObjectSchema) => {
+  private validateRequest = (schema: any) => {
     return (req: Request, res: Response, next: NextFunction): void => {
       const { error } = schema.validate(req.body);
       if (error) {
@@ -149,7 +150,7 @@ export class ApiRouter {
   /**
    * Configuration des routes
    */
-  setupRoutes(app: express.Application): void {
+  setupRoutes(app: any): void {
     this.setupMiddlewares(app);
     const schemas = this.setupValidationSchemas();
     // upload n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs

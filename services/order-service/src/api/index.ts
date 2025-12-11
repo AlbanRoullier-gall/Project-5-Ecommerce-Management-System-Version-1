@@ -8,12 +8,8 @@
  * - Request validation
  */
 
-import express, { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { Pool } from "pg";
-import cors from "cors";
-import helmet from "helmet";
-import Joi from "joi";
-import morgan from "morgan";
 import OrderService from "../services/OrderService";
 import {
   HealthController,
@@ -25,6 +21,11 @@ import {
   OrderStatisticsController,
 } from "./controller";
 import { ResponseMapper } from "./mapper";
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const Joi = require("joi");
+const morgan = require("morgan");
 
 export class ApiRouter {
   private healthController: HealthController;

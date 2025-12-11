@@ -57,32 +57,26 @@ export class ResponseMapper {
 
   /**
    * Réponse de produit créé
+   * Format standardisé avec data pour correspondre au format attendu par le backoffice
    */
   static productCreated(product: any) {
-    return {
-      message: "Produit créé avec succès",
-      product,
-    };
+    return this.createdWithData({ product }, "Produit créé avec succès");
   }
 
   /**
    * Réponse de produit récupéré
+   * Format standardisé avec data pour correspondre au format attendu par le backoffice
    */
   static productRetrieved(product: any) {
-    return {
-      message: "Produit récupéré avec succès",
-      product,
-    };
+    return this.successWithData({ product }, "Produit récupéré avec succès");
   }
 
   /**
    * Réponse de produit mis à jour
+   * Format standardisé avec data pour correspondre au format attendu par le backoffice
    */
   static productUpdated(product: any) {
-    return {
-      message: "Produit mis à jour avec succès",
-      product,
-    };
+    return this.successWithData({ product }, "Produit mis à jour avec succès");
   }
 
   /**

@@ -3,14 +3,15 @@
  * Configuration centralisée des routes pour cart-service
  */
 
-import express, { Request, Response, NextFunction } from "express";
-import cors from "cors";
-import helmet from "helmet";
-import Joi from "joi";
-import morgan from "morgan";
+import { Request, Response, NextFunction } from "express";
 import CartService from "../services/CartService";
 import { HealthController, CartController } from "./controller";
 import { ResponseMapper } from "./mapper";
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const Joi = require("joi");
+const morgan = require("morgan");
 
 export class ApiRouter {
   private healthController: HealthController;

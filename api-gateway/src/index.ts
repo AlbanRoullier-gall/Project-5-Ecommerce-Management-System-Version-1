@@ -7,10 +7,9 @@
  * - Détection automatique du service à partir du chemin de la route
  */
 
-import dotenv from "dotenv";
-dotenv.config();
+require("dotenv").config();
 
-import express from "express";
+const express = require("express");
 import { PORT, isDevelopment, SERVICES } from "./config";
 import { ApiRouter } from "./api";
 

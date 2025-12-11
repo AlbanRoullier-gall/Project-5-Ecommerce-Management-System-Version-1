@@ -7,15 +7,15 @@
  * - Exécution automatique des migrations
  * - Démarrage du serveur
  */
-import express from "express";
 import { Pool } from "pg";
 import { ApiRouter } from "./api";
 import runMigrations from "./migrations/migrate";
-import dotenv from "dotenv";
 
 // Charger les variables d'environnement
-dotenv.config();
+require("dotenv").config();
 
+// Import express avec require pour éviter les problèmes de compilation TypeScript
+const express = require("express");
 const app = express();
 const PORT = process.env["PORT"] || 3008;
 

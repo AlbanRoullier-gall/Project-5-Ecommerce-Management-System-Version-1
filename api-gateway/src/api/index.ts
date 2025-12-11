@@ -4,10 +4,10 @@
  * Garde seulement les routes qui nécessitent de l'orchestration
  */
 
-import { Application, Request, Response } from "express";
-import express from "express";
-import { ServiceName } from "../config";
+import { Request, Response } from "express";
+import { ServiceName, SERVICES } from "../config";
 import { proxyRequest } from "./proxy";
+import axios from "axios";
 import { requireAuth } from "./middleware/auth";
 import { requireSuperAdmin } from "./middleware/authorization";
 import {
@@ -39,6 +39,7 @@ import {
   cartSessionMiddleware,
   handleCreateCartSession,
 } from "./middleware/cart-session";
+const express = require("express");
 
 export class ApiRouter {
   // Multer n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
@@ -82,7 +83,7 @@ export class ApiRouter {
   /**
    * Configuration des middlewares globaux
    */
-  private setupMiddlewares(app: express.Application): void {
+  private setupMiddlewares(app: any): void {
     // Sécurité
     app.use(corsMiddleware);
     app.use(helmetMiddleware);
@@ -95,7 +96,7 @@ export class ApiRouter {
     app.use(express.urlencoded({ extended: true }));
   }
 
-  setupRoutes(app: Application): void {
+  setupRoutes(app: any): void {
     this.setupMiddlewares(app);
 
     // ===== ROUTES DE BASE =====
@@ -176,7 +177,7 @@ export class ApiRouter {
       "/api/admin/users/pending",
       requireAuth,
       requireSuperAdmin,
-      async (req, res) => {
+      async (req: Request, res: Response) => {
         await proxyRequest(req, res, "auth");
       }
     );
@@ -185,7 +186,7 @@ export class ApiRouter {
       "/api/admin/users",
       requireAuth,
       requireSuperAdmin,
-      async (req, res) => {
+      async (req: Request, res: Response) => {
         await proxyRequest(req, res, "auth");
       }
     );
@@ -194,7 +195,7 @@ export class ApiRouter {
       "/api/admin/users/:id",
       requireAuth,
       requireSuperAdmin,
-      async (req, res) => {
+      async (req: Request, res: Response) => {
         await proxyRequest(req, res, "auth");
       }
     );
@@ -203,7 +204,7 @@ export class ApiRouter {
       "/api/admin/users/:id/approve",
       requireAuth,
       requireSuperAdmin,
-      async (req, res) => {
+      async (req: Request, res: Response) => {
         await proxyRequest(req, res, "auth");
       }
     );
@@ -212,7 +213,7 @@ export class ApiRouter {
       "/api/admin/users/:id/reject",
       requireAuth,
       requireSuperAdmin,
-      async (req, res) => {
+      async (req: Request, res: Response) => {
         await proxyRequest(req, res, "auth");
       }
     );
@@ -221,25 +222,31 @@ export class ApiRouter {
       "/api/admin/users/:id",
       requireAuth,
       requireSuperAdmin,
-      async (req, res) => {
+      async (req: Request, res: Response) => {
         await proxyRequest(req, res, "auth");
       }
     );
 
     // Routes admin spécifiques avec paramètres (AVANT la route générique /api/admin/*)
-    app.post("/api/admin/products/:id/activate", requireAuth, (req, res) =>
-      proxyRequest(req, res, "product")
+    app.post(
+      "/api/admin/products/:id/activate",
+      requireAuth,
+      (req: Request, res: Response) => proxyRequest(req, res, "product")
     );
-    app.post("/api/admin/products/:id/deactivate", requireAuth, (req, res) =>
-      proxyRequest(req, res, "product")
+    app.post(
+      "/api/admin/products/:id/deactivate",
+      requireAuth,
+      (req: Request, res: Response) => proxyRequest(req, res, "product")
     );
-    app.get("/api/admin/products/:id/images", requireAuth, (req, res) =>
-      proxyRequest(req, res, "product")
+    app.get(
+      "/api/admin/products/:id/images",
+      requireAuth,
+      (req: Request, res: Response) => proxyRequest(req, res, "product")
     );
     app.delete(
       "/api/admin/products/:id/images/:imageId",
       requireAuth,
-      (req, res) => proxyRequest(req, res, "product")
+      (req: Request, res: Response) => proxyRequest(req, res, "product")
     );
 
     // Route spécifique pour créer un produit
@@ -249,35 +256,90 @@ export class ApiRouter {
       "/api/admin/products",
       requireAuth,
       // Plus besoin de multer, on utilise JSON uniquement
-      async (req, res) => {
+      async (req: Request, res: Response) => {
         // Proxy normal vers le service (JSON uniquement)
         await proxyRequest(req, res, "product");
       }
     );
 
     // Routes admin génériques (doivent être après les routes spécifiques)
-    app.all("/api/admin/*", requireAuth, async (req, res) => {
-      const service = this.getServiceFromPath(req.path);
-      if (service) {
-        await proxyRequest(req, res, service);
-      } else {
-        res.status(404).json({ error: "Service non trouvé pour cette route" });
+    app.all(
+      "/api/admin/*",
+      requireAuth,
+      async (req: Request, res: Response) => {
+        const service = this.getServiceFromPath(req.path);
+        if (service) {
+          await proxyRequest(req, res, service);
+        } else {
+          res
+            .status(404)
+            .json({ error: "Service non trouvé pour cette route" });
+        }
       }
-    });
+    );
+
+    // Route spécifique pour /api/orders/statistics (AVANT la route générique /api/orders)
+    // Transforme /api/orders/statistics en /api/admin/statistics/dashboard du order-service
+    app.get(
+      "/api/orders/statistics",
+      requireAuth,
+      async (req: Request, res: Response) => {
+        try {
+          const headers: Record<string, string> = {};
+          if ((req as any).user) {
+            const user = (req as any).user;
+            headers["x-user-id"] = String(user.userId);
+            headers["x-user-email"] = user.email;
+          }
+
+          const queryString = req.url.includes("?")
+            ? req.url.substring(req.url.indexOf("?"))
+            : "";
+          const targetUrl = `${SERVICES.order}/api/admin/statistics/dashboard${queryString}`;
+
+          const response = await axios({
+            method: "GET",
+            url: targetUrl,
+            headers: {
+              ...headers,
+              "Content-Type": "application/json",
+            },
+            timeout: 60000,
+          });
+
+          res.status(response.status).json(response.data);
+        } catch (error: any) {
+          if (axios.isAxiosError(error) && error.response) {
+            res.status(error.response.status).json(error.response.data);
+          } else {
+            res.status(500).json({
+              error: "Service Error",
+              message: "Erreur de communication avec le service",
+            });
+          }
+        }
+      }
+    );
 
     // Routes publiques - Proxy automatique
     // Appliquer le middleware cart-session pour les routes /api/cart
-    app.all("/api/cart*", cartSessionMiddleware, async (req, res) => {
-      const service = this.getServiceFromPath(req.path);
-      if (service) {
-        await proxyRequest(req, res, service);
-      } else {
-        res.status(404).json({ error: "Service non trouvé pour cette route" });
+    app.all(
+      "/api/cart*",
+      cartSessionMiddleware,
+      async (req: Request, res: Response) => {
+        const service = this.getServiceFromPath(req.path);
+        if (service) {
+          await proxyRequest(req, res, service);
+        } else {
+          res
+            .status(404)
+            .json({ error: "Service non trouvé pour cette route" });
+        }
       }
-    });
+    );
 
     // Autres routes publiques (sans middleware cart-session)
-    app.all("/api/*", async (req, res) => {
+    app.all("/api/*", async (req: Request, res: Response) => {
       const service = this.getServiceFromPath(req.path);
       if (service) {
         await proxyRequest(req, res, service);
@@ -287,7 +349,9 @@ export class ApiRouter {
     });
 
     // Route statique pour les images (sans préfixe /api)
-    app.get("/uploads/*", (req, res) => proxyRequest(req, res, "product"));
+    app.get("/uploads/*", (req: Request, res: Response) =>
+      proxyRequest(req, res, "product")
+    );
 
     // ===== GESTION DES ERREURS =====
     app.use(notFoundHandler);
