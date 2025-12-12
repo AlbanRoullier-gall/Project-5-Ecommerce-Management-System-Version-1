@@ -221,8 +221,63 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // 3. Appeler order-service pour créer la commande
+    // 3. Ajouter les adresses au customer-service AVANT la création de la commande (bloquant)
+    // Utilise le nouvel endpoint qui gère shipping + billing en une fois
+    // Cette étape doit réussir avant de créer la commande pour garantir la cohérence des données
+    const checkoutData = cart.checkoutData;
+    if (customerId && checkoutData?.addressData) {
+      try {
+        const addressResponse = await fetch(
+          `${SERVICES.customer}/api/customers/${customerId}/addresses/bulk`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Service-Request": "api-gateway",
+            },
+            body: JSON.stringify({
+              shipping: checkoutData.addressData.shipping,
+              billing: checkoutData.addressData.billing,
+              useSameBillingAddress:
+                checkoutData.addressData.useSameBillingAddress,
+            }),
+          }
+        );
+
+        if (!addressResponse.ok) {
+          const addressError = (await addressResponse.json()) as any;
+          console.error(
+            `❌ Customer Service error (adresses): ${addressError.message}`
+          );
+          return res
+            .status(500)
+            .json(
+              createErrorResponse(
+                "Erreur lors de l'enregistrement des adresses",
+                addressError.message ||
+                  "Impossible d'enregistrer les adresses de livraison et de facturation"
+              )
+            );
+        }
+      } catch (error) {
+        console.error(
+          "❌ Erreur lors de l'appel au Customer Service (adresses):",
+          error
+        );
+        return res
+          .status(500)
+          .json(
+            createErrorResponse(
+              "Service client indisponible",
+              "Impossible d'enregistrer les adresses. Veuillez réessayer plus tard."
+            )
+          );
+      }
+    }
+
+    // 4. Appeler order-service pour créer la commande
     // Le service construit maintenant le payload en interne depuis le panier avec checkoutData
+    // Les adresses sont maintenant garanties d'être enregistrées avant cette étape
     let orderId: number;
 
     try {
@@ -274,37 +329,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // 6. Ajouter les adresses au customer-service (non-bloquant)
-    // Utilise le nouvel endpoint qui gère shipping + billing en une fois
-    // SIMPLIFICATION : Utiliser directement checkoutData depuis le panier
-    const checkoutData = cart.checkoutData;
-    if (customerId && checkoutData?.addressData) {
-      try {
-        await fetch(
-          `${SERVICES.customer}/api/customers/${customerId}/addresses/bulk`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Service-Request": "api-gateway",
-            },
-            body: JSON.stringify({
-              shipping: checkoutData.addressData.shipping,
-              billing: checkoutData.addressData.billing,
-              useSameBillingAddress:
-                checkoutData.addressData.useSameBillingAddress,
-            }),
-          }
-        );
-      } catch (error) {
-        console.warn(
-          "⚠️ Erreur lors de l'ajout des adresses au customer-service:",
-          error
-        );
-      }
-    }
-
-    // 7. Appeler email-service pour envoyer l'email de confirmation (non-bloquant)
+    // 5. Appeler email-service pour envoyer l'email de confirmation (non-bloquant)
     // email-service construit les données à partir des données brutes
     // SIMPLIFICATION : Utiliser directement checkoutData depuis le panier
     try {
@@ -332,7 +357,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       console.warn("⚠️ Erreur lors de l'envoi de l'email:", error);
     }
 
-    // 8. Vider le panier et les données checkout après création réussie (non-bloquant)
+    // 6. Vider le panier et les données checkout après création réussie (non-bloquant)
     // Le panier sera vidé automatiquement, ce qui supprime aussi les données checkout
     try {
       const clearCartResponse = await fetch(`${SERVICES.cart}/api/cart`, {

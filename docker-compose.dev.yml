@@ -128,7 +128,6 @@ services:
       - "3004:3004"
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://cart_user:cart_password@cart-db:5432/cart_db
       - REDIS_URL=redis://redis:6379
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -138,8 +137,6 @@ services:
       - ./shared-types:/app/shared-types
       - /app/node_modules
     depends_on:
-      cart-db:
-        condition: service_healthy
       redis:
         condition: service_started
     healthcheck:
@@ -160,7 +157,6 @@ services:
       - "3007:3007"
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://payment_user:payment_password@payment-db:5432/payment_db
       - STRIPE_SECRET_KEY=sk_test_51RtjchLi6vN59MNetUhP86QSndKeI5GfJCMseKO8dSq4D93k0td4AZyJ5d4SiKTveQh9pThKaj9d9MyzpTEuoFdU00ZW6qtK90
       - STRIPE_PUBLISHABLE_KEY=pk_test_51RtjchLi6vN59MNe1w9bJlC4Gg2Pnuti0Oub3RRuh4QFVPmh77ZE9oOmL3ewA6vnB2NvWjSizIup9gq9Y6pyTmdV00xFVugPSe
       - JWT_SECRET=your-jwt-secret-key
@@ -168,9 +164,6 @@ services:
       - ./services/payment-service/src:/app/src
       - ./shared-types:/app/shared-types
       - /app/node_modules
-    depends_on:
-      payment-db:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3007/api/health"]
       interval: 30s
@@ -187,7 +180,6 @@ services:
       - "3006:3006"
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://email_user:email_password@email-db:5432/email_db
       - GMAIL_USER=u4999410740@gmail.com
       - GMAIL_APP_PASSWORD=vyli fdmp hrww jvlz
       - ADMIN_EMAIL=u4999410740@gmail.com
@@ -196,9 +188,6 @@ services:
       - ./services/email-service/src:/app/src
       - ./shared-types:/app/shared-types
       - /app/node_modules
-    depends_on:
-      email-db:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3006/api/health"]
       interval: 30s
@@ -316,49 +305,10 @@ services:
       timeout: 5s
       retries: 5
 
-  cart-db:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=cart_db
-      - POSTGRES_USER=cart_user
-      - POSTGRES_PASSWORD=cart_password
-    volumes:
-      - cart_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cart_user -d cart_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
+  # removed: cart-db (Cart Service utilise uniquement Redis)
   # removed: content-db
-
-  payment-db:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=payment_db
-      - POSTGRES_USER=payment_user
-      - POSTGRES_PASSWORD=payment_password
-    volumes:
-      - payment_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U payment_user -d payment_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  email-db:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=email_db
-      - POSTGRES_USER=email_user
-      - POSTGRES_PASSWORD=email_password
-    volumes:
-      - email_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U email_user -d email_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # removed: payment-db (Payment Service utilise uniquement Stripe API)
+  # removed: email-db (Email Service utilise uniquement Gmail via nodemailer)
 
   # Redis for caching and cart storage
   # Auth Service
@@ -431,9 +381,9 @@ volumes:
   customer_data:
   product_data:
   order_data:
-  cart_data:
+  # removed: cart_data (Cart Service utilise uniquement Redis)
   # removed: content_data
-  payment_data:
-  email_data:
+  # removed: payment_data (Payment Service n'utilise pas de base de données)
+  # removed: email_data (Email Service n'utilise pas de base de données)
   auth_data:
   redis_data:
