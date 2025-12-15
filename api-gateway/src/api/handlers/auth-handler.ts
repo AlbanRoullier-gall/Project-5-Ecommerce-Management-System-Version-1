@@ -156,9 +156,11 @@ export const handlePasswordResetConfirm = async (
 export const handleLogin = async (req: Request, res: Response) => {
   try {
     const authServiceUrl = `${SERVICES.auth}/api/auth/login`;
-    console.log(`[Login] Tentative de connexion au service auth: ${authServiceUrl}`);
+    console.log(
+      `[Login] Tentative de connexion au service auth: ${authServiceUrl}`
+    );
     console.log(`[Login] SERVICES.auth = ${SERVICES.auth}`);
-    
+
     // Appel direct au Auth Service
     const authResponse = await fetch(authServiceUrl, {
       method: "POST",
@@ -180,13 +182,22 @@ export const handleLogin = async (req: Request, res: Response) => {
     // Le service auth a déjà défini le cookie, on transmet juste la réponse
     // Copier les cookies Set-Cookie depuis la réponse du service
     const setCookieHeader = authResponse.headers.get("set-cookie");
-    console.log(`[Login] Set-Cookie header reçu: ${setCookieHeader ? "présent" : "absent"}`);
+    console.log(
+      `[Login] Set-Cookie header reçu: ${
+        setCookieHeader ? "présent" : "absent"
+      }`
+    );
+    
+    let token: string | null = null;
+    
     if (setCookieHeader) {
-      console.log(`[Login] Set-Cookie header: ${setCookieHeader.substring(0, 100)}...`);
+      console.log(
+        `[Login] Set-Cookie header: ${setCookieHeader.substring(0, 100)}...`
+      );
       // Extraire le token depuis le cookie Set-Cookie
       const cookieMatch = setCookieHeader.match(/auth_token=([^;]+)/);
       if (cookieMatch && cookieMatch[1]) {
-        const token = cookieMatch[1];
+        token = cookieMatch[1];
         console.log(`[Login] ✅ Token extrait (longueur: ${token.length})`);
         // Redéfinir le cookie côté API Gateway pour que le domaine soit correct
         const { setAuthTokenCookie } = await import(
@@ -200,10 +211,19 @@ export const handleLogin = async (req: Request, res: Response) => {
         res.setHeader("Set-Cookie", setCookieHeader);
       }
     } else {
-      console.log(`[Login] ❌ Aucun Set-Cookie header dans la réponse du service auth`);
+      console.log(
+        `[Login] ❌ Aucun Set-Cookie header dans la réponse du service auth`
+      );
     }
 
-    return res.status(200).json(authData);
+    // Retourner le token dans la réponse pour que le frontend puisse le stocker
+    // Cela permet de fonctionner même si les cookies third-party sont bloqués
+    const responseData = {
+      ...authData,
+      ...(token && { token }), // Ajouter le token à la réponse si disponible
+    };
+
+    return res.status(200).json(responseData);
   } catch (error: any) {
     console.error("❌ Login error:", error);
     console.error(`[Login] Erreur détaillée:`, {
@@ -212,9 +232,12 @@ export const handleLogin = async (req: Request, res: Response) => {
       cause: error.cause,
       url: `${SERVICES.auth}/api/auth/login`,
     });
-    
+
     // Gérer les erreurs de timeout/connexion
-    if (error.code === "UND_ERR_CONNECT_TIMEOUT" || error.message?.includes("fetch failed")) {
+    if (
+      error.code === "UND_ERR_CONNECT_TIMEOUT" ||
+      error.message?.includes("fetch failed")
+    ) {
       return res.status(503).json({
         error: "Service d'authentification indisponible",
         message: `Impossible de se connecter au service auth (${SERVICES.auth}). Vérifiez que le service est démarré et que l'URL est correcte.`,
@@ -222,7 +245,7 @@ export const handleLogin = async (req: Request, res: Response) => {
         serviceUrl: SERVICES.auth,
       });
     }
-    
+
     return res.status(500).json({
       error: "Erreur interne du serveur",
       message: "Veuillez réessayer plus tard",

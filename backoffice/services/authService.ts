@@ -109,11 +109,18 @@ export async function login(
       password,
     };
 
-    // L'API Gateway retourne directement { message, user } (pas de wrapper ApiResponse)
+    // L'API Gateway retourne directement { message, user, token? } (pas de wrapper ApiResponse)
     const response = await apiClient.post<{
       message: string;
       user: UserPublicDTO;
+      token?: string; // Token optionnel pour fonctionner même si cookies third-party sont bloqués
     }>(`/api/auth/login`, loginRequest, { requireAuth: false });
+
+    // Stocker le token dans localStorage si disponible (fallback si cookies third-party bloqués)
+    if (response.token && typeof window !== "undefined") {
+      localStorage.setItem("auth_token", response.token);
+      console.log("[AuthService] Token stocké dans localStorage");
+    }
 
     if (response.user) {
       return {
@@ -140,6 +147,12 @@ export async function login(
  */
 export async function logout(): Promise<void> {
   await apiClient.post(`/api/auth/logout`, undefined, { requireAuth: false });
+  
+  // Supprimer le token du localStorage
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("auth_token");
+    console.log("[AuthService] Token supprimé de localStorage");
+  }
 }
 
 /**

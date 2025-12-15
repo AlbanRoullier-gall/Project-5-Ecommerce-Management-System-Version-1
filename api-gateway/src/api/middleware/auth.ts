@@ -32,11 +32,27 @@ export const verifyToken = (token: string): AuthenticatedUser | null => {
 };
 
 /**
- * Extrait le token d'authentification depuis le cookie httpOnly
- * Plus de fallback sur le header Authorization
+ * Extrait le token d'authentification
+ * Priorité : Header Authorization > Cookie httpOnly
+ * Cela permet de fonctionner même si les cookies third-party sont bloqués
  */
 export const extractToken = (req: Request): string | null => {
-  return extractAuthToken(req);
+  // 1. Essayer d'abord le header Authorization (Bearer token)
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.substring(7);
+    console.log(`[Auth] ✅ Token trouvé dans header Authorization (longueur: ${token.length})`);
+    return token;
+  }
+  
+  // 2. Fallback sur le cookie httpOnly
+  const cookieToken = extractAuthToken(req);
+  if (cookieToken) {
+    console.log(`[Auth] ✅ Token trouvé dans cookie (longueur: ${cookieToken.length})`);
+    return cookieToken;
+  }
+  
+  return null;
 };
 
 /**

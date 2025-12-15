@@ -95,13 +95,32 @@ class ApiClient {
   }
 
   /**
+   * Récupère le token d'authentification depuis localStorage
+   */
+  private getAuthToken(): string | null {
+    if (typeof window === "undefined") {
+      return null; // SSR
+    }
+    return localStorage.getItem("auth_token");
+  }
+
+  /**
    * Construit les headers par défaut
+   * Ajoute le token d'authentification depuis localStorage si disponible
    */
   private buildHeaders(customHeaders?: Record<string, string>): HeadersInit {
-    return {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
       ...customHeaders,
     };
+
+    // Ajouter le token d'authentification depuis localStorage si disponible
+    const token = this.getAuthToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    return headers;
   }
 
   /**
