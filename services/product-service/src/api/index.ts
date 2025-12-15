@@ -150,7 +150,7 @@ export class ApiRouter {
   /**
    * Configuration des routes
    */
-  setupRoutes(app: any): void {
+  setupRoutes(app: Application): void {
     this.setupMiddlewares(app);
     const schemas = this.setupValidationSchemas();
     // upload n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
