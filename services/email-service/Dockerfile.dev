@@ -56,3 +56,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # ===== COMMANDE DE DÉMARRAGE EN DÉVELOPPEMENT =====
 # Utilise ts-node-dev pour le hot reloading
 CMD ["npm", "run", "dev"]
+

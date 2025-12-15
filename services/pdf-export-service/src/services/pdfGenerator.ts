@@ -1,4 +1,9 @@
-import { YearExportRequestDTO, OrderInvoiceRequestDTO, OrderExportData, CreditNoteExportData } from "../api/dto";
+import {
+  YearExportRequestDTO,
+  OrderInvoiceRequestDTO,
+  OrderExportData,
+  CreditNoteExportData,
+} from "../api/dto";
 
 export class PDFGenerator {
   async generateOrdersYearExport(data: YearExportRequestDTO): Promise<Buffer> {
@@ -329,14 +334,16 @@ export class PDFGenerator {
             <tr><td><strong>ID Facture:</strong></td><td>${order.id}</td></tr>
             <tr><td><strong>Client:</strong></td><td>${customerFirstName} ${customerLastName}</td></tr>
             <tr><td><strong>Email:</strong></td><td>${customerEmail}</td></tr>
-            <tr><td><strong>Date de création:</strong></td><td>${new Date(
-              order.createdAt
-            ).toLocaleDateString("fr-FR")}</td></tr>
+            <tr><td><strong>Date de création:</strong></td><td>${
+              order.createdAt instanceof Date 
+                ? order.createdAt.toLocaleDateString("fr-FR")
+                : new Date(String(order.createdAt)).toLocaleDateString("fr-FR")
+            }</td></tr>
             <tr><td><strong>Méthode de paiement:</strong></td><td>${
-              order.paymentMethod || "N/A"
+              String(order.paymentMethod || "N/A")
             }</td></tr>
             <tr><td><strong>Statut:</strong></td><td>${
-              order.delivered ? "Livrée" : "En attente"
+              Boolean(order.delivered) ? "Livrée" : "En attente"
             }</td></tr>
             <tr><td><strong>Total HT:</strong></td><td>${parseFloat(
               order.totalAmountHT || 0
@@ -441,11 +448,13 @@ export class PDFGenerator {
               creditNote.description || "N/A"
             }</td></tr>
             <tr><td><strong>Méthode de paiement:</strong></td><td>${
-              creditNote.paymentMethod || "N/A"
+              String(creditNote.paymentMethod || "N/A")
             }</td></tr>
-            <tr><td><strong>Date de création:</strong></td><td>${new Date(
-              creditNote.createdAt
-            ).toLocaleDateString("fr-FR")}</td></tr>
+            <tr><td><strong>Date de création:</strong></td><td>${
+              creditNote.createdAt instanceof Date 
+                ? creditNote.createdAt.toLocaleDateString("fr-FR")
+                : new Date(String(creditNote.createdAt)).toLocaleDateString("fr-FR")
+            }</td></tr>
             <tr><td><strong>Total HT:</strong></td><td>${parseFloat(
               creditNote.totalAmountHT || 0
             ).toFixed(2)} €</td></tr>
@@ -705,14 +714,16 @@ export class PDFGenerator {
           <div class="invoice-info-section">
             <h3>Informations facture</h3>
             <p><strong>Numéro de commande:</strong> #${order.id}</p>
-            <p><strong>Date:</strong> ${new Date(
-              order.createdAt
-            ).toLocaleDateString("fr-FR")}</p>
+            <p><strong>Date:</strong> ${
+              order.createdAt instanceof Date 
+                ? order.createdAt.toLocaleDateString("fr-FR")
+                : new Date(String(order.createdAt)).toLocaleDateString("fr-FR")
+            }</p>
             <p><strong>Méthode de paiement:</strong> ${
-              order.paymentMethod || "N/A"
+              String(order.paymentMethod || "N/A")
             }</p>
             <p><strong>Statut:</strong> ${
-              order.delivered ? "Livrée" : "En attente"
+              Boolean(order.delivered) ? "Livrée" : "En attente"
             }</p>
           </div>
         </div>
