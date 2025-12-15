@@ -34,16 +34,26 @@ export function extractAuthToken(req: Request): string | null {
 export function setAuthTokenCookie(res: Response, token: string): void {
   const isProduction = process.env["NODE_ENV"] === "production";
 
-  res.cookie(AUTH_TOKEN_COOKIE, token, {
+  const cookieOptions = {
     httpOnly: true, // Non accessible depuis JavaScript (sécurité XSS)
     secure: isProduction, // HTTPS uniquement en production
     // En production, utiliser "none" pour permettre le partage cross-domain
     // (backoffice et API Gateway sont sur des domaines différents)
-    sameSite: isProduction ? "none" : "lax", // "none" nécessite secure: true
+    sameSite: (isProduction ? "none" : "lax") as "none" | "lax", // "none" nécessite secure: true
     maxAge: COOKIE_MAX_AGE,
     path: "/", // Disponible sur tout le site
     // Ne pas spécifier de domaine pour permettre le partage cross-domain
+  };
+
+  console.log(`[AuthSession] Définition du cookie auth_token:`, {
+    secure: cookieOptions.secure,
+    sameSite: cookieOptions.sameSite,
+    httpOnly: cookieOptions.httpOnly,
+    path: cookieOptions.path,
+    tokenLength: token.length,
   });
+
+  res.cookie(AUTH_TOKEN_COOKIE, token, cookieOptions);
 }
 
 /**

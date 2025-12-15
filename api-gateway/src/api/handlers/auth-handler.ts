@@ -174,20 +174,27 @@ export const handleLogin = async (req: Request, res: Response) => {
     // Le service auth a déjà défini le cookie, on transmet juste la réponse
     // Copier les cookies Set-Cookie depuis la réponse du service
     const setCookieHeader = authResponse.headers.get("set-cookie");
+    console.log(`[Login] Set-Cookie header reçu: ${setCookieHeader ? "présent" : "absent"}`);
     if (setCookieHeader) {
+      console.log(`[Login] Set-Cookie header: ${setCookieHeader.substring(0, 100)}...`);
       // Extraire le token depuis le cookie Set-Cookie
       const cookieMatch = setCookieHeader.match(/auth_token=([^;]+)/);
       if (cookieMatch && cookieMatch[1]) {
         const token = cookieMatch[1];
+        console.log(`[Login] ✅ Token extrait (longueur: ${token.length})`);
         // Redéfinir le cookie côté API Gateway pour que le domaine soit correct
         const { setAuthTokenCookie } = await import(
           "../middleware/auth-session"
         );
         setAuthTokenCookie(res, token);
+        console.log(`[Login] ✅ Cookie défini dans la réponse`);
       } else {
+        console.log(`[Login] ⚠️ Impossible d'extraire le token du Set-Cookie`);
         // Fallback: copier le cookie tel quel si on ne peut pas extraire le token
         res.setHeader("Set-Cookie", setCookieHeader);
       }
+    } else {
+      console.log(`[Login] ❌ Aucun Set-Cookie header dans la réponse du service auth`);
     }
 
     return res.status(200).json(authData);
