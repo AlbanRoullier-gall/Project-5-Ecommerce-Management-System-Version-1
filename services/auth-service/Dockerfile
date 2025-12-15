@@ -31,14 +31,15 @@ COPY services/auth-service/src/ ./src/
 
 # ===== COMPILATION TYPESCRIPT =====
 # Compiler le TypeScript vers JavaScript
-RUN npm run build
+RUN npm run build || (echo "Build failed!" && exit 1)
 
 # ===== VÉRIFICATION DU BUILD =====
 # Vérifier que le build a créé les fichiers
-RUN ls -la dist/ || (echo "Build failed - dist folder not found" && exit 1)
+RUN ls -la dist/ && test -f dist/index.js || (echo "ERROR: dist/index.js not found!" && ls -la && exit 1)
 
 # ===== OPTIMISATION DE L'IMAGE =====
 # Supprimer les dépendances de développement pour réduire la taille
+# IMPORTANT: Ne pas supprimer dist/ avec npm prune
 RUN npm prune --production
 
 # ===== SÉCURITÉ =====
