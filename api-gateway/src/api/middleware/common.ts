@@ -15,17 +15,21 @@ const cookieParser = require("cookie-parser");
  * IMPORTANT: Avec credentials: true, on ne peut pas utiliser origin: true ou "*"
  * Il faut spécifier explicitement les origines autorisées
  */
-export const corsMiddleware: RequestHandler = cors({
-  origin: (
-    origin: string | undefined,
-    callback: (err: Error | null, allow?: boolean) => void
-  ) => {
-    // Récupérer la liste des origines autorisées depuis les variables d'environnement
-    const allowedOriginsEnv = process.env["ALLOWED_ORIGINS"];
+export const corsMiddleware: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
+  // Récupérer la liste des origines autorisées depuis les variables d'environnement
+  const allowedOriginsEnv = process.env["ALLOWED_ORIGINS"];
 
-    let allowedOrigins: string[];
+  let allowedOrigins: string[];
 
-    if (!allowedOriginsEnv) {
+  if (!allowedOriginsEnv) {
+    // En production, autoriser toutes les origines temporairement (avec avertissement)
+    // En développement, utiliser localhost uniquement
+    if (process.env["NODE_ENV"] === "production") {
+      console.warn("⚠️⚠️⚠️ CORS: ALLOWED_ORIGINS non configuré en PRODUCTION!");
+      console.warn("⚠️⚠️⚠️ Mode permissif activé temporairement - CONFIGUREZ ALLOWED_ORIGINS dans Railway!");
+      // Mode permissif temporaire pour le debug
+      allowedOrigins = ["*"]; // Sera traité spécialement
+    } else {
       // Valeurs par défaut pour le développement local
       allowedOrigins = [
         "http://localhost:3000", // API Gateway (pour les tests)
@@ -35,43 +39,94 @@ export const corsMiddleware: RequestHandler = cors({
         "http://127.0.0.1:3009",
         "http://127.0.0.1:3010",
       ];
-    } else {
-      allowedOrigins = allowedOriginsEnv.split(",").map((o) => o.trim());
+      console.warn("⚠️ CORS: ALLOWED_ORIGINS non configuré - utilisation des valeurs par défaut (localhost uniquement)");
+    }
+  } else {
+    allowedOrigins = allowedOriginsEnv.split(",").map((o) => o.trim());
+    console.log(`✅ CORS: ${allowedOrigins.length} origine(s) autorisée(s): ${allowedOrigins.join(", ")}`);
+  }
+
+  const origin = req.headers.origin;
+
+  // Gérer les requêtes OPTIONS (preflight) manuellement pour éviter les erreurs 500
+  if (req.method === "OPTIONS") {
+    // Mode permissif temporaire si ALLOWED_ORIGINS n'est pas configuré en production
+    if (allowedOrigins.includes("*")) {
+      res.header("Access-Control-Allow-Origin", origin || "*");
+      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+      res.header("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id");
+      res.header("Access-Control-Expose-Headers", "Set-Cookie");
+      // Note: credentials ne peut pas être true avec Access-Control-Allow-Origin: *
+      // Mais on l'autorise quand même pour le debug temporaire
+      return res.status(204).end();
     }
 
-    // Autoriser les requêtes sans origine (ex: Postman, mobile apps, SSR)
+    // Si pas d'origine, autoriser (pour les outils comme Postman)
     if (!origin) {
-      return callback(null, true);
+      res.header("Access-Control-Allow-Origin", "*");
+      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+      res.header("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id");
+      return res.status(204).end();
     }
 
-    // Vérifier si l'origine est dans la liste autorisée
+    // Vérifier si l'origine est autorisée
     if (allowedOrigins.includes(origin)) {
-      callback(null, true);
+      res.header("Access-Control-Allow-Origin", origin);
+      res.header("Access-Control-Allow-Credentials", "true");
+      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+      res.header("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id");
+      res.header("Access-Control-Expose-Headers", "Set-Cookie");
+      return res.status(204).end();
     } else {
-      console.warn(`⚠️ CORS: Origine non autorisée: ${origin}`);
-      // En production, on peut être plus permissif pour le debug
-      // Mais idéalement, il faut configurer ALLOWED_ORIGINS dans Railway
-      if (process.env["NODE_ENV"] === "production") {
-        console.warn(`⚠️ CORS: Mode production - Vérifiez ALLOWED_ORIGINS dans Railway`);
-      }
-      // Rejeter l'origine non autorisée
-      callback(null, false);
+      console.warn(`⚠️ CORS: Origine non autorisée pour OPTIONS: ${origin}`);
+      console.warn(`⚠️ CORS: Origines autorisées: ${allowedOrigins.join(", ")}`);
+      // Retourner 403 au lieu de 500 pour les requêtes OPTIONS non autorisées
+      return res.status(403).json({
+        error: "CORS Error",
+        message: "Origin not allowed",
+        origin: origin,
+      });
     }
-  },
-  credentials: true, // Nécessaire pour les cookies httpOnly
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: [
-    "Content-Type",
-    "X-Requested-With",
-    "Accept",
-    "Authorization",
-    "Cookie",
-    "x-cart-session-id",
-  ],
-  exposedHeaders: ["Set-Cookie"],
-  preflightContinue: false,
-  optionsSuccessStatus: 204, // Répondre avec 204 No Content pour les requêtes OPTIONS réussies
-});
+  }
+
+  // Pour les autres méthodes, utiliser le middleware CORS standard
+  return cors({
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // Mode permissif temporaire si ALLOWED_ORIGINS n'est pas configuré en production
+      if (allowedOrigins.includes("*")) {
+        return callback(null, true);
+      }
+
+      // Autoriser les requêtes sans origine (ex: Postman, mobile apps, SSR)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Vérifier si l'origine est dans la liste autorisée
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`⚠️ CORS: Origine non autorisée: ${origin}`);
+        console.warn(`⚠️ CORS: Origines autorisées: ${allowedOrigins.join(", ")}`);
+        // Rejeter l'origine non autorisée
+        callback(null, false);
+      }
+    },
+    credentials: !allowedOrigins.includes("*"), // Ne pas utiliser credentials avec "*"
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "X-Requested-With",
+      "Accept",
+      "Authorization",
+      "Cookie",
+      "x-cart-session-id",
+    ],
+    exposedHeaders: ["Set-Cookie"],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  })(req, res, next);
+};
 
 /**
  * Configuration Helmet pour la sécurité HTTP
