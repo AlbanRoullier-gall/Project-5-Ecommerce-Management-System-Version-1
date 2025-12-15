@@ -36,3 +36,4 @@ DO UPDATE SET
     backoffice_status = 'approved'::backoffice_status,
     updated_at = NOW();
 
+
