@@ -9,7 +9,11 @@
  * - Validation des requêtes
  */
 
-import { Request, Response, NextFunction } from "express";
+import express, { Request, Response, NextFunction, Application } from "express";
+import cors from "cors";
+import helmet from "helmet";
+import Joi from "joi";
+import morgan from "morgan";
 import { Pool } from "pg";
 import CustomerService from "../services/CustomerService";
 import {
@@ -17,12 +21,8 @@ import {
   CustomerController,
   AddressController,
 } from "./controller";
+// CompanyController non utilisé pour l'instant - commenté pour éviter les erreurs de build
 import { ResponseMapper } from "./mapper";
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const Joi = require("joi");
-const morgan = require("morgan");
 // Les routes sont maintenant définies directement dans la méthode setupRoutes
 
 export class ApiRouter {
@@ -40,7 +40,7 @@ export class ApiRouter {
   /**
    * Configuration des middlewares
    */
-  private setupMiddlewares(app: express.Application): void {
+  private setupMiddlewares(app: Application): void {
     app.use(helmet()); // En-têtes de sécurité
     app.use(cors()); // Gestion CORS
     app.use(express.json()); // Analyse JSON
@@ -203,7 +203,7 @@ export class ApiRouter {
   /**
    * Configuration des routes
    */
-  setupRoutes(app: express.Application): void {
+  setupRoutes(app: Application): void {
     this.setupMiddlewares(app);
     const schemas = this.setupValidationSchemas();
 

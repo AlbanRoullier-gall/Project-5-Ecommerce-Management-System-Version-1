@@ -6,3 +6,5 @@
 export * from "./HealthController";
 export * from "./CustomerController";
 export * from "./AddressController";
+// CompanyController temporairement désactivé - fonctionnalité non implémentée
+// export * from "./CompanyController";
