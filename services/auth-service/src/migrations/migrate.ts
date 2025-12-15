@@ -58,14 +58,22 @@ async function runMigrations(): Promise<void> {
     // Récupère tous les fichiers .sql dans le dossier migrations/ et les trie alphabétiquement
     console.log(`[Migrations] Cherchant les fichiers SQL dans: ${__dirname}`);
     const allFiles = fs.readdirSync(__dirname);
-    console.log(`[Migrations] Fichiers trouvés dans le dossier: ${allFiles.join(", ")}`);
+    console.log(
+      `[Migrations] Fichiers trouvés dans le dossier: ${allFiles.join(", ")}`
+    );
     const migrationFiles = allFiles
       .filter((file) => file.endsWith(".sql")) // Filtrer uniquement les fichiers .sql
       .sort(); // Trier alphabétiquement (001_, 002_, etc.)
-    console.log(`[Migrations] Fichiers SQL trouvés: ${migrationFiles.length} - ${migrationFiles.join(", ")}`);
-    
+    console.log(
+      `[Migrations] Fichiers SQL trouvés: ${
+        migrationFiles.length
+      } - ${migrationFiles.join(", ")}`
+    );
+
     if (migrationFiles.length === 0) {
-      throw new Error(`Aucun fichier SQL de migration trouvé dans ${__dirname}. Vérifiez que les fichiers sont bien copiés dans dist/src/migrations/`);
+      throw new Error(
+        `Aucun fichier SQL de migration trouvé dans ${__dirname}. Vérifiez que les fichiers sont bien copiés dans dist/src/migrations/`
+      );
     }
 
     // ===== ÉTAPE 3 : VÉRIFIER LES MIGRATIONS DÉJÀ EXÉCUTÉES =====
@@ -117,7 +125,7 @@ async function runMigrations(): Promise<void> {
     const newExecuted = migrationFiles.filter(
       (f) => !executedFilenames.includes(f)
     ).length;
-    
+
     console.log(
       `📊 Résumé: ${migrationFiles.length} migration(s) trouvée(s), ${totalExecuted} déjà exécutée(s), ${newExecuted} nouvelle(s)`
     );

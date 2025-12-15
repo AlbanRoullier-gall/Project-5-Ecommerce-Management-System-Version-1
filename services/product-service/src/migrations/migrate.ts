@@ -125,7 +125,7 @@ export async function runMigrations(): Promise<void> {
     const newExecuted = migrationFiles.filter(
       (f) => !executedFilenames.includes(f)
     ).length;
-    
+
     console.log(
       `📊 Résumé: ${migrationFiles.length} migration(s) trouvée(s), ${totalExecuted} déjà exécutée(s), ${newExecuted} nouvelle(s)`
     );
