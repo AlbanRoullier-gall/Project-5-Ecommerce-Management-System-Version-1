@@ -45,23 +45,7 @@ export function setAuthTokenCookie(res: Response, token: string): void {
     // Ne pas spécifier de domaine pour permettre le partage cross-domain
   };
 
-  console.log(`[AuthSession] Définition du cookie auth_token:`, {
-    secure: cookieOptions.secure,
-    sameSite: cookieOptions.sameSite,
-    httpOnly: cookieOptions.httpOnly,
-    path: cookieOptions.path,
-    tokenLength: token.length,
-  });
-
   res.cookie(AUTH_TOKEN_COOKIE, token, cookieOptions);
-  
-  // Vérifier que le cookie est bien défini dans les headers de réponse
-  const setCookieHeader = res.getHeader("Set-Cookie");
-  if (setCookieHeader) {
-    console.log(`[AuthSession] ✅ Cookie défini dans Set-Cookie header: ${Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader}`);
-  } else {
-    console.log(`[AuthSession] ⚠️ Cookie non trouvé dans Set-Cookie header`);
-  }
 }
 
 /**

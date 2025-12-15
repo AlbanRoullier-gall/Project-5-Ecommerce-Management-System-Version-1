@@ -109,8 +109,6 @@ export async function login(
       password,
     };
 
-    console.log(`[AuthService] Tentative de login pour: ${email}`);
-
     // L'API Gateway retourne directement { message, user, token? } (pas de wrapper ApiResponse)
     const response = await apiClient.post<{
       message: string;
@@ -118,23 +116,9 @@ export async function login(
       token?: string; // Token optionnel pour fonctionner même si cookies third-party sont bloqués
     }>(`/api/auth/login`, loginRequest, { requireAuth: false });
 
-    console.log(`[AuthService] Réponse login reçue:`, {
-      hasUser: !!response.user,
-      hasToken: !!response.token,
-      tokenLength: response.token?.length,
-      responseKeys: Object.keys(response),
-      fullResponse: response, // Log complet pour debug
-    });
-
     // Stocker le token dans localStorage si disponible (fallback si cookies third-party bloqués)
     if (response.token && typeof window !== "undefined") {
       localStorage.setItem("auth_token", response.token);
-      console.log(`[AuthService] ✅ Token stocké dans localStorage (longueur: ${response.token.length})`);
-    } else {
-      console.log(`[AuthService] ⚠️ Token non disponible dans la réponse ou window undefined`, {
-        hasToken: !!response.token,
-        windowDefined: typeof window !== "undefined",
-      });
     }
 
     if (response.user) {
@@ -150,13 +134,6 @@ export async function login(
       };
     }
   } catch (error: any) {
-    console.error(`[AuthService] ❌ Erreur lors du login:`, error);
-    console.error(`[AuthService] Détails de l'erreur:`, {
-      message: error.message,
-      status: error.status,
-      data: error.data,
-      stack: error.stack,
-    });
     return {
       success: false,
       error: error.message || "Erreur de connexion au serveur",
@@ -173,7 +150,6 @@ export async function logout(): Promise<void> {
   // Supprimer le token du localStorage
   if (typeof window !== "undefined") {
     localStorage.removeItem("auth_token");
-    console.log("[AuthService] Token supprimé de localStorage");
   }
 }
 

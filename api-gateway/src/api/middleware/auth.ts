@@ -40,19 +40,11 @@ export const extractToken = (req: Request): string | null => {
   // 1. Essayer d'abord le header Authorization (Bearer token)
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith("Bearer ")) {
-    const token = authHeader.substring(7);
-    console.log(`[Auth] ✅ Token trouvé dans header Authorization (longueur: ${token.length})`);
-    return token;
+    return authHeader.substring(7);
   }
   
   // 2. Fallback sur le cookie httpOnly
-  const cookieToken = extractAuthToken(req);
-  if (cookieToken) {
-    console.log(`[Auth] ✅ Token trouvé dans cookie (longueur: ${cookieToken.length})`);
-    return cookieToken;
-  }
-  
-  return null;
+  return extractAuthToken(req);
 };
 
 /**
@@ -68,30 +60,9 @@ export const requireAuth = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  // Debug: afficher les cookies reçus et le header Authorization
-  const cookies = req.cookies || {};
-  const cookieNames = Object.keys(cookies);
-  const authHeader = req.headers.authorization;
-  console.log(`[Auth] Requête ${req.method} ${req.path}`);
-  console.log(
-    `[Auth] Cookies reçus: ${
-      cookieNames.length > 0 ? cookieNames.join(", ") : "aucun"
-    }`
-  );
-  console.log(`[Auth] auth_token présent: ${!!cookies["auth_token"]}`);
-  console.log(`[Auth] Header Authorization: ${authHeader ? "présent" : "absent"}`);
-  if (authHeader) {
-    console.log(`[Auth] Authorization header: ${authHeader.substring(0, 30)}...`);
-  }
-
   const token = extractToken(req);
 
   if (!token) {
-    console.log(`[Auth] ❌ Token non trouvé - Headers:`, {
-      origin: req.headers.origin,
-      cookie: req.headers.cookie ? "présent" : "absent",
-      cookies: cookieNames,
-    });
     res.status(401).json({
       error: "Token d'accès requis",
       message: "Vous devez être authentifié pour accéder à cette ressource",
@@ -99,8 +70,6 @@ export const requireAuth = async (
     });
     return;
   }
-
-  console.log(`[Auth] ✅ Token trouvé (longueur: ${token.length})`);
 
   const user = verifyToken(token);
   if (!user) {

@@ -156,11 +156,6 @@ export const handlePasswordResetConfirm = async (
 export const handleLogin = async (req: Request, res: Response) => {
   try {
     const authServiceUrl = `${SERVICES.auth}/api/auth/login`;
-    console.log(
-      `[Login] Tentative de connexion au service auth: ${authServiceUrl}`
-    );
-    console.log(`[Login] SERVICES.auth = ${SERVICES.auth}`);
-
     // Appel direct au Auth Service
     const authResponse = await fetch(authServiceUrl, {
       method: "POST",
@@ -182,38 +177,23 @@ export const handleLogin = async (req: Request, res: Response) => {
     // Le service auth a déjà défini le cookie, on transmet juste la réponse
     // Copier les cookies Set-Cookie depuis la réponse du service
     const setCookieHeader = authResponse.headers.get("set-cookie");
-    console.log(
-      `[Login] Set-Cookie header reçu: ${
-        setCookieHeader ? "présent" : "absent"
-      }`
-    );
     
     let token: string | null = null;
     
     if (setCookieHeader) {
-      console.log(
-        `[Login] Set-Cookie header: ${setCookieHeader.substring(0, 100)}...`
-      );
       // Extraire le token depuis le cookie Set-Cookie
       const cookieMatch = setCookieHeader.match(/auth_token=([^;]+)/);
       if (cookieMatch && cookieMatch[1]) {
         token = cookieMatch[1];
-        console.log(`[Login] ✅ Token extrait (longueur: ${token.length})`);
         // Redéfinir le cookie côté API Gateway pour que le domaine soit correct
         const { setAuthTokenCookie } = await import(
           "../middleware/auth-session"
         );
         setAuthTokenCookie(res, token);
-        console.log(`[Login] ✅ Cookie défini dans la réponse`);
       } else {
-        console.log(`[Login] ⚠️ Impossible d'extraire le token du Set-Cookie`);
         // Fallback: copier le cookie tel quel si on ne peut pas extraire le token
         res.setHeader("Set-Cookie", setCookieHeader);
       }
-    } else {
-      console.log(
-        `[Login] ❌ Aucun Set-Cookie header dans la réponse du service auth`
-      );
     }
 
     // Retourner le token dans la réponse pour que le frontend puisse le stocker
@@ -223,23 +203,10 @@ export const handleLogin = async (req: Request, res: Response) => {
       ...(token && { token }), // Ajouter le token à la réponse si disponible
     };
 
-    console.log(`[Login] Réponse finale:`, {
-      hasMessage: !!responseData.message,
-      hasUser: !!responseData.user,
-      hasToken: !!responseData.token,
-      tokenLength: responseData.token?.length,
-    });
-
     return res.status(200).json(responseData);
   } catch (error: any) {
     console.error("❌ Login error:", error);
-    console.error(`[Login] Erreur détaillée:`, {
-      message: error.message,
-      code: error.code,
-      cause: error.cause,
-      url: `${SERVICES.auth}/api/auth/login`,
-    });
-
+    
     // Gérer les erreurs de timeout/connexion
     if (
       error.code === "UND_ERR_CONNECT_TIMEOUT" ||

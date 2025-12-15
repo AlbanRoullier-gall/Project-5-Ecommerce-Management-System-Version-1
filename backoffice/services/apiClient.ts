@@ -101,13 +101,7 @@ class ApiClient {
     if (typeof window === "undefined") {
       return null; // SSR
     }
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      console.log(`[ApiClient] Token trouvé dans localStorage (longueur: ${token.length})`);
-    } else {
-      console.log(`[ApiClient] Aucun token dans localStorage`);
-    }
-    return token;
+    return localStorage.getItem("auth_token");
   }
 
   /**
@@ -124,9 +118,6 @@ class ApiClient {
     const token = this.getAuthToken();
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
-      console.log(`[ApiClient] Header Authorization ajouté`);
-    } else {
-      console.log(`[ApiClient] Aucun token disponible, header Authorization non ajouté`);
     }
 
     return headers;
