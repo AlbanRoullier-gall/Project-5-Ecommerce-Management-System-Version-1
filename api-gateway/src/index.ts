@@ -38,6 +38,15 @@ app.listen(PORT, () => {
       isDevelopment ? "DEVELOPMENT (localhost)" : "DOCKER (containers)"
     }`
   );
-  console.log(`🔗 Auth Service: ${SERVICES.auth}`);
+  console.log("");
+  console.log("🔗 Services URLs:");
+  console.log(`   Auth: ${SERVICES.auth}`);
+  console.log(`   Customer: ${SERVICES.customer}`);
+  console.log(`   Product: ${SERVICES.product}`);
+  console.log(`   Order: ${SERVICES.order}`);
+  console.log(`   Cart: ${SERVICES.cart}`);
+  console.log(`   Payment: ${SERVICES.payment}`);
+  console.log(`   Email: ${SERVICES.email}`);
+  console.log(`   PDF Export: ${SERVICES["pdf-export"]}`);
   console.log("");
 });

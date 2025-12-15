@@ -28,27 +28,77 @@ export const JWT_SECRET = process.env["JWT_SECRET"] || "your-jwt-secret-key";
 // ===== CONFIGURATION DES SERVICES =====
 
 /**
+ * Fonction helper pour obtenir l'URL d'un service
+ * Priorité : Variable d'environnement > Nom de service Docker > localhost (dev)
+ */
+function getServiceUrl(
+  envVar: string | undefined,
+  defaultDocker: string,
+  defaultDev: string
+): string {
+  // Si une variable d'environnement est définie, l'utiliser en priorité
+  if (envVar) {
+    return envVar;
+  }
+  // Sinon, utiliser les valeurs par défaut selon l'environnement
+  return isDevelopment ? defaultDev : defaultDocker;
+}
+
+/**
  * URLs des microservices selon l'environnement
- * Development: localhost avec ports spécifiques
- * Docker: noms de containers
+ * Priorité : Variables d'environnement > Noms de services Docker > localhost (dev)
+ * 
+ * Variables d'environnement supportées (optionnelles) :
+ * - AUTH_SERVICE_URL
+ * - CUSTOMER_SERVICE_URL
+ * - PRODUCT_SERVICE_URL
+ * - ORDER_SERVICE_URL
+ * - CART_SERVICE_URL
+ * - PAYMENT_SERVICE_URL
+ * - EMAIL_SERVICE_URL
+ * - PDF_EXPORT_SERVICE_URL
  */
 export const SERVICES = {
-  auth: isDevelopment ? "http://localhost:3008" : "http://auth-service:3008",
-  product: isDevelopment
-    ? "http://localhost:3002"
-    : "http://product-service:3002",
-  order: isDevelopment ? "http://localhost:3003" : "http://order-service:3003",
-  cart: isDevelopment ? "http://localhost:3004" : "http://cart-service:3004",
-  customer: isDevelopment
-    ? "http://localhost:3001"
-    : "http://customer-service:3001",
-  payment: isDevelopment
-    ? "http://localhost:3007"
-    : "http://payment-service:3007",
-  email: isDevelopment ? "http://localhost:3006" : "http://email-service:3006",
-  "pdf-export": isDevelopment
-    ? "http://localhost:3040"
-    : "http://pdf-export-service:3040",
+  auth: getServiceUrl(
+    process.env["AUTH_SERVICE_URL"],
+    "http://auth-service:3008",
+    "http://localhost:3008"
+  ),
+  customer: getServiceUrl(
+    process.env["CUSTOMER_SERVICE_URL"],
+    "http://customer-service:3001",
+    "http://localhost:3001"
+  ),
+  product: getServiceUrl(
+    process.env["PRODUCT_SERVICE_URL"],
+    "http://product-service:3002",
+    "http://localhost:3002"
+  ),
+  order: getServiceUrl(
+    process.env["ORDER_SERVICE_URL"],
+    "http://order-service:3003",
+    "http://localhost:3003"
+  ),
+  cart: getServiceUrl(
+    process.env["CART_SERVICE_URL"],
+    "http://cart-service:3004",
+    "http://localhost:3004"
+  ),
+  payment: getServiceUrl(
+    process.env["PAYMENT_SERVICE_URL"],
+    "http://payment-service:3007",
+    "http://localhost:3007"
+  ),
+  email: getServiceUrl(
+    process.env["EMAIL_SERVICE_URL"],
+    "http://email-service:3006",
+    "http://localhost:3006"
+  ),
+  "pdf-export": getServiceUrl(
+    process.env["PDF_EXPORT_SERVICE_URL"],
+    "http://pdf-export-service:3040",
+    "http://localhost:3040"
+  ),
 } as const;
 
 /**
