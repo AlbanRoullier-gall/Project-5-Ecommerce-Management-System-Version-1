@@ -223,6 +223,13 @@ export const handleLogin = async (req: Request, res: Response) => {
       ...(token && { token }), // Ajouter le token à la réponse si disponible
     };
 
+    console.log(`[Login] Réponse finale:`, {
+      hasMessage: !!responseData.message,
+      hasUser: !!responseData.user,
+      hasToken: !!responseData.token,
+      tokenLength: responseData.token?.length,
+    });
+
     return res.status(200).json(responseData);
   } catch (error: any) {
     console.error("❌ Login error:", error);
