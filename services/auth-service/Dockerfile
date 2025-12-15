@@ -41,8 +41,13 @@ RUN test -f dist/src/index.js || (echo "ERROR: dist/src/index.js not found!" && 
 # ===== COPIER LES FICHIERS SQL DE MIGRATION =====
 # Les fichiers SQL ne sont pas copiés par TypeScript, il faut les copier manuellement
 # Le code de migration utilise __dirname qui pointe vers dist/src/migrations/
-RUN mkdir -p dist/src/migrations && \
-    cp -r src/migrations/*.sql dist/src/migrations/ 2>/dev/null || (echo "Warning: No SQL files found in src/migrations/" && true)
+RUN echo "=== Copying SQL migration files ===" && \
+    mkdir -p dist/src/migrations && \
+    ls -la src/migrations/*.sql 2>/dev/null | head -5 && \
+    cp src/migrations/*.sql dist/src/migrations/ && \
+    echo "=== SQL files copied ===" && \
+    ls -la dist/src/migrations/*.sql 2>/dev/null | head -5 || \
+    (echo "ERROR: Failed to copy SQL files!" && exit 1)
 
 # ===== OPTIMISATION DE L'IMAGE =====
 # Supprimer les dépendances de développement pour réduire la taille
