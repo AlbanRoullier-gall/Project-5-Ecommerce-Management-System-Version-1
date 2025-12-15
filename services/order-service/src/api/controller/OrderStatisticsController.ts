@@ -12,7 +12,7 @@ import { Request, Response } from "express";
 import OrderService from "../../services/OrderService";
 import { OrderStatisticsRequestDTO } from "../dto";
 import { ResponseMapper } from "../mapper";
-const Joi = require("joi");
+import Joi from "joi";
 
 export class OrderStatisticsController {
   private orderService: OrderService;
@@ -70,7 +70,7 @@ export class OrderStatisticsController {
 
       if (error) {
         const messages = error.details
-          .map((detail) => detail.message)
+          .map((detail: Joi.ValidationErrorItem) => detail.message)
           .join("; ");
         res
           .status(400)

@@ -17,7 +17,7 @@ import {
   OrderUpdateDeliveryStatusDTO,
   OrderUpdateCreditNoteStatusDTO,
 } from "../dto";
-const Joi = require("joi");
+import Joi from "joi";
 
 export class OrderController {
   private orderService: OrderService;
@@ -130,7 +130,7 @@ export class OrderController {
 
       if (error) {
         const messages = error.details
-          .map((detail) => detail.message)
+          .map((detail: Joi.ValidationErrorItem) => detail.message)
           .join("; ");
         res
           .status(400)
