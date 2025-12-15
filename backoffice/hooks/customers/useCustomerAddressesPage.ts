@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
-import { CustomerPublicDTO } from "../../dto";
+import { CustomerPublicDTO } from "dto";
 import { getCustomer } from "../../services/customerService";
 import { normalizeRouterId, executeWithLoading } from "../../utils";
 

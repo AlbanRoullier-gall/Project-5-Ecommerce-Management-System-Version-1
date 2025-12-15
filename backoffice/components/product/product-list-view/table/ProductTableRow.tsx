@@ -1,5 +1,5 @@
 import React from "react";
-import { ProductPublicDTO } from "../../../dto";
+import { ProductPublicDTO } from "dto";
 import StatusBadge from "./StatusBadge";
 import ActionButtons from "./ActionButtons";
 import { TableRow, TableCell } from "../../../shared/TableLayout";

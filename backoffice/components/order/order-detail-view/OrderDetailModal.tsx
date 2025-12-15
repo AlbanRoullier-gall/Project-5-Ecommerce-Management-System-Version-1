@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { OrderPublicDTO } from "../../../dto";
+import { OrderPublicDTO } from "dto";
 import { Button, Modal, ItemDisplayTable } from "../../shared";
 import { CreateCreditNoteModal } from "../credit-note-view";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";

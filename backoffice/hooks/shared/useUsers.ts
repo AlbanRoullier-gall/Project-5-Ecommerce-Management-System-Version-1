@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { UserPublicDTO } from "../../dto";
+import { UserPublicDTO } from "dto";
 import {
   getUsers,
   approveUser as approveUserService,

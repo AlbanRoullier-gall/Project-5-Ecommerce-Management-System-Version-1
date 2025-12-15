@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { OrderStatisticsRequestDTO } from "../../dto";
+import { OrderStatisticsRequestDTO } from "dto";
 import { getDashboardStatistics } from "../../services/statisticsService";
 import { executeWithLoading } from "../../utils";
 

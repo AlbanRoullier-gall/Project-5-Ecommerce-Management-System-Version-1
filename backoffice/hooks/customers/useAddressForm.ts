@@ -1,4 +1,4 @@
-import { AddressPublicDTO, AddressCreateDTO, AddressUpdateDTO } from "../../dto";
+import { AddressPublicDTO, AddressCreateDTO, AddressUpdateDTO } from "dto";
 import { validateAddress } from "../../services/validationService";
 import { useForm } from "../shared/useForm";
 

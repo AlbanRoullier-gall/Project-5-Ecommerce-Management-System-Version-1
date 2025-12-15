@@ -3,7 +3,7 @@ import {
   AddressPublicDTO,
   AddressCreateDTO,
   AddressUpdateDTO,
-} from "../../../dto";
+} from "dto";
 import FormInput from "../../shared/form/FormInput";
 import FormCheckbox from "../../shared/form/FormCheckbox";
 import FormActions from "../../shared/form/FormActions";

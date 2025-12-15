@@ -7,7 +7,7 @@ import { apiClient } from "./apiClient";
 import {
   OrderStatisticsRequestDTO,
   DashboardStatisticsResponseDTO,
-} from "../dto";
+} from "dto";
 import { ApiResponse } from "./apiClient";
 
 /**

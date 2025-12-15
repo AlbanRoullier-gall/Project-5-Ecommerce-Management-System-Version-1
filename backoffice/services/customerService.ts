@@ -12,7 +12,7 @@ import {
   AddressPublicDTO,
   AddressCreateDTO,
   AddressUpdateDTO,
-} from "../dto";
+} from "dto";
 import { ApiResponse } from "./apiClient";
 
 /**

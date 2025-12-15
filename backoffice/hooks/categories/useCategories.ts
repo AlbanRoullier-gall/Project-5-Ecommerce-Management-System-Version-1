@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { CategoryPublicDTO, CategorySearchDTO } from "../../dto";
+import { CategoryPublicDTO, CategorySearchDTO } from "dto";
 import { getCategories } from "../../services/productService";
 import { executeWithLoading } from "../../utils";
 

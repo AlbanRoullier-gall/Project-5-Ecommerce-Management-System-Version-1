@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { useAuth } from "../../contexts/AuthContext";
-import { UserCreateDTO } from "../../dto";
+import { UserCreateDTO } from "dto";
 
 /**
  * Page d'inscription au backoffice

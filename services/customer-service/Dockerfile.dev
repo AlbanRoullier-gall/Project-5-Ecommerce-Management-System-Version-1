@@ -58,3 +58,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # Les migrations s'exécutent automatiquement au démarrage
 CMD ["npm", "run", "dev"]
 
+
+

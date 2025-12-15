@@ -9,7 +9,7 @@ import {
   CustomerPublicDTO,
   CustomerCreateDTO,
   CustomerUpdateDTO,
-} from "../../dto";
+} from "dto";
 import {
   getCustomer,
   createCustomer,

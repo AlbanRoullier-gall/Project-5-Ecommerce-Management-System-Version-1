@@ -553,8 +553,7 @@ export class PDFGenerator {
         : "<p>Aucune adresse</p>";
 
     const totalVAT =
-      Number(order.totalAmountTTC || 0) -
-      Number(order.totalAmountHT || 0);
+      Number(order.totalAmountTTC || 0) - Number(order.totalAmountHT || 0);
 
     return `
       <!DOCTYPE html>

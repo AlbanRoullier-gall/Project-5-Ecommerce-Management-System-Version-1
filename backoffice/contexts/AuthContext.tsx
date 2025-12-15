@@ -9,7 +9,7 @@ import React, {
   useMemo,
 } from "react";
 import { useRouter } from "next/router";
-import { UserPublicDTO, UserCreateDTO } from "../dto";
+import { UserPublicDTO, UserCreateDTO } from "dto";
 import {
   verifyAuth,
   login as loginService,

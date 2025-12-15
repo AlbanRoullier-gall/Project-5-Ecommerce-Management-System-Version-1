@@ -1,5 +1,5 @@
 import React from "react";
-import { CustomerPublicDTO } from "../../../dto";
+import { CustomerPublicDTO } from "dto";
 import TableLayout, {
   TableHeader,
   TableRow,

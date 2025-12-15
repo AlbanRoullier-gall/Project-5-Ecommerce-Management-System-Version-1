@@ -2,7 +2,7 @@ import {
   CustomerPublicDTO,
   CustomerCreateDTO,
   CustomerUpdateDTO,
-} from "../../dto";
+} from "dto";
 import { validateCustomer } from "../../services/validationService";
 import { useForm } from "../shared/useForm";
 

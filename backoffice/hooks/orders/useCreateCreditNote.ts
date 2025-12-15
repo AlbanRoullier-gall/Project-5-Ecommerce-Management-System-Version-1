@@ -4,7 +4,7 @@ import {
   CreditNotePublicDTO,
   CreditNoteCreateDTO,
   OrderItemPublicDTO,
-} from "../../dto";
+} from "dto";
 import { getOrderItems, createCreditNote } from "../../services/orderService";
 import { calculateCreditNoteTotals } from "../../services/creditNoteService";
 import { executeWithLoading } from "../../utils";

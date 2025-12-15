@@ -10,7 +10,7 @@ import {
   UserCreateDTO,
   PasswordResetDTO,
   PasswordValidationDTO,
-} from "../dto";
+} from "dto";
 
 /**
  * Résultat d'une opération d'authentification

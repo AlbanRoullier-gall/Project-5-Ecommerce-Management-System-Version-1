@@ -9,7 +9,7 @@ import {
   OrderListRequestDTO,
   CreditNotePublicDTO,
   CreditNoteListRequestDTO,
-} from "../../dto";
+} from "dto";
 import {
   getOrders,
   updateDeliveryStatus as updateDeliveryStatusService,

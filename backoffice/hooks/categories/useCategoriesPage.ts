@@ -4,7 +4,7 @@ import {
   CategoryPublicDTO,
   CategoryCreateDTO,
   CategoryUpdateDTO,
-} from "../../dto";
+} from "dto";
 import {
   getCategories,
   createCategory,

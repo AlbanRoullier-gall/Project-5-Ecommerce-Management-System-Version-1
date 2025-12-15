@@ -4,7 +4,7 @@ import {
   ProductCreateDTO,
   ProductUpdateDTO,
   CategoryPublicDTO,
-} from "../../../dto";
+} from "dto";
 import FormInput from "../../shared/form/FormInput";
 import FormTextarea from "../../shared/form/FormTextarea";
 import FormSelect from "../../shared/form/FormSelect";

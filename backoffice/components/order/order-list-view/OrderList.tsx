@@ -11,7 +11,7 @@ import {
   CreditNoteTable,
 } from "../credit-note-view";
 import { useOrderList } from "../../../hooks";
-import { CreditNotePublicDTO } from "../../../dto";
+import { CreditNotePublicDTO } from "dto";
 
 /**
  * Composant d'affichage de la liste des commandes

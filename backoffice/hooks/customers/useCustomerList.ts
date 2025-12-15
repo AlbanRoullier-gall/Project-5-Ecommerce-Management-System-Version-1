@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { CustomerPublicDTO, CustomerListRequestDTO } from "../../dto";
+import { CustomerPublicDTO, CustomerListRequestDTO } from "dto";
 import {
   getCustomers,
   deleteCustomer as deleteCustomerService,

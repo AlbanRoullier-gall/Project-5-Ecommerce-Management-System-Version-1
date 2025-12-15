@@ -4,7 +4,7 @@
  */
 
 import { apiClient } from "./apiClient";
-import { CreditNoteItemPublicDTO } from "../dto";
+import { CreditNoteItemPublicDTO } from "dto";
 import { ApiResponse } from "./apiClient";
 
 /**

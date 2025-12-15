@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { CreditNoteItemPublicDTO } from "../../dto";
+import { CreditNoteItemPublicDTO } from "dto";
 import { getCreditNoteItems } from "../../services/creditNoteService";
 import { executeWithLoading } from "../../utils";
 

@@ -5,7 +5,7 @@ import ProductTable from "./ProductTable";
 import ErrorAlert from "../../shared/ErrorAlert";
 import PageHeader from "../../shared/PageHeader";
 import Button from "../../shared/Button";
-import { ProductPublicDTO } from "../../../dto";
+import { ProductPublicDTO } from "dto";
 import { useProductList } from "../../../hooks";
 
 /**

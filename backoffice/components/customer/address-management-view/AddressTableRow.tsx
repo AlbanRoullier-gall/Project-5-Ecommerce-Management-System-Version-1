@@ -1,5 +1,5 @@
 import React from "react";
-import { AddressPublicDTO } from "../../../dto";
+import { AddressPublicDTO } from "dto";
 
 /**
  * Props du composant AddressTableRow

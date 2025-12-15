@@ -8,7 +8,7 @@ import {
   AddressPublicDTO,
   AddressCreateDTO,
   AddressUpdateDTO,
-} from "../../dto";
+} from "dto";
 import {
   getCustomerAddresses,
   createCustomerAddress,

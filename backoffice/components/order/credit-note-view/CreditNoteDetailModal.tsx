@@ -1,6 +1,6 @@
 import React from "react";
 import { Button, Modal, ItemDisplayTable } from "../../shared";
-import { CreditNotePublicDTO, OrderPublicDTO } from "../../../dto";
+import { CreditNotePublicDTO, OrderPublicDTO } from "dto";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
 import { useCreditNoteDetail } from "../../../hooks";
 

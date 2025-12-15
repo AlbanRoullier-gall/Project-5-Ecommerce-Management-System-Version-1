@@ -3,7 +3,7 @@ import {
   CategoryPublicDTO,
   CategoryCreateDTO,
   CategoryUpdateDTO,
-} from "../../../dto";
+} from "dto";
 import CategoryForm from "./category/CategoryForm";
 import CategoryTable from "./category/CategoryTable";
 import { ManagementSection } from "../../shared";

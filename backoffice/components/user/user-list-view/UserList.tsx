@@ -1,5 +1,5 @@
 import React from "react";
-import { UserPublicDTO } from "../../../dto";
+import { UserPublicDTO } from "dto";
 import { UserTable } from "./";
 import ErrorAlert from "../../shared/ErrorAlert";
 import LoadingSpinner from "../../shared/LoadingSpinner";

@@ -3,7 +3,7 @@
  * Centralise les transformations d'images (conversion base64, etc.)
  */
 
-import { ProductImageUploadDTO } from "../dto";
+import { ProductImageUploadDTO } from "dto";
 
 /**
  * Convertit un fichier image en base64
@@ -47,6 +47,8 @@ export async function filesToUploadDTOs(
     })
   );
 }
+
+
 
 
 

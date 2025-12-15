@@ -1,5 +1,5 @@
 import React from "react";
-import { CreditNotePublicDTO, OrderPublicDTO } from "../../../dto";
+import { CreditNotePublicDTO, OrderPublicDTO } from "dto";
 import TableLayout, {
   TableHeader,
   TableRow,

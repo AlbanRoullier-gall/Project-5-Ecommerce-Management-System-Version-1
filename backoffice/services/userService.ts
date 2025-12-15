@@ -4,7 +4,7 @@
  */
 
 import { apiClient } from "./apiClient";
-import { UserPublicDTO } from "../dto";
+import { UserPublicDTO } from "dto";
 import { ApiResponse } from "./apiClient";
 
 /**
@@ -53,6 +53,8 @@ export async function rejectUser(userId: number): Promise<void> {
 export async function deleteUser(userId: number): Promise<void> {
   await apiClient.delete(`/api/admin/users/${userId}`);
 }
+
+
 
 
 

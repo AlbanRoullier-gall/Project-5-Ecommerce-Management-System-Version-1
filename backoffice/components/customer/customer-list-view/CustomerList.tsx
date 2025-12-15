@@ -4,7 +4,7 @@ import { CustomerFilters, CustomerTable } from "./";
 import ErrorAlert from "../../shared/ErrorAlert";
 import PageHeader from "../../shared/PageHeader";
 import Button from "../../shared/Button";
-import { CustomerPublicDTO } from "../../../dto";
+import { CustomerPublicDTO } from "dto";
 import { useCustomerList } from "../../../hooks";
 
 /**

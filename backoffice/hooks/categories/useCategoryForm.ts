@@ -3,7 +3,7 @@ import {
   CategoryPublicDTO,
   CategoryCreateDTO,
   CategoryUpdateDTO,
-} from "../../dto";
+} from "dto";
 import { validateCategory } from "../../services/validationService";
 import { useForm } from "../shared/useForm";
 

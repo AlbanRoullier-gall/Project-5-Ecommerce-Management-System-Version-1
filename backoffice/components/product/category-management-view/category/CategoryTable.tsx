@@ -1,5 +1,5 @@
 import React from "react";
-import { CategoryPublicDTO } from "../../../../dto";
+import { CategoryPublicDTO } from "dto";
 import CategoryTableRow from "./CategoryTableRow";
 import TableLayout, {
   TableHeader,

@@ -14,7 +14,7 @@ import {
   OrderUpdateCreditNoteStatusDTO,
   OrderItemPublicDTO,
   OrderAddressPublicDTO,
-} from "../dto";
+} from "dto";
 import { ApiResponse } from "./apiClient";
 
 /**

@@ -10,7 +10,7 @@ import {
   ProductCreateDTO,
   ProductUpdateDTO,
   CategoryPublicDTO,
-} from "../../dto";
+} from "dto";
 import {
   getProduct,
   getCategories,

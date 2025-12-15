@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { OrderItemPublicDTO, OrderAddressPublicDTO } from "../../dto";
+import { OrderItemPublicDTO, OrderAddressPublicDTO } from "dto";
 import { getOrderItems, getOrderAddresses } from "../../services/orderService";
 import { executeWithLoading } from "../../utils";
 

@@ -3,7 +3,7 @@ import {
   CustomerPublicDTO,
   CustomerCreateDTO,
   CustomerUpdateDTO,
-} from "../../../dto";
+} from "dto";
 import FormInput from "../../shared/form/FormInput";
 import FormActions from "../../shared/form/FormActions";
 import { useCustomerForm } from "../../../hooks";

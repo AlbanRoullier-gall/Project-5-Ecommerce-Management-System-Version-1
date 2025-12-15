@@ -5,7 +5,7 @@ import {
   OrderPublicDTO,
   CreditNotePublicDTO,
   OrderItemPublicDTO,
-} from "../../../dto";
+} from "dto";
 import { useCreateCreditNote } from "../../../hooks";
 
 interface CreateCreditNoteModalProps {

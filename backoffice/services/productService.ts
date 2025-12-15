@@ -16,7 +16,7 @@ import {
   CategorySearchDTO,
   ProductImageUploadDTO,
   ProductImageUploadResponseDTO,
-} from "../dto";
+} from "dto";
 import { ApiResponse } from "./apiClient";
 
 /**

@@ -3,7 +3,7 @@
  * Centralise les transformations de données pour les formulaires
  */
 
-import { CategoryPublicDTO } from "../dto";
+import { CategoryPublicDTO } from "dto";
 
 /**
  * Transforme une liste de catégories en options pour un select

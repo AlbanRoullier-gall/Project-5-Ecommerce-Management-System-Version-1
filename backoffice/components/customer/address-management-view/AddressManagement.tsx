@@ -4,7 +4,7 @@ import {
   AddressPublicDTO,
   AddressCreateDTO,
   AddressUpdateDTO,
-} from "../../../dto";
+} from "dto";
 import AddressForm from "./AddressForm";
 import AddressTable from "./AddressTable";
 import { ManagementSection } from "../../shared";

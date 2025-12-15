@@ -4,7 +4,7 @@ import {
   ProductCreateDTO,
   ProductUpdateDTO,
   CategoryPublicDTO,
-} from "../../dto";
+} from "dto";
 import { validateProduct } from "../../services/validationService";
 import { categoriesToOptions } from "../../utils/formUtils";
 

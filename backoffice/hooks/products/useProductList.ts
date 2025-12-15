@@ -8,7 +8,7 @@ import {
   ProductPublicDTO,
   ProductSearchDTO,
   ProductFilterDTO,
-} from "../../dto";
+} from "dto";
 import {
   getProducts,
   deleteProduct,
