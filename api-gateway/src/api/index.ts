@@ -109,6 +109,69 @@ export class ApiRouter {
       });
     });
 
+    // Endpoint de diagnostic pour vérifier l'état des services
+    app.get("/api/health/services", async (_req: Request, res: Response) => {
+      const servicesStatus: Record<string, any> = {};
+      const serviceNames: ServiceName[] = [
+        "auth",
+        "customer",
+        "product",
+        "order",
+        "cart",
+        "payment",
+        "email",
+        "pdf-export",
+      ];
+
+      // Vérifier chaque service
+      for (const serviceName of serviceNames) {
+        const serviceUrl = SERVICES[serviceName];
+        const healthUrl = `${serviceUrl}/api/health`;
+
+        try {
+          const response = await axios.get(healthUrl, {
+            timeout: 5000,
+            validateStatus: () => true, // Accepter tous les codes de statut
+          });
+
+          servicesStatus[serviceName] = {
+            url: serviceUrl,
+            status: response.status === 200 ? "OK" : "ERROR",
+            httpStatus: response.status,
+            responseTime: response.headers["x-response-time"] || "N/A",
+            timestamp: new Date().toISOString(),
+          };
+        } catch (error: any) {
+          servicesStatus[serviceName] = {
+            url: serviceUrl,
+            status: "UNAVAILABLE",
+            error: error.code || "UNKNOWN",
+            message: error.message || "Service non accessible",
+            timestamp: new Date().toISOString(),
+          };
+        }
+      }
+
+      const allServicesOk = Object.values(servicesStatus).every(
+        (status: any) => status.status === "OK"
+      );
+
+      res.status(allServicesOk ? 200 : 503).json({
+        gateway: "OK",
+        timestamp: new Date().toISOString(),
+        services: servicesStatus,
+        summary: {
+          total: serviceNames.length,
+          ok: Object.values(servicesStatus).filter(
+            (s: any) => s.status === "OK"
+          ).length,
+          unavailable: Object.values(servicesStatus).filter(
+            (s: any) => s.status === "UNAVAILABLE"
+          ).length,
+        },
+      });
+    });
+
     app.get("/", (_req: Request, res: Response) => {
       res.json({
         message: "API Gateway - E-commerce Platform",

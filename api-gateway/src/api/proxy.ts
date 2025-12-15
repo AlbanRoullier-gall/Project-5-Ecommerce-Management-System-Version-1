@@ -132,6 +132,11 @@ export const proxyRequest = async (
   try {
     const requestConfig = buildProxyRequest(req, service);
 
+    // Log pour le debug (uniquement en développement ou si DEBUG est activé)
+    if (process.env["NODE_ENV"] === "development" || process.env["DEBUG"]) {
+      console.log(`[Proxy] ${req.method} ${req.path} -> ${service}: ${requestConfig.url}`);
+    }
+
     const response = await axios({
       method: req.method,
       url: requestConfig.url,
@@ -149,10 +154,41 @@ export const proxyRequest = async (
     if (axios.isAxiosError(error)) {
       const axiosError = error as any;
 
-      if (axiosError.code === "ECONNABORTED") {
+      // Log détaillé de l'erreur pour le diagnostic
+      const requestConfig = buildProxyRequest(req, service);
+      console.error(`[Proxy Error] ${req.method} ${req.path} -> ${service}: ${requestConfig.url}`);
+      console.error(`[Proxy Error] Code: ${axiosError.code}, Message: ${axiosError.message}`);
+      
+      if (axiosError.code === "ECONNREFUSED") {
+        console.error(`[Proxy Error] Connexion refusée - Le service ${service} n'est probablement pas démarré ou n'écoute pas sur ${SERVICES[service]}`);
+        res.status(503).json({
+          error: "Service Unavailable",
+          message: `Le service ${service} n'est pas disponible`,
+          service: service,
+          serviceUrl: SERVICES[service],
+          code: axiosError.code,
+        });
+        return;
+      }
+
+      if (axiosError.code === "ETIMEDOUT" || axiosError.code === "ECONNABORTED") {
         res.status(504).json({
           error: "Gateway Timeout",
           message: "La requête a pris trop de temps",
+          service: service,
+          serviceUrl: SERVICES[service],
+        });
+        return;
+      }
+
+      if (axiosError.code === "ENOTFOUND") {
+        console.error(`[Proxy Error] Service non trouvé - ${SERVICES[service]} n'est pas résolu`);
+        res.status(503).json({
+          error: "Service Unavailable",
+          message: `Le service ${service} n'est pas accessible`,
+          service: service,
+          serviceUrl: SERVICES[service],
+          code: axiosError.code,
         });
         return;
       }
@@ -198,14 +234,19 @@ export const proxyRequest = async (
 
         res.status(status).json(errorData);
       } else {
-        res.status(500).json({
-          error: "Service Error",
-          message: "Erreur de communication avec le service",
+        // Erreur de connexion (pas de réponse du service)
+        console.error(`[Proxy Error] Pas de réponse du service ${service} - ${axiosError.code || 'UNKNOWN'}: ${axiosError.message}`);
+        res.status(503).json({
+          error: "Service Unavailable",
+          message: `Erreur de communication avec le service ${service}`,
           service: service,
+          serviceUrl: SERVICES[service],
+          code: axiosError.code || "UNKNOWN",
           details: axiosError.message,
         });
       }
     } else {
+      console.error(`[Proxy Error] Erreur non-Axios:`, error);
       res.status(500).json({
         error: "Internal Server Error",
         message: "Erreur interne du serveur",

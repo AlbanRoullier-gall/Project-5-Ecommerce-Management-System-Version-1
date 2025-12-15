@@ -29,17 +29,30 @@ export const JWT_SECRET = process.env["JWT_SECRET"] || "your-jwt-secret-key";
 
 /**
  * Fonction helper pour obtenir l'URL d'un service
- * Priorité : Variable d'environnement > Nom de service Docker > localhost (dev)
+ * Priorité : Variable d'environnement > Railway private network > Nom de service Docker > localhost (dev)
  */
 function getServiceUrl(
   envVar: string | undefined,
   defaultDocker: string,
-  defaultDev: string
+  defaultDev: string,
+  serviceName: string
 ): string {
   // Si une variable d'environnement est définie, l'utiliser en priorité
   if (envVar) {
     return envVar;
   }
+
+  // En production (Railway), essayer d'utiliser le réseau privé Railway
+  if (!isDevelopment && process.env["NODE_ENV"] === "production") {
+    // Railway private networking utilise : service-name.railway.internal
+    // Mais on garde aussi le support des noms Docker classiques
+    const railwayUrl = `http://${serviceName}.railway.internal:${
+      defaultDocker.split(":").pop() || "3001"
+    }`;
+    // Pour l'instant, on utilise les noms Docker classiques comme dans le guide
+    // Si ça ne fonctionne pas, il faudra utiliser railway.internal
+  }
+
   // Sinon, utiliser les valeurs par défaut selon l'environnement
   return isDevelopment ? defaultDev : defaultDocker;
 }
@@ -47,7 +60,7 @@ function getServiceUrl(
 /**
  * URLs des microservices selon l'environnement
  * Priorité : Variables d'environnement > Noms de services Docker > localhost (dev)
- * 
+ *
  * Variables d'environnement supportées (optionnelles) :
  * - AUTH_SERVICE_URL
  * - CUSTOMER_SERVICE_URL
@@ -62,42 +75,50 @@ export const SERVICES = {
   auth: getServiceUrl(
     process.env["AUTH_SERVICE_URL"],
     "http://auth-service:3008",
-    "http://localhost:3008"
+    "http://localhost:3008",
+    "auth-service"
   ),
   customer: getServiceUrl(
     process.env["CUSTOMER_SERVICE_URL"],
     "http://customer-service:3001",
-    "http://localhost:3001"
+    "http://localhost:3001",
+    "customer-service"
   ),
   product: getServiceUrl(
     process.env["PRODUCT_SERVICE_URL"],
     "http://product-service:3002",
-    "http://localhost:3002"
+    "http://localhost:3002",
+    "product-service"
   ),
   order: getServiceUrl(
     process.env["ORDER_SERVICE_URL"],
     "http://order-service:3003",
-    "http://localhost:3003"
+    "http://localhost:3003",
+    "order-service"
   ),
   cart: getServiceUrl(
     process.env["CART_SERVICE_URL"],
     "http://cart-service:3004",
-    "http://localhost:3004"
+    "http://localhost:3004",
+    "cart-service"
   ),
   payment: getServiceUrl(
     process.env["PAYMENT_SERVICE_URL"],
     "http://payment-service:3007",
-    "http://localhost:3007"
+    "http://localhost:3007",
+    "payment-service"
   ),
   email: getServiceUrl(
     process.env["EMAIL_SERVICE_URL"],
     "http://email-service:3006",
-    "http://localhost:3006"
+    "http://localhost:3006",
+    "email-service"
   ),
   "pdf-export": getServiceUrl(
     process.env["PDF_EXPORT_SERVICE_URL"],
     "http://pdf-export-service:3040",
-    "http://localhost:3040"
+    "http://localhost:3040",
+    "pdf-export-service"
   ),
 } as const;
 

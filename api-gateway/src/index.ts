@@ -40,13 +40,31 @@ app.listen(PORT, () => {
   );
   console.log("");
   console.log("🔗 Services URLs:");
-  console.log(`   Auth: ${SERVICES.auth}`);
-  console.log(`   Customer: ${SERVICES.customer}`);
-  console.log(`   Product: ${SERVICES.product}`);
-  console.log(`   Order: ${SERVICES.order}`);
-  console.log(`   Cart: ${SERVICES.cart}`);
-  console.log(`   Payment: ${SERVICES.payment}`);
-  console.log(`   Email: ${SERVICES.email}`);
-  console.log(`   PDF Export: ${SERVICES["pdf-export"]}`);
+  console.log(`   Auth: ${SERVICES.auth} ${process.env["AUTH_SERVICE_URL"] ? "(env)" : "(default)"}`);
+  console.log(`   Customer: ${SERVICES.customer} ${process.env["CUSTOMER_SERVICE_URL"] ? "(env)" : "(default)"}`);
+  console.log(`   Product: ${SERVICES.product} ${process.env["PRODUCT_SERVICE_URL"] ? "(env)" : "(default)"}`);
+  console.log(`   Order: ${SERVICES.order} ${process.env["ORDER_SERVICE_URL"] ? "(env)" : "(default)"}`);
+  console.log(`   Cart: ${SERVICES.cart} ${process.env["CART_SERVICE_URL"] ? "(env)" : "(default)"}`);
+  console.log(`   Payment: ${SERVICES.payment} ${process.env["PAYMENT_SERVICE_URL"] ? "(env)" : "(default)"}`);
+  console.log(`   Email: ${SERVICES.email} ${process.env["EMAIL_SERVICE_URL"] ? "(env)" : "(default)"}`);
+  console.log(`   PDF Export: ${SERVICES["pdf-export"]} ${process.env["PDF_EXPORT_SERVICE_URL"] ? "(env)" : "(default)"}`);
+  console.log("");
+  
+  // Vérification CORS
+  if (process.env["ALLOWED_ORIGINS"]) {
+    const origins = process.env["ALLOWED_ORIGINS"].split(",").map(o => o.trim());
+    console.log(`✅ CORS: ${origins.length} origine(s) configurée(s): ${origins.join(", ")}`);
+  } else {
+    if (!isDevelopment) {
+      console.warn("⚠️⚠️⚠️ CORS: ALLOWED_ORIGINS non configuré en PRODUCTION!");
+      console.warn("⚠️⚠️⚠️ Mode permissif activé temporairement - CONFIGUREZ ALLOWED_ORIGINS dans Railway!");
+    } else {
+      console.log("ℹ️  CORS: Mode développement (localhost uniquement)");
+    }
+  }
+  
+  console.log("");
+  console.log("💡 Tip: Si vous voyez des erreurs 500, vérifiez que tous les services sont démarrés");
+  console.log("💡 Utilisez /api/health/services pour vérifier l'état des services");
   console.log("");
 });
