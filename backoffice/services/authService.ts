@@ -150,6 +150,13 @@ export async function login(
       };
     }
   } catch (error: any) {
+    console.error(`[AuthService] ❌ Erreur lors du login:`, error);
+    console.error(`[AuthService] Détails de l'erreur:`, {
+      message: error.message,
+      status: error.status,
+      data: error.data,
+      stack: error.stack,
+    });
     return {
       success: false,
       error: error.message || "Erreur de connexion au serveur",
