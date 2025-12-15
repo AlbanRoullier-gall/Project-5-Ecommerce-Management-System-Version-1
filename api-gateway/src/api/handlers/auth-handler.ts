@@ -155,14 +155,20 @@ export const handlePasswordResetConfirm = async (
  */
 export const handleLogin = async (req: Request, res: Response) => {
   try {
+    const authServiceUrl = `${SERVICES.auth}/api/auth/login`;
+    console.log(`[Login] Tentative de connexion au service auth: ${authServiceUrl}`);
+    console.log(`[Login] SERVICES.auth = ${SERVICES.auth}`);
+    
     // Appel direct au Auth Service
-    const authResponse = await fetch(`${SERVICES.auth}/api/auth/login`, {
+    const authResponse = await fetch(authServiceUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Service-Request": "api-gateway",
       },
       body: JSON.stringify(req.body),
+      // Ajouter un timeout pour éviter les attentes infinies
+      signal: AbortSignal.timeout(10000), // 10 secondes
     });
 
     const authData = (await authResponse.json()) as any;
@@ -198,8 +204,25 @@ export const handleLogin = async (req: Request, res: Response) => {
     }
 
     return res.status(200).json(authData);
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Login error:", error);
+    console.error(`[Login] Erreur détaillée:`, {
+      message: error.message,
+      code: error.code,
+      cause: error.cause,
+      url: `${SERVICES.auth}/api/auth/login`,
+    });
+    
+    // Gérer les erreurs de timeout/connexion
+    if (error.code === "UND_ERR_CONNECT_TIMEOUT" || error.message?.includes("fetch failed")) {
+      return res.status(503).json({
+        error: "Service d'authentification indisponible",
+        message: `Impossible de se connecter au service auth (${SERVICES.auth}). Vérifiez que le service est démarré et que l'URL est correcte.`,
+        timestamp: new Date().toISOString(),
+        serviceUrl: SERVICES.auth,
+      });
+    }
+    
     return res.status(500).json({
       error: "Erreur interne du serveur",
       message: "Veuillez réessayer plus tard",
