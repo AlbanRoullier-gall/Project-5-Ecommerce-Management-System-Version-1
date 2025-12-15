@@ -16,7 +16,9 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@tfe/shared-types": ["./node_modules/@tfe/shared-types", "./shared-types"]
+      "@tfe/shared-types": ["./node_modules/@tfe/shared-types", "./shared-types"],
+      "dto": ["./dto"],
+      "dto/*": ["./dto/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
