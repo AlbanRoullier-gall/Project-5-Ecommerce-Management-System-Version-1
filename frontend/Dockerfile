@@ -15,6 +15,11 @@ COPY shared-types/ ./shared-types/
 
 # Copy package files from frontend directory
 COPY frontend/package*.json ./
+
+# Fix the shared-types path in package.json for Docker context
+# In Docker, shared-types is at ./shared-types, not ../shared-types
+RUN sed -i 's|"file:../shared-types"|"file:./shared-types"|g' package.json
+
 RUN npm install
 
 # Copy frontend source files

@@ -13,6 +13,11 @@ COPY shared-types/ ./shared-types/
 
 # Copy package files from backoffice directory
 COPY backoffice/package*.json ./
+
+# Fix the shared-types path in package.json for Docker context
+# In Docker, shared-types is at ./shared-types, not ../shared-types
+RUN sed -i 's|"file:../shared-types"|"file:./shared-types"|g' package.json
+
 RUN npm install
 
 # Copy backoffice source files
