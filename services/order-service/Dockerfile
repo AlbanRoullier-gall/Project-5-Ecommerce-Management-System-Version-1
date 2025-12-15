@@ -33,6 +33,12 @@ COPY services/order-service/src/ ./src/
 # Compiler le TypeScript vers JavaScript
 RUN npm run build
 
+# ===== COPIER LES FICHIERS SQL DE MIGRATION =====
+# Les fichiers SQL ne sont pas copiés par TypeScript, il faut les copier manuellement
+# Le code de migration utilise __dirname qui pointe vers dist/src/migrations/
+RUN mkdir -p dist/src/migrations && \
+    cp -r src/migrations/*.sql dist/src/migrations/ 2>/dev/null || (echo "Warning: No SQL files found in src/migrations/" && true)
+
 # ===== OPTIMISATION DE L'IMAGE =====
 # Supprimer les dépendances de développement pour réduire la taille
 RUN npm prune --production

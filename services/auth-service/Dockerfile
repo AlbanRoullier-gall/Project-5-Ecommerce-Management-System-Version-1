@@ -38,6 +38,12 @@ RUN echo "=== Building TypeScript ===" && npm run build 2>&1 | tee /tmp/build.lo
 RUN echo "=== Checking dist folder ===" && ls -la dist/ && echo "=== Files in dist ===" && find dist/ -type f | head -10
 RUN test -f dist/src/index.js || (echo "ERROR: dist/src/index.js not found!" && echo "Files in dist/src:" && ls -la dist/src/ 2>/dev/null || echo "dist/src/ does not exist" && exit 1)
 
+# ===== COPIER LES FICHIERS SQL DE MIGRATION =====
+# Les fichiers SQL ne sont pas copiés par TypeScript, il faut les copier manuellement
+# Le code de migration utilise __dirname qui pointe vers dist/src/migrations/
+RUN mkdir -p dist/src/migrations && \
+    cp -r src/migrations/*.sql dist/src/migrations/ 2>/dev/null || (echo "Warning: No SQL files found in src/migrations/" && true)
+
 # ===== OPTIMISATION DE L'IMAGE =====
 # Supprimer les dépendances de développement pour réduire la taille
 # IMPORTANT: Ne pas supprimer dist/ avec npm prune
