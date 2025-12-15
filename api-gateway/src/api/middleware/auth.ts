@@ -56,9 +56,13 @@ export const requireAuth = async (
   const cookies = req.cookies || {};
   const cookieNames = Object.keys(cookies);
   console.log(`[Auth] Requête ${req.method} ${req.path}`);
-  console.log(`[Auth] Cookies reçus: ${cookieNames.length > 0 ? cookieNames.join(", ") : "aucun"}`);
-  console.log(`[Auth] auth_token présent: ${!!cookies.auth_token}`);
-  
+  console.log(
+    `[Auth] Cookies reçus: ${
+      cookieNames.length > 0 ? cookieNames.join(", ") : "aucun"
+    }`
+  );
+  console.log(`[Auth] auth_token présent: ${!!cookies["auth_token"]}`);
+
   const token = extractToken(req);
 
   if (!token) {
@@ -74,7 +78,7 @@ export const requireAuth = async (
     });
     return;
   }
-  
+
   console.log(`[Auth] ✅ Token trouvé (longueur: ${token.length})`);
 
   const user = verifyToken(token);
