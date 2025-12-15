@@ -213,7 +213,7 @@ export class CustomerController {
 
       if (error) {
         const messages = error.details
-          .map((detail: Joi.ValidationErrorItem) => detail.message)
+          .map((detail) => detail.message)
           .join("; ");
         res
           .status(400)
