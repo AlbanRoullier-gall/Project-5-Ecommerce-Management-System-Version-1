@@ -132,8 +132,8 @@ export const proxyRequest = async (
   try {
     const requestConfig = buildProxyRequest(req, service);
 
-    // Log pour le debug (uniquement en développement ou si DEBUG est activé)
-    if (process.env["NODE_ENV"] === "development" || process.env["DEBUG"]) {
+    // Log pour le debug (toujours en production pour diagnostiquer les problèmes Railway)
+    if (process.env["NODE_ENV"] === "development" || process.env["DEBUG"] || process.env["NODE_ENV"] === "production") {
       console.log(`[Proxy] ${req.method} ${req.path} -> ${service}: ${requestConfig.url}`);
     }
 
