@@ -6,17 +6,25 @@ Si vous avez des erreurs 500, c'est que l'API Gateway ne peut pas communiquer av
 
 ## ✅ Solution : Configurer les domaines Railway Private Networking
 
-### Étape 1 : Trouver les domaines Railway de vos services
+### Étape 1 : Vérifier les noms de vos services dans Railway
 
-Pour chaque service backend dans Railway :
+Les domaines Railway suivent le format : `service-name.railway.internal`
+
+Où `service-name` est le **nom exact du service dans Railway**.
+
+**Pour vérifier les noms :**
 
 1. **Railway** → Votre projet
-2. Cliquez sur le service (ex: **product-service**)
-3. **Settings** → **Networking**
-4. Cherchez **"Private Network"** ou **"Internal Domain"**
-5. Copiez le domaine (ex: `ideal-courtesy.railway.internal`)
+2. Regardez le nom de chaque service dans la liste
+3. Les domaines seront automatiquement : `nom-du-service.railway.internal`
+
+**Exemples :**
+- Service nommé `email-service` → `http://email-service.railway.internal:3006`
+- Service nommé `product-service` → `http://product-service.railway.internal:3002`
+- Service nommé `cart-service` → `http://cart-service.railway.internal:3004`
 
 **Répétez pour tous les services :**
+
 - product-service
 - cart-service
 - customer-service
@@ -44,6 +52,7 @@ PDF_EXPORT_SERVICE_URL=http://VOTRE-DOMAINE-PDF.railway.internal:3040
 ```
 
 **Exemple concret :**
+
 ```env
 PRODUCT_SERVICE_URL=http://ideal-courtesy.railway.internal:3002
 CART_SERVICE_URL=http://cart-production-abc.railway.internal:3004
@@ -51,6 +60,7 @@ CUSTOMER_SERVICE_URL=http://customer-service.railway.internal:3001
 ```
 
 **⚠️ IMPORTANT :**
+
 - Utilisez `http://` (pas `https://`)
 - Le port doit correspondre au port configuré dans le service (vérifiez la variable `PORT` de chaque service)
 - Les domaines doivent se terminer par `.railway.internal`
@@ -64,6 +74,7 @@ Pour chaque service backend, vérifiez le port :
 3. Utilisez ce port dans l'URL (ex: `:3002`, `:3004`, etc.)
 
 **Ports par défaut :**
+
 - product-service : `3002`
 - cart-service : `3004`
 - customer-service : `3001`
@@ -80,6 +91,7 @@ Pour chaque service backend, vérifiez le port :
 3. Vérifiez les logs
 
 **Vous devriez voir dans les logs :**
+
 ```
 🔗 Services URLs:
    Product: http://ideal-courtesy.railway.internal:3002 (env)
@@ -92,6 +104,7 @@ Le `(env)` indique que les variables d'environnement sont utilisées.
 ### Étape 5 : Tester
 
 1. **Testez l'endpoint de diagnostic :**
+
    ```
    https://api-gateway-production-91f9.up.railway.app/api/health/services
    ```
@@ -107,12 +120,14 @@ Le `(env)` indique que les variables d'environnement sont utilisées.
 Le Private Networking Railway fonctionne **uniquement** entre services du même projet.
 
 **Vérifiez :**
+
 - Tous vos services apparaissent dans la même liste de services dans Railway
 - Ils ne sont pas dans des projets différents
 
 ### Vérifier que les services sont démarrés
 
 **Pour chaque service :**
+
 1. Railway → Service
 2. Vérifiez que le statut est **"Running"** (vert)
 3. Si ce n'est pas le cas, cliquez sur **"Restart"**
@@ -132,6 +147,7 @@ Si un service ne répond pas :
 **Cause :** Le domaine n'est pas correct ou le service n'est pas dans le même projet.
 
 **Solution :**
+
 1. Vérifiez que vous avez copié le bon domaine depuis Railway
 2. Vérifiez que tous les services sont dans le même projet Railway
 3. Vérifiez que le service est "Running"
@@ -141,6 +157,7 @@ Si un service ne répond pas :
 **Cause :** Le service n'est pas démarré ou le port est incorrect.
 
 **Solution :**
+
 1. Vérifiez que le service est "Running"
 2. Vérifiez que le port dans l'URL correspond au port configuré dans le service
 3. Vérifiez les logs du service pour voir sur quel port il écoute
@@ -148,6 +165,7 @@ Si un service ne répond pas :
 ### Les erreurs 500 persistent
 
 **Solution :**
+
 1. Vérifiez que vous avez bien configuré **TOUTES** les variables `*_SERVICE_URL`
 2. Vérifiez que les domaines sont corrects (copiez-les depuis Railway)
 3. Vérifiez que les ports sont corrects
@@ -170,6 +188,7 @@ Si un service ne répond pas :
 ## 💡 Astuce
 
 Pour éviter les erreurs de frappe :
+
 1. Copiez directement les domaines depuis Railway (Settings → Networking)
 2. Collez-les dans les variables d'environnement
 3. Ajoutez seulement `http://` au début et `:PORT` à la fin

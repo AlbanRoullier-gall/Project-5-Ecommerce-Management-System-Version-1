@@ -162,17 +162,19 @@ PORT=3040
 NODE_ENV=production
 DOCKER_ENV=true
 JWT_SECRET=votre-secret-jwt-changez-moi
-CUSTOMER_SERVICE_URL=http://customer-service:3001
-PRODUCT_SERVICE_URL=http://product-service:3002
-ORDER_SERVICE_URL=http://order-service:3003
-CART_SERVICE_URL=http://cart-service:3004
-AUTH_SERVICE_URL=http://auth-service:3008
-PAYMENT_SERVICE_URL=http://payment-service:3007
-EMAIL_SERVICE_URL=http://email-service:3006
-PDF_EXPORT_SERVICE_URL=http://pdf-export-service:3040
+CUSTOMER_SERVICE_URL=http://customer-service.railway.internal:3001
+PRODUCT_SERVICE_URL=http://product-service.railway.internal:3002
+ORDER_SERVICE_URL=http://order-service.railway.internal:3003
+CART_SERVICE_URL=http://cart-service.railway.internal:3004
+AUTH_SERVICE_URL=http://auth-service.railway.internal:3008
+PAYMENT_SERVICE_URL=http://payment-service.railway.internal:3007
+EMAIL_SERVICE_URL=http://email-service.railway.internal:3006
+PDF_EXPORT_SERVICE_URL=http://pdf-export-service.railway.internal:3040
 REDIS_URL=${{Redis.REDIS_URL}}
 PORT=3020
 ```
+
+**⚠️ IMPORTANT :** Les URLs utilisent le format `service-name.railway.internal` (Railway Private Networking). Les noms de services doivent correspondre exactement aux noms de vos services dans Railway.
 
 4. **Settings** → **Networking** → **"Generate Domain"** (copiez l'URL, vous en aurez besoin)
 
