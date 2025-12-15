@@ -3,15 +3,14 @@
  * Configuration centralisée des routes pour email-service
  */
 
-import { Request, Response, NextFunction } from "express";
+import express, { Request, Response, NextFunction, Application } from "express";
+import cors from "cors";
+import helmet from "helmet";
+import Joi from "joi";
+import morgan from "morgan";
 import EmailService from "../services/EmailService";
 import { HealthController, EmailController } from "./controller";
 import { ResponseMapper } from "./mapper";
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const Joi = require("joi");
-const morgan = require("morgan");
 
 export class ApiRouter {
   private healthController: HealthController;
@@ -26,7 +25,7 @@ export class ApiRouter {
   /**
    * Setup middlewares
    */
-  private setupMiddlewares(app: express.Application): void {
+  private setupMiddlewares(app: Application): void {
     app.use(helmet());
     app.use(cors());
     app.use(morgan("combined"));
@@ -125,7 +124,7 @@ export class ApiRouter {
   /**
    * Middleware de validation
    */
-  private validateRequest = (schema: Joi.Schema) => {
+  private validateRequest = (schema: Joi.ObjectSchema) => {
     return (req: Request, res: Response, next: NextFunction): void => {
       const { error } = schema.validate(req.body);
       if (error) {
@@ -145,7 +144,7 @@ export class ApiRouter {
   /**
    * Configuration des routes
    */
-  setupRoutes(app: express.Application): void {
+  setupRoutes(app: Application): void {
     this.setupMiddlewares(app);
     const schemas = this.setupValidationSchemas();
 
