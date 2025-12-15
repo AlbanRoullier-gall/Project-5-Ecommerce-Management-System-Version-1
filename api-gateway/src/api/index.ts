@@ -110,7 +110,9 @@ export class ApiRouter {
     });
 
     // Endpoint de diagnostic pour vérifier l'état des services
+    // IMPORTANT: Cette route doit être définie AVANT la route générique /api/*
     app.get("/api/health/services", async (_req: Request, res: Response) => {
+      console.log("[Health Services] Endpoint appelé");
       const servicesStatus: Record<string, any> = {};
       const serviceNames: ServiceName[] = [
         "auth",
