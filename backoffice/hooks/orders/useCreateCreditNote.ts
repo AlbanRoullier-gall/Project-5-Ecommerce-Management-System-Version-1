@@ -254,6 +254,12 @@ export function useCreateCreditNote({
   const handleSubmit = useCallback(
     async (onCreated: (creditNote: CreditNotePublicDTO) => void) => {
       if (!selectedOrder || !canSubmit) return;
+      
+      // Ensure customerId is not null
+      if (selectedOrder.customerId === null) {
+        setError("La commande doit avoir un client associé pour créer un avoir");
+        return;
+      }
 
       const payload: CreditNoteCreateDTO = {
         customerId: selectedOrder.customerId,
