@@ -109,6 +109,8 @@ export async function login(
       password,
     };
 
+    console.log(`[AuthService] Tentative de login pour: ${email}`);
+
     // L'API Gateway retourne directement { message, user, token? } (pas de wrapper ApiResponse)
     const response = await apiClient.post<{
       message: string;
@@ -120,6 +122,8 @@ export async function login(
       hasUser: !!response.user,
       hasToken: !!response.token,
       tokenLength: response.token?.length,
+      responseKeys: Object.keys(response),
+      fullResponse: response, // Log complet pour debug
     });
 
     // Stocker le token dans localStorage si disponible (fallback si cookies third-party bloqués)
@@ -127,7 +131,10 @@ export async function login(
       localStorage.setItem("auth_token", response.token);
       console.log(`[AuthService] ✅ Token stocké dans localStorage (longueur: ${response.token.length})`);
     } else {
-      console.log(`[AuthService] ⚠️ Token non disponible dans la réponse ou window undefined`);
+      console.log(`[AuthService] ⚠️ Token non disponible dans la réponse ou window undefined`, {
+        hasToken: !!response.token,
+        windowDefined: typeof window !== "undefined",
+      });
     }
 
     if (response.user) {
