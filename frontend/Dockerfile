@@ -25,6 +25,9 @@ RUN npm install
 # Copy frontend source files
 COPY frontend/ .
 
+# Verify that dto and shared-types exist
+RUN ls -la dto/ && echo "---" && ls -la shared-types/ && echo "---" && cat dto/index.ts
+
 RUN npm run build
 
 EXPOSE 3000
