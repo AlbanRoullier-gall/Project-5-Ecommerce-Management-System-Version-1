@@ -335,20 +335,20 @@ export class PDFGenerator {
             <tr><td><strong>Client:</strong></td><td>${customerFirstName} ${customerLastName}</td></tr>
             <tr><td><strong>Email:</strong></td><td>${customerEmail}</td></tr>
             <tr><td><strong>Date de création:</strong></td><td>${
-              order.createdAt instanceof Date 
+              order.createdAt instanceof Date
                 ? order.createdAt.toLocaleDateString("fr-FR")
                 : new Date(String(order.createdAt)).toLocaleDateString("fr-FR")
             }</td></tr>
-            <tr><td><strong>Méthode de paiement:</strong></td><td>${
-              String(order.paymentMethod || "N/A")
-            }</td></tr>
+            <tr><td><strong>Méthode de paiement:</strong></td><td>${String(
+              order.paymentMethod || "N/A"
+            )}</td></tr>
             <tr><td><strong>Statut:</strong></td><td>${
               Boolean(order.delivered) ? "Livrée" : "En attente"
             }</td></tr>
-            <tr><td><strong>Total HT:</strong></td><td>${parseFloat(
+            <tr><td><strong>Total HT:</strong></td><td>${Number(
               order.totalAmountHT || 0
             ).toFixed(2)} €</td></tr>
-            <tr><td><strong>Total TTC:</strong></td><td>${parseFloat(
+            <tr><td><strong>Total TTC:</strong></td><td>${Number(
               order.totalAmountTTC || 0
             ).toFixed(2)} €</td></tr>
             ${
@@ -447,18 +447,20 @@ export class PDFGenerator {
             <tr><td><strong>Description:</strong></td><td>${
               creditNote.description || "N/A"
             }</td></tr>
-            <tr><td><strong>Méthode de paiement:</strong></td><td>${
-              String(creditNote.paymentMethod || "N/A")
-            }</td></tr>
+            <tr><td><strong>Méthode de paiement:</strong></td><td>${String(
+              creditNote.paymentMethod || "N/A"
+            )}</td></tr>
             <tr><td><strong>Date de création:</strong></td><td>${
-              creditNote.createdAt instanceof Date 
+              creditNote.createdAt instanceof Date
                 ? creditNote.createdAt.toLocaleDateString("fr-FR")
-                : new Date(String(creditNote.createdAt)).toLocaleDateString("fr-FR")
+                : new Date(String(creditNote.createdAt)).toLocaleDateString(
+                    "fr-FR"
+                  )
             }</td></tr>
-            <tr><td><strong>Total HT:</strong></td><td>${parseFloat(
+            <tr><td><strong>Total HT:</strong></td><td>${Number(
               creditNote.totalAmountHT || 0
             ).toFixed(2)} €</td></tr>
-            <tr><td><strong>Total TTC:</strong></td><td>${parseFloat(
+            <tr><td><strong>Total TTC:</strong></td><td>${Number(
               creditNote.totalAmountTTC || 0
             ).toFixed(2)} €</td></tr>
             ${
@@ -551,8 +553,8 @@ export class PDFGenerator {
         : "<p>Aucune adresse</p>";
 
     const totalVAT =
-      parseFloat(order.totalAmountTTC || 0) -
-      parseFloat(order.totalAmountHT || 0);
+      Number(order.totalAmountTTC || 0) -
+      Number(order.totalAmountHT || 0);
 
     return `
       <!DOCTYPE html>
@@ -715,13 +717,13 @@ export class PDFGenerator {
             <h3>Informations facture</h3>
             <p><strong>Numéro de commande:</strong> #${order.id}</p>
             <p><strong>Date:</strong> ${
-              order.createdAt instanceof Date 
+              order.createdAt instanceof Date
                 ? order.createdAt.toLocaleDateString("fr-FR")
                 : new Date(String(order.createdAt)).toLocaleDateString("fr-FR")
             }</p>
-            <p><strong>Méthode de paiement:</strong> ${
-              String(order.paymentMethod || "N/A")
-            }</p>
+            <p><strong>Méthode de paiement:</strong> ${String(
+              order.paymentMethod || "N/A"
+            )}</p>
             <p><strong>Statut:</strong> ${
               Boolean(order.delivered) ? "Livrée" : "En attente"
             }</p>
@@ -754,7 +756,7 @@ export class PDFGenerator {
             <table class="totals-table">
               <tr>
                 <td>Total HT</td>
-                <td>${parseFloat(order.totalAmountHT || 0).toFixed(2)} €</td>
+                <td>${Number(order.totalAmountHT || 0).toFixed(2)} €</td>
               </tr>
               <tr>
                 <td>TVA</td>
@@ -762,7 +764,7 @@ export class PDFGenerator {
               </tr>
               <tr>
                 <td>Total TTC</td>
-                <td>${parseFloat(order.totalAmountTTC || 0).toFixed(2)} €</td>
+                <td>${Number(order.totalAmountTTC || 0).toFixed(2)} €</td>
               </tr>
             </table>
           </div>
