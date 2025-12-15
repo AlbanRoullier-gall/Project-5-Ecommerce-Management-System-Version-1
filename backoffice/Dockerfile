@@ -23,6 +23,9 @@ RUN npm install
 # Copy backoffice source files
 COPY backoffice/ .
 
+# Verify that dto and shared-types exist
+RUN ls -la dto/ && echo "---" && ls -la shared-types/ && echo "---" && cat dto/index.ts
+
 RUN npm run build
 
 EXPOSE 3000

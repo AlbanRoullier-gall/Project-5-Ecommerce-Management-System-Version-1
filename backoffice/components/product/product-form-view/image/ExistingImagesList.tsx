@@ -1,5 +1,5 @@
 import React from "react";
-import { ProductImagePublicDTO } from "../../../dto/index";
+import { ProductImagePublicDTO } from "../../../dto";
 
 /**
  * Props du composant ExistingImagesList
