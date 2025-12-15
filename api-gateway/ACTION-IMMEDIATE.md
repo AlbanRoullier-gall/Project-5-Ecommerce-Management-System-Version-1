@@ -3,6 +3,7 @@
 ## Problème actuel
 
 Votre frontend retourne des erreurs 500 pour :
+
 - `/api/products` → Product Service
 - `/api/categories` → Product Service
 - `/api/cart` → Cart Service
@@ -11,17 +12,27 @@ Votre frontend retourne des erreurs 500 pour :
 ## 🔍 Étape 1 : Vérifier l'endpoint de diagnostic
 
 **Ouvrez dans votre navigateur :**
+
 ```
-https://VOTRE-API-GATEWAY-DOMAINE.up.railway.app/api/health/services
+https://api-gateway-production-91f9.up.railway.app/api/health/services
 ```
+
+**⚠️ IMPORTANT :** L'URL ne doit contenir qu'**une seule fois** `.up.railway.app` (pas de duplication).
+
+**Si vous avez une erreur "connection n'est pas privée" :**
+- Essayez d'abord avec `http://` au lieu de `https://` (si Railway le permet)
+- Ou attendez quelques minutes que Railway configure le certificat SSL
+- Ou cliquez sur "Avancé" → "Continuer vers le site" (si vous êtes sûr que c'est le bon domaine)
 
 Remplacez `VOTRE-API-GATEWAY-DOMAINE` par le domaine de votre API Gateway dans Railway.
 
 **Ce que vous devriez voir :**
+
 - Si l'endpoint fonctionne : Un JSON avec l'état de tous les services
 - Si l'endpoint ne fonctionne pas : L'API Gateway n'est pas redéployé avec les nouvelles modifications
 
 **Exemple de réponse attendue :**
+
 ```json
 {
   "gateway": "OK",
@@ -45,6 +56,7 @@ Remplacez `VOTRE-API-GATEWAY-DOMAINE` par le domaine de votre API Gateway dans R
 4. Cherchez le message de démarrage avec les URLs des services
 
 **Vous devriez voir :**
+
 ```
 🔗 Services URLs:
    Product: http://product-service:3002 (env) ou (default)
@@ -63,6 +75,7 @@ Dans Railway, vérifiez le statut de chaque service :
 - [ ] **email-service** → Statut "Running" (vert)
 
 **Si un service est "Stopped" ou "Error" :**
+
 1. Cliquez sur le service
 2. Allez dans **Logs**
 3. Identifiez l'erreur
@@ -90,6 +103,7 @@ ALLOWED_ORIGINS=https://frontend-production-27ff.up.railway.app,https://backoffi
 ```
 
 **⚠️ IMPORTANT :**
+
 - Les URLs doivent utiliser `http://` (pas `https://`)
 - Les noms de services doivent être exactement : `product-service:3002` (avec tiret)
 - Ne pas utiliser les domaines publics Railway dans ces variables
@@ -101,6 +115,7 @@ ALLOWED_ORIGINS=https://frontend-production-27ff.up.railway.app,https://backoffi
 3. Cherchez les messages `[Proxy Error]`
 
 **Vous devriez voir :**
+
 ```
 [Proxy Error] GET /api/products -> product: http://product-service:3002/api/products
 [Proxy Error] Code: ECONNREFUSED, Message: connect ECONNREFUSED
@@ -115,6 +130,7 @@ Cela vous indiquera quel service n'est pas accessible.
 **Symptôme :** L'endpoint `/api/health/services` montre `status: "UNAVAILABLE"` avec `error: "ECONNREFUSED"`
 
 **Solution :**
+
 1. Dans Railway, vérifiez les logs du service concerné
 2. Identifiez l'erreur de démarrage
 3. Vérifiez les variables d'environnement du service (DATABASE_URL, PORT, etc.)
@@ -125,6 +141,7 @@ Cela vous indiquera quel service n'est pas accessible.
 **Symptôme :** L'endpoint `/api/health/services` montre `error: "ENOTFOUND"`
 
 **Solution :**
+
 - Tous les services DOIVENT être dans le même projet Railway
 - Si un service est dans un autre projet, recréez-le dans le bon projet
 
@@ -133,6 +150,7 @@ Cela vous indiquera quel service n'est pas accessible.
 **Symptôme :** Les URLs des services sont incorrectes dans les logs
 
 **Solution :**
+
 1. Vérifiez que toutes les variables `*_SERVICE_URL` sont configurées
 2. Vérifiez que les URLs utilisent les noms de services Docker (ex: `product-service:3002`)
 3. Ne pas utiliser les domaines publics Railway
@@ -142,6 +160,7 @@ Cela vous indiquera quel service n'est pas accessible.
 **Symptôme :** L'endpoint `/api/health/services` n'existe pas (404)
 
 **Solution :**
+
 1. Dans Railway → **API Gateway** → **Settings** → **Deploy**
 2. Cliquez sur **Redeploy** pour forcer un nouveau déploiement
 3. Attendez que le déploiement se termine
@@ -160,6 +179,7 @@ Cela vous indiquera quel service n'est pas accessible.
 ## 🆘 Si rien ne fonctionne
 
 1. **Redéployez tous les services** dans cet ordre :
+
    - Bases de données (PostgreSQL, Redis)
    - Services backend (un par un)
    - API Gateway
@@ -168,6 +188,7 @@ Cela vous indiquera quel service n'est pas accessible.
 2. **Vérifiez les logs de chaque service** pour identifier les erreurs de démarrage
 
 3. **Utilisez l'endpoint de diagnostic** pour voir l'état exact :
+
    ```
    https://VOTRE-API-GATEWAY-DOMAINE.up.railway.app/api/health/services
    ```
