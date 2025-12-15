@@ -30,11 +30,40 @@ Le code a été mis à jour pour utiliser automatiquement le Private Networking 
 
 ## 📋 Configuration dans Railway
 
-### Option 1 : Laisser le code gérer automatiquement (recommandé)
+### Option 1 : Configurer manuellement les variables (RECOMMANDÉ)
 
-**Ne configurez PAS les variables `*_SERVICE_URL` dans Railway.**
+**Vous DEVEZ configurer les variables `*_SERVICE_URL` avec les vrais domaines Railway.**
 
-Le code détectera automatiquement qu'il est en production Railway et utilisera les domaines `railway.internal`.
+Railway génère des domaines basés sur le nom du service dans Railway. Pour trouver ces domaines :
+
+1. **Railway** → Votre projet → **Service** (ex: product-service)
+2. **Settings** → **Networking**
+3. Cherchez **"Private Network"** ou **"Internal Domain"**
+4. Vous verrez quelque chose comme : `ideal-courtesy.railway.internal` ou `product-service.railway.internal`
+
+**Configurez ensuite dans l'API Gateway :**
+
+Railway → **API Gateway** → **Settings** → **Variables**
+
+Ajoutez pour chaque service :
+```env
+PRODUCT_SERVICE_URL=http://ideal-courtesy.railway.internal:3002
+CART_SERVICE_URL=http://autre-nom.railway.internal:3004
+CUSTOMER_SERVICE_URL=http://encore-un-autre.railway.internal:3001
+ORDER_SERVICE_URL=http://nom-service.railway.internal:3003
+AUTH_SERVICE_URL=http://auth-nom.railway.internal:3008
+PAYMENT_SERVICE_URL=http://payment-nom.railway.internal:3007
+EMAIL_SERVICE_URL=http://email-nom.railway.internal:3006
+PDF_EXPORT_SERVICE_URL=http://pdf-nom.railway.internal:3040
+```
+
+**⚠️ IMPORTANT :** Remplacez les noms par les vrais domaines de vos services dans Railway !
+
+### Option 2 : Laisser le code gérer automatiquement (si les noms correspondent)
+
+**Si vos services s'appellent exactement `product-service`, `cart-service`, etc. dans Railway**, vous pouvez ne pas configurer les variables.
+
+Le code utilisera automatiquement `product-service.railway.internal`, `cart-service.railway.internal`, etc.
 
 ### Option 2 : Configurer manuellement les variables
 
