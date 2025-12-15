@@ -34,9 +34,9 @@ COPY services/auth-service/src/ ./src/
 RUN echo "=== Building TypeScript ===" && npm run build 2>&1 | tee /tmp/build.log || (echo "Build failed! Log:" && cat /tmp/build.log && exit 1)
 
 # ===== VÉRIFICATION DU BUILD =====
-# Vérifier que le build a créé les fichiers
-RUN echo "=== Checking dist folder ===" && ls -la dist/ && echo "=== Files in dist ===" && find dist/ -type f && echo "=== Looking for index.js ===" && find . -name "index.js" -type f
-RUN test -f dist/index.js || (echo "ERROR: dist/index.js not found!" && echo "Current directory structure:" && ls -la && echo "Dist contents:" && ls -la dist/ 2>/dev/null || echo "dist/ does not exist" && exit 1)
+# Vérifier que le build a créé les fichiers (TypeScript préserve la structure, donc dist/src/index.js)
+RUN echo "=== Checking dist folder ===" && ls -la dist/ && echo "=== Files in dist ===" && find dist/ -type f | head -10
+RUN test -f dist/src/index.js || (echo "ERROR: dist/src/index.js not found!" && echo "Files in dist/src:" && ls -la dist/src/ 2>/dev/null || echo "dist/src/ does not exist" && exit 1)
 
 # ===== OPTIMISATION DE L'IMAGE =====
 # Supprimer les dépendances de développement pour réduire la taille
