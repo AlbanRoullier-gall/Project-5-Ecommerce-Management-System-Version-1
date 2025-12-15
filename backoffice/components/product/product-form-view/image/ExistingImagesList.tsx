@@ -1,5 +1,6 @@
 import React from "react";
-import { ProductImagePublicDTO } from "../../../dto";
+// Try absolute import using path mapping
+import { ProductImagePublicDTO } from "dto";
 
 /**
  * Props du composant ExistingImagesList
