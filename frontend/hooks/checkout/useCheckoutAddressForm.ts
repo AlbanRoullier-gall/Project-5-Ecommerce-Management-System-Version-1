@@ -7,12 +7,10 @@ import { useRouter } from "next/router";
 import { useCheckout } from "../../contexts/CheckoutContext";
 import { logger } from "../../services/logger";
 
+import { AddressesCreateDTO } from "../../dto";
+
 interface UseCheckoutAddressFormResult {
-  addressData: {
-    shipping: any;
-    billing: any;
-    useSameBillingAddress: boolean;
-  };
+  addressData: AddressesCreateDTO;
   isLoading: boolean;
   error: string | null;
   fieldErrors: { [key: string]: string };
