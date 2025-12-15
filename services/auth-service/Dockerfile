@@ -33,6 +33,10 @@ COPY services/auth-service/src/ ./src/
 # Compiler le TypeScript vers JavaScript
 RUN npm run build
 
+# ===== VÉRIFICATION DU BUILD =====
+# Vérifier que le build a créé les fichiers
+RUN ls -la dist/ || (echo "Build failed - dist folder not found" && exit 1)
+
 # ===== OPTIMISATION DE L'IMAGE =====
 # Supprimer les dépendances de développement pour réduire la taille
 RUN npm prune --production
