@@ -1,5 +1,5 @@
 import React from "react";
-import { CategoryPublicDTO } from "../../dto";
+import { CategoryPublicDTO } from "../../../dto";
 import { useToggle } from "../../../hooks";
 
 /**
