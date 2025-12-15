@@ -37,9 +37,12 @@ export function setAuthTokenCookie(res: Response, token: string): void {
   res.cookie(AUTH_TOKEN_COOKIE, token, {
     httpOnly: true, // Non accessible depuis JavaScript (sécurité XSS)
     secure: isProduction, // HTTPS uniquement en production
-    sameSite: "lax", // Protection CSRF
+    // En production, utiliser "none" pour permettre le partage cross-domain
+    // (backoffice et API Gateway sont sur des domaines différents)
+    sameSite: isProduction ? "none" : "lax", // "none" nécessite secure: true
     maxAge: COOKIE_MAX_AGE,
     path: "/", // Disponible sur tout le site
+    // Ne pas spécifier de domaine pour permettre le partage cross-domain
   });
 }
 
@@ -48,10 +51,11 @@ export function setAuthTokenCookie(res: Response, token: string): void {
  * @param res - Réponse Express
  */
 export function clearAuthTokenCookie(res: Response): void {
+  const isProduction = process.env["NODE_ENV"] === "production";
   res.clearCookie(AUTH_TOKEN_COOKIE, {
     httpOnly: true,
-    secure: process.env["NODE_ENV"] === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax", // "none" nécessite secure: true
     path: "/",
   });
 }

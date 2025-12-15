@@ -48,9 +48,12 @@ export class AuthController {
       res.cookie("auth_token", token, {
         httpOnly: true, // Non accessible depuis JavaScript (sécurité XSS)
         secure: isProduction, // HTTPS uniquement en production
-        sameSite: "lax", // Protection CSRF
+        // En production, utiliser "none" pour permettre le partage cross-domain
+        // (backoffice et API Gateway sont sur des domaines différents)
+        sameSite: isProduction ? "none" : "lax", // "none" nécessite secure: true
         maxAge: 24 * 60 * 60 * 1000, // 24 heures (aligné avec l'expiration du JWT)
         path: "/", // Disponible sur tout le site
+        // Ne pas spécifier de domaine pour permettre le partage cross-domain
       });
 
       // Retourner la réponse sans le token dans le body (sécurité)
@@ -103,9 +106,12 @@ export class AuthController {
       res.cookie("auth_token", token, {
         httpOnly: true, // Non accessible depuis JavaScript (sécurité XSS)
         secure: isProduction, // HTTPS uniquement en production
-        sameSite: "lax", // Protection CSRF
+        // En production, utiliser "none" pour permettre le partage cross-domain
+        // (backoffice et API Gateway sont sur des domaines différents)
+        sameSite: isProduction ? "none" : "lax", // "none" nécessite secure: true
         maxAge: 24 * 60 * 60 * 1000, // 24 heures (aligné avec l'expiration du JWT)
         path: "/", // Disponible sur tout le site
+        // Ne pas spécifier de domaine pour permettre le partage cross-domain
       });
 
       // Retourner la réponse sans le token dans le body (sécurité)
@@ -271,7 +277,7 @@ export class AuthController {
       res.clearCookie("auth_token", {
         httpOnly: true,
         secure: isProduction,
-        sameSite: "lax",
+        sameSite: isProduction ? "none" : "lax", // "none" nécessite secure: true
         path: "/",
       });
 
