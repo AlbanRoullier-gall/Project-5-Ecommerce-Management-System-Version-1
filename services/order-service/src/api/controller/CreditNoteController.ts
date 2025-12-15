@@ -13,7 +13,7 @@ import OrderService from "../../services/OrderService";
 import { CreditNoteCreateDTO, CreditNoteListRequestDTO } from "../dto";
 import { OrderMapper, ResponseMapper } from "../mapper";
 import CreditNote from "../../models/CreditNote";
-const Joi = require("joi");
+import Joi from "joi";
 
 export class CreditNoteController {
   private orderService: OrderService;

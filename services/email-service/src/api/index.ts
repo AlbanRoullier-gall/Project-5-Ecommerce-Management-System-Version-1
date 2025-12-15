@@ -124,7 +124,7 @@ export class ApiRouter {
   /**
    * Middleware de validation
    */
-  private validateRequest = (schema: Joi.Schema) => {
+  private validateRequest = (schema: any) => {
     return (req: Request, res: Response, next: NextFunction): void => {
       const { error } = schema.validate(req.body);
       if (error) {

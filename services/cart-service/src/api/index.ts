@@ -7,11 +7,11 @@ import { Request, Response, NextFunction } from "express";
 import CartService from "../services/CartService";
 import { HealthController, CartController } from "./controller";
 import { ResponseMapper } from "./mapper";
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const Joi = require("joi");
-const morgan = require("morgan");
+import express, { Request, Response, NextFunction, Application } from "express";
+import cors from "cors";
+import helmet from "helmet";
+import Joi from "joi";
+import morgan from "morgan";
 
 export class ApiRouter {
   private healthController: HealthController;
@@ -26,7 +26,7 @@ export class ApiRouter {
   /**
    * Configuration des middlewares
    */
-  private setupMiddlewares(app: express.Application): void {
+  private setupMiddlewares(app: Application): void {
     app.use(helmet());
     app.use(cors());
     app.use(morgan("combined"));
@@ -86,7 +86,7 @@ export class ApiRouter {
   /**
    * Configuration des routes
    */
-  setupRoutes(app: express.Application): void {
+  setupRoutes(app: Application): void {
     this.setupMiddlewares(app);
     const schemas = this.setupValidationSchemas();
 
