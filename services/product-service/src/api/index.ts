@@ -19,11 +19,11 @@ import {
 } from "./controller";
 import { ResponseMapper, ProductMapper } from "./mapper";
 import { ProductImageData } from "../models/ProductImage";
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const Joi = require("joi");
-const morgan = require("morgan");
+import express, { Request, Response, NextFunction, Application } from "express";
+import cors from "cors";
+import helmet from "helmet";
+import Joi from "joi";
+import morgan from "morgan";
 // multer n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
 const path = require("path");
 const fs = require("fs");
@@ -48,7 +48,7 @@ export class ApiRouter {
   /**
    * Configuration des middlewares
    */
-  private setupMiddlewares(app: any): void {
+  private setupMiddlewares(app: Application): void {
     app.use(helmet());
     app.use(cors());
     app.use(morgan("combined"));

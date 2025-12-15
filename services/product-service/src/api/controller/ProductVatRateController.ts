@@ -20,7 +20,7 @@ export class ProductVatRateController {
       const vatRates = await this.productService.listProductVatRates(productId);
       res.json({
         productId,
-        vatRates: vatRates.map((r) => ({
+        vatRates: vatRates.map((r: any) => ({
           countryCode: r.countryCode,
           vatRate: r.vatRate,
         })),
@@ -47,7 +47,7 @@ export class ProductVatRateController {
       res.json({
         message: "Taux de TVA mis à jour",
         productId,
-        vatRates: updated.map((r) => ({
+        vatRates: updated.map((r: any) => ({
           countryCode: r.countryCode,
           vatRate: r.vatRate,
         })),

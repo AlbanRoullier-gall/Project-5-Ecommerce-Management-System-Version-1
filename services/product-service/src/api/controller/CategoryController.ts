@@ -16,7 +16,7 @@ import {
   CategoryUpdateDTO,
   CategorySearchDTO,
 } from "../dto";
-const Joi = require("joi");
+import Joi from "joi";
 
 export class CategoryController {
   private productService: ProductService;
@@ -169,7 +169,7 @@ export class CategoryController {
 
       if (error) {
         const messages = error.details
-          .map((detail) => detail.message)
+          .map((detail: Joi.ValidationErrorItem) => detail.message)
           .join("; ");
         res
           .status(400)
