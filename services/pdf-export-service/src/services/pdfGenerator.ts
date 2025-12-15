@@ -1,4 +1,4 @@
-import { YearExportRequestDTO, OrderInvoiceRequestDTO, OrderExportData, CreditNoteExportData } from "../api/dto";
+import { YearExportRequestDTO, OrderInvoiceRequestDTO } from "../api/dto";
 
 export class PDFGenerator {
   async generateOrdersYearExport(data: YearExportRequestDTO): Promise<Buffer> {
@@ -35,7 +35,8 @@ export class PDFGenerator {
       .join("");
 
     const totalOrdersAmount = orders.reduce(
-      (sum: number, order: any) => sum + parseFloat(String(order.totalAmountTTC || 0)),
+      (sum: number, order: any) =>
+        sum + parseFloat(String(order.totalAmountTTC || 0)),
       0
     );
     const totalCreditNotesAmount = creditNotes.reduce(
@@ -261,7 +262,7 @@ export class PDFGenerator {
     `;
   }
 
-  private generateOrderDetailsHTML(order: any): string {
+  private generateOrderDetailsHTML(order: OrderExportData): string {
     const customerFirstName = order.customerFirstName || "N/A";
     const customerLastName = order.customerLastName || "N/A";
     const customerEmail = order.customerEmail || "N/A";
@@ -380,7 +381,7 @@ export class PDFGenerator {
     `;
   }
 
-  private generateCreditNoteDetailsHTML(creditNote: any): string {
+  private generateCreditNoteDetailsHTML(creditNote: CreditNoteExportData): string {
     // Debug: Log credit note data
     console.log(`🔍 Credit Note #${creditNote.id}:`, {
       hasItems: !!creditNote.items,
