@@ -23,7 +23,6 @@ import {
 } from "./controller";
 // CompanyController non utilisé pour l'instant - commenté pour éviter les erreurs de build
 import { ResponseMapper } from "./mapper";
-// Les routes sont maintenant définies directement dans la méthode setupRoutes
 
 export class ApiRouter {
   private healthController: HealthController;
