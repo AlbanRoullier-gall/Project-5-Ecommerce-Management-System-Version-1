@@ -41,7 +41,7 @@ export async function runMigrations(): Promise<void> {
   // Log très tôt pour confirmer que le nouveau code s'exécute
   console.log("[Migrations] ⚡ Code de migration v2.0 - Démarrage...");
   console.log(`[Migrations] __dirname = ${__dirname}`);
-  
+
   // Connexion à la base de données
   const client = await pool.connect();
 
