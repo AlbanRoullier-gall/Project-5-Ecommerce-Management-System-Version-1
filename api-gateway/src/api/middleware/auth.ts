@@ -68,9 +68,10 @@ export const requireAuth = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  // Debug: afficher les cookies reçus
+  // Debug: afficher les cookies reçus et le header Authorization
   const cookies = req.cookies || {};
   const cookieNames = Object.keys(cookies);
+  const authHeader = req.headers.authorization;
   console.log(`[Auth] Requête ${req.method} ${req.path}`);
   console.log(
     `[Auth] Cookies reçus: ${
@@ -78,6 +79,10 @@ export const requireAuth = async (
     }`
   );
   console.log(`[Auth] auth_token présent: ${!!cookies["auth_token"]}`);
+  console.log(`[Auth] Header Authorization: ${authHeader ? "présent" : "absent"}`);
+  if (authHeader) {
+    console.log(`[Auth] Authorization header: ${authHeader.substring(0, 30)}...`);
+  }
 
   const token = extractToken(req);
 

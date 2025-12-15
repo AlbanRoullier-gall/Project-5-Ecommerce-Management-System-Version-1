@@ -116,10 +116,18 @@ export async function login(
       token?: string; // Token optionnel pour fonctionner même si cookies third-party sont bloqués
     }>(`/api/auth/login`, loginRequest, { requireAuth: false });
 
+    console.log(`[AuthService] Réponse login reçue:`, {
+      hasUser: !!response.user,
+      hasToken: !!response.token,
+      tokenLength: response.token?.length,
+    });
+
     // Stocker le token dans localStorage si disponible (fallback si cookies third-party bloqués)
     if (response.token && typeof window !== "undefined") {
       localStorage.setItem("auth_token", response.token);
-      console.log("[AuthService] Token stocké dans localStorage");
+      console.log(`[AuthService] ✅ Token stocké dans localStorage (longueur: ${response.token.length})`);
+    } else {
+      console.log(`[AuthService] ⚠️ Token non disponible dans la réponse ou window undefined`);
     }
 
     if (response.user) {
