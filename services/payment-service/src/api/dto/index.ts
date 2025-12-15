@@ -4,4 +4,5 @@
  */
 
 // Réexport des DTOs depuis shared-types
-export * from "../../../../../shared-types/payment-service";
+// Dans Docker : shared-types est à la racine /app, donc ../../../ depuis src/api/dto
+export * from "../../../shared-types/payment-service";

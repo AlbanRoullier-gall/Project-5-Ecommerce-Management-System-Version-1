@@ -16,4 +16,4 @@ export type {
   ProductImagePublicDTO,
   ProductListRequestDTO,
   CategorySearchDTO,
-} from "../../../../../shared-types/product-service";
+} from "../../../shared-types/product-service";
