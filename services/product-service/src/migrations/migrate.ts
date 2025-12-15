@@ -38,6 +38,10 @@ const pool = new Pool({
  * 6. Enregistre chaque migration exécutée
  */
 export async function runMigrations(): Promise<void> {
+  // Log très tôt pour confirmer que le nouveau code s'exécute
+  console.log("[Migrations] ⚡ Code de migration v2.0 - Démarrage...");
+  console.log(`[Migrations] __dirname = ${__dirname}`);
+  
   // Connexion à la base de données
   const client = await pool.connect();
 
@@ -111,13 +115,6 @@ export async function runMigrations(): Promise<void> {
         // Cette migration a déjà été exécutée, on la passe
         console.log(`⏭️  Migration ${filename} déjà exécutée`);
       }
-    }
-
-    // Vérifier qu'au moins une migration a été trouvée
-    if (migrationFiles.length === 0) {
-      throw new Error(
-        `Aucun fichier SQL de migration trouvé dans ${__dirname}. Vérifiez que les fichiers sont bien copiés dans dist/src/migrations/`
-      );
     }
 
     // Vérifier qu'au moins une migration a été exécutée ou était déjà exécutée

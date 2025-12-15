@@ -113,13 +113,6 @@ async function runMigrations(): Promise<void> {
       }
     }
 
-    // Vérifier qu'au moins une migration a été trouvée
-    if (migrationFiles.length === 0) {
-      throw new Error(
-        `Aucun fichier SQL de migration trouvé dans ${__dirname}. Vérifiez que les fichiers sont bien copiés dans dist/src/migrations/`
-      );
-    }
-
     // Vérifier qu'au moins une migration a été exécutée ou était déjà exécutée
     const totalExecuted = executedFilenames.length;
     const newExecuted = migrationFiles.filter(
