@@ -18,7 +18,7 @@ COPY frontend/package*.json ./
 
 # Fix the shared-types path in package.json for Docker context
 # In Docker, shared-types is at ./shared-types, not ../shared-types
-RUN sed -i 's|"file:../shared-types"|"file:./shared-types"|g' package.json
+RUN node -e "const fs=require('fs');const pkg=JSON.parse(fs.readFileSync('package.json'));if(pkg.dependencies&&pkg.dependencies['@tfe/shared-types']){pkg.dependencies['@tfe/shared-types']='file:./shared-types';fs.writeFileSync('package.json',JSON.stringify(pkg,null,2));}"
 
 RUN npm install
 
