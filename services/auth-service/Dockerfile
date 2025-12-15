@@ -35,7 +35,8 @@ RUN npm run build || (echo "Build failed!" && exit 1)
 
 # ===== VÉRIFICATION DU BUILD =====
 # Vérifier que le build a créé les fichiers
-RUN ls -la dist/ && test -f dist/index.js || (echo "ERROR: dist/index.js not found!" && ls -la && exit 1)
+RUN ls -la dist/ && echo "--- Contents of dist/ ---" && find dist/ -type f | head -20 || (echo "ERROR: dist folder not found!" && exit 1)
+RUN test -f dist/index.js || (echo "ERROR: dist/index.js not found!" && echo "Files in dist:" && find dist/ -type f && exit 1)
 
 # ===== OPTIMISATION DE L'IMAGE =====
 # Supprimer les dépendances de développement pour réduire la taille
