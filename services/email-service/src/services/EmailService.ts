@@ -3,10 +3,11 @@
  * Business logic layer pour l'envoi d'emails via Gmail
  */
 
-const nodemailer = require("nodemailer");
+import * as nodemailer from "nodemailer";
+import { Transporter } from "nodemailer";
 
 export default class EmailService {
-  private transporter: nodemailer.Transporter | null = null;
+  private transporter: Transporter | null = null;
   private adminEmail: string;
   private adminName: string;
 
