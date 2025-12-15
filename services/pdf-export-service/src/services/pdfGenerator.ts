@@ -1,4 +1,4 @@
-import { YearExportRequestDTO, OrderInvoiceRequestDTO } from "../api/dto";
+import { YearExportRequestDTO, OrderInvoiceRequestDTO, OrderExportData, CreditNoteExportData } from "../api/dto";
 
 export class PDFGenerator {
   async generateOrdersYearExport(data: YearExportRequestDTO): Promise<Buffer> {
@@ -31,7 +31,9 @@ export class PDFGenerator {
 
     // Generate detailed credit notes HTML
     const creditNotesHTML = creditNotes
-      .map((creditNote: CreditNoteExportData) => this.generateCreditNoteDetailsHTML(creditNote))
+      .map((creditNote: CreditNoteExportData) =>
+        this.generateCreditNoteDetailsHTML(creditNote)
+      )
       .join("");
 
     const totalOrdersAmount = orders.reduce(

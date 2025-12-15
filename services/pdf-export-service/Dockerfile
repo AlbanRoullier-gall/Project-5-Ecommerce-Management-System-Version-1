@@ -27,6 +27,10 @@ RUN apk add --no-cache \
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
+# ===== COPIE DES TYPES PARTAGÉS =====
+# Copier les types partagés depuis la racine du projet
+COPY shared-types/ ./shared-types/
+
 # ===== GESTION DES DÉPENDANCES NODE.JS =====
 # Copier les fichiers de configuration
 COPY services/pdf-export-service/package*.json ./
