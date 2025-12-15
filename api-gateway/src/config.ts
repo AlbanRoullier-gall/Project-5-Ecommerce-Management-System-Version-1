@@ -42,15 +42,14 @@ function getServiceUrl(
     return envVar;
   }
 
-  // En production (Railway), essayer d'utiliser le réseau privé Railway
+  // En production (Railway), utiliser le réseau privé Railway
   if (!isDevelopment && process.env["NODE_ENV"] === "production") {
     // Railway private networking utilise : service-name.railway.internal
-    // Mais on garde aussi le support des noms Docker classiques
-    const railwayUrl = `http://${serviceName}.railway.internal:${
-      defaultDocker.split(":").pop() || "3001"
-    }`;
-    // Pour l'instant, on utilise les noms Docker classiques comme dans le guide
-    // Si ça ne fonctionne pas, il faudra utiliser railway.internal
+    // Tous les services dans le même projet Railway peuvent communiquer via ce domaine
+    const port = defaultDocker.split(":").pop() || "3001";
+    const railwayUrl = `http://${serviceName}.railway.internal:${port}`;
+    console.log(`[Config] Railway production: ${serviceName} -> ${railwayUrl}`);
+    return railwayUrl;
   }
 
   // Sinon, utiliser les valeurs par défaut selon l'environnement
