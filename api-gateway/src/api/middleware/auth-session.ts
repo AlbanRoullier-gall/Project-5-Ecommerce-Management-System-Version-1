@@ -54,6 +54,14 @@ export function setAuthTokenCookie(res: Response, token: string): void {
   });
 
   res.cookie(AUTH_TOKEN_COOKIE, token, cookieOptions);
+  
+  // Vérifier que le cookie est bien défini dans les headers de réponse
+  const setCookieHeader = res.getHeader("Set-Cookie");
+  if (setCookieHeader) {
+    console.log(`[AuthSession] ✅ Cookie défini dans Set-Cookie header: ${Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader}`);
+  } else {
+    console.log(`[AuthSession] ⚠️ Cookie non trouvé dans Set-Cookie header`);
+  }
 }
 
 /**
