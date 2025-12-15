@@ -8,6 +8,9 @@ ARG NEXT_PUBLIC_API_URL
 # Set environment variables for build
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# Copy shared-types first (needed for npm install)
+COPY shared-types/ ./shared-types/
+
 # Copy package files from backoffice directory
 COPY backoffice/package*.json ./
 RUN npm install

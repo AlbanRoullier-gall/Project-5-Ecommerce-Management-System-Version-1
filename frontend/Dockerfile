@@ -10,6 +10,9 @@ ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 
+# Copy shared-types first (needed for npm install)
+COPY shared-types/ ./shared-types/
+
 # Copy package files from frontend directory
 COPY frontend/package*.json ./
 RUN npm install
