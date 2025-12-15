@@ -26,21 +26,21 @@ export class PDFGenerator {
 
     // Generate detailed orders HTML
     const ordersHTML = orders
-      .map((order: any) => this.generateOrderDetailsHTML(order))
+      .map((order: OrderExportData) => this.generateOrderDetailsHTML(order))
       .join("");
 
     // Generate detailed credit notes HTML
     const creditNotesHTML = creditNotes
-      .map((creditNote: any) => this.generateCreditNoteDetailsHTML(creditNote))
+      .map((creditNote: CreditNoteExportData) => this.generateCreditNoteDetailsHTML(creditNote))
       .join("");
 
     const totalOrdersAmount = orders.reduce(
-      (sum: number, order: any) =>
+      (sum: number, order: OrderExportData) =>
         sum + parseFloat(String(order.totalAmountTTC || 0)),
       0
     );
     const totalCreditNotesAmount = creditNotes.reduce(
-      (sum: number, creditNote: any) =>
+      (sum: number, creditNote: CreditNoteExportData) =>
         sum + parseFloat(String(creditNote.totalAmountTTC || 0)),
       0
     );
@@ -381,7 +381,9 @@ export class PDFGenerator {
     `;
   }
 
-  private generateCreditNoteDetailsHTML(creditNote: CreditNoteExportData): string {
+  private generateCreditNoteDetailsHTML(
+    creditNote: CreditNoteExportData
+  ): string {
     // Debug: Log credit note data
     console.log(`🔍 Credit Note #${creditNote.id}:`, {
       hasItems: !!creditNote.items,
