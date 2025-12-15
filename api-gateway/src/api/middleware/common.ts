@@ -49,12 +49,28 @@ export const corsMiddleware: RequestHandler = cors({
       callback(null, true);
     } else {
       console.warn(`⚠️ CORS: Origine non autorisée: ${origin}`);
-      callback(new Error("Not allowed by CORS"));
+      // En production, on peut être plus permissif pour le debug
+      // Mais idéalement, il faut configurer ALLOWED_ORIGINS dans Railway
+      if (process.env["NODE_ENV"] === "production") {
+        console.warn(`⚠️ CORS: Mode production - Vérifiez ALLOWED_ORIGINS dans Railway`);
+      }
+      // Rejeter l'origine non autorisée
+      callback(null, false);
     }
   },
   credentials: true, // Nécessaire pour les cookies httpOnly
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "X-Requested-With", "Accept"],
+  allowedHeaders: [
+    "Content-Type",
+    "X-Requested-With",
+    "Accept",
+    "Authorization",
+    "Cookie",
+    "x-cart-session-id",
+  ],
+  exposedHeaders: ["Set-Cookie"],
+  preflightContinue: false,
+  optionsSuccessStatus: 204, // Répondre avec 204 No Content pour les requêtes OPTIONS réussies
 });
 
 /**

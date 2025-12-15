@@ -176,6 +176,8 @@ PORT=3020
 
 4. **Settings** → **Networking** → **"Generate Domain"** (copiez l'URL, vous en aurez besoin)
 
+**⚠️ IMPORTANT CORS :** Après avoir créé le Frontend et le Backoffice (étapes 4 et 5), vous devrez revenir ici et ajouter la variable `ALLOWED_ORIGINS` avec les URLs de vos frontend et backoffice (voir étape 6)
+
 ---
 
 ## 🎨 Étape 4 : Frontend
@@ -211,7 +213,40 @@ NEXT_PUBLIC_API_URL=https://VOTRE-API-GATEWAY-DOMAINE.up.railway.app
 PORT=3000
 ```
 
-**Important :** Remplacez `VOTRE-API-GATEWAY-DOMAINE` par le vrai domaine de votre API Gateway 4. **Settings** → **Networking** → **"Generate Domain"**
+**Important :** Remplacez `VOTRE-API-GATEWAY-DOMAINE` par le vrai domaine de votre API Gateway
+
+4. **Settings** → **Networking** → **"Generate Domain"** (copiez l'URL, vous en aurez besoin)
+
+---
+
+## 🔐 Étape 6 : Configuration CORS (OBLIGATOIRE)
+
+**Après avoir créé le Frontend et le Backoffice**, vous devez configurer CORS dans l'API Gateway pour autoriser les requêtes depuis vos frontends.
+
+1. Allez dans votre service **API Gateway** sur Railway
+2. **Settings** → **Variables**
+3. Ajoutez la variable suivante :
+
+```
+ALLOWED_ORIGINS=https://VOTRE-FRONTEND-DOMAINE.up.railway.app,https://VOTRE-BACKOFFICE-DOMAINE.up.railway.app
+```
+
+**Important :**
+
+- Remplacez `VOTRE-FRONTEND-DOMAINE` par le vrai domaine de votre Frontend (étape 4)
+- Remplacez `VOTRE-BACKOFFICE-DOMAINE` par le vrai domaine de votre Backoffice (étape 5)
+- Les URLs doivent commencer par `https://`
+- Séparez les URLs par une virgule (sans espaces ou avec espaces, les deux fonctionnent)
+
+**Exemple :**
+
+```
+ALLOWED_ORIGINS=https://frontend-production-abc123.up.railway.app,https://backoffice-production-xyz789.up.railway.app
+```
+
+4. Sauvegardez les variables (Railway redéploiera automatiquement)
+
+**⚠️ Sans cette configuration, vous aurez des erreurs CORS (Preflight response is not successful. Status code: 500)**
 
 ---
 
@@ -279,6 +314,7 @@ Les autres services peuvent être mockés.
 - [ ] Frontend créé avec `NEXT_PUBLIC_API_URL` configuré
 - [ ] Backoffice créé avec `NEXT_PUBLIC_API_URL` configuré
 - [ ] Tous les domaines publics générés
+- [ ] **ALLOWED_ORIGINS configuré dans l'API Gateway** (étape 6 - OBLIGATOIRE)
 - [ ] URLs testées
 
 ---
@@ -290,6 +326,11 @@ Les autres services peuvent être mockés.
 3. **Erreur de connexion DB** : Vérifiez que `${{Postgres.DATABASE_URL}}/nom_db` est correct
 4. **Frontend ne trouve pas l'API** : Vérifiez que `NEXT_PUBLIC_API_URL` pointe vers le bon domaine (avec `https://`)
 5. **Erreur TypeScript lors du build** : Vérifiez que `shared-types` est bien présent dans le repository GitHub
+6. **Erreur CORS "Preflight response is not successful. Status code: 500"** :
+   - Vérifiez que `ALLOWED_ORIGINS` est configuré dans l'API Gateway (étape 6)
+   - Vérifiez que les URLs dans `ALLOWED_ORIGINS` correspondent exactement aux domaines de votre Frontend et Backoffice
+   - Les URLs doivent commencer par `https://`
+   - Après modification, attendez le redéploiement automatique
 
 ---
 
