@@ -8,7 +8,7 @@
  * - Validation des requêtes
  */
 
-import { Request, Response, NextFunction } from "express";
+import express, { Request, Response, NextFunction, Application } from "express";
 import { Pool } from "pg";
 import ProductService from "../services/ProductService";
 import {
@@ -19,7 +19,6 @@ import {
 } from "./controller";
 import { ResponseMapper, ProductMapper } from "./mapper";
 import { ProductImageData } from "../models/ProductImage";
-import express, { Request, Response, NextFunction, Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import Joi from "joi";

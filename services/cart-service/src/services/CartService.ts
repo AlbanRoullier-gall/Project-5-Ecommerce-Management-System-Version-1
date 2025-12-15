@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from "uuid";
 import { CartRepository } from "../repositories/CartRepository";
 import { Cart, CartCheckoutData } from "../models/Cart";
 import { CartMapper } from "../api/mapper/CartMapper";
-import * as DTO from "@tfe/shared-types/cart-service";
+import * as DTO from "../../shared-types/cart-service";
 
 export default class CartService {
   private cartRepository: CartRepository;

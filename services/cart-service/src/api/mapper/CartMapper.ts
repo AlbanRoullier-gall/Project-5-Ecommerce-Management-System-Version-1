@@ -3,7 +3,7 @@
  * Mapper pour les conversions DTO ↔ Service
  */
 
-import * as DTO from "@tfe/shared-types/cart-service";
+import * as DTO from "../../../shared-types/cart-service";
 import { Cart } from "../../models/Cart";
 import { CartItem, CartItemData } from "../../models/CartItem";
 function validateAndSanitizeItemData(data: {

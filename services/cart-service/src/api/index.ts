@@ -3,11 +3,10 @@
  * Configuration centralisée des routes pour cart-service
  */
 
-import { Request, Response, NextFunction } from "express";
+import express, { Request, Response, NextFunction, Application } from "express";
 import CartService from "../services/CartService";
 import { HealthController, CartController } from "./controller";
 import { ResponseMapper } from "./mapper";
-import express, { Request, Response, NextFunction, Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import Joi from "joi";
