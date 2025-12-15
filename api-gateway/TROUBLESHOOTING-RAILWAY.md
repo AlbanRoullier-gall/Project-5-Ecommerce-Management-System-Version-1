@@ -54,9 +54,14 @@ PDF_EXPORT_SERVICE_URL=http://VOTRE-DOMAINE-PDF.railway.internal:3040
 **Exemple concret :**
 
 ```env
-PRODUCT_SERVICE_URL=http://ideal-courtesy.railway.internal:3002
-CART_SERVICE_URL=http://cart-production-abc.railway.internal:3004
+PRODUCT_SERVICE_URL=http://product-service.railway.internal:3002
+CART_SERVICE_URL=http://cart-service.railway.internal:3004
 CUSTOMER_SERVICE_URL=http://customer-service.railway.internal:3001
+ORDER_SERVICE_URL=http://order-service.railway.internal:3003
+AUTH_SERVICE_URL=http://auth-service.railway.internal:3008
+PAYMENT_SERVICE_URL=http://payment-service.railway.internal:3007
+EMAIL_SERVICE_URL=http://email-service.railway.internal:3006
+PDF_EXPORT_SERVICE_URL=http://pdf-export-service.railway.internal:3040
 ```
 
 **⚠️ IMPORTANT :**
@@ -94,8 +99,9 @@ Pour chaque service backend, vérifiez le port :
 
 ```
 🔗 Services URLs:
-   Product: http://ideal-courtesy.railway.internal:3002 (env)
-   Cart: http://cart-production-abc.railway.internal:3004 (env)
+   Product: http://product-service.railway.internal:3002 (env)
+   Cart: http://cart-service.railway.internal:3004 (env)
+   Customer: http://customer-service.railway.internal:3001 (env)
    ...
 ```
 
@@ -142,7 +148,7 @@ Si un service ne répond pas :
 
 ## 🐛 Erreurs courantes
 
-### Erreur : `ENOTFOUND ideal-courtesy.railway.internal`
+### Erreur : `ENOTFOUND product-service.railway.internal`
 
 **Cause :** Le domaine n'est pas correct ou le service n'est pas dans le même projet.
 
