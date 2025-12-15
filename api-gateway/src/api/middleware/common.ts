@@ -11,6 +11,50 @@ const cookieParser = require("cookie-parser");
 // ===== MIDDLEWARES DE SÉCURITÉ =====
 
 /**
+ * Normalise une URL d'origine pour la comparaison
+ * Gère les cas avec/sans https://
+ */
+function normalizeOrigin(origin: string): string {
+  if (!origin) return origin;
+  // Si l'origine commence déjà par http:// ou https://, la retourner telle quelle
+  if (origin.startsWith("http://") || origin.startsWith("https://")) {
+    return origin;
+  }
+  // Sinon, ajouter https:// par défaut
+  return `https://${origin}`;
+}
+
+/**
+ * Vérifie si une origine est dans la liste autorisée
+ * Gère les comparaisons avec/sans https://
+ */
+function isOriginAllowed(origin: string, allowedOrigins: string[]): boolean {
+  if (!origin) return false;
+  
+  // Normaliser l'origine
+  const normalizedOrigin = normalizeOrigin(origin);
+  
+  // Vérifier si l'origine normalisée est dans la liste
+  if (allowedOrigins.includes(normalizedOrigin)) {
+    return true;
+  }
+  
+  // Vérifier aussi sans normalisation (au cas où)
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
+  
+  // Vérifier aussi en normalisant chaque origine autorisée
+  for (const allowed of allowedOrigins) {
+    if (normalizeOrigin(allowed) === normalizedOrigin) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
  * Configuration CORS
  * IMPORTANT: Avec credentials: true, on ne peut pas utiliser origin: true ou "*"
  * Il faut spécifier explicitement les origines autorisées
@@ -42,7 +86,14 @@ export const corsMiddleware: RequestHandler = (req: Request, res: Response, next
       console.warn("⚠️ CORS: ALLOWED_ORIGINS non configuré - utilisation des valeurs par défaut (localhost uniquement)");
     }
   } else {
-    allowedOrigins = allowedOriginsEnv.split(",").map((o) => o.trim());
+    allowedOrigins = allowedOriginsEnv.split(",").map((o) => {
+      const trimmed = o.trim();
+      // Normaliser : ajouter https:// si ce n'est pas déjà présent
+      if (trimmed && !trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+        return `https://${trimmed}`;
+      }
+      return trimmed;
+    });
     console.log(`✅ CORS: ${allowedOrigins.length} origine(s) autorisée(s): ${allowedOrigins.join(", ")}`);
   }
 
@@ -69,8 +120,8 @@ export const corsMiddleware: RequestHandler = (req: Request, res: Response, next
       return res.status(204).end();
     }
 
-    // Vérifier si l'origine est autorisée
-    if (allowedOrigins.includes(origin)) {
+    // Vérifier si l'origine est autorisée (avec normalisation)
+    if (isOriginAllowed(origin, allowedOrigins)) {
       res.header("Access-Control-Allow-Origin", origin);
       res.header("Access-Control-Allow-Credentials", "true");
       res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
@@ -102,8 +153,8 @@ export const corsMiddleware: RequestHandler = (req: Request, res: Response, next
         return callback(null, true);
       }
 
-      // Vérifier si l'origine est dans la liste autorisée
-      if (allowedOrigins.includes(origin)) {
+      // Vérifier si l'origine est dans la liste autorisée (avec normalisation)
+      if (isOriginAllowed(origin, allowedOrigins)) {
         callback(null, true);
       } else {
         console.warn(`⚠️ CORS: Origine non autorisée: ${origin}`);
