@@ -47,12 +47,12 @@ RUN chown -R nodejs:nodejs /app
 USER nodejs
 
 # ===== CONFIGURATION DU RÉSEAU =====
-EXPOSE 3000
+EXPOSE 3020
 
 # ===== HEALTHCHECK =====
 # Vérification de santé du service
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
+  CMD curl -f http://localhost:3020/api/health || exit 1
 
 # ===== COMMANDE DE DÉMARRAGE =====
 CMD ["npm", "start"]
