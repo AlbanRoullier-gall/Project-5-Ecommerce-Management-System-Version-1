@@ -1,16 +1,27 @@
 FROM nginx:alpine
 
+# Installer gettext pour envsubst
+RUN apk add --no-cache gettext
+
 # Supprimer la configuration par défaut pour éviter les conflits
 RUN rm -f /etc/nginx/conf.d/default.conf
 
 # Copier les configurations
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
-# Copier uniquement routing.conf (routing.dev.conf sera monté via volume en dev)
-COPY nginx/conf.d/routing.conf /etc/nginx/conf.d/routing.conf
+# Copier uniquement routing.conf comme template (routing.dev.conf sera monté via volume en dev)
+COPY nginx/conf.d/routing.conf /etc/nginx/conf.d/routing.conf.template
 COPY nginx/conf.d/rate-limiting.conf /etc/nginx/conf.d/rate-limiting.conf
+
+# Script d'entrée pour remplacer les variables d'environnement avec envsubst
+RUN echo '#!/bin/sh' > /docker-entrypoint-envsubst.sh && \
+    echo 'set -e' >> /docker-entrypoint-envsubst.sh && \
+    echo 'envsubst '"'"'$$FRONTEND_URL $$BACKOFFICE_URL $$API_GATEWAY_URL'"'"' < /etc/nginx/conf.d/routing.conf.template > /etc/nginx/conf.d/routing.conf' >> /docker-entrypoint-envsubst.sh && \
+    echo 'exec /docker-entrypoint.sh "$$@"' >> /docker-entrypoint-envsubst.sh && \
+    chmod +x /docker-entrypoint-envsubst.sh
 
 # Exposer les ports
 EXPOSE 80 443
 
-# Démarrer nginx
+# Démarrer nginx avec envsubst
+ENTRYPOINT ["/docker-entrypoint-envsubst.sh"]
 CMD ["nginx", "-g", "daemon off;"]
