@@ -3,6 +3,30 @@
 # Ne déployez PAS les conteneurs customer-db, product-db, order-db, auth-db, redis
 
 services:
+  # Nginx - Point d'entrée unique (Production)
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # Variables d'environnement pour les URLs des services
+      # En production, ces valeurs peuvent être remplacées par des variables Railway
+      - FRONTEND_URL=http://frontend:3000
+      - BACKOFFICE_URL=http://backoffice:3000
+      - API_GATEWAY_URL=http://api-gateway:3020
+    depends_on:
+      - frontend
+      - backoffice
+      - api-gateway
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # API Gateway
   api-gateway:
     build:
@@ -13,6 +37,30 @@ services:
     environment:
       - NODE_ENV=production
       - DOCKER_ENV=true
+      - JWT_SECRET=${JWT_SECRET}
+      # CORS - À configurer avec vos domaines de production
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://monsite.com,https://www.monsite.com,https://admin.monsite.com}
+      - CORS_CREDENTIALS=true
+      # Redis - Utilise la variable Railway ${{Redis.REDIS_URL}} en production
+      - REDIS_URL=${REDIS_URL:-${{Redis.REDIS_URL}}}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      # Rate limiting global
+      - RATE_LIMIT_GLOBAL_ENABLED=true
+      - RATE_LIMIT_GLOBAL_WINDOW_MS=900000
+      - RATE_LIMIT_GLOBAL_MAX_REQUESTS=200
+      # Rate limiting auth login
+      - RATE_LIMIT_AUTH_LOGIN_ENABLED=true
+      - RATE_LIMIT_AUTH_LOGIN_WINDOW_MS=900000
+      - RATE_LIMIT_AUTH_LOGIN_MAX_REQUESTS=5
+      # Rate limiting payment
+      - RATE_LIMIT_PAYMENT_ENABLED=true
+      - RATE_LIMIT_PAYMENT_WINDOW_MS=60000
+      - RATE_LIMIT_PAYMENT_MAX_REQUESTS=10
+      # Rate limiting admin
+      - RATE_LIMIT_ADMIN_ENABLED=true
+      - RATE_LIMIT_ADMIN_WINDOW_MS=60000
+      - RATE_LIMIT_ADMIN_MAX_REQUESTS=50
     depends_on:
       - customer-service
       - product-service
@@ -38,6 +86,9 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
+      # Database URL - À configurer dans Railway
+      - DATABASE_URL=${CUSTOMER_DATABASE_URL:-${{Postgres.DATABASE_URL}}/customer_db}
+      - JWT_SECRET=${JWT_SECRET}
     depends_on:
       - auth-service
     healthcheck:
@@ -57,6 +108,9 @@ services:
     environment:
       - NODE_ENV=production
       - DOCKER_ENV=true
+      # Database URL - À configurer dans Railway
+      - DATABASE_URL=${PRODUCT_DATABASE_URL:-${{Postgres.DATABASE_URL}}/product_db}
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3002/api/health"]
       interval: 30s
@@ -73,6 +127,10 @@ services:
       - "3003:3003"
     environment:
       - NODE_ENV=production
+      # Database URL - À configurer dans Railway
+      - DATABASE_URL=${ORDER_DATABASE_URL:-${{Postgres.DATABASE_URL}}/order_db}
+      - JWT_SECRET=${JWT_SECRET}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
     depends_on:
       - customer-service
       - product-service
@@ -93,6 +151,10 @@ services:
       - "3004:3004"
     environment:
       - NODE_ENV=production
+      # Redis - Utilise la variable Railway ${{Redis.REDIS_URL}} en production
+      - REDIS_URL=${REDIS_URL:-${{Redis.REDIS_URL}}}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3004/api/health"]
       interval: 30s
@@ -109,6 +171,9 @@ services:
       - "3007:3007"
     environment:
       - NODE_ENV=production
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3007/api/health"]
       interval: 30s
@@ -125,6 +190,10 @@ services:
       - "3006:3006"
     environment:
       - NODE_ENV=production
+      - GMAIL_USER=${GMAIL_USER}
+      - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3006/api/health"]
       interval: 30s
@@ -141,6 +210,9 @@ services:
       - "3008:3008"
     environment:
       - NODE_ENV=production
+      # Database URL - À configurer dans Railway
+      - DATABASE_URL=${AUTH_DATABASE_URL:-${{Postgres.DATABASE_URL}}/auth_db}
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3008/api/health"]
       interval: 30s
@@ -174,8 +246,12 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      # URL de l'API - À configurer dans Railway avec votre domaine
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://monsite.com}
+      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
     depends_on:
       - api-gateway
+      - nginx
 
   # Backoffice
   backoffice:
@@ -186,10 +262,22 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      # URL de l'API - À configurer dans Railway avec votre domaine
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://monsite.com}
     depends_on:
       - api-gateway
+      - nginx
 # NOTE: PostgreSQL et Redis sont gérés par Railway comme services séparés
 # Ne les incluez PAS dans ce docker-compose.yml
 # Utilisez les variables d'environnement Railway pour les connexions :
 # - ${{Postgres.DATABASE_URL}}/nom_database
 # - ${{Redis.REDIS_URL}}
+#
+# SERVICES UTILISANT REDIS :
+# - api-gateway : Rate limiting métier (via rateLimitService)
+# - cart-service : Gestion des paniers
+#
+# SERVICES UTILISANT NGINX :
+# - nginx : Point d'entrée unique, routing et rate limiting réseau
+#   - Route les requêtes vers frontend, backoffice et api-gateway
+#   - Applique le rate limiting réseau (200 req/15min par IP)
