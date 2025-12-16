@@ -43,8 +43,9 @@ RATE_LIMIT_ADMIN_ENABLED=true
 RATE_LIMIT_ADMIN_WINDOW_MS=60000
 RATE_LIMIT_ADMIN_MAX_REQUESTS=50
 
-# CORS (mettre à jour avec vos domaines nginx)
-ALLOWED_ORIGINS=https://VOTRE-DOMAINE-NGINX.up.railway.app,https://admin.VOTRE-DOMAINE-NGINX.up.railway.app
+# CORS (mettre à jour avec votre domaine nginx Railway)
+# Exemple : ALLOWED_ORIGINS=https://nginx-production-ac30.up.railway.app
+ALLOWED_ORIGINS=https://VOTRE-DOMAINE-NGINX.up.railway.app
 CORS_CREDENTIALS=true
 ```
 
@@ -105,17 +106,17 @@ limit_req_zone $binary_remote_addr zone=api_limit:10m rate=13r/m;
 
 # Upstream pour Frontend Next.js
 upstream frontend {
-    server ${FRONTEND_URL:-frontend:3000};
+    server ${FRONTEND_HOST};
 }
 
 # Upstream pour Backoffice Next.js
 upstream backoffice {
-    server ${BACKOFFICE_URL:-backoffice:3000};
+    server ${BACKOFFICE_HOST};
 }
 
 # Upstream pour API Gateway
 upstream api_gateway {
-    server ${API_GATEWAY_URL:-api-gateway:3020};
+    server ${API_GATEWAY_HOST};
 }
 
 # Server block unique pour Railway
@@ -260,10 +261,15 @@ Allez dans votre service **API Gateway** → **Settings** → **Variables**
 **Mettre à jour `ALLOWED_ORIGINS` :**
 
 ```bash
-ALLOWED_ORIGINS=https://VOTRE-DOMAINE-NGINX.up.railway.app
+ALLOWED_ORIGINS=https://nginx-production-ac30.up.railway.app
 ```
 
-Remplacez `VOTRE-DOMAINE-NGINX` par le domaine nginx obtenu à l'étape 2.4
+**⚠️ Remplacez `nginx-production-ac30.up.railway.app` par VOTRE domaine nginx obtenu à l'étape 2.4**
+
+**Exemple avec votre domaine :** Si votre domaine Railway est `nginx-production-ac30.up.railway.app`, mettez :
+```bash
+ALLOWED_ORIGINS=https://nginx-production-ac30.up.railway.app
+```
 
 **Note :** Si vous utilisez des domaines personnalisés plus tard, ajoutez-les aussi :
 
