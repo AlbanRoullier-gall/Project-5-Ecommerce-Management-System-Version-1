@@ -1,4 +1,42 @@
-# 🔍 Diagnostic des erreurs 404 API
+# 🔍 Diagnostic des erreurs Railway
+
+## Erreur "Application failed to respond"
+
+Si vous voyez cette erreur sur votre domaine nginx, cela signifie que nginx ne démarre pas correctement.
+
+### Causes possibles
+
+1. **Variables d'environnement manquantes ou invalides**
+   - Vérifiez que `FRONTEND_URL`, `BACKOFFICE_URL`, `API_GATEWAY_URL` sont définies dans le service Nginx
+   - Vérifiez que les URLs sont au format `http://service-name.railway.internal:port`
+
+2. **Configuration nginx invalide**
+   - Vérifiez les logs du service Nginx dans Railway
+   - Cherchez les erreurs de validation nginx
+
+3. **Script d'entrée qui échoue**
+   - Le script d'entrée peut échouer si les variables ne sont pas définies
+   - Vérifiez les logs pour voir les messages d'erreur
+
+### Solution
+
+1. **Vérifiez les logs nginx dans Railway :**
+   - Allez dans Railway → Service Nginx → Logs
+   - Cherchez les messages d'erreur commençant par `❌ ERREUR:`
+
+2. **Vérifiez les variables d'environnement :**
+   ```bash
+   FRONTEND_URL=http://VOTRE-NOM-FRONTEND.railway.internal:3000
+   BACKOFFICE_URL=http://VOTRE-NOM-BACKOFFICE.railway.internal:3000
+   API_GATEWAY_URL=http://VOTRE-NOM-API-GATEWAY.railway.internal:3020
+   ```
+   **⚠️ Important :** Remplacez les noms par les noms exacts de vos services Railway (sensible à la casse)
+
+3. **Redéployez le service nginx** après avoir corrigé les variables
+
+---
+
+## Erreurs 404 API
 
 ## Problème
 
@@ -51,6 +89,7 @@ curl https://nginx-production-ac30.up.railway.app/api/health
 ```
 
 Si cela retourne une erreur, vérifiez :
+
 - Que le service API Gateway est démarré
 - Que les variables nginx sont correctes
 - Que nginx route correctement `/api/` vers l'API Gateway
@@ -58,10 +97,12 @@ Si cela retourne une erreur, vérifiez :
 ### 5. Vérification dans les logs
 
 **Logs nginx :**
+
 - Allez dans Railway → Service Nginx → Logs
 - Vérifiez si les requêtes `/api/` arrivent bien à nginx
 
 **Logs API Gateway :**
+
 - Allez dans Railway → Service API Gateway → Logs
 - Vérifiez si les requêtes arrivent bien à l'API Gateway
 
@@ -78,14 +119,17 @@ Si cela retourne une erreur, vérifiez :
 ## Solution rapide
 
 1. **Vérifiez `NEXT_PUBLIC_API_URL` dans Backoffice :**
+
    ```bash
    NEXT_PUBLIC_API_URL=https://nginx-production-ac30.up.railway.app
    ```
+
    (Remplacez par votre domaine nginx)
 
 2. **Redéployez le Backoffice** pour que la nouvelle variable soit prise en compte
 
 3. **Vérifiez les variables nginx :**
+
    ```bash
    FRONTEND_URL=http://VOTRE-NOM-FRONTEND.railway.internal:3000
    BACKOFFICE_URL=http://VOTRE-NOM-BACKOFFICE.railway.internal:3000
