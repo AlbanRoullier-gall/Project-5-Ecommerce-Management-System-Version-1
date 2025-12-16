@@ -1,24 +1,25 @@
 import React from "react";
+import Link from "next/link";
 
 const QuickActions: React.FC = () => {
   return (
     <div className="quick-actions">
       <h2>Actions Rapides</h2>
       <div className="actions-grid">
-        <a href="/products" className="action-card">
+        <Link href="/products" className="action-card">
           <i className="fas fa-box"></i>
           <span>Gérer les Produits</span>
-        </a>
+        </Link>
 
-        <a href="/customers" className="action-card">
+        <Link href="/customers" className="action-card">
           <i className="fas fa-users"></i>
           <span>Gérer les Clients</span>
-        </a>
+        </Link>
 
-        <a href="/orders" className="action-card">
+        <Link href="/orders" className="action-card">
           <i className="fas fa-shopping-bag"></i>
           <span>Voir les Commandes</span>
-        </a>
+        </Link>
       </div>
     </div>
   );

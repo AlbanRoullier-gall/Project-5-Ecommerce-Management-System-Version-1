@@ -15,6 +15,15 @@ body {
   padding: 0;
   margin: 0;
   background-color: #13686a;
+  overflow-x: hidden;
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 a {
@@ -278,11 +287,17 @@ ul {
   min-height: calc(100vh - 200px);
   padding: 2rem;
   background-color: #f8f9fa;
+  overflow-x: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .page-container {
   max-width: 1200px;
   margin: 0 auto;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .page-title {
@@ -300,6 +315,8 @@ ul {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 2rem;
   margin-bottom: 3rem;
+  justify-items: center;
+  align-items: center;
 }
 
 .stat-card {
@@ -310,6 +327,9 @@ ul {
   text-align: center;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
 }
 
 .stat-card:hover {
@@ -893,6 +913,23 @@ footer {
     font-size: 2rem;
   }
 
+  /* Stats container responsive */
+  .stats-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+    gap: 1.5rem;
+  }
+
+  .stat-card {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 280px;
+    min-width: 200px;
+    padding: 1.5rem;
+  }
+
   /* Page Header Responsive */
   .page-header {
     flex-direction: column !important;
@@ -907,6 +944,244 @@ footer {
   .page-header-actions {
     width: 100% !important;
     justify-content: flex-start !important;
+  }
+
+  /* Tableaux responsive - Tablettes - Mode carte pour éviter le scroll */
+  .table-responsive {
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    border-radius: 0 !important;
+    margin: 0 -1rem !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    max-height: none !important;
+  }
+
+  .table-responsive table {
+    min-width: 100% !important;
+    width: 100% !important;
+    display: block !important;
+    border-collapse: separate;
+  }
+
+  /* Surcharger les styles inline des tableaux */
+  .table-responsive[style*="overflowX"],
+  .table-responsive[style*="overflow-x"],
+  .table-responsive[style*="overflowX: auto"],
+  .table-responsive[style*="overflow-x: auto"] {
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+
+  .table-responsive[style*="maxHeight"] {
+    max-height: none !important;
+  }
+
+  table[style*="minWidth"],
+  table[style*="min-width"] {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Cacher l'en-tête du tableau sur tablettes */
+  .table-responsive thead {
+    display: none !important;
+  }
+
+  /* Transformer les lignes en cartes */
+  .table-responsive tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+  }
+
+  /* Design moderne des cartes */
+  .table-responsive tbody tr {
+    display: block !important;
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%) !important;
+    border: 2px solid #e5e7eb !important;
+    border-left: 4px solid #13686a !important;
+    border-radius: 12px !important;
+    margin-bottom: 0 !important;
+    padding: 1.25rem !important;
+    box-shadow: 0 2px 8px rgba(19, 104, 106, 0.08),
+      0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: visible !important;
+  }
+
+  .table-responsive tbody tr::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #13686a 0%, #0dd3d1 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .table-responsive tbody tr:hover {
+    box-shadow: 0 4px 16px rgba(19, 104, 106, 0.15),
+      0 2px 6px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-3px);
+    background: white !important;
+    border-color: #13686a !important;
+  }
+
+  .table-responsive tbody tr:hover::before {
+    opacity: 1;
+  }
+
+  .table-responsive tbody tr:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Supprimer les lignes alternées */
+  .table-responsive tbody tr:nth-child(even) {
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%) !important;
+  }
+
+  /* Première cellule = Titre principal */
+  .table-responsive tbody td:first-child {
+    display: block !important;
+    padding: 0 0 1rem 0 !important;
+    margin-bottom: 1rem !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    text-align: left !important;
+    font-size: 1.125rem !important;
+    font-weight: 700 !important;
+    color: #13686a !important;
+    width: 100% !important;
+    line-height: 1.4 !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+  }
+
+  /* Cellules suivantes = Informations secondaires */
+  .table-responsive tbody td:not(:first-child):not(:last-child) {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    padding: 0.875rem 0 !important;
+    text-align: left !important;
+    border-bottom: 1px solid #f3f4f6 !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    font-size: 0.9375rem !important;
+    width: 100% !important;
+    gap: 1rem;
+    overflow: visible !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Dernière cellule = Actions */
+  .table-responsive tbody td:last-child {
+    display: block !important;
+    padding: 1rem 0 0 0 !important;
+    margin-top: 0.75rem !important;
+    border-top: 2px solid #e5e7eb !important;
+    border-bottom: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    text-align: left !important;
+    width: 100% !important;
+  }
+
+  /* Styles pour les cellules avec colspan */
+  .table-responsive tbody td[colspan] {
+    display: block !important;
+    text-align: center !important;
+    padding: 2rem 1rem !important;
+    border: none !important;
+    color: #6b7280 !important;
+    font-style: italic !important;
+    font-size: 0.9375rem !important;
+  }
+
+  /* Améliorer le contenu des cellules */
+  .table-responsive tbody td:not(:first-child):not(:last-child) > div,
+  .table-responsive tbody td:not(:first-child):not(:last-child) > span {
+    color: #374151 !important;
+    font-size: 0.9375rem !important;
+    line-height: 1.6 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    overflow: visible !important;
+    white-space: normal !important;
+  }
+
+  /* Cellules d'action */
+  .table-responsive tbody td:last-child > div {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+    padding-top: 0.5rem !important;
+  }
+
+  .table-responsive tbody td:last-child > div[style*="display: flex"] {
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+  }
+
+  .table-responsive tbody td:last-child button,
+  .table-responsive tbody td:last-child a {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    border-radius: 8px !important;
+  }
+
+  /* Masquer certaines colonnes sur tablettes */
+  .mobile-hide {
+    display: none !important;
+  }
+
+  .table-responsive tbody tr .mobile-hide {
+    display: none !important;
+  }
+
+  /* Ajuster les conteneurs parent */
+  div[style*="display: flex"][style*="flexDirection: column"]
+    > .table-responsive {
+    margin: 0 !important;
+    border-radius: 12px !important;
+    background: transparent !important;
+  }
+
+  div[style*="maxHeight"] > .table-responsive {
+    max-height: none !important;
+  }
+
+  div[style*="overflow"] > .table-responsive,
+  div[style*="overflowX"] > .table-responsive,
+  div[style*="overflow-x"] > .table-responsive {
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+
+  /* Empêcher le scroll sur les conteneurs parent */
+  div[style*="overflow: hidden"] > .table-responsive,
+  div[style*="overflowX: hidden"] > .table-responsive {
+    overflow-x: hidden !important;
   }
 }
 
@@ -964,6 +1239,348 @@ footer {
 
   .page-header-actions button {
     width: 100% !important;
+  }
+
+  /* Stats container responsive - Small screens */
+  .stats-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .stat-card {
+    max-width: 100%;
+    width: 100%;
+    max-width: 280px;
+    padding: 1.5rem;
+  }
+
+  /* Tableaux responsive - Petits écrans - Transformation en cartes modernes */
+  .table-responsive {
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    border-radius: 0 !important;
+    margin: 0 -1rem !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    max-height: none !important;
+  }
+
+  .table-responsive table {
+    min-width: 100% !important;
+    width: 100% !important;
+    display: block !important;
+    border-collapse: separate;
+  }
+
+  /* Surcharger les styles inline des tableaux */
+  .table-responsive[style*="overflowX"],
+  .table-responsive[style*="overflow-x"],
+  .table-responsive[style*="overflowX: auto"],
+  .table-responsive[style*="overflow-x: auto"] {
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+
+  .table-responsive[style*="maxHeight"] {
+    max-height: none !important;
+  }
+
+  table[style*="minWidth"],
+  table[style*="min-width"] {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Cacher l'en-tête du tableau sur mobile */
+  .table-responsive thead {
+    display: none !important;
+  }
+
+  /* Transformer les lignes en cartes */
+  .table-responsive tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+  }
+
+  /* Design moderne des cartes */
+  .table-responsive tbody tr {
+    display: block !important;
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%) !important;
+    border: 2px solid #e5e7eb !important;
+    border-left: 4px solid #13686a !important;
+    border-radius: 12px !important;
+    margin-bottom: 0 !important;
+    padding: 1.25rem !important;
+    box-shadow: 0 2px 8px rgba(19, 104, 106, 0.08),
+      0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: visible !important;
+  }
+
+  .table-responsive tbody tr::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #13686a 0%, #0dd3d1 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .table-responsive tbody tr:hover {
+    box-shadow: 0 4px 16px rgba(19, 104, 106, 0.15),
+      0 2px 6px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-3px);
+    background: white !important;
+    border-color: #13686a !important;
+  }
+
+  .table-responsive tbody tr:hover::before {
+    opacity: 1;
+  }
+
+  .table-responsive tbody tr:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Supprimer les lignes alternées sur mobile */
+  .table-responsive tbody tr:nth-child(even) {
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%) !important;
+  }
+
+  /* Première cellule = Titre principal (mise en avant) */
+  .table-responsive tbody td:first-child {
+    display: block !important;
+    padding: 0 0 1rem 0 !important;
+    margin-bottom: 1rem !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    text-align: left !important;
+    font-size: 1.125rem !important;
+    font-weight: 700 !important;
+    color: #13686a !important;
+    width: 100% !important;
+    line-height: 1.4 !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+  }
+
+  /* Cellules suivantes = Informations secondaires */
+  .table-responsive tbody td:not(:first-child):not(:last-child) {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    padding: 0.875rem 0 !important;
+    text-align: left !important;
+    border-bottom: 1px solid #f3f4f6 !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    font-size: 0.9375rem !important;
+    width: 100% !important;
+    gap: 1rem;
+    overflow: visible !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Dernière cellule = Actions (style spécial) */
+  .table-responsive tbody td:last-child {
+    display: block !important;
+    padding: 1rem 0 0 0 !important;
+    margin-top: 0.75rem !important;
+    border-top: 2px solid #e5e7eb !important;
+    border-bottom: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    text-align: left !important;
+    width: 100% !important;
+    overflow: visible !important;
+    white-space: normal !important;
+  }
+
+  /* Style pour le contenu des cellules intermédiaires (structure label/valeur) */
+  .table-responsive tbody td:not(:first-child):not(:last-child) > * {
+    flex: 1;
+  }
+
+  /* Styles pour les cellules avec colspan (messages vides, etc.) */
+  .table-responsive tbody td[colspan] {
+    display: block !important;
+    text-align: center !important;
+    padding: 2rem 1rem !important;
+    border: none !important;
+    color: #6b7280 !important;
+    font-style: italic !important;
+    font-size: 0.9375rem !important;
+  }
+
+  /* Améliorer le contenu des cellules intermédiaires */
+  .table-responsive tbody td:not(:first-child):not(:last-child) > div,
+  .table-responsive tbody td:not(:first-child):not(:last-child) > span {
+    color: #374151 !important;
+    font-size: 0.9375rem !important;
+    line-height: 1.6 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    overflow: visible !important;
+    white-space: normal !important;
+  }
+
+  /* Style pour les valeurs importantes dans les cellules intermédiaires */
+  .table-responsive
+    tbody
+    td:not(:first-child):not(:last-child)
+    > div
+    > div[style*="font-weight: 600"],
+  .table-responsive
+    tbody
+    td:not(:first-child):not(:last-child)
+    > div
+    > div[style*="font-weight: 700"] {
+    font-size: 0.9375rem !important;
+    color: #111827 !important;
+    font-weight: 600 !important;
+  }
+
+  /* Style pour les valeurs secondaires (gris) */
+  .table-responsive
+    tbody
+    td:not(:first-child):not(:last-child)
+    > span[style*="color: #6b7280"],
+  .table-responsive
+    tbody
+    td:not(:first-child):not(:last-child)
+    > div
+    > span[style*="color: #6b7280"] {
+    color: #6b7280 !important;
+    font-size: 0.875rem !important;
+  }
+
+  /* Cellules d'action - Design spécial */
+  .table-responsive tbody td:last-child > div {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+    padding-top: 0.5rem !important;
+  }
+
+  .table-responsive tbody td:last-child > div[style*="display: flex"] {
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Améliorer l'affichage des boutons d'action */
+  .table-responsive tbody td:last-child button,
+  .table-responsive tbody td:last-child a {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    border-radius: 8px !important;
+  }
+
+  /* Améliorer le titre principal (première cellule) */
+  .table-responsive tbody td:first-child > div {
+    width: 100% !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  .table-responsive tbody td:first-child > div > div[style*="font-weight: 600"],
+  .table-responsive
+    tbody
+    td:first-child
+    > div
+    > div[style*="font-weight: 700"] {
+    font-size: 1.125rem !important;
+    font-weight: 700 !important;
+    color: #13686a !important;
+    line-height: 1.4 !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    width: 100% !important;
+  }
+
+  /* Masquer certaines colonnes sur petits écrans */
+  .mobile-hide {
+    display: none !important;
+  }
+
+  .table-responsive tbody tr .mobile-hide {
+    display: none !important;
+  }
+
+  /* Amélioration pour les tableaux dans des conteneurs avec padding */
+  .table-responsive {
+    background: transparent !important;
+    max-height: none !important;
+  }
+
+  /* Ajuster les conteneurs parent des tableaux (TableLayout) */
+  div[style*="display: flex"][style*="flexDirection: column"]
+    > .table-responsive {
+    margin: 0 !important;
+    border-radius: 12px !important;
+    background: transparent !important;
+  }
+
+  /* Supprimer les contraintes de hauteur sur mobile */
+  div[style*="maxHeight"] > .table-responsive {
+    max-height: none !important;
+  }
+
+  div[style*="overflow"] > .table-responsive,
+  div[style*="overflowX"] > .table-responsive,
+  div[style*="overflow-x"] > .table-responsive {
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+
+  /* Empêcher le scroll sur les conteneurs parent */
+  div[style*="overflow: hidden"] > .table-responsive,
+  div[style*="overflowX: hidden"] > .table-responsive {
+    overflow-x: hidden !important;
+  }
+
+  /* Améliorer les badges dans les tableaux */
+  .table-responsive tbody td .badge,
+  .table-responsive tbody td [class*="badge"] {
+    font-size: 0.8125rem !important;
+    padding: 0.375rem 0.75rem !important;
+  }
+
+  /* Styles spécifiques pour les actions dans les cartes */
+  .table-responsive tbody td:has([class*="action"]) {
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+    border-top: 2px solid #e5e7eb;
+  }
+
+  .table-responsive tbody td:has([class*="action"])::before {
+    display: none;
   }
 
   /* Styles spécifiques pour les champs de formulaire sur iPhone */
@@ -1123,13 +1740,201 @@ footer {
   gap: 0.5rem !important;
 }
 
-/* Tableaux responsive */
+/* TABLES RESPONSIVE DESIGN -------------------------------------------------------------------*/
+
+/* Container pour les tableaux - Pas de scroll horizontal */
 .table-responsive {
-  overflow-x: auto !important;
+  overflow-x: hidden !important;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  border: 1px solid rgba(19, 104, 106, 0.1);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(19, 104, 106, 0.5) rgba(19, 104, 106, 0.1);
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box;
 }
 
+.table-responsive::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(19, 104, 106, 0.05);
+  border-radius: 5px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(19, 104, 106, 0.3);
+  border-radius: 5px;
+  border: 2px solid rgba(19, 104, 106, 0.05);
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: rgba(19, 104, 106, 0.5);
+}
+
+/* Styles de base pour tous les tableaux - Pas de scroll horizontal */
 .table-responsive table {
-  min-width: 600px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 0 !important;
+  table-layout: auto !important;
+  box-sizing: border-box;
+}
+
+/* Force tous les tableaux à respecter la largeur du conteneur */
+.table-responsive table * {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* Surcharger table-layout: fixed des styles inline */
+table[style*="tableLayout"],
+table[style*="table-layout"],
+table[style*="tableLayout: fixed"],
+table[style*="table-layout: fixed"] {
+  table-layout: auto !important;
+}
+
+/* En-têtes de tableaux */
+.table-responsive thead {
+  background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%);
+  color: white;
+}
+
+.table-responsive thead th {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%);
+  color: white;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.table-responsive thead th:first-child {
+  border-top-left-radius: 0;
+}
+
+.table-responsive thead th:last-child {
+  border-top-right-radius: 0;
+}
+
+/* Corps des tableaux */
+.table-responsive tbody {
+  background: white;
+}
+
+.table-responsive tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.table-responsive tbody tr:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(19, 104, 106, 0.05) 0%,
+    rgba(13, 211, 209, 0.05) 100%
+  );
+}
+
+.table-responsive tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table-responsive tbody td {
+  padding: 1rem 1.25rem;
+  color: #374151;
+  font-size: 0.9375rem;
+  vertical-align: middle;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.table-responsive tbody td:first-child {
+  font-weight: 500;
+}
+
+/* Lignes alternées pour une meilleure lisibilité */
+.table-responsive tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.table-responsive tbody tr:nth-child(even):hover {
+  background: linear-gradient(
+    90deg,
+    rgba(19, 104, 106, 0.08) 0%,
+    rgba(13, 211, 209, 0.08) 100%
+  );
+}
+
+/* Masquer certaines colonnes sur mobile */
+.mobile-hide {
+  display: table-cell;
+}
+
+/* Animations douces pour les lignes */
+.table-responsive tbody tr {
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.table-responsive tbody tr:active {
+  transform: scale(0.998);
+}
+
+/* Amélioration de la lisibilité pour les cellules importantes */
+.table-responsive tbody td[style*="font-weight: 600"],
+.table-responsive tbody td[style*="font-weight: 700"] {
+  color: #111827;
+}
+
+/* Alignement du texte */
+.table-responsive td[style*="text-align: right"],
+.table-responsive th[style*="text-align: right"] {
+  text-align: right !important;
+}
+
+.table-responsive td[style*="text-align: center"],
+.table-responsive th[style*="text-align: center"] {
+  text-align: center !important;
+}
+
+.table-responsive td[style*="text-align: left"],
+.table-responsive th[style*="text-align: left"] {
+  text-align: left !important;
+}
+
+/* Amélioration de l'accessibilité - Focus visible pour les tableaux */
+.table-responsive:focus-visible {
+  outline: 2px solid #13686a;
+  outline-offset: 2px;
+}
+
+/* Styles pour les messages vides dans les tableaux */
+.table-responsive tbody tr td[colspan] {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #6b7280;
+  font-style: italic;
 }
 
 /* Modal détail de commande - Styles spécifiques */
@@ -1433,7 +2238,8 @@ footer {
   }
 
   .table-responsive table {
-    min-width: 500px !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
   }
 
   /* Modal détail de commande sur iPhone */
@@ -1499,6 +2305,41 @@ footer {
 
   .order-info-grid > div {
     padding: 0.5rem !important;
+  }
+
+  /* Tableaux sur très petits écrans - Optimisations supplémentaires */
+  .table-responsive {
+    margin: 0 -0.75rem;
+  }
+
+  .table-responsive tbody {
+    padding: 0.75rem !important;
+    gap: 0.875rem !important;
+  }
+
+  .table-responsive tbody tr {
+    padding: 1rem !important;
+    border-radius: 10px !important;
+  }
+
+  .table-responsive tbody td:first-child {
+    font-size: 1.0625rem !important;
+    padding-bottom: 0.875rem !important;
+    margin-bottom: 0.875rem !important;
+  }
+
+  .table-responsive tbody td:not(:first-child):not(:last-child) {
+    padding: 0.75rem 0 !important;
+    font-size: 0.875rem !important;
+  }
+
+  .table-responsive tbody td:last-child {
+    padding-top: 0.875rem !important;
+    margin-top: 0.625rem !important;
+  }
+
+  .table-responsive tbody td:last-child > div {
+    gap: 0.625rem !important;
   }
 
   /* Modal détail de commande responsive */
