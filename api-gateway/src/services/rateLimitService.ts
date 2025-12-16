@@ -89,21 +89,24 @@ export class RateLimitService {
   }
 
   /**
-   * Vérifier le rate limiting par IP (global)
+   * Méthode générique pour vérifier le rate limiting
+   * Factorise la logique commune de toutes les méthodes check*Limit
    */
-  async checkGlobalLimit(
-    ip: string
+  private async checkLimit(
+    keyPrefix: string,
+    identifier: string,
+    config: RateLimitConfig
   ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
-    if (!this.globalConfig.enabled) {
+    if (!config.enabled) {
       return {
         allowed: true,
         remaining: Infinity,
-        resetTime: Date.now() + this.globalConfig.windowMs,
+        resetTime: Date.now() + config.windowMs,
       };
     }
 
-    const key = `rate_limit:global:${ip}`;
-    const windowSeconds = Math.floor(this.globalConfig.windowMs / 1000);
+    const key = `rate_limit:${keyPrefix}:${identifier}`;
+    const windowSeconds = Math.floor(config.windowMs / 1000);
 
     const current = await this.redis.incr(key);
 
@@ -112,15 +115,24 @@ export class RateLimitService {
       await this.redis.expire(key, windowSeconds);
     }
 
-    const remaining = Math.max(0, this.globalConfig.maxRequests - current);
+    const remaining = Math.max(0, config.maxRequests - current);
     const ttl = await this.redis.ttl(key);
     const resetTime = Date.now() + ttl * 1000;
 
     return {
-      allowed: current <= this.globalConfig.maxRequests,
+      allowed: current <= config.maxRequests,
       remaining,
       resetTime,
     };
+  }
+
+  /**
+   * Vérifier le rate limiting par IP (global)
+   */
+  async checkGlobalLimit(
+    ip: string
+  ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+    return this.checkLimit("global", ip, this.globalConfig);
   }
 
   /**
@@ -129,32 +141,7 @@ export class RateLimitService {
   async checkAuthLoginLimit(
     ip: string
   ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
-    if (!this.authLoginConfig.enabled) {
-      return {
-        allowed: true,
-        remaining: Infinity,
-        resetTime: Date.now() + this.authLoginConfig.windowMs,
-      };
-    }
-
-    const key = `rate_limit:auth_login:${ip}`;
-    const windowSeconds = Math.floor(this.authLoginConfig.windowMs / 1000);
-
-    const current = await this.redis.incr(key);
-
-    if (current === 1) {
-      await this.redis.expire(key, windowSeconds);
-    }
-
-    const remaining = Math.max(0, this.authLoginConfig.maxRequests - current);
-    const ttl = await this.redis.ttl(key);
-    const resetTime = Date.now() + ttl * 1000;
-
-    return {
-      allowed: current <= this.authLoginConfig.maxRequests,
-      remaining,
-      resetTime,
-    };
+    return this.checkLimit("auth_login", ip, this.authLoginConfig);
   }
 
   /**
@@ -163,32 +150,7 @@ export class RateLimitService {
   async checkPaymentLimit(
     userId: string
   ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
-    if (!this.paymentConfig.enabled) {
-      return {
-        allowed: true,
-        remaining: Infinity,
-        resetTime: Date.now() + this.paymentConfig.windowMs,
-      };
-    }
-
-    const key = `rate_limit:payment:${userId}`;
-    const windowSeconds = Math.floor(this.paymentConfig.windowMs / 1000);
-
-    const current = await this.redis.incr(key);
-
-    if (current === 1) {
-      await this.redis.expire(key, windowSeconds);
-    }
-
-    const remaining = Math.max(0, this.paymentConfig.maxRequests - current);
-    const ttl = await this.redis.ttl(key);
-    const resetTime = Date.now() + ttl * 1000;
-
-    return {
-      allowed: current <= this.paymentConfig.maxRequests,
-      remaining,
-      resetTime,
-    };
+    return this.checkLimit("payment", userId, this.paymentConfig);
   }
 
   /**
@@ -197,32 +159,7 @@ export class RateLimitService {
   async checkAdminLimit(
     userId: string
   ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
-    if (!this.adminConfig.enabled) {
-      return {
-        allowed: true,
-        remaining: Infinity,
-        resetTime: Date.now() + this.adminConfig.windowMs,
-      };
-    }
-
-    const key = `rate_limit:admin:${userId}`;
-    const windowSeconds = Math.floor(this.adminConfig.windowMs / 1000);
-
-    const current = await this.redis.incr(key);
-
-    if (current === 1) {
-      await this.redis.expire(key, windowSeconds);
-    }
-
-    const remaining = Math.max(0, this.adminConfig.maxRequests - current);
-    const ttl = await this.redis.ttl(key);
-    const resetTime = Date.now() + ttl * 1000;
-
-    return {
-      allowed: current <= this.adminConfig.maxRequests,
-      remaining,
-      resetTime,
-    };
+    return this.checkLimit("admin", userId, this.adminConfig);
   }
 
   /**

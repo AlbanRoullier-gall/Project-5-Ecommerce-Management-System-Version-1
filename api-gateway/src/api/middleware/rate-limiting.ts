@@ -13,6 +13,53 @@ import { RateLimitService } from "../../services/rateLimitService";
 const rateLimitService = new RateLimitService();
 
 /**
+ * Helper pour ajouter les headers de rate limiting
+ */
+function setRateLimitHeaders(
+  res: Response,
+  limit: number,
+  remaining: number,
+  resetTime: number
+): void {
+  res.setHeader("X-RateLimit-Limit", limit.toString());
+  res.setHeader("X-RateLimit-Remaining", remaining.toString());
+  res.setHeader("X-RateLimit-Reset", new Date(resetTime).toISOString());
+}
+
+/**
+ * Helper pour retourner une erreur 429 Too Many Requests
+ */
+function sendTooManyRequests(
+  res: Response,
+  message: string,
+  resetTime: number
+): void {
+  res.status(429).json({
+    error: "Too Many Requests",
+    message,
+    retryAfter: Math.ceil((resetTime - Date.now()) / 1000),
+  });
+}
+
+/**
+ * Helper pour le fallback vers rate limit global quand l'utilisateur n'est pas authentifié
+ */
+async function checkGlobalLimitFallback(
+  req: Request,
+  res: Response
+): Promise<{ allowed: boolean; result: any }> {
+  const ip = rateLimitService.getClientIp(req);
+  const result = await rateLimitService.checkGlobalLimit(ip);
+
+  if (!result.allowed) {
+    sendTooManyRequests(res, "Limite de requêtes dépassée.", result.resetTime);
+    return { allowed: false, result };
+  }
+
+  return { allowed: true, result };
+}
+
+/**
  * Rate limiting global par IP
  * Appliqué à toutes les routes /api/* (sauf /api/health)
  */
@@ -29,18 +76,14 @@ export const globalRateLimit = async (
   const ip = rateLimitService.getClientIp(req);
   const result = await rateLimitService.checkGlobalLimit(ip);
 
-  // Ajouter les headers de rate limiting
-  res.setHeader("X-RateLimit-Limit", "200");
-  res.setHeader("X-RateLimit-Remaining", result.remaining.toString());
-  res.setHeader("X-RateLimit-Reset", new Date(result.resetTime).toISOString());
+  setRateLimitHeaders(res, 200, result.remaining, result.resetTime);
 
   if (!result.allowed) {
-    res.status(429).json({
-      error: "Too Many Requests",
-      message:
-        "Vous avez dépassé la limite de requêtes. Veuillez réessayer plus tard.",
-      retryAfter: Math.ceil((result.resetTime - Date.now()) / 1000),
-    });
+    sendTooManyRequests(
+      res,
+      "Vous avez dépassé la limite de requêtes. Veuillez réessayer plus tard.",
+      result.resetTime
+    );
     return;
   }
 
@@ -59,17 +102,14 @@ export const authLoginRateLimit = async (
   const ip = rateLimitService.getClientIp(req);
   const result = await rateLimitService.checkAuthLoginLimit(ip);
 
-  res.setHeader("X-RateLimit-Limit", "5");
-  res.setHeader("X-RateLimit-Remaining", result.remaining.toString());
-  res.setHeader("X-RateLimit-Reset", new Date(result.resetTime).toISOString());
+  setRateLimitHeaders(res, 5, result.remaining, result.resetTime);
 
   if (!result.allowed) {
-    res.status(429).json({
-      error: "Too Many Requests",
-      message:
-        "Trop de tentatives de connexion. Veuillez réessayer dans quelques minutes.",
-      retryAfter: Math.ceil((result.resetTime - Date.now()) / 1000),
-    });
+    sendTooManyRequests(
+      res,
+      "Trop de tentatives de connexion. Veuillez réessayer dans quelques minutes.",
+      result.resetTime
+    );
     return;
   }
 
@@ -89,33 +129,21 @@ export const paymentRateLimit = async (
 
   if (!user || !user.userId) {
     // Si pas d'utilisateur, utiliser l'IP comme fallback
-    const ip = rateLimitService.getClientIp(req);
-    const result = await rateLimitService.checkGlobalLimit(ip);
-
-    if (!result.allowed) {
-      res.status(429).json({
-        error: "Too Many Requests",
-        message: "Limite de requêtes dépassée.",
-        retryAfter: Math.ceil((result.resetTime - Date.now()) / 1000),
-      });
-      return;
-    }
+    const { allowed } = await checkGlobalLimitFallback(req, res);
+    if (!allowed) return;
     return next();
   }
 
   const result = await rateLimitService.checkPaymentLimit(String(user.userId));
 
-  res.setHeader("X-RateLimit-Limit", "10");
-  res.setHeader("X-RateLimit-Remaining", result.remaining.toString());
-  res.setHeader("X-RateLimit-Reset", new Date(result.resetTime).toISOString());
+  setRateLimitHeaders(res, 10, result.remaining, result.resetTime);
 
   if (!result.allowed) {
-    res.status(429).json({
-      error: "Too Many Requests",
-      message:
-        "Trop de requêtes de paiement. Veuillez réessayer dans une minute.",
-      retryAfter: Math.ceil((result.resetTime - Date.now()) / 1000),
-    });
+    sendTooManyRequests(
+      res,
+      "Trop de requêtes de paiement. Veuillez réessayer dans une minute.",
+      result.resetTime
+    );
     return;
   }
 
@@ -135,32 +163,21 @@ export const adminRateLimit = async (
 
   if (!user || !user.userId) {
     // Si pas d'utilisateur, utiliser l'IP comme fallback
-    const ip = rateLimitService.getClientIp(req);
-    const result = await rateLimitService.checkGlobalLimit(ip);
-
-    if (!result.allowed) {
-      res.status(429).json({
-        error: "Too Many Requests",
-        message: "Limite de requêtes dépassée.",
-        retryAfter: Math.ceil((result.resetTime - Date.now()) / 1000),
-      });
-      return;
-    }
+    const { allowed } = await checkGlobalLimitFallback(req, res);
+    if (!allowed) return;
     return next();
   }
 
   const result = await rateLimitService.checkAdminLimit(String(user.userId));
 
-  res.setHeader("X-RateLimit-Limit", "50");
-  res.setHeader("X-RateLimit-Remaining", result.remaining.toString());
-  res.setHeader("X-RateLimit-Reset", new Date(result.resetTime).toISOString());
+  setRateLimitHeaders(res, 50, result.remaining, result.resetTime);
 
   if (!result.allowed) {
-    res.status(429).json({
-      error: "Too Many Requests",
-      message: "Trop de requêtes admin. Veuillez réessayer dans une minute.",
-      retryAfter: Math.ceil((result.resetTime - Date.now()) / 1000),
-    });
+    sendTooManyRequests(
+      res,
+      "Trop de requêtes admin. Veuillez réessayer dans une minute.",
+      result.resetTime
+    );
     return;
   }
 
