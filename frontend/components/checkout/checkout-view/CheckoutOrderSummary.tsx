@@ -63,6 +63,7 @@ export default function CheckoutOrderSummary() {
 
       {/* Grille principale : informations client à gauche, commande à droite */}
       <div
+        className="checkout-summary-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
@@ -72,6 +73,7 @@ export default function CheckoutOrderSummary() {
       >
         {/* Colonne gauche : Informations client et adresses */}
         <div
+          className="checkout-customer-info"
           style={{
             gridColumn: 1,
             background: "white",
@@ -84,8 +86,12 @@ export default function CheckoutOrderSummary() {
           }}
         >
           {/* Section informations client */}
-          <div style={{ marginBottom: "2.5rem" }}>
+          <div
+            className="checkout-info-section"
+            style={{ marginBottom: "2.5rem" }}
+          >
             <h3
+              className="checkout-section-title"
               style={{
                 fontSize: "1.6rem",
                 fontWeight: "600",
@@ -100,6 +106,7 @@ export default function CheckoutOrderSummary() {
               Informations client
             </h3>
             <div
+              className="checkout-info-box"
               style={{
                 padding: "1.5rem",
                 background: "#f8f9fa",
@@ -132,8 +139,12 @@ export default function CheckoutOrderSummary() {
           </div>
 
           {/* Section adresse de livraison */}
-          <div style={{ marginBottom: "2.5rem" }}>
+          <div
+            className="checkout-info-section"
+            style={{ marginBottom: "2.5rem" }}
+          >
             <h3
+              className="checkout-section-title"
               style={{
                 fontSize: "1.6rem",
                 fontWeight: "600",
@@ -148,6 +159,7 @@ export default function CheckoutOrderSummary() {
               Adresse de livraison
             </h3>
             <div
+              className="checkout-info-box"
               style={{
                 padding: "1.5rem",
                 background: "#f8f9fa",
@@ -167,8 +179,12 @@ export default function CheckoutOrderSummary() {
           {/* Section adresse de facturation (affichée uniquement si différente de l'adresse de livraison) */}
           {!addressData.useSameBillingAddress &&
             billingAddress.address !== shippingAddress.address && (
-              <div style={{ marginBottom: "2.5rem" }}>
+              <div
+                className="checkout-info-section"
+                style={{ marginBottom: "2.5rem" }}
+              >
                 <h3
+                  className="checkout-section-title"
                   style={{
                     fontSize: "1.6rem",
                     fontWeight: "600",
@@ -183,6 +199,7 @@ export default function CheckoutOrderSummary() {
                   Adresse de facturation
                 </h3>
                 <div
+                  className="checkout-info-box"
                   style={{
                     padding: "1.5rem",
                     background: "#f8f9fa",
@@ -203,6 +220,7 @@ export default function CheckoutOrderSummary() {
 
         {/* Colonne droite : Détail de la commande et totaux */}
         <div
+          className="checkout-order-details"
           style={{
             gridColumn: 2,
             background: "white",
@@ -216,6 +234,7 @@ export default function CheckoutOrderSummary() {
           }}
         >
           <h3
+            className="checkout-section-title"
             style={{
               fontSize: "1.6rem",
               fontWeight: "600",
@@ -231,12 +250,11 @@ export default function CheckoutOrderSummary() {
           </h3>
 
           {/* Liste des produits commandés - Utilise ItemDisplay */}
-          <div style={{ marginBottom: "2rem" }}>
+          <div className="checkout-items-list" style={{ marginBottom: "2rem" }}>
             {cartItems.map((item, index) => (
               <ItemDisplay
                 key={index}
                 item={item}
-                variant="checkout"
                 showImage={true}
                 showDescription={false}
                 showQuantityControls={false}
@@ -247,6 +265,7 @@ export default function CheckoutOrderSummary() {
 
           {/* Section des totaux */}
           <div
+            className="checkout-totals-box"
             style={{
               padding: "2rem",
               background: "#f8f9fa",
@@ -261,6 +280,7 @@ export default function CheckoutOrderSummary() {
             {totals.breakdown.map((b) => (
               <div
                 key={b.rate}
+                className="checkout-vat-breakdown"
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
@@ -289,6 +309,7 @@ export default function CheckoutOrderSummary() {
 
       {/* Section d'information sur le paiement sécurisé */}
       <div
+        className="checkout-payment-info"
         style={{
           marginTop: "3rem",
           padding: "2rem",
@@ -418,211 +439,249 @@ export default function CheckoutOrderSummary() {
         /* Tablette */
         @media (max-width: 1024px) {
           .checkout-form-container {
-            padding: 2.5rem !important;
+            padding: 2rem !important;
           }
 
-          .checkout-form-title {
-            font-size: 2rem !important;
+          .checkout-summary-grid {
+            grid-template-columns: 1fr !important;
+            gap: 2rem !important;
+          }
+
+          .checkout-customer-info {
+            grid-column: 1 !important;
+          }
+
+          .checkout-order-details {
+            grid-column: 1 !important;
+          }
+
+          .checkout-section-title {
+            font-size: 1.4rem !important;
+          }
+
+          .checkout-info-box {
+            font-size: 1.2rem !important;
+            padding: 1.2rem !important;
+          }
+
+          .checkout-totals-box {
+            padding: 1.5rem !important;
           }
         }
 
         /* Mobile */
         @media (max-width: 768px) {
           .checkout-form-container {
-            padding: 2rem !important;
-            margin: 0 1rem !important;
+            padding: 1.5rem !important;
+            margin: 0 0.5rem !important;
           }
 
-          .checkout-form-header {
-            flex-direction: column !important;
-            text-align: center !important;
-            gap: 1rem !important;
-            margin-bottom: 2rem !important;
+          .checkout-summary-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
           }
 
-          .checkout-form-title {
-            font-size: 1.8rem !important;
-            line-height: 1.3 !important;
+          .checkout-customer-info {
+            grid-column: 1 !important;
+            padding: 1.5rem !important;
+            border-radius: 12px !important;
+          }
+
+          .checkout-order-details {
+            grid-column: 1 !important;
+            padding: 1.5rem !important;
+            border-radius: 12px !important;
+          }
+
+          .checkout-info-section {
+            margin-bottom: 1.5rem !important;
+          }
+
+          .checkout-section-title {
+            font-size: 1.3rem !important;
+            margin-bottom: 1rem !important;
+          }
+
+          .checkout-info-box {
+            font-size: 1.1rem !important;
+            padding: 1rem !important;
+          }
+
+          .checkout-items-list {
+            margin-bottom: 1.5rem !important;
+          }
+
+          .checkout-totals-box {
+            padding: 1.5rem !important;
+            border-radius: 10px !important;
+          }
+
+          .checkout-vat-breakdown {
+            font-size: 1.2rem !important;
+            padding: 0.3rem 0 !important;
+          }
+
+          .checkout-payment-info {
+            padding: 1.5rem !important;
+            margin-top: 2rem !important;
+            border-radius: 10px !important;
+          }
+
+          .checkout-payment-info h3 {
+            font-size: 1.3rem !important;
+          }
+
+          .checkout-payment-info p {
+            font-size: 1.1rem !important;
           }
 
           .checkout-form-actions {
             flex-direction: column !important;
             gap: 1rem !important;
             align-items: stretch !important;
+            padding-top: 1.5rem !important;
+            margin-top: 1.5rem !important;
           }
 
           .checkout-form-actions button {
             width: 100% !important;
             padding: 1rem 2rem !important;
-            font-size: 1.3rem !important;
-            justify-content: center !important;
-          }
-
-          /* Grilles responsives */
-          div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"] {
-            grid-template-columns: 1fr !important;
-            gap: 1.5rem !important;
-          }
-
-          /* Cartes d'information */
-          div[style*="background: #f0f9ff"] {
-            padding: 1.5rem !important;
-            margin-top: 2rem !important;
-          }
-
-          div[style*="background: #f0f9ff"] h3 {
-            font-size: 1.4rem !important;
-          }
-
-          div[style*="background: #f0f9ff"] p {
             font-size: 1.2rem !important;
+            justify-content: center !important;
           }
         }
 
-        /* iPhone - Design complètement revu */
+        /* iPhone */
         @media (max-width: 480px) {
           .checkout-form-container {
-            padding: 0.8rem !important;
-            margin: 0 0.2rem !important;
-            border-radius: 8px !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+            padding: 1rem !important;
+            margin: 0 0.3rem !important;
+            border-radius: 12px !important;
           }
 
-          .checkout-form-header {
+          .checkout-summary-grid {
+            gap: 1.2rem !important;
+          }
+
+          .checkout-customer-info {
+            padding: 1.2rem !important;
+            border-radius: 10px !important;
+          }
+
+          .checkout-order-details {
+            padding: 1.2rem !important;
+            border-radius: 10px !important;
+          }
+
+          .checkout-info-section {
+            margin-bottom: 1.2rem !important;
+          }
+
+          .checkout-section-title {
+            font-size: 1.2rem !important;
             margin-bottom: 0.8rem !important;
-            text-align: center !important;
+            flex-wrap: wrap !important;
           }
 
-          .checkout-form-title {
-            font-size: 1.6rem !important;
-            line-height: 1.3 !important;
+          .checkout-info-box {
+            font-size: 1rem !important;
+            padding: 0.9rem !important;
+            border-radius: 6px !important;
+          }
+
+          .checkout-info-box p {
+            font-size: 1rem !important;
+            line-height: 1.4 !important;
+            margin: 0.3rem 0 !important;
+          }
+
+          .checkout-items-list {
+            margin-bottom: 1.2rem !important;
+          }
+
+          .checkout-totals-box {
+            padding: 1.2rem !important;
+            border-radius: 8px !important;
+          }
+
+          .checkout-vat-breakdown {
+            font-size: 1.1rem !important;
+            padding: 0.3rem 0 !important;
+          }
+
+          .checkout-payment-info {
+            padding: 1.2rem !important;
+            margin-top: 1.5rem !important;
+            border-radius: 8px !important;
+          }
+
+          .checkout-payment-info h3 {
+            font-size: 1.2rem !important;
+            margin-bottom: 0.8rem !important;
+          }
+
+          .checkout-payment-info p {
+            font-size: 1rem !important;
+            line-height: 1.5 !important;
           }
 
           .checkout-form-actions {
-            padding-top: 0.8rem !important;
-            margin-top: 0.8rem !important;
+            padding-top: 1rem !important;
+            margin-top: 1rem !important;
+            border-top-width: 1px !important;
           }
 
           .checkout-form-actions button {
-            padding: 0.6rem 1rem !important;
-            font-size: 1rem !important;
-            border-radius: 6px !important;
-            width: 100% !important;
-          }
-
-          /* Récapitulatif - Design en cartes */
-          div[style*="marginBottom: 3rem"] {
-            margin-bottom: 1rem !important;
-          }
-
-          h3[style*="fontSize: 1.8rem"] {
+            padding: 0.9rem 1.5rem !important;
             font-size: 1.1rem !important;
-            margin-bottom: 0.8rem !important;
-            text-align: center !important;
-            color: #13686a !important;
-            border-bottom: 2px solid #e0e0e0 !important;
-            padding-bottom: 0.5rem !important;
-          }
-
-          /* Informations client - Design en carte */
-          div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"] {
-            display: block !important;
-            background: #f8f9fa !important;
-            padding: 0.8rem !important;
-            border-radius: 6px !important;
-            margin-bottom: 0.8rem !important;
-            border-left: 4px solid #13686a !important;
-          }
-
-          /* Texte des informations */
-          p[style*="fontSize: 1.3rem"] {
-            font-size: 0.85rem !important;
-            line-height: 1.3 !important;
-            margin: 0.2rem 0 !important;
-            color: #333 !important;
-          }
-
-          /* Totaux - Design en carte */
-          div[style*="background: #f0f9ff"] {
-            background: #f8f9fa !important;
-            padding: 0.8rem !important;
-            margin-top: 0.8rem !important;
-            border-radius: 6px !important;
-            border: 1px solid #e0e0e0 !important;
-          }
-
-          div[style*="background: #f0f9ff"] h3 {
-            font-size: 0.9rem !important;
-            margin-bottom: 0.4rem !important;
-            color: #13686a !important;
-            text-align: center !important;
-          }
-
-          div[style*="background: #f0f9ff"] p {
-            font-size: 0.8rem !important;
-            line-height: 1.2 !important;
-            margin: 0.2rem 0 !important;
-            text-align: center !important;
-          }
-
-          /* Grilles de totaux */
-          div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"] {
-            display: block !important;
-            text-align: center !important;
-          }
-
-          div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"]
-            > div {
-            margin: 0.3rem 0 !important;
-            padding: 0.3rem !important;
-            background: white !important;
-            border-radius: 4px !important;
-            border: 1px solid #e0e0e0 !important;
-          }
-
-          /* Total final */
-          div[style*="fontSize: 1.8rem"] {
-            font-size: 1.2rem !important;
-            font-weight: 700 !important;
-            color: #13686a !important;
-            text-align: center !important;
-            margin: 0.5rem 0 !important;
-            padding: 0.5rem !important;
-            background: linear-gradient(
-              135deg,
-              #13686a 0%,
-              #0dd3d1 100%
-            ) !important;
-            color: white !important;
-            border-radius: 6px !important;
+            border-radius: 8px !important;
           }
         }
 
         /* Très petits écrans */
         @media (max-width: 360px) {
           .checkout-form-container {
-            padding: 1rem !important;
-            margin: 0 0.3rem !important;
+            padding: 0.8rem !important;
+            margin: 0 0.2rem !important;
           }
 
-          .checkout-form-title {
-            font-size: 1.4rem !important;
+          .checkout-customer-info,
+          .checkout-order-details {
+            padding: 1rem !important;
+          }
+
+          .checkout-section-title {
+            font-size: 1.1rem !important;
+          }
+
+          .checkout-info-box {
+            font-size: 0.95rem !important;
+            padding: 0.8rem !important;
+          }
+
+          .checkout-totals-box {
+            padding: 1rem !important;
+          }
+
+          .checkout-vat-breakdown {
+            font-size: 1rem !important;
+            padding: 0.25rem 0 !important;
+          }
+
+          .checkout-payment-info {
+            padding: 1rem !important;
+          }
+
+          .checkout-payment-info h3 {
+            font-size: 1.1rem !important;
+          }
+
+          .checkout-payment-info p {
+            font-size: 0.95rem !important;
           }
 
           .checkout-form-actions button {
-            padding: 0.7rem 1.2rem !important;
-            font-size: 1.1rem !important;
-          }
-
-          div[style*="background: #f0f9ff"] {
-            padding: 1rem !important;
-          }
-
-          div[style*="background: #f0f9ff"] h3 {
-            font-size: 1.1rem !important;
-          }
-
-          div[style*="background: #f0f9ff"] p {
+            padding: 0.8rem 1.2rem !important;
             font-size: 1rem !important;
           }
         }

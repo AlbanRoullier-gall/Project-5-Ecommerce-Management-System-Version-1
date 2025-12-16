@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
@@ -20,7 +20,13 @@ import { useAuth } from "../contexts/AuthContext";
  */
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isAuthenticated, logout, user } = useAuth();
+  const [isMounted, setIsMounted] = useState(false);
+  const { isAuthenticated, logout, user, isLoading } = useAuth();
+
+  // Éviter les erreurs d'hydratation en ne rendant les éléments conditionnels qu'après le montage
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   /**
    * Déconnecte l'utilisateur et redirige vers la page de connexion
@@ -46,7 +52,7 @@ const Header: React.FC = () => {
         </div>
 
         {/* User Actions */}
-        {isAuthenticated && (
+        {isMounted && !isLoading && isAuthenticated && (
           <div className="user-actions">
             <button onClick={handleLogout} className="logout-btn">
               <i className="fas fa-sign-out-alt"></i>
@@ -83,7 +89,7 @@ const Header: React.FC = () => {
             <i className="fas fa-shopping-bag"></i>
             <span>COMMANDES</span>
           </Link>
-          {user?.isSuperAdmin && (
+          {isMounted && !isLoading && user?.isSuperAdmin && (
             <Link href="/users/management" className="nav-item">
               <i className="fas fa-user-shield"></i>
               <span>UTILISATEURS</span>
@@ -128,7 +134,7 @@ const Header: React.FC = () => {
             <i className="fas fa-shopping-bag"></i>
             <span>COMMANDES</span>
           </Link>
-          {user?.isSuperAdmin && (
+          {isMounted && !isLoading && user?.isSuperAdmin && (
             <Link
               href="/users/management"
               className="mobile-nav-item"

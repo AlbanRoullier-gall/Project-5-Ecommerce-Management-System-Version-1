@@ -4,8 +4,8 @@ const nextConfig = {
   swcMinify: true,
   // assetPrefix pour que les assets pointent vers /admin/_next/...
   // mais le routing reste normal (sans basePath) pour éviter les boucles de redirection
-  // Désactivé en développement local pour éviter les boucles de redirection
-  assetPrefix: process.env.NODE_ENV === "production" ? "/admin" : undefined,
+  // Activé aussi en développement pour que les assets soient correctement routés par nginx
+  assetPrefix: "/admin",
   webpack: (config, { isServer }) => {
     // Help webpack resolve @tfe/shared-types and dto
     const path = require("path");

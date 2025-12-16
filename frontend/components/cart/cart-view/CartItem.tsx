@@ -19,7 +19,6 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
   return (
     <ItemDisplay
       item={item}
-      variant="cart"
       showImage={true}
       showDescription={false}
       showQuantityControls={true}
