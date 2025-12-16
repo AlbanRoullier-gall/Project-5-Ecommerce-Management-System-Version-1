@@ -59,6 +59,15 @@ echo "   FRONTEND_HOST=$FRONTEND_HOST"
 echo "   BACKOFFICE_HOST=$BACKOFFICE_HOST"
 echo "   API_GATEWAY_HOST=$API_GATEWAY_HOST"
 
+# Test de résolution DNS pour diagnostiquer les problèmes de connexion
+echo "🔍 Test de résolution DNS..."
+if command -v nslookup >/dev/null 2>&1; then
+    echo "   Test API_GATEWAY_HOST: $(echo "$API_GATEWAY_HOST" | cut -d: -f1)"
+    nslookup $(echo "$API_GATEWAY_HOST" | cut -d: -f1) || echo "   ⚠️ Résolution DNS échouée pour API_GATEWAY_HOST"
+else
+    echo "   nslookup non disponible, skip du test DNS"
+fi
+
 # Remplacer les variables dans le template
 envsubst '${FRONTEND_HOST} ${BACKOFFICE_HOST} ${API_GATEWAY_HOST}' < /etc/nginx/conf.d/routing.conf.template > /etc/nginx/conf.d/routing.conf
 
