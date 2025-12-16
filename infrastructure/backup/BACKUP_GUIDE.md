@@ -105,7 +105,7 @@ Si les noms changent, utilisez :
 
 ### **Variables d'Environnement**
 
-Les scripts utilisent les informations de connexion définies dans `docker-compose.yml` :
+Les scripts utilisent les informations de connexion définies dans `docker-compose.dev.yml` :
 
 ```yaml
 environment:
