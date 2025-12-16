@@ -16,7 +16,12 @@ COPY nginx/conf.d/rate-limiting.conf /etc/nginx/conf.d/rate-limiting.conf
 RUN cat > /docker-entrypoint-envsubst.sh << 'EOFSCRIPT'
 #!/bin/sh
 set -e
-envsubst '${FRONTEND_URL} ${BACKOFFICE_URL} ${API_GATEWAY_URL}' < /etc/nginx/conf.d/routing.conf.template > /etc/nginx/conf.d/routing.conf
+# Extraire hostname:port des URLs (supprimer http:// ou https://)
+export FRONTEND_HOST=$(echo "$FRONTEND_URL" | sed 's|^https\?://||')
+export BACKOFFICE_HOST=$(echo "$BACKOFFICE_URL" | sed 's|^https\?://||')
+export API_GATEWAY_HOST=$(echo "$API_GATEWAY_URL" | sed 's|^https\?://||')
+# Remplacer les variables dans le template
+envsubst '${FRONTEND_HOST} ${BACKOFFICE_HOST} ${API_GATEWAY_HOST}' < /etc/nginx/conf.d/routing.conf.template > /etc/nginx/conf.d/routing.conf
 exec /docker-entrypoint.sh "$@"
 EOFSCRIPT
 RUN chmod +x /docker-entrypoint-envsubst.sh
