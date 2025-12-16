@@ -27,30 +27,56 @@ function normalizeOrigin(origin: string): string {
 /**
  * Vérifie si une origine est dans la liste autorisée
  * Gère les comparaisons avec/sans https://
+ * Gère aussi les correspondances entre URLs Railway internes et publiques
  */
 function isOriginAllowed(origin: string, allowedOrigins: string[]): boolean {
   if (!origin) return false;
-  
+
   // Normaliser l'origine
   const normalizedOrigin = normalizeOrigin(origin);
-  
+
   // Vérifier si l'origine normalisée est dans la liste
   if (allowedOrigins.includes(normalizedOrigin)) {
     return true;
   }
-  
+
   // Vérifier aussi sans normalisation (au cas où)
   if (allowedOrigins.includes(origin)) {
     return true;
   }
-  
+
   // Vérifier aussi en normalisant chaque origine autorisée
   for (const allowed of allowedOrigins) {
     if (normalizeOrigin(allowed) === normalizedOrigin) {
       return true;
     }
   }
-  
+
+  // Gestion spéciale pour Railway : si une URL interne Railway est autorisée,
+  // autoriser aussi les URLs publiques Railway correspondantes
+  // Exemple: https://frontend.railway.internal -> https://frontend-production-*.up.railway.app
+  if (normalizedOrigin.includes(".up.railway.app")) {
+    // Extraire le nom du service depuis l'URL publique (ex: "frontend" depuis "frontend-production-27ff")
+    const publicUrlMatch = normalizedOrigin.match(/https?:\/\/([^-]+)-/);
+    if (publicUrlMatch) {
+      const serviceName = publicUrlMatch[1];
+      // Vérifier si l'URL interne correspondante est autorisée (avec normalisation)
+      const internalUrl = normalizeOrigin(`${serviceName}.railway.internal`);
+      for (const allowed of allowedOrigins) {
+        const normalizedAllowed = normalizeOrigin(allowed);
+        if (
+          normalizedAllowed === internalUrl ||
+          normalizedAllowed.includes(`${serviceName}.railway.internal`)
+        ) {
+          console.log(
+            `✅ CORS: URL publique Railway autorisée via URL interne: ${normalizedOrigin} (service: ${serviceName})`
+          );
+          return true;
+        }
+      }
+    }
+  }
+
   return false;
 }
 
@@ -59,7 +85,11 @@ function isOriginAllowed(origin: string, allowedOrigins: string[]): boolean {
  * IMPORTANT: Avec credentials: true, on ne peut pas utiliser origin: true ou "*"
  * Il faut spécifier explicitement les origines autorisées
  */
-export const corsMiddleware: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
+export const corsMiddleware: RequestHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   // Récupérer la liste des origines autorisées depuis les variables d'environnement
   const allowedOriginsEnv = process.env["ALLOWED_ORIGINS"];
 
@@ -70,7 +100,9 @@ export const corsMiddleware: RequestHandler = (req: Request, res: Response, next
     // En développement, utiliser localhost uniquement
     if (process.env["NODE_ENV"] === "production") {
       console.warn("⚠️⚠️⚠️ CORS: ALLOWED_ORIGINS non configuré en PRODUCTION!");
-      console.warn("⚠️⚠️⚠️ Mode permissif activé temporairement - CONFIGUREZ ALLOWED_ORIGINS dans Railway!");
+      console.warn(
+        "⚠️⚠️⚠️ Mode permissif activé temporairement - CONFIGUREZ ALLOWED_ORIGINS dans Railway!"
+      );
       // Mode permissif temporaire pour le debug
       allowedOrigins = ["*"]; // Sera traité spécialement
     } else {
@@ -83,18 +115,28 @@ export const corsMiddleware: RequestHandler = (req: Request, res: Response, next
         "http://127.0.0.1:3009",
         "http://127.0.0.1:3010",
       ];
-      console.warn("⚠️ CORS: ALLOWED_ORIGINS non configuré - utilisation des valeurs par défaut (localhost uniquement)");
+      console.warn(
+        "⚠️ CORS: ALLOWED_ORIGINS non configuré - utilisation des valeurs par défaut (localhost uniquement)"
+      );
     }
   } else {
     allowedOrigins = allowedOriginsEnv.split(",").map((o) => {
       const trimmed = o.trim();
       // Normaliser : ajouter https:// si ce n'est pas déjà présent
-      if (trimmed && !trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+      if (
+        trimmed &&
+        !trimmed.startsWith("http://") &&
+        !trimmed.startsWith("https://")
+      ) {
         return `https://${trimmed}`;
       }
       return trimmed;
     });
-    console.log(`✅ CORS: ${allowedOrigins.length} origine(s) autorisée(s): ${allowedOrigins.join(", ")}`);
+    console.log(
+      `✅ CORS: ${
+        allowedOrigins.length
+      } origine(s) autorisée(s): ${allowedOrigins.join(", ")}`
+    );
   }
 
   const origin = req.headers.origin;
@@ -104,8 +146,14 @@ export const corsMiddleware: RequestHandler = (req: Request, res: Response, next
     // Mode permissif temporaire si ALLOWED_ORIGINS n'est pas configuré en production
     if (allowedOrigins.includes("*")) {
       res.header("Access-Control-Allow-Origin", origin || "*");
-      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-      res.header("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id");
+      res.header(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+      );
+      res.header(
+        "Access-Control-Allow-Headers",
+        "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id"
+      );
       res.header("Access-Control-Expose-Headers", "Set-Cookie");
       // Note: credentials ne peut pas être true avec Access-Control-Allow-Origin: *
       // Mais on l'autorise quand même pour le debug temporaire
@@ -115,8 +163,14 @@ export const corsMiddleware: RequestHandler = (req: Request, res: Response, next
     // Si pas d'origine, autoriser (pour les outils comme Postman)
     if (!origin) {
       res.header("Access-Control-Allow-Origin", "*");
-      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-      res.header("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id");
+      res.header(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+      );
+      res.header(
+        "Access-Control-Allow-Headers",
+        "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id"
+      );
       return res.status(204).end();
     }
 
@@ -124,13 +178,21 @@ export const corsMiddleware: RequestHandler = (req: Request, res: Response, next
     if (isOriginAllowed(origin, allowedOrigins)) {
       res.header("Access-Control-Allow-Origin", origin);
       res.header("Access-Control-Allow-Credentials", "true");
-      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-      res.header("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id");
+      res.header(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+      );
+      res.header(
+        "Access-Control-Allow-Headers",
+        "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id"
+      );
       res.header("Access-Control-Expose-Headers", "Set-Cookie");
       return res.status(204).end();
     } else {
       console.warn(`⚠️ CORS: Origine non autorisée pour OPTIONS: ${origin}`);
-      console.warn(`⚠️ CORS: Origines autorisées: ${allowedOrigins.join(", ")}`);
+      console.warn(
+        `⚠️ CORS: Origines autorisées: ${allowedOrigins.join(", ")}`
+      );
       // Retourner 403 au lieu de 500 pour les requêtes OPTIONS non autorisées
       return res.status(403).json({
         error: "CORS Error",
@@ -142,7 +204,10 @@ export const corsMiddleware: RequestHandler = (req: Request, res: Response, next
 
   // Pour les autres méthodes, utiliser le middleware CORS standard
   return cors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) => {
       // Mode permissif temporaire si ALLOWED_ORIGINS n'est pas configuré en production
       if (allowedOrigins.includes("*")) {
         return callback(null, true);
@@ -158,7 +223,9 @@ export const corsMiddleware: RequestHandler = (req: Request, res: Response, next
         callback(null, true);
       } else {
         console.warn(`⚠️ CORS: Origine non autorisée: ${origin}`);
-        console.warn(`⚠️ CORS: Origines autorisées: ${allowedOrigins.join(", ")}`);
+        console.warn(
+          `⚠️ CORS: Origines autorisées: ${allowedOrigins.join(", ")}`
+        );
         // Rejeter l'origine non autorisée
         callback(null, false);
       }
