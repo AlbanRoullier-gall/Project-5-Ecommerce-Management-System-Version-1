@@ -18,6 +18,12 @@ import {
   errorHandler,
 } from "./middleware/common";
 import {
+  globalRateLimit,
+  authLoginRateLimit,
+  paymentRateLimit,
+  adminRateLimit,
+} from "./middleware/rate-limiting";
+import {
   handleLogin,
   handleRegister,
   handlePasswordReset,
@@ -94,6 +100,10 @@ export class ApiRouter {
     // Parsing du body (Express gère déjà le Content-Type automatiquement)
     app.use(express.json({ limit: "10mb" }));
     app.use(express.urlencoded({ extended: true }));
+
+    // Rate limiting global par IP (après les middlewares de base)
+    // Exclut automatiquement /api/health
+    app.use("/api", globalRateLimit);
   }
 
   setupRoutes(app: any): void {
@@ -185,7 +195,7 @@ export class ApiRouter {
     // ===== ROUTES AVEC ORCHESTRATION (handlers spéciaux) =====
 
     // Auth - Routes orchestrées
-    app.post("/api/auth/login", handleLogin);
+    app.post("/api/auth/login", authLoginRateLimit, handleLogin);
     app.post("/api/auth/register", handleRegister);
     app.post("/api/auth/verify", handleVerifyAuth);
     app.post("/api/auth/logout", handleLogout);
@@ -193,11 +203,18 @@ export class ApiRouter {
     app.post("/api/auth/reset-password/confirm", handlePasswordResetConfirm);
 
     // Payment - Routes avec transformation/orchestration
-    app.post("/api/payment/create", handleCreatePayment);
+    app.post(
+      "/api/payment/create",
+      requireAuth,
+      paymentRateLimit,
+      handleCreatePayment
+    );
     // Applique le middleware cart-session pour extraire le sessionId du cookie
     app.post(
       "/api/payment/finalize",
+      requireAuth,
       cartSessionMiddleware,
+      paymentRateLimit,
       handleFinalizePayment
     );
 
@@ -230,6 +247,7 @@ export class ApiRouter {
     app.get(
       "/api/admin/statistics/dashboard",
       requireAuth,
+      adminRateLimit,
       handleDashboardStatistics
     );
 
@@ -331,6 +349,7 @@ export class ApiRouter {
     app.all(
       "/api/admin/*",
       requireAuth,
+      adminRateLimit,
       async (req: Request, res: Response) => {
         const service = this.getServiceFromPath(req.path);
         if (service) {

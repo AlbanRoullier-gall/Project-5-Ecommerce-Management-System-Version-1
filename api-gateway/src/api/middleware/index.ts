@@ -30,3 +30,11 @@ export {
   extractCartSessionId,
   CART_SESSION_COOKIE,
 } from "./cart-session";
+
+// Middlewares de rate limiting
+export {
+  globalRateLimit,
+  authLoginRateLimit,
+  paymentRateLimit,
+  adminRateLimit,
+} from "./rate-limiting";

@@ -177,9 +177,9 @@ export const handleLogin = async (req: Request, res: Response) => {
     // Le service auth a déjà défini le cookie, on transmet juste la réponse
     // Copier les cookies Set-Cookie depuis la réponse du service
     const setCookieHeader = authResponse.headers.get("set-cookie");
-    
+
     let token: string | null = null;
-    
+
     if (setCookieHeader) {
       // Extraire le token depuis le cookie Set-Cookie
       const cookieMatch = setCookieHeader.match(/auth_token=([^;]+)/);
@@ -206,7 +206,7 @@ export const handleLogin = async (req: Request, res: Response) => {
     return res.status(200).json(responseData);
   } catch (error: any) {
     console.error("❌ Login error:", error);
-    
+
     // Gérer les erreurs de timeout/connexion
     if (
       error.code === "UND_ERR_CONNECT_TIMEOUT" ||

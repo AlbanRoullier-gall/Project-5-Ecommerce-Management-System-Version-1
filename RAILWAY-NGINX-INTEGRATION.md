@@ -83,21 +83,18 @@ API_GATEWAY_URL=http://api-gateway.railway.internal:3020
 - Remplacez `frontend`, `backoffice`, et `api-gateway` par les **noms exacts** de vos services dans Railway
 - Les noms de services dans Railway sont sensibles à la casse
 - Utilisez le format `service-name.railway.internal:port` pour Railway Private Networking
+- **Ces variables sont OBLIGATOIRES** - nginx ne démarrera pas si elles ne sont pas définies
+- Le Dockerfile utilise `envsubst` pour remplacer les variables avant le démarrage de nginx
 
 ### 2.3 Configuration des domaines dans nginx
 
 La configuration nginx (`nginx/conf.d/routing.conf`) utilise des variables d'environnement pour les domaines.
 
-**⚠️ IMPORTANT :** Le fichier `routing.conf` actuel est configuré pour des domaines personnalisés (`monsite.com` et `admin.monsite.com`).
+**⚠️ IMPORTANT :** Le fichier `routing.conf` est configuré pour des domaines personnalisés avec routing par domaine (`monsite.com` pour frontend, `admin.monsite.com` pour backoffice).
 
-**Option A : Utiliser des domaines Railway générés automatiquement (Recommandé pour commencer)**
+**Pour utiliser des domaines Railway générés automatiquement :**
 
-Si vous utilisez les domaines Railway (`.up.railway.app`), utilisez le **Dockerfile Path** : `nginx/Dockerfile.railway`
-
-Ce Dockerfile utilise automatiquement `routing-railway.conf` qui est configuré pour :
-
-- Un seul domaine avec des chemins (`/` pour frontend, `/admin` pour backoffice)
-- Routing par chemin au lieu de par domaine
+Si vous utilisez les domaines Railway (`.up.railway.app`), vous devez modifier `routing.conf` pour utiliser un seul `server` block avec `server_name _;` et un routing par chemin (`/` pour frontend, `/admin` pour backoffice).
 
 ```nginx
 # Configuration de routing pour Railway (domaines générés)
@@ -286,26 +283,7 @@ Le Dockerfile actuel utilise déjà `routing.conf`, donc pas de modification né
 
 **Option B : Utiliser routing-railway.conf (domaines Railway générés)**
 
-Si vous voulez utiliser la configuration Railway, modifiez `nginx/Dockerfile` :
-
-```dockerfile
-FROM nginx:alpine
-
-# Supprimer la configuration par défaut
-RUN rm -f /etc/nginx/conf.d/default.conf
-
-# Copier les configurations
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
-# Utiliser routing-railway.conf pour Railway
-COPY nginx/conf.d/routing-railway.conf /etc/nginx/conf.d/routing.conf
-COPY nginx/conf.d/rate-limiting.conf /etc/nginx/conf.d/rate-limiting.conf
-
-# Exposer les ports
-EXPOSE 80 443
-
-# Démarrer nginx
-CMD ["nginx", "-g", "daemon off;"]
-```
+**Note :** Le `Dockerfile` actuel utilise `routing.conf` qui est configuré pour des domaines personnalisés. Si vous utilisez des domaines Railway générés, modifiez `routing.conf` comme indiqué ci-dessus.
 
 ---
 
