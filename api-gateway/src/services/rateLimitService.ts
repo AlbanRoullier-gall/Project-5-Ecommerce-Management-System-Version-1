@@ -53,8 +53,8 @@ export class RateLimitService {
         process.env["RATE_LIMIT_GLOBAL_WINDOW_MS"] || "900000"
       ), // 15 minutes
       maxRequests: parseInt(
-        process.env["RATE_LIMIT_GLOBAL_MAX_REQUESTS"] || "100"
-      ),
+        process.env["RATE_LIMIT_GLOBAL_MAX_REQUESTS"] || "200"
+      ), // 200 requêtes / 15 min (aligné avec l'ancienne config nginx)
     };
 
     this.authLoginConfig = {

@@ -30,7 +30,7 @@ export const globalRateLimit = async (
   const result = await rateLimitService.checkGlobalLimit(ip);
 
   // Ajouter les headers de rate limiting
-  res.setHeader("X-RateLimit-Limit", "100");
+  res.setHeader("X-RateLimit-Limit", "200");
   res.setHeader("X-RateLimit-Remaining", result.remaining.toString());
   res.setHeader("X-RateLimit-Reset", new Date(result.resetTime).toISOString());
 
@@ -166,3 +166,4 @@ export const adminRateLimit = async (
 
   next();
 };
+
