@@ -8,8 +8,8 @@ RUN rm -f /etc/nginx/conf.d/default.conf
 
 # Copier les configurations
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
-# Copier uniquement routing.conf comme template (routing.dev.conf sera monté via volume en dev)
-COPY nginx/conf.d/routing.conf /etc/nginx/conf.d/routing.conf.template
+# Utiliser routing-railway.conf pour Railway (domaines générés)
+COPY nginx/conf.d/routing-railway.conf /etc/nginx/conf.d/routing.conf.template
 COPY nginx/conf.d/rate-limiting.conf /etc/nginx/conf.d/rate-limiting.conf
 
 # Script d'entrée pour remplacer les variables d'environnement avec envsubst
