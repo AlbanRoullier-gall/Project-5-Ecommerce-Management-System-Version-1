@@ -1,0 +1,68 @@
+@layer components {
+  .page {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    min-height: 100vh;
+    background: white;
+  }
+
+  .brandPanel {
+    background: linear-gradient(135deg, #13686a 0%, #0d4f51 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    padding: 2rem;
+  }
+
+  .brandLogo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .brandLogo img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .brandTitle {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  .brandSubtitle {
+    font-size: 1rem;
+    opacity: 0.85;
+  }
+
+  .contentPanel {
+    display: flex;
+    flex-direction: column;
+    background: white;
+  }
+
+  @media (max-width: 1024px) {
+    .page {
+      grid-template-columns: 1fr;
+    }
+
+    .brandPanel {
+      min-height: 200px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .brandPanel {
+      padding: 1.5rem;
+    }
+  }
+}
+

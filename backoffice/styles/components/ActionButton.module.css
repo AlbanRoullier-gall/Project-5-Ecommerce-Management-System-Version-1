@@ -1,0 +1,30 @@
+@layer components {
+  .container {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .button {
+    padding: 0.75rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--btn-color, #13686a);
+    transition: transform var(--transition-normal) var(--transition-smooth),
+      background-color var(--transition-normal) var(--transition-smooth);
+    border-radius: 8px;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .button:hover {
+    background: var(--btn-bg-hover, rgba(0, 0, 0, 0.05));
+    transform: scale(1.1);
+  }
+}
+

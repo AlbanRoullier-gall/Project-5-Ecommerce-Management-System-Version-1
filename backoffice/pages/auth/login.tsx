@@ -1,6 +1,8 @@
 "use client";
 
 import Head from "next/head";
+import authStyles from "../../styles/components/Auth.module.css";
+import pageStyles from "../../styles/components/AuthPage.module.css";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -89,9 +91,9 @@ const LoginPage: React.FC = () => {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className="auth-page">
-        <div className="auth-background">
-          <div className="auth-logo">
+      <div className={pageStyles.page}>
+        <div className={pageStyles.brandPanel}>
+          <div className={pageStyles.brandLogo}>
             <img
               src="/images/logoNatureDePierreIcon.svg"
               alt="Logo Nature de Pierre"
@@ -102,101 +104,110 @@ const LoginPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="auth-content">
-          <div className="auth-container">
-            <div className="auth-card">
-              <div className="auth-header">
-                <h1 className="auth-title">Connexion</h1>
-                <p className="auth-subtitle">
-                  Accédez à votre espace d'administration
-                </p>
-              </div>
+        <div className={pageStyles.contentPanel}>
+          <div className={authStyles.authContent}>
+            <div className={authStyles.authContainer}>
+              <div className={authStyles.authCard}>
+                <div className={authStyles.authHeader}>
+                  <h1 className={authStyles.authTitle}>Connexion</h1>
+                  <p className={authStyles.authSubtitle}>
+                    Accédez à votre espace d'administration
+                  </p>
+                </div>
 
-              {/* Message d'erreur global */}
-              {error && (
-                <div className="auth-error-global">
-                  <i className="fas fa-exclamation-triangle"></i>
-                  <div className="error-content">
-                    <strong>Erreur :</strong>
-                    <div className="error-message-text">{error}</div>
+                {/* Message d'erreur global */}
+                {error && (
+                  <div className="auth-error-global">
+                    <i className="fas fa-exclamation-triangle"></i>
+                    <div className="error-content">
+                      <strong>Erreur :</strong>
+                      <div className="error-message-text">{error}</div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <form onSubmit={handleSubmit} className="auth-form">
-                {/* Champ email */}
-                <div className="form-group">
-                  <label htmlFor="email" className="form-label">
-                    Adresse email
-                    <span className="required">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    placeholder="votre@email.com"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className={`form-input ${errors.email ? "error" : ""}`}
+                <form onSubmit={handleSubmit} className={authStyles.authForm}>
+                  {/* Champ email */}
+                  <div className={authStyles.formGroup}>
+                    <label htmlFor="email" className={authStyles.formLabel}>
+                      Adresse email
+                      <span className={authStyles.required}>*</span>
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      placeholder="votre@email.com"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={`${authStyles.formInput} ${
+                        errors.email ? authStyles.formInputError : ""
+                      }`}
+                      disabled={isLoading}
+                    />
+                    {errors.email && (
+                      <div className="error-message-field">
+                        <i className="fas fa-exclamation-circle"></i>
+                        <span>{errors.email}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Champ mot de passe */}
+                  <div className={authStyles.formGroup}>
+                    <label htmlFor="password" className={authStyles.formLabel}>
+                      Mot de passe
+                      <span className={authStyles.required}>*</span>
+                    </label>
+                    <input
+                      type="password"
+                      id="password"
+                      name="password"
+                      placeholder="Votre mot de passe"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      className={`${authStyles.formInput} ${
+                        errors.password ? authStyles.formInputError : ""
+                      }`}
+                      disabled={isLoading}
+                    />
+                    {errors.password && (
+                      <div className="error-message-field">
+                        <i className="fas fa-exclamation-circle"></i>
+                        <span>{errors.password}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bouton de soumission */}
+                  <button
+                    type="submit"
+                    className={authStyles.authSubmit}
                     disabled={isLoading}
-                  />
-                  {errors.email && (
-                    <div className="error-message-field">
-                      <i className="fas fa-exclamation-circle"></i>
-                      <span>{errors.email}</span>
-                    </div>
-                  )}
+                  >
+                    {isLoading ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin"></i>
+                        Chargement...
+                      </>
+                    ) : (
+                      "Se connecter"
+                    )}
+                  </button>
+                </form>
+
+                {/* Liens supplémentaires */}
+                <div className={authStyles.authLinks}>
+                  <Link
+                    href="/auth/reset-password"
+                    className={authStyles.authLink}
+                  >
+                    Mot de passe oublié ?
+                  </Link>
+                  <Link href="/auth/register" className={authStyles.authLink}>
+                    Pas encore de compte ?
+                  </Link>
                 </div>
-
-                {/* Champ mot de passe */}
-                <div className="form-group">
-                  <label htmlFor="password" className="form-label">
-                    Mot de passe
-                    <span className="required">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="Votre mot de passe"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className={`form-input ${errors.password ? "error" : ""}`}
-                    disabled={isLoading}
-                  />
-                  {errors.password && (
-                    <div className="error-message-field">
-                      <i className="fas fa-exclamation-circle"></i>
-                      <span>{errors.password}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Bouton de soumission */}
-                <button
-                  type="submit"
-                  className="auth-submit-btn"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <i className="fas fa-spinner fa-spin"></i>
-                      Chargement...
-                    </>
-                  ) : (
-                    "Se connecter"
-                  )}
-                </button>
-              </form>
-
-              {/* Liens supplémentaires */}
-              <div className="auth-links">
-                <Link href="/auth/reset-password" className="auth-link">
-                  Mot de passe oublié ?
-                </Link>
-                <Link href="/auth/register" className="auth-link">
-                  Pas encore de compte ?
-                </Link>
               </div>
             </div>
           </div>
