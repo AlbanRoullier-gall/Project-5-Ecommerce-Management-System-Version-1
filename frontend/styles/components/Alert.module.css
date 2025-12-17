@@ -1,0 +1,50 @@
+@layer components {
+  .alert {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    align-items: flex-start;
+    font-size: 1.1rem;
+  }
+
+  .icon {
+    font-size: 1.2rem;
+    margin-top: 0.2rem;
+  }
+
+  .content {
+    flex: 1;
+  }
+
+  .title {
+    font-weight: 700;
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+
+  .close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+
+  .error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+  }
+
+  .success {
+    background: #ecfdf3;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+
+  .info {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+}

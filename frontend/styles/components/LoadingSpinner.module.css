@@ -1,0 +1,48 @@
+@layer components {
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem;
+  }
+
+  .fullscreen {
+    height: 100vh;
+    background: linear-gradient(135deg, #13686a 0%, #0d4f51 100%);
+    color: white;
+  }
+
+  .spinner {
+    color: #13686a;
+    font-size: 2rem;
+  }
+
+  .spinnerFullscreen {
+    color: white;
+    font-size: 2.5rem;
+  }
+
+  .spinnerSmall {
+    font-size: 1.5rem;
+  }
+
+  .spinnerMedium {
+    font-size: 2rem;
+  }
+
+  .spinnerLarge {
+    font-size: 3rem;
+  }
+
+  .message {
+    font-size: 1.2rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  .messageFullscreen {
+    color: white;
+  }
+}

@@ -1,9 +1,3 @@
-/**
- * Composant formulaire adresses de livraison et facturation
- *
- * Composant de présentation pur pour la saisie des adresses lors du processus de checkout.
- */
-
 import React from "react";
 import { AddressCreateDTO } from "../../../dto";
 import {
@@ -15,20 +9,15 @@ import {
   FieldError,
 } from "../../shared";
 import { useCheckoutAddressForm } from "../../../hooks";
+import styles from "../../../styles/components/CheckoutAddressForm.module.css";
 
-/**
- * Props pour le composant AddressFields
- */
 interface AddressFieldsProps {
   address: Partial<AddressCreateDTO>;
   onChange: (field: string, value: string) => void;
   errors?: { [key: string]: string };
-  prefix?: string; // "shipping" ou "billing" pour les clés d'erreur
+  prefix?: string;
 }
 
-/**
- * Composant réutilisable pour afficher les champs d'adresse
- */
 const AddressFields: React.FC<AddressFieldsProps> = ({
   address,
   onChange,
@@ -54,7 +43,7 @@ const AddressFields: React.FC<AddressFieldsProps> = ({
           onChange={handleInputChange}
           required
           placeholder="Numéro et nom de rue"
-          gridColumn="1 / -1"
+          fullWidth
         />
         {getError("address") && <FieldError message={getError("address")!} />}
       </div>
@@ -87,7 +76,7 @@ const AddressFields: React.FC<AddressFieldsProps> = ({
           value={address.countryName || ""}
           onChange={handleInputChange}
           readOnly
-          gridColumn="1 / -1"
+          fullWidth
         />
         {getError("countryName") && (
           <FieldError message={getError("countryName")!} />
@@ -97,9 +86,6 @@ const AddressFields: React.FC<AddressFieldsProps> = ({
   );
 };
 
-/**
- * Composant de présentation pur pour le formulaire adresses
- */
 export default function CheckoutAddressForm() {
   const {
     addressData,
@@ -116,39 +102,19 @@ export default function CheckoutAddressForm() {
 
   return (
     <FormContainer>
-      {/* En-tête du formulaire avec numéro d'étape */}
       <FormHeader stepNumber={2} title="Adresse de livraison" />
 
-      {/* Affichage de l'erreur générale (si pas d'erreurs par champ) */}
       {error && Object.keys(fieldErrors).length === 0 && (
         <Alert type="error" message={error} onClose={clearError} />
       )}
 
       <form onSubmit={handleSubmit}>
-        {/* Section adresse de livraison */}
-        <div style={{ marginBottom: "3rem" }}>
-          <h3
-            style={{
-              fontSize: "1.8rem",
-              fontWeight: "600",
-              color: "#13686a",
-              marginBottom: "1.5rem",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.8rem",
-            }}
-          >
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>
             <i className="fas fa-truck"></i>
             Adresse de livraison
           </h3>
-          <div
-            className="checkout-form-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "2rem",
-            }}
-          >
+          <div className={styles.grid}>
             <AddressFields
               address={addressData?.shipping || {}}
               onChange={handleShippingFieldChange}
@@ -158,75 +124,30 @@ export default function CheckoutAddressForm() {
           </div>
         </div>
 
-        {/* Checkbox pour même adresse de facturation */}
-        <div
-          style={{
-            marginBottom: "3rem",
-            padding: "1.5rem",
-            background: "#f8f9fa",
-            borderRadius: "8px",
-            border: "2px solid #e0e0e0",
-          }}
-        >
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
-              cursor: "pointer",
-              fontSize: "1.3rem",
-              fontWeight: "600",
-              color: "#333",
-            }}
-          >
+        <div className={styles.sameAddress}>
+          <label className={styles.checkboxLabel}>
             <input
               type="checkbox"
               checked={addressData?.useSameBillingAddress ?? true}
               onChange={(e) =>
                 handleUseSameBillingAddressChange(e.target.checked)
               }
-              style={{
-                width: "20px",
-                height: "20px",
-                cursor: "pointer",
-                accentColor: "#13686a",
-              }}
+              className={styles.checkbox}
             />
             <span>
-              <i
-                className="fas fa-check-square"
-                style={{ marginRight: "0.5rem" }}
-              ></i>
+              <i className={`fas fa-check-square ${styles.iconLeft}`}></i>
               Utiliser la même adresse pour la facturation
             </span>
           </label>
         </div>
 
-        {/* Section adresse de facturation (affichée uniquement si différente) */}
         {!(addressData?.useSameBillingAddress ?? true) && (
-          <div style={{ marginBottom: "3rem" }}>
-            <h3
-              style={{
-                fontSize: "1.8rem",
-                fontWeight: "600",
-                color: "#13686a",
-                marginBottom: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.8rem",
-              }}
-            >
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>
               <i className="fas fa-file-invoice"></i>
               Adresse de facturation
             </h3>
-            <div
-              className="checkout-form-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "2rem",
-              }}
-            >
+            <div className={styles.grid}>
               <AddressFields
                 address={addressData?.billing || {}}
                 onChange={handleBillingFieldChange}
@@ -237,22 +158,9 @@ export default function CheckoutAddressForm() {
           </div>
         )}
 
-        {/* Boutons de navigation */}
-        <div
-          className="checkout-form-actions"
-          style={{
-            display: "flex",
-            gap: "1.5rem",
-            justifyContent: "space-between",
-            paddingTop: "2rem",
-            borderTop: "2px solid #e0e0e0",
-          }}
-        >
+        <div className={styles.actions}>
           <Button type="button" variant="outline" onClick={handleBack}>
-            <i
-              className="fas fa-arrow-left"
-              style={{ marginRight: "0.8rem" }}
-            ></i>
+            <i className={`fas fa-arrow-left ${styles.iconLeft}`}></i>
             Retour
           </Button>
           <Button
@@ -262,152 +170,10 @@ export default function CheckoutAddressForm() {
             isLoading={isLoading}
           >
             Continuer
-            <i
-              className="fas fa-arrow-right"
-              style={{ marginLeft: "0.8rem" }}
-            ></i>
+            <i className={`fas fa-arrow-right ${styles.iconLeft}`}></i>
           </Button>
         </div>
       </form>
-
-      {/* Styles CSS pour le responsive design */}
-      <style jsx>{`
-        /* Responsive Design pour CheckoutAddressForm */
-
-        /* Tablette */
-        @media (max-width: 1024px) {
-          .checkout-form-container {
-            padding: 2.5rem !important;
-          }
-
-          .checkout-form-title {
-            font-size: 2rem !important;
-          }
-
-          .checkout-form-grid {
-            gap: 1.5rem !important;
-          }
-        }
-
-        /* Mobile */
-        @media (max-width: 768px) {
-          .checkout-form-container {
-            padding: 2rem !important;
-            margin: 0 1rem !important;
-          }
-
-          .checkout-form-header {
-            flex-direction: column !important;
-            text-align: center !important;
-            gap: 1rem !important;
-            margin-bottom: 2rem !important;
-          }
-
-          .checkout-form-title {
-            font-size: 1.8rem !important;
-            line-height: 1.3 !important;
-          }
-
-          .checkout-form-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1.5rem !important;
-          }
-
-          .checkout-form-group label {
-            font-size: 1.2rem !important;
-            margin-bottom: 0.6rem !important;
-          }
-
-          .checkout-form-group input,
-          .checkout-form-group select {
-            padding: 1rem !important;
-            font-size: 1.2rem !important;
-          }
-
-          .checkout-form-actions {
-            flex-direction: column !important;
-            gap: 1rem !important;
-            align-items: stretch !important;
-          }
-
-          .checkout-form-actions button {
-            width: 100% !important;
-            padding: 1rem 2rem !important;
-            font-size: 1.3rem !important;
-            justify-content: center !important;
-          }
-        }
-
-        /* iPhone */
-        @media (max-width: 480px) {
-          .checkout-form-container {
-            padding: 1.5rem !important;
-            margin: 0 0.5rem !important;
-            border-radius: 12px !important;
-          }
-
-          .checkout-form-header {
-            margin-bottom: 1.5rem !important;
-          }
-
-          .checkout-form-title {
-            font-size: 1.6rem !important;
-          }
-
-          .checkout-form-grid {
-            gap: 1.2rem !important;
-          }
-
-          .checkout-form-group label {
-            font-size: 1.1rem !important;
-            margin-bottom: 0.5rem !important;
-          }
-
-          .checkout-form-group input,
-          .checkout-form-group select {
-            padding: 0.8rem !important;
-            font-size: 1.1rem !important;
-            border-radius: 6px !important;
-          }
-
-          .checkout-form-actions {
-            padding-top: 1.5rem !important;
-          }
-
-          .checkout-form-actions button {
-            padding: 0.8rem 1.5rem !important;
-            font-size: 1.2rem !important;
-            border-radius: 6px !important;
-          }
-        }
-
-        /* Très petits écrans */
-        @media (max-width: 360px) {
-          .checkout-form-container {
-            padding: 1rem !important;
-            margin: 0 0.3rem !important;
-          }
-
-          .checkout-form-title {
-            font-size: 1.4rem !important;
-          }
-
-          .checkout-form-group label {
-            font-size: 1rem !important;
-          }
-
-          .checkout-form-group input,
-          .checkout-form-group select {
-            padding: 0.7rem !important;
-            font-size: 1rem !important;
-          }
-
-          .checkout-form-actions button {
-            padding: 0.7rem 1.2rem !important;
-            font-size: 1.1rem !important;
-          }
-        }
-      `}</style>
     </FormContainer>
   );
 }

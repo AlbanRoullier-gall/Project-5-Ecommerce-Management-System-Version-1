@@ -1,4 +1,5 @@
 import React from "react";
+import styles from "../../../styles/components/FormControls.module.css";
 
 /**
  * Props du composant FormSelect
@@ -50,50 +51,17 @@ const FormSelect: React.FC<FormSelectProps> = ({
   required = false,
   placeholder,
 }) => {
-  const selectStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "1rem 1.25rem",
-    border: "2px solid #e1e5e9",
-    borderRadius: "10px",
-    fontSize: "1rem",
-    transition: "all 0.3s ease",
-    background: "#f8f9fa",
-    fontFamily: "inherit",
-    boxSizing: "border-box",
-    borderColor: error ? "#dc2626" : "#e1e5e9",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: "1.1rem",
-    fontWeight: "600",
-    color: "#13686a",
-    marginBottom: "0.75rem",
-  };
-
   return (
-    <div style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>
-      <label htmlFor={id} style={labelStyle}>
-        {label} {required && "*"}
+    <div className={styles.field}>
+      <label htmlFor={id} className={styles.label}>
+        {label} {required && <span className={styles.required}>*</span>}
       </label>
       <select
         id={id}
         name={name}
         value={value}
         onChange={onChange}
-        style={selectStyle}
-        onFocus={(e) => {
-          if (!error) {
-            e.target.style.borderColor = "#13686a";
-            e.target.style.background = "white";
-            e.target.style.boxShadow = "0 0 0 3px rgba(19, 104, 106, 0.1)";
-          }
-        }}
-        onBlur={(e) => {
-          e.target.style.borderColor = error ? "#dc2626" : "#e1e5e9";
-          e.target.style.background = "#f8f9fa";
-          e.target.style.boxShadow = "none";
-        }}
+        className={`${styles.select} ${error ? styles.selectError : ""}`}
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((option) => (
@@ -102,17 +70,7 @@ const FormSelect: React.FC<FormSelectProps> = ({
           </option>
         ))}
       </select>
-      {error && (
-        <p
-          style={{
-            marginTop: "0.5rem",
-            fontSize: "0.9rem",
-            color: "#dc2626",
-          }}
-        >
-          ⚠️ {error}
-        </p>
-      )}
+      {error && <p className={styles.errorText}>⚠️ {error}</p>}
     </div>
   );
 };

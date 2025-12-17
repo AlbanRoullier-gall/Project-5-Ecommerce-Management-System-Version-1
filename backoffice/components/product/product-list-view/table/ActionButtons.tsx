@@ -29,13 +29,13 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ onEdit, onDelete }) => {
     <ActionButtonsContainer>
       <ActionButton
         icon="fas fa-edit"
-        color="#3b82f6"
+        variant="blue"
         title="Modifier"
         onClick={onEdit}
       />
       <ActionButton
         icon="fas fa-trash"
-        color="#ef4444"
+        variant="red"
         title="Supprimer"
         onClick={onDelete}
       />

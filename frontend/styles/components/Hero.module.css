@@ -1,0 +1,27 @@
+@layer components {
+  .hero {
+    background: linear-gradient(135deg, #13686a 0%, #0d4f51 100%);
+    color: white;
+    text-align: center;
+    padding: 4rem 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .content {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .title {
+    font-size: 4rem;
+    font-weight: 300;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .subtitle {
+    font-size: 1.8rem;
+    opacity: 0.9;
+    line-height: 1.4;
+  }
+}

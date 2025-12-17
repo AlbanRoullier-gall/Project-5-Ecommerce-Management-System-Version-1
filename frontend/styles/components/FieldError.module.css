@@ -1,0 +1,24 @@
+@layer components {
+  .error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #fef2f2;
+    border: 1px solid #ef4444;
+    border-radius: 6px;
+    font-size: 1.2rem;
+    color: #991b1b;
+  }
+
+  .icon {
+    font-size: 1.1rem;
+    color: #ef4444;
+  }
+
+  .text {
+    margin: 0;
+    line-height: 1.4;
+  }
+}

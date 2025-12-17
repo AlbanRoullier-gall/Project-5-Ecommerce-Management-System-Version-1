@@ -1,0 +1,26 @@
+@layer components {
+  .container {
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 2px solid #e1e5e9;
+    gap: 1rem;
+  }
+
+  .checkbox {
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+    accent-color: #13686a;
+  }
+
+  .label {
+    font-size: 1rem;
+    color: #111827;
+    cursor: pointer;
+    font-weight: 500;
+  }
+}
+

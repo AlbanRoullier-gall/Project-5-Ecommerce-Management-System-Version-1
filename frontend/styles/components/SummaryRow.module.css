@@ -1,0 +1,18 @@
+@layer components {
+  .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+    font-size: 1.4rem;
+    color: #555;
+    font-weight: 700;
+  }
+
+  .total {
+    padding: 1.5rem 0;
+    font-size: 1.8rem;
+    color: #13686a;
+    border-top: 2px solid #e0e0e0;
+    margin-top: 1rem;
+  }
+}

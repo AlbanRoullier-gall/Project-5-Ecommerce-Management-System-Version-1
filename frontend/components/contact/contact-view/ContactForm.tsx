@@ -8,11 +8,8 @@ import {
   Alert,
 } from "../../shared";
 import { useContactForm } from "../../../hooks";
+import styles from "../../../styles/components/ContactForm.module.css";
 
-/**
- * Composant de présentation du formulaire de contact
- * Utilise le hook useContactForm pour gérer la logique
- */
 export default function ContactForm() {
   const {
     formData,
@@ -25,20 +22,8 @@ export default function ContactForm() {
   } = useContactForm();
   return (
     <FormContainer className="contact-form-container">
-      {/* Titre du formulaire */}
-      <h2
-        style={{
-          fontSize: "2rem",
-          color: "#13686a",
-          marginBottom: "1.5rem",
-          textAlign: "center",
-          fontWeight: "bold",
-        }}
-      >
-        Envoyez-nous un message
-      </h2>
+      <h2 className={styles.title}>Envoyez-nous un message</h2>
 
-      {/* Affichage conditionnel du message de statut (succès ou erreur) */}
       {submitStatus.type && (
         <Alert
           type={submitStatus.type}
@@ -47,16 +32,7 @@ export default function ContactForm() {
         />
       )}
 
-      {/* Formulaire de contact */}
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1.5rem",
-        }}
-      >
-        {/* Champ : Nom */}
+      <form onSubmit={handleSubmit} className={styles.form}>
         <FormInput
           id="name"
           name="name"
@@ -65,7 +41,6 @@ export default function ContactForm() {
           onChange={handleInputChange}
         />
 
-        {/* Champ : Email (obligatoire) */}
         <FormInput
           id="email"
           name="email"
@@ -76,7 +51,6 @@ export default function ContactForm() {
           required
         />
 
-        {/* Champ : Sujet */}
         <FormInput
           id="subject"
           name="subject"
@@ -85,7 +59,6 @@ export default function ContactForm() {
           onChange={handleInputChange}
         />
 
-        {/* Champ : Message (textarea) */}
         <FormTextarea
           id="message"
           name="message"
@@ -95,7 +68,6 @@ export default function ContactForm() {
           rows={6}
         />
 
-        {/* Bouton de soumission avec état de chargement */}
         <Button
           type="submit"
           variant="primary"

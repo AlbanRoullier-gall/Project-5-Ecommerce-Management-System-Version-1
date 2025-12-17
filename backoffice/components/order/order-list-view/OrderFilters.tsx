@@ -1,6 +1,7 @@
 import React from "react";
 import { SearchInput, FilterContainer, FilterSelect } from "../../shared";
 import { useAvailableYears } from "../../../hooks";
+import styles from "../../../styles/components/OrderFilters.module.css";
 
 interface OrderFiltersProps {
   searchTerm: string;
@@ -63,18 +64,9 @@ const OrderFilters: React.FC<OrderFiltersProps> = ({
         placeholder="Toutes les années"
         options={yearOptions}
       />
-      <div style={{ minWidth: "200px", maxWidth: "100%" }}>
-        <label
-          htmlFor="totalFilter"
-          style={{
-            display: "block",
-            fontSize: "1.1rem",
-            fontWeight: "600",
-            color: "#13686a",
-            marginBottom: "0.75rem",
-          }}
-        >
-          <i className="fas fa-euro-sign" style={{ marginRight: "0.5rem" }}></i>
+      <div className={styles.field}>
+        <label htmlFor="totalFilter" className={styles.label}>
+          <i className={`fas fa-euro-sign ${styles.icon}`}></i>
           Total HT/TTC
         </label>
         <input
@@ -85,45 +77,12 @@ const OrderFilters: React.FC<OrderFiltersProps> = ({
           placeholder="Rechercher par montant..."
           step="0.01"
           min="0"
-          style={{
-            width: "100%",
-            padding: "1rem 1.25rem",
-            border: "2px solid #e1e5e9",
-            borderRadius: "10px",
-            fontSize: "1rem",
-            transition: "all 0.3s ease",
-            background: "#f8f9fa",
-            fontFamily: "inherit",
-            boxSizing: "border-box",
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = "#13686a";
-            e.currentTarget.style.background = "white";
-            e.currentTarget.style.boxShadow =
-              "0 0 0 3px rgba(19, 104, 106, 0.1)";
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = "#e1e5e9";
-            e.currentTarget.style.background = "#f8f9fa";
-            e.currentTarget.style.boxShadow = "none";
-          }}
+          className={styles.input}
         />
       </div>
-      <div style={{ minWidth: "200px", maxWidth: "100%" }}>
-        <label
-          htmlFor="dateFilter"
-          style={{
-            display: "block",
-            fontSize: "1.1rem",
-            fontWeight: "600",
-            color: "#13686a",
-            marginBottom: "0.75rem",
-          }}
-        >
-          <i
-            className="fas fa-calendar-alt"
-            style={{ marginRight: "0.5rem" }}
-          ></i>
+      <div className={styles.field}>
+        <label htmlFor="dateFilter" className={styles.label}>
+          <i className={`fas fa-calendar-alt ${styles.icon}`}></i>
           Date de création
         </label>
         <input
@@ -131,70 +90,12 @@ const OrderFilters: React.FC<OrderFiltersProps> = ({
           id="dateFilter"
           value={dateFilter}
           onChange={(e) => onDateFilterChange(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "1rem 1.25rem",
-            border: "2px solid #e1e5e9",
-            borderRadius: "10px",
-            fontSize: "1rem",
-            transition: "all 0.3s ease",
-            background: "#f8f9fa",
-            fontFamily: "inherit",
-            boxSizing: "border-box",
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = "#13686a";
-            e.currentTarget.style.background = "white";
-            e.currentTarget.style.boxShadow =
-              "0 0 0 3px rgba(19, 104, 106, 0.1)";
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = "#e1e5e9";
-            e.currentTarget.style.background = "#f8f9fa";
-            e.currentTarget.style.boxShadow = "none";
-          }}
+          className={styles.input}
         />
       </div>
-      <div
-        style={{
-          gridColumn: "1 / -1",
-          display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "center",
-          marginTop: "0.5rem",
-        }}
-      >
-        <button
-          onClick={onResetFilters}
-          style={{
-            padding: "0.85rem 1.75rem",
-            border: "none",
-            borderRadius: "10px",
-            fontSize: "0.95rem",
-            fontWeight: "600",
-            background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-            color: "white",
-            cursor: "pointer",
-            transition: "all 0.3s ease",
-            fontFamily: "inherit",
-            boxSizing: "border-box",
-            boxShadow: "0 2px 8px rgba(239, 68, 68, 0.25)",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = "translateY(-2px) scale(1.02)";
-            e.currentTarget.style.boxShadow =
-              "0 4px 16px rgba(239, 68, 68, 0.4)";
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = "translateY(0) scale(1)";
-            e.currentTarget.style.boxShadow =
-              "0 2px 8px rgba(239, 68, 68, 0.25)";
-          }}
-        >
-          <i className="fas fa-redo" style={{ fontSize: "0.9rem" }}></i>
+      <div className={styles.actions}>
+        <button onClick={onResetFilters} className={styles.resetButton}>
+          <i className={`fas fa-redo ${styles.resetIcon}`}></i>
           <span>Réinitialiser les filtres</span>
         </button>
       </div>

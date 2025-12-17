@@ -1,0 +1,74 @@
+@layer components {
+  .categoryBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(19, 104, 106, 0.08);
+    color: #13686a;
+    border-radius: 9999px;
+    border: 1px solid rgba(19, 104, 106, 0.18);
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .title {
+    font-size: 2.4rem;
+    color: #102a43;
+    margin-bottom: 0;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  .description {
+    display: grid;
+    row-gap: 0.25rem;
+    padding: 0;
+    margin: 0;
+  }
+
+  .descriptionHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: #13686a;
+    font-weight: 800;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .descriptionBody {
+    background: #ffffff;
+    border: 1px solid #e6eef5;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    color: #334e68;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    min-height: 200px;
+  }
+
+  @media (max-width: 768px) {
+    .title {
+      font-size: 2.5rem;
+    }
+    .categoryBadge {
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+    }
+    .descriptionBody {
+      font-size: 1.2rem;
+      padding: 1.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .title {
+      font-size: 2rem;
+    }
+  }
+}

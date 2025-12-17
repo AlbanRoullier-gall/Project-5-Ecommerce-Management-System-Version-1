@@ -6,6 +6,7 @@ import TableLayout, {
   TableRow,
   TableCell,
 } from "../../shared/TableLayout";
+import styles from "../../../styles/components/ProductTable.module.css";
 
 /**
  * Props du composant ProductTable
@@ -74,13 +75,13 @@ const ProductTable: React.FC<ProductTableProps> = ({
   ];
 
   return (
-    <TableLayout headers={headers} minWidth="1000px" headerGradient="teal">
+    <TableLayout headers={headers} headerGradient="teal">
       {products.length === 0 && (
         <TableRow>
           <TableCell
             colSpan={headers.length}
             align="center"
-            style={{ color: "#6b7280", padding: "2rem" }}
+            className={styles.empty}
           >
             Aucun produit trouvé
           </TableCell>

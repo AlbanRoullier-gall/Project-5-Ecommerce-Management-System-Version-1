@@ -10,6 +10,7 @@ import {
   ActionButton,
 } from "../../shared/ActionButton";
 import Badge from "../../shared/Badge";
+import styles from "../../../styles/components/UserTable.module.css";
 
 /**
  * Props du composant UserTable
@@ -74,14 +75,10 @@ const UserTable: React.FC<UserTableProps> = ({
   ];
 
   return (
-    <TableLayout headers={headers} minWidth="800px" headerGradient="teal">
+    <TableLayout headers={headers} headerGradient="teal">
       {users.length === 0 && (
         <TableRow>
-          <TableCell
-            colSpan={5}
-            align="center"
-            style={{ color: "#6b7280", padding: "2rem" }}
-          >
+          <TableCell colSpan={5} align="center" className={styles.empty}>
             Aucun utilisateur trouvé
           </TableCell>
         </TableRow>
@@ -90,9 +87,7 @@ const UserTable: React.FC<UserTableProps> = ({
       {users.map((user) => (
         <TableRow key={user.userId}>
           <TableCell>
-            <div style={{ fontWeight: "600", color: "#1f2937" }}>
-              {user.fullName}
-            </div>
+            <div className={styles.name}>{user.fullName}</div>
           </TableCell>
           <TableCell>{user.email}</TableCell>
           <TableCell>{getStatusBadge(user)}</TableCell>
@@ -100,12 +95,12 @@ const UserTable: React.FC<UserTableProps> = ({
             {formatDate(user.createdAt)}
           </TableCell>
           <TableCell align="right">
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <div className={styles.actions}>
               <ActionButtonsContainer>
                 {mode === "pending" && onApprove && (
                   <ActionButton
                     icon="fas fa-check"
-                    color="#10b981"
+                    variant="green"
                     title="Approuver"
                     onClick={() => onApprove(user)}
                   />
@@ -113,7 +108,7 @@ const UserTable: React.FC<UserTableProps> = ({
                 {mode === "pending" && onReject && (
                   <ActionButton
                     icon="fas fa-times"
-                    color="#ef4444"
+                    variant="red"
                     title="Rejeter"
                     onClick={() => onReject(user)}
                   />
@@ -121,7 +116,7 @@ const UserTable: React.FC<UserTableProps> = ({
                 {mode === "all" && onDelete && (
                   <ActionButton
                     icon="fas fa-trash"
-                    color="#ef4444"
+                    variant="red"
                     title="Supprimer"
                     onClick={() => onDelete(user.userId)}
                   />

@@ -1,5 +1,6 @@
 import React from "react";
 import Button from "./Button";
+import styles from "../../styles/components/ManagementSectionHeader.module.css";
 
 /**
  * Props du composant ManagementSectionHeader
@@ -29,39 +30,9 @@ const ManagementSectionHeader: React.FC<ManagementSectionHeaderProps> = ({
   isFormOpen = false,
 }) => {
   return (
-    <div
-      className="management-section-header"
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "2rem",
-        paddingBottom: "1rem",
-        borderBottom: "3px solid #d9b970",
-        flexWrap: "wrap",
-        gap: "1rem",
-      }}
-    >
-      <h2
-        style={{
-          fontSize: "2rem",
-          fontWeight: "bold",
-          color: "#13686a",
-          margin: 0,
-          flex: "0 0 auto",
-        }}
-      >
-        {title}
-      </h2>
-      <div
-        style={{
-          display: "flex",
-          gap: "0.5rem",
-          alignItems: "center",
-          flex: "0 0 auto",
-          marginLeft: "auto",
-        }}
-      >
+    <div className={styles.header}>
+      <h2 className={styles.title}>{title}</h2>
+      <div className={styles.actions}>
         {!isFormOpen && addButtonText && onAdd && (
           <Button onClick={onAdd} variant="primary" icon="fas fa-plus">
             {addButtonText}
@@ -78,4 +49,3 @@ const ManagementSectionHeader: React.FC<ManagementSectionHeaderProps> = ({
 };
 
 export default ManagementSectionHeader;
-

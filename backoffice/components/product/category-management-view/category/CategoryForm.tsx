@@ -1,12 +1,9 @@
 import React from "react";
-import {
-  CategoryPublicDTO,
-  CategoryCreateDTO,
-  CategoryUpdateDTO,
-} from "dto";
+import { CategoryPublicDTO, CategoryCreateDTO, CategoryUpdateDTO } from "dto";
 import FormInput from "../../../shared/form/FormInput";
 import FormTextarea from "../../../shared/form/FormTextarea";
 import FormActions from "../../../shared/form/FormActions";
+import styles from "../../../../styles/components/CategoryForm.module.css";
 
 interface CategoryFormProps {
   formData: CategoryCreateDTO | CategoryUpdateDTO;
@@ -30,38 +27,11 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   onCancel,
 }) => {
   return (
-    <div
-      style={{
-        marginBottom: "2rem",
-        padding: "2rem",
-        background: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
-        borderRadius: "12px",
-        border: "2px solid rgba(19, 104, 106, 0.2)",
-        width: "100%",
-        boxSizing: "border-box",
-        overflow: "hidden",
-      }}
-    >
-      <h3
-        style={{
-          fontSize: "1.5rem",
-          fontWeight: "600",
-          marginBottom: "1.5rem",
-          color: "#13686a",
-        }}
-      >
+    <div className={styles.card}>
+      <h3 className={styles.title}>
         {editingCategory ? "✏️ Modifier la catégorie" : "➕ Nouvelle catégorie"}
       </h3>
-      <form
-        onSubmit={onSubmit}
-        style={{
-          display: "grid",
-          gap: "1.5rem",
-          width: "100%",
-          maxWidth: "100%",
-          boxSizing: "border-box",
-        }}
-      >
+      <form onSubmit={onSubmit} className={styles.form}>
         <FormInput
           id="name"
           name="name"

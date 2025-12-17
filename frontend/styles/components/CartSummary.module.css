@@ -1,0 +1,131 @@
+@layer components {
+  .wrapper {
+    align-self: center;
+  }
+
+  .summary {
+    background: white;
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 2rem;
+    border: 3px solid #13686a;
+  }
+
+  .title {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: #333;
+    font-weight: 700;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #e0e0e0;
+    text-align: center;
+  }
+
+  .country {
+    font-size: 0.95rem;
+    color: #64748b;
+    opacity: 0.7;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: -1.2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .totals {
+    margin-bottom: 2rem;
+  }
+
+  .actions {
+    margin-bottom: 2rem;
+  }
+
+  .checkoutButton {
+    width: 100%;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(19, 104, 106, 0.3);
+    transition: transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    text-decoration: none;
+  }
+
+  .checkoutButton:hover {
+    transform: translateY(-2px);
+  }
+
+  .checkoutDisabled {
+    background: #ccc;
+    pointer-events: none;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .info {
+    padding-top: 2rem;
+    border-top: 2px solid #e0e0e0;
+    text-align: center;
+  }
+
+  .infoItem {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    color: #666;
+    justify-content: center;
+  }
+
+  .infoIcon {
+    color: #13686a;
+    font-size: 1.4rem;
+  }
+
+  @media (max-width: 1024px) {
+    .summary {
+      position: static;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .summary {
+      padding: 2rem 1.5rem;
+    }
+
+    .title {
+      font-size: 1.8rem;
+    }
+
+    .infoItem {
+      font-size: 1.1rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .title {
+      font-size: 1.6rem;
+    }
+
+    .checkoutButton {
+      font-size: 1.3rem;
+      padding: 1.2rem;
+    }
+
+    .infoIcon {
+      font-size: 1.2rem;
+    }
+  }
+}

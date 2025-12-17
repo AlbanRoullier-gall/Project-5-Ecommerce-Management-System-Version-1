@@ -1,0 +1,28 @@
+@layer components {
+  .card {
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    border: 2px solid rgba(19, 104, 106, 0.2);
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #13686a;
+  }
+
+  .form {
+    display: grid;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+

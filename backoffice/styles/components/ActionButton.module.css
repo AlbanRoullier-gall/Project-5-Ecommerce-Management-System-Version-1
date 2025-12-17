@@ -12,7 +12,7 @@
     border: none;
     background: none;
     cursor: pointer;
-    color: var(--btn-color, #13686a);
+    color: #13686a;
     transition: transform var(--transition-normal) var(--transition-smooth),
       background-color var(--transition-normal) var(--transition-smooth);
     border-radius: 8px;
@@ -23,8 +23,47 @@
   }
 
   .button:hover {
-    background: var(--btn-bg-hover, rgba(0, 0, 0, 0.05));
+    background: rgba(0, 0, 0, 0.05);
     transform: scale(1.1);
   }
-}
 
+  .blue {
+    color: #3b82f6;
+  }
+
+  .blue:hover {
+    background: rgba(59, 130, 246, 0.1);
+  }
+
+  .green {
+    color: #10b981;
+  }
+
+  .green:hover {
+    background: rgba(16, 185, 129, 0.12);
+  }
+
+  .red {
+    color: #ef4444;
+  }
+
+  .red:hover {
+    background: rgba(239, 68, 68, 0.12);
+  }
+
+  .gold {
+    color: #d9b970;
+  }
+
+  .gold:hover {
+    background: rgba(217, 185, 112, 0.16);
+  }
+
+  .amber {
+    color: #f59e0b;
+  }
+
+  .amber:hover {
+    background: rgba(245, 158, 11, 0.14);
+  }
+}

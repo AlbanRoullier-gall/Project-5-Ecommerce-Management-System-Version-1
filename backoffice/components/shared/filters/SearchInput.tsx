@@ -1,4 +1,5 @@
 import React from "react";
+import styles from "../../../styles/components/SearchInput.module.css";
 
 /**
  * Props du composant SearchInput
@@ -27,30 +28,10 @@ const SearchInput: React.FC<SearchInputProps> = ({
   onChange,
   placeholder = "Nom du produit...",
 }) => {
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "1rem 1.25rem",
-    border: "2px solid #e1e5e9",
-    borderRadius: "10px",
-    fontSize: "1rem",
-    transition: "all 0.3s ease",
-    background: "#f8f9fa",
-    fontFamily: "inherit",
-    boxSizing: "border-box",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: "1.1rem",
-    fontWeight: "600",
-    color: "#13686a",
-    marginBottom: "0.75rem",
-  };
-
   return (
-    <div style={{ minWidth: "300px", maxWidth: "100%" }}>
-      <label htmlFor="search" style={labelStyle}>
-        <i className="fas fa-search" style={{ marginRight: "0.5rem" }}></i>
+    <div className={styles.field}>
+      <label htmlFor="search" className={styles.label}>
+        <i className={`fas fa-search ${styles.icon}`}></i>
         Rechercher
       </label>
       <input
@@ -59,17 +40,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        style={inputStyle}
-        onFocus={(e) => {
-          e.target.style.borderColor = "#13686a";
-          e.target.style.background = "white";
-          e.target.style.boxShadow = "0 0 0 3px rgba(19, 104, 106, 0.1)";
-        }}
-        onBlur={(e) => {
-          e.target.style.borderColor = "#e1e5e9";
-          e.target.style.background = "#f8f9fa";
-          e.target.style.boxShadow = "none";
-        }}
+        className={styles.input}
       />
     </div>
   );

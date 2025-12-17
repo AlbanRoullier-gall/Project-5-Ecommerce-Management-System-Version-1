@@ -1,0 +1,132 @@
+@layer components {
+  .container {
+    background: #ffffff;
+    border: 1px solid #e6eef5;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(16, 42, 67, 0.06);
+    padding: 1rem 1.25rem;
+  }
+
+  .mainWrapper {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdfd 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    transform: translateY(0);
+  }
+
+  .mainHovered {
+    box-shadow: 0 20px 60px rgba(19, 104, 106, 0.2);
+    transform: translateY(-4px);
+  }
+
+  .hoverBar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #13686a 0%, #0dd3d1 100%);
+    z-index: 10;
+  }
+
+  .mainImage {
+    width: 100%;
+    height: 520px;
+    object-fit: contain;
+    background-color: #ffffff;
+    transition: transform 0.4s ease;
+  }
+
+  .mainImageHovered {
+    transform: scale(1.02);
+  }
+
+  @media (max-width: 1024px) {
+    .mainImage {
+      height: 400px;
+    }
+    .thumbImage,
+    .thumbButton {
+      width: 90px;
+      height: 90px;
+      min-width: 90px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .mainImage {
+      height: 300px;
+    }
+    .thumbImage,
+    .thumbButton {
+      width: 70px;
+      height: 70px;
+      min-width: 70px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .mainImage {
+      height: 250px;
+    }
+  }
+
+  .thumbList {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding: 0.25rem 0;
+    justify-content: center;
+  }
+
+  .thumbButton {
+    border: 1px solid #e8edf3;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    padding: 0;
+    background: #ffffff;
+    min-width: 110px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    transform: scale(1);
+    position: relative;
+  }
+
+  .thumbButton:hover:not(.thumbSelected) {
+    transform: scale(1.05);
+  }
+
+  .thumbSelected {
+    box-shadow: 0 0 0 3px rgba(19, 104, 106, 0.25),
+      0 4px 12px rgba(19, 104, 106, 0.18);
+    transform: scale(1.05);
+  }
+
+  .selectedBadge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%);
+    color: #ffffff;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    z-index: 10;
+  }
+
+  .thumbImage {
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    display: block;
+  }
+}

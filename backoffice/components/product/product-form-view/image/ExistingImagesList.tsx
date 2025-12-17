@@ -1,6 +1,7 @@
 import React from "react";
 // Try absolute import using path mapping
 import { ProductImagePublicDTO } from "dto";
+import styles from "../../../../styles/components/ExistingImagesList.module.css";
 
 /**
  * Props du composant ExistingImagesList
@@ -43,83 +44,31 @@ const ExistingImagesList: React.FC<ExistingImagesListProps> = ({
   }
 
   return (
-    <div style={{ marginBottom: "1rem" }}>
-      <p
-        style={{
-          fontSize: "0.9rem",
-          color: "#6b7280",
-          marginBottom: "0.5rem",
-        }}
-      >
+    <div className={styles.container}>
+      <p className={styles.caption}>
         Images actuelles ({visibleImages.length}/5) :
       </p>
-      <div
-        className="images-grid"
-        style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}
-      >
+      <div className={styles.grid}>
         {visibleImages.map((img) => (
-          <div
-            key={img.id}
-            style={{
-              position: "relative",
-              width: "100px",
-              height: "100px",
-              borderRadius: "10px",
-              overflow: "hidden",
-              border: "2px solid #e1e5e9",
-            }}
-          >
+          <div key={img.id} className={styles.card}>
             {/* Image */}
             <img
               src={`${API_URL}/api/images/${img.id}`}
               alt={img.filename}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              }}
+              className={styles.image}
             />
 
             {/* Bouton de suppression */}
             <button
               type="button"
               onClick={() => onMarkForDeletion(img.id)}
-              style={{
-                position: "absolute",
-                top: "4px",
-                right: "4px",
-                background: "rgba(239, 68, 68, 0.9)",
-                color: "white",
-                border: "none",
-                borderRadius: "50%",
-                width: "24px",
-                height: "24px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "0.75rem",
-              }}
+              className={styles.remove}
             >
               ✕
             </button>
 
             {/* Numéro d'ordre */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: "0",
-                left: "0",
-                right: "0",
-                background: "rgba(0, 0, 0, 0.7)",
-                color: "white",
-                fontSize: "0.6rem",
-                padding: "0.25rem",
-                textAlign: "center",
-              }}
-            >
-              #{img.orderIndex + 1}
-            </div>
+            <div className={styles.badge}>#{img.orderIndex + 1}</div>
           </div>
         ))}
       </div>

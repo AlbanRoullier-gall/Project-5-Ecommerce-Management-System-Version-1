@@ -3,6 +3,7 @@ import { ProductPublicDTO } from "dto";
 import StatusBadge from "./StatusBadge";
 import ActionButtons from "./ActionButtons";
 import { TableRow, TableCell } from "../../../shared/TableLayout";
+import styles from "../../../../styles/components/ProductTableRow.module.css";
 
 /**
  * Props du composant ProductTableRow
@@ -44,31 +45,15 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
   return (
     <TableRow>
       <TableCell>
-        <div style={{ display: "flex", alignItems: "center", minWidth: 0 }}>
-          <div
-            style={{
-              flexShrink: 0,
-              width: "50px",
-              height: "50px",
-              background: "#f3f4f6",
-              borderRadius: "10px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              overflow: "hidden",
-            }}
-          >
+        <div className={styles.rowContent}>
+          <div className={styles.thumb}>
             {product.images && product.images.length > 0 ? (
               <img
                 src={`${
                   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020"
                 }/api/images/${product.images[0].id}`}
                 alt={product.name}
-                style={{
-                  width: "50px",
-                  height: "50px",
-                  objectFit: "cover",
-                }}
+                className={styles.thumbImage}
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                   const icon =
@@ -79,76 +64,28 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
                 }}
               />
             ) : null}
-            <i
-              className="fas fa-image"
-              style={{
-                fontSize: "1.5rem",
-                color: "#9ca3af",
-                display:
-                  product.images && product.images.length > 0
-                    ? "none"
-                    : "inline-block",
-              }}
-            ></i>
+            {(!product.images || product.images.length === 0) && (
+              <i className={`fas fa-image ${styles.thumbIcon}`}></i>
+            )}
           </div>
-          <div style={{ marginLeft: "1rem", minWidth: 0, flex: 1 }}>
-            <div
-              style={{
-                fontSize: "1rem",
-                fontWeight: "600",
-                color: "#111827",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {product.name}
-            </div>
+          <div className={styles.info}>
+            <div className={styles.name}>{product.name}</div>
             {product.description && (
-              <div
-                style={{
-                  fontSize: "0.875rem",
-                  color: "#6b7280",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {product.description}
-              </div>
+              <div className={styles.desc}>{product.description}</div>
             )}
           </div>
         </div>
       </TableCell>
       <TableCell>
-        <span
-          style={{
-            fontSize: "1rem",
-            color: "#111827",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            display: "block",
-          }}
-        >
-          {product.categoryName || "-"}
-        </span>
+        <span className={styles.category}>{product.categoryName || "-"}</span>
       </TableCell>
       <TableCell align="right">
-        <span
-          style={{
-            fontSize: "1rem",
-            fontWeight: "600",
-            color: "#13686a",
-          }}
-        >
+        <span className={styles.price}>
           {Number(product.price).toFixed(2)} €
         </span>
       </TableCell>
       <TableCell className="mobile-hide" align="center">
-        <span style={{ fontSize: "1rem", color: "#111827" }}>
-          {product.vatRate}%
-        </span>
+        <span className={styles.vat}>{product.vatRate}%</span>
       </TableCell>
       <TableCell align="center">
         <StatusBadge
@@ -157,12 +94,12 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         />
       </TableCell>
       <TableCell className="mobile-hide">
-        <span style={{ fontSize: "1rem", color: "#6b7280" }}>
+        <span className={styles.createdAt}>
           {formatDate(product.createdAt)}
         </span>
       </TableCell>
       <TableCell align="right" width="160px">
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div className={styles.actions}>
           <ActionButtons
             onEdit={() => onEdit(product)}
             onDelete={() => {

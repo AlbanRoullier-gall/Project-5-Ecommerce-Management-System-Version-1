@@ -35,7 +35,7 @@ const CreditNoteActionButtons: React.FC<CreditNoteActionButtonsProps> = ({
       {onView && (
         <ActionButton
           icon="fas fa-eye"
-          color="#3b82f6"
+          variant="blue"
           title="Voir"
           onClick={onView}
         />
@@ -43,7 +43,7 @@ const CreditNoteActionButtons: React.FC<CreditNoteActionButtonsProps> = ({
       {onToggleStatus && (
         <ActionButton
           icon={isRefunded ? "fas fa-undo" : "fas fa-check"}
-          color={isRefunded ? "#f59e0b" : "#10b981"}
+          variant={isRefunded ? "amber" : "green"}
           title={
             isRefunded ? "Marquer comme en attente" : "Marquer comme remboursé"
           }
@@ -53,7 +53,7 @@ const CreditNoteActionButtons: React.FC<CreditNoteActionButtonsProps> = ({
       {onDelete && (
         <ActionButton
           icon="fas fa-trash"
-          color="#ef4444"
+          variant="red"
           title="Supprimer"
           onClick={onDelete}
         />

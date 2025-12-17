@@ -1,0 +1,7 @@
+@layer components {
+  .empty {
+    color: #6b7280;
+    padding: 1rem;
+  }
+}
+

@@ -1,0 +1,40 @@
+@layer components {
+  .nameRow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .tagIcon {
+    font-size: 1rem;
+    color: #13686a;
+  }
+
+  .name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .description {
+    font-size: 0.95rem;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+
+  .productsCount {
+    font-size: 0.95rem;
+    color: #6b7280;
+  }
+
+  .date {
+    font-size: 0.95rem;
+    color: #6b7280;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+

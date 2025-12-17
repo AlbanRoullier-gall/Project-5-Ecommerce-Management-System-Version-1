@@ -1,0 +1,29 @@
+@layer components {
+  .badge {
+    border-radius: 50%;
+    background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+
+  .small {
+    width: 40px;
+    height: 40px;
+    font-size: 1.4rem;
+  }
+
+  .medium {
+    width: 50px;
+    height: 50px;
+    font-size: 1.8rem;
+  }
+
+  .large {
+    width: 60px;
+    height: 60px;
+    font-size: 2.2rem;
+  }
+}

@@ -8,6 +8,7 @@ import {
   SustainabilitySection,
   CraftSection,
 } from "../components/philosophy";
+import styles from "../styles/components/PhilosophyPage.module.css";
 
 export default function PhilosophyPage() {
   return (
@@ -21,11 +22,11 @@ export default function PhilosophyPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
+      <div className={styles.page}>
         <Header />
 
-        <main style={{ padding: "3.5rem 2rem 4rem" }}>
-          <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+        <main className={styles.main}>
+          <div className={styles.content}>
             <ValuesSection />
             <SustainabilitySection />
             <CraftSection />
@@ -34,17 +35,6 @@ export default function PhilosophyPage() {
 
         <Footer />
       </div>
-
-      <style jsx global>{`
-        @media (max-width: 900px) {
-          main > div section {
-            grid-template-columns: 1fr !important;
-          }
-          main {
-            padding: 2.5rem 1.5rem 3rem !important;
-          }
-        }
-      `}</style>
     </>
   );
 }

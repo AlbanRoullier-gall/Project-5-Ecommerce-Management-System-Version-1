@@ -1,0 +1,65 @@
+@layer components {
+  .container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4rem;
+    padding: 0 2rem;
+    --step-gradient: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%);
+  }
+
+  .step {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .connector {
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    right: -50%;
+    height: 4px;
+    background: #e0e0e0;
+    z-index: 0;
+  }
+
+  .connectorActive {
+    background: var(--step-gradient);
+  }
+
+  .iconWrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .iconActive {
+    background: var(--step-gradient);
+    box-shadow: 0 4px 12px rgba(19, 104, 106, 0.3);
+  }
+
+  .label {
+    font-size: 1.3rem;
+    text-align: center;
+    color: #999;
+    font-weight: 500;
+  }
+
+  .labelActive {
+    color: #13686a;
+    font-weight: 700;
+  }
+}

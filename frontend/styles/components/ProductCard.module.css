@@ -1,0 +1,280 @@
+@layer components {
+  .card {
+    background: linear-gradient(to bottom, #ffffff 0%, #fcfdfd 100%);
+    border: 1px solid #eaeef2;
+    border-radius: 12px;
+    padding: 0;
+    text-align: left;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    overflow: hidden;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    will-change: transform, box-shadow;
+  }
+
+  .hover {
+    box-shadow: 0 10px 24px rgba(19, 104, 106, 0.12);
+    transform: translateY(-4px);
+  }
+
+  .link {
+    text-decoration: none;
+    display: block;
+    flex: 1 1 auto;
+  }
+
+  .imageWrapper {
+    margin-bottom: 0;
+    overflow: hidden;
+    border: none;
+    position: relative;
+    background: #ffffff;
+    border-bottom: 1px solid #eef2f7;
+  }
+
+  .image {
+    width: 100%;
+    height: 220px;
+    object-fit: contain;
+    background-color: #fafafa;
+    transition: transform 0.3s ease;
+  }
+
+  .imageHover {
+    transform: scale(1.05);
+  }
+
+  .content {
+    padding: 1rem 1rem 0.85rem 1rem;
+  }
+
+  .categoryWrap {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .category {
+    display: inline-block;
+    padding: 0.35rem 0.9rem;
+    background: rgba(19, 104, 106, 0.08);
+    color: #13686a;
+    border-radius: 9999px;
+    border: 1px solid rgba(19, 104, 106, 0.2);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #1a1a1a;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 3.9rem;
+    letter-spacing: -0.01em;
+  }
+
+  .meta {
+    border-top: 1px solid #eef2f7;
+    padding-top: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .metaRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 1rem;
+    flex-wrap: nowrap;
+  }
+
+  .price {
+    flex: 0 0 auto;
+    text-align: right;
+  }
+
+  .priceLine {
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .priceLabel {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .priceValue {
+    font-size: 1.1rem;
+    color: #0f172a;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .priceSeparator {
+    border-top: 1px solid #eef2f7;
+    margin: 0.25rem 0 0.5rem 0;
+  }
+
+  .priceTotal {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .priceTotalValue {
+    font-size: 1.45rem;
+    color: #13686a;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .priceVat {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .stock {
+    flex: 1 1 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #0f172a;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .stockIcon {
+    color: #10b981;
+  }
+
+  .actions {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .quantity {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    color: #475569;
+    font-weight: 600;
+  }
+
+  .quantityBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    background: #eef2f7;
+    border-radius: 8px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .footer {
+    padding: 0 1rem 1rem 1rem;
+    margin-top: auto;
+    border-top: 1px solid #eef2f7;
+    background: #fff;
+  }
+
+  .addButton {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(19, 104, 106, 0.2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .addButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(19, 104, 106, 0.3);
+  }
+
+  .addButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .quantityControls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .qtyButton {
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(19, 104, 106, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .qtyButton:hover:not(:disabled) {
+    transform: scale(1.08);
+  }
+
+  .qtyButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .qtyDisplay {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    background: #f3f4f6;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #13686a;
+    text-align: center;
+  }
+}

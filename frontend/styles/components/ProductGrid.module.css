@@ -1,0 +1,163 @@
+@layer components {
+  .container {
+    padding: 4rem 0;
+    background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+    min-height: 60vh;
+  }
+
+  .wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2.5rem;
+    justify-items: center;
+    align-items: start;
+  }
+
+  .loadingContainer,
+  .emptyContainer {
+    padding: 4rem 0;
+    background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+    min-height: 60vh;
+  }
+
+  .loadingWrapper,
+  .emptyWrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .loadingContent,
+  .emptyContent {
+    text-align: center;
+    padding: 4rem;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .loadingContent {
+    color: #13686a;
+  }
+
+  .loadingIcon {
+    font-size: 1.5rem;
+  }
+
+  .loadingText {
+    font-size: 1.5rem;
+  }
+
+  .emptyContent {
+    flex-direction: column;
+    color: #666;
+  }
+
+  .emptyIcon {
+    font-size: 3rem;
+    color: #d1d5db;
+  }
+
+  .emptyText {
+    font-size: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .container,
+    .loadingContainer,
+    .emptyContainer {
+      padding: 3rem 0;
+    }
+
+    .wrapper,
+    .loadingWrapper,
+    .emptyWrapper {
+      padding: 0 1rem;
+    }
+
+    .grid {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 2rem;
+    }
+
+    .loadingContent,
+    .emptyContent {
+      padding: 3rem 1rem;
+      font-size: 1.3rem;
+    }
+
+    .loadingIcon {
+      font-size: 1.3rem;
+    }
+
+    .loadingText {
+      font-size: 1.3rem;
+    }
+
+    .emptyIcon {
+      font-size: 2.5rem;
+    }
+
+    .emptyText {
+      font-size: 1.3rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .container,
+    .loadingContainer,
+    .emptyContainer {
+      padding: 2rem 0;
+    }
+
+    .wrapper,
+    .loadingWrapper,
+    .emptyWrapper {
+      padding: 0 0.75rem;
+    }
+
+    .grid {
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .loadingContent,
+    .emptyContent {
+      padding: 2rem 0.75rem;
+      font-size: 1.1rem;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .loadingIcon {
+      font-size: 1.1rem;
+    }
+
+    .loadingText {
+      font-size: 1.1rem;
+    }
+
+    .emptyIcon {
+      font-size: 2rem;
+    }
+
+    .emptyText {
+      font-size: 1.1rem;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+  }
+}

@@ -1,12 +1,9 @@
 import React from "react";
-import {
-  CustomerPublicDTO,
-  CustomerCreateDTO,
-  CustomerUpdateDTO,
-} from "dto";
+import { CustomerPublicDTO, CustomerCreateDTO, CustomerUpdateDTO } from "dto";
 import FormInput from "../../shared/form/FormInput";
 import FormActions from "../../shared/form/FormActions";
 import { useCustomerForm } from "../../../hooks";
+import styles from "../../../styles/components/CustomerForm.module.css";
 
 /**
  * Props du composant CustomerForm
@@ -42,51 +39,13 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
   };
 
   return (
-    <div
-      style={{
-        background: "white",
-        borderRadius: "16px",
-        padding: "2.5rem",
-        marginBottom: "2rem",
-        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.12)",
-        border: "2px solid rgba(19, 104, 106, 0.1)",
-        width: "100%",
-        boxSizing: "border-box",
-        overflow: "hidden",
-      }}
-    >
-      <h2
-        style={{
-          fontSize: "2.5rem",
-          color: "#13686a",
-          fontWeight: "bold",
-          marginBottom: "2rem",
-          paddingBottom: "1rem",
-          borderBottom: "3px solid #d9b970",
-        }}
-      >
+    <div className={styles.card}>
+      <h2 className={styles.title}>
         {customer ? "✏️ Modifier le client" : "➕ Nouveau client"}
       </h2>
 
-      <form
-        onSubmit={onSubmitHandler}
-        style={{
-          display: "grid",
-          gap: "1.5rem",
-          width: "100%",
-          maxWidth: "100%",
-          boxSizing: "border-box",
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "2rem",
-            width: "100%",
-            boxSizing: "border-box",
-          }}
-        >
+      <form onSubmit={onSubmitHandler} className={styles.form}>
+        <div className={styles.grid}>
           {/* Prénom */}
           <FormInput
             id="firstName"

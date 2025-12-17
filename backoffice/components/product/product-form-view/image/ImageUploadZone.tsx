@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import styles from "../../../../styles/components/ImageUploadZone.module.css";
 
 /**
  * Props du composant ImageUploadZone
@@ -32,6 +33,8 @@ const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
   isDisabled = false,
   multiple = true,
 }) => {
+  const [isHover, setIsHover] = useState(false);
+
   // Cacher la zone si plus d'emplacements disponibles
   if (remainingSlots <= 0) {
     return null;
@@ -39,51 +42,16 @@ const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
 
   return (
     <label
-      className="image-upload-zone"
-      style={{
-        border: "2px dashed #d1d5db",
-        borderRadius: "10px",
-        padding: "2rem",
-        textAlign: "center",
-        cursor: "pointer",
-        transition: "all 0.3s ease",
-        background: "#f9fafb",
-        minHeight: "120px",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-      onMouseOver={(e) => {
-        e.currentTarget.style.borderColor = "#13686a";
-        e.currentTarget.style.background = "#f0fdf4";
-      }}
-      onMouseOut={(e) => {
-        e.currentTarget.style.borderColor = "#d1d5db";
-        e.currentTarget.style.background = "#f9fafb";
-      }}
+      className={`${styles.zone} ${isHover ? styles.zoneHover : ""}`}
+      onMouseOver={() => setIsHover(true)}
+      onMouseOut={() => setIsHover(false)}
     >
       {/* Icône d'upload */}
-      <i
-        className="fas fa-cloud-upload-alt"
-        style={{
-          fontSize: "2.5rem",
-          color: "#9ca3af",
-          marginBottom: "0.5rem",
-        }}
-      ></i>
+      <i className={`fas fa-cloud-upload-alt ${styles.icon}`}></i>
 
       {/* Instructions */}
-      <p
-        style={{
-          fontSize: "1rem",
-          color: "#6b7280",
-          marginBottom: "0.25rem",
-        }}
-      >
-        Cliquez pour sélectionner des images
-      </p>
-      <p style={{ fontSize: "0.875rem", color: "#9ca3af" }}>
+      <p className={styles.text}>Cliquez pour sélectionner des images</p>
+      <p className={styles.helper}>
         PNG, JPG, GIF - Max 10MB par image - {remainingSlots} restante(s)
       </p>
 
@@ -93,7 +61,7 @@ const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
         accept="image/*"
         multiple={multiple}
         onChange={onFileChange}
-        style={{ display: "none" }}
+        className={styles.inputHidden}
         disabled={isDisabled}
       />
     </label>

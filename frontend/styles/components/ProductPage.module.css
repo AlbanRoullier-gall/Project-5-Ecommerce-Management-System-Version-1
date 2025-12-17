@@ -1,0 +1,182 @@
+@layer components {
+  .page {
+    min-height: 100vh;
+    background-image: radial-gradient(
+        circle at 10% 10%,
+        rgba(13, 211, 209, 0.1) 0%,
+        transparent 40%
+      ),
+      radial-gradient(
+        circle at 90% 30%,
+        rgba(19, 104, 106, 0.08) 0%,
+        transparent 35%
+      ),
+      linear-gradient(to bottom, #f8f9fa 0%, #ffffff 50%, #f8f9fa 100%);
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 3rem auto 5rem;
+    padding: 0 2rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 3rem;
+    align-items: stretch;
+  }
+
+  .stickySection {
+    position: sticky;
+    top: 2rem;
+    height: 100%;
+  }
+
+  .panel {
+    background: #ffffff;
+    border: 1px solid #e6eef5;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(16, 42, 67, 0.06);
+    padding: 1rem 1.25rem;
+    display: grid;
+    row-gap: 1rem;
+    height: 100%;
+  }
+
+  .actions {
+    padding: 0 0 0.75rem 0;
+    border-top: 1px solid #eef2f7;
+    margin-top: 0.25rem;
+  }
+
+  .addButton {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%);
+    border: none;
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(19, 104, 106, 0.2);
+  }
+
+  .addButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(19, 104, 106, 0.3);
+  }
+
+  .addButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .qtyRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .qtyButton {
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%);
+    border: none;
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(19, 104, 106, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .qtyButton:hover:not(:disabled) {
+    transform: scale(1.1);
+  }
+
+  .qtyButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .qtyDisplay {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    background: #f3f4f6;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #13686a;
+    text-align: center;
+  }
+
+  .loading,
+  .error {
+    text-align: center;
+    padding: 4rem;
+    font-size: 1.5rem;
+  }
+
+  .loadingIcon {
+    margin-right: 1rem;
+  }
+
+  .error {
+    color: #c33;
+  }
+
+  .errorIcon {
+    margin-right: 1rem;
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  .errorButton {
+    margin-top: 2rem;
+    padding: 1rem 2rem;
+    background: #13686a;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .errorButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(19, 104, 106, 0.2);
+  }
+
+  .iconLeft {
+    margin-right: 0.5rem;
+  }
+
+  @media (max-width: 1024px) {
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+    .stickySection {
+      position: static;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+  }
+}

@@ -1,0 +1,106 @@
+@layer components {
+  .filterIndicator {
+    background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(19, 104, 106, 0.3);
+  }
+
+  .filterInfo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .filterIcon {
+    font-size: 1.2rem;
+  }
+
+  .filterLabel {
+    font-weight: 600;
+  }
+
+  .filterBadge {
+    margin-left: 0.5rem;
+    opacity: 0.9;
+  }
+
+  .tableSection {
+    margin-bottom: 2.5rem;
+  }
+
+  .creditHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .exportCard {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    border: 2px solid #e9ecef;
+    text-align: center;
+  }
+
+  .exportTitle {
+    margin: 0 0 1rem 0;
+    color: #13686a;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .exportText {
+    margin: 0 0 1.5rem 0;
+    color: #666;
+    font-size: 0.9rem;
+  }
+
+  .exportButton {
+    padding: 1rem 2rem;
+    border: 2px solid #13686a;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    background-color: #13686a;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    min-width: 200px;
+    box-shadow: 0 4px 12px rgba(19, 104, 106, 0.2);
+  }
+
+  .exportButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(19, 104, 106, 0.3);
+    background-color: #0dd3d1;
+    border-color: #0dd3d1;
+  }
+
+  .exportButton:disabled {
+    background-color: #e0e0e0;
+    color: #666;
+    border-color: #e0e0e0;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .exportHint {
+    margin: 1rem 0 0 0;
+    color: #e74c3c;
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+}
+

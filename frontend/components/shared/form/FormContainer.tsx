@@ -1,4 +1,5 @@
 import React from "react";
+import styles from "../../../styles/components/FormContainer.module.css";
 
 /**
  * Props du composant FormContainer
@@ -26,19 +27,8 @@ const FormContainer: React.FC<FormContainerProps> = ({
   className = "checkout-form-container",
 }) => {
   return (
-    <div
-      className={className}
-      style={{
-        background: "white",
-        borderRadius: "16px",
-        padding: "3rem",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-      }}
-    >
-      {children}
-    </div>
+    <div className={`${styles.container} ${className || ""}`}>{children}</div>
   );
 };
 
 export default FormContainer;
-

@@ -1,0 +1,60 @@
+@layer components {
+  .root {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .button {
+    width: 44px;
+    height: 44px;
+    border: 2px solid #13686a;
+    border-radius: 10px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .minus {
+    background: white;
+    color: #13686a;
+  }
+
+  .plus {
+    background: #13686a;
+    color: white;
+  }
+
+  .button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .plus:not(:disabled):hover {
+    background: #0dd3d1;
+  }
+
+  .minus:not(:disabled):hover {
+    background: #f0f9fa;
+  }
+
+  .input {
+    width: 100px;
+    height: 44px;
+    text-align: center;
+    border: 2px solid #ddd;
+    font-size: 1.4rem;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: border-color 0.3s ease;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: #13686a;
+  }
+}

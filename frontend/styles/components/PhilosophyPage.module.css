@@ -1,0 +1,26 @@
+@layer components {
+  .page {
+    min-height: 100vh;
+    background: #f8f9fa;
+  }
+
+  .main {
+    padding: 3.5rem 2rem 4rem;
+  }
+
+  .content {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 900px) {
+    .main {
+      padding: 2.5rem 1.5rem 3rem;
+    }
+
+    .content section {
+      grid-template-columns: 1fr !important;
+    }
+  }
+}
+

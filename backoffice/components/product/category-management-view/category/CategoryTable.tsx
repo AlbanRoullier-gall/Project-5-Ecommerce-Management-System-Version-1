@@ -6,6 +6,7 @@ import TableLayout, {
   TableRow,
   TableCell,
 } from "../../../shared/TableLayout";
+import styles from "../../../../styles/components/CategoryTable.module.css";
 
 /**
  * Props du composant CategoryTable
@@ -56,14 +57,10 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
   ];
 
   return (
-    <TableLayout headers={headers} minWidth="600px" headerGradient="gold">
+    <TableLayout headers={headers} headerGradient="gold">
       {categories.length === 0 && (
         <TableRow>
-          <TableCell
-            colSpan={4}
-            align="center"
-            style={{ color: "#6b7280", padding: "1rem" }}
-          >
+          <TableCell colSpan={4} align="center" className={styles.empty}>
             Aucune catégorie créée
           </TableCell>
         </TableRow>

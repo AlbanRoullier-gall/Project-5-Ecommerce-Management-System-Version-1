@@ -8,7 +8,9 @@ import {
   CheckoutAddressForm,
   CheckoutOrderSummary,
 } from "../components/checkout";
+import { LoadingSpinner } from "../components/shared";
 import { useCheckoutStep, useCheckoutPageGuard } from "../hooks";
+import styles from "../styles/components/CheckoutPage.module.css";
 
 /**
  * Page de passage de commande (checkout)
@@ -25,24 +27,9 @@ export default function CheckoutPage() {
         <Head>
           <title>Chargement... - Nature de Pierre</title>
         </Head>
-        <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
+        <div className={styles.page}>
           <Header />
-          <div
-            style={{
-              textAlign: "center",
-              padding: "5rem 2rem",
-            }}
-          >
-            <i
-              className="fas fa-spinner fa-spin"
-              style={{
-                fontSize: "4rem",
-                color: "#13686a",
-                marginBottom: "2rem",
-              }}
-            ></i>
-            <p style={{ fontSize: "1.4rem", color: "#666" }}>Chargement...</p>
-          </div>
+          <LoadingSpinner fullscreen message="Chargement..." />
         </div>
       </>
     );
@@ -55,107 +42,37 @@ export default function CheckoutPage() {
         <meta name="description" content="Finalisez votre commande" />
       </Head>
 
-      <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
+      <div className={styles.page}>
         <Header />
 
         {/* Main Content */}
-        <div
-          className="checkout-main-content"
-          style={{
-            maxWidth: "1200px",
-            margin: "3rem auto",
-            padding: "0 2rem",
-            minHeight: "60vh",
-          }}
-        >
+        <div className={styles.main}>
           {/* En-tête */}
-          <div
-            className="checkout-header"
-            style={{ marginBottom: "3rem", textAlign: "center" }}
-          >
-            <h1
-              className="checkout-title"
-              style={{
-                fontSize: "3rem",
-                color: "#333",
-                fontWeight: "700",
-                marginBottom: "1rem",
-              }}
-            >
-              Finaliser votre commande
-            </h1>
-            <p
-              className="checkout-subtitle"
-              style={{ fontSize: "1.4rem", color: "#666" }}
-            >
+          <div className={styles.header}>
+            <h1 className={styles.title}>Finaliser votre commande</h1>
+            <p className={styles.subtitle}>
               Complétez les étapes ci-dessous pour passer votre commande
             </p>
           </div>
 
           {/* Indicateur de progression */}
-          <div
-            className="checkout-progress"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: "4rem",
-              padding: "0 2rem",
-            }}
-          >
+          <div className={styles.progress}>
             {steps.map((step, index) => (
-              <div
-                key={step.number}
-                style={{
-                  flex: 1,
-                  position: "relative",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
+              <div key={step.number} className={styles.step}>
                 {/* Ligne de connexion */}
                 {index < steps.length - 1 && (
                   <div
-                    style={{
-                      position: "absolute",
-                      top: "25px",
-                      left: "50%",
-                      right: "-50%",
-                      height: "4px",
-                      background:
-                        currentStep > step.number
-                          ? "linear-gradient(90deg, #13686a 0%, #0dd3d1 100%)"
-                          : "#e0e0e0",
-                      zIndex: 0,
-                    }}
+                    className={`${styles.connector} ${
+                      currentStep > step.number ? styles.connectorActive : ""
+                    }`}
                   />
                 )}
 
                 {/* Icône étape */}
                 <div
-                  style={{
-                    width: "60px",
-                    height: "60px",
-                    borderRadius: "50%",
-                    background:
-                      currentStep >= step.number
-                        ? "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)"
-                        : "#e0e0e0",
-                    color: "white",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "1.8rem",
-                    fontWeight: "700",
-                    position: "relative",
-                    zIndex: 1,
-                    marginBottom: "1rem",
-                    boxShadow:
-                      currentStep >= step.number
-                        ? "0 4px 12px rgba(19, 104, 106, 0.3)"
-                        : "none",
-                    transition: "all 0.3s ease",
-                  }}
+                  className={`${styles.stepIcon} ${
+                    currentStep >= step.number ? styles.stepIconActive : ""
+                  }`}
                 >
                   {currentStep > step.number ? (
                     <i className="fas fa-check"></i>
@@ -166,13 +83,9 @@ export default function CheckoutPage() {
 
                 {/* Label étape */}
                 <div
-                  className="checkout-step-label"
-                  style={{
-                    fontSize: "1.3rem",
-                    fontWeight: currentStep === step.number ? "700" : "500",
-                    color: currentStep >= step.number ? "#13686a" : "#999",
-                    textAlign: "center",
-                  }}
+                  className={`${styles.stepLabel} ${
+                    currentStep >= step.number ? styles.stepLabelActive : ""
+                  }`}
                 >
                   {step.label}
                 </div>
@@ -181,233 +94,36 @@ export default function CheckoutPage() {
           </div>
 
           {/* Formulaires des étapes */}
-          <div style={{ marginBottom: "4rem" }}>
+          <div className={styles.forms}>
             {currentStep === 1 && <CheckoutCustomerForm />}
             {currentStep === 2 && <CheckoutAddressForm />}
             {currentStep === 3 && <CheckoutOrderSummary />}
           </div>
 
           {/* Informations de sécurité */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "2rem",
-              marginBottom: "4rem",
-            }}
-          >
-            <div
-              className="checkout-info-card"
-              style={{
-                textAlign: "center",
-                padding: "2rem",
-                background: "white",
-                borderRadius: "12px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              }}
-            >
-              <i
-                className="fas fa-lock"
-                style={{
-                  fontSize: "3rem",
-                  color: "#13686a",
-                  marginBottom: "1rem",
-                }}
-              ></i>
-              <h3
-                style={{
-                  fontSize: "1.4rem",
-                  fontWeight: "600",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                Paiement sécurisé
-              </h3>
-              <p style={{ fontSize: "1.2rem", color: "#666" }}>
-                Transaction cryptée SSL
-              </p>
+          <div className={styles.infoGrid}>
+            <div className={styles.infoCard}>
+              <i className={`fas fa-lock ${styles.infoIcon}`}></i>
+              <h3 className={styles.infoTitle}>Paiement sécurisé</h3>
+              <p className={styles.infoText}>Transaction cryptée SSL</p>
             </div>
 
-            <div
-              className="checkout-info-card"
-              style={{
-                textAlign: "center",
-                padding: "2rem",
-                background: "white",
-                borderRadius: "12px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              }}
-            >
-              <i
-                className="fas fa-truck"
-                style={{
-                  fontSize: "3rem",
-                  color: "#13686a",
-                  marginBottom: "1rem",
-                }}
-              ></i>
-              <h3
-                style={{
-                  fontSize: "1.4rem",
-                  fontWeight: "600",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                Livraison rapide
-              </h3>
-              <p style={{ fontSize: "1.2rem", color: "#666" }}>
-                Gratuite dès 50 €
-              </p>
+            <div className={styles.infoCard}>
+              <i className={`fas fa-truck ${styles.infoIcon}`}></i>
+              <h3 className={styles.infoTitle}>Livraison rapide</h3>
+              <p className={styles.infoText}>Gratuite dès 50 €</p>
             </div>
 
-            <div
-              className="checkout-info-card"
-              style={{
-                textAlign: "center",
-                padding: "2rem",
-                background: "white",
-                borderRadius: "12px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              }}
-            >
-              <i
-                className="fas fa-headset"
-                style={{
-                  fontSize: "3rem",
-                  color: "#13686a",
-                  marginBottom: "1rem",
-                }}
-              ></i>
-              <h3
-                style={{
-                  fontSize: "1.4rem",
-                  fontWeight: "600",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                Support client
-              </h3>
-              <p style={{ fontSize: "1.2rem", color: "#666" }}>
-                7j/7 à votre écoute
-              </p>
+            <div className={styles.infoCard}>
+              <i className={`fas fa-headset ${styles.infoIcon}`}></i>
+              <h3 className={styles.infoTitle}>Support client</h3>
+              <p className={styles.infoText}>7j/7 à votre écoute</p>
             </div>
           </div>
         </div>
 
         <Footer />
       </div>
-
-      <style jsx global>{`
-        /* Responsive Design pour Checkout */
-
-        /* Tablette */
-        @media (max-width: 1024px) {
-          .checkout-main-content {
-            margin: 2rem auto !important;
-            padding: 0 1.5rem !important;
-          }
-
-          .checkout-progress {
-            padding: 0 1rem !important;
-          }
-
-          .checkout-step-label {
-            font-size: 1.1rem !important;
-          }
-
-          .checkout-title {
-            font-size: 2.5rem !important;
-          }
-
-          .checkout-subtitle {
-            font-size: 1.2rem !important;
-          }
-        }
-
-        /* Mobile */
-        @media (max-width: 768px) {
-          .checkout-main-content {
-            margin: 1.5rem auto !important;
-            padding: 0 1rem !important;
-          }
-
-          /* Masquer le titre et sous-titre sur mobile */
-          .checkout-header {
-            display: none !important;
-          }
-
-          /* Masquer l'indicateur de progression sur mobile */
-          .checkout-progress {
-            display: none !important;
-          }
-
-          /* Grille des cartes info en 1 colonne sur mobile */
-          .checkout-info-card {
-            grid-column: 1 / -1 !important;
-            margin-bottom: 1rem !important;
-          }
-        }
-
-        /* iPhone - Design complètement revu */
-        @media (max-width: 480px) {
-          .checkout-main-content {
-            margin: 0.5rem auto !important;
-            padding: 0 0.3rem !important;
-            max-width: 100% !important;
-          }
-
-          /* Masquer le titre et sous-titre sur iPhone */
-          .checkout-header {
-            display: none !important;
-          }
-
-          /* Masquer l'indicateur de progression sur iPhone */
-          .checkout-progress {
-            display: none !important;
-          }
-
-          .checkout-info-card {
-            padding: 1.5rem !important;
-          }
-
-          .checkout-info-card h3 {
-            font-size: 1.2rem !important;
-          }
-
-          .checkout-info-card p {
-            font-size: 1rem !important;
-          }
-
-          .checkout-info-card i {
-            font-size: 2.5rem !important;
-          }
-        }
-
-        /* Très petits écrans */
-        @media (max-width: 360px) {
-          .checkout-main-content {
-            padding: 0 0.5rem !important;
-          }
-
-          .checkout-title {
-            font-size: 1.6rem !important;
-          }
-
-          .checkout-progress > div {
-            padding: 0.6rem !important;
-          }
-
-          .checkout-progress > div > div:first-child {
-            width: 40px !important;
-            height: 40px !important;
-            font-size: 1.2rem !important;
-          }
-
-          .checkout-step-label {
-            font-size: 0.8rem !important;
-          }
-        }
-      `}</style>
     </>
   );
 }

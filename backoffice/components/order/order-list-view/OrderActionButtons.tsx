@@ -30,7 +30,7 @@ const OrderActionButtons: React.FC<OrderActionButtonsProps> = ({
       {onView && (
         <ActionButton
           icon="fas fa-eye"
-          color="#3b82f6"
+          variant="blue"
           title="Voir"
           onClick={onView}
         />
@@ -38,7 +38,7 @@ const OrderActionButtons: React.FC<OrderActionButtonsProps> = ({
       {onToggleDelivery && (
         <ActionButton
           icon={delivered ? "fas fa-undo" : "fas fa-check"}
-          color={delivered ? "#ef4444" : "#10b981"}
+          variant={delivered ? "red" : "green"}
           title={delivered ? "Marquer comme non livré" : "Marquer comme livré"}
           onClick={onToggleDelivery}
         />

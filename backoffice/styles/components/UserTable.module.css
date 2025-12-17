@@ -1,0 +1,16 @@
+@layer components {
+  .empty {
+    color: #6b7280;
+    padding: 2rem;
+  }
+
+  .name {
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+}

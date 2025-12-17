@@ -1,0 +1,29 @@
+@layer components {
+  .page {
+    min-height: 100vh;
+    background: #f8f9fa;
+  }
+
+  .section {
+    padding: 4rem 2rem;
+  }
+
+  .grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 520px) minmax(0, 520px);
+    justify-content: center;
+    gap: 4rem;
+    align-items: stretch;
+  }
+
+  @media (max-width: 768px) {
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      justify-content: stretch;
+    }
+  }
+}
+

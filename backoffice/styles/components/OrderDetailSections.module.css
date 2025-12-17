@@ -4,6 +4,11 @@
     gap: 1.5rem;
   }
 
+  .contentGridTight {
+    display: grid;
+    gap: 1rem;
+  }
+
   .section {
     border: 1px solid #e5e7eb;
     border-radius: 8px;
@@ -30,6 +35,12 @@
     gap: 1rem;
   }
 
+  .mainInfoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
   .sectionHeader {
     display: flex;
     align-items: center;
@@ -46,6 +57,18 @@
   .loadingText {
     color: #6b7280;
     font-size: 0.9rem;
+  }
+
+  .errorBox {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+  }
+
+  .errorSpacer {
+    margin-bottom: 1rem;
   }
 
   .errorAlert {
@@ -69,6 +92,83 @@
   .createdText {
     font-size: 0.9rem;
     color: #6b7280;
+  }
+
+  .mainCard {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.75rem;
+    background: white;
+  }
+
+  .mutedCard {
+    background: #f9fafb;
+  }
+
+  .cardLabel {
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  .cardValue {
+    font-size: 1.05rem;
+    color: #111827;
+  }
+
+  .cardValueMuted {
+    font-size: 0.95rem;
+    color: #6b7280;
+  }
+
+  .addressesSection {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.75rem;
+    background: white;
+  }
+
+  .addressesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .addressEmpty {
+    color: #6b7280;
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .addressCard {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.75rem;
+    background: #f9fafb;
+  }
+
+  .addressTitle {
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .addressName {
+    color: #111827;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+  }
+
+  .addressLine {
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+  }
+
+  .addressPhone {
+    color: #6b7280;
+    font-size: 0.8rem;
   }
 
   .totalsSection {

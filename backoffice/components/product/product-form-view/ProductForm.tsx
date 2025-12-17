@@ -14,6 +14,7 @@ import ImageUploadZone from "./image/ImageUploadZone";
 import ExistingImagesList from "./image/ExistingImagesList";
 import NewImagesList from "./image/NewImagesList";
 import { useProductForm } from "../../../hooks";
+import styles from "../../../styles/components/ProductForm.module.css";
 
 /**
  * Props du composant ProductForm
@@ -87,42 +88,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
   };
 
   return (
-    <div
-      style={{
-        background: "white",
-        borderRadius: "16px",
-        padding: "2.5rem",
-        marginBottom: "2rem",
-        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.12)",
-        border: "2px solid rgba(19, 104, 106, 0.1)",
-        width: "100%",
-        boxSizing: "border-box",
-        overflow: "hidden",
-      }}
-    >
-      <h2
-        style={{
-          fontSize: "2.5rem",
-          color: "#13686a",
-          fontWeight: "bold",
-          marginBottom: "2rem",
-          paddingBottom: "1rem",
-          borderBottom: "3px solid #d9b970",
-        }}
-      >
+    <div className={styles.card}>
+      <h2 className={styles.title}>
         {product ? "✏️ Modifier le produit" : "➕ Nouveau produit"}
       </h2>
 
-      <form
-        onSubmit={onSubmitHandler}
-        style={{
-          display: "grid",
-          gap: "1.5rem",
-          width: "100%",
-          maxWidth: "100%",
-          boxSizing: "border-box",
-        }}
-      >
+      <form onSubmit={onSubmitHandler} className={styles.form}>
         <FormInput
           id="name"
           name="name"
@@ -144,16 +115,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
           rows={4}
         />
 
-        <div
-          className="form-grid"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "1.5rem",
-            width: "100%",
-            boxSizing: "border-box",
-          }}
-        >
+        <div className={styles.grid}>
           <FormInput
             id="price"
             name="price"
@@ -204,19 +166,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
           label="✅ Produit actif (visible sur le site)"
         />
 
-        <div
-          className="images-section"
-          style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
-        >
-          <label
-            style={{
-              display: "block",
-              fontSize: "1.1rem",
-              fontWeight: "600",
-              color: "#13686a",
-              marginBottom: "0.75rem",
-            }}
-          >
+        <div className={styles.imagesSection}>
+          <label className={styles.imagesLabel}>
             📷 Images du produit (max 5)
           </label>
 

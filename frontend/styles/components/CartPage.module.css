@@ -1,0 +1,79 @@
+@layer components {
+  .page {
+    min-height: 100vh;
+    background: #f5f5f5;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 3rem auto;
+    padding: 0 2rem;
+    min-height: 60vh;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  .error {
+    background: #fee;
+    border: 2px solid #fcc;
+    color: #c33;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 5rem 2rem;
+  }
+
+  .loadingIcon {
+    font-size: 4rem;
+    color: #13686a;
+    margin-bottom: 2rem;
+  }
+
+  .loadingText {
+    font-size: 1.4rem;
+    color: #666;
+  }
+
+  @media (max-width: 1024px) {
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .container {
+      padding: 2rem 1.5rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      padding: 1.5rem 1rem;
+      margin: 1.5rem auto;
+    }
+
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .container {
+      padding: 1rem 0.5rem;
+      margin: 1rem auto;
+    }
+  }
+}

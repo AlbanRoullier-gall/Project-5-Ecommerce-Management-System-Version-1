@@ -1,0 +1,38 @@
+@layer components {
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border: 2px solid rgba(19, 104, 106, 0.1);
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .title {
+    font-size: 2.5rem;
+    color: #13686a;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 3px solid #d9b970;
+  }
+
+  .form {
+    display: grid;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

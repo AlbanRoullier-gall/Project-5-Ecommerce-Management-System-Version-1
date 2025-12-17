@@ -1,4 +1,5 @@
 import React from "react";
+import styles from "../../../styles/components/FilterSelect.module.css";
 
 /**
  * Option pour le select
@@ -56,49 +57,18 @@ const FilterSelect: React.FC<FilterSelectProps> = ({
   onChange,
   options,
   placeholder,
-  minWidth = "300px",
 }) => {
-  const selectStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "1rem 1.25rem",
-    border: "2px solid #e1e5e9",
-    borderRadius: "10px",
-    fontSize: "1rem",
-    transition: "all 0.3s ease",
-    background: "#f8f9fa",
-    fontFamily: "inherit",
-    boxSizing: "border-box",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: "1.1rem",
-    fontWeight: "600",
-    color: "#13686a",
-    marginBottom: "0.75rem",
-  };
-
   return (
-    <div style={{ minWidth, maxWidth: "100%" }}>
-      <label htmlFor={id} style={labelStyle}>
-        {icon && <i className={icon} style={{ marginRight: "0.5rem" }}></i>}
+    <div className={styles.field}>
+      <label htmlFor={id} className={styles.label}>
+        {icon && <i className={`${icon} ${styles.icon}`}></i>}
         {label}
       </label>
       <select
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={selectStyle}
-        onFocus={(e) => {
-          e.currentTarget.style.borderColor = "#13686a";
-          e.currentTarget.style.background = "white";
-          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(19, 104, 106, 0.1)";
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.borderColor = "#e1e5e9";
-          e.currentTarget.style.background = "#f8f9fa";
-          e.currentTarget.style.boxShadow = "none";
-        }}
+        className={styles.select}
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((option) => (

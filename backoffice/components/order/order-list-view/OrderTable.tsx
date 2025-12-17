@@ -7,6 +7,7 @@ import TableLayout, {
 } from "../../shared/TableLayout";
 import { Badge } from "../../shared";
 import OrderActionButtons from "./OrderActionButtons";
+import styles from "../../../styles/components/OrderTable.module.css";
 
 interface OrderTableProps {
   orders: OrderPublicDTO[];
@@ -34,25 +35,17 @@ const OrderTable: React.FC<OrderTableProps> = ({
   ];
 
   return (
-    <TableLayout headers={headers} minWidth="900px" headerGradient="teal">
+    <TableLayout headers={headers} headerGradient="teal">
       {isLoading && (
         <TableRow>
-          <TableCell
-            colSpan={9}
-            align="center"
-            style={{ color: "#6b7280", padding: "1rem" }}
-          >
+          <TableCell colSpan={9} align="center" className={styles.empty}>
             Chargement...
           </TableCell>
         </TableRow>
       )}
       {!isLoading && orders.length === 0 && (
         <TableRow>
-          <TableCell
-            colSpan={9}
-            align="center"
-            style={{ color: "#6b7280", padding: "1rem" }}
-          >
+          <TableCell colSpan={9} align="center" className={styles.empty}>
             Aucune commande trouvée
           </TableCell>
         </TableRow>
@@ -64,9 +57,9 @@ const OrderTable: React.FC<OrderTableProps> = ({
             "—";
           return (
             <TableRow key={o.id}>
-              <TableCell style={{ color: "#111827" }}>{o.id}</TableCell>
-              <TableCell style={{ color: "#111827" }}>{customerName}</TableCell>
-              <TableCell className="mobile-hide" style={{ color: "#6b7280" }}>
+              <TableCell className={styles.cellDark}>{o.id}</TableCell>
+              <TableCell className={styles.cellDark}>{customerName}</TableCell>
+              <TableCell className={`mobile-hide ${styles.cellMuted}`}>
                 {o.customerEmail || "—"}
               </TableCell>
               <TableCell className="mobile-hide" align="right">
@@ -89,7 +82,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                 />
               </TableCell>
               <TableCell width="160px">
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <div className={styles.actions}>
                   <OrderActionButtons
                     onView={() => onView && onView(o.id)}
                     onToggleDelivery={() =>

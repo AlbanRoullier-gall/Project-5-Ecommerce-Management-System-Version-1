@@ -1,0 +1,106 @@
+@layer components {
+  .field {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .label {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #13686a;
+    margin-bottom: 0.75rem;
+  }
+
+  .required {
+    color: #dc2626;
+    margin-left: 0.25rem;
+  }
+
+  .input {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    color: #333;
+    font-family: inherit;
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: #13686a;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(19, 104, 106, 0.1);
+  }
+
+  .inputError {
+    border-color: #dc2626;
+  }
+
+  .readOnly {
+    background: #f8f9fa;
+    color: #666;
+    cursor: not-allowed;
+  }
+
+  .errorText {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #dc2626;
+  }
+
+  .select {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+
+  .select:focus {
+    outline: none;
+    border-color: #13686a;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(19, 104, 106, 0.1);
+  }
+
+  .selectError {
+    border-color: #dc2626;
+  }
+
+  .textarea {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    font-family: inherit;
+    box-sizing: border-box;
+    max-width: 100%;
+    resize: vertical;
+  }
+
+  .textarea:focus {
+    outline: none;
+    border-color: #13686a;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(19, 104, 106, 0.1);
+  }
+
+  .textareaError {
+    border-color: #dc2626;
+  }
+}
+

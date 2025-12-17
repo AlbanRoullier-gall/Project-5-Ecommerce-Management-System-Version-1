@@ -1,0 +1,92 @@
+@layer components {
+  .field {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .fieldFull {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .label {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #13686a;
+    margin-bottom: 0.75rem;
+  }
+
+  .required {
+    color: #dc2626;
+    margin-left: 0.25rem;
+  }
+
+  .input {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    color: #333;
+    font-family: inherit;
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: #13686a;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(19, 104, 106, 0.1);
+  }
+
+  .inputError {
+    border-color: #dc2626;
+  }
+
+  .readOnly {
+    background: #f8f9fa;
+    color: #666;
+    cursor: not-allowed;
+  }
+
+  .errorText {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #dc2626;
+  }
+
+  .select {
+    width: 100%;
+    padding: 1.2rem;
+    font-size: 1.3rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    transition: border-color 0.3s ease;
+    background-color: white;
+    cursor: pointer;
+  }
+
+  .selectError {
+    border-color: #c33;
+  }
+
+  .textarea {
+    width: 100%;
+    padding: 1.2rem;
+    font-size: 1.3rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    transition: border-color 0.3s ease;
+    font-family: inherit;
+    resize: vertical;
+  }
+
+  .textareaError {
+    border-color: #c33;
+  }
+}

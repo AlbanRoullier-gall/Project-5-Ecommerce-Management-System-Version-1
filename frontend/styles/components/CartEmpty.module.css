@@ -1,0 +1,48 @@
+@layer components {
+  .card {
+    text-align: center;
+    padding: 5rem 2rem;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .icon {
+    font-size: 6rem;
+    color: #dddddd;
+    margin-bottom: 2rem;
+  }
+
+  .title {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #333333;
+    font-weight: 600;
+  }
+
+  .text {
+    font-size: 1.3rem;
+    color: #666666;
+    margin-bottom: 3rem;
+  }
+
+  .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.2rem 3rem;
+    background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%);
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 12px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(19, 104, 106, 0.3);
+    transition: transform 0.2s ease;
+  }
+
+  .button:hover {
+    transform: translateY(-2px);
+  }
+}
+

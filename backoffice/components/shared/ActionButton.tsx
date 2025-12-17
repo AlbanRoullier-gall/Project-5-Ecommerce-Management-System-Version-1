@@ -7,8 +7,8 @@ import styles from "../../styles/components/ActionButton.module.css";
 interface ActionButtonProps {
   /** Icône FontAwesome à afficher */
   icon: string;
-  /** Couleur du bouton */
-  color: string;
+  /** Variante de couleur */
+  variant?: "blue" | "green" | "red" | "gold" | "amber";
   /** Tooltip du bouton */
   title: string;
   /** Callback appelé lors du clic */
@@ -22,32 +22,31 @@ interface ActionButtonProps {
  * @example
  * <ActionButton
  *   icon="fas fa-edit"
- *   color="#3b82f6"
+ *   variant="blue"
  *   title="Modifier"
  *   onClick={handleEdit}
  * />
  */
 export const ActionButton: React.FC<ActionButtonProps> = ({
   icon,
-  color,
+  variant = "blue",
   title,
   onClick,
 }) => {
-  const hex = color.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  const hoverBg = `rgba(${r}, ${g}, ${b}, 0.1)`;
+  const variantClass =
+    {
+      blue: styles.blue,
+      green: styles.green,
+      red: styles.red,
+      gold: styles.gold,
+      amber: styles.amber,
+    }[variant] || styles.blue;
 
   return (
     <button
       onClick={onClick}
       title={title}
-      className={styles.button}
-      style={{
-        ["--btn-color" as string]: color,
-        ["--btn-bg-hover" as string]: hoverBg,
-      }}
+      className={`${styles.button} ${variantClass}`}
       type="button"
     >
       <i className={icon}></i>

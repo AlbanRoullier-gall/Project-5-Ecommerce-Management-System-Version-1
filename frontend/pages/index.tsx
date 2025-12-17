@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { ProductCatalog } from "../components/product";
 import { useCatalog } from "../hooks";
+import styles from "../styles/components/HomePage.module.css";
 
 export default function Home() {
   const {
@@ -27,7 +28,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
+      <div className={styles.page}>
         {/* HEADER */}
         <Header />
 

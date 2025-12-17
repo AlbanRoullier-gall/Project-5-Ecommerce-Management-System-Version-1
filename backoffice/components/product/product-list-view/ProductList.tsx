@@ -7,6 +7,7 @@ import PageHeader from "../../shared/PageHeader";
 import Button from "../../shared/Button";
 import { ProductPublicDTO } from "dto";
 import { useProductList } from "../../../hooks";
+import styles from "../../../styles/components/ProductList.module.css";
 
 /**
  * Composant d'affichage de la liste des produits
@@ -53,7 +54,7 @@ const ProductList: React.FC = () => {
   };
 
   return (
-    <div style={{ fontSize: "1rem" }}>
+    <div className={styles.wrapper}>
       {productsError && (
         <ErrorAlert
           message={productsError}
@@ -84,21 +85,8 @@ const ProductList: React.FC = () => {
         categories={categories}
       />
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "1rem",
-        }}
-      >
-        <p
-          style={{
-            fontSize: "1.1rem",
-            color: "#6b7280",
-            fontWeight: "500",
-          }}
-        >
+      <div className={styles.summaryBar}>
+        <p className={styles.summaryText}>
           {totalProducts} produit(s) trouvé(s)
         </p>
       </div>

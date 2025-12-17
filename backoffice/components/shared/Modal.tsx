@@ -17,8 +17,6 @@ interface ModalProps {
   footerActions?: React.ReactNode;
   /** Callback appelé lors de la fermeture */
   onClose: () => void;
-  /** Largeur maximale de la modal (défaut: 800px) */
-  maxWidth?: string;
   /** Afficher le bouton de fermeture dans le header (défaut: true) */
   showCloseButton?: boolean;
   /** Classe CSS personnalisée pour le conteneur */
@@ -47,7 +45,6 @@ const Modal: React.FC<ModalProps> = ({
   headerActions,
   footerActions,
   onClose,
-  maxWidth = "800px",
   showCloseButton = true,
   className = "",
 }) => {
@@ -64,9 +61,6 @@ const Modal: React.FC<ModalProps> = ({
     >
       <div
         className={`${styles.container} ${className}`}
-        style={{
-          maxWidth: `min(98vw, ${maxWidth})`,
-        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

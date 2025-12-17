@@ -1,0 +1,29 @@
+@layer components {
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 3px solid #d9b970;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #13686a;
+    margin: 0;
+    flex: 0 0 auto;
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+}
+

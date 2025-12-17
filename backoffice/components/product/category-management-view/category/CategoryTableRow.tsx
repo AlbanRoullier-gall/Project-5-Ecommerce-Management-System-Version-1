@@ -2,6 +2,7 @@ import React from "react";
 import { CategoryPublicDTO } from "dto";
 import ActionButtons from "../../product-list-view/table/ActionButtons";
 import { TableRow, TableCell } from "../../../shared/TableLayout";
+import styles from "../../../../styles/components/CategoryTableRow.module.css";
 
 interface CategoryTableRowProps {
   category: CategoryPublicDTO;
@@ -21,62 +22,24 @@ const CategoryTableRow: React.FC<CategoryTableRowProps> = ({
   return (
     <TableRow backgroundColor={rowIndex % 2 === 0 ? "#ffffff" : "#fafafa"}>
       <TableCell>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.75rem",
-          }}
-        >
-          <div
-            style={{
-              width: "36px",
-              height: "36px",
-              background: "linear-gradient(135deg, #d9b970 0%, #f4d03f 100%)",
-              borderRadius: "9999px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#13686a",
-            }}
-          >
-            <i className="fas fa-tag" style={{ fontSize: "1rem" }}></i>
+        <div className={styles.nameRow}>
+          <div className={styles.tagIcon}>
+            <i className="fas fa-tag"></i>
           </div>
-          <span
-            style={{
-              fontSize: "1rem",
-              fontWeight: "600",
-              color: "#111827",
-            }}
-          >
-            {category.name}
-          </span>
+          <span className={styles.name}>{category.name}</span>
         </div>
       </TableCell>
       <TableCell className="mobile-hide">
-        <span
-          style={{
-            fontSize: "1rem",
-            color: "#6b7280",
-            maxWidth: "420px",
-            display: "block",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
+        <span className={styles.description}>
           {category.description || "-"}
         </span>
       </TableCell>
 
-      <TableCell
-        className="mobile-hide"
-        style={{ fontSize: "1rem", color: "#6b7280" }}
-      >
-        {formatDate(category.createdAt)}
+      <TableCell className="mobile-hide">
+        <span className={styles.date}>{formatDate(category.createdAt)}</span>
       </TableCell>
       <TableCell width="160px">
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div className={styles.actions}>
           <ActionButtons
             onEdit={() => onEdit(category)}
             onDelete={() => {

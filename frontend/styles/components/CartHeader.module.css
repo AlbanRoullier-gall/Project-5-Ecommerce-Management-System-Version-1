@@ -1,0 +1,49 @@
+@layer components {
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+  }
+
+  .title {
+    font-size: 3rem;
+    color: #333;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .backButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1rem 2rem;
+    background: white;
+    color: #13686a;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    border: 2px solid #13686a;
+    transition: all 0.3s ease;
+  }
+
+  .backButton:hover {
+    background: #13686a;
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    .header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .title {
+      font-size: 2rem;
+    }
+  }
+}

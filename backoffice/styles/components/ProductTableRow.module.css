@@ -1,0 +1,84 @@
+@layer components {
+  .rowContent {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .thumb {
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .thumbImage {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+  }
+
+  .thumbIcon {
+    font-size: 1.5rem;
+    color: #9ca3af;
+  }
+
+  .info {
+    margin-left: 1rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .desc {
+    font-size: 0.875rem;
+    color: #6b7280;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .category {
+    font-size: 1rem;
+    color: #111827;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+  }
+
+  .price {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #13686a;
+  }
+
+  .vat {
+    font-size: 1rem;
+    color: #111827;
+  }
+
+  .createdAt {
+    font-size: 1rem;
+    color: #6b7280;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+

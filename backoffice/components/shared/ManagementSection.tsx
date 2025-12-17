@@ -1,6 +1,7 @@
 import React, { ReactNode } from "react";
 import ErrorAlert from "./ErrorAlert";
 import ManagementSectionHeader from "./ManagementSectionHeader";
+import styles from "../../styles/components/ManagementSection.module.css";
 
 /**
  * Props du composant ManagementSection
@@ -42,16 +43,7 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
   listContent,
 }) => {
   return (
-    <div
-      style={{
-        background: "white",
-        borderRadius: "16px",
-        padding: "2rem",
-        marginBottom: "2rem",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-        border: "2px solid rgba(19, 104, 106, 0.1)",
-      }}
-    >
+    <div className={styles.container}>
       {error && onErrorClose && (
         <ErrorAlert message={error} onClose={onErrorClose} />
       )}
@@ -74,4 +66,3 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
 };
 
 export default ManagementSection;
-

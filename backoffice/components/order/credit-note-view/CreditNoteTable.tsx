@@ -7,6 +7,7 @@ import TableLayout, {
 } from "../../shared/TableLayout";
 import { Badge } from "../../shared";
 import CreditNoteActionButtons from "./CreditNoteActionButtons";
+import styles from "../../../styles/components/CreditNoteTable.module.css";
 
 interface CreditNoteTableProps {
   creditNotes: CreditNotePublicDTO[];
@@ -44,25 +45,17 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
   ];
 
   return (
-    <TableLayout headers={headers} minWidth="800px" headerGradient="teal">
+    <TableLayout headers={headers} headerGradient="teal">
       {isLoading && (
         <TableRow>
-          <TableCell
-            colSpan={9}
-            align="center"
-            style={{ color: "#6b7280", padding: "1rem" }}
-          >
+          <TableCell colSpan={9} align="center" className={styles.empty}>
             Chargement...
           </TableCell>
         </TableRow>
       )}
       {!isLoading && creditNotes.length === 0 && (
         <TableRow>
-          <TableCell
-            colSpan={9}
-            align="center"
-            style={{ color: "#6b7280", padding: "1rem" }}
-          >
+          <TableCell colSpan={9} align="center" className={styles.empty}>
             Aucun avoir trouvé
           </TableCell>
         </TableRow>
@@ -84,8 +77,8 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
             : "—";
           return (
             <TableRow key={c.id}>
-              <TableCell style={{ color: "#111827" }}>{c.id}</TableCell>
-              <TableCell style={{ color: "#111827" }}>{customerName}</TableCell>
+              <TableCell className={styles.cellDark}>{c.id}</TableCell>
+              <TableCell className={styles.cellDark}>{customerName}</TableCell>
               <TableCell align="center">{c.orderId}</TableCell>
               <TableCell className="mobile-hide">{c.reason}</TableCell>
               <TableCell className="mobile-hide" align="right">
@@ -111,7 +104,7 @@ const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                 />
               </TableCell>
               <TableCell width="160px">
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <div className={styles.actions}>
                   <CreditNoteActionButtons
                     onView={() => onView && onView(c.id)}
                     onToggleStatus={() => {

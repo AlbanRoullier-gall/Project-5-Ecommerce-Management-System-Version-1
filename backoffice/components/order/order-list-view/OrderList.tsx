@@ -12,6 +12,7 @@ import {
 } from "../credit-note-view";
 import { useOrderList } from "../../../hooks";
 import { CreditNotePublicDTO } from "dto";
+import styles from "../../../styles/components/OrderList.module.css";
 
 /**
  * Composant d'affichage de la liste des commandes
@@ -142,25 +143,14 @@ const OrderList: React.FC = () => {
 
       {/* Indicateur de filtrage */}
       {(search || deliveryFilter || yearFilter) && (
-        <div
-          style={{
-            background: "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-            color: "white",
-            padding: "1rem 1.5rem",
-            borderRadius: "12px",
-            marginBottom: "1.5rem",
-            display: "flex",
-            alignItems: "center",
-            boxShadow: "0 4px 12px rgba(19, 104, 106, 0.3)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-            <i className="fas fa-filter" style={{ fontSize: "1.2rem" }}></i>
-            <span style={{ fontWeight: "600" }}>
+        <div className={styles.filterIndicator}>
+          <div className={styles.filterInfo}>
+            <i className={`fas fa-filter ${styles.filterIcon}`}></i>
+            <span className={styles.filterLabel}>
               {orders.length} commande{orders.length !== 1 ? "s" : ""} trouvée
               {orders.length !== 1 ? "s" : ""}
               {deliveryFilter && (
-                <span style={{ marginLeft: "0.5rem", opacity: 0.9 }}>
+                <span className={styles.filterBadge}>
                   • {deliveryFilter === "delivered" ? "Livrées" : "En attente"}
                 </span>
               )}
@@ -169,7 +159,7 @@ const OrderList: React.FC = () => {
         </div>
       )}
 
-      <div style={{ marginBottom: "2.5rem" }}>
+      <div className={styles.tableSection}>
         <OrderTable
           orders={orders}
           isLoading={isLoading}
@@ -179,14 +169,7 @@ const OrderList: React.FC = () => {
       </div>
 
       <PageHeader title="Avoirs" />
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "0.75rem",
-        }}
-      >
+      <div className={styles.creditHeader}>
         <div />
         <Button
           variant="primary"
@@ -196,7 +179,7 @@ const OrderList: React.FC = () => {
           Créer un avoir
         </Button>
       </div>
-      <div style={{ marginBottom: "2.5rem" }}>
+      <div className={styles.tableSection}>
         <CreditNoteTable
           creditNotes={creditNotes}
           isLoading={isLoading}
@@ -221,75 +204,17 @@ const OrderList: React.FC = () => {
       </div>
 
       {/* Section Export */}
-      <div
-        style={{
-          marginTop: "2rem",
-          padding: "1.5rem",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "12px",
-          border: "2px solid #e9ecef",
-          textAlign: "center",
-        }}
-      >
-        <h3
-          style={{
-            margin: "0 0 1rem 0",
-            color: "#13686a",
-            fontSize: "1.2rem",
-            fontWeight: "600",
-          }}
-        >
-          📊 Export des données
-        </h3>
-        <p
-          style={{
-            margin: "0 0 1.5rem 0",
-            color: "#666",
-            fontSize: "0.9rem",
-          }}
-        >
+      <div className={styles.exportCard}>
+        <h3 className={styles.exportTitle}>📊 Export des données</h3>
+        <p className={styles.exportText}>
           Exportez les commandes et avoirs pour une année spécifique
         </p>
         <button
           onClick={handleExportPDF}
           disabled={isExporting || !yearFilter}
-          style={{
-            padding: "1rem 2rem",
-            border: "2px solid #13686a",
-            borderRadius: "8px",
-            fontSize: "1.1rem",
-            backgroundColor: yearFilter ? "#13686a" : "#e0e0e0",
-            color: yearFilter ? "white" : "#666",
-            cursor: yearFilter ? "pointer" : "not-allowed",
-            transition: "all 0.3s ease",
-            fontWeight: "600",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "0.75rem",
-            minWidth: "200px",
-            boxShadow: yearFilter
-              ? "0 4px 12px rgba(19, 104, 106, 0.2)"
-              : "none",
-          }}
-          onMouseEnter={(e) => {
-            if (yearFilter) {
-              e.currentTarget.style.backgroundColor = "#0dd3d1";
-              e.currentTarget.style.borderColor = "#0dd3d1";
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow =
-                "0 6px 16px rgba(19, 104, 106, 0.3)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (yearFilter) {
-              e.currentTarget.style.backgroundColor = "#13686a";
-              e.currentTarget.style.borderColor = "#13686a";
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 12px rgba(19, 104, 106, 0.2)";
-            }
-          }}
+          className={`${styles.exportButton} ${
+            !yearFilter || isExporting ? styles.exportButtonDisabled : ""
+          }`}
         >
           {isExporting ? (
             <>
@@ -304,14 +229,7 @@ const OrderList: React.FC = () => {
           )}
         </button>
         {!yearFilter && (
-          <p
-            style={{
-              margin: "1rem 0 0 0",
-              color: "#e74c3c",
-              fontSize: "0.85rem",
-              fontStyle: "italic",
-            }}
-          >
+          <p className={styles.exportHint}>
             ⚠️ Veuillez sélectionner une année pour activer l'export
           </p>
         )}

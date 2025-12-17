@@ -6,6 +6,7 @@ import PageHeader from "../../shared/PageHeader";
 import Button from "../../shared/Button";
 import { CustomerPublicDTO } from "dto";
 import { useCustomerList } from "../../../hooks";
+import styles from "../../../styles/components/CustomerList.module.css";
 
 /**
  * Composant d'affichage de la liste des clients
@@ -60,7 +61,7 @@ const CustomerList: React.FC = () => {
   };
 
   return (
-    <div style={{ fontSize: "1rem" }}>
+    <div className={styles.wrapper}>
       {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
 
       <PageHeader title="Clients">
@@ -75,21 +76,8 @@ const CustomerList: React.FC = () => {
 
       <CustomerFilters searchTerm={searchTerm} onSearchChange={setSearchTerm} />
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "1rem",
-        }}
-      >
-        <p
-          style={{
-            fontSize: "1.1rem",
-            color: "#6b7280",
-            fontWeight: "500",
-          }}
-        >
+      <div className={styles.summaryBar}>
+        <p className={styles.summaryText}>
           {totalCustomers} client(s) trouvé(s)
         </p>
       </div>

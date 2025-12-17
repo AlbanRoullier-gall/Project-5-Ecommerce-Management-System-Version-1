@@ -80,7 +80,6 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           order ? `Détail de la commande #${order.id}` : "Détail de la commande"
         }
         onClose={onClose}
-        maxWidth="900px"
         headerActions={
           <>
             <Button
@@ -103,227 +102,85 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
         }
       >
         {isLoading && (
-          <div style={{ color: "#6b7280" }}>Chargement du détail…</div>
+          <div className={styles.loadingText}>Chargement du détail…</div>
         )}
 
-        {!isLoading && error && (
-          <div
-            style={{
-              background: "#FEF2F2",
-              color: "#B91C1C",
-              border: "1px solid #FECACA",
-              padding: "0.75rem 1rem",
-              borderRadius: 12,
-            }}
-          >
-            {error}
-          </div>
-        )}
+        {!isLoading && error && <div className={styles.errorBox}>{error}</div>}
 
         {exportError && (
-          <div
-            style={{
-              background: "#FEF2F2",
-              color: "#B91C1C",
-              border: "1px solid #FECACA",
-              padding: "0.75rem 1rem",
-              borderRadius: 12,
-              marginBottom: "1rem",
-            }}
-          >
+          <div className={`${styles.errorBox} ${styles.errorSpacer}`}>
             {exportError}
           </div>
         )}
 
         {!isLoading && !error && order && (
-          <div
-            className="order-detail-content"
-            style={{ display: "grid", gap: "1rem" }}
-          >
+          <div className={styles.contentGridTight}>
             {/* Informations principales */}
-            <div
-              className="order-main-info"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                gap: "1rem",
-              }}
-            >
-              <div
-                style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 8,
-                  padding: "0.75rem",
-                }}
-              >
-                <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                  Client
-                </div>
+            <div className={styles.mainInfoGrid}>
+              <div className={styles.mainCard}>
+                <div className={styles.cardLabel}>Client</div>
                 {customerName && (
-                  <div style={{ fontSize: "1.05rem", color: "#111827" }}>
-                    {customerName}
-                  </div>
+                  <div className={styles.cardValue}>{customerName}</div>
                 )}
                 {order.customerEmail && (
-                  <div style={{ fontSize: "0.95rem", color: "#6b7280" }}>
+                  <div className={styles.cardValueMuted}>
                     {order.customerEmail}
                   </div>
                 )}
                 {order.customerPhoneNumber && (
-                  <div style={{ fontSize: "0.95rem", color: "#6b7280" }}>
+                  <div className={styles.cardValueMuted}>
                     {order.customerPhoneNumber}
                   </div>
                 )}
               </div>
 
-              <div
-                style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 8,
-                  padding: "0.75rem",
-                }}
-              >
-                <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                  Paiement
-                </div>
-                <div style={{ fontSize: "1.05rem", color: "#111827" }}>
+              <div className={styles.mainCard}>
+                <div className={styles.cardLabel}>Paiement</div>
+                <div className={styles.cardValue}>
                   {order.paymentMethod || "—"}
                 </div>
               </div>
             </div>
 
             {/* Adresses */}
-            <div
-              className="order-addresses-section"
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: 8,
-                padding: "0.75rem",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "0.75rem",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "1rem",
-                    color: "#111827",
-                    fontWeight: 600,
-                  }}
-                >
+            <div className={styles.addressesSection}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionTitle}>
                   Adresses de la commande
                 </div>
                 {addressesLoading && (
-                  <div style={{ color: "#6b7280", fontSize: "0.9rem" }}>
-                    Chargement…
-                  </div>
+                  <div className={styles.loadingText}>Chargement…</div>
                 )}
               </div>
 
               {addressesError && (
-                <div
-                  style={{
-                    background: "#FEF2F2",
-                    color: "#B91C1C",
-                    border: "1px solid #FECACA",
-                    padding: "0.5rem 0.75rem",
-                    borderRadius: 10,
-                    marginBottom: "0.75rem",
-                  }}
-                >
-                  {addressesError}
-                </div>
+                <div className={styles.errorAlert}>{addressesError}</div>
               )}
 
               {!addressesLoading && !addressesError && (
-                <div
-                  className="addresses-grid"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                    gap: "1rem",
-                  }}
-                >
+                <div className={styles.addressesGrid}>
                   {addresses.length === 0 && (
-                    <div
-                      style={{
-                        color: "#6b7280",
-                        gridColumn: "1 / -1",
-                        textAlign: "center",
-                        padding: "1rem",
-                      }}
-                    >
-                      Aucune adresse
-                    </div>
+                    <div className={styles.addressEmpty}>Aucune adresse</div>
                   )}
                   {addresses.map((addr) => (
-                    <div
-                      key={addr.id}
-                      className="address-card"
-                      style={{
-                        border: "1px solid #e5e7eb",
-                        borderRadius: 8,
-                        padding: "0.75rem",
-                        background: "#f9fafb",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontWeight: 600,
-                          color: "#111827",
-                          marginBottom: "0.5rem",
-                          fontSize: "0.9rem",
-                        }}
-                      >
+                    <div key={addr.id} className={styles.addressCard}>
+                      <div className={styles.addressTitle}>
                         {addr.addressType === "shipping"
                           ? "Livraison"
                           : "Facturation"}
                       </div>
-                      <div
-                        style={{
-                          color: "#111827",
-                          marginBottom: "0.25rem",
-                          fontSize: "0.85rem",
-                        }}
-                      >
+                      <div className={styles.addressName}>
                         {addr.firstName} {addr.lastName}
                       </div>
-                      <div
-                        style={{
-                          color: "#6b7280",
-                          marginBottom: "0.25rem",
-                          fontSize: "0.8rem",
-                        }}
-                      >
-                        {addr.address}
-                      </div>
-                      <div
-                        style={{
-                          color: "#6b7280",
-                          marginBottom: "0.25rem",
-                          fontSize: "0.8rem",
-                        }}
-                      >
+                      <div className={styles.addressLine}>{addr.address}</div>
+                      <div className={styles.addressLine}>
                         {addr.postalCode} {addr.city}
                       </div>
-                      <div
-                        style={{
-                          color: "#6b7280",
-                          marginBottom: "0.25rem",
-                          fontSize: "0.8rem",
-                        }}
-                      >
+                      <div className={styles.addressLine}>
                         {addr.countryName}
                       </div>
                       {addr.phone && (
-                        <div style={{ color: "#6b7280", fontSize: "0.8rem" }}>
-                          {addr.phone}
-                        </div>
+                        <div className={styles.addressPhone}>{addr.phone}</div>
                       )}
                     </div>
                   ))}

@@ -5,7 +5,11 @@ import TableLayout, {
   TableRow,
   TableCell,
 } from "../../shared/TableLayout";
-import { ActionButtonsContainer, ActionButton } from "../../shared/ActionButton";
+import {
+  ActionButtonsContainer,
+  ActionButton,
+} from "../../shared/ActionButton";
+import styles from "../../../styles/components/CustomerTable.module.css";
 
 /**
  * Props du composant CustomerTable
@@ -47,14 +51,10 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
   ];
 
   return (
-    <TableLayout headers={headers} minWidth="600px" headerGradient="teal">
+    <TableLayout headers={headers} headerGradient="teal">
       {customers.length === 0 && (
         <TableRow>
-          <TableCell
-            colSpan={4}
-            align="center"
-            style={{ color: "#6b7280", padding: "1rem" }}
-          >
+          <TableCell colSpan={4} align="center" className={styles.empty}>
             Aucun client trouvé
           </TableCell>
         </TableRow>
@@ -90,32 +90,20 @@ const CustomerTableRow: React.FC<CustomerTableRowProps> = ({
   <TableRow>
     <TableCell>
       <div>
-        <div
-          style={{
-            fontWeight: "600",
-            fontSize: "1rem",
-            color: "#111827",
-          }}
-        >
-          {customer.fullName}
-        </div>
+        <div className={styles.cellDark}>{customer.fullName}</div>
       </div>
     </TableCell>
 
     <TableCell>
-      <span style={{ color: "#6b7280", fontSize: "1rem" }}>
-        {customer.email}
-      </span>
+      <span className={styles.cellMuted}>{customer.email}</span>
     </TableCell>
 
     <TableCell className="mobile-hide">
-      <span style={{ color: "#6b7280", fontSize: "1rem" }}>
-        {customer.phoneNumber || "-"}
-      </span>
+      <span className={styles.cellMuted}>{customer.phoneNumber || "-"}</span>
     </TableCell>
 
     <TableCell width="160px">
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div className={styles.actions}>
         <CustomerActionButtons
           customer={customer}
           onEdit={onEdit}
@@ -143,19 +131,19 @@ const CustomerActionButtons: React.FC<CustomerActionButtonsProps> = ({
   <ActionButtonsContainer>
     <ActionButton
       icon="fas fa-map-marker-alt"
-      color="#d9b970"
+      variant="gold"
       title="Gérer les adresses"
       onClick={() => onManageAddresses(customer)}
     />
     <ActionButton
       icon="fas fa-edit"
-      color="#3b82f6"
+      variant="blue"
       title="Modifier"
       onClick={() => onEdit(customer)}
     />
     <ActionButton
       icon="fas fa-trash"
-      color="#ef4444"
+      variant="red"
       title="Supprimer"
       onClick={() => onDelete(customer.customerId)}
     />
