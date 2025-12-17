@@ -1,4 +1,7 @@
-import React from "react";
+import React, { createContext, useContext } from "react";
+import styles from "../../styles/components/TableLayout.module.css";
+
+const HeadersContext = createContext<TableHeader[]>([]);
 
 export interface TableHeader {
   label: string;
@@ -7,13 +10,14 @@ export interface TableHeader {
   className?: string;
 }
 
-export interface TableCell {
+export interface TableCellProps {
   children: React.ReactNode;
   align?: "left" | "right" | "center";
   width?: string;
   className?: string;
   style?: React.CSSProperties;
   colSpan?: number;
+  dataLabel?: string;
 }
 
 interface TableLayoutProps {
@@ -48,71 +52,48 @@ const TableLayout: React.FC<TableLayoutProps> = ({
   minWidth = "800px",
   headerGradient = "teal",
 }) => {
-  const headerStyleBase: React.CSSProperties = {
-    padding: "1.5rem 1.25rem",
-    textAlign: "left",
-    fontSize: "1rem",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  };
-
   return (
-    <div
-      style={{
-        background: "white",
-        borderRadius: 16,
-        overflow: "hidden",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-        border: "2px solid rgba(19, 104, 106, 0.1)",
-        display: "flex",
-        flexDirection: "column",
-        maxHeight: "600px",
-      }}
-    >
-      <div
-        className="table-responsive"
-        style={{
-          overflowX: "auto",
-          overflowY: "auto",
-          flex: 1,
-        }}
-      >
-        <table
+    <HeadersContext.Provider value={headers}>
+      <div className={styles.tableContainer}>
+        <div
+          className={styles.tableResponsive}
           style={{
-            width: "100%",
-            tableLayout: "fixed",
-            borderCollapse: "separate",
-            borderSpacing: 0,
-            fontSize: "1rem",
-            minWidth,
+            overflowX: "auto",
+            overflowY: "auto",
+            flex: 1,
           }}
         >
-          <thead style={gradientMap[headerGradient]}>
-            <tr>
-              {headers.map((h, idx) => (
-                <th
-                  key={`${h.label}-${idx}`}
-                  style={{
-                    ...headerStyleBase,
-                    textAlign: h.align || "left",
-                    width: h.width,
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 10,
-                    ...gradientMap[headerGradient],
-                  }}
-                  className={h.className}
-                >
-                  {h.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>{children}</tbody>
-        </table>
+          <table
+            className={styles.table}
+            style={{
+              minWidth,
+            }}
+          >
+            <thead
+              className={styles.tableHead}
+              style={gradientMap[headerGradient]}
+            >
+              <tr>
+                {headers.map((h, idx) => (
+                  <th
+                    key={`${h.label}-${idx}`}
+                    style={{
+                      textAlign: h.align || "left",
+                      width: h.width,
+                      ...gradientMap[headerGradient],
+                    }}
+                    className={`${styles.tableHeadCell} ${h.className || ""}`}
+                  >
+                    {h.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className={styles.tableBody}>{children}</tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </HeadersContext.Provider>
   );
 };
 
@@ -120,11 +101,11 @@ export const TableRow: React.FC<TableRowProps> = ({
   children,
   backgroundColor = "white",
 }) => {
+  const headers = useContext(HeadersContext);
   return (
     <tr
+      className={styles.tableRow}
       style={{
-        borderBottom: "1px solid #e1e5e9",
-        transition: "all 0.2s ease",
         background: backgroundColor,
       }}
       onMouseOver={(e) => {
@@ -137,28 +118,35 @@ export const TableRow: React.FC<TableRowProps> = ({
         e.currentTarget.style.background = backgroundColor;
       }}
     >
-      {children}
+      {React.Children.map(children, (cell, idx) => {
+        if (React.isValidElement(cell)) {
+          const label = headers[idx]?.label ?? headers.at(-1)?.label ?? "";
+          return React.cloneElement(cell, { dataLabel: label });
+        }
+        return cell;
+      })}
     </tr>
   );
 };
 
-export const TableCell: React.FC<TableCell> = ({
+export const TableCell: React.FC<TableCellProps> = ({
   children,
   align = "left",
   width,
   className,
   style,
   colSpan,
+  dataLabel,
 }) => {
   return (
     <td
       style={{
-        padding: "1.5rem 1.25rem",
         textAlign: align,
         width,
         ...style,
       }}
-      className={className}
+      className={`${styles.tableCell} ${className || ""}`}
+      data-label={dataLabel ?? ""}
       colSpan={colSpan}
     >
       {children}

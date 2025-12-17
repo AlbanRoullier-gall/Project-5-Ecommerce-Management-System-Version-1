@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Hero from "./Hero";
+import styles from "../styles/components/Header.module.css";
 import { useHeader } from "../hooks";
 
 interface HeaderProps {
@@ -16,52 +17,54 @@ const Header: React.FC<HeaderProps> = ({ hero: customHero }) => {
 
   return (
     <>
-      <header className="modern-header">
-        <div className="header-container">
-          <div className="brand-section">
-            <Link href="/" className="brand-link">
+      <header className={styles.header}>
+        <div className={styles.headerContainer}>
+          <div className={styles.brandSection}>
+            <Link href="/" className={styles.brandLink}>
               <Image
-                className="logo"
+                className={styles.logo}
                 src="/images/logoNatureDePierreIcon.svg"
                 alt="Logo Nature de Pierre"
                 width={50}
                 height={50}
               />
-              <span className="brand-text">NATURE DE PIERRE</span>
+              <span className={styles.brandText}>NATURE DE PIERRE</span>
             </Link>
           </div>
 
           {/* Cart Section */}
-          <div className="cart-section">
-            <Link href="/cart" className="cart-link">
-              <div className="cart-icon">
-                <i className="fas fa-shopping-cart"></i>
+          <div className={styles.cartSection}>
+            <Link href="/cart" className={styles.cartLink}>
+              <div className={styles.cartIconWrapper}>
+                <i className={`fas fa-shopping-cart ${styles.cartIcon}`}></i>
                 {itemCount > 0 && (
-                  <span className="cart-count">{itemCount}</span>
+                  <span className={styles.cartCount}>{itemCount}</span>
                 )}
               </div>
             </Link>
           </div>
 
           {/* Mobile Menu Button */}
-          <button className="mobile-menu-btn" onClick={toggleMenu}>
-            <i className={`fas ${isMenuOpen ? "fa-times" : "fa-bars"}`}></i>
+          <button className={styles.mobileMenuBtn} onClick={toggleMenu}>
+            <i
+              className={`fas ${isMenuOpen ? "fa-times" : "fa-bars"} ${styles.mobileMenuIcon}`}
+            ></i>
           </button>
         </div>
 
         {/* Desktop Navigation - Below Title */}
-        <nav className="desktop-nav">
-          <div className="nav-container">
-            <Link href="/#catalog" className="nav-item">
-              <i className="fas fa-th-large"></i>
+        <nav className={styles.desktopNav}>
+          <div className={styles.navContainer}>
+            <Link href="/#catalog" className={styles.navItem}>
+              <i className={`fas fa-th-large ${styles.navIcon}`}></i>
               <span>CATALOGUE</span>
             </Link>
-            <Link href="/philosophy" className="nav-item">
-              <i className="fas fa-leaf"></i>
+            <Link href="/philosophy" className={styles.navItem}>
+              <i className={`fas fa-leaf ${styles.navIcon}`}></i>
               <span>PHILOSOPHIE</span>
             </Link>
-            <Link href="/contact" className="nav-item">
-              <i className="fas fa-envelope"></i>
+            <Link href="/contact" className={styles.navItem}>
+              <i className={`fas fa-envelope ${styles.navIcon}`}></i>
               <span>CONTACT</span>
             </Link>
           </div>
@@ -69,29 +72,29 @@ const Header: React.FC<HeaderProps> = ({ hero: customHero }) => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <nav className="mobile-nav">
+          <nav className={styles.mobileNav}>
             <Link
               href="/#catalog"
-              className="mobile-nav-item"
+              className={styles.mobileNavItem}
               onClick={closeMenu}
             >
-              <i className="fas fa-th-large"></i>
+              <i className={`fas fa-th-large ${styles.mobileNavIcon}`}></i>
               <span>CATALOGUE</span>
             </Link>
             <Link
               href="/philosophy"
-              className="mobile-nav-item"
+              className={styles.mobileNavItem}
               onClick={closeMenu}
             >
-              <i className="fas fa-leaf"></i>
+              <i className={`fas fa-leaf ${styles.mobileNavIcon}`}></i>
               <span>PHILOSOPHIE</span>
             </Link>
             <Link
               href="/contact"
-              className="mobile-nav-item"
+              className={styles.mobileNavItem}
               onClick={closeMenu}
             >
-              <i className="fas fa-envelope"></i>
+              <i className={`fas fa-envelope ${styles.mobileNavIcon}`}></i>
               <span>CONTACT</span>
             </Link>
           </nav>

@@ -3,6 +3,7 @@
 import React from "react";
 import { StatCard } from "../shared";
 import { useDashboardStats } from "../../hooks";
+import styles from "../../styles/components/DashboardCards.module.css";
 
 /**
  * Composant d'affichage des statistiques du dashboard
@@ -20,11 +21,11 @@ const StatsOverview: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="stats-container">
-        <div className="stat-card">
-          <h3>Chargement...</h3>
-          <p className="stat-number">—</p>
-          <p className="stat-label">Veuillez patienter</p>
+      <div className={styles.statsContainer}>
+        <div className={styles.statCard}>
+          <h3 className={styles.statTitle}>Chargement...</h3>
+          <p className={styles.statNumber}>—</p>
+          <p className={styles.statLabel}>Veuillez patienter</p>
         </div>
       </div>
     );
@@ -32,11 +33,11 @@ const StatsOverview: React.FC = () => {
 
   if (error) {
     return (
-      <div className="stats-container">
-        <div className="stat-card">
-          <h3>Erreur</h3>
-          <p className="stat-number">!</p>
-          <p className="stat-label">{error}</p>
+      <div className={styles.statsContainer}>
+        <div className={styles.statCard}>
+          <h3 className={styles.statTitle}>Erreur</h3>
+          <p className={styles.statNumber}>!</p>
+          <p className={styles.statLabel}>{error}</p>
         </div>
       </div>
     );
@@ -100,12 +101,7 @@ const StatsOverview: React.FC = () => {
       </div>
 
       {/* Cards de statistiques - Grille responsive */}
-      <div
-        className="stats-container"
-        style={{
-          marginBottom: "2rem",
-        }}
-      >
+      <div className={styles.statsContainer} style={{ marginBottom: "2rem" }}>
         <StatCard title="Produits" value={stats?.productsCount ?? 0} />
         <StatCard title="Clients" value={stats?.customersCount ?? 0} />
         <StatCard title="Commandes" value={stats?.ordersCount ?? 0} />

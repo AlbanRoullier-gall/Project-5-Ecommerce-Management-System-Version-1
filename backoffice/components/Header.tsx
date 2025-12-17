@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
+import styles from "../styles/components/Header.module.css";
 
 /**
  * Composant Header du backoffice
@@ -36,26 +37,26 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="modern-header">
-      <div className="header-container">
-        <div className="brand-section">
-          <Link href="/" className="brand-link">
+    <header className={styles.header}>
+      <div className={styles.headerContainer}>
+        <div className={styles.brandSection}>
+          <Link href="/" className={styles.brandLink}>
             <Image
-              className="logo"
+              className={styles.logo}
               src="/images/logoNatureDePierreIcon.svg"
               alt="Logo Nature de Pierre"
               width={50}
               height={50}
             />
-            <span className="brand-text">NATURE DE PIERRE</span>
+            <span className={styles.brandText}>NATURE DE PIERRE</span>
           </Link>
         </div>
 
         {/* User Actions */}
         {isMounted && !isLoading && isAuthenticated && (
-          <div className="user-actions">
-            <button onClick={handleLogout} className="logout-btn">
-              <i className="fas fa-sign-out-alt"></i>
+          <div className={styles.userActions}>
+            <button onClick={handleLogout} className={styles.logoutButton}>
+              <i className={`fas fa-sign-out-alt ${styles.logoutIcon}`}></i>
               <span>Déconnexion</span>
             </button>
           </div>
@@ -63,35 +64,37 @@ const Header: React.FC = () => {
 
         {/* Mobile Menu Button */}
         <button
-          className="mobile-menu-btn"
+          className={styles.mobileMenuBtn}
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
-          <i className={`fas ${isMenuOpen ? "fa-times" : "fa-bars"}`}></i>
+          <i
+            className={`fas ${isMenuOpen ? "fa-times" : "fa-bars"} ${styles.mobileMenuIcon}`}
+          ></i>
         </button>
       </div>
 
       {/* Desktop Navigation - Below Title */}
-      <nav className="desktop-nav">
-        <div className="nav-container">
-          <Link href="/dashboard" className="nav-item">
-            <i className="fas fa-tachometer-alt"></i>
+      <nav className={styles.desktopNav}>
+        <div className={styles.navContainer}>
+          <Link href="/dashboard" className={styles.navItem}>
+            <i className={`fas fa-tachometer-alt ${styles.navIcon}`}></i>
             <span>DASHBOARD</span>
           </Link>
-          <Link href="/products" className="nav-item">
-            <i className="fas fa-box"></i>
+          <Link href="/products" className={styles.navItem}>
+            <i className={`fas fa-box ${styles.navIcon}`}></i>
             <span>PRODUITS</span>
           </Link>
-          <Link href="/customers" className="nav-item">
-            <i className="fas fa-users"></i>
+          <Link href="/customers" className={styles.navItem}>
+            <i className={`fas fa-users ${styles.navIcon}`}></i>
             <span>CLIENTS</span>
           </Link>
-          <Link href="/orders" className="nav-item">
-            <i className="fas fa-shopping-bag"></i>
+          <Link href="/orders" className={styles.navItem}>
+            <i className={`fas fa-shopping-bag ${styles.navIcon}`}></i>
             <span>COMMANDES</span>
           </Link>
           {isMounted && !isLoading && user?.isSuperAdmin && (
-            <Link href="/users/management" className="nav-item">
-              <i className="fas fa-user-shield"></i>
+            <Link href="/users/management" className={styles.navItem}>
+              <i className={`fas fa-user-shield ${styles.navIcon}`}></i>
               <span>UTILISATEURS</span>
             </Link>
           )}
@@ -101,46 +104,46 @@ const Header: React.FC = () => {
 
       {/* Mobile Navigation */}
       {isMenuOpen && (
-        <nav className="mobile-nav">
+        <nav className={styles.mobileNav}>
           <Link
             href="/dashboard"
-            className="mobile-nav-item"
+            className={styles.mobileNavItem}
             onClick={() => setIsMenuOpen(false)}
           >
-            <i className="fas fa-tachometer-alt"></i>
+            <i className={`fas fa-tachometer-alt ${styles.mobileNavIcon}`}></i>
             <span>DASHBOARD</span>
           </Link>
           <Link
             href="/products"
-            className="mobile-nav-item"
+            className={styles.mobileNavItem}
             onClick={() => setIsMenuOpen(false)}
           >
-            <i className="fas fa-box"></i>
+            <i className={`fas fa-box ${styles.mobileNavIcon}`}></i>
             <span>PRODUITS</span>
           </Link>
           <Link
             href="/customers"
-            className="mobile-nav-item"
+            className={styles.mobileNavItem}
             onClick={() => setIsMenuOpen(false)}
           >
-            <i className="fas fa-users"></i>
+            <i className={`fas fa-users ${styles.mobileNavIcon}`}></i>
             <span>CLIENTS</span>
           </Link>
           <Link
             href="/orders"
-            className="mobile-nav-item"
+            className={styles.mobileNavItem}
             onClick={() => setIsMenuOpen(false)}
           >
-            <i className="fas fa-shopping-bag"></i>
+            <i className={`fas fa-shopping-bag ${styles.mobileNavIcon}`}></i>
             <span>COMMANDES</span>
           </Link>
           {isMounted && !isLoading && user?.isSuperAdmin && (
             <Link
               href="/users/management"
-              className="mobile-nav-item"
+              className={styles.mobileNavItem}
               onClick={() => setIsMenuOpen(false)}
             >
-              <i className="fas fa-user-shield"></i>
+              <i className={`fas fa-user-shield ${styles.mobileNavIcon}`}></i>
               <span>UTILISATEURS</span>
             </Link>
           )}

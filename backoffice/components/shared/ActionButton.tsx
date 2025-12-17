@@ -84,7 +84,19 @@ interface ActionButtonsContainerProps {
 export const ActionButtonsContainer: React.FC<ActionButtonsContainerProps> = ({
   children,
 }) => {
-  return <div style={{ display: "flex", gap: "0.75rem" }}>{children}</div>;
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: "0.75rem",
+        justifyContent: "center",
+        alignItems: "center",
+        width: "100%",
+      }}
+    >
+      {children}
+    </div>
+  );
 };
 
 export default ActionButton;

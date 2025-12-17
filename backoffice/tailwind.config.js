@@ -6,6 +6,25 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Gurmukhi MT", "Arial", "sans-serif"],
+      },
+      borderRadius: {
+        lg: "16px",
+        md: "12px",
+        sm: "8px",
+      },
+      boxShadow: {
+        card: "0 4px 20px rgba(0, 0, 0, 0.08)",
+        elevated: "0 10px 30px rgba(0, 0, 0, 0.12)",
+      },
+      transitionTimingFunction: {
+        smooth: "cubic-bezier(0.4, 0, 0.2, 1)",
+      },
+      transitionDuration: {
+        fast: "150ms",
+        normal: "250ms",
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",

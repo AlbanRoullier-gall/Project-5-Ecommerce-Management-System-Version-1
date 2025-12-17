@@ -1,0 +1,40 @@
+@layer components {
+  .footer {
+    background-color: var(--color-brand-teal);
+    color: white;
+    text-align: center;
+    padding: 2rem;
+    border-top: 3px solid var(--color-brand-gold);
+  }
+
+  .social {
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+
+  .socialLink {
+    color: white;
+    font-size: 2rem;
+    transition: color var(--transition-normal) var(--transition-smooth);
+  }
+
+  .socialLink:hover {
+    color: var(--color-brand-gold);
+  }
+
+  .legal {
+    font-size: 1.2rem;
+  }
+
+  .legalLink {
+    color: white;
+    text-decoration: underline;
+    transition: color var(--transition-normal) var(--transition-smooth);
+  }
+
+  .legalLink:hover {
+    color: var(--color-brand-gold);
+  }
+}
