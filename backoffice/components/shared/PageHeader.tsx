@@ -1,4 +1,5 @@
 import React from "react";
+import styles from "../../styles/components/PageHeader.module.css";
 
 /**
  * Props du composant PageHeader
@@ -21,39 +22,9 @@ interface PageHeaderProps {
  */
 const PageHeader: React.FC<PageHeaderProps> = ({ title, children }) => {
   return (
-    <div
-      className="page-header"
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "3rem",
-        paddingBottom: "2rem",
-        borderBottom: "3px solid #d9b970",
-        flexWrap: "wrap",
-        gap: "1rem",
-      }}
-    >
-      <h1
-        className="page-header-title"
-        style={{
-          fontSize: "3rem",
-          color: "#13686a",
-          fontWeight: "bold",
-          textShadow: "1px 1px 2px rgba(0, 0, 0, 0.05)",
-          margin: 0,
-        }}
-      >
-        {title}
-      </h1>
-      {children && (
-        <div
-          className="page-header-actions"
-          style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}
-        >
-          {children}
-        </div>
-      )}
+    <div className={styles.header}>
+      <h1 className={styles.title}>{title}</h1>
+      {children && <div className={styles.actions}>{children}</div>}
     </div>
   );
 };

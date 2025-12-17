@@ -1,0 +1,154 @@
+@layer components {
+  .contentGrid {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .section {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    background: #f9fafb;
+  }
+
+  .itemsSection {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.75rem;
+  }
+
+  .infoSection {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    background: #f9fafb;
+  }
+
+  .infoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .sectionTitle {
+    font-size: 1rem;
+    color: #111827;
+    font-weight: 600;
+  }
+
+  .loadingText {
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+
+  .errorAlert {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+  }
+
+  .createdSection {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    background: #f9fafb;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .createdText {
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+
+  .totalsSection {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    background: #f9fafb;
+  }
+
+  .totalsSectionGradient {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  }
+
+  .totalsTitle {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    color: #111827;
+    font-weight: 600;
+  }
+
+  .amountsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+
+  .amountCard {
+    text-align: center;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e1e5e9;
+  }
+
+  .amountLabel {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+  }
+
+  .amountValue {
+    font-size: 1.25rem;
+    color: #13686a;
+    font-weight: 700;
+  }
+
+  .dateCard {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    background: #f8fafc;
+    text-align: center;
+  }
+
+  .dateLabel {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+  }
+
+  .dateValue {
+    font-size: 1rem;
+    color: #111827;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .amountsGrid {
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.75rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .amountsGrid {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+  }
+}

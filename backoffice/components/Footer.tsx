@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import styles from "../styles/components/Footer.module.css";
 
 /**
  * Composant Footer du backoffice
@@ -12,8 +13,8 @@ import Link from "next/link";
  */
 const Footer: React.FC = () => {
   return (
-    <footer>
-      <div className="social-network-logos">
+    <footer className={styles.footer}>
+      <div className={styles.social}>
         <a href="#" onClick={(e) => e.preventDefault()}>
           <i className="fab fa-facebook"></i>
         </a>
@@ -27,7 +28,7 @@ const Footer: React.FC = () => {
           <i className="fab fa-twitter"></i>
         </a>
       </div>
-      <div className="textuel">
+      <div className={styles.text}>
         <Link href="/mentions-legales">Mentions légales</Link> |
         <Link href="/politique-confidentialite">
           {" "}

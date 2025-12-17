@@ -5,6 +5,7 @@ import { CreateCreditNoteModal } from "../credit-note-view";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
 import { useOrderDetail } from "../../../hooks";
 import { exportOrderInvoice } from "../../../services/orderService";
+import styles from "../../../styles/components/OrderDetailSections.module.css";
 
 interface OrderDetailModalProps {
   isOpen: boolean;
@@ -331,51 +332,18 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             </div>
 
             {/* Items */}
-            <div
-              className="order-items-section"
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: 8,
-                padding: "0.75rem",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "0.75rem",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "1rem",
-                    color: "#111827",
-                    fontWeight: 600,
-                  }}
-                >
+            <div className={styles.itemsSection}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionTitle}>
                   Articles de la commande
                 </div>
                 {itemsLoading && (
-                  <div style={{ color: "#6b7280", fontSize: "0.9rem" }}>
-                    Chargement…
-                  </div>
+                  <div className={styles.loadingText}>Chargement…</div>
                 )}
               </div>
 
               {itemsError && (
-                <div
-                  style={{
-                    background: "#FEF2F2",
-                    color: "#B91C1C",
-                    border: "1px solid #FECACA",
-                    padding: "0.5rem 0.75rem",
-                    borderRadius: 10,
-                    marginBottom: "0.75rem",
-                  }}
-                >
-                  {itemsError}
-                </div>
+                <div className={styles.errorAlert}>{itemsError}</div>
               )}
 
               {!itemsLoading && !itemsError && (
@@ -389,23 +357,8 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             </div>
 
             {/* Créée le */}
-            <div
-              className="order-created-section"
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: 8,
-                padding: "1rem",
-                background: "#f9fafb",
-                marginBottom: "1rem",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "0.9rem",
-                  color: "#6b7280",
-                  textAlign: "center",
-                }}
-              >
+            <div className={styles.createdSection}>
+              <div className={styles.createdText}>
                 <strong>Créée le :</strong>{" "}
                 {order.createdAt
                   ? new Date(order.createdAt as any).toLocaleString("fr-FR")
@@ -414,114 +367,24 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             </div>
 
             {/* Montants */}
-            <div
-              className="order-totals-section"
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: 8,
-                padding: "1rem",
-                background: "#f9fafb",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "1rem",
-                  color: "#111827",
-                  fontWeight: "600",
-                  marginBottom: "1rem",
-                }}
-              >
-                Montants
-              </div>
-              <div
-                className="amounts-grid"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-                  gap: "1rem",
-                }}
-              >
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "0.75rem",
-                    background: "white",
-                    borderRadius: 8,
-                    border: "1px solid #e1e5e9",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "#6b7280",
-                      marginBottom: "0.25rem",
-                    }}
-                  >
-                    Total HT
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "1.25rem",
-                      color: "#13686a",
-                      fontWeight: "700",
-                    }}
-                  >
+            <div className={styles.totalsSection}>
+              <div className={styles.totalsTitle}>Montants</div>
+              <div className={styles.amountsGrid}>
+                <div className={styles.amountCard}>
+                  <div className={styles.amountLabel}>Total HT</div>
+                  <div className={styles.amountValue}>
                     {Number(order.totalAmountHT || 0).toFixed(2)} €
                   </div>
                 </div>
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "0.75rem",
-                    background: "white",
-                    borderRadius: 8,
-                    border: "1px solid #e1e5e9",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "#6b7280",
-                      marginBottom: "0.25rem",
-                    }}
-                  >
-                    Total TTC
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "1.25rem",
-                      color: "#13686a",
-                      fontWeight: "700",
-                    }}
-                  >
+                <div className={styles.amountCard}>
+                  <div className={styles.amountLabel}>Total TTC</div>
+                  <div className={styles.amountValue}>
                     {Number(order.totalAmountTTC || 0).toFixed(2)} €
                   </div>
                 </div>
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "0.75rem",
-                    background: "white",
-                    borderRadius: 8,
-                    border: "1px solid #e1e5e9",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "#6b7280",
-                      marginBottom: "0.25rem",
-                    }}
-                  >
-                    TVA
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "1.25rem",
-                      color: "#13686a",
-                      fontWeight: "700",
-                    }}
-                  >
+                <div className={styles.amountCard}>
+                  <div className={styles.amountLabel}>TVA</div>
+                  <div className={styles.amountValue}>
                     {Number(order.totalVAT || 0).toFixed(2)} €
                   </div>
                 </div>

@@ -1,0 +1,25 @@
+@layer components {
+  .error {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(220, 38, 38, 0.05);
+    border-radius: 6px;
+    border-left: 3px solid #dc2626;
+  }
+
+  .icon {
+    font-size: 0.875rem;
+    margin-top: 0.125rem;
+    flex-shrink: 0;
+  }
+
+  .text {
+    line-height: 1.4;
+    word-wrap: break-word;
+  }
+}

@@ -6,6 +6,7 @@ import AuthGuard from "../auth/AuthGuard";
 import ErrorAlert from "./ErrorAlert";
 import PageHeader from "./PageHeader";
 import LoadingSpinner from "./LoadingSpinner";
+import styles from "../../styles/components/PageLayout.module.css";
 
 interface PageLayoutProps {
   title: string;
@@ -48,8 +49,8 @@ const PageLayout: React.FC<PageLayoutProps> = ({
         </Head>
         <div className="min-h-screen">
           <Header />
-          <main className="main-content">
-            <div className="page-container">
+          <main className={styles.mainContent}>
+            <div className={styles.pageContainer}>
               <LoadingSpinner message={loadingMessage} />
             </div>
           </main>
@@ -67,8 +68,8 @@ const PageLayout: React.FC<PageLayoutProps> = ({
         </Head>
         <div className="min-h-screen">
           <Header />
-          <main className="main-content">
-            <div className="page-container">
+          <main className={styles.mainContent}>
+            <div className={styles.pageContainer}>
               <ErrorAlert
                 message={notFoundMessage}
                 onClose={onNotFoundClose || (() => {})}
@@ -92,8 +93,8 @@ const PageLayout: React.FC<PageLayoutProps> = ({
       <div className="min-h-screen">
         <Header />
 
-        <main className="main-content">
-          <div className="page-container">
+        <main className={styles.mainContent}>
+          <div className={styles.pageContainer}>
             {error && (
               <ErrorAlert
                 message={error}

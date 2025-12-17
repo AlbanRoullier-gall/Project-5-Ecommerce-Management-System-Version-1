@@ -6,6 +6,9 @@
 
 import React from "react";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
+import TableLayout, { TableHeader, TableRow, TableCell } from "./TableLayout";
+import tableStyles from "../../styles/components/TableLayout.module.css";
+import styles from "../../styles/components/ItemDisplayTable.module.css";
 
 interface ItemDisplayTableProps {
   items: BaseItemDTO[];
@@ -54,334 +57,132 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
   getItemId,
 }) => {
   if (items.length === 0) {
-    return (
-      <div
-        style={{
-          padding: "0.75rem",
-          textAlign: "center",
-          color: "#6b7280",
-        }}
-      >
-        Aucun article
-      </div>
-    );
+    return <div className={styles.emptyState}>Aucun article</div>;
+  }
+
+  const headers: TableHeader[] = [];
+
+  if (columns.selection) {
+    headers.push({ label: "Sélection", align: "center", width: "90px" });
+  }
+  if (columns.product) {
+    headers.push({ label: "Produit", align: "left" });
+  }
+  if (columns.quantity) {
+    headers.push({ label: "Qté", align: "center", width: "90px" });
+  }
+  if (columns.unitPriceHT) {
+    headers.push({
+      label: "Prix unit. HT",
+      align: "right",
+      className: tableStyles.mobileHide,
+    });
+  }
+  if (columns.vatRate) {
+    headers.push({
+      label: "TVA",
+      align: "right",
+      className: tableStyles.mobileHide,
+    });
+  }
+  if (columns.totalPriceHT) {
+    headers.push({ label: "Total HT", align: "right" });
+  }
+  if (columns.totalPriceTTC) {
+    headers.push({ label: "Total TTC", align: "right" });
   }
 
   return (
-    <div
-      className="table-responsive"
-      style={{
-        overflowX: "auto",
-        overflowY: "auto",
-        maxHeight: "500px",
-      }}
+    <TableLayout
+      headers={headers}
+      headerGradient={variant === "credit-note" ? "gold" : "teal"}
+      minWidth="700px"
     >
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "separate",
-          borderSpacing: 0,
-          fontSize: "0.9rem",
-          minWidth: "700px",
-        }}
-      >
-        <thead
-          style={{
-            background:
-              variant === "credit-note"
-                ? "#f3f4f6"
-                : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-            color: variant === "credit-note" ? "#374151" : "white",
-          }}
-        >
-          <tr>
-            {columns.selection && (
-              <th
-                style={{
-                  textAlign: "left",
-                  padding: "0.5rem",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                  fontSize: "0.85rem",
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 10,
-                  background:
-                    variant === "credit-note"
-                      ? "#f3f4f6"
-                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-                  color: variant === "credit-note" ? "#374151" : "white",
-                }}
-              >
-                Sélection
-              </th>
-            )}
-            {columns.product && (
-              <th
-                style={{
-                  textAlign: "left",
-                  padding: "0.75rem 1rem",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                  fontSize: "0.85rem",
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 10,
-                  background:
-                    variant === "credit-note"
-                      ? "#f3f4f6"
-                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-                  color: variant === "credit-note" ? "#374151" : "white",
-                }}
-              >
-                Produit
-              </th>
-            )}
-            {columns.quantity && (
-              <th
-                style={{
-                  textAlign: "center",
-                  padding: "0.75rem 1rem",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                  fontSize: "0.85rem",
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 10,
-                  background:
-                    variant === "credit-note"
-                      ? "#f3f4f6"
-                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-                  color: variant === "credit-note" ? "#374151" : "white",
-                }}
-              >
-                Qté
-              </th>
-            )}
-            {columns.unitPriceHT && (
-              <th
-                className="mobile-hide"
-                style={{
-                  textAlign: "right",
-                  padding: "0.75rem 1rem",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                  fontSize: "0.85rem",
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 10,
-                  background:
-                    variant === "credit-note"
-                      ? "#f3f4f6"
-                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-                  color: variant === "credit-note" ? "#374151" : "white",
-                }}
-              >
-                Prix unit. HT
-              </th>
-            )}
-            {columns.vatRate && (
-              <th
-                className="mobile-hide"
-                style={{
-                  textAlign: "right",
-                  padding: "0.75rem 1rem",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                  fontSize: "0.85rem",
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 10,
-                  background:
-                    variant === "credit-note"
-                      ? "#f3f4f6"
-                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-                  color: variant === "credit-note" ? "#374151" : "white",
-                }}
-              >
-                TVA
-              </th>
-            )}
-            {columns.totalPriceHT && (
-              <th
-                style={{
-                  textAlign: "right",
-                  padding: "1rem 1.25rem",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 10,
-                  background:
-                    variant === "credit-note"
-                      ? "#f3f4f6"
-                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-                  color: variant === "credit-note" ? "#374151" : "white",
-                }}
-              >
-                Total HT
-              </th>
-            )}
-            {columns.totalPriceTTC && (
-              <th
-                style={{
-                  textAlign: "right",
-                  padding: "1rem 1.25rem",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 10,
-                  background:
-                    variant === "credit-note"
-                      ? "#f3f4f6"
-                      : "linear-gradient(135deg, #13686a 0%, #0dd3d1 100%)",
-                  color: variant === "credit-note" ? "#374151" : "white",
-                }}
-              >
-                Total TTC
-              </th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item, index) => {
-            // Pour les items avec id (OrderItemPublicDTO ou CartItemPublicDTO)
-            const itemId = getItemId ? getItemId(item) : (item as any).id;
-            const isSelected =
-              itemId !== undefined && selectedItemIds.includes(itemId);
+      {items.map((item, index) => {
+        const itemId = getItemId ? getItemId(item) : (item as any).id;
+        const isSelected =
+          itemId !== undefined && selectedItemIds.includes(itemId);
 
-            return (
-              <tr
-                key={itemId || index}
-                style={{
-                  borderTop: "1px solid #f3f4f6",
-                  backgroundColor: index % 2 === 0 ? "white" : "#f9fafb",
-                }}
+        return (
+          <TableRow
+            key={itemId || index}
+            backgroundColor={index % 2 === 0 ? "white" : "#f9fafb"}
+          >
+            {columns.selection && itemId !== undefined && (
+              <TableCell
+                align="center"
+                width="90px"
+                className={styles.checkboxCell}
               >
-                {columns.selection && itemId !== undefined && (
-                  <td style={{ padding: "0.5rem" }}>
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={(e) => {
-                        if (onSelectionChange) {
-                          onSelectionChange(itemId, e.target.checked);
-                        }
+                <input
+                  type="checkbox"
+                  className={styles.checkbox}
+                  checked={isSelected}
+                  onChange={(e) => {
+                    if (onSelectionChange) {
+                      onSelectionChange(itemId, e.target.checked);
+                    }
+                  }}
+                />
+              </TableCell>
+            )}
+
+            {columns.product && (
+              <TableCell align="left">
+                <div>
+                  <div className={styles.productName}>
+                    {item.productName || "Produit"}
+                  </div>
+                  {showDescription && item.description && (
+                    <div className={styles.productDescription}>
+                      {item.description}
+                    </div>
+                  )}
+                  {showImage && item.imageUrl && (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.productName}
+                      className={styles.productImage}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
                       }}
                     />
-                  </td>
-                )}
-                {columns.product && (
-                  <td
-                    style={{
-                      padding: "0.5rem 0.75rem",
-                      color: "#111827",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 600, marginBottom: "0.2rem" }}>
-                        {item.productName || "Produit"}
-                      </div>
-                      {showDescription && item.description && (
-                        <div
-                          style={{
-                            fontSize: "0.85rem",
-                            color: "#6b7280",
-                            marginTop: "0.2rem",
-                          }}
-                        >
-                          {item.description}
-                        </div>
-                      )}
-                      {showImage && item.imageUrl && (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.productName}
-                          style={{
-                            width: "50px",
-                            height: "50px",
-                            objectFit: "contain",
-                            marginTop: "0.5rem",
-                            borderRadius: "4px",
-                          }}
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display =
-                              "none";
-                          }}
-                        />
-                      )}
-                    </div>
-                  </td>
-                )}
-                {columns.quantity && (
-                  <td
-                    style={{
-                      padding: "0.5rem 0.75rem",
-                      textAlign: "center",
-                    }}
-                  >
-                    {item.quantity}
-                  </td>
-                )}
-                {columns.unitPriceHT && (
-                  <td
-                    className="mobile-hide"
-                    style={{
-                      padding: "0.5rem 0.75rem",
-                      textAlign: "right",
-                    }}
-                  >
-                    {Number(item.unitPriceHT).toFixed(2)} €
-                  </td>
-                )}
-                {columns.vatRate && (
-                  <td
-                    className="mobile-hide"
-                    style={{
-                      padding: "0.5rem 0.75rem",
-                      textAlign: "right",
-                    }}
-                  >
-                    {item.vatRate}%
-                  </td>
-                )}
-                {columns.totalPriceHT && (
-                  <td
-                    style={{
-                      padding: "0.5rem 0.75rem",
-                      textAlign: "right",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {Number(item.totalPriceHT).toFixed(2)} €
-                  </td>
-                )}
-                {columns.totalPriceTTC && (
-                  <td
-                    style={{
-                      padding: "0.5rem 0.75rem",
-                      textAlign: "right",
-                      fontWeight: 700,
-                      color: "#13686a",
-                    }}
-                  >
-                    {Number(item.totalPriceTTC).toFixed(2)} €
-                  </td>
-                )}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                  )}
+                </div>
+              </TableCell>
+            )}
+
+            {columns.quantity && (
+              <TableCell align="center">{item.quantity}</TableCell>
+            )}
+
+            {columns.unitPriceHT && (
+              <TableCell align="right" className={tableStyles.mobileHide}>
+                {Number(item.unitPriceHT).toFixed(2)} €
+              </TableCell>
+            )}
+
+            {columns.vatRate && (
+              <TableCell align="right" className={tableStyles.mobileHide}>
+                {item.vatRate}%
+              </TableCell>
+            )}
+
+            {columns.totalPriceHT && (
+              <TableCell align="right">
+                {Number(item.totalPriceHT).toFixed(2)} €
+              </TableCell>
+            )}
+
+            {columns.totalPriceTTC && (
+              <TableCell align="right" className={styles.currencyStrong}>
+                {Number(item.totalPriceTTC).toFixed(2)} €
+              </TableCell>
+            )}
+          </TableRow>
+        );
+      })}
+    </TableLayout>
   );
 };
 

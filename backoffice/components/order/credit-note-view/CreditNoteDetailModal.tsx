@@ -3,6 +3,7 @@ import { Button, Modal, ItemDisplayTable } from "../../shared";
 import { CreditNotePublicDTO, OrderPublicDTO } from "dto";
 import { BaseItemDTO } from "@tfe/shared-types/common/BaseItemDTO";
 import { useCreditNoteDetail } from "../../../hooks";
+import styles from "../../../styles/components/OrderDetailSections.module.css";
 
 interface CreditNoteDetailModalProps {
   isOpen: boolean;
@@ -66,114 +67,29 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
         </>
       }
     >
-      <div style={{ display: "grid", gap: "1.5rem" }}>
+      <div className={styles.contentGrid}>
         {/* Informations principales */}
-        <div
-          style={{
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
-            padding: "1.25rem",
-            background: "#f9fafb",
-          }}
-        >
-          <h4
-            style={{
-              margin: "0 0 1rem 0",
-              fontSize: "1.1rem",
-              color: "#111827",
-              fontWeight: 600,
-            }}
-          >
-            Informations générales
-          </h4>
-          <div
-            className="credit-note-info-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "1rem",
-            }}
-          >
+        <div className={styles.infoSection}>
+          <h4 className={styles.totalsTitle}>Informations générales</h4>
+          <div className={styles.infoGrid}>
             <div>
-              <div
-                style={{
-                  fontSize: "0.85rem",
-                  color: "#6b7280",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                Client
-              </div>
-              <div
-                style={{
-                  fontSize: "1rem",
-                  color: "#111827",
-                  fontWeight: 500,
-                }}
-              >
-                {customerName}
-              </div>
+              <div className={styles.amountLabel}>Client</div>
+              <div className={styles.amountValue}>{customerName}</div>
             </div>
 
             <div>
-              <div
-                style={{
-                  fontSize: "0.85rem",
-                  color: "#6b7280",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                Commande associée
-              </div>
-              <div
-                style={{
-                  fontSize: "1rem",
-                  color: "#111827",
-                  fontWeight: 500,
-                }}
-              >
-                #{creditNote.orderId}
-              </div>
+              <div className={styles.amountLabel}>Commande associée</div>
+              <div className={styles.amountValue}>#{creditNote.orderId}</div>
             </div>
 
             <div>
-              <div
-                style={{
-                  fontSize: "0.85rem",
-                  color: "#6b7280",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                Date d'émission
-              </div>
-              <div
-                style={{
-                  fontSize: "1rem",
-                  color: "#111827",
-                  fontWeight: 500,
-                }}
-              >
-                {emitted}
-              </div>
+              <div className={styles.amountLabel}>Date d'émission</div>
+              <div className={styles.amountValue}>{emitted}</div>
             </div>
 
             <div>
-              <div
-                style={{
-                  fontSize: "0.85rem",
-                  color: "#6b7280",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                Méthode de paiement
-              </div>
-              <div
-                style={{
-                  fontSize: "1rem",
-                  color: "#111827",
-                  fontWeight: 500,
-                }}
-              >
+              <div className={styles.amountLabel}>Méthode de paiement</div>
+              <div className={styles.amountValue}>
                 {creditNote.paymentMethod || "—"}
               </div>
             </div>
@@ -181,63 +97,18 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
         </div>
 
         {/* Détails de l'avoir */}
-        <div
-          style={{
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
-            padding: "1.25rem",
-          }}
-        >
-          <h4
-            style={{
-              margin: "0 0 1rem 0",
-              fontSize: "1.1rem",
-              color: "#111827",
-              fontWeight: 600,
-            }}
-          >
-            Détails de l'avoir
-          </h4>
-          <div style={{ display: "grid", gap: "1rem" }}>
+        <div className={styles.infoSection}>
+          <h4 className={styles.totalsTitle}>Détails de l'avoir</h4>
+          <div className={styles.contentGrid}>
             <div>
-              <div
-                style={{
-                  fontSize: "0.85rem",
-                  color: "#6b7280",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                Motif
-              </div>
-              <div
-                style={{
-                  fontSize: "1rem",
-                  color: "#111827",
-                  fontWeight: 500,
-                }}
-              >
-                {creditNote.reason}
-              </div>
+              <div className={styles.amountLabel}>Motif</div>
+              <div className={styles.amountValue}>{creditNote.reason}</div>
             </div>
 
             {creditNote.description && (
               <div>
-                <div
-                  style={{
-                    fontSize: "0.85rem",
-                    color: "#6b7280",
-                    marginBottom: "0.25rem",
-                  }}
-                >
-                  Description
-                </div>
-                <div
-                  style={{
-                    fontSize: "1rem",
-                    color: "#111827",
-                    lineHeight: "1.5",
-                  }}
-                >
+                <div className={styles.amountLabel}>Description</div>
+                <div className={styles.sectionTitle}>
                   {creditNote.description}
                 </div>
               </div>
@@ -245,74 +116,22 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
 
             {creditNote.notes && (
               <div>
-                <div
-                  style={{
-                    fontSize: "0.85rem",
-                    color: "#6b7280",
-                    marginBottom: "0.25rem",
-                  }}
-                >
-                  Notes internes
-                </div>
-                <div
-                  style={{
-                    fontSize: "1rem",
-                    color: "#111827",
-                    lineHeight: "1.5",
-                  }}
-                >
-                  {creditNote.notes}
-                </div>
+                <div className={styles.amountLabel}>Notes internes</div>
+                <div className={styles.sectionTitle}>{creditNote.notes}</div>
               </div>
             )}
           </div>
         </div>
 
-        <div
-          style={{
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
-            padding: "1rem",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "0.75rem",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "1rem",
-                color: "#111827",
-                fontWeight: 600,
-              }}
-            >
-              Articles de l'avoir
-            </div>
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <div className={styles.sectionTitle}>Articles de l'avoir</div>
             {itemsLoading && (
-              <div style={{ color: "#6b7280", fontSize: "0.9rem" }}>
-                Chargement…
-              </div>
+              <div className={styles.loadingText}>Chargement…</div>
             )}
           </div>
 
-          {itemsError && (
-            <div
-              style={{
-                background: "#FEF2F2",
-                color: "#B91C1C",
-                border: "1px solid #FECACA",
-                padding: "0.5rem 0.75rem",
-                borderRadius: 10,
-                marginBottom: "0.75rem",
-              }}
-            >
-              {itemsError}
-            </div>
-          )}
+          {itemsError && <div className={styles.errorAlert}>{itemsError}</div>}
 
           {!itemsLoading && !itemsError && (
             <ItemDisplayTable
@@ -348,32 +167,10 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
 
         {/* Date de commande */}
         {order && (
-          <div
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 12,
-              padding: "1.25rem",
-              background: "#f8fafc",
-              textAlign: "center",
-            }}
-          >
+          <div className={styles.dateCard}>
             <div>
-              <div
-                style={{
-                  fontSize: "0.85rem",
-                  color: "#6b7280",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                Date de commande
-              </div>
-              <div
-                style={{
-                  fontSize: "1rem",
-                  color: "#111827",
-                  fontWeight: 500,
-                }}
-              >
+              <div className={styles.dateLabel}>Date de commande</div>
+              <div className={styles.dateValue}>
                 {order.createdAt
                   ? new Date(order.createdAt as any).toLocaleDateString()
                   : "—"}
@@ -383,113 +180,24 @@ const CreditNoteDetailModal: React.FC<CreditNoteDetailModalProps> = ({
         )}
 
         {/* Totaux */}
-        <div
-          style={{
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
-            padding: "1.25rem",
-            background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
-          }}
-        >
-          <h4
-            style={{
-              margin: "0 0 1rem 0",
-              fontSize: "1.1rem",
-              color: "#111827",
-              fontWeight: 600,
-            }}
-          >
-            Montants
-          </h4>
-          <div
-            className="amounts-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-              gap: "1rem",
-            }}
-          >
-            <div
-              style={{
-                textAlign: "center",
-                padding: "0.75rem",
-                background: "white",
-                borderRadius: 8,
-                border: "1px solid #e1e5e9",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "0.85rem",
-                  color: "#6b7280",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                Total HT
-              </div>
-              <div
-                style={{
-                  fontSize: "1.25rem",
-                  color: "#13686a",
-                  fontWeight: 700,
-                }}
-              >
+        <div className={styles.totalsSectionGradient}>
+          <h4 className={styles.totalsTitle}>Montants</h4>
+          <div className={styles.amountsGrid}>
+            <div className={styles.amountCard}>
+              <div className={styles.amountLabel}>Total HT</div>
+              <div className={styles.amountValue}>
                 {Number(Number(creditNote.totalAmountHT) || 0).toFixed(2)} €
               </div>
             </div>
-            <div
-              style={{
-                textAlign: "center",
-                padding: "0.75rem",
-                background: "white",
-                borderRadius: 8,
-                border: "1px solid #e1e5e9",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "0.85rem",
-                  color: "#6b7280",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                Total TTC
-              </div>
-              <div
-                style={{
-                  fontSize: "1.25rem",
-                  color: "#13686a",
-                  fontWeight: 700,
-                }}
-              >
+            <div className={styles.amountCard}>
+              <div className={styles.amountLabel}>Total TTC</div>
+              <div className={styles.amountValue}>
                 {Number(Number(creditNote.totalAmountTTC) || 0).toFixed(2)} €
               </div>
             </div>
-            <div
-              style={{
-                textAlign: "center",
-                padding: "0.75rem",
-                background: "white",
-                borderRadius: 8,
-                border: "1px solid #e1e5e9",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "0.85rem",
-                  color: "#6b7280",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                TVA
-              </div>
-              <div
-                style={{
-                  fontSize: "1.25rem",
-                  color: "#13686a",
-                  fontWeight: 700,
-                }}
-              >
+            <div className={styles.amountCard}>
+              <div className={styles.amountLabel}>TVA</div>
+              <div className={styles.amountValue}>
                 {Number(creditNote.totalVAT || 0).toFixed(2)} €
               </div>
             </div>

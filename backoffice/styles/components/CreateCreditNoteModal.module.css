@@ -1,0 +1,147 @@
+@layer components {
+  .creditNoteForm {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .orderSelect {
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
+
+  .label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .select {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 10px;
+    border: 2px solid #e1e5e9;
+    background: white;
+    transition: border-color 0.2s ease;
+  }
+
+  .select:focus {
+    border-color: #13686a;
+    outline: none;
+  }
+
+  .orderCard {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0.75rem;
+  }
+
+  .orderCardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+
+  .orderCardTitle {
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .loadingText {
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+
+  .itemsError {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+  }
+
+  .formFields {
+    border: 1px solid #e5e7e9;
+    border-radius: 8px;
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+
+  .formField {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .formFieldFull {
+    grid-column: 1 / -1;
+  }
+
+  .input,
+  .textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 2px solid #e1e5e9;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+  }
+
+  .input:focus,
+  .textarea:focus {
+    border-color: #13686a;
+    outline: none;
+  }
+
+  .textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .inputDisabled {
+    background: #f9fafb;
+    color: #6b7280;
+    cursor: not-allowed;
+  }
+
+  .totalsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    grid-column: 1 / -1;
+    margin-top: 1rem;
+  }
+
+  .totalField {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .helperText {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .helperIcon {
+    font-size: 0.7rem;
+  }
+
+  @media (max-width: 768px) {
+    .formFields {
+      grid-template-columns: 1fr;
+    }
+
+    .totalsGrid {
+      grid-template-columns: 1fr;
+    }
+  }
+}

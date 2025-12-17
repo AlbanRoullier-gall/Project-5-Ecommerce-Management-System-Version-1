@@ -3,7 +3,8 @@
 import React from "react";
 import { StatCard } from "../shared";
 import { useDashboardStats } from "../../hooks";
-import styles from "../../styles/components/DashboardCards.module.css";
+import cardStyles from "../../styles/components/DashboardCards.module.css";
+import pageStyles from "../../styles/components/DashboardPage.module.css";
 
 /**
  * Composant d'affichage des statistiques du dashboard
@@ -21,11 +22,11 @@ const StatsOverview: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className={styles.statsContainer}>
-        <div className={styles.statCard}>
-          <h3 className={styles.statTitle}>Chargement...</h3>
-          <p className={styles.statNumber}>—</p>
-          <p className={styles.statLabel}>Veuillez patienter</p>
+      <div className={cardStyles.statsContainer}>
+        <div className={cardStyles.statCard}>
+          <h3 className={cardStyles.statTitle}>Chargement...</h3>
+          <p className={cardStyles.statNumber}>—</p>
+          <p className={cardStyles.statLabel}>Veuillez patienter</p>
         </div>
       </div>
     );
@@ -33,46 +34,21 @@ const StatsOverview: React.FC = () => {
 
   if (error) {
     return (
-      <div className={styles.statsContainer}>
-        <div className={styles.statCard}>
-          <h3 className={styles.statTitle}>Erreur</h3>
-          <p className={styles.statNumber}>!</p>
-          <p className={styles.statLabel}>{error}</p>
+      <div className={cardStyles.statsContainer}>
+        <div className={cardStyles.statCard}>
+          <h3 className={cardStyles.statTitle}>Erreur</h3>
+          <p className={cardStyles.statNumber}>!</p>
+          <p className={cardStyles.statLabel}>{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        width: "100%",
-        maxWidth: "1200px",
-        margin: "0 auto",
-        padding: "0 1rem",
-      }}
-    >
+    <div className={pageStyles.wrapper}>
       {/* Filtre par année - En haut, centré */}
-      <div
-        style={{
-          marginBottom: "2rem",
-          textAlign: "center",
-          padding: "1rem",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "8px",
-          border: "1px solid #e9ecef",
-        }}
-      >
-        <label
-          htmlFor="year-select"
-          style={{
-            display: "inline-block",
-            marginRight: "1rem",
-            fontWeight: "600",
-            color: "#13686a",
-            fontSize: "1.1rem",
-          }}
-        >
+      <div className={pageStyles.filterBox}>
+        <label htmlFor="year-select" className={pageStyles.filterLabel}>
           Filtrer par année :
         </label>
         <select
@@ -80,17 +56,7 @@ const StatsOverview: React.FC = () => {
           value={selectedYear || ""}
           onChange={(e) => setSelectedYear(parseInt(e.target.value))}
           disabled={!selectedYear}
-          style={{
-            padding: "0.5rem 1rem",
-            border: "2px solid #13686a",
-            borderRadius: "6px",
-            backgroundColor: "white",
-            color: "#13686a",
-            fontSize: "1rem",
-            fontWeight: "600",
-            minWidth: "120px",
-            cursor: "pointer",
-          }}
+          className={pageStyles.yearSelect}
         >
           {availableYears.map((year) => (
             <option key={year} value={year}>
@@ -101,7 +67,7 @@ const StatsOverview: React.FC = () => {
       </div>
 
       {/* Cards de statistiques - Grille responsive */}
-      <div className={styles.statsContainer} style={{ marginBottom: "2rem" }}>
+      <div className={`${cardStyles.statsContainer} ${pageStyles.statsBlock}`}>
         <StatCard title="Produits" value={stats?.productsCount ?? 0} />
         <StatCard title="Clients" value={stats?.customersCount ?? 0} />
         <StatCard title="Commandes" value={stats?.ordersCount ?? 0} />

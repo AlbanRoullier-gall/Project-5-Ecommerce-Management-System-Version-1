@@ -7,6 +7,8 @@ import Link from "next/link";
 import { useAuth } from "../../contexts/AuthContext";
 import authStyles from "../../styles/components/Auth.module.css";
 import pageStyles from "../../styles/components/AuthPage.module.css";
+import alertsStyles from "../../styles/components/Alerts.module.css";
+import formErrorStyles from "../../styles/components/FormError.module.css";
 
 /**
  * Page de réinitialisation de mot de passe (2 étapes)
@@ -176,20 +178,32 @@ const ResetPasswordPage: React.FC = () => {
                     </div>
 
                     {error && (
-                      <div className="auth-error-global">
-                        <i className="fas fa-exclamation-triangle"></i>
-                        <div className="error-content">
-                          <strong>Erreur :</strong>
-                          <div className="error-message-text">{error}</div>
+                      <div
+                        className={`${alertsStyles.alert} ${alertsStyles.error}`}
+                      >
+                        <i
+                          className={`fas fa-exclamation-triangle ${alertsStyles.alertIcon}`}
+                        ></i>
+                        <div className={alertsStyles.alertContent}>
+                          <span className={alertsStyles.alertTitle}>
+                            Erreur :
+                          </span>
+                          <div>{error}</div>
                         </div>
                       </div>
                     )}
                     {success && (
-                      <div className="auth-success-global">
-                        <i className="fas fa-check-circle"></i>
-                        <div className="success-content">
-                          <strong>Succès :</strong>
-                          <div className="success-message-text">{success}</div>
+                      <div
+                        className={`${alertsStyles.alert} ${alertsStyles.success}`}
+                      >
+                        <i
+                          className={`fas fa-check-circle ${alertsStyles.alertIcon}`}
+                        ></i>
+                        <div className={alertsStyles.alertContent}>
+                          <span className={alertsStyles.alertTitle}>
+                            Succès :
+                          </span>
+                          <div>{success}</div>
                         </div>
                       </div>
                     )}
@@ -215,9 +229,13 @@ const ResetPasswordPage: React.FC = () => {
                           disabled={isLoading}
                         />
                         {emailErrors.email && (
-                          <div className="error-message-field">
-                            <i className="fas fa-exclamation-circle"></i>
-                            <span>{emailErrors.email}</span>
+                          <div className={formErrorStyles.error}>
+                            <i
+                              className={`fas fa-exclamation-circle ${formErrorStyles.icon}`}
+                            ></i>
+                            <span className={formErrorStyles.text}>
+                              {emailErrors.email}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -256,20 +274,32 @@ const ResetPasswordPage: React.FC = () => {
                     </div>
 
                     {error && (
-                      <div className="auth-error-global">
-                        <i className="fas fa-exclamation-triangle"></i>
-                        <div className="error-content">
-                          <strong>Erreur :</strong>
-                          <div className="error-message-text">{error}</div>
+                      <div
+                        className={`${alertsStyles.alert} ${alertsStyles.error}`}
+                      >
+                        <i
+                          className={`fas fa-exclamation-triangle ${alertsStyles.alertIcon}`}
+                        ></i>
+                        <div className={alertsStyles.alertContent}>
+                          <span className={alertsStyles.alertTitle}>
+                            Erreur :
+                          </span>
+                          <div>{error}</div>
                         </div>
                       </div>
                     )}
                     {success && (
-                      <div className="auth-success-global">
-                        <i className="fas fa-check-circle"></i>
-                        <div className="success-content">
-                          <strong>Succès :</strong>
-                          <div className="success-message-text">{success}</div>
+                      <div
+                        className={`${alertsStyles.alert} ${alertsStyles.success}`}
+                      >
+                        <i
+                          className={`fas fa-check-circle ${alertsStyles.alertIcon}`}
+                        ></i>
+                        <div className={alertsStyles.alertContent}>
+                          <span className={alertsStyles.alertTitle}>
+                            Succès :
+                          </span>
+                          <div>{success}</div>
                         </div>
                       </div>
                     )}
@@ -300,9 +330,13 @@ const ResetPasswordPage: React.FC = () => {
                           disabled={isLoading}
                         />
                         {resetErrors.password && (
-                          <div className="error-message-field">
-                            <i className="fas fa-exclamation-circle"></i>
-                            <span>{resetErrors.password}</span>
+                          <div className={formErrorStyles.error}>
+                            <i
+                              className={`fas fa-exclamation-circle ${formErrorStyles.icon}`}
+                            ></i>
+                            <span className={formErrorStyles.text}>
+                              {resetErrors.password}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -329,9 +363,13 @@ const ResetPasswordPage: React.FC = () => {
                           disabled={isLoading}
                         />
                         {resetErrors.confirmPassword && (
-                          <div className="error-message-field">
-                            <i className="fas fa-exclamation-circle"></i>
-                            <span>{resetErrors.confirmPassword}</span>
+                          <div className={formErrorStyles.error}>
+                            <i
+                              className={`fas fa-exclamation-circle ${formErrorStyles.icon}`}
+                            ></i>
+                            <span className={formErrorStyles.text}>
+                              {resetErrors.confirmPassword}
+                            </span>
                           </div>
                         )}
                       </div>

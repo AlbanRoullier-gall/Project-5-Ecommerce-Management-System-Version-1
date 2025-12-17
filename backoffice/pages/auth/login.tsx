@@ -3,6 +3,8 @@
 import Head from "next/head";
 import authStyles from "../../styles/components/Auth.module.css";
 import pageStyles from "../../styles/components/AuthPage.module.css";
+import alertsStyles from "../../styles/components/Alerts.module.css";
+import formErrorStyles from "../../styles/components/FormError.module.css";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -117,11 +119,15 @@ const LoginPage: React.FC = () => {
 
                 {/* Message d'erreur global */}
                 {error && (
-                  <div className="auth-error-global">
-                    <i className="fas fa-exclamation-triangle"></i>
-                    <div className="error-content">
-                      <strong>Erreur :</strong>
-                      <div className="error-message-text">{error}</div>
+                  <div
+                    className={`${alertsStyles.alert} ${alertsStyles.error}`}
+                  >
+                    <i
+                      className={`fas fa-exclamation-triangle ${alertsStyles.alertIcon}`}
+                    ></i>
+                    <div className={alertsStyles.alertContent}>
+                      <span className={alertsStyles.alertTitle}>Erreur :</span>
+                      <div>{error}</div>
                     </div>
                   </div>
                 )}
@@ -146,9 +152,13 @@ const LoginPage: React.FC = () => {
                       disabled={isLoading}
                     />
                     {errors.email && (
-                      <div className="error-message-field">
-                        <i className="fas fa-exclamation-circle"></i>
-                        <span>{errors.email}</span>
+                      <div className={formErrorStyles.error}>
+                        <i
+                          className={`fas fa-exclamation-circle ${formErrorStyles.icon}`}
+                        ></i>
+                        <span className={formErrorStyles.text}>
+                          {errors.email}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -172,9 +182,13 @@ const LoginPage: React.FC = () => {
                       disabled={isLoading}
                     />
                     {errors.password && (
-                      <div className="error-message-field">
-                        <i className="fas fa-exclamation-circle"></i>
-                        <span>{errors.password}</span>
+                      <div className={formErrorStyles.error}>
+                        <i
+                          className={`fas fa-exclamation-circle ${formErrorStyles.icon}`}
+                        ></i>
+                        <span className={formErrorStyles.text}>
+                          {errors.password}
+                        </span>
                       </div>
                     )}
                   </div>

@@ -1,0 +1,90 @@
+@layer components {
+  .emptyState {
+    background: #f9fafb;
+    padding: 3rem 2rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+  }
+
+  .emptyIcon {
+    font-size: 3rem;
+    color: #d1d5db;
+    margin-bottom: 1rem;
+    display: inline-block;
+  }
+
+  .emptyText {
+    font-size: 1.1rem;
+    color: #6b7280;
+  }
+
+  .addressText {
+    color: #1f2937;
+    font-size: 0.95rem;
+  }
+
+  .metaText {
+    color: #6b7280;
+    font-size: 1rem;
+  }
+
+  .badgeYes {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    color: white;
+  }
+
+  .badgeNo {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
+    color: white;
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .actionButton {
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    background: none;
+  }
+
+  .edit {
+    color: #3b82f6;
+  }
+
+  .edit:hover {
+    background: rgba(59, 130, 246, 0.1);
+    transform: scale(1.05);
+  }
+
+  .delete {
+    color: #ef4444;
+  }
+
+  .delete:hover {
+    background: rgba(239, 68, 68, 0.1);
+    transform: scale(1.05);
+  }
+}

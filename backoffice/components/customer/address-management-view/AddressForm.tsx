@@ -1,13 +1,10 @@
 import React from "react";
-import {
-  AddressPublicDTO,
-  AddressCreateDTO,
-  AddressUpdateDTO,
-} from "dto";
+import { AddressPublicDTO, AddressCreateDTO, AddressUpdateDTO } from "dto";
 import FormInput from "../../shared/form/FormInput";
 import FormCheckbox from "../../shared/form/FormCheckbox";
 import FormActions from "../../shared/form/FormActions";
 import { useAddressForm } from "../../../hooks";
+import styles from "../../../styles/components/AddressForm.module.css";
 
 /**
  * Props du composant AddressForm
@@ -43,35 +40,14 @@ const AddressForm: React.FC<AddressFormProps> = ({
   };
 
   return (
-    <div
-      style={{
-        background: "#f9fafb",
-        borderRadius: "12px",
-        padding: "1.5rem",
-        marginBottom: "2rem",
-        border: "1px solid #e5e7eb",
-      }}
-    >
-      <h3
-        style={{
-          fontSize: "1.4rem",
-          fontWeight: "600",
-          color: "#13686a",
-          marginBottom: "1.5rem",
-        }}
-      >
+    <div className={styles.container}>
+      <h3 className={styles.title}>
         {address ? "Modifier l'adresse" : "Nouvelle adresse"}
       </h3>
 
       <form onSubmit={onSubmitHandler}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "1.5rem",
-          }}
-        >
-          <div style={{ gridColumn: "1 / -1" }}>
+        <div className={styles.grid}>
+          <div className={styles.fullRow}>
             <FormInput
               id="address"
               label="Adresse"
@@ -101,9 +77,9 @@ const AddressForm: React.FC<AddressFormProps> = ({
             required
             error={errors.city}
           />
-          <div className="form-group">
-            <label htmlFor="countryDisplay" className="form-label">
-              Pays <span className="required">*</span>
+          <div>
+            <label htmlFor="countryDisplay" className={styles.label}>
+              Pays <span className={styles.required}>*</span>
             </label>
             <input
               type="text"
@@ -111,16 +87,10 @@ const AddressForm: React.FC<AddressFormProps> = ({
               name="countryName"
               value={formData.countryName || ""}
               readOnly
-              className="form-input"
-              style={{
-                backgroundColor: "#f8f9fa",
-                color: "#666",
-                cursor: "not-allowed",
-                border: "1px solid #e0e0e0",
-              }}
+              className={`${styles.input} ${styles.readOnly}`}
             />
           </div>
-          <div style={{ gridColumn: "1 / -1" }}>
+          <div className={styles.fullRow}>
             <FormCheckbox
               id="isDefault"
               label="Adresse par défaut"

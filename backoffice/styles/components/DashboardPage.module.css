@@ -1,0 +1,48 @@
+@layer components {
+  .pageTitle {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 1.5rem;
+  }
+
+  .wrapper {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  .filterBox {
+    margin-bottom: 2rem;
+    text-align: center;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+  }
+
+  .filterLabel {
+    display: inline-block;
+    margin-right: 1rem;
+    font-weight: 600;
+    color: #13686a;
+    font-size: 1.1rem;
+  }
+
+  .yearSelect {
+    padding: 0.5rem 1rem;
+    border: 2px solid #13686a;
+    border-radius: 6px;
+    background-color: white;
+    color: #13686a;
+    font-size: 1rem;
+    font-weight: 600;
+    min-width: 120px;
+    cursor: pointer;
+  }
+
+  .statsBlock {
+    margin-bottom: 2rem;
+  }
+}

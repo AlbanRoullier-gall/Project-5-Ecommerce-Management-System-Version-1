@@ -3,6 +3,7 @@
 import StatsOverview from "../components/dashboard/StatsOverview";
 import QuickActions from "../components/dashboard/QuickActions";
 import { PageLayout } from "../components/shared";
+import styles from "../styles/components/DashboardPage.module.css";
 
 /**
  * Page Dashboard du backoffice
@@ -15,7 +16,7 @@ const DashboardPage: React.FC = () => {
       description="Interface d'administration pour Nature de Pierre"
       showPageHeader={false}
     >
-      <h1 className="page-title">Tableau de Bord</h1>
+      <h1 className={styles.pageTitle}>Tableau de Bord</h1>
       <StatsOverview />
       <QuickActions />
     </PageLayout>

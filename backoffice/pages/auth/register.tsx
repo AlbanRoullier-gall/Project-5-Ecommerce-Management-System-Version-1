@@ -8,6 +8,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { UserCreateDTO } from "dto";
 import authStyles from "../../styles/components/Auth.module.css";
 import pageStyles from "../../styles/components/AuthPage.module.css";
+import alertsStyles from "../../styles/components/Alerts.module.css";
+import formErrorStyles from "../../styles/components/FormError.module.css";
 
 /**
  * Page d'inscription au backoffice
@@ -122,20 +124,28 @@ const RegisterPage: React.FC = () => {
                 </div>
 
                 {error && (
-                  <div className="auth-error-global">
-                    <i className="fas fa-exclamation-triangle"></i>
-                    <div className="error-content">
-                      <strong>Erreur :</strong>
-                      <div className="error-message-text">{error}</div>
+                  <div
+                    className={`${alertsStyles.alert} ${alertsStyles.error}`}
+                  >
+                    <i
+                      className={`fas fa-exclamation-triangle ${alertsStyles.alertIcon}`}
+                    ></i>
+                    <div className={alertsStyles.alertContent}>
+                      <span className={alertsStyles.alertTitle}>Erreur :</span>
+                      <div>{error}</div>
                     </div>
                   </div>
                 )}
                 {success && (
-                  <div className="auth-success-global">
-                    <i className="fas fa-check-circle"></i>
-                    <div className="success-content">
-                      <strong>Succès :</strong>
-                      <div className="success-message-text">{success}</div>
+                  <div
+                    className={`${alertsStyles.alert} ${alertsStyles.success}`}
+                  >
+                    <i
+                      className={`fas fa-check-circle ${alertsStyles.alertIcon}`}
+                    ></i>
+                    <div className={alertsStyles.alertContent}>
+                      <span className={alertsStyles.alertTitle}>Succès :</span>
+                      <div>{success}</div>
                     </div>
                   </div>
                 )}
@@ -159,9 +169,13 @@ const RegisterPage: React.FC = () => {
                       disabled={isLoading}
                     />
                     {errors.firstName && (
-                      <div className="error-message-field">
-                        <i className="fas fa-exclamation-circle"></i>
-                        <span>{errors.firstName}</span>
+                      <div className={formErrorStyles.error}>
+                        <i
+                          className={`fas fa-exclamation-circle ${formErrorStyles.icon}`}
+                        ></i>
+                        <span className={formErrorStyles.text}>
+                          {errors.firstName}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -184,9 +198,13 @@ const RegisterPage: React.FC = () => {
                       disabled={isLoading}
                     />
                     {errors.lastName && (
-                      <div className="error-message-field">
-                        <i className="fas fa-exclamation-circle"></i>
-                        <span>{errors.lastName}</span>
+                      <div className={formErrorStyles.error}>
+                        <i
+                          className={`fas fa-exclamation-circle ${formErrorStyles.icon}`}
+                        ></i>
+                        <span className={formErrorStyles.text}>
+                          {errors.lastName}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -209,9 +227,13 @@ const RegisterPage: React.FC = () => {
                       disabled={isLoading}
                     />
                     {errors.email && (
-                      <div className="error-message-field">
-                        <i className="fas fa-exclamation-circle"></i>
-                        <span>{errors.email}</span>
+                      <div className={formErrorStyles.error}>
+                        <i
+                          className={`fas fa-exclamation-circle ${formErrorStyles.icon}`}
+                        ></i>
+                        <span className={formErrorStyles.text}>
+                          {errors.email}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -234,9 +256,13 @@ const RegisterPage: React.FC = () => {
                       disabled={isLoading}
                     />
                     {errors.password && (
-                      <div className="error-message-field">
-                        <i className="fas fa-exclamation-circle"></i>
-                        <span>{errors.password}</span>
+                      <div className={formErrorStyles.error}>
+                        <i
+                          className={`fas fa-exclamation-circle ${formErrorStyles.icon}`}
+                        ></i>
+                        <span className={formErrorStyles.text}>
+                          {errors.password}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -262,9 +288,13 @@ const RegisterPage: React.FC = () => {
                       disabled={isLoading}
                     />
                     {errors.confirmPassword && (
-                      <div className="error-message-field">
-                        <i className="fas fa-exclamation-circle"></i>
-                        <span>{errors.confirmPassword}</span>
+                      <div className={formErrorStyles.error}>
+                        <i
+                          className={`fas fa-exclamation-circle ${formErrorStyles.icon}`}
+                        ></i>
+                        <span className={formErrorStyles.text}>
+                          {errors.confirmPassword}
+                        </span>
                       </div>
                     )}
                   </div>

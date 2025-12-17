@@ -1,0 +1,51 @@
+@layer components {
+  .emptyState {
+    padding: 0.75rem;
+    text-align: center;
+    color: #6b7280;
+  }
+
+  .productName {
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    color: #111827;
+  }
+
+  .productDescription {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 0.2rem;
+  }
+
+  .productImage {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    margin-top: 0.5rem;
+    border-radius: 4px;
+  }
+
+  .currencyStrong {
+    font-weight: 700;
+    color: #13686a;
+  }
+
+  .helper {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .checkboxCell {
+    display: flex;
+    justify-content: center;
+  }
+
+  .checkbox {
+    width: 18px;
+    height: 18px;
+  }
+}
