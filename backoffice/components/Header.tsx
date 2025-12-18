@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
 import styles from "../styles/components/Header.module.css";
@@ -22,12 +23,36 @@ import styles from "../styles/components/Header.module.css";
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const router = useRouter();
   const { isAuthenticated, logout, user, isLoading } = useAuth();
 
   // Éviter les erreurs d'hydratation en ne rendant les éléments conditionnels qu'après le montage
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Désactiver le hover pendant les transitions de page
+  useEffect(() => {
+    const handleRouteChangeStart = () => {
+      setIsNavigating(true);
+    };
+
+    const handleRouteChangeComplete = () => {
+      // Réactiver après un court délai pour permettre au navigateur de réinitialiser
+      setTimeout(() => {
+        setIsNavigating(false);
+      }, 0);
+    };
+
+    router.events?.on("routeChangeStart", handleRouteChangeStart);
+    router.events?.on("routeChangeComplete", handleRouteChangeComplete);
+
+    return () => {
+      router.events?.off("routeChangeStart", handleRouteChangeStart);
+      router.events?.off("routeChangeComplete", handleRouteChangeComplete);
+    };
+  }, [router]);
 
   /**
    * Déconnecte l'utilisateur et redirige vers la page de connexion
@@ -77,81 +102,29 @@ const Header: React.FC = () => {
 
       {/* Desktop Navigation - Below Title */}
       <nav className={styles.desktopNav}>
-        <div className={styles.navContainer}>
-          <Link
-            href="/dashboard"
-            className={styles.navItem}
-            onClick={(e) => {
-              // Blur tous les éléments de navigation pour réinitialiser l'état hover
-              const navItems = e.currentTarget.parentElement?.querySelectorAll("a");
-              navItems?.forEach((el) => {
-                if (el instanceof HTMLElement) {
-                  el.blur();
-                }
-              });
-            }}
-          >
+        <div
+          className={`${styles.navContainer} ${
+            isNavigating ? styles.navigating : ""
+          }`}
+        >
+          <Link href="/dashboard" className={styles.navItem}>
             <i className={`fas fa-tachometer-alt ${styles.navIcon}`}></i>
             <span>TABLEAU DE BORD</span>
           </Link>
-          <Link
-            href="/products"
-            className={styles.navItem}
-            onClick={(e) => {
-              const navItems = e.currentTarget.parentElement?.querySelectorAll("a");
-              navItems?.forEach((el) => {
-                if (el instanceof HTMLElement) {
-                  el.blur();
-                }
-              });
-            }}
-          >
+          <Link href="/products" className={styles.navItem}>
             <i className={`fas fa-box ${styles.navIcon}`}></i>
             <span>PRODUITS</span>
           </Link>
-          <Link
-            href="/customers"
-            className={styles.navItem}
-            onClick={(e) => {
-              const navItems = e.currentTarget.parentElement?.querySelectorAll("a");
-              navItems?.forEach((el) => {
-                if (el instanceof HTMLElement) {
-                  el.blur();
-                }
-              });
-            }}
-          >
+          <Link href="/customers" className={styles.navItem}>
             <i className={`fas fa-users ${styles.navIcon}`}></i>
             <span>CLIENTS</span>
           </Link>
-          <Link
-            href="/orders"
-            className={styles.navItem}
-            onClick={(e) => {
-              const navItems = e.currentTarget.parentElement?.querySelectorAll("a");
-              navItems?.forEach((el) => {
-                if (el instanceof HTMLElement) {
-                  el.blur();
-                }
-              });
-            }}
-          >
+          <Link href="/orders" className={styles.navItem}>
             <i className={`fas fa-shopping-bag ${styles.navIcon}`}></i>
             <span>COMMANDES</span>
           </Link>
           {isMounted && !isLoading && user?.isSuperAdmin && (
-            <Link
-              href="/users/management"
-              className={styles.navItem}
-              onClick={(e) => {
-                const navItems = e.currentTarget.parentElement?.querySelectorAll("a");
-                navItems?.forEach((el) => {
-                  if (el instanceof HTMLElement) {
-                    el.blur();
-                  }
-                });
-              }}
-            >
+            <Link href="/users/management" className={styles.navItem}>
               <i className={`fas fa-user-shield ${styles.navIcon}`}></i>
               <span>UTILISATEURS</span>
             </Link>

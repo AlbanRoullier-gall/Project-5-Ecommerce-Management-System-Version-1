@@ -62,6 +62,10 @@
     margin: 0 auto;
   }
 
+  .navContainer.navigating a {
+    pointer-events: none;
+  }
+
   .navItem {
     display: flex;
     align-items: center;
@@ -79,6 +83,12 @@
   .navItem:hover {
     background: var(--color-brand-gold);
     color: var(--color-brand-teal);
+  }
+
+  /* Désactiver le hover pendant la navigation */
+  .navContainer.navigating .navItem:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
   }
 
   .navIcon {
