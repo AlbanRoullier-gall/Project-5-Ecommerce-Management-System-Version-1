@@ -50,7 +50,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
           <title>{loadingMessage} - Nature de Pierre</title>
         </Head>
         <div className="min-h-screen">
-          <Header />
+          <Header key={router.asPath} />
           <main className={styles.mainContent}>
             <div className={styles.pageContainer}>
               <LoadingSpinner message={loadingMessage} />
