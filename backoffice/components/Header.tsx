@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Image from "next/image";
@@ -33,10 +33,10 @@ const Header: React.FC = () => {
   }, []);
 
   // Fonction pour réinitialiser tous les états hover
-  const resetAllHoverStates = () => {
+  const resetAllHoverStates = useCallback(() => {
     if (navContainerRef.current) {
       const navItems = navContainerRef.current.querySelectorAll(
-        `.${styles.navItem}`
+        `a[class*="navItem"]`
       );
       navItems.forEach((el) => {
         if (el instanceof HTMLElement) {
@@ -50,7 +50,7 @@ const Header: React.FC = () => {
         }
       });
     }
-  };
+  }, []);
 
   // Réinitialiser les états hover AVANT la navigation
   useEffect(() => {
