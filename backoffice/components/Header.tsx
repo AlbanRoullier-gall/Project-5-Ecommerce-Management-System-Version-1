@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
 import styles from "../styles/components/Header.module.css";
@@ -22,12 +23,35 @@ import styles from "../styles/components/Header.module.css";
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter();
+  const navContainerRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, logout, user, isLoading } = useAuth();
 
   // Éviter les erreurs d'hydratation en ne rendant les éléments conditionnels qu'après le montage
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Réinitialiser l'état hover après chaque navigation
+  useEffect(() => {
+    const handleRouteChangeComplete = () => {
+      // Forcer le blur de tous les éléments de navigation pour réinitialiser l'état hover
+      if (navContainerRef.current) {
+        const navItems = navContainerRef.current.querySelectorAll("a");
+        navItems.forEach((el) => {
+          if (el instanceof HTMLElement) {
+            el.blur();
+          }
+        });
+      }
+    };
+
+    router.events?.on("routeChangeComplete", handleRouteChangeComplete);
+
+    return () => {
+      router.events?.off("routeChangeComplete", handleRouteChangeComplete);
+    };
+  }, [router]);
 
   /**
    * Déconnecte l'utilisateur et redirige vers la page de connexion
@@ -77,45 +101,25 @@ const Header: React.FC = () => {
 
       {/* Desktop Navigation - Below Title */}
       <nav className={styles.desktopNav}>
-        <div className={styles.navContainer}>
-          <Link
-            href="/dashboard"
-            className={styles.navItem}
-            onMouseDown={(e) => e.currentTarget.blur()}
-          >
+        <div className={styles.navContainer} ref={navContainerRef}>
+          <Link href="/dashboard" className={styles.navItem}>
             <i className={`fas fa-tachometer-alt ${styles.navIcon}`}></i>
             <span>TABLEAU DE BORD</span>
           </Link>
-          <Link
-            href="/products"
-            className={styles.navItem}
-            onMouseDown={(e) => e.currentTarget.blur()}
-          >
+          <Link href="/products" className={styles.navItem}>
             <i className={`fas fa-box ${styles.navIcon}`}></i>
             <span>PRODUITS</span>
           </Link>
-          <Link
-            href="/customers"
-            className={styles.navItem}
-            onMouseDown={(e) => e.currentTarget.blur()}
-          >
+          <Link href="/customers" className={styles.navItem}>
             <i className={`fas fa-users ${styles.navIcon}`}></i>
             <span>CLIENTS</span>
           </Link>
-          <Link
-            href="/orders"
-            className={styles.navItem}
-            onMouseDown={(e) => e.currentTarget.blur()}
-          >
+          <Link href="/orders" className={styles.navItem}>
             <i className={`fas fa-shopping-bag ${styles.navIcon}`}></i>
             <span>COMMANDES</span>
           </Link>
           {isMounted && !isLoading && user?.isSuperAdmin && (
-            <Link
-              href="/users/management"
-              className={styles.navItem}
-              onMouseDown={(e) => e.currentTarget.blur()}
-            >
+            <Link href="/users/management" className={styles.navItem}>
               <i className={`fas fa-user-shield ${styles.navIcon}`}></i>
               <span>UTILISATEURS</span>
             </Link>
@@ -131,7 +135,6 @@ const Header: React.FC = () => {
             href="/dashboard"
             className={styles.mobileNavItem}
             onClick={() => setIsMenuOpen(false)}
-            onMouseDown={(e) => e.currentTarget.blur()}
           >
             <i className={`fas fa-tachometer-alt ${styles.mobileNavIcon}`}></i>
             <span>TABLEAU DE BORD</span>
@@ -140,7 +143,6 @@ const Header: React.FC = () => {
             href="/products"
             className={styles.mobileNavItem}
             onClick={() => setIsMenuOpen(false)}
-            onMouseDown={(e) => e.currentTarget.blur()}
           >
             <i className={`fas fa-box ${styles.mobileNavIcon}`}></i>
             <span>PRODUITS</span>
@@ -149,7 +151,6 @@ const Header: React.FC = () => {
             href="/customers"
             className={styles.mobileNavItem}
             onClick={() => setIsMenuOpen(false)}
-            onMouseDown={(e) => e.currentTarget.blur()}
           >
             <i className={`fas fa-users ${styles.mobileNavIcon}`}></i>
             <span>CLIENTS</span>
@@ -158,7 +159,6 @@ const Header: React.FC = () => {
             href="/orders"
             className={styles.mobileNavItem}
             onClick={() => setIsMenuOpen(false)}
-            onMouseDown={(e) => e.currentTarget.blur()}
           >
             <i className={`fas fa-shopping-bag ${styles.mobileNavIcon}`}></i>
             <span>COMMANDES</span>
@@ -168,7 +168,6 @@ const Header: React.FC = () => {
               href="/users/management"
               className={styles.mobileNavItem}
               onClick={() => setIsMenuOpen(false)}
-              onMouseDown={(e) => e.currentTarget.blur()}
             >
               <i className={`fas fa-user-shield ${styles.mobileNavIcon}`}></i>
               <span>UTILISATEURS</span>
