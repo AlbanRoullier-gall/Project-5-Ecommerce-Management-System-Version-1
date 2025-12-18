@@ -23,8 +23,6 @@ import styles from "../styles/components/Header.module.css";
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
-  const router = useRouter();
   const { isAuthenticated, logout, user, isLoading } = useAuth();
 
   // Éviter les erreurs d'hydratation en ne rendant les éléments conditionnels qu'après le montage
@@ -32,27 +30,16 @@ const Header: React.FC = () => {
     setIsMounted(true);
   }, []);
 
-  // Désactiver le hover pendant les transitions de page
-  useEffect(() => {
-    const handleRouteChangeStart = () => {
-      setIsNavigating(true);
-    };
-
-    const handleRouteChangeComplete = () => {
-      // Réactiver après un court délai pour permettre au navigateur de réinitialiser
-      setTimeout(() => {
-        setIsNavigating(false);
-      }, 0);
-    };
-
-    router.events?.on("routeChangeStart", handleRouteChangeStart);
-    router.events?.on("routeChangeComplete", handleRouteChangeComplete);
-
-    return () => {
-      router.events?.off("routeChangeStart", handleRouteChangeStart);
-      router.events?.off("routeChangeComplete", handleRouteChangeComplete);
-    };
-  }, [router]);
+  // Réinitialiser tous les états hover quand la souris quitte le conteneur nav
+  const handleNavMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Forcer le blur de tous les éléments de navigation
+    const navItems = e.currentTarget.querySelectorAll("a");
+    navItems.forEach((el) => {
+      if (el instanceof HTMLElement) {
+        el.blur();
+      }
+    });
+  };
 
   /**
    * Déconnecte l'utilisateur et redirige vers la page de connexion
@@ -103,9 +90,8 @@ const Header: React.FC = () => {
       {/* Desktop Navigation - Below Title */}
       <nav className={styles.desktopNav}>
         <div
-          className={`${styles.navContainer} ${
-            isNavigating ? styles.navigating : ""
-          }`}
+          className={styles.navContainer}
+          onMouseLeave={handleNavMouseLeave}
         >
           <Link href="/dashboard" className={styles.navItem}>
             <i className={`fas fa-tachometer-alt ${styles.navIcon}`}></i>
