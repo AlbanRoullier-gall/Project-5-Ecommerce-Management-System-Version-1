@@ -2,10 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // assetPrefix pour que les assets pointent vers /admin/_next/...
-  // mais le routing reste normal (sans basePath) pour éviter les boucles de redirection
-  // Activé aussi en développement pour que les assets soient correctement routés par nginx
-  assetPrefix: "/admin",
+  // basePath permet à Next.js de gérer automatiquement le préfixe /admin
+  // pour tous les liens, routes et assets. Plus besoin d'assetPrefix séparé.
+  basePath: "/admin",
   webpack: (config, { isServer }) => {
     // Help webpack resolve @tfe/shared-types and dto
     const path = require("path");
