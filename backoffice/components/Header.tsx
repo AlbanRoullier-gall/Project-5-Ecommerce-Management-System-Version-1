@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
 import styles from "../styles/components/Header.module.css";
@@ -22,7 +23,8 @@ import styles from "../styles/components/Header.module.css";
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [isInitialMount, setIsInitialMount] = useState(true);
+  const router = useRouter();
+  const navContainerRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, logout, user, isLoading } = useAuth();
 
   // Éviter les erreurs d'hydratation en ne rendant les éléments conditionnels qu'après le montage
@@ -30,31 +32,50 @@ const Header: React.FC = () => {
     setIsMounted(true);
   }, []);
 
-  // Réinitialiser tous les états hover au montage pour éviter les états persistants
-  useEffect(() => {
-    // Désactiver temporairement le hover au montage
-    if (isInitialMount) {
-      // Forcer le blur de tous les éléments de navigation
-      const navItems = document.querySelectorAll(`.${styles.navItem}`);
+  // Fonction pour réinitialiser tous les états hover
+  const resetAllHoverStates = () => {
+    if (navContainerRef.current) {
+      const navItems = navContainerRef.current.querySelectorAll(`.${styles.navItem}`);
       navItems.forEach((el) => {
         if (el instanceof HTMLElement) {
           el.blur();
-          // Désactiver temporairement pointer-events pour forcer la réinitialisation
-          el.style.pointerEvents = 'none';
+          // Forcer la réinitialisation en retirant temporairement le focus
+          el.style.pointerEvents = "none";
+          // Utiliser requestAnimationFrame pour forcer le reflow
+          requestAnimationFrame(() => {
+            el.style.pointerEvents = "";
+          });
         }
       });
-      
-      // Réactiver après un court délai
-      setTimeout(() => {
-        navItems.forEach((el) => {
-          if (el instanceof HTMLElement) {
-            el.style.pointerEvents = '';
-          }
-        });
-        setIsInitialMount(false);
-      }, 50);
     }
-  }, [isInitialMount, styles.navItem]);
+  };
+
+  // Réinitialiser les états hover AVANT la navigation
+  useEffect(() => {
+    const handleRouteChangeStart = () => {
+      resetAllHoverStates();
+    };
+
+    const handleRouteChangeComplete = () => {
+      // Réinitialiser à nouveau après la navigation complète
+      setTimeout(() => {
+        resetAllHoverStates();
+      }, 0);
+    };
+
+    router.events?.on("routeChangeStart", handleRouteChangeStart);
+    router.events?.on("routeChangeComplete", handleRouteChangeComplete);
+
+    return () => {
+      router.events?.off("routeChangeStart", handleRouteChangeStart);
+      router.events?.off("routeChangeComplete", handleRouteChangeComplete);
+    };
+  }, [router, styles.navItem]);
+
+  // Réinitialiser au montage initial
+  useEffect(() => {
+    resetAllHoverStates();
+  }, []);
 
   /**
    * Déconnecte l'utilisateur et redirige vers la page de connexion
@@ -104,25 +125,61 @@ const Header: React.FC = () => {
 
       {/* Desktop Navigation - Below Title */}
       <nav className={styles.desktopNav}>
-        <div className={styles.navContainer}>
-          <Link href="/dashboard" className={styles.navItem}>
+        <div className={styles.navContainer} ref={navContainerRef}>
+          <Link
+            href="/dashboard"
+            className={styles.navItem}
+            onMouseDown={(e) => {
+              // Blur tous les autres éléments avant la navigation
+              resetAllHoverStates();
+              e.currentTarget.blur();
+            }}
+          >
             <i className={`fas fa-tachometer-alt ${styles.navIcon}`}></i>
             <span>TABLEAU DE BORD</span>
           </Link>
-          <Link href="/products" className={styles.navItem}>
+          <Link
+            href="/products"
+            className={styles.navItem}
+            onMouseDown={(e) => {
+              resetAllHoverStates();
+              e.currentTarget.blur();
+            }}
+          >
             <i className={`fas fa-box ${styles.navIcon}`}></i>
             <span>PRODUITS</span>
           </Link>
-          <Link href="/customers" className={styles.navItem}>
+          <Link
+            href="/customers"
+            className={styles.navItem}
+            onMouseDown={(e) => {
+              resetAllHoverStates();
+              e.currentTarget.blur();
+            }}
+          >
             <i className={`fas fa-users ${styles.navIcon}`}></i>
             <span>CLIENTS</span>
           </Link>
-          <Link href="/orders" className={styles.navItem}>
+          <Link
+            href="/orders"
+            className={styles.navItem}
+            onMouseDown={(e) => {
+              resetAllHoverStates();
+              e.currentTarget.blur();
+            }}
+          >
             <i className={`fas fa-shopping-bag ${styles.navIcon}`}></i>
             <span>COMMANDES</span>
           </Link>
           {isMounted && !isLoading && user?.isSuperAdmin && (
-            <Link href="/users/management" className={styles.navItem}>
+            <Link
+              href="/users/management"
+              className={styles.navItem}
+              onMouseDown={(e) => {
+                resetAllHoverStates();
+                e.currentTarget.blur();
+              }}
+            >
               <i className={`fas fa-user-shield ${styles.navIcon}`}></i>
               <span>UTILISATEURS</span>
             </Link>
