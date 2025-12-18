@@ -19,6 +19,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     handleIncrement,
     handleDecrement,
     getImageUrl,
+    canAddToCart,
+    canIncrement,
+    isOutOfStock,
+    isLowStock,
   } = useProductCard(product);
 
   const priceWithVat = product.priceTTC;
@@ -51,6 +55,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
           )}
           <h3 className={styles.title}>{product.name}</h3>
+          {isLowStock && (
+            <div className={styles.stockAlert}>
+              <i className="fas fa-exclamation-triangle"></i>
+              Stock limité
+            </div>
+          )}
+          {isOutOfStock && (
+            <div className={styles.stockAlertOut}>
+              <i className="fas fa-times-circle"></i>
+              Rupture de stock
+            </div>
+          )}
           <div className={styles.meta}>
             <div className={styles.metaRow}>
               <div className={styles.price}>
@@ -80,10 +96,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <button
             className={styles.addButton}
             onClick={handleAddToCart}
-            disabled={isLoading}
+            disabled={isLoading || !canAddToCart}
           >
             <i className="fas fa-shopping-cart"></i>
-            {isLoading ? "Ajout..." : "Ajouter au panier"}
+            {isLoading
+              ? "Ajout..."
+              : isOutOfStock
+              ? "Rupture de stock"
+              : "Ajouter au panier"}
           </button>
         ) : (
           <div className={styles.quantityControls}>
@@ -102,7 +122,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <button
               className={styles.qtyButton}
               onClick={handleIncrement}
-              disabled={isLoading}
+              disabled={isLoading || !canIncrement}
             >
               <i className="fas fa-plus"></i>
             </button>

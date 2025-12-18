@@ -45,6 +45,7 @@ import {
 } from "./handlers/export-handler";
 import { handleDashboardStatistics } from "./handlers/statistics-handler";
 import { handleCheckoutComplete } from "./handlers/checkout-handler";
+import { handleCheckStock } from "./handlers/stock-handler";
 import {
   cartSessionMiddleware,
   handleCreateCartSession,
@@ -260,6 +261,9 @@ export class ApiRouter {
       requireAuth,
       handleDashboardStatistics
     );
+
+    // Stock - Route orchestrée pour vérifier le stock (utilisée par cart-service)
+    app.get("/api/stock/check/:productId", handleCheckStock);
 
     // ===== PROXY AUTOMATIQUE POUR TOUTES LES AUTRES ROUTES =====
     // IMPORTANT: L'ordre est crucial - les routes spécifiques doivent être enregistrées AVANT les routes génériques

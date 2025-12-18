@@ -18,6 +18,10 @@ interface UseProductCardResult {
   handleIncrement: () => Promise<void>;
   handleDecrement: () => Promise<void>;
   getImageUrl: () => string;
+  canAddToCart: boolean;
+  canIncrement: boolean;
+  isOutOfStock: boolean;
+  isLowStock: boolean;
 }
 
 /**
@@ -48,9 +52,20 @@ export function useProductCard(
   const quantityInCart = cartItem?.quantity || 0;
 
   /**
+   * Vérifie la disponibilité du stock
+   */
+  const availableStock = product.stock ?? 0;
+  const isOutOfStock = !product.isActive || availableStock === 0;
+  const isLowStock = availableStock > 0 && availableStock < 10;
+  const canAddToCart = !isOutOfStock && availableStock > 0;
+  const canIncrement = !isOutOfStock && quantityInCart < availableStock;
+
+  /**
    * Gère l'ajout au panier
    */
   const handleAddToCart = useCallback(async () => {
+    if (!canAddToCart) return;
+
     try {
       const imageUrl =
         product.images && product.images.length > 0
@@ -70,21 +85,30 @@ export function useProductCard(
         productId: product.id,
       });
     }
-  }, [product, addToCart]);
+  }, [product, addToCart, canAddToCart]);
 
   /**
    * Gère l'augmentation de la quantité
    */
   const handleIncrement = useCallback(async () => {
+    if (!canIncrement) return;
+
+    const newQuantity = Math.min(quantityInCart + 1, availableStock);
     try {
-      await updateQuantity(product.id, quantityInCart + 1);
+      await updateQuantity(product.id, newQuantity);
     } catch (error) {
       logger.error("Erreur lors de la mise à jour de la quantité", error, {
         productId: product.id,
-        quantity: quantityInCart + 1,
+        quantity: newQuantity,
       });
     }
-  }, [product.id, quantityInCart, updateQuantity]);
+  }, [
+    product.id,
+    quantityInCart,
+    updateQuantity,
+    canIncrement,
+    availableStock,
+  ]);
 
   /**
    * Gère la diminution de la quantité
@@ -120,5 +144,9 @@ export function useProductCard(
     handleIncrement,
     handleDecrement,
     getImageUrl,
+    canAddToCart,
+    canIncrement,
+    isOutOfStock,
+    isLowStock,
   };
 }

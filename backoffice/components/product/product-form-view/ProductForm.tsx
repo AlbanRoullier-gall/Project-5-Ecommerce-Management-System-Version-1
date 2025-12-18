@@ -13,6 +13,7 @@ import FormActions from "../../shared/form/FormActions";
 import ImageUploadZone from "./image/ImageUploadZone";
 import ExistingImagesList from "./image/ExistingImagesList";
 import NewImagesList from "./image/NewImagesList";
+import { Alert } from "../../shared";
 import { useProductForm } from "../../../hooks";
 import styles from "../../../styles/components/ProductForm.module.css";
 
@@ -92,6 +93,13 @@ const ProductForm: React.FC<ProductFormProps> = ({
       <h2 className={styles.title}>
         {product ? "✏️ Modifier le produit" : "➕ Nouveau produit"}
       </h2>
+
+      {product && product.stock === 0 && (
+        <Alert
+          type="warning"
+          message="⚠️ Rupture de stock : Ce produit est actuellement en rupture de stock et a été automatiquement désactivé."
+        />
+      )}
 
       <form onSubmit={onSubmitHandler} className={styles.form}>
         <FormInput

@@ -164,6 +164,8 @@ services:
       - "3004:3004"
     environment:
       - NODE_ENV=development
+      - DOCKER_ENV=true
+      - API_GATEWAY_URL=http://api-gateway:3020
       - REDIS_URL=redis://redis:6379
       - REDIS_HOST=redis
       - REDIS_PORT=6379

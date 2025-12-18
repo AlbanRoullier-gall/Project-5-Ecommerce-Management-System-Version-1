@@ -14,6 +14,7 @@ interface ItemDisplayProps {
   onRemove?: () => void | Promise<void>;
   isUpdating?: boolean;
   currentQuantity?: number;
+  maxQuantity?: number;
 }
 
 /**
@@ -29,6 +30,7 @@ const ItemDisplay: React.FC<ItemDisplayProps> = ({
   onRemove,
   isUpdating = false,
   currentQuantity,
+  maxQuantity,
 }) => {
   const quantity = currentQuantity ?? item.quantity;
   const productImage = item.imageUrl || PLACEHOLDER_IMAGE_PATH;
@@ -94,6 +96,7 @@ const ItemDisplay: React.FC<ItemDisplayProps> = ({
                   quantity={quantity}
                   onChange={handleQuantityChange}
                   min={1}
+                  max={maxQuantity}
                   disabled={isUpdating}
                   isLoading={isUpdating}
                 />

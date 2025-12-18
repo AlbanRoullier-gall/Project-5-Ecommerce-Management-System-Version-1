@@ -131,6 +131,51 @@ export class ProductController {
   }
 
   /**
+   * Décrémenter le stock d'un produit
+   * Utilisé lors de la création d'une commande
+   */
+  async decrementStock(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { quantity } = req.body;
+
+      if (!quantity || quantity <= 0) {
+        res
+          .status(400)
+          .json(
+            ResponseMapper.validationError(
+              "La quantité doit être un nombre positif"
+            )
+          );
+        return;
+      }
+
+      const product = await this.productService.decrementStock(
+        parseInt(id),
+        quantity
+      );
+
+      res.json(
+        ResponseMapper.successWithData(
+          { product: ProductMapper.productToPublicDTO(product) },
+          "Stock décrémenté avec succès"
+        )
+      );
+    } catch (error: any) {
+      console.error("Erreur lors de la décrémentation du stock:", error);
+      if (error.message === "Produit non trouvé") {
+        res.status(404).json(ResponseMapper.notFoundError("Product"));
+        return;
+      }
+      if (error.message.includes("Stock insuffisant")) {
+        res.status(400).json(ResponseMapper.validationError(error.message));
+        return;
+      }
+      res.status(500).json(ResponseMapper.internalServerError());
+    }
+  }
+
+  /**
    * Supprimer un produit
    */
   async deleteProduct(req: Request, res: Response): Promise<void> {

@@ -127,7 +127,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       } catch (err) {
         logger.error(errorMessage, err);
         const errorMsg = err instanceof Error ? err.message : errorMessage;
-        setError(errorMsg);
+        // Ne pas afficher les erreurs de stock insuffisant dans le panier
+        // La limitation est déjà gérée visuellement par le QuantitySelector
+        if (!errorMsg.toLowerCase().includes("stock insuffisant")) {
+          setError(errorMsg);
+        }
         throw err;
       } finally {
         setIsLoading(false);

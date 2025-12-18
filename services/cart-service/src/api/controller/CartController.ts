@@ -93,6 +93,13 @@ export class CartController {
       res.status(200).json(ResponseMapper.itemAdded(cart));
     } catch (error: any) {
       console.error("Add item error:", error);
+      if (
+        error.message.includes("Stock insuffisant") ||
+        error.message.includes("plus disponible")
+      ) {
+        res.status(400).json(ResponseMapper.validationError(error.message));
+        return;
+      }
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
@@ -140,6 +147,13 @@ export class CartController {
       console.error("Update item quantity error:", error);
       if (error.message.includes("non trouvé")) {
         res.status(404).json(ResponseMapper.notFoundError("Panier"));
+        return;
+      }
+      if (
+        error.message.includes("Stock insuffisant") ||
+        error.message.includes("plus disponible")
+      ) {
+        res.status(400).json(ResponseMapper.validationError(error.message));
         return;
       }
       res.status(500).json(ResponseMapper.internalServerError());

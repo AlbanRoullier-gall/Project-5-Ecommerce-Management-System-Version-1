@@ -13,8 +13,14 @@ interface CartItemProps {
  * Permet de modifier la quantité ou supprimer l'article
  */
 const CartItem: React.FC<CartItemProps> = ({ item }) => {
-  const { quantity, isUpdating, handleQuantityChange, handleRemove } =
-    useCartItem(item);
+  const {
+    quantity,
+    isUpdating,
+    handleQuantityChange,
+    handleRemove,
+    maxQuantity,
+    isLoadingStock,
+  } = useCartItem(item);
 
   return (
     <ItemDisplay
@@ -25,8 +31,9 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
       showRemoveButton={true}
       onQuantityChange={handleQuantityChange}
       onRemove={handleRemove}
-      isUpdating={isUpdating}
+      isUpdating={isUpdating || isLoadingStock}
       currentQuantity={quantity}
+      maxQuantity={maxQuantity}
     />
   );
 };

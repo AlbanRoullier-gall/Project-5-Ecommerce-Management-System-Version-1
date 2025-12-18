@@ -174,6 +174,15 @@ export class ApiRouter {
       this.productController.listProducts(req, res);
     });
 
+    // Décrémenter le stock d'un produit (public, utilisé par l'API Gateway lors de la création de commande)
+    // IMPORTANT: Cette route doit être AVANT /api/products/:id pour éviter les conflits de matching
+    app.post(
+      "/api/products/:id/decrement-stock",
+      (req: Request, res: Response) => {
+        this.productController.decrementStock(req, res);
+      }
+    );
+
     // Récupérer un produit spécifique (public)
     app.get("/api/products/:id", (req: Request, res: Response) => {
       this.productController.getProductById(req, res);

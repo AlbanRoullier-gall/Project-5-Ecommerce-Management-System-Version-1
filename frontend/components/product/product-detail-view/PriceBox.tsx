@@ -52,6 +52,11 @@ const PriceBox: React.FC<PriceBoxProps> = ({ product }) => {
             <i className={`fas fa-percentage ${styles.detailIcon}`}></i>
             TVA : {product.vatRate}%
           </span>
+          {/* Stock disponible */}
+          <span>
+            <i className={`fas fa-box ${styles.detailIcon}`}></i>
+            Stock : {product.stock ?? 0}
+          </span>
         </div>
       </div>
     </section>

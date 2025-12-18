@@ -13,6 +13,7 @@ import { CartRepository } from "../repositories/CartRepository";
 import { Cart, CartCheckoutData } from "../models/Cart";
 import { CartMapper } from "../api/mapper/CartMapper";
 import * as DTO from "../../shared-types/cart-service";
+import { API_GATEWAY_URL } from "../config";
 
 export default class CartService {
   private cartRepository: CartRepository;
@@ -65,16 +66,81 @@ export default class CartService {
   }
 
   /**
+   * Vérifier le stock disponible d'un produit via l'API Gateway
+   */
+  private async checkProductStock(
+    productId: number,
+    requestedQuantity: number
+  ): Promise<void> {
+    try {
+      const response = await fetch(
+        `${API_GATEWAY_URL}/api/stock/check/${productId}?quantity=${requestedQuantity}`,
+        {
+          headers: {
+            "X-Service-Request": "cart-service",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.error || `Erreur lors de la vérification du stock`;
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      if (!data.success || !data.data) {
+        throw new Error(
+          data.error || "Erreur lors de la vérification du stock"
+        );
+      }
+
+      // Vérifier si le stock est disponible
+      if (!data.data.isAvailable) {
+        throw new Error(data.data.message || "Stock insuffisant");
+      }
+    } catch (error: any) {
+      if (
+        error.message.includes("Stock insuffisant") ||
+        error.message.includes("plus disponible") ||
+        error.message.includes("n'est plus disponible")
+      ) {
+        throw error;
+      }
+      // En cas d'erreur de réseau, on laisse passer (le payment-handler validera à nouveau)
+      console.warn(
+        `Impossible de vérifier le stock pour le produit ${productId}:`,
+        error.message
+      );
+    }
+  }
+
+  /**
    * Ajouter un article au panier
    */
   async addItem(
     sessionId: string,
     itemData: DTO.CartItemCreateDTO
   ): Promise<Cart> {
+    // Vérifier le stock avant d'ajouter
+    await this.checkProductStock(itemData.productId, itemData.quantity);
+
     let cart = await this.getCart(sessionId);
 
     if (!cart) {
       cart = await this.createCart(sessionId);
+    }
+
+    // Vérifier si l'article existe déjà dans le panier
+    const existingItem = cart.items.find(
+      (item) => item.productId === itemData.productId
+    );
+    if (existingItem) {
+      // Si l'article existe, vérifier le stock total (quantité existante + nouvelle quantité)
+      const totalQuantity = existingItem.quantity + itemData.quantity;
+      await this.checkProductStock(itemData.productId, totalQuantity);
     }
 
     const cartItem = CartMapper.cartItemCreateDTOToCartItem(itemData, uuidv4());
@@ -93,6 +159,9 @@ export default class CartService {
     productId: number,
     quantity: number
   ): Promise<Cart> {
+    // Vérifier le stock avant de mettre à jour
+    await this.checkProductStock(productId, quantity);
+
     const cart = await this.getCart(sessionId);
     if (!cart) {
       throw new Error("Panier non trouvé");

@@ -69,7 +69,14 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
             )}
           </div>
           <div className={styles.info}>
-            <div className={styles.name}>{product.name}</div>
+            <div className={styles.name}>
+              {product.name}
+              {product.stock === 0 && (
+                <span className={styles.stockAlert} title="Rupture de stock">
+                  ⚠️ Rupture de stock
+                </span>
+              )}
+            </div>
             {product.description && (
               <div className={styles.desc}>{product.description}</div>
             )}
@@ -88,7 +95,13 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         <span className={styles.vat}>{product.vatRate}%</span>
       </TableCell>
       <TableCell align="center">
-        <span className={styles.stock}>{product.stock ?? 0}</span>
+        <span
+          className={`${styles.stock} ${
+            product.stock === 0 ? styles.stockZero : ""
+          }`}
+        >
+          {product.stock ?? 0}
+        </span>
       </TableCell>
       <TableCell align="center">
         <StatusBadge

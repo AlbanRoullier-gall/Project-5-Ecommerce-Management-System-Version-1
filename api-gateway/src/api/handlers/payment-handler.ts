@@ -329,7 +329,73 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // 5. Appeler email-service pour envoyer l'email de confirmation (non-bloquant)
+    // 5. Décrémenter le stock de chaque produit commandé (bloquant)
+    // Cette étape doit réussir pour garantir la cohérence des données
+    try {
+      const stockUpdatePromises = cart.items.map(async (item: any) => {
+        // Ajouter un timeout pour éviter les blocages (10 secondes par produit)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        try {
+          const stockResponse = await fetch(
+            `${SERVICES.product}/api/products/${item.productId}/decrement-stock`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Service-Request": "api-gateway",
+              },
+              body: JSON.stringify({
+                quantity: item.quantity,
+              }),
+              signal: controller.signal,
+            }
+          );
+
+          clearTimeout(timeoutId);
+
+          if (!stockResponse.ok) {
+            const stockError = (await stockResponse.json()) as any;
+            throw new Error(
+              `Erreur lors de la décrémentation du stock pour le produit ${
+                item.productId
+              }: ${
+                stockError.message || stockError.error || "Stock insuffisant"
+              }`
+            );
+          }
+
+          return stockResponse.json();
+        } catch (fetchError: any) {
+          clearTimeout(timeoutId);
+          if (fetchError.name === "AbortError") {
+            throw new Error(
+              `Timeout lors de la décrémentation du stock pour le produit ${item.productId}`
+            );
+          }
+          throw fetchError;
+        }
+      });
+
+      await Promise.all(stockUpdatePromises);
+      console.log("✅ Stock décrémenté pour tous les produits");
+    } catch (error) {
+      console.error("❌ Erreur lors de la décrémentation du stock:", error);
+      // En cas d'erreur, on retourne une erreur car la commande a été créée
+      // mais le stock n'a pas été décrémenté - cela nécessite une intervention manuelle
+      return res
+        .status(500)
+        .json(
+          createErrorResponse(
+            "Erreur lors de la mise à jour du stock",
+            (error as any)?.message ||
+              "La commande a été créée mais le stock n'a pas pu être mis à jour. Veuillez contacter le support."
+          )
+        );
+    }
+
+    // 6. Appeler email-service pour envoyer l'email de confirmation (non-bloquant)
     // email-service construit les données à partir des données brutes
     // SIMPLIFICATION : Utiliser directement checkoutData depuis le panier
     try {
@@ -357,7 +423,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       console.warn("⚠️ Erreur lors de l'envoi de l'email:", error);
     }
 
-    // 6. Vider le panier et les données checkout après création réussie (non-bloquant)
+    // 7. Vider le panier et les données checkout après création réussie (non-bloquant)
     // Le panier sera vidé automatiquement, ce qui supprime aussi les données checkout
     try {
       const clearCartResponse = await fetch(`${SERVICES.cart}/api/cart`, {
