@@ -80,7 +80,10 @@ export const TableRow: React.FC<TableRowProps> = ({ children }) => {
     <tr className={styles.tableRow}>
       {React.Children.map(children, (cell, idx) => {
         if (React.isValidElement(cell)) {
-          const label = headers[idx]?.label ?? headers.at(-1)?.label ?? "";
+          // Préserver le dataLabel s'il est déjà défini, sinon utiliser le header correspondant
+          const existingLabel = (cell.props as TableCellProps).dataLabel;
+          const label =
+            existingLabel || headers[idx]?.label || headers.at(-1)?.label || "";
           return React.cloneElement(cell, { dataLabel: label });
         }
         return cell;

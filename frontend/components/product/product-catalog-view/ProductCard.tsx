@@ -70,11 +70,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   </span>
                 </div>
               </div>
-
-              <div className={styles.stock}>
-                <i className={`fas fa-check-circle ${styles.stockIcon}`}></i>
-                En stock
-              </div>
             </div>
           </div>
         </div>

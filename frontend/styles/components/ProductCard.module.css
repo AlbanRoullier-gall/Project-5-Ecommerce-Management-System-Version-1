@@ -155,20 +155,6 @@
     letter-spacing: 0.06em;
   }
 
-  .stock {
-    flex: 1 1 auto;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    color: #0f172a;
-    font-weight: 600;
-    font-size: 0.95rem;
-  }
-
-  .stockIcon {
-    color: #10b981;
-  }
-
   .actions {
     margin-top: 1rem;
     display: flex;

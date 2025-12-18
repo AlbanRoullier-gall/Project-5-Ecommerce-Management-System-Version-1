@@ -169,13 +169,17 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
             )}
 
             {columns.totalPriceHT && (
-              <TableCell align="right">
+              <TableCell align="right" dataLabel="Total HT">
                 {Number(item.totalPriceHT).toFixed(2)} €
               </TableCell>
             )}
 
             {columns.totalPriceTTC && (
-              <TableCell align="right" className={styles.currencyStrong}>
+              <TableCell
+                align="right"
+                className={styles.currencyStrong}
+                dataLabel="Total TTC"
+              >
                 {Number(item.totalPriceTTC).toFixed(2)} €
               </TableCell>
             )}
