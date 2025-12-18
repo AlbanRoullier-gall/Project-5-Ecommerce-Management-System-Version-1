@@ -32,23 +32,42 @@ const Header: React.FC = () => {
     setIsMounted(true);
   }, []);
 
+  // Fonction pour réinitialiser tous les états hover
+  const resetHoverStates = () => {
+    if (navContainerRef.current) {
+      const navItems = navContainerRef.current.querySelectorAll("a");
+      navItems.forEach((el) => {
+        if (el instanceof HTMLElement) {
+          el.blur();
+          // Désactiver temporairement pointer-events pour forcer la réinitialisation
+          el.style.pointerEvents = "none";
+          // Utiliser requestAnimationFrame pour forcer le reflow
+          requestAnimationFrame(() => {
+            el.style.pointerEvents = "";
+          });
+        }
+      });
+    }
+  };
+
   // Réinitialiser l'état hover après chaque navigation
   useEffect(() => {
-    const handleRouteChangeComplete = () => {
-      // Forcer le blur de tous les éléments de navigation pour réinitialiser l'état hover
-      if (navContainerRef.current) {
-        const navItems = navContainerRef.current.querySelectorAll("a");
-        navItems.forEach((el) => {
-          if (el instanceof HTMLElement) {
-            el.blur();
-          }
-        });
-      }
+    const handleRouteChangeStart = () => {
+      resetHoverStates();
     };
 
+    const handleRouteChangeComplete = () => {
+      // Réinitialiser à nouveau après la navigation complète
+      setTimeout(() => {
+        resetHoverStates();
+      }, 0);
+    };
+
+    router.events?.on("routeChangeStart", handleRouteChangeStart);
     router.events?.on("routeChangeComplete", handleRouteChangeComplete);
 
     return () => {
+      router.events?.off("routeChangeStart", handleRouteChangeStart);
       router.events?.off("routeChangeComplete", handleRouteChangeComplete);
     };
   }, [router]);
@@ -102,24 +121,59 @@ const Header: React.FC = () => {
       {/* Desktop Navigation - Below Title */}
       <nav className={styles.desktopNav}>
         <div className={styles.navContainer} ref={navContainerRef}>
-          <Link href="/dashboard" className={styles.navItem}>
+          <Link
+            href="/dashboard"
+            className={styles.navItem}
+            onMouseDown={(e) => {
+              resetHoverStates();
+              e.currentTarget.blur();
+            }}
+          >
             <i className={`fas fa-tachometer-alt ${styles.navIcon}`}></i>
             <span>TABLEAU DE BORD</span>
           </Link>
-          <Link href="/products" className={styles.navItem}>
+          <Link
+            href="/products"
+            className={styles.navItem}
+            onMouseDown={(e) => {
+              resetHoverStates();
+              e.currentTarget.blur();
+            }}
+          >
             <i className={`fas fa-box ${styles.navIcon}`}></i>
             <span>PRODUITS</span>
           </Link>
-          <Link href="/customers" className={styles.navItem}>
+          <Link
+            href="/customers"
+            className={styles.navItem}
+            onMouseDown={(e) => {
+              resetHoverStates();
+              e.currentTarget.blur();
+            }}
+          >
             <i className={`fas fa-users ${styles.navIcon}`}></i>
             <span>CLIENTS</span>
           </Link>
-          <Link href="/orders" className={styles.navItem}>
+          <Link
+            href="/orders"
+            className={styles.navItem}
+            onMouseDown={(e) => {
+              resetHoverStates();
+              e.currentTarget.blur();
+            }}
+          >
             <i className={`fas fa-shopping-bag ${styles.navIcon}`}></i>
             <span>COMMANDES</span>
           </Link>
           {isMounted && !isLoading && user?.isSuperAdmin && (
-            <Link href="/users/management" className={styles.navItem}>
+            <Link
+              href="/users/management"
+              className={styles.navItem}
+              onMouseDown={(e) => {
+                resetHoverStates();
+                e.currentTarget.blur();
+              }}
+            >
               <i className={`fas fa-user-shield ${styles.navIcon}`}></i>
               <span>UTILISATEURS</span>
             </Link>
