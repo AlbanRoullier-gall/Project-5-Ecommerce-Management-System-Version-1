@@ -1,5 +1,6 @@
 import React from "react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import Header from "../Header";
 import Footer from "../Footer";
 import AuthGuard from "../auth/AuthGuard";
@@ -41,6 +42,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
   notFoundMessage = "Ressource introuvable",
   onNotFoundClose,
 }) => {
+  const router = useRouter();
   if (isLoading) {
     return (
       <AuthGuard>
@@ -67,7 +69,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
           <title>{title} - Nature de Pierre</title>
         </Head>
         <div className="min-h-screen">
-          <Header />
+          <Header key={router.asPath} />
           <main className={styles.mainContent}>
             <div className={styles.pageContainer}>
               <ErrorAlert
@@ -91,7 +93,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
       </Head>
 
       <div className="min-h-screen">
-        <Header />
+        <Header key={router.asPath} />
 
         <main className={styles.mainContent}>
           <div className={styles.pageContainer}>
