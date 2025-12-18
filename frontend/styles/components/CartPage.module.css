@@ -13,9 +13,15 @@
 
   .grid {
     display: grid;
-    grid-template-columns: 1fr 400px;
-    gap: 3rem;
+    grid-template-columns: 1fr 380px;
+    gap: 2rem;
     align-items: start;
+  }
+
+  .itemsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
 
   .error {
@@ -50,7 +56,7 @@
   @media (max-width: 1024px) {
     .grid {
       grid-template-columns: 1fr;
-      gap: 2rem;
+      gap: 1.5rem;
     }
 
     .container {
@@ -66,14 +72,22 @@
 
     .grid {
       grid-template-columns: 1fr;
-      gap: 2rem;
+      gap: 1.5rem;
+    }
+
+    .itemsList {
+      gap: 0;
     }
   }
 
   @media (max-width: 480px) {
     .container {
-      padding: 1rem 0.5rem;
+      padding: 1rem;
       margin: 1rem auto;
+    }
+
+    .grid {
+      gap: 1rem;
     }
   }
 }

@@ -66,7 +66,7 @@ export default function CartPage() {
           {cart && cart.items && cart.items.length > 0 && (
             <div className={styles.grid}>
               {/* Liste des articles */}
-              <div>
+              <div className={styles.itemsList}>
                 {cart.items.map((item: CartItemPublicDTO) => (
                   <CartItem key={item.id} item={item} />
                 ))}

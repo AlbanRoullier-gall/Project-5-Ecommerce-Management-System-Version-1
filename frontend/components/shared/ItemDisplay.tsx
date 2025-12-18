@@ -44,13 +44,9 @@ const ItemDisplay: React.FC<ItemDisplayProps> = ({
     await onRemove();
   };
 
-  const gridClass = showImage ? styles.withImage : styles.withoutImage;
-  const headerClass = showImage ? styles.headerWithImage : styles.headerNoImage;
-  const footerClass = showImage ? styles.footerWithImage : styles.footerNoImage;
-
   return (
     <div className={`${styles.container} ${isUpdating ? styles.updating : ""}`}>
-      <div className={`${styles.grid} ${gridClass}`}>
+      <div className={styles.grid}>
         {showImage && (
           <div className={styles.image}>
             <img
@@ -64,52 +60,57 @@ const ItemDisplay: React.FC<ItemDisplayProps> = ({
           </div>
         )}
 
-        <div className={`${styles.header} ${headerClass}`}>
-          <div className={styles.name}>
-            <h3
-              className={`${styles.title} ${
-                showDescription && item.description
-                  ? styles.titleWithDescription
-                  : ""
-              }`}
-            >
-              {item.productName || "Produit"}
-            </h3>
-            {showDescription && item.description && (
-              <p className={styles.description}>{item.description}</p>
+        <div className={styles.content}>
+          <div className={styles.header}>
+            <div className={styles.name}>
+              <h3
+                className={`${styles.title} ${
+                  showDescription && item.description
+                    ? styles.titleWithDescription
+                    : ""
+                }`}
+              >
+                {item.productName || "Produit"}
+              </h3>
+              {showDescription && item.description && (
+                <p className={styles.description}>{item.description}</p>
+              )}
+            </div>
+
+            <div className={styles.unitPrice}>
+              <div className={styles.unitPriceValue}>
+                {Number(item.unitPriceHT).toFixed(2)} € HTVA / unité
+              </div>
+              <div className={styles.vatInfo}>TVA (Belgique) {item.vatRate}%</div>
+            </div>
+          </div>
+
+          <div className={styles.footer}>
+            {showQuantityControls && onQuantityChange ? (
+              <div className={styles.quantitySection}>
+                <QuantitySelector
+                  quantity={quantity}
+                  onChange={handleQuantityChange}
+                  min={1}
+                  disabled={isUpdating}
+                  isLoading={isUpdating}
+                />
+              </div>
+            ) : (
+              <div className={styles.quantityLabel}>
+                Quantité :<span className={styles.quantityValue}>{quantity}</span>
+              </div>
             )}
-          </div>
 
-          <div className={styles.unitPrice}>
-            <div className={styles.unitPriceValue}>
-              {Number(item.unitPriceHT).toFixed(2)} € HTVA / unité
+            <div className={styles.totalSection}>
+              <div className={styles.totalHT}>
+                {Number(item.totalPriceHT).toFixed(2)} € HT
+              </div>
+              <div className={styles.totalTTC}>
+                {Number(item.totalPriceTTC).toFixed(2)} € TTC
+              </div>
             </div>
-            <div className={styles.vatInfo}>TVA (Belgique) {item.vatRate}%</div>
-          </div>
-        </div>
 
-        <div className={`${styles.footer} ${footerClass}`}>
-          {showQuantityControls && onQuantityChange ? (
-            <QuantitySelector
-              quantity={quantity}
-              onChange={handleQuantityChange}
-              min={1}
-              disabled={isUpdating}
-              isLoading={isUpdating}
-            />
-          ) : (
-            <div className={styles.quantityLabel}>
-              Quantité :<span className={styles.quantityValue}>{quantity}</span>
-            </div>
-          )}
-
-          <div className={styles.totalSection}>
-            <div className={styles.totalHT}>
-              {Number(item.totalPriceHT).toFixed(2)} € HT
-            </div>
-            <div className={styles.totalTTC}>
-              {Number(item.totalPriceTTC).toFixed(2)} € TTC
-            </div>
             {showRemoveButton && onRemove && (
               <button
                 className={styles.removeButton}
