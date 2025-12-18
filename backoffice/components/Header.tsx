@@ -35,7 +35,9 @@ const Header: React.FC = () => {
   // Fonction pour réinitialiser tous les états hover
   const resetAllHoverStates = () => {
     if (navContainerRef.current) {
-      const navItems = navContainerRef.current.querySelectorAll(`.${styles.navItem}`);
+      const navItems = navContainerRef.current.querySelectorAll(
+        `.${styles.navItem}`
+      );
       navItems.forEach((el) => {
         if (el instanceof HTMLElement) {
           el.blur();
