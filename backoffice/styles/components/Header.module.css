@@ -84,22 +84,11 @@
     font-size: 1rem;
     border: 2px solid transparent;
     backdrop-filter: blur(10px);
-    /* Désactiver le hover au montage pour éviter les états persistants */
-    pointer-events: auto;
   }
 
   .navItem:hover {
-    background: linear-gradient(
-      135deg,
-      var(--color-brand-gold) 0%,
-      var(--color-brand-gold-light) 100%
-    );
+    background: var(--color-brand-gold);
     color: var(--color-brand-teal);
-  }
-
-  /* Désactiver le hover si l'élément n'est pas focusable ou si on vient de le monter */
-  .navItem:focus {
-    outline: none;
   }
 
   .navIcon {
@@ -128,7 +117,7 @@
   }
 
   .logoutButton:hover {
-    background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+    background: #c0392b;
   }
 
   .logoutIcon {
@@ -147,13 +136,8 @@
   }
 
   .mobileMenuBtn:hover {
-    background: linear-gradient(
-      135deg,
-      var(--color-brand-gold) 0%,
-      var(--color-brand-gold-light) 100%
-    );
+    background: var(--color-brand-gold);
     color: var(--color-brand-teal);
-    border-color: var(--color-brand-gold);
   }
 
   .mobileMenuIcon {
@@ -180,7 +164,6 @@
 
   .mobileNavItem:hover {
     background: rgba(217, 185, 112, 0.2);
-    border-left-color: var(--color-brand-gold);
     color: var(--color-brand-gold);
   }
 

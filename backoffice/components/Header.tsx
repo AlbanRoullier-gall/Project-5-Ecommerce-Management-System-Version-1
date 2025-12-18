@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
 import styles from "../styles/components/Header.module.css";
@@ -23,60 +22,11 @@ import styles from "../styles/components/Header.module.css";
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const router = useRouter();
-  const navContainerRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, logout, user, isLoading } = useAuth();
 
   // Éviter les erreurs d'hydratation en ne rendant les éléments conditionnels qu'après le montage
   useEffect(() => {
     setIsMounted(true);
-  }, []);
-
-  // Fonction pour réinitialiser tous les états hover
-  const resetAllHoverStates = useCallback(() => {
-    if (navContainerRef.current) {
-      const navItems = navContainerRef.current.querySelectorAll(
-        `a[class*="navItem"]`
-      );
-      navItems.forEach((el) => {
-        if (el instanceof HTMLElement) {
-          el.blur();
-          // Forcer la réinitialisation en retirant temporairement le focus
-          el.style.pointerEvents = "none";
-          // Utiliser requestAnimationFrame pour forcer le reflow
-          requestAnimationFrame(() => {
-            el.style.pointerEvents = "";
-          });
-        }
-      });
-    }
-  }, []);
-
-  // Réinitialiser les états hover AVANT la navigation
-  useEffect(() => {
-    const handleRouteChangeStart = () => {
-      resetAllHoverStates();
-    };
-
-    const handleRouteChangeComplete = () => {
-      // Réinitialiser à nouveau après la navigation complète
-      setTimeout(() => {
-        resetAllHoverStates();
-      }, 0);
-    };
-
-    router.events?.on("routeChangeStart", handleRouteChangeStart);
-    router.events?.on("routeChangeComplete", handleRouteChangeComplete);
-
-    return () => {
-      router.events?.off("routeChangeStart", handleRouteChangeStart);
-      router.events?.off("routeChangeComplete", handleRouteChangeComplete);
-    };
-  }, [router, styles.navItem]);
-
-  // Réinitialiser au montage initial
-  useEffect(() => {
-    resetAllHoverStates();
   }, []);
 
   /**
@@ -127,61 +77,25 @@ const Header: React.FC = () => {
 
       {/* Desktop Navigation - Below Title */}
       <nav className={styles.desktopNav}>
-        <div className={styles.navContainer} ref={navContainerRef}>
-          <Link
-            href="/dashboard"
-            className={styles.navItem}
-            onMouseDown={(e) => {
-              // Blur tous les autres éléments avant la navigation
-              resetAllHoverStates();
-              e.currentTarget.blur();
-            }}
-          >
+        <div className={styles.navContainer}>
+          <Link href="/dashboard" className={styles.navItem}>
             <i className={`fas fa-tachometer-alt ${styles.navIcon}`}></i>
             <span>TABLEAU DE BORD</span>
           </Link>
-          <Link
-            href="/products"
-            className={styles.navItem}
-            onMouseDown={(e) => {
-              resetAllHoverStates();
-              e.currentTarget.blur();
-            }}
-          >
+          <Link href="/products" className={styles.navItem}>
             <i className={`fas fa-box ${styles.navIcon}`}></i>
             <span>PRODUITS</span>
           </Link>
-          <Link
-            href="/customers"
-            className={styles.navItem}
-            onMouseDown={(e) => {
-              resetAllHoverStates();
-              e.currentTarget.blur();
-            }}
-          >
+          <Link href="/customers" className={styles.navItem}>
             <i className={`fas fa-users ${styles.navIcon}`}></i>
             <span>CLIENTS</span>
           </Link>
-          <Link
-            href="/orders"
-            className={styles.navItem}
-            onMouseDown={(e) => {
-              resetAllHoverStates();
-              e.currentTarget.blur();
-            }}
-          >
+          <Link href="/orders" className={styles.navItem}>
             <i className={`fas fa-shopping-bag ${styles.navIcon}`}></i>
             <span>COMMANDES</span>
           </Link>
           {isMounted && !isLoading && user?.isSuperAdmin && (
-            <Link
-              href="/users/management"
-              className={styles.navItem}
-              onMouseDown={(e) => {
-                resetAllHoverStates();
-                e.currentTarget.blur();
-              }}
-            >
+            <Link href="/users/management" className={styles.navItem}>
               <i className={`fas fa-user-shield ${styles.navIcon}`}></i>
               <span>UTILISATEURS</span>
             </Link>
