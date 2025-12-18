@@ -84,7 +84,7 @@ jspm_packages/
 .dockerignore
 
 # Database backups
-infrastructure/backup/backups/
+backup-service/backups/
 
 # Uploads
 services/*/uploads/

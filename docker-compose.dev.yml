@@ -13,22 +13,38 @@ services:
       - REDIS_URL=redis://redis:6379
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      # Rate limiting global - Désactivé pour le développement
-      - RATE_LIMIT_GLOBAL_ENABLED=false
-      - RATE_LIMIT_GLOBAL_WINDOW_MS=900000
-      - RATE_LIMIT_GLOBAL_MAX_REQUESTS=10000
-      # Rate limiting auth login
+      # Rate limiting GET - Produits et catalogue (1000 req/min par IP)
+      - RATE_LIMIT_GET_PRODUCTS_ENABLED=true
+      - RATE_LIMIT_GET_PRODUCTS_WINDOW_MS=60000
+      - RATE_LIMIT_GET_PRODUCTS_MAX_REQUESTS=1000
+      # Rate limiting GET - Pages statiques (500 req/min par IP)
+      - RATE_LIMIT_GET_STATIC_ENABLED=true
+      - RATE_LIMIT_GET_STATIC_WINDOW_MS=60000
+      - RATE_LIMIT_GET_STATIC_MAX_REQUESTS=500
+      # Rate limiting POST/PUT - Création/modification (100 req/min par utilisateur)
+      - RATE_LIMIT_POST_PUT_ENABLED=true
+      - RATE_LIMIT_POST_PUT_WINDOW_MS=60000
+      - RATE_LIMIT_POST_PUT_MAX_REQUESTS=100
+      # Rate limiting DELETE - Suppression (20 req/min par utilisateur)
+      - RATE_LIMIT_DELETE_ENABLED=true
+      - RATE_LIMIT_DELETE_WINDOW_MS=60000
+      - RATE_LIMIT_DELETE_MAX_REQUESTS=20
+      # Rate limiting auth login (5 tentatives / 15 min par IP)
       - RATE_LIMIT_AUTH_LOGIN_ENABLED=true
       - RATE_LIMIT_AUTH_LOGIN_WINDOW_MS=900000
       - RATE_LIMIT_AUTH_LOGIN_MAX_REQUESTS=5
-      # Rate limiting payment
+      # Rate limiting auth register (3 tentatives / heure par IP)
+      - RATE_LIMIT_AUTH_REGISTER_ENABLED=true
+      - RATE_LIMIT_AUTH_REGISTER_WINDOW_MS=3600000
+      - RATE_LIMIT_AUTH_REGISTER_MAX_REQUESTS=3
+      # Rate limiting auth password reset (3 tentatives / heure par IP)
+      - RATE_LIMIT_AUTH_PASSWORD_RESET_ENABLED=true
+      - RATE_LIMIT_AUTH_PASSWORD_RESET_WINDOW_MS=3600000
+      - RATE_LIMIT_AUTH_PASSWORD_RESET_MAX_REQUESTS=3
+      # Rate limiting payment (5 requêtes / 5 min par utilisateur)
       - RATE_LIMIT_PAYMENT_ENABLED=true
-      - RATE_LIMIT_PAYMENT_WINDOW_MS=60000
-      - RATE_LIMIT_PAYMENT_MAX_REQUESTS=10
-      # Rate limiting admin
-      - RATE_LIMIT_ADMIN_ENABLED=true
-      - RATE_LIMIT_ADMIN_WINDOW_MS=60000
-      - RATE_LIMIT_ADMIN_MAX_REQUESTS=50
+      - RATE_LIMIT_PAYMENT_WINDOW_MS=300000
+      - RATE_LIMIT_PAYMENT_MAX_REQUESTS=5
     volumes:
       - ./api-gateway/src:/app/src
       - ./shared-types:/app/shared-types
@@ -420,6 +436,29 @@ services:
     volumes:
       - redis_data:/data
 
+  # Backup Service - Backup automatique des bases de données
+  backup-service:
+    build:
+      context: .
+      dockerfile: backup-service/Dockerfile
+    environment:
+      - NODE_ENV=development
+      - BACKUP_BASE_DIR=/backups
+      - BACKUP_RETENTION_DAYS=7
+      # Les DATABASE_URL seront détectées automatiquement depuis les autres services
+      # En production Railway, ces variables seront définies directement
+    volumes:
+      - ./backup-service/backups:/backups
+      - ./backup-service:/app/backup-scripts:ro
+    depends_on:
+      - customer-db
+      - product-db
+      - order-db
+      - auth-db
+    # Le service tourne en continu pour exécuter les tâches cron
+    restart: unless-stopped
+    # Pas de healthcheck car c'est un service de tâches planifiées
+
 volumes:
   customer_data:
   product_data:
@@ -430,3 +469,4 @@ volumes:
   # removed: email_data (Email Service n'utilise pas de base de données)
   auth_data:
   redis_data:
+  backup_data:

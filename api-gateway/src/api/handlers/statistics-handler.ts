@@ -13,6 +13,8 @@ interface DashboardStatistics {
   ordersCount: number;
   totalRevenue: number; // TTC
   totalRevenueHT: number; // HT
+  undeliveredOrdersCount: number;
+  unrefundedCreditNotesCount: number;
 }
 
 /**
@@ -111,6 +113,8 @@ export const handleDashboardStatistics = async (
       ordersCount: ordersStats.ordersCount || 0,
       totalRevenue: ordersStats.totalRevenue || 0,
       totalRevenueHT: ordersStats.totalRevenueHT || 0,
+      undeliveredOrdersCount: ordersStats.undeliveredOrdersCount || 0,
+      unrefundedCreditNotesCount: ordersStats.unrefundedCreditNotesCount || 0,
     };
 
     res.json({

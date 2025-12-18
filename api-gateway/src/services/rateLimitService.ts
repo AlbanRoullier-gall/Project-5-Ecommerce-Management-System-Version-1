@@ -19,10 +19,15 @@ interface RateLimitConfig {
 
 export class RateLimitService {
   private redis: Redis;
-  private globalConfig: RateLimitConfig;
+  // Nouvelles configurations par type de requête
+  private getProductsConfig: RateLimitConfig;
+  private getStaticConfig: RateLimitConfig;
+  private postPutConfig: RateLimitConfig;
+  private deleteConfig: RateLimitConfig;
   private authLoginConfig: RateLimitConfig;
+  private authRegisterConfig: RateLimitConfig;
+  private authPasswordResetConfig: RateLimitConfig;
   private paymentConfig: RateLimitConfig;
-  private adminConfig: RateLimitConfig;
 
   constructor() {
     // Configuration Redis
@@ -47,42 +52,88 @@ export class RateLimitService {
     this.redis = new Redis(redisConfig);
 
     // Configuration des limites depuis les variables d'environnement
-    this.globalConfig = {
-      enabled: process.env["RATE_LIMIT_GLOBAL_ENABLED"] === "true",
+    // Requêtes GET (lecture) - limites élevées
+    this.getProductsConfig = {
+      enabled: process.env["RATE_LIMIT_GET_PRODUCTS_ENABLED"] !== "false",
       windowMs: parseInt(
-        process.env["RATE_LIMIT_GLOBAL_WINDOW_MS"] || "900000"
-      ), // 15 minutes
+        process.env["RATE_LIMIT_GET_PRODUCTS_WINDOW_MS"] || "60000"
+      ), // 1 minute
       maxRequests: parseInt(
-        process.env["RATE_LIMIT_GLOBAL_MAX_REQUESTS"] || "200"
-      ), // 200 requêtes / 15 min (aligné avec l'ancienne config nginx)
+        process.env["RATE_LIMIT_GET_PRODUCTS_MAX_REQUESTS"] || "1000"
+      ), // 1000 req/min par IP
     };
 
+    this.getStaticConfig = {
+      enabled: process.env["RATE_LIMIT_GET_STATIC_ENABLED"] !== "false",
+      windowMs: parseInt(
+        process.env["RATE_LIMIT_GET_STATIC_WINDOW_MS"] || "60000"
+      ), // 1 minute
+      maxRequests: parseInt(
+        process.env["RATE_LIMIT_GET_STATIC_MAX_REQUESTS"] || "500"
+      ), // 500 req/min par IP
+    };
+
+    // Requêtes POST/PUT (écriture) - limites strictes par utilisateur
+    this.postPutConfig = {
+      enabled: process.env["RATE_LIMIT_POST_PUT_ENABLED"] !== "false",
+      windowMs: parseInt(
+        process.env["RATE_LIMIT_POST_PUT_WINDOW_MS"] || "60000"
+      ), // 1 minute
+      maxRequests: parseInt(
+        process.env["RATE_LIMIT_POST_PUT_MAX_REQUESTS"] || "100"
+      ), // 100 req/min par utilisateur authentifié
+    };
+
+    // Requêtes DELETE (suppression) - limites très strictes
+    this.deleteConfig = {
+      enabled: process.env["RATE_LIMIT_DELETE_ENABLED"] !== "false",
+      windowMs: parseInt(process.env["RATE_LIMIT_DELETE_WINDOW_MS"] || "60000"), // 1 minute
+      maxRequests: parseInt(
+        process.env["RATE_LIMIT_DELETE_MAX_REQUESTS"] || "20"
+      ), // 20 req/min par utilisateur authentifié
+    };
+
+    // Requêtes authentification - très strictes
     this.authLoginConfig = {
-      enabled: process.env["RATE_LIMIT_AUTH_LOGIN_ENABLED"] === "true",
+      enabled: process.env["RATE_LIMIT_AUTH_LOGIN_ENABLED"] !== "false",
       windowMs: parseInt(
         process.env["RATE_LIMIT_AUTH_LOGIN_WINDOW_MS"] || "900000"
       ), // 15 minutes
       maxRequests: parseInt(
         process.env["RATE_LIMIT_AUTH_LOGIN_MAX_REQUESTS"] || "5"
-      ),
+      ), // 5 tentatives / 15 min par IP
     };
 
-    this.paymentConfig = {
-      enabled: process.env["RATE_LIMIT_PAYMENT_ENABLED"] === "true",
+    this.authRegisterConfig = {
+      enabled: process.env["RATE_LIMIT_AUTH_REGISTER_ENABLED"] !== "false",
       windowMs: parseInt(
-        process.env["RATE_LIMIT_PAYMENT_WINDOW_MS"] || "60000"
-      ), // 1 minute
+        process.env["RATE_LIMIT_AUTH_REGISTER_WINDOW_MS"] || "3600000"
+      ), // 1 heure
       maxRequests: parseInt(
-        process.env["RATE_LIMIT_PAYMENT_MAX_REQUESTS"] || "10"
-      ),
+        process.env["RATE_LIMIT_AUTH_REGISTER_MAX_REQUESTS"] || "3"
+      ), // 3 tentatives / heure par IP
     };
 
-    this.adminConfig = {
-      enabled: process.env["RATE_LIMIT_ADMIN_ENABLED"] === "true",
-      windowMs: parseInt(process.env["RATE_LIMIT_ADMIN_WINDOW_MS"] || "60000"), // 1 minute
+    this.authPasswordResetConfig = {
+      enabled:
+        process.env["RATE_LIMIT_AUTH_PASSWORD_RESET_ENABLED"] !== "false",
+      windowMs: parseInt(
+        process.env["RATE_LIMIT_AUTH_PASSWORD_RESET_WINDOW_MS"] || "3600000"
+      ), // 1 heure
       maxRequests: parseInt(
-        process.env["RATE_LIMIT_ADMIN_MAX_REQUESTS"] || "50"
-      ),
+        process.env["RATE_LIMIT_AUTH_PASSWORD_RESET_MAX_REQUESTS"] || "3"
+      ), // 3 tentatives / heure par IP
+    };
+
+    // Requêtes paiement - très strictes
+    this.paymentConfig = {
+      enabled: process.env["RATE_LIMIT_PAYMENT_ENABLED"] !== "false",
+      windowMs: parseInt(
+        process.env["RATE_LIMIT_PAYMENT_WINDOW_MS"] || "300000"
+      ), // 5 minutes
+      maxRequests: parseInt(
+        process.env["RATE_LIMIT_PAYMENT_MAX_REQUESTS"] || "5"
+      ), // 5 requêtes / 5 min par utilisateur
     };
 
     console.log("✅ RateLimitService initialized");
@@ -127,21 +178,70 @@ export class RateLimitService {
   }
 
   /**
-   * Vérifier le rate limiting par IP (global)
+   * Vérifier le rate limiting pour GET /api/products/* (par IP)
    */
-  async checkGlobalLimit(
+  async checkGetProductsLimit(
     ip: string
   ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
-    return this.checkLimit("global", ip, this.globalConfig);
+    return this.checkLimit("get_products", ip, this.getProductsConfig);
   }
 
   /**
-   * Vérifier le rate limiting pour /api/auth/login
+   * Vérifier le rate limiting pour GET pages statiques (par IP)
+   */
+  async checkGetStaticLimit(
+    ip: string
+  ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+    return this.checkLimit("get_static", ip, this.getStaticConfig);
+  }
+
+  /**
+   * Vérifier le rate limiting pour POST/PUT (par utilisateur authentifié)
+   */
+  async checkPostPutLimit(
+    userId: string
+  ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+    return this.checkLimit("post_put", userId, this.postPutConfig);
+  }
+
+  /**
+   * Vérifier le rate limiting pour DELETE (par utilisateur authentifié)
+   */
+  async checkDeleteLimit(
+    userId: string
+  ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+    return this.checkLimit("delete", userId, this.deleteConfig);
+  }
+
+  /**
+   * Vérifier le rate limiting pour /api/auth/login (par IP)
    */
   async checkAuthLoginLimit(
     ip: string
   ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
     return this.checkLimit("auth_login", ip, this.authLoginConfig);
+  }
+
+  /**
+   * Vérifier le rate limiting pour /api/auth/register (par IP)
+   */
+  async checkAuthRegisterLimit(
+    ip: string
+  ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+    return this.checkLimit("auth_register", ip, this.authRegisterConfig);
+  }
+
+  /**
+   * Vérifier le rate limiting pour /api/auth/reset-password (par IP)
+   */
+  async checkAuthPasswordResetLimit(
+    ip: string
+  ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+    return this.checkLimit(
+      "auth_password_reset",
+      ip,
+      this.authPasswordResetConfig
+    );
   }
 
   /**
@@ -151,15 +251,6 @@ export class RateLimitService {
     userId: string
   ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
     return this.checkLimit("payment", userId, this.paymentConfig);
-  }
-
-  /**
-   * Vérifier le rate limiting pour /api/admin/* (par utilisateur)
-   */
-  async checkAdminLimit(
-    userId: string
-  ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
-    return this.checkLimit("admin", userId, this.adminConfig);
   }
 
   /**

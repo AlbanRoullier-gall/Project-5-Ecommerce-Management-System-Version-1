@@ -51,6 +51,7 @@ export function useProductForm({
       vatRate: product?.vatRate || 21,
       categoryId: product?.categoryId || categories[0]?.id || 0,
       isActive: product?.isActive ?? true,
+      stock: product?.stock ?? 0,
     }
   );
 
@@ -69,6 +70,7 @@ export function useProductForm({
         vatRate: product.vatRate,
         categoryId: product.categoryId,
         isActive: product.isActive,
+        stock: product.stock ?? 0,
       });
       setSelectedImages([]);
       setImagePreviewUrls([]);

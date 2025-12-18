@@ -39,6 +39,7 @@ export class ProductMapper {
       vat_rate: dto.vatRate,
       category_id: dto.categoryId,
       is_active: dto.isActive !== undefined ? dto.isActive : true,
+      stock: dto.stock !== undefined ? dto.stock : 0,
     };
   }
 
@@ -55,6 +56,7 @@ export class ProductMapper {
     if (dto.vatRate !== undefined) data.vat_rate = dto.vatRate;
     if (dto.categoryId !== undefined) data.category_id = dto.categoryId;
     if (dto.isActive !== undefined) data.is_active = dto.isActive;
+    if (dto.stock !== undefined) data.stock = dto.stock;
     return data;
   }
 
@@ -86,6 +88,7 @@ export class ProductMapper {
       vatRate: vatRate,
       categoryId: product.categoryId,
       isActive: product.isActive,
+      stock: product.stock ?? 0,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
       categoryName: product.categoryName,

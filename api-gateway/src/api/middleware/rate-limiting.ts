@@ -2,9 +2,12 @@
  * Rate Limiting Middleware
  * Middleware de rate limiting métier pour l'API Gateway
  *
- * Applique le rate limiting en deux couches :
- * 1. Rate limiting global par IP (après les middlewares de base)
- * 2. Rate limiting spécifique par route (après l'authentification)
+ * Stratégie par type de requête :
+ * - GET (lecture) : limites élevées par IP
+ * - POST/PUT (écriture) : limites strictes par utilisateur authentifié
+ * - DELETE (suppression) : limites très strictes par utilisateur authentifié
+ * - Auth : limites très strictes par IP
+ * - Payment : limites très strictes par utilisateur
  */
 
 import { Request, Response, NextFunction } from "express";
@@ -42,46 +45,130 @@ function sendTooManyRequests(
 }
 
 /**
- * Helper pour le fallback vers rate limit global quand l'utilisateur n'est pas authentifié
+ * Rate limiting pour GET /api/products/* et catalogue
+ * 1000 req/min par IP
  */
-async function checkGlobalLimitFallback(
-  req: Request,
-  res: Response
-): Promise<{ allowed: boolean; result: any }> {
-  const ip = rateLimitService.getClientIp(req);
-  const result = await rateLimitService.checkGlobalLimit(ip);
-
-  if (!result.allowed) {
-    sendTooManyRequests(res, "Limite de requêtes dépassée.", result.resetTime);
-    return { allowed: false, result };
-  }
-
-  return { allowed: true, result };
-}
-
-/**
- * Rate limiting global par IP
- * Appliqué à toutes les routes /api/* (sauf /api/health)
- */
-export const globalRateLimit = async (
+export const getProductsRateLimit = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  // Exclure /api/health du rate limiting
-  if (req.path === "/api/health" || req.path === "/api/health/services") {
-    return next();
-  }
-
   const ip = rateLimitService.getClientIp(req);
-  const result = await rateLimitService.checkGlobalLimit(ip);
+  const result = await rateLimitService.checkGetProductsLimit(ip);
 
-  setRateLimitHeaders(res, 200, result.remaining, result.resetTime);
+  setRateLimitHeaders(res, 1000, result.remaining, result.resetTime);
 
   if (!result.allowed) {
     sendTooManyRequests(
       res,
-      "Vous avez dépassé la limite de requêtes. Veuillez réessayer plus tard.",
+      "Trop de requêtes pour le catalogue. Veuillez réessayer dans une minute.",
+      result.resetTime
+    );
+    return;
+  }
+
+  next();
+};
+
+/**
+ * Rate limiting pour GET pages statiques
+ * 500 req/min par IP
+ */
+export const getStaticRateLimit = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const ip = rateLimitService.getClientIp(req);
+  const result = await rateLimitService.checkGetStaticLimit(ip);
+
+  setRateLimitHeaders(res, 500, result.remaining, result.resetTime);
+
+  if (!result.allowed) {
+    sendTooManyRequests(
+      res,
+      "Trop de requêtes pour les pages statiques. Veuillez réessayer dans une minute.",
+      result.resetTime
+    );
+    return;
+  }
+
+  next();
+};
+
+/**
+ * Rate limiting pour POST/PUT (création/modification)
+ * 100 req/min par utilisateur authentifié
+ */
+export const postPutRateLimit = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const user = (req as any).user;
+
+  if (!user || !user.userId) {
+    // Si pas d'utilisateur, utiliser l'IP comme fallback avec limite plus stricte
+    const ip = rateLimitService.getClientIp(req);
+    const result = await rateLimitService.checkGetStaticLimit(ip); // Utiliser limite statique comme fallback
+
+    setRateLimitHeaders(res, 500, result.remaining, result.resetTime);
+
+    if (!result.allowed) {
+      sendTooManyRequests(
+        res,
+        "Limite de requêtes dépassée. Veuillez vous authentifier.",
+        result.resetTime
+      );
+      return;
+    }
+    return next();
+  }
+
+  const result = await rateLimitService.checkPostPutLimit(String(user.userId));
+
+  setRateLimitHeaders(res, 100, result.remaining, result.resetTime);
+
+  if (!result.allowed) {
+    sendTooManyRequests(
+      res,
+      "Trop de requêtes de création/modification. Veuillez réessayer dans une minute.",
+      result.resetTime
+    );
+    return;
+  }
+
+  next();
+};
+
+/**
+ * Rate limiting pour DELETE (suppression)
+ * 20 req/min par utilisateur authentifié
+ */
+export const deleteRateLimit = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const user = (req as any).user;
+
+  if (!user || !user.userId) {
+    sendTooManyRequests(
+      res,
+      "Authentification requise pour les opérations de suppression.",
+      Date.now() + 60000
+    );
+    return;
+  }
+
+  const result = await rateLimitService.checkDeleteLimit(String(user.userId));
+
+  setRateLimitHeaders(res, 20, result.remaining, result.resetTime);
+
+  if (!result.allowed) {
+    sendTooManyRequests(
+      res,
+      "Trop de requêtes de suppression. Veuillez réessayer dans une minute.",
       result.resetTime
     );
     return;
@@ -92,7 +179,7 @@ export const globalRateLimit = async (
 
 /**
  * Rate limiting pour /api/auth/login
- * Appliqué avant l'authentification
+ * 5 tentatives / 15 min par IP
  */
 export const authLoginRateLimit = async (
   req: Request,
@@ -117,31 +204,23 @@ export const authLoginRateLimit = async (
 };
 
 /**
- * Rate limiting pour /api/payment/* (par utilisateur)
- * Nécessite que l'utilisateur soit authentifié
+ * Rate limiting pour /api/auth/register
+ * 3 tentatives / heure par IP
  */
-export const paymentRateLimit = async (
+export const authRegisterRateLimit = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const user = (req as any).user;
+  const ip = rateLimitService.getClientIp(req);
+  const result = await rateLimitService.checkAuthRegisterLimit(ip);
 
-  if (!user || !user.userId) {
-    // Si pas d'utilisateur, utiliser l'IP comme fallback
-    const { allowed } = await checkGlobalLimitFallback(req, res);
-    if (!allowed) return;
-    return next();
-  }
-
-  const result = await rateLimitService.checkPaymentLimit(String(user.userId));
-
-  setRateLimitHeaders(res, 10, result.remaining, result.resetTime);
+  setRateLimitHeaders(res, 3, result.remaining, result.resetTime);
 
   if (!result.allowed) {
     sendTooManyRequests(
       res,
-      "Trop de requêtes de paiement. Veuillez réessayer dans une minute.",
+      "Trop de tentatives d'inscription. Veuillez réessayer dans une heure.",
       result.resetTime
     );
     return;
@@ -151,31 +230,23 @@ export const paymentRateLimit = async (
 };
 
 /**
- * Rate limiting pour /api/admin/* (par utilisateur)
- * Nécessite que l'utilisateur soit authentifié
+ * Rate limiting pour /api/auth/reset-password
+ * 3 tentatives / heure par IP
  */
-export const adminRateLimit = async (
+export const authPasswordResetRateLimit = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const user = (req as any).user;
+  const ip = rateLimitService.getClientIp(req);
+  const result = await rateLimitService.checkAuthPasswordResetLimit(ip);
 
-  if (!user || !user.userId) {
-    // Si pas d'utilisateur, utiliser l'IP comme fallback
-    const { allowed } = await checkGlobalLimitFallback(req, res);
-    if (!allowed) return;
-    return next();
-  }
-
-  const result = await rateLimitService.checkAdminLimit(String(user.userId));
-
-  setRateLimitHeaders(res, 50, result.remaining, result.resetTime);
+  setRateLimitHeaders(res, 3, result.remaining, result.resetTime);
 
   if (!result.allowed) {
     sendTooManyRequests(
       res,
-      "Trop de requêtes admin. Veuillez réessayer dans une minute.",
+      "Trop de tentatives de réinitialisation. Veuillez réessayer dans une heure.",
       result.resetTime
     );
     return;
@@ -184,3 +255,38 @@ export const adminRateLimit = async (
   next();
 };
 
+/**
+ * Rate limiting pour /api/payment/* (par utilisateur)
+ * 5 requêtes / 5 min par utilisateur authentifié
+ */
+export const paymentRateLimit = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const user = (req as any).user;
+
+  if (!user || !user.userId) {
+    sendTooManyRequests(
+      res,
+      "Authentification requise pour les opérations de paiement.",
+      Date.now() + 300000
+    );
+    return;
+  }
+
+  const result = await rateLimitService.checkPaymentLimit(String(user.userId));
+
+  setRateLimitHeaders(res, 5, result.remaining, result.resetTime);
+
+  if (!result.allowed) {
+    sendTooManyRequests(
+      res,
+      "Trop de requêtes de paiement. Veuillez réessayer dans 5 minutes.",
+      result.resetTime
+    );
+    return;
+  }
+
+  next();
+};

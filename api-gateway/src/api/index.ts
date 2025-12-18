@@ -4,7 +4,7 @@
  * Garde seulement les routes qui nécessitent de l'orchestration
  */
 
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { ServiceName, SERVICES } from "../config";
 import { proxyRequest } from "./proxy";
 import axios from "axios";
@@ -18,10 +18,14 @@ import {
   errorHandler,
 } from "./middleware/common";
 import {
-  globalRateLimit,
+  getProductsRateLimit,
+  getStaticRateLimit,
+  postPutRateLimit,
+  deleteRateLimit,
   authLoginRateLimit,
+  authRegisterRateLimit,
+  authPasswordResetRateLimit,
   paymentRateLimit,
-  adminRateLimit,
 } from "./middleware/rate-limiting";
 import {
   handleLogin,
@@ -101,9 +105,8 @@ export class ApiRouter {
     app.use(express.json({ limit: "10mb" }));
     app.use(express.urlencoded({ extended: true }));
 
-    // Rate limiting global par IP (après les middlewares de base)
-    // Exclut automatiquement /api/health
-    app.use("/api", globalRateLimit);
+    // Rate limiting par type de requête - appliqué de manière sélective sur les routes
+    // Plus de rate limiting global, chaque route a son propre middleware
   }
 
   setupRoutes(app: any): void {
@@ -194,13 +197,21 @@ export class ApiRouter {
 
     // ===== ROUTES AVEC ORCHESTRATION (handlers spéciaux) =====
 
-    // Auth - Routes orchestrées
+    // Auth - Routes orchestrées avec rate limiting strict
     app.post("/api/auth/login", authLoginRateLimit, handleLogin);
-    app.post("/api/auth/register", handleRegister);
+    app.post("/api/auth/register", authRegisterRateLimit, handleRegister);
     app.post("/api/auth/verify", handleVerifyAuth);
     app.post("/api/auth/logout", handleLogout);
-    app.post("/api/auth/reset-password", handlePasswordReset);
-    app.post("/api/auth/reset-password/confirm", handlePasswordResetConfirm);
+    app.post(
+      "/api/auth/reset-password",
+      authPasswordResetRateLimit,
+      handlePasswordReset
+    );
+    app.post(
+      "/api/auth/reset-password/confirm",
+      authPasswordResetRateLimit,
+      handlePasswordResetConfirm
+    );
 
     // Payment - Routes avec transformation/orchestration
     app.post(
@@ -247,7 +258,6 @@ export class ApiRouter {
     app.get(
       "/api/admin/statistics/dashboard",
       requireAuth,
-      adminRateLimit,
       handleDashboardStatistics
     );
 
@@ -287,6 +297,7 @@ export class ApiRouter {
       "/api/admin/users/:id/approve",
       requireAuth,
       requireSuperAdmin,
+      postPutRateLimit,
       async (req: Request, res: Response) => {
         await proxyRequest(req, res, "auth");
       }
@@ -296,6 +307,7 @@ export class ApiRouter {
       "/api/admin/users/:id/reject",
       requireAuth,
       requireSuperAdmin,
+      postPutRateLimit,
       async (req: Request, res: Response) => {
         await proxyRequest(req, res, "auth");
       }
@@ -305,6 +317,7 @@ export class ApiRouter {
       "/api/admin/users/:id",
       requireAuth,
       requireSuperAdmin,
+      deleteRateLimit,
       async (req: Request, res: Response) => {
         await proxyRequest(req, res, "auth");
       }
@@ -314,11 +327,13 @@ export class ApiRouter {
     app.post(
       "/api/admin/products/:id/activate",
       requireAuth,
+      postPutRateLimit,
       (req: Request, res: Response) => proxyRequest(req, res, "product")
     );
     app.post(
       "/api/admin/products/:id/deactivate",
       requireAuth,
+      postPutRateLimit,
       (req: Request, res: Response) => proxyRequest(req, res, "product")
     );
     app.get(
@@ -329,6 +344,7 @@ export class ApiRouter {
     app.delete(
       "/api/admin/products/:id/images/:imageId",
       requireAuth,
+      deleteRateLimit,
       (req: Request, res: Response) => proxyRequest(req, res, "product")
     );
 
@@ -338,6 +354,7 @@ export class ApiRouter {
     app.post(
       "/api/admin/products",
       requireAuth,
+      postPutRateLimit,
       // Plus besoin de multer, on utilise JSON uniquement
       async (req: Request, res: Response) => {
         // Proxy normal vers le service (JSON uniquement)
@@ -346,10 +363,29 @@ export class ApiRouter {
     );
 
     // Routes admin génériques (doivent être après les routes spécifiques)
+    // Applique le rate limiting selon le type de requête
     app.all(
       "/api/admin/*",
       requireAuth,
-      adminRateLimit,
+      async (req: Request, res: Response, next: NextFunction) => {
+        // Appliquer le rate limiting selon la méthode HTTP
+        if (req.method === "GET") {
+          // GET admin : pas de rate limiting spécial, juste auth
+          return next();
+        } else if (
+          req.method === "POST" ||
+          req.method === "PUT" ||
+          req.method === "PATCH"
+        ) {
+          // POST/PUT/PATCH : rate limiting pour création/modification
+          return postPutRateLimit(req, res, next);
+        } else if (req.method === "DELETE") {
+          // DELETE : rate limiting strict pour suppression
+          return deleteRateLimit(req, res, next);
+        } else {
+          return next();
+        }
+      },
       async (req: Request, res: Response) => {
         const service = this.getServiceFromPath(req.path);
         if (service) {
@@ -405,11 +441,26 @@ export class ApiRouter {
       }
     );
 
-    // Routes publiques - Proxy automatique
+    // Routes publiques - Proxy automatique avec rate limiting par type
     // Appliquer le middleware cart-session pour les routes /api/cart
     app.all(
       "/api/cart*",
       cartSessionMiddleware,
+      async (req: Request, res: Response, next: NextFunction) => {
+        // Appliquer le rate limiting selon la méthode HTTP
+        if (req.method === "GET") {
+          return getProductsRateLimit(req, res, next);
+        } else if (
+          req.method === "POST" ||
+          req.method === "PUT" ||
+          req.method === "PATCH"
+        ) {
+          // Pour les routes publiques POST/PUT, on utilise getStaticRateLimit comme fallback
+          return getStaticRateLimit(req, res, next);
+        } else {
+          return next();
+        }
+      },
       async (req: Request, res: Response) => {
         const service = this.getServiceFromPath(req.path);
         if (service) {
@@ -422,18 +473,77 @@ export class ApiRouter {
       }
     );
 
-    // Autres routes publiques (sans middleware cart-session)
-    app.all("/api/*", async (req: Request, res: Response) => {
-      const service = this.getServiceFromPath(req.path);
-      if (service) {
-        await proxyRequest(req, res, service);
-      } else {
-        res.status(404).json({ error: "Service non trouvé pour cette route" });
+    // Routes GET pour produits et catalogue - Rate limiting élevé
+    app.get(
+      "/api/products*",
+      getProductsRateLimit,
+      async (req: Request, res: Response) => {
+        const service = this.getServiceFromPath(req.path);
+        if (service) {
+          await proxyRequest(req, res, service);
+        } else {
+          res
+            .status(404)
+            .json({ error: "Service non trouvé pour cette route" });
+        }
       }
-    });
+    );
+
+    app.get(
+      "/api/categories*",
+      getProductsRateLimit,
+      async (req: Request, res: Response) => {
+        const service = this.getServiceFromPath(req.path);
+        if (service) {
+          await proxyRequest(req, res, service);
+        } else {
+          res
+            .status(404)
+            .json({ error: "Service non trouvé pour cette route" });
+        }
+      }
+    );
+
+    // Autres routes publiques avec rate limiting selon le type
+    app.all(
+      "/api/*",
+      async (req: Request, res: Response, next: NextFunction) => {
+        // Appliquer le rate limiting selon la méthode HTTP et le chemin
+        if (req.method === "GET") {
+          // GET : rate limiting pour pages statiques ou produits selon le chemin
+          if (
+            req.path.startsWith("/api/products") ||
+            req.path.startsWith("/api/categories")
+          ) {
+            return getProductsRateLimit(req, res, next);
+          } else {
+            return getStaticRateLimit(req, res, next);
+          }
+        } else if (
+          req.method === "POST" ||
+          req.method === "PUT" ||
+          req.method === "PATCH"
+        ) {
+          // POST/PUT/PATCH publiques : nécessitent généralement auth, mais on applique une limite par IP
+          return getStaticRateLimit(req, res, next);
+        } else {
+          return next();
+        }
+      },
+      async (req: Request, res: Response) => {
+        const service = this.getServiceFromPath(req.path);
+        if (service) {
+          await proxyRequest(req, res, service);
+        } else {
+          res
+            .status(404)
+            .json({ error: "Service non trouvé pour cette route" });
+        }
+      }
+    );
 
     // Route statique pour les images (sans préfixe /api)
-    app.get("/uploads/*", (req: Request, res: Response) =>
+    app.get("/uploads/*", getStaticRateLimit, (req: Request, res: Response) =>
       proxyRequest(req, res, "product")
     );
 

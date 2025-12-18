@@ -88,6 +88,9 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         <span className={styles.vat}>{product.vatRate}%</span>
       </TableCell>
       <TableCell align="center">
+        <span className={styles.stock}>{product.stock ?? 0}</span>
+      </TableCell>
+      <TableCell align="center">
         <StatusBadge
           isActive={product.isActive}
           onClick={() => onToggleStatus(product.id, product.isActive)}

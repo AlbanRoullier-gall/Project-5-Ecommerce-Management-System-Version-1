@@ -4,10 +4,6 @@
  */
 
 import { apiClient } from "./apiClient";
-import {
-  OrderStatisticsRequestDTO,
-  DashboardStatisticsResponseDTO,
-} from "dto";
 import { ApiResponse } from "./apiClient";
 
 /**
@@ -19,6 +15,8 @@ export interface DashboardStatistics {
   ordersCount?: number;
   totalRevenue?: number;
   totalRevenueHT?: number;
+  undeliveredOrdersCount?: number;
+  unrefundedCreditNotesCount?: number;
 }
 
 /**
@@ -61,4 +59,3 @@ export async function getDashboardStatistics(
     year: response.data.year,
   };
 }
-

@@ -14,6 +14,8 @@ interface StatsData {
   ordersCount: number;
   totalRevenue: number;
   totalRevenueHT: number;
+  undeliveredOrdersCount: number;
+  unrefundedCreditNotesCount: number;
 }
 
 interface UseDashboardStatsReturn {
@@ -68,6 +70,9 @@ export function useDashboardStats(): UseDashboardStatsReturn {
         ordersCount: result.statistics.ordersCount ?? 0,
         totalRevenue: result.statistics.totalRevenue ?? 0,
         totalRevenueHT: result.statistics.totalRevenueHT ?? 0,
+        undeliveredOrdersCount: result.statistics.undeliveredOrdersCount ?? 0,
+        unrefundedCreditNotesCount:
+          result.statistics.unrefundedCreditNotesCount ?? 0,
       });
     }
   }, [selectedYear]);

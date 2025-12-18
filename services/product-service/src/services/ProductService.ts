@@ -42,6 +42,7 @@ export default class ProductService {
     vatRate?: number;
     categoryId?: number;
     isActive?: boolean;
+    stock?: number;
   }): {
     isValid: boolean;
     errors: { field: string; message: string }[];

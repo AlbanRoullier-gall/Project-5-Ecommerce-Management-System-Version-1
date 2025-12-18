@@ -16,6 +16,7 @@ export interface ProductCreateDTO {
   vatRate: number;
   categoryId: number;
   isActive?: boolean;
+  stock?: number;
 }
 
 /**
@@ -29,6 +30,7 @@ export interface ProductUpdateDTO {
   vatRate?: number;
   categoryId?: number;
   isActive?: boolean;
+  stock?: number;
 }
 
 /**
@@ -44,6 +46,7 @@ export interface ProductPublicDTO {
   vatRate: number;
   categoryId: number;
   isActive: boolean;
+  stock: number;
   createdAt: Date;
   updatedAt: Date;
   categoryName?: string;

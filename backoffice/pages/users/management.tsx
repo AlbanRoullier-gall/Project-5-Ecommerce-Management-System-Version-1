@@ -13,10 +13,10 @@ const UserManagementPage: React.FC = () => {
 
   return (
     <PageLayout
-      title="Gestion des Utilisateurs"
+      title="Utilisateurs"
       description="Gestion des utilisateurs du backoffice"
     >
-      <PageHeader title="Gestion des utilisateurs">
+      <PageHeader title="Utilisateurs">
         <Button
           onClick={() => setActiveTab("pending")}
           variant={activeTab === "pending" ? "primary" : "secondary"}

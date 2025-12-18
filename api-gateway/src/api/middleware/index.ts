@@ -33,8 +33,12 @@ export {
 
 // Middlewares de rate limiting
 export {
-  globalRateLimit,
+  getProductsRateLimit,
+  getStaticRateLimit,
+  postPutRateLimit,
+  deleteRateLimit,
   authLoginRateLimit,
+  authRegisterRateLimit,
+  authPasswordResetRateLimit,
   paymentRateLimit,
-  adminRateLimit,
 } from "./rate-limiting";

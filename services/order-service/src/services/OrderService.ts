@@ -503,6 +503,8 @@ export default class OrderService {
       ordersCount: number;
       totalRevenue: number;
       totalRevenueHT: number;
+      undeliveredOrdersCount: number;
+      unrefundedCreditNotesCount: number;
     };
     year: number;
     availableYears: number[];
@@ -515,8 +517,27 @@ export default class OrderService {
       const ordersList = await this.orderRepository.listOrders(options);
       const ordersCount = ordersList.length;
 
+      // Compter les commandes non livrées pour l'année
+      const undeliveredOptions: OrderListOptions = {
+        ...options,
+        delivered: false,
+      };
+      const undeliveredOrdersList = await this.orderRepository.listOrders(
+        undeliveredOptions
+      );
+      const undeliveredOrdersCount = undeliveredOrdersList.length;
+
       // Récupérer les totaux (revenus)
       const statistics = await this.getOrderStatistics(options);
+
+      // Compter les avoirs non remboursés pour l'année
+      const creditNotesOptions: OrderListOptions = { year };
+      const allCreditNotes = await this.creditNoteRepository.listAll(
+        creditNotesOptions
+      );
+      const unrefundedCreditNotesCount = allCreditNotes.filter(
+        (cn) => !cn.status || cn.status !== "refunded"
+      ).length;
 
       // Générer les années disponibles
       const availableYears = this.generateAvailableYears();
@@ -529,6 +550,8 @@ export default class OrderService {
           ordersCount,
           totalRevenue: statistics.totalAmountTTC,
           totalRevenueHT: statistics.totalAmountHT,
+          undeliveredOrdersCount,
+          unrefundedCreditNotesCount,
         },
         year,
         availableYears,

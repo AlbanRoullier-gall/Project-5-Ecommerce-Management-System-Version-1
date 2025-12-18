@@ -75,6 +75,14 @@ const StatsOverview: React.FC = () => {
           title="Chiffre d'Affaires"
           value={`${stats?.totalRevenueHT ?? 0} €`}
         />
+        <StatCard
+          title="Commandes Non Livrées"
+          value={stats?.undeliveredOrdersCount ?? 0}
+        />
+        <StatCard
+          title="Avoirs Non Remboursés"
+          value={stats?.unrefundedCreditNotesCount ?? 0}
+        />
       </div>
     </div>
   );

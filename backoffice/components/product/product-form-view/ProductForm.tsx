@@ -146,6 +146,19 @@ const ProductForm: React.FC<ProductFormProps> = ({
           />
         </div>
 
+        <FormInput
+          id="stock"
+          name="stock"
+          type="number"
+          value={formData.stock ?? 0}
+          onChange={handleChange}
+          label="Stock"
+          placeholder="0"
+          error={errors.stock}
+          step="1"
+          min="0"
+        />
+
         <FormSelect
           id="categoryId"
           name="categoryId"

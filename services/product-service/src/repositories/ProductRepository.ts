@@ -26,9 +26,9 @@ export class ProductRepository {
   async createProduct(productData: ProductData): Promise<Product> {
     try {
       const query = `
-        INSERT INTO products (name, description, price, vat_rate, category_id, is_active, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-        RETURNING id, name, description, price, vat_rate, category_id, is_active, created_at, updated_at
+        INSERT INTO products (name, description, price, vat_rate, category_id, is_active, stock, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        RETURNING id, name, description, price, vat_rate, category_id, is_active, stock, created_at, updated_at
       `;
 
       const values = [
@@ -38,6 +38,7 @@ export class ProductRepository {
         productData.vat_rate,
         productData.category_id,
         productData.is_active,
+        productData.stock ?? 0,
       ];
 
       const result = await this.pool.query(query, values);
@@ -56,7 +57,7 @@ export class ProductRepository {
   async getProductById(id: number): Promise<Product | null> {
     try {
       const query = `
-        SELECT id, name, description, price, vat_rate, category_id, is_active, created_at, updated_at
+        SELECT id, name, description, price, vat_rate, category_id, is_active, stock, created_at, updated_at
         FROM products 
         WHERE id = $1
       `;
@@ -83,7 +84,7 @@ export class ProductRepository {
     try {
       const query = `
         SELECT p.id, p.name, p.description, p.price, p.vat_rate, p.category_id, p.is_active, 
-               p.created_at, p.updated_at, c.name as category_name
+               p.stock, p.created_at, p.updated_at, c.name as category_name
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
         WHERE p.id = $1
@@ -146,6 +147,10 @@ export class ProductRepository {
         setClause.push(`is_active = $${++paramCount}`);
         values.push(productData.is_active);
       }
+      if (productData.stock !== undefined) {
+        setClause.push(`stock = $${++paramCount}`);
+        values.push(productData.stock);
+      }
 
       if (setClause.length === 0) {
         throw new Error("Aucun champ à mettre à jour");
@@ -157,7 +162,7 @@ export class ProductRepository {
         UPDATE products 
         SET ${setClause.join(", ")}
         WHERE id = $${++paramCount}
-        RETURNING id, name, description, price, vat_rate, category_id, is_active, created_at, updated_at
+        RETURNING id, name, description, price, vat_rate, category_id, is_active, stock, created_at, updated_at
       `;
 
       const result = await this.pool.query(query, values);
@@ -272,7 +277,7 @@ export class ProductRepository {
 
       const query = `
         SELECT p.id, p.name, p.description, p.price, p.vat_rate, p.category_id, p.is_active, 
-               p.created_at, p.updated_at, c.name as category_name
+               p.stock, p.created_at, p.updated_at, c.name as category_name
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
         ${whereClause}

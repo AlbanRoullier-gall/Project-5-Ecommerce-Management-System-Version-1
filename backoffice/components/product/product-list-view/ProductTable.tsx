@@ -65,10 +65,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
   // Empty state handled below inside TableLayout for consistency
 
   const headers: TableHeader[] = [
-    { label: "Produit", width: "30%" },
-    { label: "Catégorie", width: "15%" },
+    { label: "Produit", width: "25%" },
+    { label: "Catégorie", width: "12%" },
     { label: "Prix", width: "10%", align: "right" },
     { label: "TVA", width: "8%", className: "mobile-hide", align: "center" },
+    { label: "Stock", width: "8%", align: "center" },
     { label: "Statut", width: "10%", align: "center" },
     { label: "Date création", width: "12%", className: "mobile-hide" },
     { label: "Actions", align: "right", width: "15%" },

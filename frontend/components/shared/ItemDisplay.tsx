@@ -81,7 +81,9 @@ const ItemDisplay: React.FC<ItemDisplayProps> = ({
               <div className={styles.unitPriceValue}>
                 {Number(item.unitPriceHT).toFixed(2)} € HTVA / unité
               </div>
-              <div className={styles.vatInfo}>TVA (Belgique) {item.vatRate}%</div>
+              <div className={styles.vatInfo}>
+                TVA (Belgique) {item.vatRate}%
+              </div>
             </div>
           </div>
 
@@ -98,7 +100,8 @@ const ItemDisplay: React.FC<ItemDisplayProps> = ({
               </div>
             ) : (
               <div className={styles.quantityLabel}>
-                Quantité :<span className={styles.quantityValue}>{quantity}</span>
+                Quantité :
+                <span className={styles.quantityValue}>{quantity}</span>
               </div>
             )}
 

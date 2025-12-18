@@ -14,6 +14,7 @@ export interface ProductData {
   vat_rate: number;
   category_id: number;
   is_active: boolean;
+  stock: number;
   created_at: Date;
   updated_at: Date;
 }
@@ -26,6 +27,7 @@ class Product {
   public readonly vatRate: number;
   public readonly categoryId: number;
   public readonly isActive: boolean;
+  public readonly stock: number;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -37,6 +39,7 @@ class Product {
     this.vatRate = data.vat_rate;
     this.categoryId = data.category_id;
     this.isActive = data.is_active;
+    this.stock = data.stock ?? 0;
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
   }

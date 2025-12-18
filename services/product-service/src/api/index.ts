@@ -72,6 +72,7 @@ export class ApiRouter {
         vatRate: Joi.number().min(0).max(100).precision(2).required(),
         categoryId: Joi.number().integer().positive().required(),
         isActive: Joi.boolean().optional(),
+        stock: Joi.number().integer().min(0).optional(),
       }),
       productUpdateSchema: Joi.object({
         name: Joi.string().max(255).optional(),
@@ -80,6 +81,7 @@ export class ApiRouter {
         vatRate: Joi.number().min(0).max(100).precision(2).optional(),
         categoryId: Joi.number().integer().positive().optional(),
         isActive: Joi.boolean().optional(),
+        stock: Joi.number().integer().min(0).optional(),
       }),
 
       // Schémas de catégorie

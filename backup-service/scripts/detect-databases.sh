@@ -102,7 +102,7 @@ detect_databases() {
             [ -n "$line" ] && databases+=("$line")
         done <<< "$env_dbs_output"
         if [ ${#databases[@]} -gt 0 ]; then
-            print_success "✅ Environnement détecté: Production (Railway)"
+        print_success "✅ Environnement détecté: Production (Railway)"
         fi
     fi
     
@@ -114,7 +114,7 @@ detect_databases() {
                 [ -n "$line" ] && databases+=("$line")
             done <<< "$docker_dbs_output"
             if [ ${#databases[@]} -gt 0 ]; then
-                print_success "✅ Environnement détecté: Développement (Docker Compose)"
+            print_success "✅ Environnement détecté: Développement (Docker Compose)"
             fi
         fi
     fi
