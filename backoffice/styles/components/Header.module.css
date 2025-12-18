@@ -82,15 +82,8 @@
     color: white;
     font-weight: 600;
     font-size: 1rem;
-    transition: background-color var(--transition-normal)
-        var(--transition-smooth),
-      color var(--transition-normal) var(--transition-smooth),
-      transform var(--transition-normal) var(--transition-smooth),
-      box-shadow var(--transition-normal) var(--transition-smooth),
-      border-color var(--transition-normal) var(--transition-smooth);
     border: 2px solid transparent;
     backdrop-filter: blur(10px);
-    position: relative;
   }
 
   .navItem:hover {
@@ -100,27 +93,10 @@
       var(--color-brand-gold-light) 100%
     );
     color: var(--color-brand-teal);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(217, 185, 112, 0.4);
-    border-color: var(--color-brand-gold);
-  }
-
-  .navItem:active {
-    transform: translateY(0) !important;
-    box-shadow: 0 4px 10px rgba(217, 185, 112, 0.3) !important;
-  }
-
-  .navItem:focus {
-    outline: none;
   }
 
   .navIcon {
     font-size: 1.1rem;
-    transition: transform var(--transition-normal) var(--transition-smooth);
-  }
-
-  .navItem:hover:not(:active) .navIcon {
-    transform: scale(1.2);
   }
 
   .userActions {
@@ -141,13 +117,10 @@
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all var(--transition-normal) var(--transition-smooth);
     text-decoration: none;
   }
 
   .logoutButton:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(231, 76, 60, 0.3);
     background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
   }
 
@@ -163,7 +136,6 @@
     color: white;
     padding: 0.75rem;
     cursor: pointer;
-    transition: all var(--transition-normal) var(--transition-smooth);
     backdrop-filter: blur(10px);
   }
 
@@ -196,7 +168,6 @@
     padding: 1rem 2rem;
     color: white;
     font-weight: 600;
-    transition: all var(--transition-normal) var(--transition-smooth);
     border-left: 4px solid transparent;
   }
 
