@@ -102,10 +102,12 @@
   .navIcon {
     font-size: 1.1rem;
     transition: transform var(--transition-normal) var(--transition-smooth);
+    color: inherit;
   }
 
   .navItem:hover .navIcon {
     transform: scale(1.2);
+    color: inherit;
   }
 
   .cartSection {
@@ -150,10 +152,12 @@
   .cartIcon {
     font-size: 1.5rem;
     transition: transform var(--transition-normal) var(--transition-smooth);
+    color: inherit;
   }
 
   .cartLink:hover .cartIcon {
     transform: scale(1.2);
+    color: inherit;
   }
 
   .cartCount {
@@ -197,6 +201,7 @@
 
   .mobileMenuIcon {
     font-size: 1.5rem;
+    color: inherit;
   }
 
   .mobileNav {
@@ -228,6 +233,7 @@
     font-size: 1.2rem;
     width: 20px;
     text-align: center;
+    color: inherit;
   }
 
   @media (max-width: 768px) {
