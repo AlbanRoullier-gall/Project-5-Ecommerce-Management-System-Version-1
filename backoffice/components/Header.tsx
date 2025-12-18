@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
 import styles from "../styles/components/Header.module.css";
@@ -30,13 +29,14 @@ const Header: React.FC = () => {
     setIsMounted(true);
   }, []);
 
-  // Réinitialiser tous les états hover quand la souris quitte le conteneur nav
-  const handleNavMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Forcer le blur de tous les éléments de navigation
-    const navItems = e.currentTarget.querySelectorAll("a");
+  // Réinitialiser tous les états hover
+  const resetAllHovers = (container: HTMLElement) => {
+    const navItems = container.querySelectorAll("a");
     navItems.forEach((el) => {
       if (el instanceof HTMLElement) {
         el.blur();
+        // Forcer la réinitialisation en simulant mouseleave
+        el.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }));
       }
     });
   };
@@ -89,10 +89,7 @@ const Header: React.FC = () => {
 
       {/* Desktop Navigation - Below Title */}
       <nav className={styles.desktopNav}>
-        <div
-          className={styles.navContainer}
-          onMouseLeave={handleNavMouseLeave}
-        >
+        <div className={styles.navContainer} onMouseLeave={handleNavMouseLeave}>
           <Link href="/dashboard" className={styles.navItem}>
             <i className={`fas fa-tachometer-alt ${styles.navIcon}`}></i>
             <span>TABLEAU DE BORD</span>
