@@ -76,14 +76,9 @@
     backdrop-filter: blur(10px);
   }
 
-  .navItem:hover:not(:active) {
+  .navItem:hover {
     background: var(--color-brand-gold);
     color: var(--color-brand-teal);
-  }
-
-  .navItem:active {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
   }
 
   .navIcon {
