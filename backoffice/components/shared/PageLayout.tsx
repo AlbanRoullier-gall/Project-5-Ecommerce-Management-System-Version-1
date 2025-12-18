@@ -91,7 +91,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
       </Head>
 
       <div className="min-h-screen">
-        <Header key={router.asPath} />
+        <Header />
 
         <main className={styles.mainContent}>
           <div className={styles.pageContainer}>
