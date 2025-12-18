@@ -68,7 +68,9 @@ const Header: React.FC = () => {
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           <i
-            className={`fas ${isMenuOpen ? "fa-times" : "fa-bars"} ${styles.mobileMenuIcon}`}
+            className={`fas ${isMenuOpen ? "fa-times" : "fa-bars"} ${
+              styles.mobileMenuIcon
+            }`}
           ></i>
         </button>
       </div>
@@ -76,24 +78,44 @@ const Header: React.FC = () => {
       {/* Desktop Navigation - Below Title */}
       <nav className={styles.desktopNav}>
         <div className={styles.navContainer}>
-          <Link href="/dashboard" className={styles.navItem}>
+          <Link 
+            href="/dashboard" 
+            className={styles.navItem}
+            onMouseDown={(e) => e.currentTarget.blur()}
+          >
             <i className={`fas fa-tachometer-alt ${styles.navIcon}`}></i>
-            <span>DASHBOARD</span>
+            <span>TABLEAU DE BORD</span>
           </Link>
-          <Link href="/products" className={styles.navItem}>
+          <Link 
+            href="/products" 
+            className={styles.navItem}
+            onMouseDown={(e) => e.currentTarget.blur()}
+          >
             <i className={`fas fa-box ${styles.navIcon}`}></i>
             <span>PRODUITS</span>
           </Link>
-          <Link href="/customers" className={styles.navItem}>
+          <Link 
+            href="/customers" 
+            className={styles.navItem}
+            onMouseDown={(e) => e.currentTarget.blur()}
+          >
             <i className={`fas fa-users ${styles.navIcon}`}></i>
             <span>CLIENTS</span>
           </Link>
-          <Link href="/orders" className={styles.navItem}>
+          <Link 
+            href="/orders" 
+            className={styles.navItem}
+            onMouseDown={(e) => e.currentTarget.blur()}
+          >
             <i className={`fas fa-shopping-bag ${styles.navIcon}`}></i>
             <span>COMMANDES</span>
           </Link>
           {isMounted && !isLoading && user?.isSuperAdmin && (
-            <Link href="/users/management" className={styles.navItem}>
+            <Link 
+              href="/users/management" 
+              className={styles.navItem}
+              onMouseDown={(e) => e.currentTarget.blur()}
+            >
               <i className={`fas fa-user-shield ${styles.navIcon}`}></i>
               <span>UTILISATEURS</span>
             </Link>
@@ -109,14 +131,16 @@ const Header: React.FC = () => {
             href="/dashboard"
             className={styles.mobileNavItem}
             onClick={() => setIsMenuOpen(false)}
+            onMouseDown={(e) => e.currentTarget.blur()}
           >
             <i className={`fas fa-tachometer-alt ${styles.mobileNavIcon}`}></i>
-            <span>DASHBOARD</span>
+            <span>TABLEAU DE BORD</span>
           </Link>
           <Link
             href="/products"
             className={styles.mobileNavItem}
             onClick={() => setIsMenuOpen(false)}
+            onMouseDown={(e) => e.currentTarget.blur()}
           >
             <i className={`fas fa-box ${styles.mobileNavIcon}`}></i>
             <span>PRODUITS</span>
@@ -125,6 +149,7 @@ const Header: React.FC = () => {
             href="/customers"
             className={styles.mobileNavItem}
             onClick={() => setIsMenuOpen(false)}
+            onMouseDown={(e) => e.currentTarget.blur()}
           >
             <i className={`fas fa-users ${styles.mobileNavIcon}`}></i>
             <span>CLIENTS</span>
@@ -133,6 +158,7 @@ const Header: React.FC = () => {
             href="/orders"
             className={styles.mobileNavItem}
             onClick={() => setIsMenuOpen(false)}
+            onMouseDown={(e) => e.currentTarget.blur()}
           >
             <i className={`fas fa-shopping-bag ${styles.mobileNavIcon}`}></i>
             <span>COMMANDES</span>
@@ -142,6 +168,7 @@ const Header: React.FC = () => {
               href="/users/management"
               className={styles.mobileNavItem}
               onClick={() => setIsMenuOpen(false)}
+              onMouseDown={(e) => e.currentTarget.blur()}
             >
               <i className={`fas fa-user-shield ${styles.mobileNavIcon}`}></i>
               <span>UTILISATEURS</span>
