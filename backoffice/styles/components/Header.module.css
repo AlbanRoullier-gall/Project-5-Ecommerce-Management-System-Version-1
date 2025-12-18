@@ -82,33 +82,17 @@
     color: white;
     font-weight: 600;
     font-size: 1rem;
-    transition: background-color 0.2s ease, color 0.2s ease;
     border: 2px solid transparent;
     backdrop-filter: blur(10px);
-    position: relative;
   }
 
   .navItem:hover {
-    background: linear-gradient(
-      135deg,
-      var(--color-brand-gold) 0%,
-      var(--color-brand-gold-light) 100%
-    );
-    color: var(--color-brand-teal);
-  }
-
-  .navItem:active,
-  .navItem:focus {
-    outline: none;
+    background: rgba(217, 185, 112, 0.3);
+    color: var(--color-brand-gold);
   }
 
   .navIcon {
     font-size: 1.1rem;
-    transition: transform 0.2s ease;
-  }
-
-  .navItem:hover .navIcon {
-    transform: scale(1.1);
   }
 
   .userActions {
@@ -122,24 +106,18 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1rem;
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    background: #e74c3c;
     color: white;
     border: none;
     border-radius: 8px;
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s ease;
     text-decoration: none;
   }
 
   .logoutButton:hover {
-    background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
-  }
-
-  .logoutButton:active,
-  .logoutButton:focus {
-    outline: none;
+    background: #c0392b;
   }
 
   .logoutIcon {
@@ -154,23 +132,12 @@
     color: white;
     padding: 0.75rem;
     cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease;
     backdrop-filter: blur(10px);
   }
 
   .mobileMenuBtn:hover {
-    background: linear-gradient(
-      135deg,
-      var(--color-brand-gold) 0%,
-      var(--color-brand-gold-light) 100%
-    );
-    color: var(--color-brand-teal);
-    border-color: var(--color-brand-gold);
-  }
-
-  .mobileMenuBtn:active,
-  .mobileMenuBtn:focus {
-    outline: none;
+    background: rgba(217, 185, 112, 0.3);
+    color: var(--color-brand-gold);
   }
 
   .mobileMenuIcon {
@@ -192,7 +159,6 @@
     padding: 1rem 2rem;
     color: white;
     font-weight: 600;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     border-left: 4px solid transparent;
   }
 
@@ -200,11 +166,6 @@
     background: rgba(217, 185, 112, 0.2);
     border-left-color: var(--color-brand-gold);
     color: var(--color-brand-gold);
-  }
-
-  .mobileNavItem:active,
-  .mobileNavItem:focus {
-    outline: none;
   }
 
   .mobileNavIcon {
