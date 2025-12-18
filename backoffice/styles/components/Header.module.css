@@ -76,9 +76,16 @@
     backdrop-filter: blur(10px);
   }
 
+  /* Désactiver le hover CSS natif */
   .navItem:hover {
-    background: var(--color-brand-gold);
-    color: var(--color-brand-teal);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+
+  /* Utiliser une classe pour le hover géré par JavaScript */
+  .navItemHovered {
+    background: var(--color-brand-gold) !important;
+    color: var(--color-brand-teal) !important;
   }
 
   .navIcon {

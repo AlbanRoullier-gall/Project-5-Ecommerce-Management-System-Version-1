@@ -22,24 +22,13 @@ import styles from "../styles/components/Header.module.css";
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const { isAuthenticated, logout, user, isLoading } = useAuth();
 
   // Éviter les erreurs d'hydratation en ne rendant les éléments conditionnels qu'après le montage
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  // Réinitialiser tous les états hover
-  const resetAllHovers = (container: HTMLElement) => {
-    const navItems = container.querySelectorAll("a");
-    navItems.forEach((el) => {
-      if (el instanceof HTMLElement) {
-        el.blur();
-        // Forcer la réinitialisation en simulant mouseleave
-        el.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }));
-      }
-    });
-  };
 
   /**
    * Déconnecte l'utilisateur et redirige vers la page de connexion
@@ -92,48 +81,48 @@ const Header: React.FC = () => {
         <div className={styles.navContainer}>
           <Link
             href="/dashboard"
-            className={styles.navItem}
-            onMouseDown={(e) => {
-              if (e.currentTarget.parentElement) {
-                resetAllHovers(e.currentTarget.parentElement);
-              }
-            }}
+            className={`${styles.navItem} ${
+              hoveredItem === "dashboard" ? styles.navItemHovered : ""
+            }`}
+            onMouseEnter={() => setHoveredItem("dashboard")}
+            onMouseLeave={() => setHoveredItem(null)}
+            onClick={() => setHoveredItem(null)}
           >
             <i className={`fas fa-tachometer-alt ${styles.navIcon}`}></i>
             <span>TABLEAU DE BORD</span>
           </Link>
           <Link
             href="/products"
-            className={styles.navItem}
-            onMouseDown={(e) => {
-              if (e.currentTarget.parentElement) {
-                resetAllHovers(e.currentTarget.parentElement);
-              }
-            }}
+            className={`${styles.navItem} ${
+              hoveredItem === "products" ? styles.navItemHovered : ""
+            }`}
+            onMouseEnter={() => setHoveredItem("products")}
+            onMouseLeave={() => setHoveredItem(null)}
+            onClick={() => setHoveredItem(null)}
           >
             <i className={`fas fa-box ${styles.navIcon}`}></i>
             <span>PRODUITS</span>
           </Link>
           <Link
             href="/customers"
-            className={styles.navItem}
-            onMouseDown={(e) => {
-              if (e.currentTarget.parentElement) {
-                resetAllHovers(e.currentTarget.parentElement);
-              }
-            }}
+            className={`${styles.navItem} ${
+              hoveredItem === "customers" ? styles.navItemHovered : ""
+            }`}
+            onMouseEnter={() => setHoveredItem("customers")}
+            onMouseLeave={() => setHoveredItem(null)}
+            onClick={() => setHoveredItem(null)}
           >
             <i className={`fas fa-users ${styles.navIcon}`}></i>
             <span>CLIENTS</span>
           </Link>
           <Link
             href="/orders"
-            className={styles.navItem}
-            onMouseDown={(e) => {
-              if (e.currentTarget.parentElement) {
-                resetAllHovers(e.currentTarget.parentElement);
-              }
-            }}
+            className={`${styles.navItem} ${
+              hoveredItem === "orders" ? styles.navItemHovered : ""
+            }`}
+            onMouseEnter={() => setHoveredItem("orders")}
+            onMouseLeave={() => setHoveredItem(null)}
+            onClick={() => setHoveredItem(null)}
           >
             <i className={`fas fa-shopping-bag ${styles.navIcon}`}></i>
             <span>COMMANDES</span>
@@ -141,12 +130,12 @@ const Header: React.FC = () => {
           {isMounted && !isLoading && user?.isSuperAdmin && (
             <Link
               href="/users/management"
-              className={styles.navItem}
-              onMouseDown={(e) => {
-                if (e.currentTarget.parentElement) {
-                  resetAllHovers(e.currentTarget.parentElement);
-                }
-              }}
+              className={`${styles.navItem} ${
+                hoveredItem === "users" ? styles.navItemHovered : ""
+              }`}
+              onMouseEnter={() => setHoveredItem("users")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onClick={() => setHoveredItem(null)}
             >
               <i className={`fas fa-user-shield ${styles.navIcon}`}></i>
               <span>UTILISATEURS</span>
