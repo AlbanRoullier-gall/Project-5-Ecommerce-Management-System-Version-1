@@ -1,0 +1,18 @@
+# =====================================================
+# CRONTAB - BACKUP AUTOMATIQUE DES BASES DE DONNÉES
+# =====================================================
+
+# Variables d'environnement
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Backup quotidien à 2h du matin
+0 2 * * * root /app/backup.sh daily >> /var/log/backup.log 2>&1
+
+# Backup hebdomadaire complet le dimanche à 3h
+0 3 * * 0 root /app/backup.sh weekly >> /var/log/backup.log 2>&1
+
+# Nettoyage des anciens backups tous les jours à 4h
+0 4 * * * root find /backups -type d -name "20*" -mtime +${BACKUP_RETENTION_DAYS:-7} -exec rm -rf {} \; >> /var/log/backup.log 2>&1
+
+# Ligne vide requise à la fin du fichier

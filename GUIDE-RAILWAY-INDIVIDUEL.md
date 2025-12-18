@@ -148,6 +148,42 @@ NODE_ENV=production
 PORT=3040
 ```
 
+### 2.9 Backup Service (Optionnel mais recommandé)
+
+Le service de backup automatique permet de sauvegarder toutes vos bases de données PostgreSQL de manière automatique via cron.
+
+- **Root Directory** : (vide - racine du projet)
+- **Dockerfile Path** : `backup-service/Dockerfile`
+- **Variables** :
+
+```
+NODE_ENV=production
+BACKUP_BASE_DIR=/backups
+BACKUP_RETENTION_DAYS=7
+DATABASE_URL_CUSTOMER=${{Postgres.DATABASE_URL}}/customer_db
+DATABASE_URL_PRODUCT=${{Postgres.DATABASE_URL}}/product_db
+DATABASE_URL_ORDER=${{Postgres.DATABASE_URL}}/order_db
+DATABASE_URL_AUTH=${{Postgres.DATABASE_URL}}/auth_db
+```
+
+**Important :**
+
+- Remplacez `${{Postgres.DATABASE_URL}}` par l'URL complète de votre base PostgreSQL
+- Le service détecte automatiquement les bases depuis les variables `DATABASE_URL_*`
+- Les backups sont stockés dans `/backups` (volume Railway)
+- **Backups automatiques** :
+  - Quotidien : tous les jours à 2h (UTC)
+  - Hebdomadaire : dimanche à 3h (UTC)
+  - Nettoyage : tous les jours à 4h (UTC) - garde 7 jours par défaut
+
+**Configuration du volume (recommandé) :**
+
+1. Allez dans **Settings** → **Volumes**
+2. Créez un volume nommé `backup-data`
+3. Montez-le sur `/backups` dans le service
+
+**Note :** Ce service est optionnel mais fortement recommandé pour la production. Il tourne en continu et exécute les tâches cron automatiquement.
+
 ---
 
 ## 🌐 Étape 3 : API Gateway
@@ -268,8 +304,9 @@ Cela permet à Railway de builder depuis la racine du projet, ce qui est nécess
 
 1. ✅ Bases de données (déjà fait)
 2. Services backend (auth, customer, product, order, cart, payment, email, pdf-export)
-3. API Gateway
-4. Frontend et Backoffice
+3. Backup Service (optionnel mais recommandé)
+4. API Gateway
+5. Frontend et Backoffice
 
 ### Variables Railway :
 
@@ -312,6 +349,8 @@ Les autres services peuvent être mockés.
 ## ✅ Checklist finale
 
 - [ ] Tous les services backend créés avec **Root Directory vide**
+- [ ] Backup Service configuré avec variables `DATABASE_URL_*` (optionnel mais recommandé)
+- [ ] Volume `backup-data` créé et monté sur `/backups` pour Backup Service (optionnel)
 - [ ] API Gateway créé avec domaine public
 - [ ] Frontend créé avec `NEXT_PUBLIC_API_URL` configuré
 - [ ] Backoffice créé avec `NEXT_PUBLIC_API_URL` configuré
@@ -333,6 +372,11 @@ Les autres services peuvent être mockés.
    - Vérifiez que les URLs dans `ALLOWED_ORIGINS` correspondent exactement aux domaines de votre Frontend et Backoffice
    - Les URLs doivent commencer par `https://`
    - Après modification, attendez le redéploiement automatique
+7. **Backup Service ne détecte pas les bases** :
+   - Vérifiez que toutes les variables `DATABASE_URL_*` sont configurées
+   - Vérifiez que les URLs sont complètes (incluent le nom de la base : `/customer_db`, `/product_db`, etc.)
+   - Consultez les logs : `Service → Deployments → View Logs`
+   - Testez manuellement : `Service → Connect → Terminal` puis `/app/scripts/detect-databases.sh`
 
 ---
 
