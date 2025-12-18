@@ -79,7 +79,7 @@
     padding: 0.75rem 1.5rem;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 25px;
-    color: white;
+    color: white !important;
     font-weight: 600;
     font-size: 1rem;
     transition: all var(--transition-normal) var(--transition-smooth);
@@ -93,7 +93,7 @@
       var(--color-brand-gold) 0%,
       var(--color-brand-gold-light) 100%
     );
-    color: white;
+    color: white !important;
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(217, 185, 112, 0.4);
     border-color: var(--color-brand-gold);
@@ -120,7 +120,7 @@
     gap: 0.5rem;
     padding: 0.75rem 1rem;
     background: #e74c3c;
-    color: white;
+    color: white !important;
     border: none;
     border-radius: 8px;
     font-size: 0.9rem;
@@ -131,6 +131,7 @@
 
   .logoutButton:hover {
     background: #c0392b;
+    color: white !important;
   }
 
   .logoutIcon {
@@ -142,7 +143,7 @@
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid transparent;
     border-radius: 8px;
-    color: white;
+    color: white !important;
     padding: 0.75rem;
     cursor: pointer;
     transition: all var(--transition-normal) var(--transition-smooth);
@@ -155,7 +156,7 @@
       var(--color-brand-gold) 0%,
       var(--color-brand-gold-light) 100%
     );
-    color: white;
+    color: white !important;
     border-color: var(--color-brand-gold);
   }
 
@@ -176,7 +177,7 @@
     align-items: center;
     gap: 1rem;
     padding: 1rem 2rem;
-    color: white;
+    color: white !important;
     font-weight: 600;
     transition: all var(--transition-normal) var(--transition-smooth);
     border-left: 4px solid transparent;
@@ -185,7 +186,7 @@
   .mobileNavItem:hover {
     background: rgba(217, 185, 112, 0.2);
     border-left-color: var(--color-brand-gold);
-    color: white;
+    color: white !important;
   }
 
   .mobileNavIcon {
