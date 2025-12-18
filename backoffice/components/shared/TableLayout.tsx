@@ -60,7 +60,7 @@ const TableLayout: React.FC<TableLayoutProps> = ({
                 {headers.map((h, idx) => (
                   <th
                     key={`${h.label}-${idx}`}
-                    width={h.width}
+                    style={h.width ? { width: h.width } : undefined}
                     className={`${styles.tableHeadCell} ${
                       headerGradient === "gold" ? styles.gold : styles.teal
                     } ${h.align ? alignClassMap[h.align] : styles.alignLeft} ${
@@ -108,7 +108,7 @@ export const TableCell: React.FC<TableCellProps> = ({
 }) => {
   return (
     <td
-      width={width}
+      style={width ? { width } : undefined}
       className={`${styles.tableCell} ${
         align ? alignClassMap[align] : styles.alignLeft
       } ${className || ""}`}
