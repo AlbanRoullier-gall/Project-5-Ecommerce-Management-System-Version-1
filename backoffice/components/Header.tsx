@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
 import styles from "../styles/components/Header.module.css";
-import { useRouter } from "next/router";
 
 /**
  * Composant Header du backoffice
@@ -30,6 +29,16 @@ const Header: React.FC = () => {
     setIsMounted(true);
   }, []);
 
+  // Réinitialiser tous les états hover au montage pour éviter les états persistants
+  useEffect(() => {
+    // Forcer le blur de tous les éléments de navigation pour réinitialiser les états hover
+    const navItems = document.querySelectorAll(`.${styles.navItem}`);
+    navItems.forEach((el) => {
+      if (el instanceof HTMLElement) {
+        el.blur();
+      }
+    });
+  }, [styles.navItem]);
 
   /**
    * Déconnecte l'utilisateur et redirige vers la page de connexion

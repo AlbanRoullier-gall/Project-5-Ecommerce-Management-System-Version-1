@@ -84,6 +84,8 @@
     font-size: 1rem;
     border: 2px solid transparent;
     backdrop-filter: blur(10px);
+    /* Désactiver le hover au montage pour éviter les états persistants */
+    pointer-events: auto;
   }
 
   .navItem:hover {
@@ -93,6 +95,11 @@
       var(--color-brand-gold-light) 100%
     );
     color: var(--color-brand-teal);
+  }
+
+  /* Désactiver le hover si l'élément n'est pas focusable ou si on vient de le monter */
+  .navItem:focus {
+    outline: none;
   }
 
   .navIcon {
