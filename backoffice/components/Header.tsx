@@ -22,6 +22,7 @@ import styles from "../styles/components/Header.module.css";
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isInitialMount, setIsInitialMount] = useState(true);
   const { isAuthenticated, logout, user, isLoading } = useAuth();
 
   // Éviter les erreurs d'hydratation en ne rendant les éléments conditionnels qu'après le montage
@@ -31,14 +32,29 @@ const Header: React.FC = () => {
 
   // Réinitialiser tous les états hover au montage pour éviter les états persistants
   useEffect(() => {
-    // Forcer le blur de tous les éléments de navigation pour réinitialiser les états hover
-    const navItems = document.querySelectorAll(`.${styles.navItem}`);
-    navItems.forEach((el) => {
-      if (el instanceof HTMLElement) {
-        el.blur();
-      }
-    });
-  }, [styles.navItem]);
+    // Désactiver temporairement le hover au montage
+    if (isInitialMount) {
+      // Forcer le blur de tous les éléments de navigation
+      const navItems = document.querySelectorAll(`.${styles.navItem}`);
+      navItems.forEach((el) => {
+        if (el instanceof HTMLElement) {
+          el.blur();
+          // Désactiver temporairement pointer-events pour forcer la réinitialisation
+          el.style.pointerEvents = 'none';
+        }
+      });
+      
+      // Réactiver après un court délai
+      setTimeout(() => {
+        navItems.forEach((el) => {
+          if (el instanceof HTMLElement) {
+            el.style.pointerEvents = '';
+          }
+        });
+        setIsInitialMount(false);
+      }, 50);
+    }
+  }, [isInitialMount, styles.navItem]);
 
   /**
    * Déconnecte l'utilisateur et redirige vers la page de connexion
