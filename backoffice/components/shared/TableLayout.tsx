@@ -28,6 +28,7 @@ interface TableLayoutProps {
 
 interface TableRowProps {
   children: React.ReactNode;
+  backgroundColor?: string;
 }
 
 const alignClassMap: Record<NonNullable<TableHeader["align"]>, string> = {
@@ -79,10 +80,10 @@ const TableLayout: React.FC<TableLayoutProps> = ({
   );
 };
 
-export const TableRow: React.FC<TableRowProps> = ({ children }) => {
+export const TableRow: React.FC<TableRowProps> = ({ children, backgroundColor }) => {
   const headers = useContext(HeadersContext);
   return (
-    <tr className={styles.tableRow}>
+    <tr className={styles.tableRow} style={backgroundColor ? { backgroundColor } : undefined}>
       {React.Children.map(children, (cell, idx) => {
         if (React.isValidElement(cell)) {
           // Préserver le dataLabel s'il est déjà défini, sinon utiliser le header correspondant
