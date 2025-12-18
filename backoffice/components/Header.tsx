@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
 import styles from "../styles/components/Header.module.css";
+import { useRouter } from "next/router";
 
 /**
  * Composant Header du backoffice
@@ -30,29 +31,6 @@ const Header: React.FC = () => {
     setIsMounted(true);
   }, []);
 
-  // Réinitialiser tous les états hover lors du changement de route
-  useEffect(() => {
-    const handleRouteChange = () => {
-      // Forcer la réinitialisation de tous les éléments avec hover
-      const allNavItems = document.querySelectorAll(`.${styles.navItem}`);
-      allNavItems.forEach((el) => {
-        if (el instanceof HTMLElement) {
-          el.blur();
-          // Forcer le re-render en retirant et remettant la classe
-          const className = el.className;
-          el.className = "";
-          setTimeout(() => {
-            el.className = className;
-          }, 0);
-        }
-      });
-    };
-
-    router.events?.on("routeChangeComplete", handleRouteChange);
-    return () => {
-      router.events?.off("routeChangeComplete", handleRouteChange);
-    };
-  }, [router, styles.navItem]);
 
   /**
    * Déconnecte l'utilisateur et redirige vers la page de connexion
