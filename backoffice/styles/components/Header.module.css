@@ -82,16 +82,17 @@
     color: white;
     font-weight: 600;
     font-size: 1rem;
-    transition: background-color var(--transition-normal) var(--transition-smooth),
-                color var(--transition-normal) var(--transition-smooth),
-                transform var(--transition-normal) var(--transition-smooth),
-                box-shadow var(--transition-normal) var(--transition-smooth),
-                border-color var(--transition-normal) var(--transition-smooth);
+    transition: background-color var(--transition-normal)
+        var(--transition-smooth),
+      color var(--transition-normal) var(--transition-smooth),
+      transform var(--transition-normal) var(--transition-smooth),
+      box-shadow var(--transition-normal) var(--transition-smooth),
+      border-color var(--transition-normal) var(--transition-smooth);
     border: 2px solid transparent;
     backdrop-filter: blur(10px);
   }
 
-  .navItem:hover {
+  .navItem:hover:not(:active) {
     background: linear-gradient(
       135deg,
       var(--color-brand-gold) 0%,
@@ -103,8 +104,9 @@
     border-color: var(--color-brand-gold);
   }
 
-  .navItem:not(:hover) {
-    transform: translateY(0);
+  .navItem:active,
+  .navItem:focus {
+    outline: none;
   }
 
   .navIcon {
@@ -112,12 +114,8 @@
     transition: transform var(--transition-normal) var(--transition-smooth);
   }
 
-  .navItem:hover .navIcon {
+  .navItem:hover:not(:active) .navIcon {
     transform: scale(1.2);
-  }
-
-  .navItem:not(:hover) .navIcon {
-    transform: scale(1);
   }
 
   .userActions {
