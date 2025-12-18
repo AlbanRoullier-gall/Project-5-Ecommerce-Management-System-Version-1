@@ -39,10 +39,10 @@ const Header: React.FC = () => {
         document.activeElement.blur();
       }
     };
-    
-    router.events?.on('routeChangeComplete', handleRouteChange);
+
+    router.events?.on("routeChangeComplete", handleRouteChange);
     return () => {
-      router.events?.off('routeChangeComplete', handleRouteChange);
+      router.events?.off("routeChangeComplete", handleRouteChange);
     };
   }, [router]);
 
@@ -99,11 +99,15 @@ const Header: React.FC = () => {
             href="/dashboard"
             className={styles.navItem}
             prefetch={false}
-            onClick={() => {
-              // Réinitialiser tous les états hover
+            onMouseDown={(e) => {
+              // Réinitialiser immédiatement tous les états hover au moment du clic
               document.querySelectorAll(`.${styles.navItem}`).forEach((el) => {
-                if (el instanceof HTMLElement) {
-                  el.blur();
+                if (el instanceof HTMLElement && el !== e.currentTarget) {
+                  el.style.pointerEvents = 'none';
+                  setTimeout(() => {
+                    el.style.pointerEvents = '';
+                    el.blur();
+                  }, 0);
                 }
               });
             }}
@@ -115,10 +119,14 @@ const Header: React.FC = () => {
             href="/products"
             className={styles.navItem}
             prefetch={false}
-            onClick={() => {
+            onMouseDown={(e) => {
               document.querySelectorAll(`.${styles.navItem}`).forEach((el) => {
-                if (el instanceof HTMLElement) {
-                  el.blur();
+                if (el instanceof HTMLElement && el !== e.currentTarget) {
+                  el.style.pointerEvents = 'none';
+                  setTimeout(() => {
+                    el.style.pointerEvents = '';
+                    el.blur();
+                  }, 0);
                 }
               });
             }}
@@ -130,10 +138,14 @@ const Header: React.FC = () => {
             href="/customers"
             className={styles.navItem}
             prefetch={false}
-            onClick={() => {
+            onMouseDown={(e) => {
               document.querySelectorAll(`.${styles.navItem}`).forEach((el) => {
-                if (el instanceof HTMLElement) {
-                  el.blur();
+                if (el instanceof HTMLElement && el !== e.currentTarget) {
+                  el.style.pointerEvents = 'none';
+                  setTimeout(() => {
+                    el.style.pointerEvents = '';
+                    el.blur();
+                  }, 0);
                 }
               });
             }}
@@ -145,10 +157,14 @@ const Header: React.FC = () => {
             href="/orders"
             className={styles.navItem}
             prefetch={false}
-            onClick={() => {
+            onMouseDown={(e) => {
               document.querySelectorAll(`.${styles.navItem}`).forEach((el) => {
-                if (el instanceof HTMLElement) {
-                  el.blur();
+                if (el instanceof HTMLElement && el !== e.currentTarget) {
+                  el.style.pointerEvents = 'none';
+                  setTimeout(() => {
+                    el.style.pointerEvents = '';
+                    el.blur();
+                  }, 0);
                 }
               });
             }}
@@ -161,10 +177,14 @@ const Header: React.FC = () => {
               href="/users/management"
               className={styles.navItem}
               prefetch={false}
-              onClick={() => {
+              onMouseDown={(e) => {
                 document.querySelectorAll(`.${styles.navItem}`).forEach((el) => {
-                  if (el instanceof HTMLElement) {
-                    el.blur();
+                  if (el instanceof HTMLElement && el !== e.currentTarget) {
+                    el.style.pointerEvents = 'none';
+                    setTimeout(() => {
+                      el.style.pointerEvents = '';
+                      el.blur();
+                    }, 0);
                   }
                 });
               }}
