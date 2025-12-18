@@ -4,7 +4,9 @@ const nextConfig = {
   swcMinify: true,
   // basePath permet à Next.js de gérer automatiquement le préfixe /admin
   // pour tous les liens, routes et assets. Plus besoin d'assetPrefix séparé.
-  basePath: "/admin",
+  // En production Railway, pas de basePath (déployé à la racine)
+  // En développement Docker, basePath /admin (routé via NGINX)
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || (process.env.NODE_ENV === "production" ? "" : "/admin"),
   webpack: (config, { isServer }) => {
     // Help webpack resolve @tfe/shared-types and dto
     const path = require("path");
