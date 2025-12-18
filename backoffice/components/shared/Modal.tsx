@@ -21,6 +21,8 @@ interface ModalProps {
   showCloseButton?: boolean;
   /** Classe CSS personnalisée pour le conteneur */
   className?: string;
+  /** Largeur maximale de la modal */
+  maxWidth?: string;
 }
 
 /**
@@ -47,6 +49,7 @@ const Modal: React.FC<ModalProps> = ({
   onClose,
   showCloseButton = true,
   className = "",
+  maxWidth,
 }) => {
   if (!isOpen) return null;
 
@@ -61,6 +64,7 @@ const Modal: React.FC<ModalProps> = ({
     >
       <div
         className={`${styles.container} ${className}`}
+        style={maxWidth ? { maxWidth } : undefined}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
