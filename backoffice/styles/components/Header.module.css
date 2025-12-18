@@ -78,7 +78,7 @@
 
   .navItem:hover:not(:active) {
     background: var(--color-brand-gold);
-    color: var(--color-brand-teal);
+    color: white;
   }
 
   .navItem:active {
@@ -132,7 +132,7 @@
 
   .mobileMenuBtn:hover {
     background: var(--color-brand-gold);
-    color: var(--color-brand-teal);
+    color: white;
   }
 
   .mobileMenuIcon {
@@ -159,7 +159,7 @@
 
   .mobileNavItem:hover {
     background: rgba(217, 185, 112, 0.2);
-    color: var(--color-brand-gold);
+    color: white;
   }
 
   .mobileNavIcon {

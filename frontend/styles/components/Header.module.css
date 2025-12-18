@@ -1,6 +1,10 @@
 @layer components {
   .header {
-    background: linear-gradient(135deg, var(--color-brand-teal) 0%, var(--color-brand-teal-dark) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--color-brand-teal) 0%,
+      var(--color-brand-teal-dark) 100%
+    );
     box-shadow: var(--shadow-card);
     position: sticky;
     top: 0;
@@ -78,17 +82,30 @@
     color: white;
     font-weight: 600;
     font-size: 1rem;
+    transition: all var(--transition-normal) var(--transition-smooth);
     border: 2px solid transparent;
     backdrop-filter: blur(10px);
   }
 
   .navItem:hover {
-    background: rgba(217, 185, 112, 0.3);
-    color: var(--color-brand-gold);
+    background: linear-gradient(
+      135deg,
+      var(--color-brand-gold) 0%,
+      var(--color-brand-gold-light) 100%
+    );
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(217, 185, 112, 0.4);
+    border-color: var(--color-brand-gold);
   }
 
   .navIcon {
     font-size: 1.1rem;
+    transition: transform var(--transition-normal) var(--transition-smooth);
+  }
+
+  .navItem:hover .navIcon {
+    transform: scale(1.2);
   }
 
   .cartSection {
@@ -106,13 +123,21 @@
     background: rgba(255, 255, 255, 0.1);
     border-radius: 50%;
     color: white;
+    transition: all var(--transition-normal) var(--transition-smooth);
     border: 2px solid transparent;
     backdrop-filter: blur(10px);
   }
 
   .cartLink:hover {
-    background: rgba(217, 185, 112, 0.3);
-    color: var(--color-brand-gold);
+    background: linear-gradient(
+      135deg,
+      var(--color-brand-gold) 0%,
+      var(--color-brand-gold-light) 100%
+    );
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(217, 185, 112, 0.4);
+    border-color: var(--color-brand-gold);
   }
 
   .cartIconWrapper {
@@ -124,6 +149,11 @@
 
   .cartIcon {
     font-size: 1.5rem;
+    transition: transform var(--transition-normal) var(--transition-smooth);
+  }
+
+  .cartLink:hover .cartIcon {
+    transform: scale(1.2);
   }
 
   .cartCount {
@@ -151,12 +181,18 @@
     color: white;
     padding: 0.75rem;
     cursor: pointer;
+    transition: all var(--transition-normal) var(--transition-smooth);
     backdrop-filter: blur(10px);
   }
 
   .mobileMenuBtn:hover {
-    background: rgba(217, 185, 112, 0.3);
-    color: var(--color-brand-gold);
+    background: linear-gradient(
+      135deg,
+      var(--color-brand-gold) 0%,
+      var(--color-brand-gold-light) 100%
+    );
+    color: white;
+    border-color: var(--color-brand-gold);
   }
 
   .mobileMenuIcon {
@@ -178,13 +214,14 @@
     padding: 1rem 2rem;
     color: white;
     font-weight: 600;
+    transition: all var(--transition-normal) var(--transition-smooth);
     border-left: 4px solid transparent;
   }
 
   .mobileNavItem:hover {
     background: rgba(217, 185, 112, 0.2);
     border-left-color: var(--color-brand-gold);
-    color: var(--color-brand-gold);
+    color: white;
   }
 
   .mobileNavIcon {
