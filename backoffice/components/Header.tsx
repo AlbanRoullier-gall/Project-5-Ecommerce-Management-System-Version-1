@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
 import styles from "../styles/components/Header.module.css";
@@ -41,7 +40,7 @@ const Header: React.FC = () => {
           el.blur();
           // Forcer le re-render en retirant et remettant la classe
           const className = el.className;
-          el.className = '';
+          el.className = "";
           setTimeout(() => {
             el.className = className;
           }, 0);
@@ -49,9 +48,9 @@ const Header: React.FC = () => {
       });
     };
 
-    router.events?.on('routeChangeComplete', handleRouteChange);
+    router.events?.on("routeChangeComplete", handleRouteChange);
     return () => {
-      router.events?.off('routeChangeComplete', handleRouteChange);
+      router.events?.off("routeChangeComplete", handleRouteChange);
     };
   }, [router, styles.navItem]);
 
