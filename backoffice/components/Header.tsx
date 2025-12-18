@@ -22,7 +22,6 @@ import styles from "../styles/components/Header.module.css";
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const { isAuthenticated, logout, user, isLoading } = useAuth();
 
   // Éviter les erreurs d'hydratation en ne rendant les éléments conditionnels qu'après le montage
@@ -79,64 +78,24 @@ const Header: React.FC = () => {
       {/* Desktop Navigation - Below Title */}
       <nav className={styles.desktopNav}>
         <div className={styles.navContainer}>
-          <Link
-            href="/dashboard"
-            className={`${styles.navItem} ${
-              hoveredItem === "dashboard" ? styles.navItemHovered : ""
-            }`}
-            onMouseEnter={() => setHoveredItem("dashboard")}
-            onMouseLeave={() => setHoveredItem(null)}
-            onClick={() => setHoveredItem(null)}
-          >
+          <Link href="/dashboard" className={styles.navItem}>
             <i className={`fas fa-tachometer-alt ${styles.navIcon}`}></i>
             <span>TABLEAU DE BORD</span>
           </Link>
-          <Link
-            href="/products"
-            className={`${styles.navItem} ${
-              hoveredItem === "products" ? styles.navItemHovered : ""
-            }`}
-            onMouseEnter={() => setHoveredItem("products")}
-            onMouseLeave={() => setHoveredItem(null)}
-            onClick={() => setHoveredItem(null)}
-          >
+          <Link href="/products" className={styles.navItem}>
             <i className={`fas fa-box ${styles.navIcon}`}></i>
             <span>PRODUITS</span>
           </Link>
-          <Link
-            href="/customers"
-            className={`${styles.navItem} ${
-              hoveredItem === "customers" ? styles.navItemHovered : ""
-            }`}
-            onMouseEnter={() => setHoveredItem("customers")}
-            onMouseLeave={() => setHoveredItem(null)}
-            onClick={() => setHoveredItem(null)}
-          >
+          <Link href="/customers" className={styles.navItem}>
             <i className={`fas fa-users ${styles.navIcon}`}></i>
             <span>CLIENTS</span>
           </Link>
-          <Link
-            href="/orders"
-            className={`${styles.navItem} ${
-              hoveredItem === "orders" ? styles.navItemHovered : ""
-            }`}
-            onMouseEnter={() => setHoveredItem("orders")}
-            onMouseLeave={() => setHoveredItem(null)}
-            onClick={() => setHoveredItem(null)}
-          >
+          <Link href="/orders" className={styles.navItem}>
             <i className={`fas fa-shopping-bag ${styles.navIcon}`}></i>
             <span>COMMANDES</span>
           </Link>
           {isMounted && !isLoading && user?.isSuperAdmin && (
-            <Link
-              href="/users/management"
-              className={`${styles.navItem} ${
-                hoveredItem === "users" ? styles.navItemHovered : ""
-              }`}
-              onMouseEnter={() => setHoveredItem("users")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onClick={() => setHoveredItem(null)}
-            >
+            <Link href="/users/management" className={styles.navItem}>
               <i className={`fas fa-user-shield ${styles.navIcon}`}></i>
               <span>UTILISATEURS</span>
             </Link>
