@@ -23,6 +23,7 @@ interface TableLayoutProps {
   headers: TableHeader[];
   children: React.ReactNode;
   headerGradient?: "teal" | "gold";
+  minWidth?: string;
 }
 
 interface TableRowProps {
@@ -39,10 +40,14 @@ const TableLayout: React.FC<TableLayoutProps> = ({
   headers,
   children,
   headerGradient = "teal",
+  minWidth,
 }) => {
   return (
     <HeadersContext.Provider value={headers}>
-      <div className={styles.tableContainer}>
+      <div
+        className={styles.tableContainer}
+        style={minWidth ? { minWidth } : undefined}
+      >
         <div className={styles.tableResponsive}>
           <table className={styles.table}>
             <thead

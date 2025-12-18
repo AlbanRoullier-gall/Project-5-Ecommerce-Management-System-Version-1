@@ -10,11 +10,11 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.14",
-    "next": "^14.0.0",
+    "@tfe/shared-types": "file:../shared-types",
+    "next": "^14.2.35",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "tailwindcss": "^4.1.14",
-    "@tfe/shared-types": "file:../shared-types"
+    "tailwindcss": "^4.1.14"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -25,9 +25,3 @@
     "typescript": "^5.0.0"
   }
 }
-
-
-
-
-
-
