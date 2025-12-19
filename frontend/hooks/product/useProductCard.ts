@@ -40,7 +40,7 @@ export function useProductCard(
   const getImageUrl = useCallback(() => {
     if (product.images && product.images.length > 0) {
       const firstImage = product.images[0];
-      return imageService.getImageUrl(firstImage.filePath);
+      return imageService.getImageUrlFromImage(firstImage);
     }
     return "/images/placeholder.svg";
   }, [product.images]);
@@ -69,7 +69,7 @@ export function useProductCard(
     try {
       const imageUrl =
         product.images && product.images.length > 0
-          ? imageService.getImageUrl(product.images[0].filePath)
+          ? imageService.getImageUrlFromImage(product.images[0])
           : undefined;
       await addToCart(
         product.id,

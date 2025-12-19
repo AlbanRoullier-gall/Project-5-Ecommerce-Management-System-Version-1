@@ -1,6 +1,6 @@
 /**
  * Proxy pour les requêtes vers les services
- * Gère les requêtes HTTP, les fichiers multipart, et les réponses
+ * Gère les requêtes HTTP et les réponses
  */
 
 import { Request, Response } from "express";
@@ -38,8 +38,6 @@ const buildCartQueryParams = (req: Request): Record<string, string> => {
 
   return params;
 };
-
-// prepareMultipartData supprimée - plus utilisée car les uploads utilisent maintenant base64 via DTOs
 
 /**
  * Construit la configuration de la requête proxy

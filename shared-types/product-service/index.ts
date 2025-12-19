@@ -96,7 +96,6 @@ export interface ProductImagePublicDTO {
   id: number;
   productId: number;
   filename: string;
-  filePath: string;
   orderIndex: number;
 }
 

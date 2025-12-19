@@ -215,17 +215,18 @@ class ApiClient {
   }
 
   /**
-   * Construit une URL d'image à partir d'un filePath
+   * Construit une URL à partir d'un chemin relatif
    * Utilise toujours l'URL complète
+   * @param path - Chemin relatif (ex: "/api/images/1")
    */
-  getImageUrl(filePath: string): string {
-    // Si le filePath commence déjà par http, on l'utilise tel quel
-    if (filePath.startsWith("http")) {
-      return filePath;
+  getImageUrl(path: string): string {
+    // Si le chemin commence déjà par http, on l'utilise tel quel
+    if (path.startsWith("http")) {
+      return path;
     }
 
     // Nettoyer le chemin
-    const cleanPath = filePath.startsWith("/") ? filePath : `/${filePath}`;
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
 
     // Toujours construire l'URL complète
     return `${this.baseUrl}${cleanPath}`;

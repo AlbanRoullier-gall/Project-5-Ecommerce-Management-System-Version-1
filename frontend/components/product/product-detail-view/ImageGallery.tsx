@@ -43,10 +43,10 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
    */
   const getImageUrl = (imageId: number) => {
     const image = product?.images?.find(
-      (img: { id: number; filePath?: string }) => img.id === imageId
+      (img: { id: number }) => img.id === imageId
     );
     if (image) {
-      return imageService.getImageUrl(image.filePath);
+      return imageService.getImageUrlFromImage(image);
     }
     return imageService.getImageUrlById(imageId);
   };
@@ -88,35 +88,33 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
       {/* Galerie de miniatures - affichée uniquement s'il y a plus d'une image */}
       {product.images && product.images.length > 1 && (
         <div className={styles.thumbList}>
-          {product.images.map(
-            (image: { id: number; filePath?: string }, index: number) => (
-              <button
-                key={image.id}
-                className={`${styles.thumbButton} ${
-                  selectedImageIndex === index ? styles.thumbSelected : ""
-                }`}
-                onClick={() => setSelectedImageIndex(index)}
-                type="button"
-              >
-                {/* Badge de sélection sur la miniature active */}
-                {selectedImageIndex === index && (
-                  <div className={styles.selectedBadge}>
-                    <i className="fas fa-check"></i>
-                  </div>
-                )}
-                {/* Image miniature */}
-                <img
-                  className={styles.thumbImage}
-                  src={getImageUrl(image.id)}
-                  alt={`${product.name} - ${index + 1}`}
-                  onError={(e) => {
-                    // Si l'image ne charge pas, utiliser le placeholder
-                    (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE_PATH;
-                  }}
-                />
-              </button>
-            )
-          )}
+          {product.images.map((image: { id: number }, index: number) => (
+            <button
+              key={image.id}
+              className={`${styles.thumbButton} ${
+                selectedImageIndex === index ? styles.thumbSelected : ""
+              }`}
+              onClick={() => setSelectedImageIndex(index)}
+              type="button"
+            >
+              {/* Badge de sélection sur la miniature active */}
+              {selectedImageIndex === index && (
+                <div className={styles.selectedBadge}>
+                  <i className="fas fa-check"></i>
+                </div>
+              )}
+              {/* Image miniature */}
+              <img
+                className={styles.thumbImage}
+                src={getImageUrl(image.id)}
+                alt={`${product.name} - ${index + 1}`}
+                onError={(e) => {
+                  // Si l'image ne charge pas, utiliser le placeholder
+                  (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE_PATH;
+                }}
+              />
+            </button>
+          ))}
         </div>
       )}
     </div>

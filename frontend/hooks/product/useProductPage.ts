@@ -50,7 +50,7 @@ export function useProductPage(
       const priceWithVat = product.priceTTC;
       const imageUrl =
         product.images && product.images.length > 0
-          ? imageService.getImageUrl(product.images[0].filePath)
+          ? imageService.getImageUrlFromImage(product.images[0])
           : undefined;
       await addToCart(
         product.id,

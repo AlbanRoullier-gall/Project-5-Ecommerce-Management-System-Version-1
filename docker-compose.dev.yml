@@ -117,7 +117,6 @@ services:
     volumes:
       - ./services/product-service/src:/app/src
       - ./shared-types:/app/shared-types
-      - ./services/product-service/uploads:/app/uploads
       - /app/node_modules
     depends_on:
       product-db:

@@ -140,18 +140,13 @@ export class ProductMapper {
 
   /**
    * Convertir le modèle ProductImage vers ProductImagePublicDTO
-   * Retourne le chemin relatif pour que le frontend/backoffice construise l'URL via leur apiClient
-   * Cela permet une meilleure flexibilité et évite les problèmes de CORS/URLs
+   * Les images sont maintenant stockées en base (image_data), donc on utilise l'ID pour construire l'URL
    */
   static productImageToPublicDTO(image: any): ProductImagePublicDTO {
-    // Retourner le chemin relatif tel quel (ex: "uploads/products/filename.jpg")
-    // Le frontend/backoffice utilisera apiClient.getImageUrl() pour construire l'URL complète
-    // Cela garantit que l'URL sera construite avec la bonne base (API Gateway)
     return {
       id: image.id,
       productId: image.productId,
       filename: image.filename,
-      filePath: image.filePath, // Chemin relatif : "uploads/products/filename.jpg"
       orderIndex: image.orderIndex,
     };
   }

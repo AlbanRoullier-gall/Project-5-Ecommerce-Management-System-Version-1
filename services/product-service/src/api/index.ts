@@ -23,9 +23,6 @@ import cors from "cors";
 import helmet from "helmet";
 import Joi from "joi";
 import morgan from "morgan";
-// multer n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
-const path = require("path");
-const fs = require("fs");
 
 export class ApiRouter {
   private healthController: HealthController;
@@ -53,10 +50,6 @@ export class ApiRouter {
     app.use(morgan("combined"));
     app.use(express.json({ limit: "50mb" }));
     app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-
-    // Servir les fichiers statiques (images de produits)
-    app.use("/uploads", express.static("uploads"));
-    app.use("/uploads/products", express.static("uploads/products"));
   }
 
   /**
@@ -95,8 +88,6 @@ export class ApiRouter {
       }),
     };
   }
-
-  // setupFileUpload supprimée - les uploads utilisent maintenant base64 via DTOs
 
   /**
    * Middleware de validation
@@ -154,7 +145,6 @@ export class ApiRouter {
   setupRoutes(app: Application): void {
     this.setupMiddlewares(app);
     const schemas = this.setupValidationSchemas();
-    // upload n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
 
     // ===== ROUTES DE SANTÉ =====
     app.get("/api/health", (req: Request, res: Response) => {
@@ -397,12 +387,6 @@ export class ApiRouter {
             return;
           }
 
-          // Créer le dossier uploads s'il n'existe pas
-          const uploadsDir = path.join(process.cwd(), "uploads", "products");
-          if (!fs.existsSync(uploadsDir)) {
-            fs.mkdirSync(uploadsDir, { recursive: true });
-          }
-
           // Traiter chaque image
           const images = [];
           for (let i = 0; i < uploadDTOs.length; i++) {
@@ -446,24 +430,29 @@ export class ApiRouter {
               return;
             }
 
-            // Générer un nom de fichier unique
-            const ext = path.extname(uploadDTO.filename) || ".jpg";
-            const uniqueFilename = `${Date.now()}-${Math.random()
-              .toString(36)
-              .substring(7)}${ext}`;
-            const filePath = path.join(uploadsDir, uniqueFilename);
+            // Vérifier la taille de l'image (limite à 5MB pour éviter les problèmes de performance)
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (imageBuffer.length > maxSize) {
+              res
+                .status(400)
+                .json(
+                  ResponseMapper.validationError(
+                    `Image ${
+                      i + 1
+                    }: Image size exceeds maximum allowed size of 5MB`
+                  )
+                );
+              return;
+            }
 
-            // Sauvegarder le fichier
-            fs.writeFileSync(filePath, imageBuffer);
-
-            // Créer l'image dans la base de données
+            // Créer l'image dans la base de données avec les données binaires
             const orderIndex =
               uploadDTO.orderIndex ?? existingImages.length + i;
             const imageData: Partial<ProductImageData> = {
               product_id: productId,
               filename: uploadDTO.filename,
-              file_path: `uploads/products/${uniqueFilename}`,
               order_index: orderIndex,
+              image_data: imageBuffer, // Stocker les données binaires directement
             };
 
             const image = await this.productService.createImage(imageData);

@@ -53,8 +53,6 @@ import {
 const express = require("express");
 
 export class ApiRouter {
-  // Multer n'est plus utilisé - les uploads utilisent maintenant base64 via DTOs
-
   private getServiceFromPath(path: string): ServiceName | null {
     if (path.startsWith("/api/auth")) return "auth";
     if (
@@ -62,8 +60,7 @@ export class ApiRouter {
       path.startsWith("/api/categories") ||
       path.startsWith("/api/images") ||
       path.startsWith("/api/admin/products") ||
-      path.startsWith("/api/admin/categories") ||
-      path.startsWith("/uploads")
+      path.startsWith("/api/admin/categories")
     )
       return "product";
     if (
@@ -544,11 +541,6 @@ export class ApiRouter {
             .json({ error: "Service non trouvé pour cette route" });
         }
       }
-    );
-
-    // Route statique pour les images (sans préfixe /api)
-    app.get("/uploads/*", getStaticRateLimit, (req: Request, res: Response) =>
-      proxyRequest(req, res, "product")
     );
 
     // ===== GESTION DES ERREURS =====

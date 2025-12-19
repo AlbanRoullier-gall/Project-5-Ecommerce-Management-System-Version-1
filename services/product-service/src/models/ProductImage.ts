@@ -10,8 +10,8 @@ export interface ProductImageData {
   id: number;
   product_id: number;
   filename: string;
-  file_path: string;
   order_index: number;
+  image_data?: Buffer | null; // Données binaires de l'image stockées en base
 }
 
 /**
@@ -26,24 +26,24 @@ class ProductImage {
   public readonly id: number;
   public readonly productId: number;
   public readonly filename: string;
-  public readonly filePath: string;
   public readonly orderIndex: number;
+  public readonly imageData: Buffer | null; // Données binaires de l'image
 
   constructor(data: ProductImageData) {
     this.id = data.id;
     this.productId = data.product_id;
     this.filename = data.filename;
-    this.filePath = data.file_path;
     this.orderIndex = data.order_index;
+    this.imageData = data.image_data || null;
   }
 
   /**
    * Vérifier si l'image est valide
+   * L'image est valide si elle a des imageData
    */
   isValid(): boolean {
-    return (
-      this.filename.length > 0 && this.filePath.length > 0 && this.productId > 0
-    );
+    const hasImageData = !!(this.imageData && this.imageData.length > 0);
+    return this.filename.length > 0 && this.productId > 0 && hasImageData;
   }
 
   /**
@@ -57,8 +57,10 @@ class ProductImage {
       errors.push("Le nom de fichier est requis");
     }
 
-    if (!this.filePath || this.filePath.trim().length === 0) {
-      errors.push("Le chemin du fichier est requis");
+    // L'image doit avoir des imageData
+    const hasImageData = this.imageData && this.imageData.length > 0;
+    if (!hasImageData) {
+      errors.push("L'image doit avoir des données binaires (image_data)");
     }
 
     if (!this.productId || this.productId <= 0) {
@@ -67,10 +69,6 @@ class ProductImage {
 
     if (this.filename && this.filename.length > 255) {
       errors.push("Le nom de fichier doit faire moins de 255 caractères");
-    }
-
-    if (this.filePath && this.filePath.length > 500) {
-      errors.push("Le chemin du fichier doit faire moins de 500 caractères");
     }
 
     return {

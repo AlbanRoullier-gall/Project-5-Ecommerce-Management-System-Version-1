@@ -66,31 +66,31 @@ export class ProductImageController {
 
   /**
    * Servir le fichier image de produit (public)
-   * Sert le fichier image réel au lieu des métadonnées JSON
+   * Sert l'image depuis la base de données (image_data)
    */
   async serveProductImageFile(req: Request, res: Response): Promise<void> {
     try {
       const { imageId } = req.params;
-      const image = await this.productService.getImageById(parseInt(imageId));
+      // Récupérer l'image avec les données binaires
+      const image = await this.productService.getImageById(
+        parseInt(imageId),
+        true
+      );
 
       if (!image) {
         res.status(404).json(ResponseMapper.notFoundError("Image"));
         return;
       }
 
-      // Construire le chemin complet du fichier
-      const path = require("path");
-      const fs = require("fs");
-      const imagePath = path.join(process.cwd(), image.filePath);
-
-      // Vérifier si le fichier existe
-      if (!fs.existsSync(imagePath)) {
-        console.error("Image file not found:", imagePath);
-        res.status(404).json(ResponseMapper.notFoundError("Image file"));
+      // Vérifier que l'image a des données binaires
+      if (!image.imageData || image.imageData.length === 0) {
+        console.error("Image data not found for image:", imageId);
+        res.status(404).json(ResponseMapper.notFoundError("Image data"));
         return;
       }
 
       // Déterminer le type MIME à partir de l'extension
+      const path = require("path");
       const ext = path.extname(image.filename).toLowerCase();
       const mimeTypes: { [key: string]: string } = {
         ".jpg": "image/jpeg",
@@ -102,10 +102,10 @@ export class ProductImageController {
       };
       const mimeType = mimeTypes[ext] || "application/octet-stream";
 
-      // Envoyer le fichier
+      // Envoyer les données binaires depuis la base
       res.setHeader("Content-Type", mimeType);
       res.setHeader("Cache-Control", "public, max-age=31536000"); // Cache 1 an
-      res.sendFile(imagePath);
+      res.send(image.imageData);
     } catch (error: any) {
       console.error("Erreur lors du service du fichier image:", error);
       res.status(500).json(ResponseMapper.internalServerError());

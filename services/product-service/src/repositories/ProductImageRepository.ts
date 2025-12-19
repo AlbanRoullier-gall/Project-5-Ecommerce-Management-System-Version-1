@@ -25,21 +25,32 @@ export class ProductImageRepository {
    */
   async createImage(imageData: ProductImageData): Promise<ProductImage> {
     try {
+      if (!imageData.image_data || imageData.image_data.length === 0) {
+        throw new Error("image_data est requis pour créer une image");
+      }
+
       const query = `
-        INSERT INTO product_images (product_id, filename, file_path, order_index)
+        INSERT INTO product_images (product_id, filename, order_index, image_data)
         VALUES ($1, $2, $3, $4)
-        RETURNING id, product_id, filename, file_path, order_index
+        RETURNING id, product_id, filename, order_index, image_data
       `;
 
       const values = [
         imageData.product_id,
         imageData.filename,
-        imageData.file_path,
         imageData.order_index,
+        imageData.image_data,
       ];
 
       const result = await this.pool.query(query, values);
-      return new ProductImage(result.rows[0] as ProductImageData);
+      const row = result.rows[0];
+      return new ProductImage({
+        id: row.id,
+        product_id: row.product_id,
+        filename: row.filename,
+        order_index: row.order_index,
+        image_data: row.image_data || null,
+      });
     } catch (error) {
       console.error("Erreur lors de la création de l'image de produit:", error);
       throw error;
@@ -49,12 +60,16 @@ export class ProductImageRepository {
   /**
    * Obtenir une image par ID
    * @param {number} id ID de l'image
+   * @param {boolean} includeImageData Si true, inclut les données binaires de l'image
    * @returns {Promise<ProductImage|null>} Image ou null si non trouvée
    */
-  async getImageById(id: number): Promise<ProductImage | null> {
+  async getImageById(
+    id: number,
+    includeImageData: boolean = false
+  ): Promise<ProductImage | null> {
     try {
       const query = `
-        SELECT id, product_id, filename, file_path, order_index
+        SELECT id, product_id, filename, order_index, image_data
         FROM product_images 
         WHERE id = $1
       `;
@@ -65,7 +80,14 @@ export class ProductImageRepository {
         return null;
       }
 
-      return new ProductImage(result.rows[0] as ProductImageData);
+      const row = result.rows[0];
+      return new ProductImage({
+        id: row.id,
+        product_id: row.product_id,
+        filename: row.filename,
+        order_index: row.order_index,
+        image_data: includeImageData ? row.image_data || null : null,
+      });
     } catch (error) {
       console.error("Erreur lors de la récupération de l'image par ID:", error);
       throw error;
@@ -91,13 +113,13 @@ export class ProductImageRepository {
         setClause.push(`filename = $${++paramCount}`);
         values.push(imageData.filename);
       }
-      if (imageData.file_path !== undefined) {
-        setClause.push(`file_path = $${++paramCount}`);
-        values.push(imageData.file_path);
-      }
       if (imageData.order_index !== undefined) {
         setClause.push(`order_index = $${++paramCount}`);
         values.push(imageData.order_index);
+      }
+      if (imageData.image_data !== undefined) {
+        setClause.push(`image_data = $${++paramCount}`);
+        values.push(imageData.image_data);
       }
 
       if (setClause.length === 0) {
@@ -110,7 +132,7 @@ export class ProductImageRepository {
         UPDATE product_images 
         SET ${setClause.join(", ")}
         WHERE id = $${++paramCount}
-        RETURNING id, product_id, filename, file_path, order_index
+        RETURNING id, product_id, filename, order_index, image_data
       `;
 
       const result = await this.pool.query(query, values);
@@ -119,7 +141,14 @@ export class ProductImageRepository {
         return null;
       }
 
-      return new ProductImage(result.rows[0] as ProductImageData);
+      const row = result.rows[0];
+      return new ProductImage({
+        id: row.id,
+        product_id: row.product_id,
+        filename: row.filename,
+        order_index: row.order_index,
+        image_data: row.image_data || null,
+      });
     } catch (error) {
       console.error("Erreur lors de la mise à jour de l'image:", error);
       throw error;
@@ -145,12 +174,16 @@ export class ProductImageRepository {
   /**
    * Lister les images d'un produit
    * @param {number} productId ID du produit
+   * @param {boolean} includeImageData Si true, inclut les données binaires (non recommandé pour les listes)
    * @returns {Promise<ProductImage[]>} Liste des images
    */
-  async listImagesByProduct(productId: number): Promise<ProductImage[]> {
+  async listImagesByProduct(
+    productId: number,
+    includeImageData: boolean = false
+  ): Promise<ProductImage[]> {
     try {
       const query = `
-        SELECT id, product_id, filename, file_path, order_index
+        SELECT id, product_id, filename, order_index, image_data
         FROM product_images 
         WHERE product_id = $1
         ORDER BY order_index ASC
@@ -158,7 +191,14 @@ export class ProductImageRepository {
 
       const result = await this.pool.query(query, [productId]);
       return result.rows.map(
-        (row) => new ProductImage(row as ProductImageData)
+        (row) =>
+          new ProductImage({
+            id: row.id,
+            product_id: row.product_id,
+            filename: row.filename,
+            order_index: row.order_index,
+            image_data: includeImageData ? row.image_data || null : null,
+          })
       );
     } catch (error) {
       console.error("Erreur lors de la liste des images par produit:", error);

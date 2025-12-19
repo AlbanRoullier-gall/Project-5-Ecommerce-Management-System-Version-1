@@ -463,8 +463,12 @@ export default class ProductService {
     if (!imageData.filename) {
       throw new Error("Le nom de fichier est requis");
     }
-    if (!imageData.file_path) {
-      throw new Error("Le chemin du fichier est requis");
+
+    // L'image doit avoir image_data
+    const hasImageData =
+      imageData.image_data && imageData.image_data.length > 0;
+    if (!hasImageData) {
+      throw new Error("L'image doit avoir des données binaires (image_data)");
     }
 
     // Vérifier si le produit existe
@@ -483,10 +487,14 @@ export default class ProductService {
   /**
    * Obtenir une image par ID
    * @param {number} id ID de l'image
+   * @param {boolean} includeImageData Si true, inclut les données binaires de l'image
    * @returns {Promise<ProductImage|null>} Image ou null si non trouvée
    */
-  async getImageById(id: number): Promise<ProductImage | null> {
-    return await this.imageRepository.getImageById(id);
+  async getImageById(
+    id: number,
+    includeImageData: boolean = false
+  ): Promise<ProductImage | null> {
+    return await this.imageRepository.getImageById(id, includeImageData);
   }
 
   /**
