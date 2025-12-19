@@ -71,21 +71,36 @@ export class ProductImageController {
   async serveProductImageFile(req: Request, res: Response): Promise<void> {
     try {
       const { imageId } = req.params;
+      const imageIdNum = parseInt(imageId);
+
+      if (isNaN(imageIdNum)) {
+        console.warn(`Invalid image ID: ${imageId}`);
+        res
+          .status(400)
+          .json(ResponseMapper.validationError("Invalid image ID"));
+        return;
+      }
+
       // Récupérer l'image avec les données binaires
-      const image = await this.productService.getImageById(
-        parseInt(imageId),
-        true
-      );
+      const image = await this.productService.getImageById(imageIdNum, true);
 
       if (!image) {
+        console.warn(`Image not found: ${imageId}`);
         res.status(404).json(ResponseMapper.notFoundError("Image"));
         return;
       }
 
       // Vérifier que l'image a des données binaires
       if (!image.imageData || image.imageData.length === 0) {
-        console.error("Image data not found for image:", imageId);
-        res.status(404).json(ResponseMapper.notFoundError("Image data"));
+        console.error(
+          `Image data not found for image ID ${imageId} (filename: ${image.filename}, product_id: ${image.productId})`
+        );
+        res.status(404).json({
+          error: "Image data not found",
+          message:
+            "Cette image n'a pas de données binaires. Elle a probablement été créée avec l'ancien système de fichiers.",
+          imageId: imageIdNum,
+        });
         return;
       }
 
@@ -107,7 +122,10 @@ export class ProductImageController {
       res.setHeader("Cache-Control", "public, max-age=31536000"); // Cache 1 an
       res.send(image.imageData);
     } catch (error: any) {
-      console.error("Erreur lors du service du fichier image:", error);
+      console.error(
+        `Erreur lors du service du fichier image (ID: ${req.params.imageId}):`,
+        error
+      );
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }

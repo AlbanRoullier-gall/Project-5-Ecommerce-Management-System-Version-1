@@ -113,14 +113,31 @@ export function useProductFormPage(
 
             const productId = createdProduct.id;
 
-            // Si des images sont fournies, les uploader (ne pas bloquer en cas d'erreur)
+            // Si des images sont fournies, les uploader
             if (images && images.length > 0 && productId) {
               try {
                 const uploadDTOs = await filesToUploadDTOs(images, productId);
-                await uploadProductImages(productId, uploadDTOs);
-              } catch (err) {
+                const uploadResponse = await uploadProductImages(
+                  productId,
+                  uploadDTOs
+                );
+                console.log("Images uploadées avec succès:", uploadResponse);
+
+                // Vérifier que les images ont bien été créées
+                if (
+                  !uploadResponse.images ||
+                  uploadResponse.images.length === 0
+                ) {
+                  console.warn("Aucune image n'a été retournée après l'upload");
+                }
+              } catch (err: any) {
                 console.error("Erreur lors de l'ajout des images:", err);
-                // Ne pas bloquer la création si l'upload d'images échoue
+                // Afficher l'erreur à l'utilisateur mais ne pas bloquer la création
+                setError(
+                  `Le produit a été créé mais l'ajout des images a échoué: ${
+                    err?.message || "Erreur inconnue"
+                  }`
+                );
               }
             }
 
@@ -155,13 +172,30 @@ export function useProductFormPage(
             // Mettre à jour le produit
             await updateProduct(product.id, data);
 
-            // Ajouter les nouvelles images si nécessaire (ne pas bloquer en cas d'erreur)
+            // Ajouter les nouvelles images si nécessaire
             if (images && images.length > 0) {
               try {
                 const uploadDTOs = await filesToUploadDTOs(images, product.id);
-                await uploadProductImages(product.id, uploadDTOs);
-              } catch (err) {
+                const uploadResponse = await uploadProductImages(
+                  product.id,
+                  uploadDTOs
+                );
+                console.log("Images uploadées avec succès:", uploadResponse);
+
+                // Vérifier que les images ont bien été créées
+                if (
+                  !uploadResponse.images ||
+                  uploadResponse.images.length === 0
+                ) {
+                  console.warn("Aucune image n'a été retournée après l'upload");
+                }
+              } catch (err: any) {
                 console.error("Erreur lors de l'ajout des images:", err);
+                setError(
+                  `Le produit a été mis à jour mais l'ajout des images a échoué: ${
+                    err?.message || "Erreur inconnue"
+                  }`
+                );
               }
             }
 

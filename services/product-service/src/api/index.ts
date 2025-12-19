@@ -456,6 +456,22 @@ export class ApiRouter {
             };
 
             const image = await this.productService.createImage(imageData);
+
+            // Vérifier que l'image a bien été créée avec des données
+            if (!image || !image.imageData || image.imageData.length === 0) {
+              console.error(
+                `Image créée sans données binaires pour le produit ${productId}, image ID: ${image?.id}`
+              );
+              throw new Error(
+                `L'image ${
+                  i + 1
+                } n'a pas pu être créée avec des données binaires`
+              );
+            }
+
+            console.log(
+              `Image créée avec succès: ID=${image.id}, filename=${image.filename}, data_size=${image.imageData.length} bytes`
+            );
             images.push(ProductMapper.productImageToPublicDTO(image));
           }
 

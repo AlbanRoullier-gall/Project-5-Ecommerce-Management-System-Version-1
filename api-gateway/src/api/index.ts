@@ -490,6 +490,30 @@ export class ApiRouter {
       }
     );
 
+    // Route spécifique pour les images de produits - Rate limiting pour ressources statiques
+    // DOIT être définie AVANT la route générique /api/* pour être prioritaire
+    app.get(
+      "/api/images/:imageId",
+      getStaticRateLimit,
+      async (req: Request, res: Response) => {
+        const { imageId } = req.params;
+        console.log(`[API Gateway] Requête image: /api/images/${imageId}`);
+
+        const service = this.getServiceFromPath(req.path);
+        if (service) {
+          console.log(`[API Gateway] Proxification vers service: ${service}`);
+          await proxyRequest(req, res, service);
+        } else {
+          console.error(
+            `[API Gateway] Service non trouvé pour /api/images/${imageId}`
+          );
+          res
+            .status(404)
+            .json({ error: "Service non trouvé pour cette route" });
+        }
+      }
+    );
+
     app.get(
       "/api/categories*",
       getProductsRateLimit,
