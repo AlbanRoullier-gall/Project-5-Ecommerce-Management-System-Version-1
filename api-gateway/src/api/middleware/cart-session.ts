@@ -31,35 +31,39 @@ export function generateCartSessionId(): string {
  * @returns Le sessionId ou null si absent
  */
 export function extractCartSessionId(req: Request): string | null {
-  // Essayer d'abord le cookie (méthode principale)
+  // PRIORITÉ 1: Essayer d'abord le header x-cart-session-id (fallback pour cookies cross-domain)
+  // Ce header est envoyé par le frontend quand le cookie n'est pas disponible
+  const headerSessionId = req.headers["x-cart-session-id"] as string;
+  if (headerSessionId) {
+    console.log(
+      `[Cart Session] SessionId trouvé dans header (fallback): ${headerSessionId.substring(
+        0,
+        20
+      )}... (path: ${req.path})`
+    );
+    return headerSessionId;
+  }
+
+  // PRIORITÉ 2: Essayer le cookie (méthode principale si disponible)
   const cookieSessionId = req.cookies?.[CART_SESSION_COOKIE];
   if (cookieSessionId) {
     console.log(
-      `[Cart Session] Cookie trouvé: ${cookieSessionId.substring(0, 20)}...`
+      `[Cart Session] Cookie trouvé: ${cookieSessionId.substring(0, 20)}... (path: ${req.path})`
     );
     return cookieSessionId;
   }
 
-  // Log pour diagnostiquer
+  // Log pour diagnostiquer si aucun sessionId n'est trouvé
   console.log(
-    `[Cart Session] Aucun cookie trouvé. Cookies disponibles:`,
-    req.cookies ? Object.keys(req.cookies) : "aucun"
+    `[Cart Session] Aucun sessionId trouvé. Cookies disponibles:`,
+    req.cookies ? Object.keys(req.cookies) : "aucun",
+    `(path: ${req.path})`
   );
-  console.log(
-    `[Cart Session] Headers cookies:`,
-    req.headers.cookie ? req.headers.cookie.substring(0, 100) : "aucun"
-  );
-
-  // Fallback: vérifier aussi le header (pour compatibilité pendant migration)
-  const headerSessionId = req.headers["x-cart-session-id"] as string;
-  if (headerSessionId) {
+  if (process.env.NODE_ENV === "development") {
     console.log(
-      `[Cart Session] SessionId trouvé dans header: ${headerSessionId.substring(
-        0,
-        20
-      )}...`
+      `[Cart Session] Headers cookies:`,
+      req.headers.cookie ? req.headers.cookie.substring(0, 100) : "aucun"
     );
-    return headerSessionId;
   }
 
   return null;
@@ -128,6 +132,10 @@ export function cartSessionMiddleware(
   // Toujours renvoyer le cookie dans la réponse pour s'assurer qu'il est défini
   // (même si on a déjà un sessionId, cela permet de le renouveler si nécessaire)
   setCartSessionCookie(res, sessionId);
+
+  // AUSSI envoyer le sessionId dans un header de réponse pour le fallback localStorage
+  // (le frontend ne peut pas lire les cookies httpOnly, donc on utilise ce header)
+  res.setHeader("X-Cart-Session-Id", sessionId);
 
   next();
 }

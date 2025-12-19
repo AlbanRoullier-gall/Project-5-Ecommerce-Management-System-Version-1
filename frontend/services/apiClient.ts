@@ -76,13 +76,59 @@ class ApiClient {
   }
 
   /**
+   * Récupère le sessionId depuis le localStorage (fallback si cookie non disponible)
+   */
+  private getCartSessionId(): string | null {
+    if (typeof window === "undefined") return null;
+    try {
+      return localStorage.getItem("cart_session_id");
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Sauvegarde le sessionId dans le localStorage (fallback si cookie non disponible)
+   */
+  private setCartSessionId(sessionId: string): void {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem("cart_session_id", sessionId);
+    } catch {
+      // Ignorer les erreurs de localStorage (mode privé, quota dépassé, etc.)
+    }
+  }
+
+  /**
+   * Extrait le sessionId depuis les headers de réponse
+   * Le serveur envoie le sessionId dans le header X-Cart-Session-Id pour le fallback localStorage
+   */
+  private extractSessionIdFromResponse(response: Response): void {
+    // Le serveur envoie le sessionId dans un header personnalisé (pour le fallback localStorage)
+    // car les cookies httpOnly ne peuvent pas être lus par JavaScript
+    const sessionId = response.headers.get("X-Cart-Session-Id");
+    if (sessionId) {
+      this.setCartSessionId(sessionId);
+    }
+  }
+
+  /**
    * Construit les headers par défaut
    */
   private buildHeaders(customHeaders?: Record<string, string>): HeadersInit {
-    return {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
       ...customHeaders,
     };
+
+    // Ajouter le sessionId depuis localStorage si disponible (fallback pour cookies)
+    // L'API Gateway utilisera ce header si le cookie n'est pas disponible
+    const sessionId = this.getCartSessionId();
+    if (sessionId) {
+      headers["x-cart-session-id"] = sessionId;
+    }
+
+    return headers;
   }
 
   /**
@@ -153,6 +199,9 @@ class ApiClient {
       body: requestBody,
       credentials: "include", // Important pour envoyer les cookies
     });
+
+    // Extraire le sessionId depuis la réponse si présent (pour le fallback localStorage)
+    this.extractSessionIdFromResponse(response);
 
     if (!response.ok) {
       await this.handleError(response);
