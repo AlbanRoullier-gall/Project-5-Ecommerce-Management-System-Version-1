@@ -20,8 +20,13 @@ export async function getCart(): Promise<CartPublicDTO | null> {
 
     return response.cart || null;
   } catch (error: any) {
-    // Si 404, c'est normal (pas de panier)
+    // Si 404, c'est normal (pas de panier) - ne pas propager l'erreur
     if (error.status === 404) {
+      return null;
+    }
+    // Pour les autres erreurs, vérifier si c'est un message "Panier non trouvé"
+    // qui peut arriver même avec un statut différent
+    if (error.message && error.message.includes("Panier non trouvé")) {
       return null;
     }
     throw error;

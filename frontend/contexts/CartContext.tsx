@@ -145,11 +145,23 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
    * Le sessionId est géré automatiquement via cookie httpOnly
    */
   const refreshCart = useCallback(async () => {
-    await executeWithLoading(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
       const cart = await getCart();
       setCart(cart);
-    }, "Erreur lors du chargement du panier");
-  }, [executeWithLoading]);
+      // Si le panier est null, c'est normal (pas de panier existant), ne pas afficher d'erreur
+    } catch (err) {
+      logger.error("Erreur lors du chargement du panier", err);
+      const errorMsg = err instanceof Error ? err.message : "Erreur lors du chargement du panier";
+      // Ne pas afficher "Panier non trouvé" comme erreur, c'est un état normal
+      if (!errorMsg.includes("Panier non trouvé")) {
+        setError(errorMsg);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   /**
    * Charge le panier au montage
