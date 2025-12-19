@@ -167,7 +167,10 @@ export const corsMiddleware: RequestHandler = (
         "Access-Control-Allow-Headers",
         "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id"
       );
-      res.header("Access-Control-Expose-Headers", "Set-Cookie");
+      res.header(
+        "Access-Control-Expose-Headers",
+        "Set-Cookie, X-Cart-Session-Id"
+      );
       return res.status(204).end();
     }
 
@@ -197,7 +200,10 @@ export const corsMiddleware: RequestHandler = (
         "Access-Control-Allow-Headers",
         "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id"
       );
-      res.header("Access-Control-Expose-Headers", "Set-Cookie");
+      res.header(
+        "Access-Control-Expose-Headers",
+        "Set-Cookie, X-Cart-Session-Id"
+      );
       return res.status(204).end();
     } else {
       console.warn(`⚠️ CORS: Origine non autorisée pour OPTIONS: ${origin}`);
@@ -256,7 +262,7 @@ export const corsMiddleware: RequestHandler = (
       "Cookie",
       "x-cart-session-id",
     ],
-    exposedHeaders: ["Set-Cookie"],
+    exposedHeaders: ["Set-Cookie", "X-Cart-Session-Id"],
     preflightContinue: false,
     optionsSuccessStatus: 204,
   })(req, res, next);

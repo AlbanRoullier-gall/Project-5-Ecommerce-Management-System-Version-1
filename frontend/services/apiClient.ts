@@ -109,6 +109,18 @@ class ApiClient {
     const sessionId = response.headers.get("X-Cart-Session-Id");
     if (sessionId) {
       this.setCartSessionId(sessionId);
+      // Log en développement pour vérifier que le sessionId est bien extrait
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          `[ApiClient] SessionId extrait et stocké: ${sessionId.substring(0, 20)}...`
+        );
+      }
+    } else if (process.env.NODE_ENV === "development") {
+      // Log en développement si le header n'est pas présent
+      console.warn(
+        "[ApiClient] Header X-Cart-Session-Id non trouvé dans la réponse",
+        response.url
+      );
     }
   }
 
@@ -126,6 +138,15 @@ class ApiClient {
     const sessionId = this.getCartSessionId();
     if (sessionId) {
       headers["x-cart-session-id"] = sessionId;
+      // Log en développement pour vérifier que le sessionId est bien envoyé
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          `[ApiClient] SessionId envoyé dans header: ${sessionId.substring(0, 20)}...`
+        );
+      }
+    } else if (process.env.NODE_ENV === "development") {
+      // Log en développement si aucun sessionId n'est disponible
+      console.warn("[ApiClient] Aucun sessionId disponible dans localStorage");
     }
 
     return headers;
@@ -200,7 +221,9 @@ class ApiClient {
       credentials: "include", // Important pour envoyer les cookies
     });
 
-    // Extraire le sessionId depuis la réponse si présent (pour le fallback localStorage)
+    // IMPORTANT: Extraire le sessionId depuis la réponse AVANT de vérifier si elle est OK
+    // Le serveur envoie toujours le sessionId dans le header, même en cas d'erreur
+    // Cela permet de maintenir la cohérence du sessionId même si la requête échoue
     this.extractSessionIdFromResponse(response);
 
     if (!response.ok) {
