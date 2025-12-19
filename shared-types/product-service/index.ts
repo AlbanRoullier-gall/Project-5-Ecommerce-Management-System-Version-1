@@ -182,7 +182,8 @@ export interface ProductImageUploadDTO {
  */
 export interface ProductImageUploadResponseDTO {
   success: boolean;
-  image?: ProductImagePublicDTO;
+  message?: string;
+  images?: ProductImagePublicDTO[];
   error?: string;
 }
 
