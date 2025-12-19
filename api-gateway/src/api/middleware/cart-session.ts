@@ -48,7 +48,10 @@ export function extractCartSessionId(req: Request): string | null {
   const cookieSessionId = req.cookies?.[CART_SESSION_COOKIE];
   if (cookieSessionId) {
     console.log(
-      `[Cart Session] Cookie trouvé: ${cookieSessionId.substring(0, 20)}... (path: ${req.path})`
+      `[Cart Session] Cookie trouvé: ${cookieSessionId.substring(
+        0,
+        20
+      )}... (path: ${req.path})`
     );
     return cookieSessionId;
   }
@@ -59,7 +62,7 @@ export function extractCartSessionId(req: Request): string | null {
     req.cookies ? Object.keys(req.cookies) : "aucun",
     `(path: ${req.path})`
   );
-  if (process.env.NODE_ENV === "development") {
+  if (process.env["NODE_ENV"] === "development") {
     console.log(
       `[Cart Session] Headers cookies:`,
       req.headers.cookie ? req.headers.cookie.substring(0, 100) : "aucun"
