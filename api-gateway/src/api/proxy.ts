@@ -34,6 +34,17 @@ const buildCartQueryParams = (req: Request): Record<string, string> => {
   // Si c'est une route cart et qu'on a un cartSessionId, l'ajouter
   if (req.path.startsWith("/api/cart") && (req as any).cartSessionId) {
     params["sessionId"] = (req as any).cartSessionId;
+    console.log(
+      `[Proxy] Cart request - sessionId ajouté aux query params: ${(req as any).cartSessionId.substring(0, 20)}...`
+    );
+  } else if (req.path.startsWith("/api/cart")) {
+    console.warn(
+      `[Proxy] Cart request sans sessionId - path: ${req.path}, method: ${req.method}`
+    );
+    console.warn(
+      `[Proxy] Cookies reçus:`,
+      req.cookies ? Object.keys(req.cookies) : "aucun"
+    );
   }
 
   return params;

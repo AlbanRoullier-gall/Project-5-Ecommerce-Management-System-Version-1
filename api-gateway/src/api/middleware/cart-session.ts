@@ -80,6 +80,13 @@ export function cartSessionMiddleware(
   if (!sessionId) {
     sessionId = generateCartSessionId();
     setCartSessionCookie(res, sessionId);
+    console.log(
+      `[Cart Session] Nouveau sessionId généré: ${sessionId.substring(0, 20)}...`
+    );
+  } else {
+    console.log(
+      `[Cart Session] SessionId extrait: ${sessionId.substring(0, 20)}...`
+    );
   }
 
   // Ajouter le sessionId à la requête pour utilisation dans les handlers/proxy

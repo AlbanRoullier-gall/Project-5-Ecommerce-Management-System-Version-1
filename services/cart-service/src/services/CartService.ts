@@ -165,6 +165,22 @@ export default class CartService {
     // Récupérer ou créer le panier si nécessaire
     const cart = await this.getOrCreateCart(sessionId);
 
+    // Vérifier si l'article existe dans le panier
+    const existingItem = cart.items.find(
+      (item) => item.productId === productId
+    );
+
+    if (!existingItem) {
+      // Si l'article n'existe pas, c'est une erreur - on ne peut pas mettre à jour un article qui n'existe pas
+      // Cela ne devrait pas arriver normalement, mais gérons-le gracieusement
+      console.warn(
+        `Tentative de mise à jour d'un article inexistant (productId: ${productId}) dans le panier ${sessionId}`
+      );
+      throw new Error(
+        `L'article avec l'ID ${productId} n'existe pas dans le panier. Veuillez d'abord l'ajouter au panier.`
+      );
+    }
+
     const updatedCart = cart.updateItemQuantity(productId, quantity);
     await this.cartRepository.updateCart(updatedCart);
 

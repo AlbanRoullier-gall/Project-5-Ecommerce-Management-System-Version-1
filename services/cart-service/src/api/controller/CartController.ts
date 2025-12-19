@@ -145,8 +145,14 @@ export class CartController {
       res.status(200).json(ResponseMapper.itemUpdated(cart));
     } catch (error: any) {
       console.error("Update item quantity error:", error);
-      if (error.message.includes("non trouvé")) {
-        res.status(404).json(ResponseMapper.notFoundError("Panier"));
+      if (error.message.includes("non trouvé") || error.message.includes("n'existe pas")) {
+        // Si l'article n'existe pas dans le panier, retourner 404 avec un message clair
+        res.status(404).json({
+          error: "Article non trouvé",
+          message: error.message || "L'article n'existe pas dans le panier",
+          timestamp: new Date().toISOString(),
+          status: 404,
+        });
         return;
       }
       if (
