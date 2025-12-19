@@ -52,10 +52,17 @@ function isOriginAllowed(origin: string, allowedOrigins: string[]): boolean {
     }
   }
 
-  // Gestion spéciale pour Railway : si une URL interne Railway est autorisée,
-  // autoriser aussi les URLs publiques Railway correspondantes
-  // Exemple: https://frontend.railway.internal -> https://frontend-production-*.up.railway.app
+  // Gestion spéciale pour Railway : autoriser automatiquement toutes les URLs Railway
+  // si on est en production et que l'origine est une URL Railway
   if (normalizedOrigin.includes(".up.railway.app")) {
+    // En production Railway, autoriser toutes les URLs Railway automatiquement
+    if (process.env["NODE_ENV"] === "production") {
+      console.log(
+        `✅ CORS: URL Railway autorisée automatiquement en production: ${normalizedOrigin}`
+      );
+      return true;
+    }
+
     // Extraire le nom du service depuis l'URL publique (ex: "frontend" depuis "frontend-production-27ff")
     const publicUrlMatch = normalizedOrigin.match(/https?:\/\/([^-]+)-/);
     if (publicUrlMatch) {
@@ -96,15 +103,15 @@ export const corsMiddleware: RequestHandler = (
   let allowedOrigins: string[];
 
   if (!allowedOriginsEnv) {
-    // En production, autoriser toutes les origines temporairement (avec avertissement)
+    // En production, autoriser automatiquement toutes les URLs Railway
     // En développement, utiliser localhost uniquement
     if (process.env["NODE_ENV"] === "production") {
       console.warn("⚠️⚠️⚠️ CORS: ALLOWED_ORIGINS non configuré en PRODUCTION!");
       console.warn(
-        "⚠️⚠️⚠️ Mode permissif activé temporairement - CONFIGUREZ ALLOWED_ORIGINS dans Railway!"
+        "⚠️⚠️⚠️ Mode permissif activé pour les URLs Railway - CONFIGUREZ ALLOWED_ORIGINS dans Railway pour plus de sécurité!"
       );
-      // Mode permissif temporaire pour le debug
-      allowedOrigins = ["*"]; // Sera traité spécialement
+      // Mode permissif pour Railway uniquement (géré dans isOriginAllowed)
+      allowedOrigins = []; // Vide, mais isOriginAllowed gérera les URLs Railway
     } else {
       // Valeurs par défaut pour le développement local
       allowedOrigins = [
@@ -143,9 +150,15 @@ export const corsMiddleware: RequestHandler = (
 
   // Gérer les requêtes OPTIONS (preflight) manuellement pour éviter les erreurs 500
   if (req.method === "OPTIONS") {
-    // Mode permissif temporaire si ALLOWED_ORIGINS n'est pas configuré en production
-    if (allowedOrigins.includes("*")) {
-      res.header("Access-Control-Allow-Origin", origin || "*");
+    // En production Railway sans ALLOWED_ORIGINS, autoriser les URLs Railway
+    if (
+      process.env["NODE_ENV"] === "production" &&
+      !allowedOriginsEnv &&
+      origin &&
+      origin.includes(".up.railway.app")
+    ) {
+      res.header("Access-Control-Allow-Origin", origin);
+      res.header("Access-Control-Allow-Credentials", "true");
       res.header(
         "Access-Control-Allow-Methods",
         "GET, POST, PUT, DELETE, PATCH, OPTIONS"
@@ -155,8 +168,6 @@ export const corsMiddleware: RequestHandler = (
         "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id"
       );
       res.header("Access-Control-Expose-Headers", "Set-Cookie");
-      // Note: credentials ne peut pas être true avec Access-Control-Allow-Origin: *
-      // Mais on l'autorise quand même pour le debug temporaire
       return res.status(204).end();
     }
 
@@ -208,8 +219,13 @@ export const corsMiddleware: RequestHandler = (
       origin: string | undefined,
       callback: (err: Error | null, allow?: boolean) => void
     ) => {
-      // Mode permissif temporaire si ALLOWED_ORIGINS n'est pas configuré en production
-      if (allowedOrigins.includes("*")) {
+      // En production Railway sans ALLOWED_ORIGINS, autoriser les URLs Railway
+      if (
+        process.env["NODE_ENV"] === "production" &&
+        !allowedOriginsEnv &&
+        origin &&
+        origin.includes(".up.railway.app")
+      ) {
         return callback(null, true);
       }
 
@@ -230,7 +246,7 @@ export const corsMiddleware: RequestHandler = (
         callback(null, false);
       }
     },
-    credentials: !allowedOrigins.includes("*"), // Ne pas utiliser credentials avec "*"
+    credentials: true, // Toujours autoriser les credentials pour les requêtes autorisées
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
