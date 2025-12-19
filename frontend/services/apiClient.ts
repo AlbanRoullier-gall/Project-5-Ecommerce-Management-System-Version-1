@@ -112,7 +112,10 @@ class ApiClient {
       // Log en développement pour vérifier que le sessionId est bien extrait
       if (process.env.NODE_ENV === "development") {
         console.log(
-          `[ApiClient] SessionId extrait et stocké: ${sessionId.substring(0, 20)}...`
+          `[ApiClient] SessionId extrait et stocké: ${sessionId.substring(
+            0,
+            20
+          )}...`
         );
       }
     } else if (process.env.NODE_ENV === "development") {
@@ -141,7 +144,10 @@ class ApiClient {
       // Log en développement pour vérifier que le sessionId est bien envoyé
       if (process.env.NODE_ENV === "development") {
         console.log(
-          `[ApiClient] SessionId envoyé dans header: ${sessionId.substring(0, 20)}...`
+          `[ApiClient] SessionId envoyé dans header: ${sessionId.substring(
+            0,
+            20
+          )}...`
         );
       }
     } else if (process.env.NODE_ENV === "development") {

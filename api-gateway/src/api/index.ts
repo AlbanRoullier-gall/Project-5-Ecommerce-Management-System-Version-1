@@ -219,9 +219,10 @@ export class ApiRouter {
       handleCreatePayment
     );
     // Applique le middleware cart-session pour extraire le sessionId du cookie
+    // NOTE: Pas de requireAuth car les clients peuvent finaliser un paiement sans être connectés
+    // L'authentification se fait via la session Stripe et le cartSessionId
     app.post(
       "/api/payment/finalize",
-      requireAuth,
       cartSessionMiddleware,
       paymentRateLimit,
       handleFinalizePayment
