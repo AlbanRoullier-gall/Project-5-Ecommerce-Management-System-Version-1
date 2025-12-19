@@ -153,7 +153,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       // Si le panier est null, c'est normal (pas de panier existant), ne pas afficher d'erreur
     } catch (err) {
       logger.error("Erreur lors du chargement du panier", err);
-      const errorMsg = err instanceof Error ? err.message : "Erreur lors du chargement du panier";
+      const errorMsg =
+        err instanceof Error
+          ? err.message
+          : "Erreur lors du chargement du panier";
       // Ne pas afficher "Panier non trouvé" comme erreur, c'est un état normal
       if (!errorMsg.includes("Panier non trouvé")) {
         setError(errorMsg);
@@ -220,7 +223,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         // Créer le DTO pour la mise à jour d'article
         const updateData: CartItemUpdateDTO = {
           quantity,
@@ -231,7 +234,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         setCart(updatedCart);
       } catch (err) {
         logger.error("Erreur lors de la mise à jour de la quantité", err);
-        const errorMsg = err instanceof Error ? err.message : "Erreur lors de la mise à jour de la quantité";
+        const errorMsg =
+          err instanceof Error
+            ? err.message
+            : "Erreur lors de la mise à jour de la quantité";
         // Ne pas afficher "Panier non trouvé" comme erreur, essayer de recharger le panier
         if (errorMsg.includes("Panier non trouvé")) {
           // Essayer de recharger le panier
@@ -240,7 +246,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             setCart(cart);
           } catch (reloadError) {
             // Si le rechargement échoue aussi, ne pas afficher d'erreur
-            console.warn("Impossible de recharger le panier après erreur", reloadError);
+            console.warn(
+              "Impossible de recharger le panier après erreur",
+              reloadError
+            );
           }
         } else {
           setError(errorMsg);
@@ -258,13 +267,39 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
    */
   const removeFromCart = useCallback(
     async (productId: number) => {
-      await executeWithLoading(async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
         await removeCartItem(productId);
         // Recharger le panier après suppression
         await refreshCart();
-      }, "Erreur lors de la suppression de l'article");
+      } catch (err) {
+        logger.error("Erreur lors de la suppression de l'article", err);
+        const errorMsg =
+          err instanceof Error
+            ? err.message
+            : "Erreur lors de la suppression de l'article";
+        // Ne pas afficher "Panier non trouvé" comme erreur, essayer de recharger le panier
+        if (errorMsg.includes("Panier non trouvé")) {
+          // Essayer de recharger le panier
+          try {
+            await refreshCart();
+          } catch (reloadError) {
+            // Si le rechargement échoue aussi, ne pas afficher d'erreur
+            console.warn(
+              "Impossible de recharger le panier après suppression",
+              reloadError
+            );
+          }
+        } else {
+          setError(errorMsg);
+        }
+      } finally {
+        setIsLoading(false);
+      }
     },
-    [executeWithLoading, refreshCart]
+    [refreshCart]
   );
 
   /**

@@ -94,9 +94,18 @@ export async function updateCartItem(
  * Supprime un article du panier
  */
 export async function removeCartItem(productId: number): Promise<void> {
-  await apiClient.delete(`/api/cart/items/${productId}`);
-
-  // Le panier sera rechargé par le contexte si nécessaire
+  try {
+    await apiClient.delete(`/api/cart/items/${productId}`);
+    // Le panier sera rechargé par le contexte si nécessaire
+  } catch (error: any) {
+    // Si l'erreur contient "Panier non trouvé", c'est peut-être que le panier a expiré
+    if (error.status === 404 || (error.message && error.message.includes("Panier non trouvé"))) {
+      // Ne pas propager l'erreur, le contexte rechargera le panier
+      console.warn("Panier non trouvé lors de la suppression, sera rechargé");
+      return;
+    }
+    throw error;
+  }
 }
 
 /**
