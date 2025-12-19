@@ -54,7 +54,10 @@ export function extractCartSessionId(req: Request): string | null {
   const headerSessionId = req.headers["x-cart-session-id"] as string;
   if (headerSessionId) {
     console.log(
-      `[Cart Session] SessionId trouvé dans header: ${headerSessionId.substring(0, 20)}...`
+      `[Cart Session] SessionId trouvé dans header: ${headerSessionId.substring(
+        0,
+        20
+      )}...`
     );
     return headerSessionId;
   }

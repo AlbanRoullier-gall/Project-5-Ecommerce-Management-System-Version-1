@@ -35,7 +35,9 @@ const buildCartQueryParams = (req: Request): Record<string, string> => {
   if (req.path.startsWith("/api/cart") && (req as any).cartSessionId) {
     params["sessionId"] = (req as any).cartSessionId;
     console.log(
-      `[Proxy] Cart request - sessionId ajouté aux query params: ${(req as any).cartSessionId.substring(0, 20)}...`
+      `[Proxy] Cart request - sessionId ajouté aux query params: ${(
+        req as any
+      ).cartSessionId.substring(0, 20)}...`
     );
   } else if (req.path.startsWith("/api/cart")) {
     console.warn(
@@ -170,7 +172,10 @@ export const proxyRequest = async (
       // Le cookie sera défini par le middleware cartSessionMiddleware
       // mais on s'assure qu'il est bien présent dans la réponse
       const cookieHeader = res.getHeader("Set-Cookie");
-      if (!cookieHeader || (Array.isArray(cookieHeader) && cookieHeader.length === 0)) {
+      if (
+        !cookieHeader ||
+        (Array.isArray(cookieHeader) && cookieHeader.length === 0)
+      ) {
         console.warn(
           `[Proxy] Cookie de session non défini dans la réponse pour ${req.path}`
         );
@@ -192,7 +197,9 @@ export const proxyRequest = async (
       );
       if (service === "cart") {
         console.error(
-          `[Proxy Error] SessionId utilisé: ${(req as any).cartSessionId?.substring(0, 20) || "aucun"}...`
+          `[Proxy Error] SessionId utilisé: ${
+            (req as any).cartSessionId?.substring(0, 20) || "aucun"
+          }...`
         );
       }
 
