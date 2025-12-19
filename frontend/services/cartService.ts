@@ -70,17 +70,22 @@ export async function updateCartItem(
     // Recharger le panier pour avoir les totaux à jour
     // Attendre un peu pour laisser le temps au backend de persister
     await new Promise((resolve) => setTimeout(resolve, 100));
-    
+
     const cart = await getCart();
     if (!cart) {
       // Si le panier n'existe pas, retourner null (sera géré par le contexte)
-      console.warn("Panier non trouvé après la mise à jour, peut-être qu'il a été supprimé");
+      console.warn(
+        "Panier non trouvé après la mise à jour, peut-être qu'il a été supprimé"
+      );
       return null;
     }
     return cart;
   } catch (error: any) {
     // Si l'erreur contient "Panier non trouvé" ou 404, essayer de récupérer le panier
-    if (error.status === 404 || (error.message && error.message.includes("Panier non trouvé"))) {
+    if (
+      error.status === 404 ||
+      (error.message && error.message.includes("Panier non trouvé"))
+    ) {
       // Attendre un peu avant de réessayer
       await new Promise((resolve) => setTimeout(resolve, 200));
       const cart = await getCart();
@@ -99,11 +104,14 @@ export async function updateCartItem(
  */
 export async function removeCartItem(productId: number): Promise<void> {
   try {
-  await apiClient.delete(`/api/cart/items/${productId}`);
-  // Le panier sera rechargé par le contexte si nécessaire
+    await apiClient.delete(`/api/cart/items/${productId}`);
+    // Le panier sera rechargé par le contexte si nécessaire
   } catch (error: any) {
     // Si l'erreur contient "Panier non trouvé", c'est peut-être que le panier a expiré
-    if (error.status === 404 || (error.message && error.message.includes("Panier non trouvé"))) {
+    if (
+      error.status === 404 ||
+      (error.message && error.message.includes("Panier non trouvé"))
+    ) {
       // Ne pas propager l'erreur, le contexte rechargera le panier
       console.warn("Panier non trouvé lors de la suppression, sera rechargé");
       return;

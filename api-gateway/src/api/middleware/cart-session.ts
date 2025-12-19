@@ -52,10 +52,13 @@ function setCartSessionCookie(res: Response, sessionId: string): void {
 
   res.cookie(CART_SESSION_COOKIE, sessionId, {
     httpOnly: true, // Non accessible depuis JavaScript (sécurité XSS)
-    secure: isProduction, // HTTPS uniquement en production
-    sameSite: "lax", // Protection CSRF
+    secure: isProduction, // HTTPS uniquement en production (requis pour sameSite: "none")
+    // En production, utiliser "none" pour permettre le partage cross-domain
+    // (frontend et API Gateway sont sur des domaines différents Railway)
+    sameSite: (isProduction ? "none" : "lax") as "none" | "lax", // "none" nécessite secure: true
     maxAge: COOKIE_MAX_AGE,
     path: "/", // Disponible sur tout le site
+    // Ne pas spécifier de domaine pour permettre le partage cross-domain
   });
 }
 
@@ -98,10 +101,11 @@ export function handleCreateCartSession(_req: Request, res: Response): void {
   const isProduction = process.env["NODE_ENV"] === "production";
   res.cookie(CART_SESSION_COOKIE, sessionId, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: "lax",
+    secure: isProduction, // Requis pour sameSite: "none"
+    sameSite: isProduction ? "none" : "lax", // "none" nécessite secure: true
     maxAge: COOKIE_MAX_AGE,
     path: "/",
+    // Ne pas spécifier de domaine pour permettre le partage cross-domain
   });
 
   res.status(200).json({
