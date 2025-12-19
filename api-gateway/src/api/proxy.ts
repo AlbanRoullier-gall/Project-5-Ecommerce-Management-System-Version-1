@@ -164,6 +164,19 @@ export const proxyRequest = async (
       responseType: "arraybuffer",
     });
 
+    // S'assurer que le cookie de session est renvoyé dans la réponse
+    // (même si la réponse vient du service backend)
+    if (service === "cart" && (req as any).cartSessionId) {
+      // Le cookie sera défini par le middleware cartSessionMiddleware
+      // mais on s'assure qu'il est bien présent dans la réponse
+      const cookieHeader = res.getHeader("Set-Cookie");
+      if (!cookieHeader || (Array.isArray(cookieHeader) && cookieHeader.length === 0)) {
+        console.warn(
+          `[Proxy] Cookie de session non défini dans la réponse pour ${req.path}`
+        );
+      }
+    }
+
     handleProxyResponse(res, response);
   } catch (error: any) {
     if (axios.isAxiosError(error)) {
@@ -177,6 +190,11 @@ export const proxyRequest = async (
       console.error(
         `[Proxy Error] Code: ${axiosError.code}, Message: ${axiosError.message}`
       );
+      if (service === "cart") {
+        console.error(
+          `[Proxy Error] SessionId utilisé: ${(req as any).cartSessionId?.substring(0, 20) || "aucun"}...`
+        );
+      }
 
       if (axiosError.code === "ECONNREFUSED") {
         console.error(

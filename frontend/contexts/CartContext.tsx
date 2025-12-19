@@ -249,7 +249,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
           err instanceof Error
             ? err.message
             : "Erreur lors de la mise à jour de la quantité";
-        
+
         // Si l'article n'existe pas dans le panier, recharger le panier pour avoir l'état à jour
         if (
           errorMsg.includes("n'existe pas dans le panier") ||

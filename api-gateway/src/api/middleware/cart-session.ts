@@ -34,12 +34,32 @@ export function extractCartSessionId(req: Request): string | null {
   // Essayer d'abord le cookie (méthode principale)
   const cookieSessionId = req.cookies?.[CART_SESSION_COOKIE];
   if (cookieSessionId) {
+    console.log(
+      `[Cart Session] Cookie trouvé: ${cookieSessionId.substring(0, 20)}...`
+    );
     return cookieSessionId;
   }
 
+  // Log pour diagnostiquer
+  console.log(
+    `[Cart Session] Aucun cookie trouvé. Cookies disponibles:`,
+    req.cookies ? Object.keys(req.cookies) : "aucun"
+  );
+  console.log(
+    `[Cart Session] Headers cookies:`,
+    req.headers.cookie ? req.headers.cookie.substring(0, 100) : "aucun"
+  );
+
   // Fallback: vérifier aussi le header (pour compatibilité pendant migration)
   const headerSessionId = req.headers["x-cart-session-id"] as string;
-  return headerSessionId || null;
+  if (headerSessionId) {
+    console.log(
+      `[Cart Session] SessionId trouvé dans header: ${headerSessionId.substring(0, 20)}...`
+    );
+    return headerSessionId;
+  }
+
+  return null;
 }
 
 /**
@@ -84,16 +104,27 @@ export function cartSessionMiddleware(
       `[Cart Session] Nouveau sessionId généré: ${sessionId.substring(
         0,
         20
-      )}...`
+      )}... (path: ${req.path}, method: ${req.method})`
+    );
+    console.log(
+      `[Cart Session] Cookies reçus:`,
+      req.cookies ? Object.keys(req.cookies) : "aucun"
     );
   } else {
     console.log(
-      `[Cart Session] SessionId extrait: ${sessionId.substring(0, 20)}...`
+      `[Cart Session] SessionId extrait: ${sessionId.substring(
+        0,
+        20
+      )}... (path: ${req.path}, method: ${req.method})`
     );
   }
 
   // Ajouter le sessionId à la requête pour utilisation dans les handlers/proxy
   (req as any).cartSessionId = sessionId;
+
+  // Toujours renvoyer le cookie dans la réponse pour s'assurer qu'il est défini
+  // (même si on a déjà un sessionId, cela permet de le renouveler si nécessaire)
+  setCartSessionCookie(res, sessionId);
 
   next();
 }
