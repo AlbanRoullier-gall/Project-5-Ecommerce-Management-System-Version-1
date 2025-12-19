@@ -81,7 +81,10 @@ export function cartSessionMiddleware(
     sessionId = generateCartSessionId();
     setCartSessionCookie(res, sessionId);
     console.log(
-      `[Cart Session] Nouveau sessionId généré: ${sessionId.substring(0, 20)}...`
+      `[Cart Session] Nouveau sessionId généré: ${sessionId.substring(
+        0,
+        20
+      )}...`
     );
   } else {
     console.log(

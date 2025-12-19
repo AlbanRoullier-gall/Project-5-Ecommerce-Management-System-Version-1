@@ -249,11 +249,30 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
           err instanceof Error
             ? err.message
             : "Erreur lors de la mise à jour de la quantité";
-        // Ne pas afficher "Panier non trouvé" comme erreur, essayer de recharger le panier
-        if (errorMsg.includes("Panier non trouvé")) {
-          // Essayer de recharger le panier
+        
+        // Si l'article n'existe pas dans le panier, recharger le panier pour avoir l'état à jour
+        if (
+          errorMsg.includes("n'existe pas dans le panier") ||
+          errorMsg.includes("Article non trouvé") ||
+          errorMsg.includes("Panier non trouvé")
+        ) {
+          // Recharger le panier pour avoir l'état à jour
           try {
             await refreshCart();
+            // Vérifier si l'article existe maintenant dans le panier
+            const currentCart = await getCart();
+            if (currentCart) {
+              const itemExists = currentCart.items?.some(
+                (item) => item.productId === productId
+              );
+              if (!itemExists) {
+                // L'article n'existe vraiment pas, c'est normal
+                console.warn(
+                  `L'article ${productId} n'existe pas dans le panier. Il faut d'abord l'ajouter.`
+                );
+                // Ne pas afficher d'erreur, juste recharger le panier
+              }
+            }
           } catch (reloadError) {
             // Si le rechargement échoue aussi, ne pas afficher d'erreur
             console.warn(
