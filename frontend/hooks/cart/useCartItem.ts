@@ -26,6 +26,11 @@ export function useCartItem(item: CartItemPublicDTO): UseCartItemResult {
   const [maxQuantity, setMaxQuantity] = useState<number | undefined>(undefined);
   const [isLoadingStock, setIsLoadingStock] = useState(true);
 
+  // Synchroniser la quantité avec l'item du panier (après mise à jour)
+  useEffect(() => {
+    setQuantity(item.quantity);
+  }, [item.quantity]);
+
   // Récupérer le stock du produit
   useEffect(() => {
     const fetchStock = async () => {

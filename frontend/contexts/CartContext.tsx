@@ -270,7 +270,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         await removeCartItem(productId);
         // Recharger le panier après suppression
         await refreshCart();
