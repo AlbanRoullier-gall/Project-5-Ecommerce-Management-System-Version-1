@@ -162,10 +162,8 @@ export default class CartService {
     // Vérifier le stock avant de mettre à jour
     await this.checkProductStock(productId, quantity);
 
-    const cart = await this.getCart(sessionId);
-    if (!cart) {
-      throw new Error("Panier non trouvé");
-    }
+    // Récupérer ou créer le panier si nécessaire
+    const cart = await this.getOrCreateCart(sessionId);
 
     const updatedCart = cart.updateItemQuantity(productId, quantity);
     await this.cartRepository.updateCart(updatedCart);
@@ -177,10 +175,8 @@ export default class CartService {
    * Supprimer un article du panier
    */
   async removeItem(sessionId: string, productId: number): Promise<Cart> {
-    const cart = await this.getCart(sessionId);
-    if (!cart) {
-      throw new Error("Panier non trouvé");
-    }
+    // Récupérer ou créer le panier si nécessaire
+    const cart = await this.getOrCreateCart(sessionId);
 
     const updatedCart = cart.removeItem(productId);
     await this.cartRepository.updateCart(updatedCart);
@@ -192,10 +188,8 @@ export default class CartService {
    * Vider le panier
    */
   async clearCart(sessionId: string): Promise<Cart> {
-    const cart = await this.getCart(sessionId);
-    if (!cart) {
-      throw new Error("Panier non trouvé");
-    }
+    // Récupérer ou créer le panier si nécessaire
+    const cart = await this.getOrCreateCart(sessionId);
 
     const clearedCart = cart.clear();
     await this.cartRepository.updateCart(clearedCart);

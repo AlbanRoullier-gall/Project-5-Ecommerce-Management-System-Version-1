@@ -130,13 +130,6 @@ export const proxyRequest = async (
   try {
     const requestConfig = buildProxyRequest(req, service);
 
-    // Log spécial pour les images
-    if (req.path.startsWith("/api/images/")) {
-      console.log(
-        `[Proxy] Image request: ${req.method} ${req.path} -> ${service}${req.path}`
-      );
-    }
-
     // Log pour le debug (toujours en production pour diagnostiquer les problèmes Railway)
     if (
       process.env["NODE_ENV"] === "development" ||
