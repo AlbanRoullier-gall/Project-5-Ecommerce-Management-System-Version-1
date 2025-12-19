@@ -217,7 +217,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
    */
   const updateQuantity = useCallback(
     async (productId: number, quantity: number) => {
-      await executeWithLoading(async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
         // Créer le DTO pour la mise à jour d'article
         const updateData: CartItemUpdateDTO = {
           quantity,
@@ -226,9 +229,27 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         // Le service recharge automatiquement le panier
         const updatedCart = await updateCartItem(productId, updateData);
         setCart(updatedCart);
-      }, "Erreur lors de la mise à jour de la quantité");
+      } catch (err) {
+        logger.error("Erreur lors de la mise à jour de la quantité", err);
+        const errorMsg = err instanceof Error ? err.message : "Erreur lors de la mise à jour de la quantité";
+        // Ne pas afficher "Panier non trouvé" comme erreur, essayer de recharger le panier
+        if (errorMsg.includes("Panier non trouvé")) {
+          // Essayer de recharger le panier
+          try {
+            const cart = await getCart();
+            setCart(cart);
+          } catch (reloadError) {
+            // Si le rechargement échoue aussi, ne pas afficher d'erreur
+            console.warn("Impossible de recharger le panier après erreur", reloadError);
+          }
+        } else {
+          setError(errorMsg);
+        }
+      } finally {
+        setIsLoading(false);
+      }
     },
-    [executeWithLoading]
+    []
   );
 
   /**
