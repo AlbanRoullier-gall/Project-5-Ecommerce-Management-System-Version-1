@@ -220,6 +220,12 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
    */
   const updateQuantity = useCallback(
     async (productId: number, quantity: number) => {
+      // Éviter les appels multiples simultanés
+      if (isLoading) {
+        console.warn("Une opération sur le panier est déjà en cours");
+        return;
+      }
+
       try {
         setIsLoading(true);
         setError(null);
@@ -231,7 +237,12 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
         // Le service recharge automatiquement le panier
         const updatedCart = await updateCartItem(productId, updateData);
-        setCart(updatedCart);
+        if (updatedCart) {
+          setCart(updatedCart);
+        } else {
+          // Si le panier est null, recharger
+          await refreshCart();
+        }
       } catch (err) {
         logger.error("Erreur lors de la mise à jour de la quantité", err);
         const errorMsg =
@@ -242,8 +253,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         if (errorMsg.includes("Panier non trouvé")) {
           // Essayer de recharger le panier
           try {
-            const cart = await getCart();
-            setCart(cart);
+            await refreshCart();
           } catch (reloadError) {
             // Si le rechargement échoue aussi, ne pas afficher d'erreur
             console.warn(
@@ -258,7 +268,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         setIsLoading(false);
       }
     },
-    []
+    [isLoading, refreshCart]
   );
 
   /**
@@ -267,12 +277,18 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
    */
   const removeFromCart = useCallback(
     async (productId: number) => {
+      // Éviter les appels multiples simultanés
+      if (isLoading) {
+        console.warn("Une opération sur le panier est déjà en cours");
+        return;
+      }
+
       try {
         setIsLoading(true);
         setError(null);
 
         await removeCartItem(productId);
-        // Recharger le panier après suppression
+        // Recharger le panier après suppression pour avoir l'état à jour
         await refreshCart();
       } catch (err) {
         logger.error("Erreur lors de la suppression de l'article", err);
@@ -299,7 +315,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         setIsLoading(false);
       }
     },
-    [refreshCart]
+    [isLoading, refreshCart]
   );
 
   /**

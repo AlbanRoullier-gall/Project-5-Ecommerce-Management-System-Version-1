@@ -53,6 +53,7 @@ export function useCartItem(item: CartItemPublicDTO): UseCartItemResult {
   const handleQuantityChange = useCallback(
     async (newQuantity: number) => {
       if (newQuantity < 1) return;
+      if (isUpdating) return; // Éviter les appels multiples simultanés
 
       // Limiter la quantité au stock disponible
       const finalQuantity =
@@ -60,19 +61,21 @@ export function useCartItem(item: CartItemPublicDTO): UseCartItemResult {
           ? Math.min(newQuantity, maxQuantity)
           : newQuantity;
 
-      setQuantity(finalQuantity);
+      // Ne pas mettre à jour la quantité locale immédiatement
+      // Attendre la confirmation du serveur
       setIsUpdating(true);
 
       try {
         await updateQuantity(item.productId, finalQuantity);
+        // La quantité sera mise à jour via le useEffect qui écoute item.quantity
       } catch (err) {
-        // Restaurer l'ancienne quantité en cas d'erreur
-        setQuantity(item.quantity);
+        // En cas d'erreur, la quantité reste celle de item.quantity (via useEffect)
+        logger.error("Erreur lors de la mise à jour de la quantité", err);
       } finally {
         setIsUpdating(false);
       }
     },
-    [item.productId, item.quantity, updateQuantity, maxQuantity]
+    [item.productId, item.quantity, updateQuantity, maxQuantity, isUpdating]
   );
 
   const handleRemove = useCallback(async () => {

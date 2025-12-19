@@ -63,28 +63,32 @@ export async function addCartItem(
 export async function updateCartItem(
   productId: number,
   updateData: CartItemUpdateDTO
-): Promise<CartPublicDTO> {
+): Promise<CartPublicDTO | null> {
   try {
-  await apiClient.put(`/api/cart/items/${productId}`, updateData);
+    await apiClient.put(`/api/cart/items/${productId}`, updateData);
 
-  // Recharger le panier pour avoir les totaux à jour
-  const cart = await getCart();
-  if (!cart) {
-      // Si le panier n'existe pas après la mise à jour, c'est peut-être qu'il a été supprimé
-      // Ne pas lancer d'erreur, retourner null sera géré par le contexte
-      throw new Error("Panier non trouvé après la mise à jour");
-  }
-  return cart;
+    // Recharger le panier pour avoir les totaux à jour
+    // Attendre un peu pour laisser le temps au backend de persister
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    
+    const cart = await getCart();
+    if (!cart) {
+      // Si le panier n'existe pas, retourner null (sera géré par le contexte)
+      console.warn("Panier non trouvé après la mise à jour, peut-être qu'il a été supprimé");
+      return null;
+    }
+    return cart;
   } catch (error: any) {
-    // Si l'erreur contient "Panier non trouvé", c'est peut-être que le panier a expiré
+    // Si l'erreur contient "Panier non trouvé" ou 404, essayer de récupérer le panier
     if (error.status === 404 || (error.message && error.message.includes("Panier non trouvé"))) {
-      // Essayer de récupérer le panier (peut-être qu'il existe maintenant)
+      // Attendre un peu avant de réessayer
+      await new Promise((resolve) => setTimeout(resolve, 200));
       const cart = await getCart();
       if (cart) {
         return cart;
       }
-      // Si toujours pas de panier, lancer l'erreur
-      throw new Error("Panier non trouvé");
+      // Si toujours pas de panier, retourner null plutôt que lancer une erreur
+      return null;
     }
     throw error;
   }
