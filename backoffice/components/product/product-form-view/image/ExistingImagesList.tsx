@@ -1,6 +1,7 @@
 import React from "react";
 // Try absolute import using path mapping
 import { ProductImagePublicDTO } from "dto";
+import { imageService } from "../../../../services/imageService";
 import styles from "../../../../styles/components/ExistingImagesList.module.css";
 
 /**
@@ -32,7 +33,6 @@ const ExistingImagesList: React.FC<ExistingImagesListProps> = ({
   imagesToDelete,
   onMarkForDeletion,
 }) => {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
   // Filtrer les images non marquées pour suppression
   const visibleImages = images.filter(
     (img) => !imagesToDelete.includes(img.id)
@@ -53,7 +53,7 @@ const ExistingImagesList: React.FC<ExistingImagesListProps> = ({
           <div key={img.id} className={styles.card}>
             {/* Image */}
             <img
-              src={`${API_URL}/api/images/${img.id}`}
+              src={imageService.getImageUrlById(img.id)}
               alt={img.filename}
               className={styles.image}
             />

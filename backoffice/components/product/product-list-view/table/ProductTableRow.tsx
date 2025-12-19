@@ -3,6 +3,7 @@ import { ProductPublicDTO } from "dto";
 import StatusBadge from "./StatusBadge";
 import ActionButtons from "./ActionButtons";
 import { TableRow, TableCell } from "../../../shared/TableLayout";
+import { imageService } from "../../../../services/imageService";
 import styles from "../../../../styles/components/ProductTableRow.module.css";
 
 /**
@@ -49,9 +50,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
           <div className={styles.thumb}>
             {product.images && product.images.length > 0 ? (
               <img
-                src={`${
-                  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020"
-                }/api/images/${product.images[0].id}`}
+                src={imageService.getImageUrlById(product.images[0].id)}
                 alt={product.name}
                 className={styles.thumbImage}
                 onError={(e) => {
