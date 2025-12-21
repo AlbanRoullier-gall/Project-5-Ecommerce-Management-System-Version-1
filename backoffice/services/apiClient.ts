@@ -220,9 +220,22 @@ class ApiClient {
 
       return this.parseResponse<T>(response);
     } catch (error: any) {
-      // Gérer les erreurs réseau (CORS, connexion refusée, etc.)
-      if (error instanceof TypeError && error.message.includes("fetch")) {
+      // Gérer les erreurs réseau (CORS, connexion refusée, timeout, etc.)
+      if (
+        error instanceof TypeError &&
+        (error.message.includes("fetch") ||
+          error.message.includes("Load failed") ||
+          error.message.includes("Failed to fetch"))
+      ) {
         const apiUrl = this.baseUrl;
+        // Pour le logout, ne pas lancer d'erreur car le cookie est déjà supprimé côté serveur
+        if (endpoint.includes("/auth/logout")) {
+          console.warn(
+            "[ApiClient] Erreur réseau lors du logout, mais la déconnexion locale est effectuée"
+          );
+          // Retourner un objet vide pour indiquer que la déconnexion locale est OK
+          return {} as T;
+        }
         throw new Error(
           `Erreur de connexion au serveur (${apiUrl}). Vérifiez que l'API Gateway est accessible et que CORS est correctement configuré.`
         );

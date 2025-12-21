@@ -341,29 +341,60 @@ export const handleVerifyAuth = async (req: Request, res: Response) => {
  */
 export const handleLogout = async (req: Request, res: Response) => {
   try {
-    // Appel au Auth Service pour logout
-    const authResponse = await fetch(`${SERVICES.auth}/api/auth/logout`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Service-Request": "api-gateway",
-        Cookie: req.headers.cookie || "",
-      },
-    });
-
-    // Supprimer le cookie côté API Gateway aussi
+    // Supprimer le cookie côté API Gateway immédiatement (même si l'appel au service échoue)
     clearAuthTokenCookie(res);
 
-    if (!authResponse.ok) {
-      // Même en cas d'erreur, supprimer le cookie localement
+    // Appel au Auth Service pour logout avec timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 5000); // Timeout de 5 secondes
+
+    try {
+      const authResponse = await fetch(`${SERVICES.auth}/api/auth/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Service-Request": "api-gateway",
+          Cookie: req.headers.cookie || "",
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!authResponse.ok) {
+        // Même en cas d'erreur, supprimer le cookie localement
+        console.warn(
+          `[Logout] Auth service returned ${authResponse.status}, but cookie already cleared`
+        );
+        return res.status(200).json({
+          success: true,
+          message: "Déconnexion réussie",
+        });
+      }
+
+      const authData = (await authResponse.json()) as any;
+      return res.json(authData);
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError.name === "AbortError") {
+        console.warn(
+          "[Logout] Timeout lors de l'appel au service auth (5s), mais cookie déjà supprimé"
+        );
+      } else {
+        console.warn(
+          `[Logout] Erreur lors de l'appel au service auth: ${fetchError.message}, mais cookie déjà supprimé`
+        );
+      }
+      
+      // Même en cas d'erreur réseau/timeout, retourner un succès car le cookie est déjà supprimé
       return res.status(200).json({
         success: true,
         message: "Déconnexion réussie",
       });
     }
-
-    const authData = (await authResponse.json()) as any;
-    return res.json(authData);
   } catch (error) {
     console.error("❌ Logout error:", error);
     // Même en cas d'erreur, supprimer le cookie localement

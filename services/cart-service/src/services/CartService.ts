@@ -76,7 +76,7 @@ export default class CartService {
     console.log(
       `[CartService] checkProductStock: Vérification du stock pour productId=${productId}, quantity=${requestedQuantity}`
     );
-    
+
     try {
       // Ajouter un timeout pour éviter les blocages
       const controller = new AbortController();
@@ -129,7 +129,7 @@ export default class CartService {
         );
         throw new Error(data.data.message || "Stock insuffisant");
       }
-      
+
       console.log(
         `[CartService] checkProductStock: ✅ Stock disponible pour productId=${productId}`
       );
@@ -144,7 +144,7 @@ export default class CartService {
         );
         return; // Ne pas bloquer l'ajout au panier en cas de timeout
       }
-      
+
       if (
         error.message.includes("Stock insuffisant") ||
         error.message.includes("plus disponible") ||
@@ -170,7 +170,10 @@ export default class CartService {
   ): Promise<Cart> {
     const startTime = Date.now();
     console.log(
-      `[CartService] addItem: Début - sessionId: ${sessionId.substring(0, 20)}..., productId: ${itemData.productId}, quantity: ${itemData.quantity}`
+      `[CartService] addItem: Début - sessionId: ${sessionId.substring(
+        0,
+        20
+      )}..., productId: ${itemData.productId}, quantity: ${itemData.quantity}`
     );
 
     try {
@@ -239,9 +242,7 @@ export default class CartService {
         `[CartService] addItem: Étape 4 - Sauvegarde du panier dans Redis`
       );
       await this.cartRepository.updateCart(updatedCart);
-      console.log(
-        `[CartService] addItem: ✅ Panier sauvegardé dans Redis`
-      );
+      console.log(`[CartService] addItem: ✅ Panier sauvegardé dans Redis`);
 
       const duration = Date.now() - startTime;
       console.log(
@@ -312,27 +313,42 @@ export default class CartService {
    * Vider le panier
    */
   async clearCart(sessionId: string): Promise<Cart> {
-    console.log(`[CartService] clearCart appelé pour sessionId: ${sessionId.substring(0, 20)}...`);
-    
+    console.log(
+      `[CartService] clearCart appelé pour sessionId: ${sessionId.substring(
+        0,
+        20
+      )}...`
+    );
+
     // Récupérer ou créer le panier si nécessaire
     const cart = await this.getOrCreateCart(sessionId);
-    console.log(`[CartService] Panier récupéré avant vidage: ${cart.itemCount} articles`);
+    console.log(
+      `[CartService] Panier récupéré avant vidage: ${cart.itemCount} articles`
+    );
 
     const clearedCart = cart.clear();
-    console.log(`[CartService] Panier vidé (nouveau itemCount: ${clearedCart.itemCount})`);
-    
+    console.log(
+      `[CartService] Panier vidé (nouveau itemCount: ${clearedCart.itemCount})`
+    );
+
     await this.cartRepository.updateCart(clearedCart);
     console.log(`[CartService] Panier vidé sauvegardé dans Redis`);
 
     // Vérification: Récupérer le panier après le vidage pour confirmer
     const verifyCart = await this.getCart(sessionId);
     if (verifyCart) {
-      console.log(`[CartService] Vérification après vidage: panier contient ${verifyCart.itemCount} articles`);
+      console.log(
+        `[CartService] Vérification après vidage: panier contient ${verifyCart.itemCount} articles`
+      );
       if (verifyCart.itemCount > 0) {
-        console.error(`[CartService] ⚠️ ERREUR: Le panier contient encore ${verifyCart.itemCount} article(s) après le vidage!`);
+        console.error(
+          `[CartService] ⚠️ ERREUR: Le panier contient encore ${verifyCart.itemCount} article(s) après le vidage!`
+        );
       }
     } else {
-      console.log(`[CartService] Vérification après vidage: panier non trouvé (normal si complètement supprimé)`);
+      console.log(
+        `[CartService] Vérification après vidage: panier non trouvé (normal si complètement supprimé)`
+      );
     }
 
     return clearedCart;
