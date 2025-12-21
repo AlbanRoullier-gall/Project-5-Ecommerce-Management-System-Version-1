@@ -12,6 +12,7 @@ import { Pool } from "pg";
 import { ProductRepository } from "../repositories/ProductRepository";
 import { CategoryRepository } from "../repositories/CategoryRepository";
 import { ProductImageRepository } from "../repositories/ProductImageRepository";
+import { StockReservationRepository } from "../repositories/StockReservationRepository";
 import Product, { ProductData } from "../models/Product";
 import Category, { CategoryData } from "../models/Category";
 import ProductImage, { ProductImageData } from "../models/ProductImage";
@@ -20,11 +21,13 @@ export default class ProductService {
   private productRepository: ProductRepository;
   private categoryRepository: CategoryRepository;
   private imageRepository: ProductImageRepository;
+  private stockReservationRepository: StockReservationRepository;
 
   constructor(pool: Pool) {
     this.productRepository = new ProductRepository(pool);
     this.categoryRepository = new CategoryRepository(pool);
     this.imageRepository = new ProductImageRepository(pool);
+    this.stockReservationRepository = new StockReservationRepository(pool);
   }
 
   // ===== MÉTHODES PRODUIT =====
@@ -509,5 +512,134 @@ export default class ProductService {
    */
   async listImages(productId: number): Promise<ProductImage[]> {
     return await this.imageRepository.listImagesByProduct(productId);
+  }
+
+  // ===== MÉTHODES DE RÉSERVATION DE STOCK =====
+
+  /**
+   * Réserver du stock de manière atomique pour un panier
+   * Utilise un verrou pour éviter les race conditions
+   * @param productId ID du produit
+   * @param quantity Quantité à réserver
+   * @param sessionId ID de session du panier
+   * @param ttlMinutes Durée de vie de la réservation en minutes (défaut: 30)
+   * @returns Promise avec les informations de réservation
+   * @throws Error si stock insuffisant
+   */
+  async reserveStock(
+    productId: number,
+    quantity: number,
+    sessionId: string,
+    ttlMinutes: number = 30
+  ): Promise<{
+    reservationId: number;
+    productId: number;
+    quantity: number;
+    expiresAt: Date;
+    availableStock: number;
+  }> {
+    // Réserver le stock de manière atomique
+    const reservation = await this.stockReservationRepository.reserveStock(
+      productId,
+      quantity,
+      sessionId,
+      ttlMinutes
+    );
+
+    // Calculer le stock disponible après réservation
+    const availableStock =
+      await this.stockReservationRepository.getAvailableStock(productId);
+
+    return {
+      reservationId: reservation.id,
+      productId: reservation.product_id,
+      quantity: reservation.quantity,
+      expiresAt: reservation.expires_at,
+      availableStock,
+    };
+  }
+
+  /**
+   * Libérer une réservation de stock
+   * @param sessionId ID de session du panier
+   * @param productId ID du produit (optionnel, si null libère toutes les réservations)
+   * @returns Promise<number> Nombre de réservations libérées
+   */
+  async releaseStockReservation(
+    sessionId: string,
+    productId?: number
+  ): Promise<number> {
+    return await this.stockReservationRepository.releaseReservation(
+      sessionId,
+      productId
+    );
+  }
+
+  /**
+   * Confirmer les réservations (lors du checkout)
+   * Convertit les réservations en commande définitive
+   * @param sessionId ID de session du panier
+   * @returns Promise<number> Nombre de réservations confirmées
+   */
+  async confirmStockReservations(sessionId: string): Promise<number> {
+    return await this.stockReservationRepository.confirmReservations(sessionId);
+  }
+
+  /**
+   * Obtenir le stock disponible (stock réel - réservations actives)
+   * @param productId ID du produit
+   * @returns Promise<number> Stock disponible
+   */
+  async getAvailableStock(productId: number): Promise<number> {
+    return await this.stockReservationRepository.getAvailableStock(productId);
+  }
+
+  /**
+   * Mettre à jour la quantité d'une réservation existante
+   * @param sessionId ID de session
+   * @param productId ID du produit
+   * @param newQuantity Nouvelle quantité
+   * @returns Promise avec les informations de réservation mise à jour
+   * @throws Error si stock insuffisant pour augmenter la quantité
+   */
+  async updateReservationQuantity(
+    sessionId: string,
+    productId: number,
+    newQuantity: number
+  ): Promise<{
+    reservationId: number;
+    productId: number;
+    quantity: number;
+    availableStock: number;
+  } | null> {
+    const reservation =
+      await this.stockReservationRepository.updateReservationQuantity(
+        sessionId,
+        productId,
+        newQuantity
+      );
+
+    if (!reservation) {
+      return null;
+    }
+
+    const availableStock =
+      await this.stockReservationRepository.getAvailableStock(productId);
+
+    return {
+      reservationId: reservation.id,
+      productId: reservation.product_id,
+      quantity: reservation.quantity,
+      availableStock,
+    };
+  }
+
+  /**
+   * Nettoyer les réservations expirées
+   * À appeler périodiquement via un job cron
+   * @returns Promise<number> Nombre de réservations expirées
+   */
+  async cleanupExpiredReservations(): Promise<number> {
+    return await this.stockReservationRepository.expireOldReservations();
   }
 }

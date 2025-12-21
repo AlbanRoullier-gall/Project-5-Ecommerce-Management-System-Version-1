@@ -16,6 +16,7 @@ import {
   ProductController,
   CategoryController,
   ProductImageController,
+  StockController,
 } from "./controller";
 import { ResponseMapper, ProductMapper } from "./mapper";
 import { ProductImageData } from "../models/ProductImage";
@@ -29,6 +30,7 @@ export class ApiRouter {
   private productController: ProductController;
   private categoryController: CategoryController;
   private productImageController: ProductImageController;
+  private stockController: StockController;
   private productService: ProductService;
 
   constructor(pool: Pool) {
@@ -39,6 +41,7 @@ export class ApiRouter {
     this.productImageController = new ProductImageController(
       this.productService
     );
+    this.stockController = new StockController(this.productService);
   }
 
   /**
@@ -186,6 +189,37 @@ export class ApiRouter {
     // Servir une image de produit (public)
     app.get("/api/images/:imageId", (req: Request, res: Response) => {
       this.productImageController.serveProductImageFile(req, res);
+    });
+
+    // ===== ROUTES DE RÉSERVATION DE STOCK (PUBLIQUES) =====
+    // Ces routes sont utilisées par le cart-service pour gérer les réservations de stock
+
+    // Réserver du stock pour un panier
+    app.post("/api/stock/reserve", (req: Request, res: Response) => {
+      this.stockController.reserveStock(req, res);
+    });
+
+    // Libérer une réservation de stock
+    app.post("/api/stock/release", (req: Request, res: Response) => {
+      this.stockController.releaseStock(req, res);
+    });
+
+    // Confirmer les réservations (lors du checkout)
+    app.post("/api/stock/confirm", (req: Request, res: Response) => {
+      this.stockController.confirmReservations(req, res);
+    });
+
+    // Obtenir le stock disponible
+    app.get(
+      "/api/stock/available/:productId",
+      (req: Request, res: Response) => {
+        this.stockController.getAvailableStock(req, res);
+      }
+    );
+
+    // Mettre à jour la quantité d'une réservation
+    app.put("/api/stock/reservation", (req: Request, res: Response) => {
+      this.stockController.updateReservation(req, res);
     });
 
     // ===== ROUTES D'ADMINISTRATION =====

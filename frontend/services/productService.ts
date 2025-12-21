@@ -91,3 +91,39 @@ export async function getCategories(
 
   return response.data.categories;
 }
+
+/**
+ * Récupère le stock disponible réel d'un produit (stock - réservations actives)
+ * @param productId ID du produit
+ * @param fallbackStock Stock brut à utiliser en cas d'erreur (optionnel)
+ * @returns Stock disponible réel, ou fallbackStock si erreur
+ */
+export async function getAvailableStock(
+  productId: string | number,
+  fallbackStock?: number
+): Promise<number> {
+  try {
+    const response = await apiClient.get<
+      ApiResponse<{ productId: number; availableStock: number }>
+    >(`/api/stock/available/${productId}`);
+
+    if (!response.data || response.data.availableStock === undefined) {
+      // Fallback: utiliser le stock brut si fourni, sinon 0
+      console.warn(
+        `Réponse invalide pour le stock disponible du produit ${productId}, utilisation du fallback`
+      );
+      return fallbackStock !== undefined ? fallbackStock : 0;
+    }
+
+    return response.data.availableStock;
+  } catch (error) {
+    // En cas d'erreur, utiliser le stock brut comme fallback si fourni
+    console.warn(
+      `Impossible de récupérer le stock disponible pour le produit ${productId}:`,
+      error
+    );
+    // Si fallbackStock est fourni, l'utiliser (meilleur que 0)
+    // Sinon retourner 0 (sera géré par le composant)
+    return fallbackStock !== undefined ? fallbackStock : 0;
+  }
+}

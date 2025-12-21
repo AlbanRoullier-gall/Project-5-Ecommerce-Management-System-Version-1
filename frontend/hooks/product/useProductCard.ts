@@ -3,11 +3,12 @@
  * Encapsule toute la logique métier liée au panier pour un produit
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ProductPublicDTO } from "../../dto";
 import { useCart } from "../../contexts/CartContext";
 import { imageService } from "../../services/imageService";
 import { logger } from "../../services/logger";
+import * as productService from "../../services/productService";
 
 interface UseProductCardResult {
   quantityInCart: number;
@@ -31,8 +32,41 @@ export function useProductCard(
   product: ProductPublicDTO
 ): UseProductCardResult {
   const [isHovered, setIsHovered] = useState(false);
+  const [availableStock, setAvailableStock] = useState<number | null>(null);
+  const [isLoadingStock, setIsLoadingStock] = useState(true);
   const { cart, addToCart, updateQuantity, removeFromCart, isLoading } =
     useCart();
+
+  /**
+   * Récupère le stock disponible réel (stock - réservations actives)
+   */
+  useEffect(() => {
+    const fetchAvailableStock = async () => {
+      try {
+        setIsLoadingStock(true);
+        // Passer le stock brut comme fallback en cas d'erreur
+        const stock = await productService.getAvailableStock(
+          product.id,
+          product.stock ?? 0
+        );
+        setAvailableStock(stock);
+      } catch (error) {
+        logger.error(
+          "Erreur lors de la récupération du stock disponible",
+          error,
+          {
+            productId: product.id,
+          }
+        );
+        // En cas d'erreur, utiliser le stock brut comme fallback
+        setAvailableStock(product.stock ?? 0);
+      } finally {
+        setIsLoadingStock(false);
+      }
+    };
+
+    fetchAvailableStock();
+  }, [product.id, product.stock]);
 
   /**
    * Récupère l'URL de la première image du produit
@@ -53,12 +87,13 @@ export function useProductCard(
 
   /**
    * Vérifie la disponibilité du stock
+   * Utilise le stock disponible réel si disponible, sinon le stock brut
    */
-  const availableStock = product.stock ?? 0;
-  const isOutOfStock = !product.isActive || availableStock === 0;
-  const isLowStock = availableStock > 0 && availableStock < 10;
-  const canAddToCart = !isOutOfStock && availableStock > 0;
-  const canIncrement = !isOutOfStock && quantityInCart < availableStock;
+  const stock = availableStock !== null ? availableStock : product.stock ?? 0;
+  const isOutOfStock = !product.isActive || stock === 0;
+  const isLowStock = stock > 0 && stock < 10;
+  const canAddToCart = !isOutOfStock && stock > 0;
+  const canIncrement = !isOutOfStock && quantityInCart < stock;
 
   /**
    * Gère l'ajout au panier
@@ -80,10 +115,26 @@ export function useProductCard(
         product.description || undefined,
         imageUrl
       );
+      // Rafraîchir le stock disponible après l'ajout
+      const updatedStock = await productService.getAvailableStock(
+        product.id,
+        product.stock ?? 0
+      );
+      setAvailableStock(updatedStock);
     } catch (error) {
       logger.error("Erreur lors de l'ajout au panier", error, {
         productId: product.id,
       });
+      // Rafraîchir le stock en cas d'erreur (peut-être que le stock a changé)
+      try {
+        const updatedStock = await productService.getAvailableStock(
+          product.id,
+          product.stock ?? 0
+        );
+        setAvailableStock(updatedStock);
+      } catch (refreshError) {
+        // Ignorer les erreurs de rafraîchissement
+      }
     }
   }, [product, addToCart, canAddToCart]);
 
@@ -93,9 +144,13 @@ export function useProductCard(
   const handleIncrement = useCallback(async () => {
     if (!canIncrement) return;
 
-    const newQuantity = Math.min(quantityInCart + 1, availableStock);
+    const stock = availableStock !== null ? availableStock : product.stock ?? 0;
+    const newQuantity = Math.min(quantityInCart + 1, stock);
     try {
       await updateQuantity(product.id, newQuantity);
+      // Rafraîchir le stock disponible après la mise à jour
+      const updatedStock = await productService.getAvailableStock(product.id);
+      setAvailableStock(updatedStock);
     } catch (error) {
       logger.error("Erreur lors de la mise à jour de la quantité", error, {
         productId: product.id,
@@ -104,6 +159,7 @@ export function useProductCard(
     }
   }, [
     product.id,
+    product.stock,
     quantityInCart,
     updateQuantity,
     canIncrement,

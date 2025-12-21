@@ -31,16 +31,25 @@ export function useCartItem(item: CartItemPublicDTO): UseCartItemResult {
     setQuantity(item.quantity);
   }, [item.quantity]);
 
-  // Récupérer le stock du produit
+  // Récupérer le stock disponible réel (stock - réservations actives)
   useEffect(() => {
     const fetchStock = async () => {
       try {
-        const product = await productService.getProduct(String(item.productId));
-        setMaxQuantity(product.stock ?? 0);
+        setIsLoadingStock(true);
+        // Note: On n'a pas accès au stock brut ici, donc on utilise undefined comme fallback
+        // Le composant gérera l'affichage en fonction du maxQuantity
+        const availableStock = await productService.getAvailableStock(
+          String(item.productId)
+        );
+        setMaxQuantity(availableStock);
       } catch (error) {
-        logger.error("Erreur lors de la récupération du stock", error, {
-          productId: item.productId,
-        });
+        logger.error(
+          "Erreur lors de la récupération du stock disponible",
+          error,
+          {
+            productId: item.productId,
+          }
+        );
         // En cas d'erreur, on ne limite pas (maxQuantity reste undefined)
       } finally {
         setIsLoadingStock(false);
@@ -68,9 +77,27 @@ export function useCartItem(item: CartItemPublicDTO): UseCartItemResult {
       try {
         await updateQuantity(item.productId, finalQuantity);
         // La quantité sera mise à jour via le useEffect qui écoute item.quantity
+        // Rafraîchir le stock disponible après la mise à jour
+        try {
+          const updatedStock = await productService.getAvailableStock(
+            String(item.productId)
+          );
+          setMaxQuantity(updatedStock);
+        } catch (refreshError) {
+          // Ignorer les erreurs de rafraîchissement
+        }
       } catch (err) {
         // En cas d'erreur, la quantité reste celle de item.quantity (via useEffect)
         logger.error("Erreur lors de la mise à jour de la quantité", err);
+        // Rafraîchir le stock en cas d'erreur (peut-être que le stock a changé)
+        try {
+          const updatedStock = await productService.getAvailableStock(
+            String(item.productId)
+          );
+          setMaxQuantity(updatedStock);
+        } catch (refreshError) {
+          // Ignorer les erreurs de rafraîchissement
+        }
       } finally {
         setIsUpdating(false);
       }

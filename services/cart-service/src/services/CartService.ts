@@ -70,7 +70,8 @@ export default class CartService {
    */
   private async checkProductStock(
     productId: number,
-    requestedQuantity: number
+    requestedQuantity: number,
+    sessionId?: string
   ): Promise<void> {
     const startTime = Date.now();
     console.log(
@@ -84,15 +85,20 @@ export default class CartService {
         controller.abort();
       }, 10000); // Timeout de 10 secondes
 
-      const response = await fetch(
-        `${API_GATEWAY_URL}/api/stock/check/${productId}?quantity=${requestedQuantity}`,
-        {
-          headers: {
-            "X-Service-Request": "cart-service",
-          },
-          signal: controller.signal,
-        }
-      );
+      // Si sessionId est fourni, réserver le stock atomiquement
+      // Sinon, juste vérifier le stock (comportement legacy)
+      const url = sessionId
+        ? `${API_GATEWAY_URL}/api/stock/check/${productId}?quantity=${requestedQuantity}&sessionId=${encodeURIComponent(
+            sessionId
+          )}`
+        : `${API_GATEWAY_URL}/api/stock/check/${productId}?quantity=${requestedQuantity}`;
+
+      const response = await fetch(url, {
+        headers: {
+          "X-Service-Request": "cart-service",
+        },
+        signal: controller.signal,
+      });
 
       clearTimeout(timeoutId);
       const duration = Date.now() - startTime;
@@ -130,9 +136,15 @@ export default class CartService {
         throw new Error(data.data.message || "Stock insuffisant");
       }
 
-      console.log(
-        `[CartService] checkProductStock: ✅ Stock disponible pour productId=${productId}`
-      );
+      if (sessionId && data.data.reservationId) {
+        console.log(
+          `[CartService] checkProductStock: ✅ Stock réservé pour productId=${productId}, reservationId=${data.data.reservationId}`
+        );
+      } else {
+        console.log(
+          `[CartService] checkProductStock: ✅ Stock disponible pour productId=${productId}`
+        );
+      }
     } catch (error: any) {
       if (error.name === "AbortError") {
         console.error(
@@ -162,6 +174,103 @@ export default class CartService {
   }
 
   /**
+   * Mettre à jour la quantité d'une réservation de stock
+   * @param sessionId ID de session du panier
+   * @param productId ID du produit
+   * @param quantity Nouvelle quantité
+   */
+  private async updateStockReservation(
+    sessionId: string,
+    productId: number,
+    quantity: number
+  ): Promise<void> {
+    try {
+      const response = await fetch(`${API_GATEWAY_URL}/api/stock/reservation`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Service-Request": "cart-service",
+        },
+        body: JSON.stringify({
+          sessionId,
+          productId,
+          quantity,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.error || "Erreur lors de la mise à jour de la réservation";
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      console.log(
+        `[CartService] updateStockReservation: ✅ Réservation mise à jour pour productId=${productId}, quantity=${quantity}`
+      );
+    } catch (error: any) {
+      console.error(
+        `[CartService] updateStockReservation: Erreur:`,
+        error.message
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Libérer une réservation de stock
+   * @param sessionId ID de session du panier
+   * @param productId ID du produit (optionnel, si null libère toutes les réservations)
+   */
+  private async releaseStockReservation(
+    sessionId: string,
+    productId?: number
+  ): Promise<void> {
+    try {
+      const response = await fetch(`${API_GATEWAY_URL}/api/stock/release`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Service-Request": "cart-service",
+        },
+        body: JSON.stringify({
+          sessionId,
+          productId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.warn(
+          `[CartService] releaseStockReservation: Erreur ${response.status}: ${
+            errorData.error || "Erreur lors de la libération"
+          }`
+        );
+        // Ne pas throw, juste logger l'erreur (non bloquant)
+        return;
+      }
+
+      const data = await response.json();
+      const releasedCount = data.data?.releasedCount || 0;
+      if (releasedCount > 0) {
+        console.log(
+          `[CartService] releaseStockReservation: ✅ ${releasedCount} réservation(s) libérée(s) pour sessionId=${sessionId.substring(
+            0,
+            20
+          )}...`
+        );
+      }
+    } catch (error: any) {
+      console.warn(
+        `[CartService] releaseStockReservation: Erreur lors de la libération:`,
+        error.message
+      );
+      // Ne pas throw, juste logger l'erreur (non bloquant)
+    }
+  }
+
+  /**
    * Ajouter un article au panier
    */
   async addItem(
@@ -177,13 +286,17 @@ export default class CartService {
     );
 
     try {
-      // Vérifier le stock avant d'ajouter
+      // Vérifier et réserver le stock avant d'ajouter
       console.log(
-        `[CartService] addItem: Étape 1 - Vérification du stock pour productId=${itemData.productId}`
+        `[CartService] addItem: Étape 1 - Vérification/réservation du stock pour productId=${itemData.productId}`
       );
-      await this.checkProductStock(itemData.productId, itemData.quantity);
+      await this.checkProductStock(
+        itemData.productId,
+        itemData.quantity,
+        sessionId
+      );
       console.log(
-        `[CartService] addItem: ✅ Stock vérifié pour productId=${itemData.productId}`
+        `[CartService] addItem: ✅ Stock vérifié/réservé pour productId=${itemData.productId}`
       );
 
       // Récupérer ou créer le panier
@@ -214,14 +327,19 @@ export default class CartService {
         console.log(
           `[CartService] addItem: Article existant trouvé, quantité actuelle: ${existingItem.quantity}`
         );
-        // Si l'article existe, vérifier le stock total (quantité existante + nouvelle quantité)
+        // Si l'article existe, mettre à jour la réservation pour la quantité totale
         const totalQuantity = existingItem.quantity + itemData.quantity;
         console.log(
-          `[CartService] addItem: Vérification du stock pour quantité totale: ${totalQuantity}`
+          `[CartService] addItem: Mise à jour de la réservation pour quantité totale: ${totalQuantity}`
         );
-        await this.checkProductStock(itemData.productId, totalQuantity);
+        // Mettre à jour la réservation existante via l'API
+        await this.updateStockReservation(
+          sessionId,
+          itemData.productId,
+          totalQuantity
+        );
         console.log(
-          `[CartService] addItem: ✅ Stock vérifié pour quantité totale`
+          `[CartService] addItem: ✅ Réservation mise à jour pour quantité totale`
         );
       }
 
@@ -268,9 +386,6 @@ export default class CartService {
     productId: number,
     quantity: number
   ): Promise<Cart> {
-    // Vérifier le stock avant de mettre à jour
-    await this.checkProductStock(productId, quantity);
-
     // Récupérer ou créer le panier si nécessaire
     const cart = await this.getOrCreateCart(sessionId);
 
@@ -290,6 +405,15 @@ export default class CartService {
       );
     }
 
+    // Mettre à jour la réservation de stock
+    if (quantity === 0) {
+      // Si quantité = 0, libérer la réservation
+      await this.releaseStockReservation(sessionId, productId);
+    } else {
+      // Sinon, mettre à jour la réservation
+      await this.updateStockReservation(sessionId, productId, quantity);
+    }
+
     const updatedCart = cart.updateItemQuantity(productId, quantity);
     await this.cartRepository.updateCart(updatedCart);
 
@@ -302,6 +426,9 @@ export default class CartService {
   async removeItem(sessionId: string, productId: number): Promise<Cart> {
     // Récupérer ou créer le panier si nécessaire
     const cart = await this.getOrCreateCart(sessionId);
+
+    // Libérer la réservation de stock pour cet article
+    await this.releaseStockReservation(sessionId, productId);
 
     const updatedCart = cart.removeItem(productId);
     await this.cartRepository.updateCart(updatedCart);
@@ -330,6 +457,9 @@ export default class CartService {
     console.log(
       `[CartService] Panier vidé (nouveau itemCount: ${clearedCart.itemCount})`
     );
+
+    // Libérer toutes les réservations de stock pour cette session
+    await this.releaseStockReservation(sessionId);
 
     await this.cartRepository.updateCart(clearedCart);
     console.log(`[CartService] Panier vidé sauvegardé dans Redis`);

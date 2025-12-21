@@ -128,11 +128,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       } catch (err) {
         logger.error(errorMessage, err);
         const errorMsg = err instanceof Error ? err.message : errorMessage;
-        // Ne pas afficher les erreurs de stock insuffisant dans le panier
-        // La limitation est déjà gérée visuellement par le QuantitySelector
-        if (!errorMsg.toLowerCase().includes("stock insuffisant")) {
-          setError(errorMsg);
-        }
+        // Afficher toutes les erreurs, y compris les erreurs de stock insuffisant
+        // Cela permet à l'utilisateur de comprendre pourquoi l'action a échoué
+        setError(errorMsg);
         throw err;
       } finally {
         setIsLoading(false);
@@ -149,9 +147,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       setError(null);
-      console.log("[CartContext] refreshCart: Récupération du panier depuis l'API");
+      console.log(
+        "[CartContext] refreshCart: Récupération du panier depuis l'API"
+      );
       const cart = await getCart();
-      console.log(`[CartContext] refreshCart: Panier récupéré - ${cart ? `${cart.itemCount} articles` : "panier null/vide"}`);
+      console.log(
+        `[CartContext] refreshCart: Panier récupéré - ${
+          cart ? `${cart.itemCount} articles` : "panier null/vide"
+        }`
+      );
       setCart(cart);
       // Si le panier est null, c'est normal (pas de panier existant), ne pas afficher d'erreur
     } catch (err) {
@@ -241,7 +245,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         // Le service recharge automatiquement le panier
         const updatedCart = await updateCartItem(productId, updateData);
         if (updatedCart) {
-        setCart(updatedCart);
+          setCart(updatedCart);
         } else {
           // Si le panier est null, recharger
           await refreshCart();

@@ -134,9 +134,7 @@ class ApiClient {
         process.env.NODE_ENV === "production" &&
         typeof window !== "undefined"
       ) {
-        console.warn(
-          `[apiClient] Aucun token dans localStorage`
-        );
+        console.warn(`[apiClient] Aucun token dans localStorage`);
       }
     }
 

@@ -59,6 +59,7 @@ export class ApiRouter {
       path.startsWith("/api/products") ||
       path.startsWith("/api/categories") ||
       path.startsWith("/api/images") ||
+      path.startsWith("/api/stock") ||
       path.startsWith("/api/admin/products") ||
       path.startsWith("/api/admin/categories")
     )
