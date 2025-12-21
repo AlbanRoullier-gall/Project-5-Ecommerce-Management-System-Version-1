@@ -226,7 +226,7 @@ export class ApiRouter {
     );
     app.post(
       "/api/payment/finalize",
-      (req: Request, res: Response, next: NextFunction) => {
+      (req: Request, _res: Response, next: NextFunction) => {
         console.log(
           `[API Gateway] ✅ Route spécifique /api/payment/finalize interceptée - méthode: ${req.method}, path: ${req.path}`
         );

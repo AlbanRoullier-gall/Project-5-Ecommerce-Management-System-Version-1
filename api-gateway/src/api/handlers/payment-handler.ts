@@ -579,7 +579,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         console.log(
           `[Payment Finalize] ✅ Panier et données checkout vidés avec succès`
         );
-        
+
         // VÉRIFICATION: Vérifier que le panier est bien vide après le vidage
         // Attendre un peu pour la propagation Redis, puis vérifier
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -591,10 +591,12 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
               "X-Service-Request": "api-gateway",
             },
           });
-          
+
           if (verifyResponse.ok) {
-            const verifyCart = await verifyResponse.json();
-            const itemCount = verifyCart?.data?.itemCount || 0;
+            const verifyCart = (await verifyResponse.json()) as {
+              cart?: { itemCount?: number };
+            };
+            const itemCount = verifyCart?.cart?.itemCount || 0;
             if (itemCount > 0) {
               console.error(
                 `[Payment Finalize] ⚠️ ATTENTION: Le panier contient encore ${itemCount} article(s) après le vidage!`
