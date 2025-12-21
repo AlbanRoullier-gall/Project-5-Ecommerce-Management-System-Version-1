@@ -301,11 +301,22 @@ Cet email a été envoyé automatiquement, merci de ne pas y répondre.
       };
     };
   }): Promise<any> {
+    console.log("📧 EmailService.sendOrderConfirmationEmail: Début");
+    console.log("📧 Transporter configuré:", !!this.transporter);
+    console.log("📧 GMAIL_USER configuré:", !!process.env.GMAIL_USER);
+    console.log("📧 GMAIL_APP_PASSWORD configuré:", !!process.env.GMAIL_APP_PASSWORD);
+    
     if (!this.transporter) {
+      console.error("❌ Gmail transporter not configured - vérifiez GMAIL_USER et GMAIL_APP_PASSWORD");
       throw new Error("Gmail transporter not configured");
     }
 
     // Validation basique
+    console.log("📧 Validation des données reçues...");
+    console.log("📧 - customerData.email:", data.customerData?.email || "MANQUANT");
+    console.log("📧 - orderId:", data.orderId || "MANQUANT");
+    console.log("📧 - cart.items.length:", data.cart?.items?.length || 0);
+    
     if (
       !data.customerData?.email ||
       !data.orderId ||
@@ -321,6 +332,8 @@ Cet email a été envoyé automatiquement, merci de ne pas y répondre.
         "Données manquantes pour l'envoi de l'email de confirmation"
       );
     }
+    
+    console.log("📧 Validation réussie, préparation de l'email...");
 
     try {
       // Construire les données formatées
@@ -584,7 +597,15 @@ Elle fait office de confirmation de commande et de justificatif de paiement.
         `,
       };
 
+      console.log("📧 Envoi de l'email via Gmail transporter...");
+      console.log("📧 Destinataire:", customerEmail);
+      console.log("📧 Sujet:", `Confirmation de commande #${data.orderId}`);
+      
       const result = await this.transporter.sendMail(mailOptions);
+      
+      console.log("📧 ✅ Email envoyé avec succès!");
+      console.log("📧 MessageId:", result.messageId);
+      console.log("📧 Response:", result.response);
 
       return {
         messageId: result.messageId,
@@ -594,7 +615,8 @@ Elle fait office de confirmation de commande et de justificatif de paiement.
         sentAt: new Date(),
       };
     } catch (error) {
-      console.error("Error sending order confirmation email:", error);
+      console.error("❌ Error sending order confirmation email:", error);
+      console.error("❌ Error details:", JSON.stringify(error, null, 2));
       throw error;
     }
   }
