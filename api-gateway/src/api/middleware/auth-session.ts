@@ -17,13 +17,31 @@ export const AUTH_TOKEN_COOKIE = "auth_token";
 const COOKIE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 heures en millisecondes
 
 /**
- * Extrait le token d'authentification depuis le cookie
+ * Extrait le token d'authentification depuis le cookie ou le header Authorization
+ * Fallback sur le header Authorization si le cookie n'est pas disponible (cross-domain)
  * @param req - Requête Express
  * @returns Le token ou null si absent
  */
 export function extractAuthToken(req: Request): string | null {
+  // Essayer d'abord depuis le cookie (méthode préférée)
   const cookieToken = req.cookies?.[AUTH_TOKEN_COOKIE];
-  return cookieToken || null;
+  if (cookieToken) {
+    return cookieToken;
+  }
+
+  // Fallback: essayer depuis le header Authorization (pour cross-domain)
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.substring(7); // Enlever "Bearer "
+    if (process.env["NODE_ENV"] === "production") {
+      console.log(
+        `[extractAuthToken] Token récupéré depuis le header Authorization (fallback cross-domain)`
+      );
+    }
+    return token;
+  }
+
+  return null;
 }
 
 /**
