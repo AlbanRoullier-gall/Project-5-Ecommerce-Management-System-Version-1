@@ -23,12 +23,12 @@ export default class EmailService {
     this.fromEmail =
       process.env.FROM_EMAIL || process.env.ADMIN_EMAIL || "admin@example.com";
     this.fromName = process.env.FROM_NAME || "Nature de Pierre";
-    
+
     // Pour Resend, utiliser RESEND_FROM_EMAIL si défini, sinon utiliser un domaine par défaut
     // IMPORTANT: Resend nécessite un domaine vérifié. Utilisez votre domaine vérifié ou onboarding@resend.dev pour les tests
     this.resendFromEmail =
       process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-    
+
     // Email du compte Resend pour les tests (si on utilise onboarding@resend.dev, on doit envoyer à l'email du compte)
     // En mode test, Resend ne permet d'envoyer qu'à l'adresse email associée au compte
     this.resendTestEmail = process.env.RESEND_TEST_EMAIL || null;
@@ -100,6 +100,26 @@ export default class EmailService {
   }
 
   /**
+   * Helper pour déterminer le destinataire en fonction du mode Resend
+   * En mode test (onboarding@resend.dev), Resend ne permet d'envoyer qu'à l'email du compte
+   * @param {string} intendedRecipient L'adresse email prévue pour l'envoi
+   * @returns {string} L'adresse email à utiliser (peut être différente en mode test)
+   */
+  private getResendRecipient(intendedRecipient: string): string {
+    // Si on utilise onboarding@resend.dev (mode test) et qu'on a RESEND_TEST_EMAIL configuré
+    if (
+      this.resendFromEmail.includes("onboarding@resend.dev") &&
+      this.resendTestEmail
+    ) {
+      console.log(
+        `⚠️ Mode test Resend: email sera envoyé à ${this.resendTestEmail} au lieu de ${intendedRecipient}`
+      );
+      return this.resendTestEmail;
+    }
+    return intendedRecipient;
+  }
+
+  /**
    * Envoyer un email au client (formulaire de contact)
    * Le destinataire est déterminé depuis ADMIN_EMAIL (configuré côté serveur)
    * @param {Object} emailData Données de l'e-mail (sans champ to)
@@ -152,18 +172,10 @@ export default class EmailService {
         console.log("📧 Envoi de l'email de contact via Resend (API HTTP)...");
         const resendFrom = `${this.fromName} <${this.resendFromEmail}>`;
         console.log(`📧 From (Resend): ${resendFrom}`);
-        
-        // Si on utilise onboarding@resend.dev (mode test), on doit envoyer à l'email du compte Resend
-        // Sinon, utiliser ADMIN_EMAIL normalement
-        const recipientEmail = 
-          this.resendFromEmail.includes("onboarding@resend.dev") && this.resendTestEmail
-            ? this.resendTestEmail
-            : this.adminEmail;
-        
+
+        // Utiliser la méthode helper pour gérer le mode test Resend
+        const recipientEmail = this.getResendRecipient(this.adminEmail);
         console.log(`📧 To (Admin): ${recipientEmail}`);
-        if (recipientEmail !== this.adminEmail) {
-          console.log(`⚠️ Mode test Resend: email envoyé à ${recipientEmail} au lieu de ${this.adminEmail}`);
-        }
 
         const resendResult = await this.resend.emails.send({
           from: resendFrom,
@@ -254,9 +266,9 @@ export default class EmailService {
     userFullName?: string;
     user?: { firstName?: string; lastName?: string; email?: string };
   }): Promise<any> {
-    if (!this.transporter) {
-      console.error("Gmail transporter not configured");
-      throw new Error("Gmail transporter not configured");
+    if (!this.resend && !this.transporter) {
+      console.error("❌ Aucun service d'email configuré - vérifiez RESEND_API_KEY ou GMAIL_USER/GMAIL_APP_PASSWORD");
+      throw new Error("No email service configured");
     }
 
     const userFullName = this.buildUserFullName(data);
@@ -265,48 +277,97 @@ export default class EmailService {
       throw new Error("userEmail est requis");
     }
 
+    const subject = "Demande d'accès au backoffice rejetée - Nature de Pierre";
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #dc3545;">Notification</h2>
+        <p>Bonjour ${userFullName},</p>
+        <p>Votre demande d'accès au backoffice a été rejetée.</p>
+        <p>Si vous pensez qu'il s'agit d'une erreur, veuillez contacter l'administrateur.</p>
+        <p>Cordialement,<br>L'équipe d'administration Nature de Pierre</p>
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+        <p style="color: #666; font-size: 12px;">
+          Nature de Pierre - Interface d'administration
+        </p>
+      </div>
+    `;
+    const textContent = `
+      Notification
+      
+      Bonjour ${userFullName},
+      
+      Votre demande d'accès au backoffice a été rejetée.
+      Si vous pensez qu'il s'agit d'une erreur, veuillez contacter l'administrateur.
+      
+      Cordialement,
+      L'équipe d'administration Nature de Pierre
+    `;
+
     try {
-      const mailOptions = {
-        from: process.env.GMAIL_USER,
-        to: userEmail,
-        subject: "Demande d'accès au backoffice rejetée - Nature de Pierre",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #dc3545;">Notification</h2>
-            <p>Bonjour ${userFullName},</p>
-            <p>Votre demande d'accès au backoffice a été rejetée.</p>
-            <p>Si vous pensez qu'il s'agit d'une erreur, veuillez contacter l'administrateur.</p>
-            <p>Cordialement,<br>L'équipe d'administration Nature de Pierre</p>
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-            <p style="color: #666; font-size: 12px;">
-              Nature de Pierre - Interface d'administration
-            </p>
-          </div>
-        `,
-        text: `
-          Notification
-          
-          Bonjour ${userFullName},
-          
-          Votre demande d'accès au backoffice a été rejetée.
-          Si vous pensez qu'il s'agit d'une erreur, veuillez contacter l'administrateur.
-          
-          Cordialement,
-          L'équipe d'administration Nature de Pierre
-        `,
-      };
+      // Priorité 1: Utiliser Resend (API HTTP - fonctionne sur Railway)
+      if (this.resend) {
+        console.log("📧 Envoi de l'email de rejet backoffice via Resend (API HTTP)...");
+        const resendFrom = `${this.fromName} <${this.resendFromEmail}>`;
+        console.log(`📧 From (Resend): ${resendFrom}`);
+        
+        // Utiliser la méthode helper pour gérer le mode test Resend
+        const recipientEmail = this.getResendRecipient(userEmail);
+        console.log(`📧 To (User): ${recipientEmail}`);
+        
+        const resendResult = await this.resend.emails.send({
+          from: resendFrom,
+          to: [recipientEmail],
+          subject: subject,
+          html: htmlContent,
+          text: textContent,
+        });
 
-      const result = await this.transporter.sendMail(mailOptions);
+        if (resendResult.error) {
+          console.error("❌ Erreur Resend:", resendResult.error);
+          throw new Error(
+            `Resend error: ${JSON.stringify(resendResult.error)}`
+          );
+        }
 
-      return {
-        messageId: result.messageId,
-        status: "sent",
-        recipient: userEmail,
-        subject: mailOptions.subject,
-        sentAt: new Date(),
-      };
+        console.log("📧 ✅ Email de rejet backoffice envoyé avec succès via Resend!");
+        console.log("📧 MessageId:", resendResult.data?.id);
+
+        return {
+          messageId: resendResult.data?.id || "unknown",
+          status: "sent",
+          recipient: recipientEmail,
+          subject: subject,
+          sentAt: new Date(),
+        };
+      }
+      // Priorité 2: Utiliser Gmail SMTP (fallback pour développement local)
+      else if (this.transporter) {
+        console.log("📧 Envoi de l'email de rejet backoffice via Gmail transporter (SMTP)...");
+        const mailOptions = {
+          from: process.env.GMAIL_USER,
+          to: userEmail,
+          subject: subject,
+          html: htmlContent,
+          text: textContent,
+        };
+
+        const result = await this.transporter.sendMail(mailOptions);
+
+        console.log("📧 ✅ Email de rejet backoffice envoyé avec succès via Gmail SMTP!");
+        console.log("📧 MessageId:", result.messageId);
+
+        return {
+          messageId: result.messageId,
+          status: "sent",
+          recipient: userEmail,
+          subject: subject,
+          sentAt: new Date(),
+        };
+      } else {
+        throw new Error("No email service available");
+      }
     } catch (error) {
-      console.error("Error sending backoffice rejection notification:", error);
+      console.error("❌ Error sending backoffice rejection notification:", error);
       throw error;
     }
   }
@@ -320,37 +381,35 @@ export default class EmailService {
     userName: string;
     resetUrl: string;
   }): Promise<any> {
-    if (!this.transporter) {
-      console.error("Gmail transporter not configured");
-      throw new Error("Gmail transporter not configured");
+    if (!this.resend && !this.transporter) {
+      console.error("❌ Aucun service d'email configuré - vérifiez RESEND_API_KEY ou GMAIL_USER/GMAIL_APP_PASSWORD");
+      throw new Error("No email service configured");
     }
 
-    try {
-      const subject =
-        "Réinitialisation de votre mot de passe - Nature de Pierre";
-      const htmlMessage = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #13686a;">Réinitialisation de votre mot de passe</h2>
-          <p>Bonjour ${data.userName},</p>
-          <p>Vous avez demandé la réinitialisation de votre mot de passe pour votre compte Nature de Pierre.</p>
-          <p>Pour réinitialiser votre mot de passe, cliquez sur le lien ci-dessous :</p>
-          <p style="text-align: center; margin: 30px 0;">
-            <a href="${data.resetUrl}?token=${data.token}" 
-               style="background-color: #13686a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
-              Réinitialiser mon mot de passe
-            </a>
-          </p>
-          <p><strong>Ce lien est valide pendant 15 minutes.</strong></p>
-          <p>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-          <p style="color: #666; font-size: 12px;">
-            Nature de Pierre - Interface d'administration<br>
-            Cet email a été envoyé automatiquement, merci de ne pas y répondre.
-          </p>
-        </div>
-      `;
+    const subject = "Réinitialisation de votre mot de passe - Nature de Pierre";
+    const htmlMessage = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #13686a;">Réinitialisation de votre mot de passe</h2>
+        <p>Bonjour ${data.userName},</p>
+        <p>Vous avez demandé la réinitialisation de votre mot de passe pour votre compte Nature de Pierre.</p>
+        <p>Pour réinitialiser votre mot de passe, cliquez sur le lien ci-dessous :</p>
+        <p style="text-align: center; margin: 30px 0;">
+          <a href="${data.resetUrl}?token=${data.token}" 
+             style="background-color: #13686a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            Réinitialiser mon mot de passe
+          </a>
+        </p>
+        <p><strong>Ce lien est valide pendant 15 minutes.</strong></p>
+        <p>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+        <p style="color: #666; font-size: 12px;">
+          Nature de Pierre - Interface d'administration<br>
+          Cet email a été envoyé automatiquement, merci de ne pas y répondre.
+        </p>
+      </div>
+    `;
 
-      const textMessage = `
+    const textMessage = `
 Réinitialisation de votre mot de passe - Nature de Pierre
 
 Bonjour ${data.userName},
@@ -367,28 +426,73 @@ Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.
 ---
 Nature de Pierre - Interface d'administration
 Cet email a été envoyé automatiquement, merci de ne pas y répondre.
-      `;
+    `;
 
-      // Envoyer directement à l'utilisateur (pas via sendClientEmail qui envoie à l'admin)
-      const mailOptions = {
-        from: process.env.GMAIL_USER,
-        to: data.email, // Envoyer à l'adresse de l'utilisateur qui demande la réinitialisation
-        subject: subject,
-        html: htmlMessage,
-        text: textMessage,
-      };
+    try {
+      // Priorité 1: Utiliser Resend (API HTTP - fonctionne sur Railway)
+      if (this.resend) {
+        console.log("📧 Envoi de l'email de réinitialisation via Resend (API HTTP)...");
+        const resendFrom = `${this.fromName} <${this.resendFromEmail}>`;
+        console.log(`📧 From (Resend): ${resendFrom}`);
+        
+        // Utiliser la méthode helper pour gérer le mode test Resend
+        const recipientEmail = this.getResendRecipient(data.email);
+        console.log(`📧 To (User): ${recipientEmail}`);
+        
+        const resendResult = await this.resend.emails.send({
+          from: resendFrom,
+          to: [recipientEmail],
+          subject: subject,
+          html: htmlMessage,
+          text: textMessage,
+        });
 
-      const result = await this.transporter.sendMail(mailOptions);
+        if (resendResult.error) {
+          console.error("❌ Erreur Resend:", resendResult.error);
+          throw new Error(
+            `Resend error: ${JSON.stringify(resendResult.error)}`
+          );
+        }
 
-      return {
-        messageId: result.messageId,
-        status: "sent",
-        recipient: data.email,
-        subject: subject,
-        sentAt: new Date(),
-      };
+        console.log("📧 ✅ Email de réinitialisation envoyé avec succès via Resend!");
+        console.log("📧 MessageId:", resendResult.data?.id);
+
+        return {
+          messageId: resendResult.data?.id || "unknown",
+          status: "sent",
+          recipient: recipientEmail,
+          subject: subject,
+          sentAt: new Date(),
+        };
+      }
+      // Priorité 2: Utiliser Gmail SMTP (fallback pour développement local)
+      else if (this.transporter) {
+        console.log("📧 Envoi de l'email de réinitialisation via Gmail transporter (SMTP)...");
+        const mailOptions = {
+          from: process.env.GMAIL_USER,
+          to: data.email,
+          subject: subject,
+          html: htmlMessage,
+          text: textMessage,
+        };
+
+        const result = await this.transporter.sendMail(mailOptions);
+
+        console.log("📧 ✅ Email de réinitialisation envoyé avec succès via Gmail SMTP!");
+        console.log("📧 MessageId:", result.messageId);
+
+        return {
+          messageId: result.messageId,
+          status: "sent",
+          recipient: data.email,
+          subject: subject,
+          sentAt: new Date(),
+        };
+      } else {
+        throw new Error("No email service available");
+      }
     } catch (error) {
-      console.error("Error sending reset password email:", error);
+      console.error("❌ Error sending reset password email:", error);
       throw error;
     }
   }
@@ -737,9 +841,14 @@ Elle fait office de confirmation de commande et de justificatif de paiement.
         // Utiliser resendFromEmail (domaine vérifié) au lieu de fromEmail (qui peut être Gmail)
         const resendFrom = `${this.fromName} <${this.resendFromEmail}>`;
         console.log(`📧 From (Resend): ${resendFrom}`);
+        
+        // Utiliser la méthode helper pour gérer le mode test Resend
+        const recipientEmail = this.getResendRecipient(customerEmail);
+        console.log(`📧 To (Customer): ${recipientEmail}`);
+        
         const resendResult = await this.resend.emails.send({
           from: resendFrom,
-          to: [customerEmail],
+          to: [recipientEmail],
           subject: `Confirmation de commande #${data.orderId}`,
           html: mailOptions.html,
           text: mailOptions.text,
