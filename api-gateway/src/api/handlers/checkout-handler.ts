@@ -170,10 +170,11 @@ export const handleCheckoutComplete = async (
       cart = cartData.cart;
 
       console.log(
-        `[Checkout] Panier récupéré: ${cart?.items?.length || 0} articles, sessionId: ${cart?.sessionId?.substring(
-          0,
-          20
-        ) || "aucun"}...`
+        `[Checkout] Panier récupéré: ${
+          cart?.items?.length || 0
+        } articles, sessionId: ${
+          cart?.sessionId?.substring(0, 20) || "aucun"
+        }...`
       );
 
       if (!cart || !cart.items || cart.items.length === 0) {

@@ -256,8 +256,9 @@ export const authPasswordResetRateLimit = async (
 };
 
 /**
- * Rate limiting pour /api/payment/* (par utilisateur)
- * 5 requêtes / 5 min par utilisateur authentifié
+ * Rate limiting pour /api/payment/* (par utilisateur ou session panier)
+ * 5 requêtes / 5 min par utilisateur authentifié ou par session panier
+ * Permet les paiements sans authentification (guest checkout)
  */
 export const paymentRateLimit = async (
   req: Request,
@@ -265,17 +266,38 @@ export const paymentRateLimit = async (
   next: NextFunction
 ): Promise<void> => {
   const user = (req as any).user;
+  const cartSessionId = (req as any).cartSessionId;
 
-  if (!user || !user.userId) {
-    sendTooManyRequests(
-      res,
-      "Authentification requise pour les opérations de paiement.",
-      Date.now() + 300000
-    );
-    return;
+  // Identifier : utilisateur authentifié OU session panier
+  let identifier: string;
+  if (user && user.userId) {
+    // Utilisateur authentifié : utiliser userId
+    identifier = `user:${user.userId}`;
+  } else if (cartSessionId) {
+    // Client non authentifié : utiliser cartSessionId
+    identifier = `cart:${cartSessionId}`;
+  } else {
+    // Fallback : utiliser l'IP (limite plus stricte)
+    const ip = rateLimitService.getClientIp(req);
+    const result = await rateLimitService.checkGetStaticLimit(ip);
+    
+    setRateLimitHeaders(res, 500, result.remaining, result.resetTime);
+    
+    if (!result.allowed) {
+      sendTooManyRequests(
+        res,
+        "Trop de requêtes de paiement. Veuillez réessayer dans une minute.",
+        result.resetTime
+      );
+      return;
+    }
+    
+    return next();
   }
 
-  const result = await rateLimitService.checkPaymentLimit(String(user.userId));
+  // Utiliser le même service de rate limiting pour les paiements
+  // (le service gère les identifiants de manière générique)
+  const result = await rateLimitService.checkPaymentLimit(identifier);
 
   setRateLimitHeaders(res, 5, result.remaining, result.resetTime);
 
