@@ -14,7 +14,7 @@ import { AuthenticatedUser } from "./middleware/auth";
  */
 function addCorsHeadersToErrorResponse(req: Request, res: Response): void {
   const origin = req.headers.origin;
-  
+
   // Si l'origine est une URL Railway en production, l'autoriser automatiquement
   if (
     process.env["NODE_ENV"] === "production" &&
@@ -31,7 +31,10 @@ function addCorsHeadersToErrorResponse(req: Request, res: Response): void {
       "Access-Control-Allow-Headers",
       "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id"
     );
-    res.header("Access-Control-Expose-Headers", "Set-Cookie, X-Cart-Session-Id");
+    res.header(
+      "Access-Control-Expose-Headers",
+      "Set-Cookie, X-Cart-Session-Id"
+    );
   } else if (origin) {
     // Pour les autres origines, vérifier si elles sont autorisées
     const allowedOriginsEnv = process.env["ALLOWED_ORIGINS"];
@@ -48,7 +51,10 @@ function addCorsHeadersToErrorResponse(req: Request, res: Response): void {
           "Access-Control-Allow-Headers",
           "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id"
         );
-        res.header("Access-Control-Expose-Headers", "Set-Cookie, X-Cart-Session-Id");
+        res.header(
+          "Access-Control-Expose-Headers",
+          "Set-Cookie, X-Cart-Session-Id"
+        );
       }
     }
   }
@@ -203,7 +209,7 @@ export const proxyRequest = async (
     // Timeout réduit pour les requêtes cart (30 secondes au lieu de 60)
     // Les opérations cart devraient être rapides (Redis)
     const timeout = service === "cart" ? 30000 : 60000;
-    
+
     const startTime = Date.now();
     const response = await axios({
       method: req.method,
@@ -216,7 +222,7 @@ export const proxyRequest = async (
       maxContentLength: Infinity,
       responseType: "arraybuffer",
     });
-    
+
     const duration = Date.now() - startTime;
     if (duration > 5000) {
       console.warn(
@@ -355,6 +361,7 @@ export const proxyRequest = async (
             axiosError.code || "UNKNOWN"
           }: ${axiosError.message}`
         );
+        addCorsHeadersToErrorResponse(req, res);
         res.status(503).json({
           error: "Service Unavailable",
           message: `Erreur de communication avec le service ${service}`,
@@ -366,6 +373,7 @@ export const proxyRequest = async (
       }
     } else {
       console.error(`[Proxy Error] Erreur non-Axios:`, error);
+      addCorsHeadersToErrorResponse(req, res);
       res.status(500).json({
         error: "Internal Server Error",
         message: "Erreur interne du serveur",
