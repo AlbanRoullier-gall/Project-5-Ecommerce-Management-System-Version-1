@@ -192,45 +192,37 @@ export default class ProductService {
    * @returns {Promise<Product>} Produit mis à jour
    * @throws {Error} Si le produit n'existe pas ou si le stock est insuffisant
    */
+  /**
+   * Décrémenter le stock d'un produit de manière atomique
+   * Utilise une requête SQL atomique pour éviter les conditions de course
+   * @param {number} id ID du produit
+   * @param {number} quantity Quantité à décrémenter
+   * @returns {Promise<Product>} Produit avec stock mis à jour
+   * @throws {Error} Si le produit n'existe pas ou si le stock est insuffisant
+   */
   async decrementStock(id: number, quantity: number): Promise<Product> {
     if (quantity <= 0) {
       throw new Error("La quantité à décrémenter doit être positive");
     }
 
-    // Récupérer le produit actuel
+    // Vérifier que le produit existe
     const product = await this.productRepository.getProductById(id);
     if (!product) {
       throw new Error("Produit non trouvé");
     }
 
-    // Vérifier que le stock est suffisant
-    if (product.stock < quantity) {
-      throw new Error(
-        `Stock insuffisant. Stock disponible: ${product.stock}, quantité demandée: ${quantity}`
-      );
-    }
-
-    // Calculer le nouveau stock
-    const newStock = product.stock - quantity;
-
-    // Préparer les données de mise à jour
-    const updateData: Partial<ProductData> = {
-      stock: newStock,
-    };
-
-    // Si le stock atteint 0, désactiver automatiquement le produit
-    if (newStock === 0) {
-      updateData.is_active = false;
-    }
-
-    // Mettre à jour le stock (et éventuellement le statut)
-    const updatedProduct = await this.productRepository.updateProduct(
-      id,
-      updateData
-    );
+    // Décrémenter le stock de manière atomique
+    // Cette méthode garantit qu'aucune condition de course ne peut se produire
+    const updatedProduct =
+      await this.productRepository.decrementStockAtomically(id, quantity);
 
     if (!updatedProduct) {
-      throw new Error("Erreur lors de la mise à jour du stock");
+      // Récupérer le stock actuel pour l'erreur
+      const currentProduct = await this.productRepository.getProductById(id);
+      const currentStock = currentProduct?.stock ?? 0;
+      throw new Error(
+        `Stock insuffisant. Stock disponible: ${currentStock}, quantité demandée: ${quantity}`
+      );
     }
 
     return updatedProduct;

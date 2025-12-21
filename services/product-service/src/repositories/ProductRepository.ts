@@ -179,6 +179,51 @@ export class ProductRepository {
   }
 
   /**
+   * Décrémenter le stock de manière atomique
+   * Cette méthode garantit qu'aucune condition de course ne peut se produire
+   * en utilisant une seule requête SQL atomique
+   * @param {number} id ID du produit
+   * @param {number} quantity Quantité à décrémenter
+   * @returns {Promise<Product|null>} Produit mis à jour ou null si stock insuffisant
+   */
+  async decrementStockAtomically(
+    id: number,
+    quantity: number
+  ): Promise<Product | null> {
+    try {
+      // Mise à jour atomique : décrémente le stock seulement si le stock est suffisant
+      // Si le stock atteint 0, désactive automatiquement le produit
+      const query = `
+        UPDATE products 
+        SET 
+          stock = stock - $1,
+          is_active = CASE 
+            WHEN stock - $1 = 0 THEN false 
+            ELSE is_active 
+          END,
+          updated_at = NOW()
+        WHERE id = $2 AND stock >= $1
+        RETURNING id, name, description, price, vat_rate, category_id, is_active, stock, created_at, updated_at
+      `;
+
+      const result = await this.pool.query(query, [quantity, id]);
+
+      if (result.rows.length === 0) {
+        // Aucune ligne mise à jour = stock insuffisant ou produit non trouvé
+        return null;
+      }
+
+      return new Product(result.rows[0] as ProductData);
+    } catch (error) {
+      console.error(
+        "Erreur lors de la décrémentation atomique du stock:",
+        error
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Supprimer un produit
    * @param {number} id ID du produit
    * @returns {Promise<boolean>} True si supprimé, false si non trouvé

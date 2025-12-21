@@ -234,8 +234,10 @@ class ApiClient {
           hasSecure: setCookieHeader
             ? setCookieHeader.includes("Secure")
             : false,
-          allHeaders: allHeaders.filter(([key]) =>
-            key.toLowerCase().includes("cookie") || key.toLowerCase().includes("set-cookie")
+          allHeaders: allHeaders.filter(
+            ([key]) =>
+              key.toLowerCase().includes("cookie") ||
+              key.toLowerCase().includes("set-cookie")
           ),
         });
       }
