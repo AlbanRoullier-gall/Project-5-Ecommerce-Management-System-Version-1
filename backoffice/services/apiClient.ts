@@ -118,6 +118,26 @@ class ApiClient {
     const token = this.getAuthToken();
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
+      
+      // Log pour déboguer en production
+      if (
+        process.env.NODE_ENV === "production" &&
+        typeof window !== "undefined"
+      ) {
+        console.log(
+          `[apiClient] Token ajouté au header Authorization, longueur: ${token.length}`
+        );
+      }
+    } else {
+      // Log pour déboguer si le token n'est pas disponible
+      if (
+        process.env.NODE_ENV === "production" &&
+        typeof window !== "undefined"
+      ) {
+        console.warn(
+          `[apiClient] Aucun token dans localStorage pour l'endpoint: ${endpoint}`
+        );
+      }
     }
 
     return headers;

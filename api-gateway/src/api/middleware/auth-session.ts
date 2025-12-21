@@ -35,12 +35,19 @@ export function extractAuthToken(req: Request): string | null {
     const token = authHeader.substring(7); // Enlever "Bearer "
     if (process.env["NODE_ENV"] === "production") {
       console.log(
-        `[extractAuthToken] Token récupéré depuis le header Authorization (fallback cross-domain)`
+        `[extractAuthToken] Token récupéré depuis le header Authorization (fallback cross-domain), longueur: ${token.length}`
       );
     }
     return token;
   }
-
+  
+  // Log pour déboguer si aucun token n'est trouvé
+  if (process.env["NODE_ENV"] === "production") {
+    console.warn(
+      `[extractAuthToken] Aucun token trouvé. Cookie présent: ${!!cookieToken}, Header Authorization: ${authHeader || "aucun"}`
+    );
+  }
+  
   return null;
 }
 

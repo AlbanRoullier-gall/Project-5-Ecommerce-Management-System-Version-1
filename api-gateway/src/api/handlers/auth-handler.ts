@@ -335,11 +335,28 @@ export const handleVerifyAuth = async (req: Request, res: Response) => {
     const token = extractAuthToken(req);
 
     if (!token) {
+      // Log détaillé pour diagnostiquer le problème
       if (process.env["NODE_ENV"] === "production") {
+        const authHeader = req.headers.authorization;
         console.warn(
           `[VerifyAuth] Aucun token trouvé. Cookies disponibles: ${Object.keys(
             cookies
           ).join(", ")}`
+        );
+        console.warn(
+          `[VerifyAuth] Header Authorization: ${authHeader || "aucun"}`
+        );
+        console.warn(
+          `[VerifyAuth] Tous les headers:`,
+          Object.keys(req.headers)
+            .filter((key) =>
+              key.toLowerCase().includes("authorization") ||
+              key.toLowerCase().includes("cookie")
+            )
+            .reduce((acc, key) => {
+              acc[key] = req.headers[key];
+              return acc;
+            }, {} as Record<string, any>)
         );
       }
       return res.json({
