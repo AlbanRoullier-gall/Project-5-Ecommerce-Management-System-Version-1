@@ -35,6 +35,7 @@ export default class EmailService {
         host: "smtp.gmail.com",
         port: 587,
         secure: false, // true pour 465, false pour les autres ports
+        requireTLS: true, // Forcer STARTTLS
         auth: {
           user: process.env.GMAIL_USER,
           pass: cleanPassword, // Mot de passe nettoyé
@@ -43,17 +44,14 @@ export default class EmailService {
         connectionTimeout: 60000, // 60 secondes pour la connexion initiale
         greetingTimeout: 30000, // 30 secondes pour le greeting
         socketTimeout: 60000, // 60 secondes pour les opérations socket
-        // Options de retry
-        pool: false, // Pas de pool de connexions
-        maxConnections: 1,
-        maxMessages: 1,
         // Options TLS
         tls: {
           rejectUnauthorized: false, // Accepter les certificats auto-signés (pour Railway)
-          ciphers: "SSLv3",
         },
-      });
-      console.log("✅ Gmail transporter initialized with cleaned password and robust connection options");
+      } as any); // Type assertion pour éviter les erreurs TypeScript avec les options personnalisées
+      console.log(
+        "✅ Gmail transporter initialized with cleaned password and robust connection options"
+      );
     } else {
       console.warn("⚠️ Gmail credentials not configured");
     }
@@ -321,19 +319,27 @@ Cet email a été envoyé automatiquement, merci de ne pas y répondre.
     console.log("📧 EmailService.sendOrderConfirmationEmail: Début");
     console.log("📧 Transporter configuré:", !!this.transporter);
     console.log("📧 GMAIL_USER configuré:", !!process.env.GMAIL_USER);
-    console.log("📧 GMAIL_APP_PASSWORD configuré:", !!process.env.GMAIL_APP_PASSWORD);
-    
+    console.log(
+      "📧 GMAIL_APP_PASSWORD configuré:",
+      !!process.env.GMAIL_APP_PASSWORD
+    );
+
     if (!this.transporter) {
-      console.error("❌ Gmail transporter not configured - vérifiez GMAIL_USER et GMAIL_APP_PASSWORD");
+      console.error(
+        "❌ Gmail transporter not configured - vérifiez GMAIL_USER et GMAIL_APP_PASSWORD"
+      );
       throw new Error("Gmail transporter not configured");
     }
 
     // Validation basique
     console.log("📧 Validation des données reçues...");
-    console.log("📧 - customerData.email:", data.customerData?.email || "MANQUANT");
+    console.log(
+      "📧 - customerData.email:",
+      data.customerData?.email || "MANQUANT"
+    );
     console.log("📧 - orderId:", data.orderId || "MANQUANT");
     console.log("📧 - cart.items.length:", data.cart?.items?.length || 0);
-    
+
     if (
       !data.customerData?.email ||
       !data.orderId ||
@@ -349,7 +355,7 @@ Cet email a été envoyé automatiquement, merci de ne pas y répondre.
         "Données manquantes pour l'envoi de l'email de confirmation"
       );
     }
-    
+
     console.log("📧 Validation réussie, préparation de l'email...");
 
     try {
@@ -617,9 +623,9 @@ Elle fait office de confirmation de commande et de justificatif de paiement.
       console.log("📧 Envoi de l'email via Gmail transporter...");
       console.log("📧 Destinataire:", customerEmail);
       console.log("📧 Sujet:", `Confirmation de commande #${data.orderId}`);
-      
+
       const result = await this.transporter.sendMail(mailOptions);
-      
+
       console.log("📧 ✅ Email envoyé avec succès!");
       console.log("📧 MessageId:", result.messageId);
       console.log("📧 Response:", result.response);
