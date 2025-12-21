@@ -240,139 +240,6 @@ export default class EmailService {
   }
 
   /**
-   * Envoyer un email de demande d'approbation backoffice
-   */
-  /**
-   * Construire userFullName à partir de user object ou userFullName
-   */
-  private buildUserFullName(data: {
-    userFullName?: string;
-    user?: { firstName?: string; lastName?: string };
-  }): string {
-    if (data.userFullName) {
-      return data.userFullName;
-    }
-    if (data.user) {
-      return `${data.user.firstName || ""} ${data.user.lastName || ""}`.trim();
-    }
-    return "Utilisateur";
-  }
-
-  /**
-   * Envoyer un email de notification de rejet backoffice
-   */
-  async sendBackofficeRejectionNotification(data: {
-    userEmail?: string;
-    userFullName?: string;
-    user?: { firstName?: string; lastName?: string; email?: string };
-  }): Promise<any> {
-    if (!this.resend && !this.transporter) {
-      console.error("❌ Aucun service d'email configuré - vérifiez RESEND_API_KEY ou GMAIL_USER/GMAIL_APP_PASSWORD");
-      throw new Error("No email service configured");
-    }
-
-    const userFullName = this.buildUserFullName(data);
-    const userEmail = data.user?.email || data.userEmail;
-    if (!userEmail) {
-      throw new Error("userEmail est requis");
-    }
-
-    const subject = "Demande d'accès au backoffice rejetée - Nature de Pierre";
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #dc3545;">Notification</h2>
-        <p>Bonjour ${userFullName},</p>
-        <p>Votre demande d'accès au backoffice a été rejetée.</p>
-        <p>Si vous pensez qu'il s'agit d'une erreur, veuillez contacter l'administrateur.</p>
-        <p>Cordialement,<br>L'équipe d'administration Nature de Pierre</p>
-        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-        <p style="color: #666; font-size: 12px;">
-          Nature de Pierre - Interface d'administration
-        </p>
-      </div>
-    `;
-    const textContent = `
-      Notification
-      
-      Bonjour ${userFullName},
-      
-      Votre demande d'accès au backoffice a été rejetée.
-      Si vous pensez qu'il s'agit d'une erreur, veuillez contacter l'administrateur.
-      
-      Cordialement,
-      L'équipe d'administration Nature de Pierre
-    `;
-
-    try {
-      // Priorité 1: Utiliser Resend (API HTTP - fonctionne sur Railway)
-      if (this.resend) {
-        console.log("📧 Envoi de l'email de rejet backoffice via Resend (API HTTP)...");
-        const resendFrom = `${this.fromName} <${this.resendFromEmail}>`;
-        console.log(`📧 From (Resend): ${resendFrom}`);
-        
-        // Utiliser la méthode helper pour gérer le mode test Resend
-        const recipientEmail = this.getResendRecipient(userEmail);
-        console.log(`📧 To (User): ${recipientEmail}`);
-        
-        const resendResult = await this.resend.emails.send({
-          from: resendFrom,
-          to: [recipientEmail],
-          subject: subject,
-          html: htmlContent,
-          text: textContent,
-        });
-
-        if (resendResult.error) {
-          console.error("❌ Erreur Resend:", resendResult.error);
-          throw new Error(
-            `Resend error: ${JSON.stringify(resendResult.error)}`
-          );
-        }
-
-        console.log("📧 ✅ Email de rejet backoffice envoyé avec succès via Resend!");
-        console.log("📧 MessageId:", resendResult.data?.id);
-
-        return {
-          messageId: resendResult.data?.id || "unknown",
-          status: "sent",
-          recipient: recipientEmail,
-          subject: subject,
-          sentAt: new Date(),
-        };
-      }
-      // Priorité 2: Utiliser Gmail SMTP (fallback pour développement local)
-      else if (this.transporter) {
-        console.log("📧 Envoi de l'email de rejet backoffice via Gmail transporter (SMTP)...");
-        const mailOptions = {
-          from: process.env.GMAIL_USER,
-          to: userEmail,
-          subject: subject,
-          html: htmlContent,
-          text: textContent,
-        };
-
-        const result = await this.transporter.sendMail(mailOptions);
-
-        console.log("📧 ✅ Email de rejet backoffice envoyé avec succès via Gmail SMTP!");
-        console.log("📧 MessageId:", result.messageId);
-
-        return {
-          messageId: result.messageId,
-          status: "sent",
-          recipient: userEmail,
-          subject: subject,
-          sentAt: new Date(),
-        };
-      } else {
-        throw new Error("No email service available");
-      }
-    } catch (error) {
-      console.error("❌ Error sending backoffice rejection notification:", error);
-      throw error;
-    }
-  }
-
-  /**
    * Envoyer un email de réinitialisation de mot de passe
    */
   async sendResetPasswordEmail(data: {
@@ -382,7 +249,9 @@ export default class EmailService {
     resetUrl: string;
   }): Promise<any> {
     if (!this.resend && !this.transporter) {
-      console.error("❌ Aucun service d'email configuré - vérifiez RESEND_API_KEY ou GMAIL_USER/GMAIL_APP_PASSWORD");
+      console.error(
+        "❌ Aucun service d'email configuré - vérifiez RESEND_API_KEY ou GMAIL_USER/GMAIL_APP_PASSWORD"
+      );
       throw new Error("No email service configured");
     }
 
@@ -431,14 +300,16 @@ Cet email a été envoyé automatiquement, merci de ne pas y répondre.
     try {
       // Priorité 1: Utiliser Resend (API HTTP - fonctionne sur Railway)
       if (this.resend) {
-        console.log("📧 Envoi de l'email de réinitialisation via Resend (API HTTP)...");
+        console.log(
+          "📧 Envoi de l'email de réinitialisation via Resend (API HTTP)..."
+        );
         const resendFrom = `${this.fromName} <${this.resendFromEmail}>`;
         console.log(`📧 From (Resend): ${resendFrom}`);
-        
+
         // Utiliser la méthode helper pour gérer le mode test Resend
         const recipientEmail = this.getResendRecipient(data.email);
         console.log(`📧 To (User): ${recipientEmail}`);
-        
+
         const resendResult = await this.resend.emails.send({
           from: resendFrom,
           to: [recipientEmail],
@@ -454,7 +325,9 @@ Cet email a été envoyé automatiquement, merci de ne pas y répondre.
           );
         }
 
-        console.log("📧 ✅ Email de réinitialisation envoyé avec succès via Resend!");
+        console.log(
+          "📧 ✅ Email de réinitialisation envoyé avec succès via Resend!"
+        );
         console.log("📧 MessageId:", resendResult.data?.id);
 
         return {
@@ -467,7 +340,9 @@ Cet email a été envoyé automatiquement, merci de ne pas y répondre.
       }
       // Priorité 2: Utiliser Gmail SMTP (fallback pour développement local)
       else if (this.transporter) {
-        console.log("📧 Envoi de l'email de réinitialisation via Gmail transporter (SMTP)...");
+        console.log(
+          "📧 Envoi de l'email de réinitialisation via Gmail transporter (SMTP)..."
+        );
         const mailOptions = {
           from: process.env.GMAIL_USER,
           to: data.email,
@@ -478,7 +353,9 @@ Cet email a été envoyé automatiquement, merci de ne pas y répondre.
 
         const result = await this.transporter.sendMail(mailOptions);
 
-        console.log("📧 ✅ Email de réinitialisation envoyé avec succès via Gmail SMTP!");
+        console.log(
+          "📧 ✅ Email de réinitialisation envoyé avec succès via Gmail SMTP!"
+        );
         console.log("📧 MessageId:", result.messageId);
 
         return {
@@ -841,11 +718,11 @@ Elle fait office de confirmation de commande et de justificatif de paiement.
         // Utiliser resendFromEmail (domaine vérifié) au lieu de fromEmail (qui peut être Gmail)
         const resendFrom = `${this.fromName} <${this.resendFromEmail}>`;
         console.log(`📧 From (Resend): ${resendFrom}`);
-        
+
         // Utiliser la méthode helper pour gérer le mode test Resend
         const recipientEmail = this.getResendRecipient(customerEmail);
         console.log(`📧 To (Customer): ${recipientEmail}`);
-        
+
         const resendResult = await this.resend.emails.send({
           from: resendFrom,
           to: [recipientEmail],

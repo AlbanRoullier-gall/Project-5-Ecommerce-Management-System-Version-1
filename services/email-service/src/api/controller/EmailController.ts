@@ -9,7 +9,6 @@ import { ResponseMapper } from "../mapper";
 import type {
   EmailClientSendDTO,
   EmailResetPasswordDTO,
-  EmailBackofficeRejectionDTO,
 } from "../dto";
 
 export class EmailController {
@@ -106,40 +105,6 @@ export class EmailController {
       res.status(201).json(response);
     } catch (error: any) {
       console.error("Send reset password email error:", error);
-      res.status(500).json(ResponseMapper.internalServerError());
-    }
-  }
-
-  /**
-   * Envoyer un email de notification de rejet backoffice
-   */
-  async sendBackofficeRejectionNotification(
-    req: Request,
-    res: Response
-  ): Promise<void> {
-    try {
-      console.log(
-        "📧 EmailController: Starting sendBackofficeRejectionNotification"
-      );
-      console.log("📧 Request body:", req.body);
-
-      const emailBackofficeRejectionDTO: EmailBackofficeRejectionDTO = req.body;
-
-      const result =
-        await this.emailService.sendBackofficeRejectionNotification(
-          emailBackofficeRejectionDTO
-        );
-
-      const response = {
-        success: true,
-        messageId: result.messageId,
-        message: "Email de notification de rejet envoyé avec succès",
-        timestamp: new Date().toISOString(),
-      };
-
-      res.status(201).json(response);
-    } catch (error: any) {
-      console.error("Send backoffice rejection notification error:", error);
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }

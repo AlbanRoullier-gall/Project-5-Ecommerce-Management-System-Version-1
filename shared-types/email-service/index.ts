@@ -48,16 +48,3 @@ export interface EmailResetPasswordDTO {
   resetUrl: string;
 }
 
-/**
- * DTO pour l'envoi d'email de rejet backoffice
- */
-export interface EmailBackofficeRejectionDTO {
-  userEmail: string;
-  userFullName: string;
-  user: {
-    userId: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-  };
-}

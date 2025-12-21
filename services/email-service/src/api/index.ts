@@ -55,24 +55,6 @@ export class ApiRouter {
         resetUrl: Joi.string().uri().required(),
       }),
 
-      // Backoffice rejection notification schema
-      // Accepte soit userFullName/userEmail (compatibilité), soit user object (nouveau format)
-      backofficeRejectionNotificationSchema: Joi.alternatives().try(
-        Joi.object({
-          userEmail: Joi.string().email().required(),
-          userFullName: Joi.string().max(200).required(),
-        }).unknown(true),
-        Joi.object({
-          user: Joi.object({
-            firstName: Joi.string().optional(),
-            lastName: Joi.string().optional(),
-            email: Joi.string().email().required(),
-          })
-            .unknown(true)
-            .required(),
-        }).unknown(true)
-      ),
-
       // Order confirmation email schema
       // Format simplifié : orderId, cart, customerData, addressData
       // Les items peuvent avoir des champs supplémentaires (productId, unitPriceHT, etc.)
@@ -173,16 +155,6 @@ export class ApiRouter {
       this.validateRequest(schemas.emailResetPasswordSchema),
       (req: Request, res: Response) => {
         this.emailController.sendResetPasswordEmail(req, res);
-      }
-    );
-
-    // ===== ROUTES BACKOFFICE =====
-    // Envoyer une notification de rejet backoffice
-    app.post(
-      "/api/email/backoffice-rejection-notification",
-      this.validateRequest(schemas.backofficeRejectionNotificationSchema),
-      (req: Request, res: Response) => {
-        this.emailController.sendBackofficeRejectionNotification(req, res);
       }
     );
 
