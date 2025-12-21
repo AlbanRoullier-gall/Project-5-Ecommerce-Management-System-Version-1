@@ -479,36 +479,39 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       console.warn("⚠️ Erreur lors de l'envoi de l'email:", error);
     }
 
-    // 7. Vider le panier et les données checkout après création réussie (non-bloquant)
+    // 7. Vider le panier et les données checkout après création réussie (vraiment non-bloquant)
     // Le panier sera vidé automatiquement, ce qui supprime aussi les données checkout
-    console.log(`[Payment Finalize] Étape 7: Vidage du panier (non-bloquant)`);
-    try {
-      const clearCartResponse = await fetch(`${SERVICES.cart}/api/cart`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Service-Request": "api-gateway",
-        },
-        body: JSON.stringify({ sessionId: cartSessionId }),
+    // IMPORTANT: Ne pas utiliser await pour ne pas bloquer la réponse
+    console.log(`[Payment Finalize] Étape 7: Vidage du panier (non-bloquant, en arrière-plan)`);
+    
+    // Lancer le vidage du panier en arrière-plan sans attendre
+    fetch(`${SERVICES.cart}/api/cart`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Service-Request": "api-gateway",
+      },
+      body: JSON.stringify({ sessionId: cartSessionId }),
+    })
+      .then((clearCartResponse) => {
+        if (!clearCartResponse.ok) {
+          console.warn(
+            `[Payment Finalize] ⚠️ Erreur lors du vidage du panier: ${clearCartResponse.statusText}`
+          );
+        } else {
+          console.log(
+            `[Payment Finalize] ✅ Panier et données checkout vidés avec succès (en arrière-plan)`
+          );
+        }
+      })
+      .catch((error) => {
+        console.warn(`[Payment Finalize] ⚠️ Erreur lors du vidage du panier (en arrière-plan):`, error);
+        // Ne pas bloquer - la commande est déjà créée
       });
 
-      if (!clearCartResponse.ok) {
-        console.warn(
-          "⚠️ Erreur lors du vidage du panier:",
-          clearCartResponse.statusText
-        );
-      } else {
-        console.log(
-          `[Payment Finalize] ✅ Panier et données checkout vidés avec succès`
-        );
-      }
-    } catch (error) {
-      console.warn("⚠️ Erreur lors du vidage du panier:", error);
-      // Ne pas bloquer la réponse - la commande est déjà créée
-    }
-
+    // Envoyer la réponse immédiatement sans attendre le vidage du panier
     console.log(
-      `[Payment Finalize] ✅ Finalisation complète - orderId: ${orderId}`
+      `[Payment Finalize] ✅ Finalisation complète - orderId: ${orderId} (panier sera vidé en arrière-plan)`
     );
     return res.status(200).json({
       success: true,

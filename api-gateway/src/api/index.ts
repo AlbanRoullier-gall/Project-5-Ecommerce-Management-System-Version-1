@@ -221,11 +221,15 @@ export class ApiRouter {
     // Applique le middleware cart-session pour extraire le sessionId du cookie
     // NOTE: Pas de requireAuth car les clients peuvent finaliser un paiement sans être connectés
     // L'authentification se fait via la session Stripe et le cartSessionId
-    console.log("[API Gateway] Enregistrement de la route /api/payment/finalize");
+    console.log(
+      "[API Gateway] Enregistrement de la route /api/payment/finalize"
+    );
     app.post(
       "/api/payment/finalize",
       (req: Request, res: Response, next: NextFunction) => {
-        console.log(`[API Gateway] ✅ Route spécifique /api/payment/finalize interceptée - méthode: ${req.method}, path: ${req.path}`);
+        console.log(
+          `[API Gateway] ✅ Route spécifique /api/payment/finalize interceptée - méthode: ${req.method}, path: ${req.path}`
+        );
         next();
       },
       cartSessionMiddleware,
@@ -541,7 +545,9 @@ export class ApiRouter {
       async (req: Request, res: Response, next: NextFunction) => {
         // Log pour voir si cette route générique intercepte des routes spécifiques
         if (req.path === "/api/payment/finalize") {
-          console.log(`[API Gateway] ⚠️ Route générique intercepte /api/payment/finalize - cela ne devrait pas arriver!`);
+          console.log(
+            `[API Gateway] ⚠️ Route générique intercepte /api/payment/finalize - cela ne devrait pas arriver!`
+          );
         }
         // Appliquer le rate limiting selon la méthode HTTP et le chemin
         if (req.method === "GET") {
@@ -568,7 +574,9 @@ export class ApiRouter {
       async (req: Request, res: Response) => {
         // Log pour voir si cette route générique est appelée pour /api/payment/finalize
         if (req.path === "/api/payment/finalize") {
-          console.log(`[API Gateway] ⚠️ Route générique proxy appelée pour /api/payment/finalize - cela ne devrait pas arriver!`);
+          console.log(
+            `[API Gateway] ⚠️ Route générique proxy appelée pour /api/payment/finalize - cela ne devrait pas arriver!`
+          );
         }
         const service = this.getServiceFromPath(req.path);
         if (service) {
