@@ -448,13 +448,91 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // 6. Appeler email-service pour envoyer l'email de confirmation (BLOQUANT)
+    // 6. Vider le panier et les données checkout IMMÉDIATEMENT après création réussie (BLOQUANT)
+    // PRIORITÉ: Vider le panier en premier pour que l'utilisateur voie le résultat rapidement
+    // IMPORTANT: Le vidage est maintenant bloquant pour garantir qu'il soit exécuté
+    // Utiliser un timeout pour éviter de bloquer trop longtemps
+    console.log(
+      `[Payment Finalize] Étape 6: Vidage du panier (BLOQUANT avec timeout de 3 secondes)`
+    );
+    console.log(
+      `[Payment Finalize] cartSessionId pour vidage: ${cartSessionId.substring(
+        0,
+        20
+      )}...`
+    );
+    console.log(
+      `[Payment Finalize] URL du service cart: ${SERVICES.cart}/api/cart`
+    );
+
+    try {
+      const clearCartUrl = `${SERVICES.cart}/api/cart`;
+      const clearCartBody = JSON.stringify({ sessionId: cartSessionId });
+
+      console.log(
+        `[Payment Finalize] Envoi de la requête DELETE vers: ${clearCartUrl}`
+      );
+
+      // Créer un AbortController pour le timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 3000); // Timeout de 3 secondes (le vidage est généralement rapide)
+
+      const clearCartResponse = await fetch(clearCartUrl, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Service-Request": "api-gateway",
+        },
+        body: clearCartBody,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const responseText = await clearCartResponse.text();
+      console.log(
+        `[Payment Finalize] Réponse du vidage du panier: status=${
+          clearCartResponse.status
+        }, body=${responseText.substring(0, 200)}`
+      );
+
+      if (!clearCartResponse.ok) {
+        console.error(
+          `[Payment Finalize] ❌ Erreur lors du vidage du panier: status=${clearCartResponse.status}, ${clearCartResponse.statusText}`
+        );
+        // Ne pas bloquer la réponse même si le vidage échoue - la commande est déjà créée
+        // Mais loguer l'erreur pour investigation
+      } else {
+        console.log(
+          `[Payment Finalize] ✅ Panier et données checkout vidés avec succès`
+        );
+        // Note: Pas de vérification supplémentaire nécessaire car le vidage est bloquant
+      }
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        console.error(
+          `[Payment Finalize] ❌ Timeout de 3s atteint lors du vidage du panier`
+        );
+        // Ne pas bloquer la réponse même en cas de timeout - la commande est déjà créée
+      } else {
+        console.error(
+          `[Payment Finalize] ❌ Erreur lors du vidage du panier:`,
+          error
+        );
+        // Ne pas bloquer la réponse même si le vidage échoue - la commande est déjà créée
+      }
+    }
+
+    // 7. Appeler email-service pour envoyer l'email de confirmation (BLOQUANT)
     // IMPORTANT: L'envoi de l'email est maintenant bloquant pour garantir qu'il soit exécuté
     // Utiliser un timeout pour éviter de bloquer trop longtemps
     // email-service construit les données à partir des données brutes
     // SIMPLIFICATION : Utiliser directement checkoutData depuis le panier
+    // NOTE: L'email est envoyé APRÈS le vidage du panier pour que l'utilisateur voie le panier vidé rapidement
     console.log(
-      `[Payment Finalize] Étape 6: Envoi de l'email de confirmation (BLOQUANT avec timeout de 10 secondes)`
+      `[Payment Finalize] Étape 7: Envoi de l'email de confirmation (BLOQUANT avec timeout de 10 secondes)`
     );
     try {
       const emailUrl = `${SERVICES.email}/api/email/order-confirmation`;
@@ -517,82 +595,6 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
           error
         );
         // Ne pas bloquer la réponse même si l'email échoue - la commande est déjà créée
-      }
-    }
-
-    // 7. Vider le panier et les données checkout après création réussie (BLOQUANT)
-    // IMPORTANT: Le vidage est maintenant bloquant pour garantir qu'il soit exécuté
-    // Utiliser un timeout pour éviter de bloquer trop longtemps
-    console.log(
-      `[Payment Finalize] Étape 7: Vidage du panier (BLOQUANT avec timeout de 3 secondes)`
-    );
-    console.log(
-      `[Payment Finalize] cartSessionId pour vidage: ${cartSessionId.substring(
-        0,
-        20
-      )}...`
-    );
-    console.log(
-      `[Payment Finalize] URL du service cart: ${SERVICES.cart}/api/cart`
-    );
-
-    try {
-      const clearCartUrl = `${SERVICES.cart}/api/cart`;
-      const clearCartBody = JSON.stringify({ sessionId: cartSessionId });
-
-      console.log(
-        `[Payment Finalize] Envoi de la requête DELETE vers: ${clearCartUrl}`
-      );
-
-      // Créer un AbortController pour le timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 3000); // Timeout de 3 secondes (le vidage est généralement rapide)
-
-      const clearCartResponse = await fetch(clearCartUrl, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Service-Request": "api-gateway",
-        },
-        body: clearCartBody,
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      const responseText = await clearCartResponse.text();
-      console.log(
-        `[Payment Finalize] Réponse du vidage du panier: status=${
-          clearCartResponse.status
-        }, body=${responseText.substring(0, 200)}`
-      );
-
-      if (!clearCartResponse.ok) {
-        console.error(
-          `[Payment Finalize] ❌ Erreur lors du vidage du panier: status=${clearCartResponse.status}, ${clearCartResponse.statusText}`
-        );
-        // Ne pas bloquer la réponse même si le vidage échoue - la commande est déjà créée
-        // Mais loguer l'erreur pour investigation
-      } else {
-        console.log(
-          `[Payment Finalize] ✅ Panier et données checkout vidés avec succès`
-        );
-        // Note: Pas de vérification supplémentaire nécessaire car le vidage est bloquant
-      }
-    } catch (error: any) {
-      if (error.name === "AbortError") {
-        console.error(
-          `[Payment Finalize] ❌ Timeout de 5s atteint lors du vidage du panier`
-        );
-        // Ne pas bloquer la réponse même en cas de timeout - la commande est déjà créée
-      } else {
-        console.error(
-          `[Payment Finalize] ❌ Erreur lors du vidage du panier:`,
-          error
-        );
-        // Ne pas bloquer la réponse même si le vidage échoue - la commande est déjà créée
       }
     }
 
