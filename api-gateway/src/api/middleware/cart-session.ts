@@ -103,6 +103,7 @@ export function cartSessionMiddleware(
   res: Response,
   next: NextFunction
 ): void {
+  console.log(`[Cart Session Middleware] Requête: ${req.method} ${req.path}`);
   // Extraire le sessionId du cookie (ou header en fallback)
   let sessionId = extractCartSessionId(req);
 
