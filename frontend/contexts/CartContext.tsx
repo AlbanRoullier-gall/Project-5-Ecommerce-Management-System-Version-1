@@ -287,8 +287,23 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
               reloadError
             );
           }
+          // Ne pas propager l'erreur pour les erreurs "article non trouvé"
+          return;
         } else {
+          // Pour les erreurs de stock, ne pas afficher dans CartContext
+          // Elles seront gérées par useCartItem, useProductCard, useProductPage
+          if (
+            errorMsg.toLowerCase().includes("stock insuffisant") ||
+            errorMsg.toLowerCase().includes("stock unavailable") ||
+            errorMsg.toLowerCase().includes("insufficient stock")
+          ) {
+            // Ne pas afficher l'erreur dans CartContext, juste la propager
+            throw err;
+          }
+          // Pour les autres erreurs, afficher dans CartContext
           setError(errorMsg);
+          // Re-lancer l'erreur pour que les hooks puissent la capturer
+          throw err;
         }
       } finally {
         setIsLoading(false);

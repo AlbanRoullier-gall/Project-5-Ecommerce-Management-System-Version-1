@@ -5,123 +5,110 @@
 import { useState, useCallback, useEffect } from "react";
 import { useCart, CartItemPublicDTO } from "../../contexts/CartContext";
 import { logger } from "../../services/logger";
-import * as productService from "../../services/productService";
 
 interface UseCartItemResult {
   quantity: number;
-  isUpdating: boolean;
-  handleQuantityChange: (newQuantity: number) => Promise<void>;
+  isLoading: boolean;
+  handleIncrement: () => Promise<void>;
+  handleDecrement: () => Promise<void>;
   handleRemove: () => Promise<void>;
-  maxQuantity: number | undefined;
-  isLoadingStock: boolean;
+  stockError: string | null; // Message d'erreur uniquement quand l'API retourne une erreur de stock
 }
 
 /**
  * Hook pour gérer l'état et les actions d'un item du panier
  */
 export function useCartItem(item: CartItemPublicDTO): UseCartItemResult {
-  const { updateQuantity, removeFromCart } = useCart();
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [quantity, setQuantity] = useState(item.quantity);
-  const [maxQuantity, setMaxQuantity] = useState<number | undefined>(undefined);
-  const [isLoadingStock, setIsLoadingStock] = useState(true);
+  const { updateQuantity, removeFromCart, isLoading } = useCart();
+  const [stockError, setStockError] = useState<string | null>(null);
 
-  // Synchroniser la quantité avec l'item du panier (après mise à jour)
+  // Réinitialiser l'erreur de stock quand la quantité change (mise à jour réussie)
   useEffect(() => {
-    setQuantity(item.quantity);
+    setStockError(null);
   }, [item.quantity]);
 
-  // Récupérer le stock disponible réel (stock - réservations actives)
-  useEffect(() => {
-    const fetchStock = async () => {
+  /**
+   * Gère l'augmentation de la quantité
+   * Comme dans useProductPage et useProductCard, on incrémente directement
+   * Le backend validera le stock disponible et retournera une erreur si nécessaire
+   */
+  const handleIncrement = useCallback(async () => {
+    // Réinitialiser l'erreur de stock avant la nouvelle tentative
+    setStockError(null);
+
+    try {
+      // Incrémenter directement, comme dans useProductPage et useProductCard
+      // Le backend gérera la validation du stock disponible
+      await updateQuantity(item.productId, item.quantity + 1);
+    } catch (error: any) {
+      logger.error("Erreur lors de la mise à jour de la quantité", error, {
+        productId: item.productId,
+        quantity: item.quantity + 1,
+      });
+
+      // Vérifier si c'est une erreur de stock insuffisant
+      // Vérifier dans error.message, error.data.message, et error.data.error
+      const errorMessage =
+        error?.message ||
+        error?.data?.message ||
+        error?.data?.error ||
+        String(error);
+
+      if (
+        errorMessage.toLowerCase().includes("stock insuffisant") ||
+        errorMessage.toLowerCase().includes("stock unavailable") ||
+        errorMessage.toLowerCase().includes("insufficient stock")
+      ) {
+        // Afficher simplement "Stock limité" sans le nombre
+        setStockError("Stock limité");
+      }
+    }
+  }, [item.productId, item.quantity, updateQuantity]);
+
+  /**
+   * Gère la diminution de la quantité
+   * Si quantité = 1, on supprime l'article
+   * Le stock disponible sera automatiquement rafraîchi via le useEffect qui écoute item.quantity
+   */
+  const handleDecrement = useCallback(async () => {
+    // Réinitialiser l'erreur de stock avant la nouvelle tentative
+    setStockError(null);
+
+    if (item.quantity <= 1) {
+      // Si quantité = 1, on supprime l'article
       try {
-        setIsLoadingStock(true);
-        // Note: On n'a pas accès au stock brut ici, donc on utilise undefined comme fallback
-        // Le composant gérera l'affichage en fonction du maxQuantity
-        const availableStock = await productService.getAvailableStock(
-          String(item.productId)
-        );
-        setMaxQuantity(availableStock);
+        await removeFromCart(item.productId);
       } catch (error) {
-        logger.error(
-          "Erreur lors de la récupération du stock disponible",
-          error,
-          {
-            productId: item.productId,
-          }
-        );
-        // En cas d'erreur, on ne limite pas (maxQuantity reste undefined)
-      } finally {
-        setIsLoadingStock(false);
+        logger.error("Erreur lors de la suppression de l'article", error, {
+          productId: item.productId,
+        });
       }
-    };
-
-    fetchStock();
-  }, [item.productId]);
-
-  const handleQuantityChange = useCallback(
-    async (newQuantity: number) => {
-      if (newQuantity < 1) return;
-      if (isUpdating) return; // Éviter les appels multiples simultanés
-
-      // Limiter la quantité au stock disponible
-      const finalQuantity =
-        maxQuantity !== undefined
-          ? Math.min(newQuantity, maxQuantity)
-          : newQuantity;
-
-      // Ne pas mettre à jour la quantité locale immédiatement
-      // Attendre la confirmation du serveur
-      setIsUpdating(true);
-
+    } else {
       try {
-        await updateQuantity(item.productId, finalQuantity);
-        // La quantité sera mise à jour via le useEffect qui écoute item.quantity
-        // Rafraîchir le stock disponible après la mise à jour
-        try {
-          const updatedStock = await productService.getAvailableStock(
-            String(item.productId)
-          );
-          setMaxQuantity(updatedStock);
-        } catch (refreshError) {
-          // Ignorer les erreurs de rafraîchissement
-        }
-      } catch (err) {
-        // En cas d'erreur, la quantité reste celle de item.quantity (via useEffect)
-        logger.error("Erreur lors de la mise à jour de la quantité", err);
-        // Rafraîchir le stock en cas d'erreur (peut-être que le stock a changé)
-        try {
-          const updatedStock = await productService.getAvailableStock(
-            String(item.productId)
-          );
-          setMaxQuantity(updatedStock);
-        } catch (refreshError) {
-          // Ignorer les erreurs de rafraîchissement
-        }
-      } finally {
-        setIsUpdating(false);
+        await updateQuantity(item.productId, item.quantity - 1);
+      } catch (error) {
+        logger.error("Erreur lors de la mise à jour de la quantité", error, {
+          productId: item.productId,
+          quantity: item.quantity - 1,
+        });
       }
-    },
-    [item.productId, item.quantity, updateQuantity, maxQuantity, isUpdating]
-  );
+    }
+  }, [item.productId, item.quantity, updateQuantity, removeFromCart]);
 
   const handleRemove = useCallback(async () => {
-    setIsUpdating(true);
     try {
       await removeFromCart(item.productId);
     } catch (err) {
       logger.error("Error removing item", err, { productId: item.productId });
-    } finally {
-      setIsUpdating(false);
     }
   }, [item.productId, removeFromCart]);
 
   return {
-    quantity,
-    isUpdating,
-    handleQuantityChange,
+    quantity: item.quantity,
+    isLoading,
+    handleIncrement,
+    handleDecrement,
     handleRemove,
-    maxQuantity,
-    isLoadingStock,
+    stockError,
   };
 }

@@ -200,8 +200,11 @@ export default class CartService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        // Extraire le message d'erreur depuis errorData.message, errorData.error, ou error
         const errorMessage =
-          errorData.error || "Erreur lors de la mise à jour de la réservation";
+          errorData.message ||
+          errorData.error ||
+          `Erreur lors de la mise à jour de la réservation (${response.status})`;
         throw new Error(errorMessage);
       }
 

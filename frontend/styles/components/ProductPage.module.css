@@ -44,6 +44,19 @@
     height: 100%;
   }
 
+  .stockError {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    background: #fee2e2;
+    color: #dc2626;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
   .actions {
     padding: 0 0 0.75rem 0;
     border-top: 1px solid #eef2f7;

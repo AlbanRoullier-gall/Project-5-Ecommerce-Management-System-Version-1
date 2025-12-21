@@ -11,10 +11,13 @@ interface ItemDisplayProps {
   showQuantityControls?: boolean;
   showRemoveButton?: boolean;
   onQuantityChange?: (newQuantity: number) => void | Promise<void>;
+  onIncrement?: () => void | Promise<void>;
+  onDecrement?: () => void | Promise<void>;
   onRemove?: () => void | Promise<void>;
   isUpdating?: boolean;
   currentQuantity?: number;
   maxQuantity?: number;
+  stockError?: string | null;
 }
 
 /**
@@ -27,10 +30,13 @@ const ItemDisplay: React.FC<ItemDisplayProps> = ({
   showQuantityControls = false,
   showRemoveButton = false,
   onQuantityChange,
+  onIncrement,
+  onDecrement,
   onRemove,
   isUpdating = false,
   currentQuantity,
   maxQuantity,
+  stockError,
 }) => {
   const quantity = currentQuantity ?? item.quantity;
   const productImage = item.imageUrl || PLACEHOLDER_IMAGE_PATH;
@@ -90,7 +96,37 @@ const ItemDisplay: React.FC<ItemDisplayProps> = ({
           </div>
 
           <div className={styles.footer}>
-            {showQuantityControls && onQuantityChange ? (
+            {stockError && (
+              <div className={styles.stockError}>
+                <i className="fas fa-exclamation-triangle"></i>
+                {stockError}
+              </div>
+            )}
+            {showQuantityControls && onIncrement && onDecrement ? (
+              <div className={styles.quantityControls}>
+                <button
+                  className={styles.qtyButton}
+                  onClick={onDecrement}
+                  disabled={isUpdating}
+                  type="button"
+                >
+                  <i className="fas fa-minus"></i>
+                </button>
+
+                <div className={styles.qtyDisplay}>
+                  {quantity} {quantity > 1 ? "articles" : "article"}
+                </div>
+
+                <button
+                  className={styles.qtyButton}
+                  onClick={onIncrement}
+                  disabled={isUpdating}
+                  type="button"
+                >
+                  <i className="fas fa-plus"></i>
+                </button>
+              </div>
+            ) : showQuantityControls && onQuantityChange ? (
               <div className={styles.quantitySection}>
                 <QuantitySelector
                   quantity={quantity}

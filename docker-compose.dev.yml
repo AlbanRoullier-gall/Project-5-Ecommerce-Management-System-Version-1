@@ -263,7 +263,7 @@ services:
     ports:
       - "3010:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
       - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
       - NODE_ENV=development
       - WATCHPACK_POLLING=true

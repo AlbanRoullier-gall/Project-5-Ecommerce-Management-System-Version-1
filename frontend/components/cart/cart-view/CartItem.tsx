@@ -15,11 +15,11 @@ interface CartItemProps {
 const CartItem: React.FC<CartItemProps> = ({ item }) => {
   const {
     quantity,
-    isUpdating,
-    handleQuantityChange,
+    isLoading,
+    handleIncrement,
+    handleDecrement,
     handleRemove,
-    maxQuantity,
-    isLoadingStock,
+    stockError,
   } = useCartItem(item);
 
   return (
@@ -29,11 +29,12 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
       showDescription={false}
       showQuantityControls={true}
       showRemoveButton={true}
-      onQuantityChange={handleQuantityChange}
+      onIncrement={handleIncrement}
+      onDecrement={handleDecrement}
       onRemove={handleRemove}
-      isUpdating={isUpdating || isLoadingStock}
+      isUpdating={isLoading}
       currentQuantity={quantity}
-      maxQuantity={maxQuantity}
+      stockError={stockError}
     />
   );
 };

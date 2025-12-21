@@ -74,7 +74,7 @@ export class StockController {
         error.message.includes("non trouvé") ||
         error.message.includes("plus disponible")
       ) {
-        res.status(400).json(ResponseMapper.badRequestError(error.message));
+        res.status(400).json(ResponseMapper.validationError(error.message));
         return;
       }
       res.status(500).json(ResponseMapper.internalServerError());
@@ -265,11 +265,20 @@ export class StockController {
       );
     } catch (error: any) {
       console.error("Erreur lors de la mise à jour de la réservation:", error);
-      if (error.message.includes("Stock insuffisant")) {
-        res.status(400).json(ResponseMapper.badRequestError(error.message));
+      // Vérifier si c'est une erreur de stock insuffisant (peut être dans error.message ou error)
+      const errorMessage = error?.message || String(error);
+      if (errorMessage.includes("Stock insuffisant")) {
+        res.status(400).json(ResponseMapper.validationError(errorMessage));
         return;
       }
-      res.status(500).json(ResponseMapper.internalServerError());
+      // Pour les autres erreurs, retourner le message d'erreur si disponible
+      res
+        .status(500)
+        .json(
+          ResponseMapper.error(
+            errorMessage || "Une erreur inattendue s'est produite"
+          )
+        );
     }
   }
 }

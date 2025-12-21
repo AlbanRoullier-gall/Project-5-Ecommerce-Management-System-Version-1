@@ -145,6 +145,66 @@
     gap: 1rem;
   }
 
+  .quantityControls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .qtyButton {
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #13686a 0%, #0dd3d1 100%);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(19, 104, 106, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .qtyButton:hover:not(:disabled) {
+    transform: scale(1.08);
+  }
+
+  .qtyButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .qtyDisplay {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    background: #f3f4f6;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #13686a;
+    text-align: center;
+  }
+
+  .stockError {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    background: #fee2e2;
+    color: #dc2626;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    width: 100%;
+  }
+
   .quantityLabel {
     font-size: 0.875rem;
     color: #6b7280;

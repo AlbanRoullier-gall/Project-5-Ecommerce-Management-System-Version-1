@@ -397,12 +397,12 @@ export class RateLimitService {
     const windowSeconds = Math.floor(config.windowMs / 1000);
 
     try {
-      const current = await this.redis.incr(key);
+    const current = await this.redis.incr(key);
 
-      if (current === 1) {
-        // Première requête, définir le TTL
+    if (current === 1) {
+      // Première requête, définir le TTL
         try {
-          await this.redis.expire(key, windowSeconds);
+      await this.redis.expire(key, windowSeconds);
         } catch (expireError) {
           console.error(
             `❌ Redis: Erreur lors de la définition du TTL pour ${key}:`,
@@ -410,9 +410,9 @@ export class RateLimitService {
           );
           // Continuer même si expire échoue
         }
-      }
+    }
 
-      const remaining = Math.max(0, config.maxRequests - current);
+    const remaining = Math.max(0, config.maxRequests - current);
       let ttl = windowSeconds;
       try {
         ttl = await this.redis.ttl(key);
@@ -427,13 +427,13 @@ export class RateLimitService {
         // Utiliser windowSeconds comme fallback
       }
 
-      const resetTime = Date.now() + ttl * 1000;
+    const resetTime = Date.now() + ttl * 1000;
 
-      return {
-        allowed: current <= config.maxRequests,
-        remaining,
-        resetTime,
-      };
+    return {
+      allowed: current <= config.maxRequests,
+      remaining,
+      resetTime,
+    };
     } catch (error: any) {
       // En cas d'erreur Redis, permettre la requête (fallback gracieux)
       console.error(

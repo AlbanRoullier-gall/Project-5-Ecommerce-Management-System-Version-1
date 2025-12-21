@@ -27,6 +27,7 @@ export default function ProductPage() {
     handleIncrement,
     handleDecrement,
     handleGoHome,
+    stockError,
   } = useProductPage(product);
 
   if (isLoading) {
@@ -102,6 +103,12 @@ export default function ProductPage() {
               <div className={styles.panel}>
                 <ProductInfo product={product} />
                 <ProductPriceBox product={product} />
+                {stockError && (
+                  <div className={styles.stockError}>
+                    <i className="fas fa-exclamation-triangle"></i>
+                    {stockError}
+                  </div>
+                )}
                 <div className={styles.actions}>
                   {quantityInCart === 0 ? (
                     <button

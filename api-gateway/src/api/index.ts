@@ -273,6 +273,28 @@ export class ApiRouter {
     // Stock - Route orchestrée pour vérifier le stock (utilisée par cart-service)
     app.get("/api/stock/check/:productId", handleCheckStock);
 
+    // Stock - Route pour obtenir le stock disponible (proxifiée vers product-service)
+    app.get(
+      "/api/stock/available/:productId",
+      async (req: Request, res: Response) => {
+        await proxyRequest(req, res, "product");
+      }
+    );
+
+    // Stock - Routes pour réserver/libérer le stock (proxifiées vers product-service)
+    app.post("/api/stock/reserve", async (req: Request, res: Response) => {
+      await proxyRequest(req, res, "product");
+    });
+    app.post("/api/stock/release", async (req: Request, res: Response) => {
+      await proxyRequest(req, res, "product");
+    });
+    app.post("/api/stock/confirm", async (req: Request, res: Response) => {
+      await proxyRequest(req, res, "product");
+    });
+    app.put("/api/stock/reservation", async (req: Request, res: Response) => {
+      await proxyRequest(req, res, "product");
+    });
+
     // ===== PROXY AUTOMATIQUE POUR TOUTES LES AUTRES ROUTES =====
     // IMPORTANT: L'ordre est crucial - les routes spécifiques doivent être enregistrées AVANT les routes génériques
 

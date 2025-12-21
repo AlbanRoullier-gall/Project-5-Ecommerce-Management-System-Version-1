@@ -19,6 +19,7 @@ interface UseProductPageResult {
   handleIncrement: () => Promise<void>;
   handleDecrement: () => Promise<void>;
   handleGoHome: () => void;
+  stockError: string | null; // Message d'erreur uniquement quand l'API retourne une erreur de stock
 }
 
 /**
@@ -31,6 +32,7 @@ export function useProductPage(
   const { cart, addToCart, updateQuantity, removeFromCart, isLoading } =
     useCart();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [stockError, setStockError] = useState<string | null>(null);
 
   /**
    * Trouve l'article dans le panier s'il existe
@@ -45,6 +47,9 @@ export function useProductPage(
    */
   const handleAddToCart = useCallback(async () => {
     if (!product) return;
+
+    // Réinitialiser l'erreur de stock avant la nouvelle tentative
+    setStockError(null);
 
     try {
       const priceWithVat = product.priceTTC;
@@ -61,10 +66,27 @@ export function useProductPage(
         product.description || undefined,
         imageUrl
       );
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Erreur lors de l'ajout au panier", error, {
         productId: product.id,
       });
+
+      // Vérifier si c'est une erreur de stock insuffisant
+      // Vérifier dans error.message, error.data.message, et error.data.error
+      const errorMessage =
+        error?.message ||
+        error?.data?.message ||
+        error?.data?.error ||
+        String(error);
+
+      if (
+        errorMessage.toLowerCase().includes("stock insuffisant") ||
+        errorMessage.toLowerCase().includes("stock unavailable") ||
+        errorMessage.toLowerCase().includes("insufficient stock")
+      ) {
+        // Afficher simplement "Stock limité" sans le nombre
+        setStockError("Stock limité");
+      }
     }
   }, [product, addToCart]);
 
@@ -74,13 +96,33 @@ export function useProductPage(
   const handleIncrement = useCallback(async () => {
     if (!product) return;
 
+    // Réinitialiser l'erreur de stock avant la nouvelle tentative
+    setStockError(null);
+
     try {
       await updateQuantity(product.id, quantityInCart + 1);
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Erreur lors de la mise à jour de la quantité", error, {
         productId: product.id,
         quantity: quantityInCart + 1,
       });
+
+      // Vérifier si c'est une erreur de stock insuffisant
+      // Vérifier dans error.message, error.data.message, et error.data.error
+      const errorMessage =
+        error?.message ||
+        error?.data?.message ||
+        error?.data?.error ||
+        String(error);
+
+      if (
+        errorMessage.toLowerCase().includes("stock insuffisant") ||
+        errorMessage.toLowerCase().includes("stock unavailable") ||
+        errorMessage.toLowerCase().includes("insufficient stock")
+      ) {
+        // Afficher simplement "Stock limité" sans le nombre
+        setStockError("Stock limité");
+      }
     }
   }, [product, quantityInCart, updateQuantity]);
 
@@ -89,6 +131,9 @@ export function useProductPage(
    */
   const handleDecrement = useCallback(async () => {
     if (!product) return;
+
+    // Réinitialiser l'erreur de stock avant la nouvelle tentative
+    setStockError(null);
 
     try {
       if (quantityInCart <= 1) {
@@ -120,5 +165,6 @@ export function useProductPage(
     handleIncrement,
     handleDecrement,
     handleGoHome,
+    stockError,
   };
 }

@@ -21,8 +21,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     getImageUrl,
     canAddToCart,
     canIncrement,
-    isOutOfStock,
-    isLowStock,
+    stockError,
   } = useProductCard(product);
 
   const priceWithVat = product.priceTTC;
@@ -55,16 +54,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
           )}
           <h3 className={styles.title}>{product.name}</h3>
-          {isLowStock && (
-            <div className={styles.stockAlert}>
-              <i className="fas fa-exclamation-triangle"></i>
-              Stock limité
-            </div>
-          )}
-          {isOutOfStock && (
+          {stockError && (
             <div className={styles.stockAlertOut}>
-              <i className="fas fa-times-circle"></i>
-              Rupture de stock
+              <i className="fas fa-exclamation-triangle"></i>
+              {stockError}
             </div>
           )}
           <div className={styles.meta}>
@@ -99,11 +92,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             disabled={isLoading || !canAddToCart}
           >
             <i className="fas fa-shopping-cart"></i>
-            {isLoading
-              ? "Ajout..."
-              : isOutOfStock
-              ? "Rupture de stock"
-              : "Ajouter au panier"}
+            {isLoading ? "Ajout..." : "Ajouter au panier"}
           </button>
         ) : (
           <div className={styles.quantityControls}>

@@ -108,8 +108,11 @@ export const corsMiddleware: RequestHandler = (
 
   if (!allowedOriginsEnv) {
     // En production, autoriser automatiquement toutes les URLs Railway
-    // En développement, utiliser localhost uniquement
-    if (process.env["NODE_ENV"] === "production") {
+    // En développement (local ou Docker), utiliser localhost uniquement
+    if (
+      process.env["NODE_ENV"] === "production" &&
+      !process.env["DOCKER_ENV"]
+    ) {
       console.warn("⚠️⚠️⚠️ CORS: ALLOWED_ORIGINS non configuré en PRODUCTION!");
       console.warn(
         "⚠️⚠️⚠️ Mode permissif activé pour les URLs Railway - CONFIGUREZ ALLOWED_ORIGINS dans Railway pour plus de sécurité!"
@@ -117,14 +120,18 @@ export const corsMiddleware: RequestHandler = (
       // Mode permissif pour Railway uniquement (géré dans isOriginAllowed)
       allowedOrigins = []; // Vide, mais isOriginAllowed gérera les URLs Railway
     } else {
-      // Valeurs par défaut pour le développement local
+      // Valeurs par défaut pour le développement local (avec ou sans Docker)
       allowedOrigins = [
         "http://localhost:3000", // API Gateway (pour les tests)
         "http://localhost:3009", // Backoffice Next.js
         "http://localhost:3010", // Frontend Next.js
+        "http://localhost:80", // Nginx (point d'entrée)
+        "http://localhost", // Nginx sans port
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3009",
         "http://127.0.0.1:3010",
+        "http://127.0.0.1:80",
+        "http://127.0.0.1",
       ];
       console.warn(
         "⚠️ CORS: ALLOWED_ORIGINS non configuré - utilisation des valeurs par défaut (localhost uniquement)"
@@ -194,6 +201,34 @@ export const corsMiddleware: RequestHandler = (
       return res.status(204).end();
     }
 
+    // En développement Docker, autoriser localhost même si pas dans la liste
+    if (
+      process.env["NODE_ENV"] === "development" &&
+      process.env["DOCKER_ENV"] === "true" &&
+      origin &&
+      (origin.startsWith("http://localhost") ||
+        origin.startsWith("http://127.0.0.1"))
+    ) {
+      console.log(
+        `✅ CORS: Autorisation automatique pour OPTIONS (développement Docker): ${origin}`
+      );
+      res.header("Access-Control-Allow-Origin", origin);
+      res.header("Access-Control-Allow-Credentials", "true");
+      res.header(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+      );
+      res.header(
+        "Access-Control-Allow-Headers",
+        "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id"
+      );
+      res.header(
+        "Access-Control-Expose-Headers",
+        "Set-Cookie, X-Cart-Session-Id"
+      );
+      return res.status(204).end();
+    }
+
     // Vérifier si l'origine est autorisée (avec normalisation)
     if (isOriginAllowed(origin, allowedOrigins)) {
       res.header("Access-Control-Allow-Origin", origin);
@@ -237,14 +272,25 @@ export const corsMiddleware: RequestHandler = (
         origin &&
         (origin.includes(".up.railway.app") || origin.includes("railway.app"))
       ) {
-        console.log(
-          `✅ CORS: Autorisation automatique (Railway): ${origin}`
-        );
+        console.log(`✅ CORS: Autorisation automatique (Railway): ${origin}`);
         return callback(null, true);
       }
 
       // Autoriser les requêtes sans origine (ex: Postman, mobile apps, SSR)
       if (!origin) {
+        return callback(null, true);
+      }
+
+      // En développement Docker, autoriser localhost même si pas dans la liste
+      if (
+        process.env["NODE_ENV"] === "development" &&
+        process.env["DOCKER_ENV"] === "true" &&
+        (origin.startsWith("http://localhost") ||
+          origin.startsWith("http://127.0.0.1"))
+      ) {
+        console.log(
+          `✅ CORS: Autorisation automatique (développement Docker): ${origin}`
+        );
         return callback(null, true);
       }
 
