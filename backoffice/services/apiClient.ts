@@ -221,11 +221,22 @@ class ApiClient {
         needsCredentials
       ) {
         const setCookieHeader = response.headers.get("Set-Cookie");
+        const allHeaders = Array.from(response.headers.entries());
         console.log(`[apiClient] Requête vers ${endpoint}:`, {
           url,
           credentials: needsCredentials ? "include" : "omit",
           setCookieHeader: setCookieHeader || "aucun",
           status: response.status,
+          // Vérifier si le header Set-Cookie contient SameSite=None
+          hasSameSiteNone: setCookieHeader
+            ? setCookieHeader.includes("SameSite=None")
+            : false,
+          hasSecure: setCookieHeader
+            ? setCookieHeader.includes("Secure")
+            : false,
+          allHeaders: allHeaders.filter(([key]) =>
+            key.toLowerCase().includes("cookie") || key.toLowerCase().includes("set-cookie")
+          ),
         });
       }
 

@@ -34,7 +34,14 @@ export function extractAuthToken(req: Request): string | null {
 export function setAuthTokenCookie(res: Response, token: string): void {
   const isProduction = process.env["NODE_ENV"] === "production";
 
-  const cookieOptions = {
+  const cookieOptions: {
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite: "none" | "lax";
+    maxAge: number;
+    path: string;
+    domain?: string;
+  } = {
     httpOnly: true, // Non accessible depuis JavaScript (sécurité XSS)
     secure: isProduction, // HTTPS uniquement en production
     // En production, utiliser "none" pour permettre le partage cross-domain
@@ -43,7 +50,15 @@ export function setAuthTokenCookie(res: Response, token: string): void {
     maxAge: COOKIE_MAX_AGE,
     path: "/", // Disponible sur tout le site
     // Ne pas spécifier de domaine pour permettre le partage cross-domain
+    // Le cookie sera défini pour le domaine de l'API Gateway
   };
+
+  // En production, essayer d'extraire le domaine depuis l'URL de l'API Gateway
+  // pour s'assurer que le cookie est défini sur le bon domaine
+  if (isProduction) {
+    // Ne pas spécifier de domaine - le cookie sera défini pour le domaine exact de l'API Gateway
+    // Cela permet au navigateur de l'envoyer lors des requêtes cross-domain avec sameSite: "none"
+  }
 
   res.cookie(AUTH_TOKEN_COOKIE, token, cookieOptions);
 
@@ -58,6 +73,13 @@ export function setAuthTokenCookie(res: Response, token: string): void {
       setCookieHeader: Array.isArray(setCookieHeader)
         ? setCookieHeader.join(", ")
         : setCookieHeader,
+      // Vérifier que le header Set-Cookie contient bien sameSite=None; Secure
+      hasSameSiteNone: setCookieHeader
+        ? String(setCookieHeader).includes("SameSite=None")
+        : false,
+      hasSecure: setCookieHeader
+        ? String(setCookieHeader).includes("Secure")
+        : false,
     });
   }
 }
