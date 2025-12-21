@@ -30,7 +30,7 @@ export class EmailController {
       console.log("📧 Request body:", JSON.stringify(req.body, null, 2));
 
       const emailClientSendDTO: EmailClientSendDTO = req.body;
-      
+
       // Validation des données requises
       if (!emailClientSendDTO.clientEmail) {
         console.error("❌ clientEmail manquant dans la requête");
@@ -41,7 +41,7 @@ export class EmailController {
         });
         return;
       }
-      
+
       if (!emailClientSendDTO.subject) {
         console.error("❌ subject manquant dans la requête");
         res.status(400).json({
@@ -67,7 +67,7 @@ export class EmailController {
       console.error("❌ Error message:", error.message);
       console.error("❌ Error stack:", error.stack);
       console.error("❌ Error details:", JSON.stringify(error, null, 2));
-      
+
       // Retourner une réponse d'erreur plus détaillée
       res.status(500).json({
         success: false,
@@ -152,12 +152,17 @@ export class EmailController {
     try {
       console.log("📧 EmailController: Starting sendOrderConfirmationEmail");
       console.log("📧 Request body keys:", Object.keys(req.body || {}));
-      
+
       // Log des données essentielles
       const body = req.body || {};
       console.log("📧 Order ID:", body.orderId);
       console.log("📧 Customer Email:", body.customerData?.email || "MANQUANT");
-      console.log("📧 Customer Name:", `${body.customerData?.firstName || ""} ${body.customerData?.lastName || ""}`.trim() || "MANQUANT");
+      console.log(
+        "📧 Customer Name:",
+        `${body.customerData?.firstName || ""} ${
+          body.customerData?.lastName || ""
+        }`.trim() || "MANQUANT"
+      );
       console.log("📧 Cart items count:", body.cart?.items?.length || 0);
       console.log("📧 Cart total:", body.cart?.total || "MANQUANT");
       console.log("📧 Has address data:", !!body.addressData);
@@ -181,20 +186,25 @@ export class EmailController {
       console.error("❌ Error message:", error.message);
       console.error("❌ Error stack:", error.stack);
       console.error("❌ Error name:", error.name);
-      
+
       // Log plus de détails sur l'erreur
       if (error.message?.includes("transporter")) {
         console.error("❌ PROBLÈME: Le transporter Gmail n'est pas configuré!");
-        console.error("❌ Vérifiez les variables d'environnement: GMAIL_USER, GMAIL_APP_PASSWORD");
+        console.error(
+          "❌ Vérifiez les variables d'environnement: GMAIL_USER, GMAIL_APP_PASSWORD"
+        );
       }
       if (error.message?.includes("Données manquantes")) {
         console.error("❌ PROBLÈME: Données manquantes dans la requête!");
-        console.error("❌ Vérifiez que customerData.email, orderId et cart.items sont présents");
+        console.error(
+          "❌ Vérifiez que customerData.email, orderId et cart.items sont présents"
+        );
       }
-      
+
       res.status(500).json({
         error: "Erreur interne du serveur",
-        message: error.message || "Une erreur est survenue lors de l'envoi de l'email",
+        message:
+          error.message || "Une erreur est survenue lors de l'envoi de l'email",
         timestamp: new Date().toISOString(),
       });
     }

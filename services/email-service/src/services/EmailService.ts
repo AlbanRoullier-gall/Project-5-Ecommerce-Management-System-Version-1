@@ -15,6 +15,7 @@ export default class EmailService {
   private fromEmail: string;
   private fromName: string;
   private resendFromEmail: string; // Email spécifique pour Resend (doit être un domaine vérifié)
+  private resendTestEmail: string | null = null; // Email du compte Resend pour les tests
 
   constructor() {
     this.adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
@@ -22,11 +23,15 @@ export default class EmailService {
     this.fromEmail =
       process.env.FROM_EMAIL || process.env.ADMIN_EMAIL || "admin@example.com";
     this.fromName = process.env.FROM_NAME || "Nature de Pierre";
-
+    
     // Pour Resend, utiliser RESEND_FROM_EMAIL si défini, sinon utiliser un domaine par défaut
     // IMPORTANT: Resend nécessite un domaine vérifié. Utilisez votre domaine vérifié ou onboarding@resend.dev pour les tests
     this.resendFromEmail =
       process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+    
+    // Email du compte Resend pour les tests (si on utilise onboarding@resend.dev, on doit envoyer à l'email du compte)
+    // En mode test, Resend ne permet d'envoyer qu'à l'adresse email associée au compte
+    this.resendTestEmail = process.env.RESEND_TEST_EMAIL || null;
 
     // Priorité 1: Resend (API HTTP, fonctionne sur Railway)
     if (process.env.RESEND_API_KEY) {
@@ -147,11 +152,22 @@ export default class EmailService {
         console.log("📧 Envoi de l'email de contact via Resend (API HTTP)...");
         const resendFrom = `${this.fromName} <${this.resendFromEmail}>`;
         console.log(`📧 From (Resend): ${resendFrom}`);
-        console.log(`📧 To (Admin): ${this.adminEmail}`);
+        
+        // Si on utilise onboarding@resend.dev (mode test), on doit envoyer à l'email du compte Resend
+        // Sinon, utiliser ADMIN_EMAIL normalement
+        const recipientEmail = 
+          this.resendFromEmail.includes("onboarding@resend.dev") && this.resendTestEmail
+            ? this.resendTestEmail
+            : this.adminEmail;
+        
+        console.log(`📧 To (Admin): ${recipientEmail}`);
+        if (recipientEmail !== this.adminEmail) {
+          console.log(`⚠️ Mode test Resend: email envoyé à ${recipientEmail} au lieu de ${this.adminEmail}`);
+        }
 
         const resendResult = await this.resend.emails.send({
           from: resendFrom,
-          to: [this.adminEmail],
+          to: [recipientEmail],
           subject: emailData.subject,
           html: htmlContent,
           text: textContent,
@@ -170,7 +186,7 @@ export default class EmailService {
         return {
           messageId: resendResult.data?.id || "unknown",
           status: "sent",
-          recipient: this.adminEmail,
+          recipient: recipientEmail,
           subject: emailData.subject,
           sentAt: new Date(),
         };
