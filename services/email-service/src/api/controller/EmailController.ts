@@ -6,10 +6,7 @@
 import { Request, Response } from "express";
 import EmailService from "../../services/EmailService";
 import { ResponseMapper } from "../mapper";
-import type {
-  EmailClientSendDTO,
-  EmailResetPasswordDTO,
-} from "../dto";
+import type { EmailClientSendDTO, EmailResetPasswordDTO } from "../dto";
 
 export class EmailController {
   private emailService: EmailService;

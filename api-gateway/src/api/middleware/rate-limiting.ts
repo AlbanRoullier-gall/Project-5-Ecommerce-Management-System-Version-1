@@ -192,9 +192,10 @@ export const authLoginRateLimit = async (
   setRateLimitHeaders(res, 5, result.remaining, result.resetTime);
 
   if (!result.allowed) {
+    const waitMinutes = Math.ceil((result.resetTime - Date.now()) / 60000);
     sendTooManyRequests(
       res,
-      "Trop de tentatives de connexion. Veuillez réessayer dans quelques minutes.",
+      `Trop de tentatives de connexion. Veuillez réessayer dans ${waitMinutes} minute${waitMinutes > 1 ? "s" : ""}.`,
       result.resetTime
     );
     return;
