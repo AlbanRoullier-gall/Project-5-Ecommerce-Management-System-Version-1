@@ -5,10 +5,11 @@ import authStyles from "../../styles/components/Auth.module.css";
 import pageStyles from "../../styles/components/AuthPage.module.css";
 import alertsStyles from "../../styles/components/Alerts.module.css";
 import formErrorStyles from "../../styles/components/FormError.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { useAuth } from "../../contexts/AuthContext";
+import { LoadingSpinner } from "../../components/shared";
 
 /**
  * Page de connexion au backoffice
@@ -18,11 +19,16 @@ import { useAuth } from "../../contexts/AuthContext";
  * - Validation côté client
  * - Utilisation du contexte d'authentification pour l'appel API et le stockage
  * - Redirection vers /dashboard après connexion (AuthGuard gérera les cas rejeté/pending)
+ * - Redirection automatique vers /dashboard si déjà authentifié
  * - Lien vers inscription et reset password
  */
 const LoginPage: React.FC = () => {
   const router = useRouter();
-  const { loginWithCredentials } = useAuth();
+  const {
+    loginWithCredentials,
+    isLoading: authLoading,
+    isAuthenticated,
+  } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
@@ -30,6 +36,21 @@ const LoginPage: React.FC = () => {
     password: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  /**
+   * Redirige vers le dashboard si l'utilisateur est déjà authentifié
+   */
+  useEffect(() => {
+    // Ne faire la redirection que lorsque le chargement est terminé
+    if (authLoading) {
+      return;
+    }
+
+    // Si l'utilisateur est déjà authentifié, rediriger vers le dashboard
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   /**
    * Gère les changements dans les champs du formulaire
@@ -81,6 +102,28 @@ const LoginPage: React.FC = () => {
 
     setIsLoading(false);
   };
+
+  // Afficher un loader pendant la vérification de l'authentification
+  if (authLoading) {
+    return (
+      <>
+        <Head>
+          <title>Connexion - Nature de Pierre</title>
+          <meta
+            name="description"
+            content="Connexion à l'interface d'administration Nature de Pierre"
+          />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+        </Head>
+        <LoadingSpinner message="Vérification de l'authentification..." />
+      </>
+    );
+  }
+
+  // Si l'utilisateur est déjà authentifié, ne rien afficher (redirection en cours)
+  if (isAuthenticated) {
+    return null;
+  }
 
   return (
     <>
