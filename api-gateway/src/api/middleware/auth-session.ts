@@ -40,14 +40,16 @@ export function extractAuthToken(req: Request): string | null {
     }
     return token;
   }
-  
+
   // Log pour déboguer si aucun token n'est trouvé
   if (process.env["NODE_ENV"] === "production") {
     console.warn(
-      `[extractAuthToken] Aucun token trouvé. Cookie présent: ${!!cookieToken}, Header Authorization: ${authHeader || "aucun"}`
+      `[extractAuthToken] Aucun token trouvé. Cookie présent: ${!!cookieToken}, Header Authorization: ${
+        authHeader || "aucun"
+      }`
     );
   }
-  
+
   return null;
 }
 

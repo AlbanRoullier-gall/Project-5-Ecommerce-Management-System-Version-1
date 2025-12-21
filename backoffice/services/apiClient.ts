@@ -118,7 +118,7 @@ class ApiClient {
     const token = this.getAuthToken();
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
-      
+
       // Log pour déboguer en production
       if (
         process.env.NODE_ENV === "production" &&
