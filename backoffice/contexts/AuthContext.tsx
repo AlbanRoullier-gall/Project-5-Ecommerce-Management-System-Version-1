@@ -109,7 +109,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   /**
    * Vérifie l'authentification depuis le serveur (cookie httpOnly)
-   * En cas d'erreur réseau, conserve l'état précédent pour éviter les redirections intempestives
+   * En production, fait un retry si la première tentative échoue
+   * (pour gérer les cas où le cookie n'est pas encore disponible)
    */
   const checkAuth = useCallback(async () => {
     setIsLoading(true);
@@ -119,37 +120,65 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (data.success && data.isAuthenticated && data.user) {
         setUser(data.user);
       } else {
-        clearAuthState();
+        // En production, faire un retry après un court délai
+        // pour gérer les cas où le cookie n'est pas encore disponible
+        if (
+          process.env.NODE_ENV === "production" &&
+          typeof window !== "undefined"
+        ) {
+          // Attendre un peu et réessayer une fois
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          const retryData = await verifyAuth();
+          if (
+            retryData.success &&
+            retryData.isAuthenticated &&
+            retryData.user
+          ) {
+            setUser(retryData.user);
+          } else {
+            clearAuthState();
+          }
+        } else {
+          clearAuthState();
+        }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error(
         "Erreur lors de la vérification de l'authentification:",
         error
       );
-
-      // En cas d'erreur réseau, ne pas nettoyer l'état immédiatement
-      // Cela évite les redirections intempestives lors du rechargement de page
-      // si le cookie n'est pas encore accessible (problème cross-domain temporaire)
-      const isNetworkError =
-        error.message?.includes("fetch") ||
-        error.message?.includes("network") ||
-        error.message?.includes("Failed to fetch") ||
-        error.message?.includes("Erreur de connexion");
-
-      if (isNetworkError && user) {
-        // Erreur réseau mais utilisateur était authentifié : conserver l'état
-        // La prochaine vérification réussira une fois le cookie accessible
-        console.warn(
-          "Erreur réseau lors de la vérification, conservation de l'état d'authentification précédent"
-        );
+      // En production, faire un retry en cas d'erreur réseau
+      if (
+        process.env.NODE_ENV === "production" &&
+        typeof window !== "undefined" &&
+        error instanceof Error &&
+        (error.message.includes("fetch") ||
+          error.message.includes("network") ||
+          error.message.includes("Failed to fetch"))
+      ) {
+        try {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          const retryData = await verifyAuth();
+          if (
+            retryData.success &&
+            retryData.isAuthenticated &&
+            retryData.user
+          ) {
+            setUser(retryData.user);
+          } else {
+            clearAuthState();
+          }
+        } catch (retryError) {
+          console.error("Erreur lors du retry:", retryError);
+          clearAuthState();
+        }
       } else {
-        // Erreur autre que réseau ou utilisateur non authentifié : nettoyer l'état
         clearAuthState();
       }
     } finally {
       setIsLoading(false);
     }
-  }, [clearAuthState, user]);
+  }, [clearAuthState]);
 
   /**
    * Connecte l'utilisateur (met à jour l'état local)

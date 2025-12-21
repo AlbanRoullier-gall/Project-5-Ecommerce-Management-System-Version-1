@@ -280,9 +280,28 @@ export const handleVerifyAuth = async (req: Request, res: Response) => {
     const { extractAuthToken } = await import("../middleware/auth-session");
     const { verifyToken } = await import("../middleware/auth");
 
+    // Log pour déboguer en production
+    const cookies = req.cookies || {};
+    const hasAuthCookie = !!cookies["auth_token"];
+
+    if (process.env["NODE_ENV"] === "production") {
+      console.log(
+        `[VerifyAuth] Cookies reçus: ${Object.keys(cookies).join(", ")}`
+      );
+      console.log(`[VerifyAuth] Cookie auth_token présent: ${hasAuthCookie}`);
+      console.log(`[VerifyAuth] Origin: ${req.headers.origin}`);
+    }
+
     const token = extractAuthToken(req);
 
     if (!token) {
+      if (process.env["NODE_ENV"] === "production") {
+        console.warn(
+          `[VerifyAuth] Aucun token trouvé. Cookies disponibles: ${Object.keys(
+            cookies
+          ).join(", ")}`
+        );
+      }
       return res.json({
         success: false,
         isAuthenticated: false,
@@ -378,7 +397,7 @@ export const handleLogout = async (req: Request, res: Response) => {
       return res.json(authData);
     } catch (fetchError: any) {
       clearTimeout(timeoutId);
-      
+
       if (fetchError.name === "AbortError") {
         console.warn(
           "[Logout] Timeout lors de l'appel au service auth (5s), mais cookie déjà supprimé"
@@ -388,7 +407,7 @@ export const handleLogout = async (req: Request, res: Response) => {
           `[Logout] Erreur lors de l'appel au service auth: ${fetchError.message}, mais cookie déjà supprimé`
         );
       }
-      
+
       // Même en cas d'erreur réseau/timeout, retourner un succès car le cookie est déjà supprimé
       return res.status(200).json({
         success: true,

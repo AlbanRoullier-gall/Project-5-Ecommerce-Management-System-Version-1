@@ -43,11 +43,24 @@ export async function verifyAuth(): Promise<{
     // L'API Gateway retourne directement { success, isAuthenticated, user }
     // Pas de wrapper ApiResponse pour cet endpoint
     // apiClient.post retourne directement le type T (pas ApiResponse<T>)
+    // IMPORTANT: requireAuth: false mais credentials: "include" sera utilisé car l'endpoint contient "/auth/verify"
     const response = await apiClient.post<{
       success: boolean;
       isAuthenticated: boolean;
       user?: UserPublicDTO;
     }>(`/api/auth/verify`, undefined, { requireAuth: false });
+
+    // Log pour déboguer en production
+    if (
+      process.env.NODE_ENV === "production" &&
+      typeof window !== "undefined"
+    ) {
+      console.log("[verifyAuth] Réponse reçue:", {
+        success: response?.success,
+        isAuthenticated: response?.isAuthenticated,
+        hasUser: !!response?.user,
+      });
+    }
 
     // Vérifier que la réponse a la structure attendue
     if (typeof response !== "object" || response === null) {
@@ -146,7 +159,7 @@ export async function login(
  */
 export async function logout(): Promise<void> {
   await apiClient.post(`/api/auth/logout`, undefined, { requireAuth: false });
-  
+
   // Supprimer le token du localStorage
   if (typeof window !== "undefined") {
     localStorage.removeItem("auth_token");
