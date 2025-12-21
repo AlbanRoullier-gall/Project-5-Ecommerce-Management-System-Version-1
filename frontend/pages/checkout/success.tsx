@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import Header from "../../components/Header";
@@ -12,16 +13,30 @@ import styles from "../../styles/components/CheckoutStatusPage.module.css";
  * Page de confirmation de commande réussie
  */
 export default function CheckoutSuccessPage() {
-  const { clearCart, refreshCart } = useCart();
+  const { refreshCart } = useCart();
   const { isProcessing, error } = usePaymentFinalization(async () => {
     // Callback appelé après succès de la finalisation
-    // Vider le panier côté serveur et recharger pour voir qu'il est vide
-    await clearCart();
+    // Le panier a déjà été vidé côté serveur lors de la finalisation du paiement
+    // Il suffit de recharger le panier pour voir qu'il est vide
+    console.log("[Checkout Success] Rechargement du panier après finalisation du paiement");
     // Attendre un peu pour que le serveur ait le temps de vider le panier
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     // Recharger le panier pour voir qu'il est vide
     await refreshCart();
+    console.log("[Checkout Success] Panier rechargé");
   });
+
+  // Recharger aussi le panier au montage de la page pour s'assurer qu'il est à jour
+  useEffect(() => {
+    const reloadCart = async () => {
+      console.log("[Checkout Success] Rechargement du panier au montage de la page");
+      // Attendre un peu pour que le serveur ait le temps de vider le panier
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await refreshCart();
+      console.log("[Checkout Success] Panier rechargé au montage");
+    };
+    reloadCart();
+  }, [refreshCart]);
 
   return (
     <>
