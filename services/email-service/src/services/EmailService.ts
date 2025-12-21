@@ -29,14 +29,31 @@ export default class EmailService {
         cleanPassword.substring(0, 10) + "..."
       );
 
+      // Configuration explicite pour Gmail avec options de connexion robustes
+      // Utilisation du port 587 avec STARTTLS (plus compatible avec les firewalls)
       this.transporter = nodemailer.createTransport({
-        service: "gmail",
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false, // true pour 465, false pour les autres ports
         auth: {
           user: process.env.GMAIL_USER,
           pass: cleanPassword, // Mot de passe nettoyé
         },
+        // Options de connexion pour éviter les timeouts
+        connectionTimeout: 60000, // 60 secondes pour la connexion initiale
+        greetingTimeout: 30000, // 30 secondes pour le greeting
+        socketTimeout: 60000, // 60 secondes pour les opérations socket
+        // Options de retry
+        pool: false, // Pas de pool de connexions
+        maxConnections: 1,
+        maxMessages: 1,
+        // Options TLS
+        tls: {
+          rejectUnauthorized: false, // Accepter les certificats auto-signés (pour Railway)
+          ciphers: "SSLv3",
+        },
       });
-      console.log("✅ Gmail transporter initialized with cleaned password");
+      console.log("✅ Gmail transporter initialized with cleaned password and robust connection options");
     } else {
       console.warn("⚠️ Gmail credentials not configured");
     }
