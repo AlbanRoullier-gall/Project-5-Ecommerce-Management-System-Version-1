@@ -135,7 +135,7 @@ class ApiClient {
         typeof window !== "undefined"
       ) {
         console.warn(
-          `[apiClient] Aucun token dans localStorage pour l'endpoint: ${endpoint}`
+          `[apiClient] Aucun token dans localStorage`
         );
       }
     }
