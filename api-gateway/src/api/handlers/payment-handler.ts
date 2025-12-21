@@ -479,11 +479,11 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       console.warn("⚠️ Erreur lors de l'envoi de l'email:", error);
     }
 
-    // 7. Vider le panier et les données checkout après création réussie
-    // Utiliser un timeout court pour ne pas bloquer la réponse trop longtemps
-    // mais garantir que le vidage est exécuté
+    // 7. Vider le panier et les données checkout après création réussie (BLOQUANT)
+    // IMPORTANT: Le vidage est maintenant bloquant pour garantir qu'il soit exécuté
+    // Utiliser un timeout pour éviter de bloquer trop longtemps
     console.log(
-      `[Payment Finalize] Étape 7: Vidage du panier avec timeout de 2 secondes`
+      `[Payment Finalize] Étape 7: Vidage du panier (BLOQUANT avec timeout de 5 secondes)`
     );
     console.log(
       `[Payment Finalize] cartSessionId pour vidage: ${cartSessionId.substring(
@@ -495,69 +495,66 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       `[Payment Finalize] URL du service cart: ${SERVICES.cart}/api/cart`
     );
 
-    // Vider le panier avec un timeout pour ne pas bloquer trop longtemps
-    const clearCartUrl = `${SERVICES.cart}/api/cart`;
-    const clearCartBody = JSON.stringify({ sessionId: cartSessionId });
+    try {
+      const clearCartUrl = `${SERVICES.cart}/api/cart`;
+      const clearCartBody = JSON.stringify({ sessionId: cartSessionId });
 
-    console.log(
-      `[Payment Finalize] Envoi de la requête DELETE vers: ${clearCartUrl}`
-    );
+      console.log(
+        `[Payment Finalize] Envoi de la requête DELETE vers: ${clearCartUrl}`
+      );
 
-    // Utiliser Promise.race avec un timeout pour garantir l'exécution mais ne pas bloquer trop longtemps
-    const clearCartPromise = fetch(clearCartUrl, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Service-Request": "api-gateway",
-      },
-      body: clearCartBody,
-    })
-      .then(async (clearCartResponse) => {
-        const responseText = await clearCartResponse.text();
-        console.log(
-          `[Payment Finalize] Réponse du vidage du panier: status=${
-            clearCartResponse.status
-          }, body=${responseText.substring(0, 200)}`
+      // Créer un AbortController pour le timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 5000); // Timeout de 5 secondes
+
+      const clearCartResponse = await fetch(clearCartUrl, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Service-Request": "api-gateway",
+        },
+        body: clearCartBody,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const responseText = await clearCartResponse.text();
+      console.log(
+        `[Payment Finalize] Réponse du vidage du panier: status=${
+          clearCartResponse.status
+        }, body=${responseText.substring(0, 200)}`
+      );
+
+      if (!clearCartResponse.ok) {
+        console.error(
+          `[Payment Finalize] ❌ Erreur lors du vidage du panier: status=${clearCartResponse.status}, ${clearCartResponse.statusText}`
         );
-
-        if (!clearCartResponse.ok) {
-          console.warn(
-            `[Payment Finalize] ⚠️ Erreur lors du vidage du panier: status=${clearCartResponse.status}, ${clearCartResponse.statusText}`
-          );
-        } else {
-          console.log(
-            `[Payment Finalize] ✅ Panier et données checkout vidés avec succès`
-          );
-        }
-        return clearCartResponse;
-      })
-      .catch((error) => {
+        // Ne pas bloquer la réponse même si le vidage échoue - la commande est déjà créée
+        // Mais loguer l'erreur pour investigation
+      } else {
+        console.log(
+          `[Payment Finalize] ✅ Panier et données checkout vidés avec succès`
+        );
+      }
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        console.error(
+          `[Payment Finalize] ❌ Timeout de 5s atteint lors du vidage du panier`
+        );
+        // Ne pas bloquer la réponse même en cas de timeout - la commande est déjà créée
+      } else {
         console.error(
           `[Payment Finalize] ❌ Erreur lors du vidage du panier:`,
           error
         );
-        throw error;
-      });
+        // Ne pas bloquer la réponse même si le vidage échoue - la commande est déjà créée
+      }
+    }
 
-    // Timeout de 2 secondes - si le vidage prend plus de temps, on continue quand même
-    const timeoutPromise = new Promise((resolve) => {
-      setTimeout(() => {
-        console.log(
-          `[Payment Finalize] ⚠️ Timeout de 2s atteint pour le vidage du panier - continuation sans attendre`
-        );
-        resolve(null);
-      }, 2000);
-    });
-
-    // Attendre soit le vidage, soit le timeout (le plus rapide)
-    Promise.race([clearCartPromise, timeoutPromise]).catch((error) => {
-      console.error(
-        `[Payment Finalize] ❌ Erreur lors du vidage du panier (après timeout):`,
-        error
-      );
-    });
-
-    // Envoyer la réponse après avoir lancé le vidage (avec timeout)
+    // Envoyer la réponse après avoir vidé le panier (ou après timeout/erreur)
     console.log(
       `[Payment Finalize] ✅ Finalisation complète - orderId: ${orderId} (panier sera vidé en arrière-plan)`
     );
