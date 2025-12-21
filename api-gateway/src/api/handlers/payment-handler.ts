@@ -62,10 +62,7 @@ export const handleCreatePayment = async (req: Request, res: Response) => {
   await proxyRequest(req, res, "payment");
 };
 
-export const handleFinalizePayment = async (
-  req: Request,
-  res: Response
-) => {
+export const handleFinalizePayment = async (req: Request, res: Response) => {
   console.log(
     `[Payment Finalize Handler] ✅ Handler appelé pour ${req.method} ${req.path}`
   );
@@ -621,8 +618,16 @@ export const handleFinalizePayment = async (
         // Créer un AbortController pour le timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
+          console.error(
+            `[Payment Finalize] ⏱️ Timeout de 60s approchant, annulation de la requête...`
+          );
           controller.abort();
-        }, 30000); // Timeout de 30 secondes (plus généreux car non-bloquant)
+        }, 60000); // Timeout de 60 secondes (plus généreux car non-bloquant)
+
+        console.log(
+          `[Payment Finalize] 📧 Début de l'envoi de la requête email (timeout: 60s)`
+        );
+        const startTime = Date.now();
 
         const emailResponse = await fetch(emailUrl, {
           method: "POST",
@@ -635,6 +640,10 @@ export const handleFinalizePayment = async (
         });
 
         clearTimeout(timeoutId);
+        const duration = Date.now() - startTime;
+        console.log(
+          `[Payment Finalize] 📧 Réponse reçue du service email après ${duration}ms`
+        );
 
         const responseText = await emailResponse.text();
         console.log(
@@ -654,7 +663,7 @@ export const handleFinalizePayment = async (
           try {
             const emailResponseData = JSON.parse(responseText);
             console.log(
-              `[Payment Finalize] ✅ Email de confirmation envoyé avec succès (en arrière-plan)`
+              `[Payment Finalize] ✅ Email de confirmation envoyé avec succès (en arrière-plan, durée: ${duration}ms)`
             );
             console.log(
               `[Payment Finalize] ✅ MessageId: ${
@@ -663,19 +672,26 @@ export const handleFinalizePayment = async (
             );
           } catch (parseError) {
             console.log(
-              `[Payment Finalize] ✅ Email de confirmation envoyé (réponse non-JSON, en arrière-plan)`
+              `[Payment Finalize] ✅ Email de confirmation envoyé (réponse non-JSON, en arrière-plan, durée: ${duration}ms)`
             );
           }
         }
       } catch (error: any) {
         if (error.name === "AbortError") {
           console.error(
-            `[Payment Finalize] ❌ Timeout de 30s atteint lors de l'envoi de l'email (en arrière-plan)`
+            `[Payment Finalize] ❌ Timeout de 60s atteint lors de l'envoi de l'email (en arrière-plan)`
+          );
+          console.error(
+            `[Payment Finalize] ❌ Vérifiez que le service email est accessible et que les variables d'environnement Gmail sont configurées`
           );
         } else {
           console.error(
             `[Payment Finalize] ❌ Erreur lors de l'envoi de l'email (en arrière-plan):`,
             error
+          );
+          console.error(
+            `[Payment Finalize] ❌ Stack trace:`,
+            error.stack || "N/A"
           );
         }
       }
