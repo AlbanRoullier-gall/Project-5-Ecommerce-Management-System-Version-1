@@ -183,9 +183,7 @@ export class CartRepository {
     });
 
     this.redis.on("reconnecting", (delay: number) => {
-      console.log(
-        `🔄 Redis CartRepository: Reconnexion dans ${delay}ms...`
-      );
+      console.log(`🔄 Redis CartRepository: Reconnexion dans ${delay}ms...`);
     });
 
     this.redis.on("end", () => {
