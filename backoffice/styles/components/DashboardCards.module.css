@@ -6,6 +6,7 @@
     margin-bottom: 3rem;
     justify-items: center;
     align-items: center;
+    justify-content: center;
   }
 
   .statCard {
@@ -23,7 +24,9 @@
       box-shadow var(--transition-normal) var(--transition-smooth);
     width: 100%;
     max-width: 300px;
+    min-width: 250px;
     box-sizing: border-box;
+    margin: 0 auto;
   }
 
   .statCard:hover {
@@ -52,9 +55,23 @@
     .statsContainer {
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 1.5rem;
+      justify-content: center;
     }
 
     .statCard {
+      max-width: 100%;
+      min-width: 220px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .statsContainer {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+
+    .statCard {
+      min-width: 100%;
       max-width: 100%;
     }
   }
