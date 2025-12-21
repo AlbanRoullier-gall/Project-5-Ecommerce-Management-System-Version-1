@@ -39,6 +39,7 @@ interface CartContextType {
   totals: CartTotals;
   isLoading: boolean;
   error: string | null;
+  refreshCart: () => Promise<void>; // Exposer refreshCart pour permettre le rechargement manuel
   addToCart: (
     productId: number,
     quantity: number,
@@ -363,6 +364,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     updateQuantity,
     removeFromCart,
     clearCart,
+    refreshCart, // Exposer refreshCart pour permettre le rechargement manuel
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

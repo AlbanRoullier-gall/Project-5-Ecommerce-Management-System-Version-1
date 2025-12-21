@@ -12,10 +12,15 @@ import styles from "../../styles/components/CheckoutStatusPage.module.css";
  * Page de confirmation de commande réussie
  */
 export default function CheckoutSuccessPage() {
-  const { clearCart } = useCart();
-  const { isProcessing, error } = usePaymentFinalization(() => {
+  const { clearCart, refreshCart } = useCart();
+  const { isProcessing, error } = usePaymentFinalization(async () => {
     // Callback appelé après succès de la finalisation
-    clearCart();
+    // Vider le panier côté serveur et recharger pour voir qu'il est vide
+    await clearCart();
+    // Attendre un peu pour que le serveur ait le temps de vider le panier
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Recharger le panier pour voir qu'il est vide
+    await refreshCart();
   });
 
   return (
