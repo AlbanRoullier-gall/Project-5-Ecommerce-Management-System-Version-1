@@ -220,6 +220,24 @@ export class RateLimitService {
       this.redisAvailable = false;
     });
 
+    // Vérification que maxRetriesPerRequest est bien appliqué
+    // Cette vérification permet de confirmer que les options sont correctement configurées
+    const actualMaxRetries = (this.redis as any).options?.maxRetriesPerRequest;
+    if (actualMaxRetries !== undefined) {
+      console.log(
+        `✅ Redis: maxRetriesPerRequest confirmé = ${actualMaxRetries} (attendu: 3)`
+      );
+      if (actualMaxRetries !== 3) {
+        console.error(
+          `❌ Redis: ATTENTION - maxRetriesPerRequest=${actualMaxRetries} au lieu de 3!`
+        );
+      }
+    } else {
+      console.warn(
+        "⚠️ Redis: Impossible de vérifier maxRetriesPerRequest (option non accessible)"
+      );
+    }
+
     // Connecter Redis après avoir attaché tous les event listeners
     // Cela évite les "Unhandled error event" si une erreur survient pendant la connexion
     this.redis.connect().catch((err: Error) => {
