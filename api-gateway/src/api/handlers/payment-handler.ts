@@ -522,7 +522,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
           error
         );
         // Ne pas bloquer la réponse même si le vidage échoue - la commande est déjà créée
-      }
+    }
     }
 
     // Envoyer la réponse immédiatement après le vidage du panier

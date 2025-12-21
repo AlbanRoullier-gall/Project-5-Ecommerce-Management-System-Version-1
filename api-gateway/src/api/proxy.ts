@@ -154,17 +154,29 @@ export const proxyRequest = async (
       );
     }
 
+    // Timeout réduit pour les requêtes cart (30 secondes au lieu de 60)
+    // Les opérations cart devraient être rapides (Redis)
+    const timeout = service === "cart" ? 30000 : 60000;
+    
+    const startTime = Date.now();
     const response = await axios({
       method: req.method,
       url: requestConfig.url,
       headers: requestConfig.headers,
       data: requestConfig.data,
       params: requestConfig.params,
-      timeout: 60000,
+      timeout,
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
       responseType: "arraybuffer",
     });
+    
+    const duration = Date.now() - startTime;
+    if (duration > 5000) {
+      console.warn(
+        `[Proxy] ⚠️ Requête lente: ${req.method} ${req.path} -> ${service} a pris ${duration}ms`
+      );
+    }
 
     // S'assurer que le cookie de session est renvoyé dans la réponse
     // (même si la réponse vient du service backend)

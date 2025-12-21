@@ -72,26 +72,51 @@ export default class CartService {
     productId: number,
     requestedQuantity: number
   ): Promise<void> {
+    const startTime = Date.now();
+    console.log(
+      `[CartService] checkProductStock: Vérification du stock pour productId=${productId}, quantity=${requestedQuantity}`
+    );
+    
     try {
+      // Ajouter un timeout pour éviter les blocages
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 10000); // Timeout de 10 secondes
+
       const response = await fetch(
         `${API_GATEWAY_URL}/api/stock/check/${productId}?quantity=${requestedQuantity}`,
         {
           headers: {
             "X-Service-Request": "cart-service",
           },
+          signal: controller.signal,
         }
+      );
+
+      clearTimeout(timeoutId);
+      const duration = Date.now() - startTime;
+      console.log(
+        `[CartService] checkProductStock: Réponse reçue après ${duration}ms, status=${response.status}`
       );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage =
           errorData.error || `Erreur lors de la vérification du stock`;
+        console.error(
+          `[CartService] checkProductStock: Erreur ${response.status}: ${errorMessage}`
+        );
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
 
       if (!data.success || !data.data) {
+        console.error(
+          `[CartService] checkProductStock: Réponse invalide:`,
+          JSON.stringify(data, null, 2)
+        );
         throw new Error(
           data.error || "Erreur lors de la vérification du stock"
         );
@@ -99,9 +124,27 @@ export default class CartService {
 
       // Vérifier si le stock est disponible
       if (!data.data.isAvailable) {
+        console.error(
+          `[CartService] checkProductStock: Stock insuffisant pour productId=${productId}`
+        );
         throw new Error(data.data.message || "Stock insuffisant");
       }
+      
+      console.log(
+        `[CartService] checkProductStock: ✅ Stock disponible pour productId=${productId}`
+      );
     } catch (error: any) {
+      if (error.name === "AbortError") {
+        console.error(
+          `[CartService] checkProductStock: ⏱️ Timeout de 10s atteint pour productId=${productId}`
+        );
+        // En cas de timeout, on laisse passer (le payment-handler validera à nouveau)
+        console.warn(
+          `[CartService] checkProductStock: Timeout - la vérification du stock sera faite lors du paiement`
+        );
+        return; // Ne pas bloquer l'ajout au panier en cas de timeout
+      }
+      
       if (
         error.message.includes("Stock insuffisant") ||
         error.message.includes("plus disponible") ||
@@ -111,9 +154,10 @@ export default class CartService {
       }
       // En cas d'erreur de réseau, on laisse passer (le payment-handler validera à nouveau)
       console.warn(
-        `Impossible de vérifier le stock pour le produit ${productId}:`,
+        `[CartService] checkProductStock: Impossible de vérifier le stock pour le produit ${productId}:`,
         error.message
       );
+      // Ne pas bloquer l'ajout au panier en cas d'erreur réseau
     }
   }
 
@@ -124,31 +168,95 @@ export default class CartService {
     sessionId: string,
     itemData: DTO.CartItemCreateDTO
   ): Promise<Cart> {
-    // Vérifier le stock avant d'ajouter
-    await this.checkProductStock(itemData.productId, itemData.quantity);
-
-    let cart = await this.getCart(sessionId);
-
-    if (!cart) {
-      cart = await this.createCart(sessionId);
-    }
-
-    // Vérifier si l'article existe déjà dans le panier
-    const existingItem = cart.items.find(
-      (item) => item.productId === itemData.productId
+    const startTime = Date.now();
+    console.log(
+      `[CartService] addItem: Début - sessionId: ${sessionId.substring(0, 20)}..., productId: ${itemData.productId}, quantity: ${itemData.quantity}`
     );
-    if (existingItem) {
-      // Si l'article existe, vérifier le stock total (quantité existante + nouvelle quantité)
-      const totalQuantity = existingItem.quantity + itemData.quantity;
-      await this.checkProductStock(itemData.productId, totalQuantity);
+
+    try {
+      // Vérifier le stock avant d'ajouter
+      console.log(
+        `[CartService] addItem: Étape 1 - Vérification du stock pour productId=${itemData.productId}`
+      );
+      await this.checkProductStock(itemData.productId, itemData.quantity);
+      console.log(
+        `[CartService] addItem: ✅ Stock vérifié pour productId=${itemData.productId}`
+      );
+
+      // Récupérer ou créer le panier
+      console.log(
+        `[CartService] addItem: Étape 2 - Récupération/création du panier`
+      );
+      let cart = await this.getCart(sessionId);
+
+      if (!cart) {
+        console.log(
+          `[CartService] addItem: Panier non trouvé, création d'un nouveau panier`
+        );
+        cart = await this.createCart(sessionId);
+        console.log(
+          `[CartService] addItem: ✅ Nouveau panier créé: ${cart.id}`
+        );
+      } else {
+        console.log(
+          `[CartService] addItem: ✅ Panier existant récupéré: ${cart.id}, ${cart.itemCount} articles`
+        );
+      }
+
+      // Vérifier si l'article existe déjà dans le panier
+      const existingItem = cart.items.find(
+        (item) => item.productId === itemData.productId
+      );
+      if (existingItem) {
+        console.log(
+          `[CartService] addItem: Article existant trouvé, quantité actuelle: ${existingItem.quantity}`
+        );
+        // Si l'article existe, vérifier le stock total (quantité existante + nouvelle quantité)
+        const totalQuantity = existingItem.quantity + itemData.quantity;
+        console.log(
+          `[CartService] addItem: Vérification du stock pour quantité totale: ${totalQuantity}`
+        );
+        await this.checkProductStock(itemData.productId, totalQuantity);
+        console.log(
+          `[CartService] addItem: ✅ Stock vérifié pour quantité totale`
+        );
+      }
+
+      console.log(
+        `[CartService] addItem: Étape 3 - Création de l'item et ajout au panier`
+      );
+      const cartItem = CartMapper.cartItemCreateDTOToCartItem(
+        itemData,
+        uuidv4()
+      );
+
+      const updatedCart = cart.addItem(cartItem);
+      console.log(
+        `[CartService] addItem: ✅ Item ajouté au panier, nouveau itemCount: ${updatedCart.itemCount}`
+      );
+
+      console.log(
+        `[CartService] addItem: Étape 4 - Sauvegarde du panier dans Redis`
+      );
+      await this.cartRepository.updateCart(updatedCart);
+      console.log(
+        `[CartService] addItem: ✅ Panier sauvegardé dans Redis`
+      );
+
+      const duration = Date.now() - startTime;
+      console.log(
+        `[CartService] addItem: ✅ Terminé en ${duration}ms - productId=${itemData.productId}, itemCount=${updatedCart.itemCount}`
+      );
+
+      return updatedCart;
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      console.error(
+        `[CartService] addItem: ❌ Erreur après ${duration}ms:`,
+        error.message
+      );
+      throw error;
     }
-
-    const cartItem = CartMapper.cartItemCreateDTOToCartItem(itemData, uuidv4());
-
-    const updatedCart = cart.addItem(cartItem);
-    await this.cartRepository.updateCart(updatedCart);
-
-    return updatedCart;
   }
 
   /**

@@ -91,17 +91,40 @@ export class CartController {
    * Ajouter un article au panier
    */
   async addItem(req: Request, res: Response): Promise<void> {
+    const startTime = Date.now();
     try {
+      console.log(
+        `[CartController] addItem appelé - méthode: ${req.method}, path: ${req.path}`
+      );
+      console.log(
+        `[CartController] Query params:`,
+        JSON.stringify(req.query)
+      );
+      console.log(
+        `[CartController] Body:`,
+        JSON.stringify(req.body, null, 2)
+      );
+
       const cartRequest: CartRequestDTO = {
         sessionId: req.query.sessionId as string,
       };
 
       if (!cartRequest.sessionId) {
+        console.error(
+          `[CartController] ❌ sessionId manquant dans les query params`
+        );
         res
           .status(400)
           .json(ResponseMapper.validationError("sessionId is required"));
         return;
       }
+
+      console.log(
+        `[CartController] sessionId extrait: ${cartRequest.sessionId.substring(
+          0,
+          20
+        )}...`
+      );
 
       const itemData: CartItemCreateDTO = req.body;
       const cart = await this.cartService.addItem(

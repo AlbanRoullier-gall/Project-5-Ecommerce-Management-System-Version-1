@@ -241,7 +241,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         // Le service recharge automatiquement le panier
         const updatedCart = await updateCartItem(productId, updateData);
         if (updatedCart) {
-          setCart(updatedCart);
+        setCart(updatedCart);
         } else {
           // Si le panier est null, recharger
           await refreshCart();
