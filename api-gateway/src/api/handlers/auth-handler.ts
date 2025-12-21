@@ -174,26 +174,47 @@ export const handleLogin = async (req: Request, res: Response) => {
       return res.status(authResponse.status).json(authData);
     }
 
-    // Le service auth a déjà défini le cookie, on transmet juste la réponse
-    // Copier les cookies Set-Cookie depuis la réponse du service
+    // Le service auth retourne le token dans la réponse, on doit le définir comme cookie
+    // Le service auth définit aussi un cookie, mais on doit le redéfinir pour le bon domaine
     const setCookieHeader = authResponse.headers.get("set-cookie");
+
+    // Log pour déboguer en production
+    if (process.env["NODE_ENV"] === "production") {
+      console.log(
+        `[Login] Set-Cookie header reçu: ${setCookieHeader || "aucun"}`
+      );
+      console.log(`[Login] Auth data:`, {
+        hasUser: !!authData.user,
+        hasToken: !!authData.token,
+        message: authData.message,
+      });
+    }
 
     let token: string | null = null;
 
+    // Essayer d'extraire le token depuis le cookie Set-Cookie du service auth
     if (setCookieHeader) {
-      // Extraire le token depuis le cookie Set-Cookie
       const cookieMatch = setCookieHeader.match(/auth_token=([^;]+)/);
       if (cookieMatch && cookieMatch[1]) {
         token = cookieMatch[1];
-        // Redéfinir le cookie côté API Gateway pour que le domaine soit correct
-        const { setAuthTokenCookie } = await import(
-          "../middleware/auth-session"
-        );
-        setAuthTokenCookie(res, token);
-      } else {
-        // Fallback: copier le cookie tel quel si on ne peut pas extraire le token
-        res.setHeader("Set-Cookie", setCookieHeader);
       }
+    }
+
+    // Si le token n'est pas dans le cookie, essayer de le récupérer depuis la réponse
+    if (!token && authData.token) {
+      token = authData.token;
+    }
+
+    // Si on a un token, définir le cookie côté API Gateway
+    if (token) {
+      const { setAuthTokenCookie } = await import("../middleware/auth-session");
+      setAuthTokenCookie(res, token);
+
+      if (process.env["NODE_ENV"] === "production") {
+        console.log(`[Login] Cookie défini avec succès pour le token`);
+      }
+    } else {
+      console.warn(`[Login] ⚠️ Aucun token trouvé pour définir le cookie`);
     }
 
     // Retourner le token dans la réponse pour que le frontend puisse le stocker

@@ -114,8 +114,9 @@ export class AuthController {
         // Ne pas spécifier de domaine pour permettre le partage cross-domain
       });
 
-      // Retourner la réponse sans le token dans le body (sécurité)
-      const response = ResponseMapper.loginSuccess(userPublicDTO);
+      // Retourner la réponse avec le token pour permettre à l'API Gateway
+      // de redéfinir le cookie avec le bon domaine (cross-domain en production)
+      const response = ResponseMapper.loginSuccess(userPublicDTO, token);
       res.json(response);
     } catch (error: any) {
       console.error("Login error:", error);

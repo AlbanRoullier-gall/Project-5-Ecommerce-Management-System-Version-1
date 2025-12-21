@@ -29,13 +29,26 @@ export class ResponseMapper {
 
   /**
    * Réponse de connexion réussie
-   * Le token est dans un cookie httpOnly, pas dans la réponse
+   * Le token est dans un cookie httpOnly, mais aussi retourné dans la réponse
+   * pour permettre à l'API Gateway de redéfinir le cookie avec le bon domaine
    */
-  static loginSuccess(user: UserPublicDTO) {
-    return {
+  static loginSuccess(user: UserPublicDTO, token?: string) {
+    const response: {
+      message: string;
+      user: UserPublicDTO;
+      token?: string;
+    } = {
       message: "Connexion réussie",
       user,
     };
+
+    // Retourner le token dans la réponse pour permettre à l'API Gateway
+    // de redéfinir le cookie avec le bon domaine (cross-domain)
+    if (token) {
+      response.token = token;
+    }
+
+    return response;
   }
 
   /**
