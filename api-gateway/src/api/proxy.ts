@@ -15,12 +15,16 @@ import { AuthenticatedUser } from "./middleware/auth";
 function addCorsHeadersToErrorResponse(req: Request, res: Response): void {
   const origin = req.headers.origin;
 
-  // Si l'origine est une URL Railway en production, l'autoriser automatiquement
+  // Si l'origine est une URL Railway en production, l'autoriser TOUJOURS automatiquement
+  // (même si ALLOWED_ORIGINS est défini)
   if (
     process.env["NODE_ENV"] === "production" &&
     origin &&
-    origin.includes(".up.railway.app")
+    (origin.includes(".up.railway.app") || origin.includes("railway.app"))
   ) {
+    console.log(
+      `✅ CORS (erreur): Autorisation automatique pour Railway: ${origin}`
+    );
     res.header("Access-Control-Allow-Origin", origin);
     res.header("Access-Control-Allow-Credentials", "true");
     res.header(
@@ -35,6 +39,7 @@ function addCorsHeadersToErrorResponse(req: Request, res: Response): void {
       "Access-Control-Expose-Headers",
       "Set-Cookie, X-Cart-Session-Id"
     );
+    return; // Important : retourner immédiatement pour éviter les autres vérifications
   } else if (origin) {
     // Pour les autres origines, vérifier si elles sont autorisées
     const allowedOriginsEnv = process.env["ALLOWED_ORIGINS"];

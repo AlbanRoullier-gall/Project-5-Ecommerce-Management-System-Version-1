@@ -54,8 +54,12 @@ function isOriginAllowed(origin: string, allowedOrigins: string[]): boolean {
 
   // Gestion spéciale pour Railway : autoriser automatiquement toutes les URLs Railway
   // si on est en production et que l'origine est une URL Railway
-  if (normalizedOrigin.includes(".up.railway.app")) {
-    // En production Railway, autoriser toutes les URLs Railway automatiquement
+  if (
+    normalizedOrigin.includes(".up.railway.app") ||
+    normalizedOrigin.includes("railway.app")
+  ) {
+    // En production Railway, autoriser TOUJOURS toutes les URLs Railway automatiquement
+    // (même si ALLOWED_ORIGINS est défini)
     if (process.env["NODE_ENV"] === "production") {
       console.log(
         `✅ CORS: URL Railway autorisée automatiquement en production: ${normalizedOrigin}`
@@ -150,13 +154,15 @@ export const corsMiddleware: RequestHandler = (
 
   // Gérer les requêtes OPTIONS (preflight) manuellement pour éviter les erreurs 500
   if (req.method === "OPTIONS") {
-    // En production Railway sans ALLOWED_ORIGINS, autoriser les URLs Railway
+    // En production Railway, autoriser TOUJOURS les URLs Railway (même si ALLOWED_ORIGINS est défini)
     if (
       process.env["NODE_ENV"] === "production" &&
-      !allowedOriginsEnv &&
       origin &&
-      origin.includes(".up.railway.app")
+      (origin.includes(".up.railway.app") || origin.includes("railway.app"))
     ) {
+      console.log(
+        `✅ CORS: Autorisation automatique pour OPTIONS (Railway): ${origin}`
+      );
       res.header("Access-Control-Allow-Origin", origin);
       res.header("Access-Control-Allow-Credentials", "true");
       res.header(
@@ -225,13 +231,15 @@ export const corsMiddleware: RequestHandler = (
       origin: string | undefined,
       callback: (err: Error | null, allow?: boolean) => void
     ) => {
-      // En production Railway sans ALLOWED_ORIGINS, autoriser les URLs Railway
+      // En production Railway, autoriser TOUJOURS les URLs Railway (même si ALLOWED_ORIGINS est défini)
       if (
         process.env["NODE_ENV"] === "production" &&
-        !allowedOriginsEnv &&
         origin &&
-        origin.includes(".up.railway.app")
+        (origin.includes(".up.railway.app") || origin.includes("railway.app"))
       ) {
+        console.log(
+          `✅ CORS: Autorisation automatique (Railway): ${origin}`
+        );
         return callback(null, true);
       }
 
