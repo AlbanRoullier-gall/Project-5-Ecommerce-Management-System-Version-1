@@ -18,18 +18,21 @@ export default class EmailService {
   constructor() {
     this.adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
     this.adminName = process.env.ADMIN_NAME || "Nature de Pierre";
-    this.fromEmail = process.env.FROM_EMAIL || process.env.ADMIN_EMAIL || "admin@example.com";
+    this.fromEmail =
+      process.env.FROM_EMAIL || process.env.ADMIN_EMAIL || "admin@example.com";
     this.fromName = process.env.FROM_NAME || "Nature de Pierre";
-    
+
     // Priorité 1: Resend (API HTTP, fonctionne sur Railway)
     if (process.env.RESEND_API_KEY) {
       this.initializeResend();
-    } 
+    }
     // Priorité 2: Gmail SMTP (fallback pour développement local)
     else if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
       this.initializeGmailTransporter();
     } else {
-      console.warn("⚠️ Aucun service d'email configuré (RESEND_API_KEY ou GMAIL_USER/GMAIL_APP_PASSWORD requis)");
+      console.warn(
+        "⚠️ Aucun service d'email configuré (RESEND_API_KEY ou GMAIL_USER/GMAIL_APP_PASSWORD requis)"
+      );
     }
   }
 
@@ -662,7 +665,9 @@ Elle fait office de confirmation de commande et de justificatif de paiement.
 
         if (resendResult.error) {
           console.error("❌ Erreur Resend:", resendResult.error);
-          throw new Error(`Resend error: ${JSON.stringify(resendResult.error)}`);
+          throw new Error(
+            `Resend error: ${JSON.stringify(resendResult.error)}`
+          );
         }
 
         console.log("📧 ✅ Email envoyé avec succès via Resend!");

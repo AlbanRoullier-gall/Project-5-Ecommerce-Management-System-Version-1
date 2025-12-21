@@ -23,7 +23,8 @@ COPY services/email-service/package*.json ./
 COPY services/email-service/tsconfig.json ./
 
 # Installer toutes les dépendances (dev + prod pour la compilation TypeScript)
-RUN npm ci --only=production=false
+# Utiliser npm install au lieu de npm ci pour générer le package-lock.json si nécessaire
+RUN npm install
 
 # ===== COPIE DU CODE SOURCE =====
 # Copier le code source TypeScript
