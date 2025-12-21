@@ -448,35 +448,76 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         );
     }
 
-    // 6. Appeler email-service pour envoyer l'email de confirmation (non-bloquant)
+    // 6. Appeler email-service pour envoyer l'email de confirmation (BLOQUANT)
+    // IMPORTANT: L'envoi de l'email est maintenant bloquant pour garantir qu'il soit exécuté
+    // Utiliser un timeout pour éviter de bloquer trop longtemps
     // email-service construit les données à partir des données brutes
     // SIMPLIFICATION : Utiliser directement checkoutData depuis le panier
     console.log(
-      `[Payment Finalize] Étape 6: Envoi de l'email de confirmation (non-bloquant)`
+      `[Payment Finalize] Étape 6: Envoi de l'email de confirmation (BLOQUANT avec timeout de 10 secondes)`
     );
     try {
-      const emailResponse = await fetch(
-        `${SERVICES.email}/api/email/order-confirmation`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Service-Request": "api-gateway",
-          },
-          body: JSON.stringify({
-            orderId,
-            cart,
-            customerData: checkoutData?.customerData || {},
-            addressData: checkoutData?.addressData || {},
-          }),
-        }
+      const emailUrl = `${SERVICES.email}/api/email/order-confirmation`;
+      const emailBody = JSON.stringify({
+        orderId,
+        cart,
+        customerData: checkoutData?.customerData || {},
+        addressData: checkoutData?.addressData || {},
+      });
+
+      console.log(
+        `[Payment Finalize] Envoi de la requête POST vers: ${emailUrl}`
+      );
+
+      // Créer un AbortController pour le timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 10000); // Timeout de 10 secondes
+
+      const emailResponse = await fetch(emailUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Service-Request": "api-gateway",
+        },
+        body: emailBody,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const responseText = await emailResponse.text();
+      console.log(
+        `[Payment Finalize] Réponse de l'envoi d'email: status=${
+          emailResponse.status
+        }, body=${responseText.substring(0, 200)}`
       );
 
       if (!emailResponse.ok) {
-        console.error("⚠️ Email Service error - email non envoyé");
+        console.error(
+          `[Payment Finalize] ❌ Erreur lors de l'envoi de l'email: status=${emailResponse.status}, ${emailResponse.statusText}`
+        );
+        // Ne pas bloquer la réponse même si l'email échoue - la commande est déjà créée
+        // Mais loguer l'erreur pour investigation
+      } else {
+        console.log(
+          `[Payment Finalize] ✅ Email de confirmation envoyé avec succès`
+        );
       }
-    } catch (error) {
-      console.warn("⚠️ Erreur lors de l'envoi de l'email:", error);
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        console.error(
+          `[Payment Finalize] ❌ Timeout de 10s atteint lors de l'envoi de l'email`
+        );
+        // Ne pas bloquer la réponse même en cas de timeout - la commande est déjà créée
+      } else {
+        console.error(
+          `[Payment Finalize] ❌ Erreur lors de l'envoi de l'email:`,
+          error
+        );
+        // Ne pas bloquer la réponse même si l'email échoue - la commande est déjà créée
+      }
     }
 
     // 7. Vider le panier et les données checkout après création réussie (BLOQUANT)

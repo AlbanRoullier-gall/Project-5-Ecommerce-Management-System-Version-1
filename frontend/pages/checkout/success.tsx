@@ -26,11 +26,13 @@ export default function CheckoutSuccessPage() {
     // Recharger le panier pour voir qu'il est vide
     await refreshCart();
     console.log("[Checkout Success] Panier rechargé");
-    
+
     // Vérifier à nouveau après un court délai pour s'assurer que le panier est bien vide
     await new Promise((resolve) => setTimeout(resolve, 500));
     await refreshCart();
-    console.log("[Checkout Success] Panier rechargé une deuxième fois pour vérification");
+    console.log(
+      "[Checkout Success] Panier rechargé une deuxième fois pour vérification"
+    );
   });
 
   // Recharger aussi le panier au montage de la page pour s'assurer qu'il est à jour
@@ -43,11 +45,13 @@ export default function CheckoutSuccessPage() {
       await new Promise((resolve) => setTimeout(resolve, 2500));
       await refreshCart();
       console.log("[Checkout Success] Panier rechargé au montage");
-      
+
       // Vérifier à nouveau après un court délai
       await new Promise((resolve) => setTimeout(resolve, 500));
       await refreshCart();
-      console.log("[Checkout Success] Panier rechargé une deuxième fois au montage");
+      console.log(
+        "[Checkout Success] Panier rechargé une deuxième fois au montage"
+      );
     };
     reloadCart();
   }, [refreshCart]);
