@@ -64,11 +64,14 @@ export const handleCreatePayment = async (req: Request, res: Response) => {
 
 export const handleFinalizePayment = async (req: Request, res: Response) => {
   try {
+    console.log("[Payment Finalize] Début de la finalisation du paiement");
     const { csid } = req.body || {};
+    console.log(`[Payment Finalize] csid reçu: ${csid ? csid.substring(0, 20) + "..." : "aucun"}`);
 
     // Le cartSessionId est déjà extrait par le middleware cartSessionMiddleware
     // et ajouté à req.cartSessionId
     const cartSessionId = (req as any).cartSessionId;
+    console.log(`[Payment Finalize] cartSessionId: ${cartSessionId ? cartSessionId.substring(0, 20) + "..." : "aucun"}`);
 
     // Validation HTTP basique (pas de logique métier)
     if (!csid) {
@@ -99,6 +102,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     let customerId: number | undefined;
 
     try {
+      console.log(`[Payment Finalize] Étape 1: Récupération de la session Stripe: ${csid}`);
       const paymentResponse = await fetch(
         `${SERVICES.payment}/api/payment/session/${csid}`,
         {
@@ -136,8 +140,11 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         paymentResponseData.metadata?.paymentIntentId;
       customerId = paymentResponseData.metadata?.customerId;
 
+      console.log(`[Payment Finalize] Session récupérée - customerId: ${customerId}, paymentIntentId: ${paymentIntentId?.substring(0, 20) || "aucun"}...`);
+
       // Le customerId est TOUJOURS dans les métadonnées (garanti par checkout-complete)
       if (!customerId) {
+        console.error(`[Payment Finalize] ❌ customerId manquant dans les métadonnées`);
         return res
           .status(400)
           .json(
@@ -164,6 +171,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     let cart: CartPublicDTO;
 
     try {
+      console.log(`[Payment Finalize] Étape 2: Récupération du panier avec sessionId: ${cartSessionId.substring(0, 20)}...`);
       const cartResponse = await fetch(
         `${SERVICES.cart}/api/cart?sessionId=${cartSessionId}`,
         {
@@ -191,7 +199,10 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       const cartData = (await cartResponse.json()) as { cart: CartPublicDTO };
       cart = cartData.cart;
 
+      console.log(`[Payment Finalize] Panier récupéré: ${cart?.items?.length || 0} articles`);
+
       if (!cart || !cart.items || cart.items.length === 0) {
+        console.error(`[Payment Finalize] ❌ Panier vide`);
         return res
           .status(400)
           .json(createErrorResponse("Panier vide", "Le panier est vide"));
@@ -225,6 +236,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     // Cette étape doit réussir avant de créer la commande pour garantir la cohérence des données
     const checkoutData = cart.checkoutData;
     if (customerId && checkoutData?.addressData) {
+      console.log(`[Payment Finalize] Étape 3: Enregistrement des adresses pour customerId: ${customerId}`);
       try {
         const addressResponse = await fetch(
           `${SERVICES.customer}/api/customers/${customerId}/addresses/bulk`,
@@ -279,6 +291,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     // Les adresses sont maintenant garanties d'être enregistrées avant cette étape
     let orderId: number;
 
+    console.log(`[Payment Finalize] Étape 4: Création de la commande pour customerId: ${customerId}`);
     try {
       const orderResponse = await fetch(
         `${SERVICES.order}/api/orders/create-from-cart-checkout`,
@@ -313,8 +326,11 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       orderId = orderData.order?.id;
 
       if (!orderId) {
+        console.error(`[Payment Finalize] ❌ Order ID non retourné par le service`);
         throw new Error("Order ID non retourné par le service");
       }
+
+      console.log(`[Payment Finalize] ✅ Commande créée avec succès: orderId=${orderId}`);
     } catch (error) {
       console.error("❌ Erreur lors de l'appel au Order Service:", error);
       return res
@@ -378,7 +394,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       });
 
       await Promise.all(stockUpdatePromises);
-      console.log("✅ Stock décrémenté pour tous les produits");
+      console.log(`[Payment Finalize] ✅ Stock décrémenté pour tous les produits`);
     } catch (error) {
       console.error("❌ Erreur lors de la décrémentation du stock:", error);
       // En cas d'erreur, on retourne une erreur car la commande a été créée
@@ -397,6 +413,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     // 6. Appeler email-service pour envoyer l'email de confirmation (non-bloquant)
     // email-service construit les données à partir des données brutes
     // SIMPLIFICATION : Utiliser directement checkoutData depuis le panier
+    console.log(`[Payment Finalize] Étape 6: Envoi de l'email de confirmation (non-bloquant)`);
     try {
       const emailResponse = await fetch(
         `${SERVICES.email}/api/email/order-confirmation`,
@@ -424,6 +441,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
 
     // 7. Vider le panier et les données checkout après création réussie (non-bloquant)
     // Le panier sera vidé automatiquement, ce qui supprime aussi les données checkout
+    console.log(`[Payment Finalize] Étape 7: Vidage du panier (non-bloquant)`);
     try {
       const clearCartResponse = await fetch(`${SERVICES.cart}/api/cart`, {
         method: "DELETE",
@@ -440,13 +458,14 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
           clearCartResponse.statusText
         );
       } else {
-        console.log("✅ Panier et données checkout vidés avec succès");
+        console.log(`[Payment Finalize] ✅ Panier et données checkout vidés avec succès`);
       }
     } catch (error) {
       console.warn("⚠️ Erreur lors du vidage du panier:", error);
       // Ne pas bloquer la réponse - la commande est déjà créée
     }
 
+    console.log(`[Payment Finalize] ✅ Finalisation complète - orderId: ${orderId}`);
     return res.status(200).json({
       success: true,
       orderId,

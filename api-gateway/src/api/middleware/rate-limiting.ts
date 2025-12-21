@@ -284,14 +284,14 @@ export const paymentRateLimit = async (
     setRateLimitHeaders(res, 500, result.remaining, result.resetTime);
     
     if (!result.allowed) {
-      sendTooManyRequests(
-        res,
+    sendTooManyRequests(
+      res,
         "Trop de requêtes de paiement. Veuillez réessayer dans une minute.",
         result.resetTime
-      );
-      return;
-    }
-    
+    );
+    return;
+  }
+
     return next();
   }
 
