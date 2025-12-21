@@ -14,6 +14,7 @@ export default class EmailService {
   private adminName: string;
   private fromEmail: string;
   private fromName: string;
+  private resendFromEmail: string; // Email spécifique pour Resend (doit être un domaine vérifié)
 
   constructor() {
     this.adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
@@ -21,6 +22,10 @@ export default class EmailService {
     this.fromEmail =
       process.env.FROM_EMAIL || process.env.ADMIN_EMAIL || "admin@example.com";
     this.fromName = process.env.FROM_NAME || "Nature de Pierre";
+    
+    // Pour Resend, utiliser RESEND_FROM_EMAIL si défini, sinon utiliser un domaine par défaut
+    // IMPORTANT: Resend nécessite un domaine vérifié. Utilisez votre domaine vérifié ou onboarding@resend.dev pour les tests
+    this.resendFromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
     // Priorité 1: Resend (API HTTP, fonctionne sur Railway)
     if (process.env.RESEND_API_KEY) {
@@ -655,8 +660,11 @@ Elle fait office de confirmation de commande et de justificatif de paiement.
       // Priorité 1: Utiliser Resend (API HTTP - fonctionne sur Railway)
       if (this.resend) {
         console.log("📧 Envoi de l'email via Resend (API HTTP)...");
+        // Utiliser resendFromEmail (domaine vérifié) au lieu de fromEmail (qui peut être Gmail)
+        const resendFrom = `${this.fromName} <${this.resendFromEmail}>`;
+        console.log(`📧 From (Resend): ${resendFrom}`);
         const resendResult = await this.resend.emails.send({
-          from: `${this.fromName} <${this.fromEmail}>`,
+          from: resendFrom,
           to: [customerEmail],
           subject: `Confirmation de commande #${data.orderId}`,
           html: mailOptions.html,
