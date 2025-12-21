@@ -65,7 +65,7 @@ export const handleCreatePayment = async (req: Request, res: Response) => {
 export const handleFinalizePayment = async (
   req: Request,
   res: Response
-): Promise<void> => {
+) => {
   console.log(
     `[Payment Finalize Handler] ✅ Handler appelé pour ${req.method} ${req.path}`
   );
