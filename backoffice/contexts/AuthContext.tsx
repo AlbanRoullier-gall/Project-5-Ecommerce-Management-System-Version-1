@@ -143,14 +143,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   /**
    * Déconnecte l'utilisateur
    * Appelle l'API pour supprimer le cookie et met à jour l'état local
+   * Même en cas d'erreur réseau, la déconnexion locale est effectuée
    */
   const logout = useCallback(async () => {
     try {
       await logoutService();
-    } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
+    } catch (error: any) {
+      // Pour les erreurs réseau (timeout, connexion refusée, etc.), 
+      // le cookie est déjà supprimé côté serveur et on continue avec la déconnexion locale
+      if (
+        error instanceof TypeError &&
+        (error.message.includes("fetch") ||
+          error.message.includes("Load failed") ||
+          error.message.includes("Failed to fetch"))
+      ) {
+        console.warn(
+          "[AuthContext] Erreur réseau lors du logout, mais déconnexion locale effectuée"
+        );
+      } else {
+        console.error("Erreur lors de la déconnexion:", error);
+      }
     } finally {
       // Mettre à jour l'état local même si l'appel API échoue
+      // Le cookie est déjà supprimé côté serveur (même en cas d'erreur)
       clearAuthState();
       router.push("/auth/login");
     }
