@@ -109,6 +109,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   /**
    * Vérifie l'authentification depuis le serveur (cookie httpOnly)
+   * En cas d'erreur réseau, conserve l'état précédent pour éviter les redirections intempestives
    */
   const checkAuth = useCallback(async () => {
     setIsLoading(true);
@@ -120,16 +121,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         clearAuthState();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(
         "Erreur lors de la vérification de l'authentification:",
         error
       );
-      clearAuthState();
+
+      // En cas d'erreur réseau, ne pas nettoyer l'état immédiatement
+      // Cela évite les redirections intempestives lors du rechargement de page
+      // si le cookie n'est pas encore accessible (problème cross-domain temporaire)
+      const isNetworkError =
+        error.message?.includes("fetch") ||
+        error.message?.includes("network") ||
+        error.message?.includes("Failed to fetch") ||
+        error.message?.includes("Erreur de connexion");
+
+      if (isNetworkError && user) {
+        // Erreur réseau mais utilisateur était authentifié : conserver l'état
+        // La prochaine vérification réussira une fois le cookie accessible
+        console.warn(
+          "Erreur réseau lors de la vérification, conservation de l'état d'authentification précédent"
+        );
+      } else {
+        // Erreur autre que réseau ou utilisateur non authentifié : nettoyer l'état
+        clearAuthState();
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [clearAuthState]);
+  }, [clearAuthState, user]);
 
   /**
    * Connecte l'utilisateur (met à jour l'état local)
@@ -149,7 +169,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await logoutService();
     } catch (error: any) {
-      // Pour les erreurs réseau (timeout, connexion refusée, etc.), 
+      // Pour les erreurs réseau (timeout, connexion refusée, etc.),
       // le cookie est déjà supprimé côté serveur et on continue avec la déconnexion locale
       if (
         error instanceof TypeError &&
