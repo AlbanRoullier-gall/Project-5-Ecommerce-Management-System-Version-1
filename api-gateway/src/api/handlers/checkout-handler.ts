@@ -78,23 +78,8 @@ export const handleCheckoutComplete = async (
     const cartSessionId =
       extractCartSessionId(req) || (req as any).cartSessionId;
 
-    console.log(
-      `[Checkout] Requête reçue - sessionId extrait: ${cartSessionId ? cartSessionId.substring(0, 20) + "..." : "AUCUN"}`
-    );
-    console.log(
-      `[Checkout] Cookies reçus:`,
-      req.cookies ? Object.keys(req.cookies) : "aucun"
-    );
-    console.log(
-      `[Checkout] Headers x-cart-session-id:`,
-      req.headers["x-cart-session-id"]
-    );
-
     // Validation HTTP basique (pas de logique métier)
     if (!cartSessionId) {
-      console.error(
-        `[Checkout] ERREUR: Aucun cartSessionId trouvé dans la requête`
-      );
       res
         .status(400)
         .json(
@@ -148,12 +133,12 @@ export const handleCheckoutComplete = async (
       // Récupérer le panier (contient items + checkoutData)
       const cartUrl = `${SERVICES.cart}/api/cart?sessionId=${cartSessionId}`;
       console.log(
-        `[Checkout] Récupération du panier pour sessionId: ${cartSessionId.substring(
+        `[Checkout] Récupération du panier avec sessionId: ${cartSessionId.substring(
           0,
           20
         )}...`
       );
-      console.log(`[Checkout] URL: ${cartUrl}`);
+      console.log(`[Checkout] URL du panier: ${cartUrl}`);
 
       const cartResponse = await fetch(cartUrl, {
         headers: {
@@ -186,7 +171,10 @@ export const handleCheckoutComplete = async (
       cart = cartData.cart;
 
       console.log(
-        `[Checkout] Panier récupéré: ${cart ? cart.items?.length || 0 : 0} items`
+        `[Checkout] Panier récupéré: ${cart?.items?.length || 0} articles, sessionId: ${cart?.sessionId?.substring(
+          0,
+          20
+        ) || "aucun"}...`
       );
 
       if (!cart || !cart.items || cart.items.length === 0) {
@@ -197,8 +185,8 @@ export const handleCheckoutComplete = async (
           )}...`
         );
         console.error(
-          `[Checkout] Cart data:`,
-          JSON.stringify(cartData, null, 2).substring(0, 500)
+          `[Checkout] Panier récupéré:`,
+          JSON.stringify(cart, null, 2)
         );
         res
           .status(400)
