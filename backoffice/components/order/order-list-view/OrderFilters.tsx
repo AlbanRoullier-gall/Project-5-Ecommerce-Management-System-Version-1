@@ -40,59 +40,72 @@ const OrderFilters: React.FC<OrderFiltersProps> = ({
 
   return (
     <FilterContainer>
-      <SearchInput
-        value={searchTerm}
-        onChange={onSearchChange}
-        placeholder="Rechercher par référence, client ou email..."
-      />
-      <FilterSelect
-        id="delivery"
-        label="État de livraison"
-        value={deliveryFilter}
-        onChange={onDeliveryFilterChange}
-        placeholder="Toutes les commandes"
-        options={[
-          { value: "delivered", label: "Livrées" },
-          { value: "pending", label: "En attente" },
-        ]}
-      />
-      <FilterSelect
-        id="year"
-        label="Année"
-        value={yearFilter}
-        onChange={onYearFilterChange}
-        placeholder="Toutes les années"
-        options={yearOptions}
-      />
-      <div className={styles.field}>
-        <label htmlFor="totalFilter" className={styles.label}>
-          <i className={`fas fa-euro-sign ${styles.icon}`}></i>
-          Total HT/TTC
-        </label>
-        <input
-          type="number"
-          id="totalFilter"
-          value={totalFilter}
-          onChange={(e) => onTotalFilterChange(e.target.value)}
-          placeholder="Rechercher par montant..."
-          step="0.01"
-          min="0"
-          className={styles.input}
+      {/* Recherche principale - prend plus de place */}
+      <div className={styles.searchSection}>
+        <SearchInput
+          value={searchTerm}
+          onChange={onSearchChange}
+          placeholder="Rechercher par référence, client ou email..."
         />
       </div>
-      <div className={styles.field}>
-        <label htmlFor="dateFilter" className={styles.label}>
-          <i className={`fas fa-calendar-alt ${styles.icon}`}></i>
-          Date de création
-        </label>
-        <input
-          type="date"
-          id="dateFilter"
-          value={dateFilter}
-          onChange={(e) => onDateFilterChange(e.target.value)}
-          className={styles.input}
+
+      {/* Filtres de statut - groupe logique */}
+      <div className={styles.statusGroup}>
+        <FilterSelect
+          id="delivery"
+          label="État de livraison"
+          value={deliveryFilter}
+          onChange={onDeliveryFilterChange}
+          placeholder="Toutes les commandes"
+          options={[
+            { value: "delivered", label: "Livrées" },
+            { value: "pending", label: "En attente" },
+          ]}
+        />
+        <FilterSelect
+          id="year"
+          label="Année"
+          value={yearFilter}
+          onChange={onYearFilterChange}
+          placeholder="Toutes les années"
+          options={yearOptions}
         />
       </div>
+
+      {/* Filtres numériques et dates - groupe logique */}
+      <div className={styles.dataGroup}>
+        <div className={styles.field}>
+          <label htmlFor="totalFilter" className={styles.label}>
+            <i className={`fas fa-euro-sign ${styles.icon}`}></i>
+            Total HT/TTC
+          </label>
+          <input
+            type="number"
+            id="totalFilter"
+            value={totalFilter}
+            onChange={(e) => onTotalFilterChange(e.target.value)}
+            placeholder="Rechercher par montant..."
+            step="0.01"
+            min="0"
+            className={styles.input}
+          />
+        </div>
+        <div className={styles.field}>
+          <label htmlFor="dateFilter" className={styles.label}>
+            <i className={`fas fa-calendar-alt ${styles.icon}`}></i>
+            Date de création
+          </label>
+          <input
+            type="date"
+            id="dateFilter"
+            value={dateFilter}
+            onChange={(e) => onDateFilterChange(e.target.value)}
+            className={styles.input}
+          />
+        </div>
+      </div>
+
+      {/* Actions */}
       <div className={styles.actions}>
         <button onClick={onResetFilters} className={styles.resetButton}>
           <i className={`fas fa-redo ${styles.resetIcon}`}></i>
