@@ -1,20 +1,48 @@
 /**
- * EmailService - Version simplifiée pour Gmail
- * Business logic layer pour l'envoi d'emails via Gmail
+ * EmailService - Support pour Resend (API HTTP) et Gmail SMTP (fallback)
+ * Resend est utilisé en priorité car il fonctionne sur Railway (pas de blocage SMTP)
  */
 
 import * as nodemailer from "nodemailer";
 import { Transporter } from "nodemailer";
+import { Resend } from "resend";
 
 export default class EmailService {
   private transporter: Transporter | null = null;
+  private resend: Resend | null = null;
   private adminEmail: string;
   private adminName: string;
+  private fromEmail: string;
+  private fromName: string;
 
   constructor() {
     this.adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
     this.adminName = process.env.ADMIN_NAME || "Nature de Pierre";
-    this.initializeGmailTransporter();
+    this.fromEmail = process.env.FROM_EMAIL || process.env.ADMIN_EMAIL || "admin@example.com";
+    this.fromName = process.env.FROM_NAME || "Nature de Pierre";
+    
+    // Priorité 1: Resend (API HTTP, fonctionne sur Railway)
+    if (process.env.RESEND_API_KEY) {
+      this.initializeResend();
+    } 
+    // Priorité 2: Gmail SMTP (fallback pour développement local)
+    else if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+      this.initializeGmailTransporter();
+    } else {
+      console.warn("⚠️ Aucun service d'email configuré (RESEND_API_KEY ou GMAIL_USER/GMAIL_APP_PASSWORD requis)");
+    }
+  }
+
+  /**
+   * Initialiser Resend (API HTTP - fonctionne sur Railway)
+   */
+  private initializeResend(): void {
+    try {
+      this.resend = new Resend(process.env.RESEND_API_KEY);
+      console.log("✅ Resend initialisé (API HTTP - compatible Railway)");
+    } catch (error) {
+      console.error("❌ Erreur lors de l'initialisation de Resend:", error);
+    }
   }
 
   /**
@@ -317,18 +345,16 @@ Cet email a été envoyé automatiquement, merci de ne pas y répondre.
     };
   }): Promise<any> {
     console.log("📧 EmailService.sendOrderConfirmationEmail: Début");
-    console.log("📧 Transporter configuré:", !!this.transporter);
+    console.log("📧 Resend configuré:", !!this.resend);
+    console.log("📧 Gmail transporter configuré:", !!this.transporter);
+    console.log("📧 RESEND_API_KEY configuré:", !!process.env.RESEND_API_KEY);
     console.log("📧 GMAIL_USER configuré:", !!process.env.GMAIL_USER);
-    console.log(
-      "📧 GMAIL_APP_PASSWORD configuré:",
-      !!process.env.GMAIL_APP_PASSWORD
-    );
 
-    if (!this.transporter) {
+    if (!this.resend && !this.transporter) {
       console.error(
-        "❌ Gmail transporter not configured - vérifiez GMAIL_USER et GMAIL_APP_PASSWORD"
+        "❌ Aucun service d'email configuré - vérifiez RESEND_API_KEY ou GMAIL_USER/GMAIL_APP_PASSWORD"
       );
-      throw new Error("Gmail transporter not configured");
+      throw new Error("No email service configured");
     }
 
     // Validation basique
@@ -620,23 +646,55 @@ Elle fait office de confirmation de commande et de justificatif de paiement.
         `,
       };
 
-      console.log("📧 Envoi de l'email via Gmail transporter...");
       console.log("📧 Destinataire:", customerEmail);
       console.log("📧 Sujet:", `Confirmation de commande #${data.orderId}`);
 
-      const result = await this.transporter.sendMail(mailOptions);
+      // Priorité 1: Utiliser Resend (API HTTP - fonctionne sur Railway)
+      if (this.resend) {
+        console.log("📧 Envoi de l'email via Resend (API HTTP)...");
+        const resendResult = await this.resend.emails.send({
+          from: `${this.fromName} <${this.fromEmail}>`,
+          to: [customerEmail],
+          subject: `Confirmation de commande #${data.orderId}`,
+          html: mailOptions.html,
+          text: mailOptions.text,
+        });
 
-      console.log("📧 ✅ Email envoyé avec succès!");
-      console.log("📧 MessageId:", result.messageId);
-      console.log("📧 Response:", result.response);
+        if (resendResult.error) {
+          console.error("❌ Erreur Resend:", resendResult.error);
+          throw new Error(`Resend error: ${JSON.stringify(resendResult.error)}`);
+        }
 
-      return {
-        messageId: result.messageId,
-        status: "sent",
-        recipient: customerEmail,
-        subject: mailOptions.subject,
-        sentAt: new Date(),
-      };
+        console.log("📧 ✅ Email envoyé avec succès via Resend!");
+        console.log("📧 MessageId:", resendResult.data?.id);
+
+        return {
+          messageId: resendResult.data?.id || "unknown",
+          status: "sent",
+          recipient: customerEmail,
+          subject: `Confirmation de commande #${data.orderId}`,
+          sentAt: new Date(),
+        };
+      }
+      // Priorité 2: Utiliser Gmail SMTP (fallback pour développement local)
+      else if (this.transporter) {
+        console.log("📧 Envoi de l'email via Gmail transporter (SMTP)...");
+        const result = await this.transporter.sendMail(mailOptions);
+
+        console.log("📧 ✅ Email envoyé avec succès via Gmail SMTP!");
+        console.log("📧 MessageId:", result.messageId);
+        console.log("📧 Response:", result.response);
+
+        return {
+          messageId: result.messageId,
+          status: "sent",
+          recipient: customerEmail,
+          subject: mailOptions.subject,
+          sentAt: new Date(),
+        };
+      } else {
+        throw new Error("No email service available");
+      }
     } catch (error) {
       console.error("❌ Error sending order confirmation email:", error);
       console.error("❌ Error details:", JSON.stringify(error, null, 2));
