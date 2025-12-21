@@ -9,6 +9,52 @@ import { ServiceName, SERVICES } from "../config";
 import { AuthenticatedUser } from "./middleware/auth";
 
 /**
+ * Ajoute les headers CORS à une réponse d'erreur
+ * Important pour que les erreurs du proxy soient accessibles depuis le frontend
+ */
+function addCorsHeadersToErrorResponse(req: Request, res: Response): void {
+  const origin = req.headers.origin;
+  
+  // Si l'origine est une URL Railway en production, l'autoriser automatiquement
+  if (
+    process.env["NODE_ENV"] === "production" &&
+    origin &&
+    origin.includes(".up.railway.app")
+  ) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+    );
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id"
+    );
+    res.header("Access-Control-Expose-Headers", "Set-Cookie, X-Cart-Session-Id");
+  } else if (origin) {
+    // Pour les autres origines, vérifier si elles sont autorisées
+    const allowedOriginsEnv = process.env["ALLOWED_ORIGINS"];
+    if (allowedOriginsEnv) {
+      const allowedOrigins = allowedOriginsEnv.split(",").map((o) => o.trim());
+      if (allowedOrigins.includes(origin)) {
+        res.header("Access-Control-Allow-Origin", origin);
+        res.header("Access-Control-Allow-Credentials", "true");
+        res.header(
+          "Access-Control-Allow-Methods",
+          "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        );
+        res.header(
+          "Access-Control-Allow-Headers",
+          "Content-Type, X-Requested-With, Accept, Authorization, Cookie, x-cart-session-id"
+        );
+        res.header("Access-Control-Expose-Headers", "Set-Cookie, X-Cart-Session-Id");
+      }
+    }
+  }
+}
+
+/**
  * Construit les headers de base (ajoute x-user-id et x-user-email si authentifié)
  */
 const buildBaseHeaders = (req: Request): Record<string, string> => {
@@ -219,6 +265,7 @@ export const proxyRequest = async (
         console.error(
           `[Proxy Error] Connexion refusée - Le service ${service} n'est probablement pas démarré ou n'écoute pas sur ${SERVICES[service]}`
         );
+        addCorsHeadersToErrorResponse(req, res);
         res.status(503).json({
           error: "Service Unavailable",
           message: `Le service ${service} n'est pas disponible`,
@@ -233,6 +280,7 @@ export const proxyRequest = async (
         axiosError.code === "ETIMEDOUT" ||
         axiosError.code === "ECONNABORTED"
       ) {
+        addCorsHeadersToErrorResponse(req, res);
         res.status(504).json({
           error: "Gateway Timeout",
           message: "La requête a pris trop de temps",
@@ -246,6 +294,7 @@ export const proxyRequest = async (
         console.error(
           `[Proxy Error] Service non trouvé - ${SERVICES[service]} n'est pas résolu`
         );
+        addCorsHeadersToErrorResponse(req, res);
         res.status(503).json({
           error: "Service Unavailable",
           message: `Le service ${service} n'est pas accessible`,
@@ -259,6 +308,9 @@ export const proxyRequest = async (
       if (axiosError.response) {
         const status = axiosError.response.status;
         const responseData = axiosError.response.data;
+
+        // Ajouter les headers CORS avant de retourner l'erreur
+        addCorsHeadersToErrorResponse(req, res);
 
         // Parser la réponse d'erreur
         let errorData: any;
