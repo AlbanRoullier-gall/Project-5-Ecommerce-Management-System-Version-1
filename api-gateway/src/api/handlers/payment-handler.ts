@@ -525,16 +525,29 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       }
     }
 
-    // 7. Appeler email-service pour envoyer l'email de confirmation (BLOQUANT)
-    // IMPORTANT: L'envoi de l'email est maintenant bloquant pour garantir qu'il soit exécuté
-    // Utiliser un timeout pour éviter de bloquer trop longtemps
-    // email-service construit les données à partir des données brutes
-    // SIMPLIFICATION : Utiliser directement checkoutData depuis le panier
-    // NOTE: L'email est envoyé APRÈS le vidage du panier pour que l'utilisateur voie le panier vidé rapidement
+    // Envoyer la réponse immédiatement après le vidage du panier
+    // L'envoi d'email sera fait en arrière-plan (non-bloquant)
     console.log(
-      `[Payment Finalize] Étape 7: Envoi de l'email de confirmation (BLOQUANT avec timeout de 10 secondes)`
+      `[Payment Finalize] ✅ Finalisation complète - orderId: ${orderId}`
     );
     
+    // Envoyer la réponse HTTP immédiatement
+    res.status(200).json({
+      success: true,
+      orderId,
+      message: "Paiement finalisé avec succès",
+      timestamp: new Date().toISOString(),
+    });
+
+    // 7. Appeler email-service pour envoyer l'email de confirmation (NON-BLOQUANT)
+    // IMPORTANT: L'envoi de l'email est maintenant non-bloquant pour ne pas retarder la réponse
+    // L'email sera envoyé en arrière-plan après que la réponse HTTP soit déjà partie
+    // email-service construit les données à partir des données brutes
+    // SIMPLIFICATION : Utiliser directement checkoutData depuis le panier
+    console.log(
+      `[Payment Finalize] Étape 7: Envoi de l'email de confirmation (NON-BLOQUANT en arrière-plan)`
+    );
+
     // Vérifier que les données nécessaires sont présentes
     const customerEmail = checkoutData?.customerData?.email;
     if (!customerEmail) {
@@ -545,129 +558,120 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         `[Payment Finalize] checkoutData:`,
         JSON.stringify(checkoutData, null, 2)
       );
+      return; // Ne pas essayer d'envoyer l'email si l'email est manquant
     } else {
-      console.log(
-        `[Payment Finalize] 📧 Email du client: ${customerEmail}`
-      );
+      console.log(`[Payment Finalize] 📧 Email du client: ${customerEmail}`);
     }
-    
+
     if (!cart?.items || cart.items.length === 0) {
       console.error(
         `[Payment Finalize] ❌ CART VIDE: Le panier n'a pas d'articles`
       );
+      return; // Ne pas essayer d'envoyer l'email si le panier est vide
     } else {
       console.log(
         `[Payment Finalize] 📦 Panier contient ${cart.items.length} article(s)`
       );
     }
-    
-    try {
-      const emailUrl = `${SERVICES.email}/api/email/order-confirmation`;
-      const emailPayload = {
-        orderId,
-        cart,
-        customerData: checkoutData?.customerData || {},
-        addressData: checkoutData?.addressData || {},
-      };
-      
-      // Log des données envoyées (sans les détails complets du cart pour éviter les logs trop longs)
-      console.log(
-        `[Payment Finalize] 📧 Données email à envoyer:`,
-        JSON.stringify(
-          {
-            orderId: emailPayload.orderId,
-            customerEmail: emailPayload.customerData?.email,
-            customerFirstName: emailPayload.customerData?.firstName,
-            customerLastName: emailPayload.customerData?.lastName,
-            cartItemsCount: emailPayload.cart?.items?.length || 0,
-            cartTotal: emailPayload.cart?.total,
-            hasAddressData: !!emailPayload.addressData,
+
+    // Lancer l'envoi d'email en arrière-plan (fire-and-forget)
+    // Ne pas utiliser await pour ne pas bloquer
+    (async () => {
+      try {
+        const emailUrl = `${SERVICES.email}/api/email/order-confirmation`;
+        const emailPayload = {
+          orderId,
+          cart,
+          customerData: checkoutData?.customerData || {},
+          addressData: checkoutData?.addressData || {},
+        };
+
+        // Log des données envoyées (sans les détails complets du cart pour éviter les logs trop longs)
+        console.log(
+          `[Payment Finalize] 📧 Données email à envoyer:`,
+          JSON.stringify(
+            {
+              orderId: emailPayload.orderId,
+              customerEmail: emailPayload.customerData?.email,
+              customerFirstName: emailPayload.customerData?.firstName,
+              customerLastName: emailPayload.customerData?.lastName,
+              cartItemsCount: emailPayload.cart?.items?.length || 0,
+              cartTotal: emailPayload.cart?.total,
+              hasAddressData: !!emailPayload.addressData,
+            },
+            null,
+            2
+          )
+        );
+
+        const emailBody = JSON.stringify(emailPayload);
+
+        console.log(
+          `[Payment Finalize] Envoi de la requête POST vers: ${emailUrl} (en arrière-plan)`
+        );
+
+        // Créer un AbortController pour le timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          controller.abort();
+        }, 30000); // Timeout de 30 secondes (plus généreux car non-bloquant)
+
+        const emailResponse = await fetch(emailUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Service-Request": "api-gateway",
           },
-          null,
-          2
-        )
-      );
-      
-      const emailBody = JSON.stringify(emailPayload);
+          body: emailBody,
+          signal: controller.signal,
+        });
 
-      console.log(
-        `[Payment Finalize] Envoi de la requête POST vers: ${emailUrl}`
-      );
+        clearTimeout(timeoutId);
 
-      // Créer un AbortController pour le timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 10000); // Timeout de 10 secondes
-
-      const emailResponse = await fetch(emailUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Service-Request": "api-gateway",
-        },
-        body: emailBody,
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      const responseText = await emailResponse.text();
-      console.log(
-        `[Payment Finalize] Réponse de l'envoi d'email: status=${
-          emailResponse.status
-        }, body=${responseText.substring(0, 500)}`
-      );
-
-      if (!emailResponse.ok) {
-        console.error(
-          `[Payment Finalize] ❌ Erreur lors de l'envoi de l'email: status=${emailResponse.status}, ${emailResponse.statusText}`
+        const responseText = await emailResponse.text();
+        console.log(
+          `[Payment Finalize] Réponse de l'envoi d'email: status=${
+            emailResponse.status
+          }, body=${responseText.substring(0, 500)}`
         );
-        console.error(
-          `[Payment Finalize] ❌ Réponse complète du service email: ${responseText}`
-        );
-        // Ne pas bloquer la réponse même si l'email échoue - la commande est déjà créée
-        // Mais loguer l'erreur pour investigation
-      } else {
-        try {
-          const emailResponseData = JSON.parse(responseText);
-          console.log(
-            `[Payment Finalize] ✅ Email de confirmation envoyé avec succès`
+
+        if (!emailResponse.ok) {
+          console.error(
+            `[Payment Finalize] ❌ Erreur lors de l'envoi de l'email: status=${emailResponse.status}, ${emailResponse.statusText}`
           );
-          console.log(
-            `[Payment Finalize] ✅ MessageId: ${emailResponseData.messageId || "N/A"}`
+          console.error(
+            `[Payment Finalize] ❌ Réponse complète du service email: ${responseText}`
           );
-        } catch (parseError) {
-          console.log(
-            `[Payment Finalize] ✅ Email de confirmation envoyé (réponse non-JSON)`
+        } else {
+          try {
+            const emailResponseData = JSON.parse(responseText);
+            console.log(
+              `[Payment Finalize] ✅ Email de confirmation envoyé avec succès (en arrière-plan)`
+            );
+            console.log(
+              `[Payment Finalize] ✅ MessageId: ${
+                emailResponseData.messageId || "N/A"
+              }`
+            );
+          } catch (parseError) {
+            console.log(
+              `[Payment Finalize] ✅ Email de confirmation envoyé (réponse non-JSON, en arrière-plan)`
+            );
+          }
+        }
+      } catch (error: any) {
+        if (error.name === "AbortError") {
+          console.error(
+            `[Payment Finalize] ❌ Timeout de 30s atteint lors de l'envoi de l'email (en arrière-plan)`
+          );
+        } else {
+          console.error(
+            `[Payment Finalize] ❌ Erreur lors de l'envoi de l'email (en arrière-plan):`,
+            error
           );
         }
       }
-    } catch (error: any) {
-      if (error.name === "AbortError") {
-        console.error(
-          `[Payment Finalize] ❌ Timeout de 10s atteint lors de l'envoi de l'email`
-        );
-        // Ne pas bloquer la réponse même en cas de timeout - la commande est déjà créée
-      } else {
-        console.error(
-          `[Payment Finalize] ❌ Erreur lors de l'envoi de l'email:`,
-          error
-        );
-        // Ne pas bloquer la réponse même si l'email échoue - la commande est déjà créée
-      }
-    }
-
-    // Envoyer la réponse après avoir vidé le panier (ou après timeout/erreur)
-    console.log(
-      `[Payment Finalize] ✅ Finalisation complète - orderId: ${orderId}`
-    );
-    return res.status(200).json({
-      success: true,
-      orderId,
-      message: "Paiement finalisé avec succès",
-      timestamp: new Date().toISOString(),
-    });
+    })(); // IIFE (Immediately Invoked Function Expression) pour exécuter en arrière-plan
   } catch (error) {
     console.error("❌ Finalisation de paiement - erreur:", error);
     return res
