@@ -22,10 +22,11 @@ export default class EmailService {
     this.fromEmail =
       process.env.FROM_EMAIL || process.env.ADMIN_EMAIL || "admin@example.com";
     this.fromName = process.env.FROM_NAME || "Nature de Pierre";
-    
+
     // Pour Resend, utiliser RESEND_FROM_EMAIL si défini, sinon utiliser un domaine par défaut
     // IMPORTANT: Resend nécessite un domaine vérifié. Utilisez votre domaine vérifié ou onboarding@resend.dev pour les tests
-    this.resendFromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+    this.resendFromEmail =
+      process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
     // Priorité 1: Resend (API HTTP, fonctionne sur Railway)
     if (process.env.RESEND_API_KEY) {
@@ -100,55 +101,93 @@ export default class EmailService {
    * @returns {Promise<Object>} Résultat d'envoi
    */
   async sendClientEmail(emailData: any): Promise<any> {
-    if (!this.transporter) {
-      console.error("Gmail transporter not configured");
-      return {
-        messageId: "mock-id",
-        status: "failed",
-        recipient: this.adminEmail,
-        subject: emailData.subject,
-        sentAt: null,
-        error: "Gmail transporter not configured",
-      };
+    if (!this.resend && !this.transporter) {
+      console.error("❌ Aucun service d'email configuré - vérifiez RESEND_API_KEY ou GMAIL_USER/GMAIL_APP_PASSWORD");
+      throw new Error("No email service configured");
     }
 
+    const htmlContent = `
+      <h2>Message de ${emailData.clientName}</h2>
+      <p><strong>Email:</strong> ${emailData.clientEmail}</p>
+      <p><strong>Sujet:</strong> ${emailData.subject}</p>
+      <hr>
+      <p>${emailData.message}</p>
+      <hr>
+      <p><em>Ce message a été envoyé depuis votre site web.</em></p>
+    `;
+
+    const textContent = `
+      Message de ${emailData.clientName}
+      Email: ${emailData.clientEmail}
+      Sujet: ${emailData.subject}
+      
+      ${emailData.message}
+      
+      Ce message a été envoyé depuis votre site web.
+    `;
+
     try {
-      // Le destinataire est toujours déterminé depuis ADMIN_EMAIL
-      const mailOptions = {
-        from: process.env.GMAIL_USER,
-        to: this.adminEmail,
-        subject: emailData.subject,
-        html: `
-          <h2>Message de ${emailData.clientName}</h2>
-          <p><strong>Email:</strong> ${emailData.clientEmail}</p>
-          <p><strong>Sujet:</strong> ${emailData.subject}</p>
-          <hr>
-          <p>${emailData.message}</p>
-          <hr>
-          <p><em>Ce message a été envoyé depuis votre site web.</em></p>
-        `,
-        text: `
-          Message de ${emailData.clientName}
-          Email: ${emailData.clientEmail}
-          Sujet: ${emailData.subject}
-          
-          ${emailData.message}
-          
-          Ce message a été envoyé depuis votre site web.
-        `,
-      };
+      // Priorité 1: Utiliser Resend (API HTTP - fonctionne sur Railway)
+      if (this.resend) {
+        console.log("📧 Envoi de l'email de contact via Resend (API HTTP)...");
+        const resendFrom = `${this.fromName} <${this.resendFromEmail}>`;
+        console.log(`📧 From (Resend): ${resendFrom}`);
+        console.log(`📧 To (Admin): ${this.adminEmail}`);
+        
+        const resendResult = await this.resend.emails.send({
+          from: resendFrom,
+          to: [this.adminEmail],
+          subject: emailData.subject,
+          html: htmlContent,
+          text: textContent,
+        });
 
-      const result = await this.transporter.sendMail(mailOptions);
+        if (resendResult.error) {
+          console.error("❌ Erreur Resend:", resendResult.error);
+          throw new Error(
+            `Resend error: ${JSON.stringify(resendResult.error)}`
+          );
+        }
 
-      return {
-        messageId: result.messageId,
-        status: "sent",
-        recipient: this.adminEmail,
-        subject: emailData.subject,
-        sentAt: new Date(),
-      };
+        console.log("📧 ✅ Email de contact envoyé avec succès via Resend!");
+        console.log("📧 MessageId:", resendResult.data?.id);
+
+        return {
+          messageId: resendResult.data?.id || "unknown",
+          status: "sent",
+          recipient: this.adminEmail,
+          subject: emailData.subject,
+          sentAt: new Date(),
+        };
+      }
+      // Priorité 2: Utiliser Gmail SMTP (fallback pour développement local)
+      else if (this.transporter) {
+        console.log("📧 Envoi de l'email de contact via Gmail transporter (SMTP)...");
+        const mailOptions = {
+          from: process.env.GMAIL_USER,
+          to: this.adminEmail,
+          subject: emailData.subject,
+          html: htmlContent,
+          text: textContent,
+        };
+
+        const result = await this.transporter.sendMail(mailOptions);
+
+        console.log("📧 ✅ Email de contact envoyé avec succès via Gmail SMTP!");
+        console.log("📧 MessageId:", result.messageId);
+
+        return {
+          messageId: result.messageId,
+          status: "sent",
+          recipient: this.adminEmail,
+          subject: emailData.subject,
+          sentAt: new Date(),
+        };
+      } else {
+        throw new Error("No email service available");
+      }
     } catch (error) {
-      console.error("Error sending client email:", error);
+      console.error("❌ Error sending client email:", error);
       throw error;
     }
   }
