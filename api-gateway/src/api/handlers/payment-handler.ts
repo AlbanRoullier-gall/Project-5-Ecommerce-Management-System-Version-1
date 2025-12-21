@@ -62,7 +62,10 @@ export const handleCreatePayment = async (req: Request, res: Response) => {
   await proxyRequest(req, res, "payment");
 };
 
-export const handleFinalizePayment = async (req: Request, res: Response) => {
+export const handleFinalizePayment = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   console.log(
     `[Payment Finalize Handler] ✅ Handler appelé pour ${req.method} ${req.path}`
   );
@@ -530,7 +533,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     console.log(
       `[Payment Finalize] ✅ Finalisation complète - orderId: ${orderId}`
     );
-    
+
     // Envoyer la réponse HTTP immédiatement
     res.status(200).json({
       success: true,
@@ -579,10 +582,15 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
     (async () => {
       try {
         const emailUrl = `${SERVICES.email}/api/email/order-confirmation`;
+        const customerData = checkoutData?.customerData || {
+          email: customerEmail,
+          firstName: checkoutData?.customerData?.firstName,
+          lastName: checkoutData?.customerData?.lastName,
+        };
         const emailPayload = {
           orderId,
           cart,
-          customerData: checkoutData?.customerData || {},
+          customerData,
           addressData: checkoutData?.addressData || {},
         };
 
@@ -592,9 +600,9 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
           JSON.stringify(
             {
               orderId: emailPayload.orderId,
-              customerEmail: emailPayload.customerData?.email,
-              customerFirstName: emailPayload.customerData?.firstName,
-              customerLastName: emailPayload.customerData?.lastName,
+              customerEmail: customerData.email,
+              customerFirstName: customerData.firstName,
+              customerLastName: customerData.lastName,
               cartItemsCount: emailPayload.cart?.items?.length || 0,
               cartTotal: emailPayload.cart?.total,
               hasAddressData: !!emailPayload.addressData,
@@ -672,6 +680,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         }
       }
     })(); // IIFE (Immediately Invoked Function Expression) pour exécuter en arrière-plan
+    return; // Retour explicite après avoir lancé l'envoi d'email en arrière-plan
   } catch (error) {
     console.error("❌ Finalisation de paiement - erreur:", error);
     return res
