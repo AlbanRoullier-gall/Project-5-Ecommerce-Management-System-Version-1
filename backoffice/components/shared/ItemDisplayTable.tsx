@@ -96,7 +96,6 @@ const ItemDisplayTable: React.FC<ItemDisplayTableProps> = ({
     <TableLayout
       headers={headers}
       headerGradient={variant === "credit-note" ? "gold" : "teal"}
-      minWidth="700px"
     >
       {items.map((item, index) => {
         const itemId = getItemId ? getItemId(item) : (item as any).id;

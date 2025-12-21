@@ -37,8 +37,14 @@
 
   .mainInfoGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .mainInfoGrid {
+      grid-template-columns: 1fr;
+    }
   }
 
   .sectionHeader {
@@ -129,8 +135,14 @@
 
   .addressesGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .addressesGrid {
+      grid-template-columns: 1fr;
+    }
   }
 
   .addressEmpty {
@@ -194,7 +206,7 @@
 
   .amountsGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 1rem;
   }
 
