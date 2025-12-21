@@ -479,11 +479,11 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       console.warn("⚠️ Erreur lors de l'envoi de l'email:", error);
     }
 
-    // 7. Vider le panier et les données checkout après création réussie (vraiment non-bloquant)
-    // Le panier sera vidé automatiquement, ce qui supprime aussi les données checkout
-    // IMPORTANT: Ne pas utiliser await pour ne pas bloquer la réponse
+    // 7. Vider le panier et les données checkout après création réussie
+    // Utiliser un timeout court pour ne pas bloquer la réponse trop longtemps
+    // mais garantir que le vidage est exécuté
     console.log(
-      `[Payment Finalize] Étape 7: Vidage du panier (non-bloquant, en arrière-plan)`
+      `[Payment Finalize] Étape 7: Vidage du panier avec timeout de 2 secondes`
     );
     console.log(
       `[Payment Finalize] cartSessionId pour vidage: ${cartSessionId.substring(
@@ -495,16 +495,16 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
       `[Payment Finalize] URL du service cart: ${SERVICES.cart}/api/cart`
     );
 
-    // Lancer le vidage du panier en arrière-plan sans attendre
+    // Vider le panier avec un timeout pour ne pas bloquer trop longtemps
     const clearCartUrl = `${SERVICES.cart}/api/cart`;
     const clearCartBody = JSON.stringify({ sessionId: cartSessionId });
 
     console.log(
       `[Payment Finalize] Envoi de la requête DELETE vers: ${clearCartUrl}`
     );
-    console.log(`[Payment Finalize] Body: ${clearCartBody}`);
 
-    fetch(clearCartUrl, {
+    // Utiliser Promise.race avec un timeout pour garantir l'exécution mais ne pas bloquer trop longtemps
+    const clearCartPromise = fetch(clearCartUrl, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -526,19 +526,38 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
           );
         } else {
           console.log(
-            `[Payment Finalize] ✅ Panier et données checkout vidés avec succès (en arrière-plan)`
+            `[Payment Finalize] ✅ Panier et données checkout vidés avec succès`
           );
         }
+        return clearCartResponse;
       })
       .catch((error) => {
         console.error(
-          `[Payment Finalize] ❌ Erreur lors du vidage du panier (en arrière-plan):`,
+          `[Payment Finalize] ❌ Erreur lors du vidage du panier:`,
           error
         );
-        // Ne pas bloquer - la commande est déjà créée
+        throw error;
       });
 
-    // Envoyer la réponse immédiatement sans attendre le vidage du panier
+    // Timeout de 2 secondes - si le vidage prend plus de temps, on continue quand même
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => {
+        console.log(
+          `[Payment Finalize] ⚠️ Timeout de 2s atteint pour le vidage du panier - continuation sans attendre`
+        );
+        resolve(null);
+      }, 2000);
+    });
+
+    // Attendre soit le vidage, soit le timeout (le plus rapide)
+    Promise.race([clearCartPromise, timeoutPromise]).catch((error) => {
+      console.error(
+        `[Payment Finalize] ❌ Erreur lors du vidage du panier (après timeout):`,
+        error
+      );
+    });
+
+    // Envoyer la réponse après avoir lancé le vidage (avec timeout)
     console.log(
       `[Payment Finalize] ✅ Finalisation complète - orderId: ${orderId} (panier sera vidé en arrière-plan)`
     );
