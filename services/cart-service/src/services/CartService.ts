@@ -204,11 +204,28 @@ export default class CartService {
    * Vider le panier
    */
   async clearCart(sessionId: string): Promise<Cart> {
+    console.log(`[CartService] clearCart appelé pour sessionId: ${sessionId.substring(0, 20)}...`);
+    
     // Récupérer ou créer le panier si nécessaire
     const cart = await this.getOrCreateCart(sessionId);
+    console.log(`[CartService] Panier récupéré avant vidage: ${cart.itemCount} articles`);
 
     const clearedCart = cart.clear();
+    console.log(`[CartService] Panier vidé (nouveau itemCount: ${clearedCart.itemCount})`);
+    
     await this.cartRepository.updateCart(clearedCart);
+    console.log(`[CartService] Panier vidé sauvegardé dans Redis`);
+
+    // Vérification: Récupérer le panier après le vidage pour confirmer
+    const verifyCart = await this.getCart(sessionId);
+    if (verifyCart) {
+      console.log(`[CartService] Vérification après vidage: panier contient ${verifyCart.itemCount} articles`);
+      if (verifyCart.itemCount > 0) {
+        console.error(`[CartService] ⚠️ ERREUR: Le panier contient encore ${verifyCart.itemCount} article(s) après le vidage!`);
+      }
+    } else {
+      console.log(`[CartService] Vérification après vidage: panier non trouvé (normal si complètement supprimé)`);
+    }
 
     return clearedCart;
   }

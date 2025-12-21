@@ -149,7 +149,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       setError(null);
+      console.log("[CartContext] refreshCart: Récupération du panier depuis l'API");
       const cart = await getCart();
+      console.log(`[CartContext] refreshCart: Panier récupéré - ${cart ? `${cart.itemCount} articles` : "panier null/vide"}`);
       setCart(cart);
       // Si le panier est null, c'est normal (pas de panier existant), ne pas afficher d'erreur
     } catch (err) {

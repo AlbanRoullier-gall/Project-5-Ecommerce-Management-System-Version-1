@@ -48,15 +48,21 @@ export class CartController {
         return;
       }
 
+      console.log(`[CartController] getCart appelé pour sessionId: ${cartRequest.sessionId.substring(0, 20)}...`);
+      
       const cart = await this.cartService.getCart(cartRequest.sessionId);
+      
+      console.log(`[CartController] Panier récupéré: ${cart ? `${cart.itemCount} articles` : "panier null"}`);
 
       // Si le panier n'existe pas, retourner un panier vide au lieu d'un 404
       // Cela permet au frontend de toujours avoir une structure de panier valide
       if (!cart) {
+        console.log(`[CartController] Panier non trouvé, création d'un panier vide`);
         // Créer un panier vide pour cette session
         const emptyCart = await this.cartService.getOrCreateCart(
           cartRequest.sessionId
         );
+        console.log(`[CartController] Panier vide créé: ${emptyCart.itemCount} articles`);
         res.status(200).json(ResponseMapper.cartRetrieved(emptyCart));
         return;
       }
@@ -215,7 +221,20 @@ export class CartController {
         req.body as CartClearDTO
       );
 
+      console.log(`[CartController] clearCart appelé pour sessionId: ${clearData.sessionId?.substring(0, 20) || "aucun"}...`);
+      
       const cart = await this.cartService.clearCart(clearData.sessionId);
+      
+      console.log(`[CartController] Panier vidé avec succès: ${cart.itemCount} articles restants`);
+      
+      // Vérification supplémentaire: Récupérer le panier après le vidage pour confirmer
+      const verifyCart = await this.cartService.getCart(clearData.sessionId);
+      if (verifyCart) {
+        console.log(`[CartController] Vérification après vidage: panier contient ${verifyCart.itemCount} articles`);
+        if (verifyCart.itemCount > 0) {
+          console.error(`[CartController] ⚠️ ERREUR: Le panier contient encore ${verifyCart.itemCount} article(s) après le vidage!`);
+        }
+      }
 
       res.status(200).json(ResponseMapper.cartCleared(cart));
     } catch (error: any) {

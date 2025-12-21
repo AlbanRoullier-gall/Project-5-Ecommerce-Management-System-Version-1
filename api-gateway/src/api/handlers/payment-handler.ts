@@ -538,6 +538,38 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
         console.log(
           `[Payment Finalize] ✅ Panier et données checkout vidés avec succès`
         );
+        
+        // VÉRIFICATION: Vérifier que le panier est bien vide après le vidage
+        // Attendre un peu pour la propagation Redis, puis vérifier
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        try {
+          const verifyCartUrl = `${SERVICES.cart}/api/cart?sessionId=${cartSessionId}`;
+          const verifyResponse = await fetch(verifyCartUrl, {
+            method: "GET",
+            headers: {
+              "X-Service-Request": "api-gateway",
+            },
+          });
+          
+          if (verifyResponse.ok) {
+            const verifyCart = await verifyResponse.json();
+            const itemCount = verifyCart?.data?.itemCount || 0;
+            if (itemCount > 0) {
+              console.error(
+                `[Payment Finalize] ⚠️ ATTENTION: Le panier contient encore ${itemCount} article(s) après le vidage!`
+              );
+            } else {
+              console.log(
+                `[Payment Finalize] ✅ Vérification: Le panier est bien vide (${itemCount} articles)`
+              );
+            }
+          }
+        } catch (verifyError) {
+          console.warn(
+            `[Payment Finalize] ⚠️ Impossible de vérifier le panier après vidage:`,
+            verifyError
+          );
+        }
       }
     } catch (error: any) {
       if (error.name === "AbortError") {
@@ -556,7 +588,7 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
 
     // Envoyer la réponse après avoir vidé le panier (ou après timeout/erreur)
     console.log(
-      `[Payment Finalize] ✅ Finalisation complète - orderId: ${orderId} (panier sera vidé en arrière-plan)`
+      `[Payment Finalize] ✅ Finalisation complète - orderId: ${orderId}`
     );
     return res.status(200).json({
       success: true,

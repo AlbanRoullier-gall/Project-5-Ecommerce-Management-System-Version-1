@@ -18,22 +18,36 @@ export default function CheckoutSuccessPage() {
     // Callback appelé après succès de la finalisation
     // Le panier a déjà été vidé côté serveur lors de la finalisation du paiement
     // Il suffit de recharger le panier pour voir qu'il est vide
-    console.log("[Checkout Success] Rechargement du panier après finalisation du paiement");
-    // Attendre un peu pour que le serveur ait le temps de vider le panier
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log(
+      "[Checkout Success] Rechargement du panier après finalisation du paiement"
+    );
+    // Attendre suffisamment pour que le serveur ait le temps de vider le panier et que Redis propage
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     // Recharger le panier pour voir qu'il est vide
     await refreshCart();
     console.log("[Checkout Success] Panier rechargé");
+    
+    // Vérifier à nouveau après un court délai pour s'assurer que le panier est bien vide
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await refreshCart();
+    console.log("[Checkout Success] Panier rechargé une deuxième fois pour vérification");
   });
 
   // Recharger aussi le panier au montage de la page pour s'assurer qu'il est à jour
   useEffect(() => {
     const reloadCart = async () => {
-      console.log("[Checkout Success] Rechargement du panier au montage de la page");
-      // Attendre un peu pour que le serveur ait le temps de vider le panier
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      console.log(
+        "[Checkout Success] Rechargement du panier au montage de la page"
+      );
+      // Attendre suffisamment pour que le serveur ait le temps de vider le panier et que Redis propage
+      await new Promise((resolve) => setTimeout(resolve, 2500));
       await refreshCart();
       console.log("[Checkout Success] Panier rechargé au montage");
+      
+      // Vérifier à nouveau après un court délai
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await refreshCart();
+      console.log("[Checkout Success] Panier rechargé une deuxième fois au montage");
     };
     reloadCart();
   }, [refreshCart]);
