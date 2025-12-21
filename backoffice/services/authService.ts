@@ -94,17 +94,31 @@ export async function verifyAuth(): Promise<{
     console.error("verifyAuth error:", error);
 
     // Si c'est une erreur réseau ou de connexion, retourner une réponse par défaut
+    // pour éviter que l'application reste bloquée en chargement
     if (
       error.message?.includes("fetch") ||
       error.message?.includes("network") ||
       error.message?.includes("Failed to fetch") ||
+      error.message?.includes("connexion au serveur") ||
+      error.message?.includes("CORS") ||
       error.message?.includes("Erreur de connexion")
     ) {
-      throw new Error(
-        "Erreur de connexion au serveur. Vérifiez que l'API Gateway est accessible."
+      // Retourner une réponse par défaut au lieu de lancer une erreur
+      // pour permettre à l'application de continuer à fonctionner
+      console.warn(
+        "[verifyAuth] Erreur réseau détectée, retour d'une réponse par défaut"
       );
+      return {
+        success: false,
+        isAuthenticated: false,
+      };
     }
-    throw error;
+    // Pour les autres erreurs, retourner aussi une réponse par défaut
+    // pour éviter que l'application reste bloquée
+    return {
+      success: false,
+      isAuthenticated: false,
+    };
   }
 }
 

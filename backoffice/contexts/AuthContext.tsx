@@ -147,34 +147,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         "Erreur lors de la vérification de l'authentification:",
         error
       );
-      // En production, faire un retry en cas d'erreur réseau
-      if (
-        process.env.NODE_ENV === "production" &&
-        typeof window !== "undefined" &&
-        error instanceof Error &&
-        (error.message.includes("fetch") ||
-          error.message.includes("network") ||
-          error.message.includes("Failed to fetch"))
-      ) {
-        try {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          const retryData = await verifyAuth();
-          if (
-            retryData.success &&
-            retryData.isAuthenticated &&
-            retryData.user
-          ) {
-            setUser(retryData.user);
-          } else {
-            clearAuthState();
-          }
-        } catch (retryError) {
-          console.error("Erreur lors du retry:", retryError);
-          clearAuthState();
-        }
-      } else {
-        clearAuthState();
-      }
+      // En cas d'erreur, nettoyer l'état immédiatement
+      // verifyAuth retourne maintenant toujours une réponse (même en cas d'erreur réseau)
+      // donc on ne devrait plus arriver ici, mais on garde cette gestion pour sécurité
+      clearAuthState();
     } finally {
       setIsLoading(false);
     }

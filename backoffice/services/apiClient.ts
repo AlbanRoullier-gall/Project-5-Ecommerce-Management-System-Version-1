@@ -256,6 +256,19 @@ class ApiClient {
           error.message.includes("Failed to fetch"))
       ) {
         const apiUrl = this.baseUrl;
+        
+        // Log détaillé pour le débogage en production
+        if (process.env.NODE_ENV === "production" && typeof window !== "undefined") {
+          console.error("[ApiClient] Erreur réseau:", {
+            endpoint,
+            url,
+            error: error.message,
+            apiUrl,
+            origin: window.location.origin,
+            hasToken: !!this.getAuthToken(),
+          });
+        }
+        
         // Pour le logout, ne pas lancer d'erreur car le cookie est déjà supprimé côté serveur
         if (endpoint.includes("/auth/logout")) {
           console.warn(
@@ -264,6 +277,17 @@ class ApiClient {
           // Retourner un objet vide pour indiquer que la déconnexion locale est OK
           return {} as T;
         }
+        
+        // Pour verifyAuth, on veut retourner une réponse par défaut au lieu de lancer une erreur
+        // pour éviter que l'application reste bloquée
+        if (endpoint.includes("/auth/verify")) {
+          console.warn(
+            "[ApiClient] Erreur réseau lors de verifyAuth, retour d'une réponse par défaut"
+          );
+          // Lancer une erreur spéciale qui sera catchée par verifyAuth
+          throw new Error("Erreur de connexion au serveur");
+        }
+        
         throw new Error(
           `Erreur de connexion au serveur (${apiUrl}). Vérifiez que l'API Gateway est accessible et que CORS est correctement configuré.`
         );
