@@ -19,6 +19,7 @@ interface RateLimitConfig {
 
 export class RateLimitService {
   private redis: Redis;
+  private redisAvailable: boolean = false;
   // Nouvelles configurations par type de requête
   private getProductsConfig: RateLimitConfig;
   private getStaticConfig: RateLimitConfig;
@@ -30,7 +31,7 @@ export class RateLimitService {
   private paymentConfig: RateLimitConfig;
 
   constructor() {
-    // Configuration Redis
+    // Configuration Redis avec gestion d'erreurs robuste
     let redisConfig: any;
 
     if (process.env["REDIS_URL"]) {
@@ -40,8 +41,26 @@ export class RateLimitService {
         host: process.env["REDIS_HOST"] || "localhost",
         port: parseInt(process.env["REDIS_PORT"] || "6379"),
         db: parseInt(process.env["REDIS_DB"] || "0"),
+        // Configuration de reconnexion et timeout
         maxRetriesPerRequest: 3,
+        retryStrategy: (times: number) => {
+          // Stratégie de reconnexion avec backoff exponentiel
+          const delay = Math.min(times * 50, 2000);
+          return delay;
+        },
+        reconnectOnError: (err: Error) => {
+          // Reconnexion automatique sur certaines erreurs
+          const targetError = "READONLY";
+          if (err.message.includes(targetError)) {
+            return true; // Reconnexion
+          }
+          return false; // Pas de reconnexion
+        },
+        connectTimeout: 10000, // 10 secondes
+        commandTimeout: 5000, // 5 secondes par commande
         family: 4, // Forcer IPv4
+        lazyConnect: false, // Connexion immédiate
+        enableOfflineQueue: false, // Désactiver la queue offline pour éviter l'accumulation
       };
 
       if (process.env["REDIS_PASSWORD"]) {
@@ -50,6 +69,53 @@ export class RateLimitService {
     }
 
     this.redis = new Redis(redisConfig);
+
+    // Gestionnaires d'événements Redis pour éviter les "Unhandled error event"
+    this.redis.on("connect", () => {
+      console.log("✅ Redis: Connexion établie");
+      // Ne pas mettre à jour redisAvailable ici, attendre "ready"
+    });
+
+    this.redis.on("ready", () => {
+      console.log("✅ Redis: Prêt à recevoir des commandes");
+      this.redisAvailable = true;
+    });
+
+    this.redis.on("error", (err: Error) => {
+      // Gérer les erreurs sans les propager pour éviter les "Unhandled error event"
+      const errorMessage = err.message.toLowerCase();
+
+      // Ignorer certaines erreurs qui sont normales lors de la reconnexion
+      if (
+        errorMessage.includes("connect etimedout") ||
+        errorMessage.includes("connect econnrefused") ||
+        errorMessage.includes("maxretriesperrequesterror")
+      ) {
+        console.warn(
+          `⚠️ Redis: Erreur de connexion (${err.message}), Redis sera réessayé automatiquement`
+        );
+        this.redisAvailable = false;
+      } else {
+        console.error("❌ Redis: Erreur:", err.message);
+        this.redisAvailable = false;
+      }
+      // Ne pas propager l'erreur pour éviter les "Unhandled error event"
+    });
+
+    this.redis.on("close", () => {
+      console.warn("⚠️ Redis: Connexion fermée");
+      this.redisAvailable = false;
+    });
+
+    this.redis.on("reconnecting", (delay: number) => {
+      console.log(`🔄 Redis: Reconnexion dans ${delay}ms`);
+      this.redisAvailable = false; // Pas encore disponible pendant la reconnexion
+    });
+
+    this.redis.on("end", () => {
+      console.warn("⚠️ Redis: Connexion terminée");
+      this.redisAvailable = false;
+    });
 
     // Configuration des limites depuis les variables d'environnement
     // Requêtes GET (lecture) - limites élevées
@@ -136,12 +202,39 @@ export class RateLimitService {
       ), // 5 requêtes / 5 min par utilisateur
     };
 
+    // Vérifier la connexion Redis après un court délai
+    setTimeout(() => {
+      this.checkRedisConnection();
+    }, 1000);
+
     console.log("✅ RateLimitService initialized");
+  }
+
+  /**
+   * Vérifier la connexion Redis et mettre à jour l'état de disponibilité
+   */
+  private async checkRedisConnection(): Promise<void> {
+    try {
+      await this.redis.ping();
+      this.redisAvailable = true;
+      console.log("✅ Redis: Connexion vérifiée et opérationnelle");
+    } catch (error: any) {
+      console.error("❌ Redis: Connexion non disponible:", error.message);
+      this.redisAvailable = false;
+    }
+  }
+
+  /**
+   * Obtenir l'état de disponibilité de Redis
+   */
+  isRedisAvailable(): boolean {
+    return this.redisAvailable;
   }
 
   /**
    * Méthode générique pour vérifier le rate limiting
    * Factorise la logique commune de toutes les méthodes check*Limit
+   * Gère gracieusement les erreurs Redis en permettant les requêtes si Redis n'est pas disponible
    */
   private async checkLimit(
     keyPrefix: string,
@@ -156,25 +249,74 @@ export class RateLimitService {
       };
     }
 
+    // Si Redis n'est pas disponible, permettre la requête (fallback gracieux)
+    if (!this.redisAvailable) {
+      console.warn(
+        `⚠️ Redis non disponible, rate limiting désactivé pour ${keyPrefix}:${identifier}`
+      );
+      return {
+        allowed: true,
+        remaining: config.maxRequests,
+        resetTime: Date.now() + config.windowMs,
+      };
+    }
+
     const key = `rate_limit:${keyPrefix}:${identifier}`;
     const windowSeconds = Math.floor(config.windowMs / 1000);
 
-    const current = await this.redis.incr(key);
+    try {
+      const current = await this.redis.incr(key);
 
-    if (current === 1) {
-      // Première requête, définir le TTL
-      await this.redis.expire(key, windowSeconds);
+      if (current === 1) {
+        // Première requête, définir le TTL
+        try {
+          await this.redis.expire(key, windowSeconds);
+        } catch (expireError) {
+          console.error(
+            `❌ Redis: Erreur lors de la définition du TTL pour ${key}:`,
+            expireError
+          );
+          // Continuer même si expire échoue
+        }
+      }
+
+      const remaining = Math.max(0, config.maxRequests - current);
+      let ttl = windowSeconds;
+      try {
+        ttl = await this.redis.ttl(key);
+        if (ttl < 0) {
+          ttl = windowSeconds; // Fallback si TTL invalide
+        }
+      } catch (ttlError) {
+        console.error(
+          `❌ Redis: Erreur lors de la récupération du TTL pour ${key}:`,
+          ttlError
+        );
+        // Utiliser windowSeconds comme fallback
+      }
+
+      const resetTime = Date.now() + ttl * 1000;
+
+      return {
+        allowed: current <= config.maxRequests,
+        remaining,
+        resetTime,
+      };
+    } catch (error: any) {
+      // En cas d'erreur Redis, permettre la requête (fallback gracieux)
+      console.error(
+        `❌ Redis: Erreur lors de la vérification du rate limit pour ${key}:`,
+        error.message
+      );
+      this.redisAvailable = false;
+
+      // Permettre la requête si Redis est indisponible
+      return {
+        allowed: true,
+        remaining: config.maxRequests,
+        resetTime: Date.now() + config.windowMs,
+      };
     }
-
-    const remaining = Math.max(0, config.maxRequests - current);
-    const ttl = await this.redis.ttl(key);
-    const resetTime = Date.now() + ttl * 1000;
-
-    return {
-      allowed: current <= config.maxRequests,
-      remaining,
-      resetTime,
-    };
   }
 
   /**
