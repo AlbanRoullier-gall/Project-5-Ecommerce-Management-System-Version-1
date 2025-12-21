@@ -214,6 +214,21 @@ class ApiClient {
         credentials: needsCredentials ? "include" : "omit", // Important pour envoyer/recevoir les cookies
       });
 
+      // Log pour déboguer en production
+      if (
+        process.env.NODE_ENV === "production" &&
+        typeof window !== "undefined" &&
+        needsCredentials
+      ) {
+        const setCookieHeader = response.headers.get("Set-Cookie");
+        console.log(`[apiClient] Requête vers ${endpoint}:`, {
+          url,
+          credentials: needsCredentials ? "include" : "omit",
+          setCookieHeader: setCookieHeader || "aucun",
+          status: response.status,
+        });
+      }
+
       if (!response.ok) {
         await this.handleError(response);
       }

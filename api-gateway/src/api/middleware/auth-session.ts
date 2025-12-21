@@ -46,6 +46,20 @@ export function setAuthTokenCookie(res: Response, token: string): void {
   };
 
   res.cookie(AUTH_TOKEN_COOKIE, token, cookieOptions);
+
+  // Log pour déboguer en production
+  if (isProduction) {
+    const setCookieHeader = res.getHeader("Set-Cookie");
+    console.log(`[setAuthTokenCookie] Cookie défini:`, {
+      name: AUTH_TOKEN_COOKIE,
+      hasToken: !!token,
+      tokenLength: token?.length,
+      options: cookieOptions,
+      setCookieHeader: Array.isArray(setCookieHeader)
+        ? setCookieHeader.join(", ")
+        : setCookieHeader,
+    });
+  }
 }
 
 /**

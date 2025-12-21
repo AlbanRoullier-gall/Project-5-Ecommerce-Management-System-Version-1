@@ -129,9 +129,26 @@ export async function login(
       token?: string; // Token optionnel pour fonctionner même si cookies third-party sont bloqués
     }>(`/api/auth/login`, loginRequest, { requireAuth: false });
 
+    // Log pour déboguer en production
+    if (
+      process.env.NODE_ENV === "production" &&
+      typeof window !== "undefined"
+    ) {
+      console.log("[login] Réponse reçue:", {
+        hasUser: !!response.user,
+        hasToken: !!response.token,
+        message: response.message,
+      });
+      // Vérifier si le cookie est présent dans document.cookie (même si httpOnly, on peut voir s'il est défini)
+      console.log("[login] Cookies après login:", document.cookie);
+    }
+
     // Stocker le token dans localStorage si disponible (fallback si cookies third-party bloqués)
     if (response.token && typeof window !== "undefined") {
       localStorage.setItem("auth_token", response.token);
+      if (process.env.NODE_ENV === "production") {
+        console.log("[login] Token stocké dans localStorage comme fallback");
+      }
     }
 
     if (response.user) {

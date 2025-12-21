@@ -212,9 +212,24 @@ export const handleLogin = async (req: Request, res: Response) => {
 
       if (process.env["NODE_ENV"] === "production") {
         console.log(`[Login] Cookie défini avec succès pour le token`);
+        // Vérifier que le cookie est bien dans les headers de réponse
+        const setCookieHeaders = res.getHeader("Set-Cookie");
+        console.log(`[Login] Headers Set-Cookie après définition:`, {
+          headers: Array.isArray(setCookieHeaders)
+            ? setCookieHeaders
+            : [setCookieHeaders],
+        });
       }
     } else {
       console.warn(`[Login] ⚠️ Aucun token trouvé pour définir le cookie`);
+      if (process.env["NODE_ENV"] === "production") {
+        console.warn(`[Login] Auth data reçue:`, {
+          hasUser: !!authData.user,
+          hasToken: !!authData.token,
+          message: authData.message,
+          keys: Object.keys(authData),
+        });
+      }
     }
 
     // Retourner le token dans la réponse pour que le frontend puisse le stocker
@@ -311,6 +326,10 @@ export const handleVerifyAuth = async (req: Request, res: Response) => {
       );
       console.log(`[VerifyAuth] Cookie auth_token présent: ${hasAuthCookie}`);
       console.log(`[VerifyAuth] Origin: ${req.headers.origin}`);
+      console.log(
+        `[VerifyAuth] Headers Cookie: ${req.headers.cookie || "aucun"}`
+      );
+      console.log(`[VerifyAuth] Tous les cookies:`, cookies);
     }
 
     const token = extractAuthToken(req);
