@@ -26,22 +26,57 @@ export class EmailController {
   async sendClientEmail(req: Request, res: Response): Promise<void> {
     try {
       console.log("📧 EmailController: Starting sendClientEmail");
-      console.log("📧 Request body:", req.body);
+      console.log("📧 Request body keys:", Object.keys(req.body || {}));
+      console.log("📧 Request body:", JSON.stringify(req.body, null, 2));
 
       const emailClientSendDTO: EmailClientSendDTO = req.body;
+      
+      // Validation des données requises
+      if (!emailClientSendDTO.clientEmail) {
+        console.error("❌ clientEmail manquant dans la requête");
+        res.status(400).json({
+          success: false,
+          error: "Bad Request",
+          message: "clientEmail est requis",
+        });
+        return;
+      }
+      
+      if (!emailClientSendDTO.subject) {
+        console.error("❌ subject manquant dans la requête");
+        res.status(400).json({
+          success: false,
+          error: "Bad Request",
+          message: "subject est requis",
+        });
+        return;
+      }
+
+      console.log("📧 Appel de emailService.sendClientEmail...");
       const result = await this.emailService.sendClientEmail(
         emailClientSendDTO
       );
-      console.log("📧 Service result:", result);
+      console.log("📧 Service result:", JSON.stringify(result, null, 2));
 
       const response = ResponseMapper.emailSent(result);
-      console.log("📧 Final response:", response);
+      console.log("📧 Final response:", JSON.stringify(response, null, 2));
 
       res.status(201).json(response);
     } catch (error: any) {
-      console.error("Send client email error:", error);
-      console.error("Error stack:", error.stack);
-      res.status(500).json(ResponseMapper.internalServerError());
+      console.error("❌ Send client email error:", error);
+      console.error("❌ Error message:", error.message);
+      console.error("❌ Error stack:", error.stack);
+      console.error("❌ Error details:", JSON.stringify(error, null, 2));
+      
+      // Retourner une réponse d'erreur plus détaillée
+      res.status(500).json({
+        success: false,
+        error: "Internal Server Error",
+        message: error.message || "Erreur lors de l'envoi de l'email",
+        ...(process.env.NODE_ENV === "development" && {
+          details: error.stack,
+        }),
+      });
     }
   }
 

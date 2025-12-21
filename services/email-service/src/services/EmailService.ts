@@ -101,8 +101,23 @@ export default class EmailService {
    * @returns {Promise<Object>} Résultat d'envoi
    */
   async sendClientEmail(emailData: any): Promise<any> {
+    console.log("📧 EmailService.sendClientEmail: Début");
+    console.log("📧 Email data reçue:", {
+      clientName: emailData.clientName,
+      clientEmail: emailData.clientEmail,
+      subject: emailData.subject,
+      messageLength: emailData.message?.length || 0,
+    });
+    console.log("📧 Resend configuré:", !!this.resend);
+    console.log("📧 Gmail transporter configuré:", !!this.transporter);
+    console.log("📧 ADMIN_EMAIL:", this.adminEmail);
+    console.log("📧 RESEND_FROM_EMAIL:", this.resendFromEmail);
+    console.log("📧 FROM_NAME:", this.fromName);
+
     if (!this.resend && !this.transporter) {
-      console.error("❌ Aucun service d'email configuré - vérifiez RESEND_API_KEY ou GMAIL_USER/GMAIL_APP_PASSWORD");
+      console.error(
+        "❌ Aucun service d'email configuré - vérifiez RESEND_API_KEY ou GMAIL_USER/GMAIL_APP_PASSWORD"
+      );
       throw new Error("No email service configured");
     }
 
@@ -133,7 +148,7 @@ export default class EmailService {
         const resendFrom = `${this.fromName} <${this.resendFromEmail}>`;
         console.log(`📧 From (Resend): ${resendFrom}`);
         console.log(`📧 To (Admin): ${this.adminEmail}`);
-        
+
         const resendResult = await this.resend.emails.send({
           from: resendFrom,
           to: [this.adminEmail],
@@ -162,7 +177,9 @@ export default class EmailService {
       }
       // Priorité 2: Utiliser Gmail SMTP (fallback pour développement local)
       else if (this.transporter) {
-        console.log("📧 Envoi de l'email de contact via Gmail transporter (SMTP)...");
+        console.log(
+          "📧 Envoi de l'email de contact via Gmail transporter (SMTP)..."
+        );
         const mailOptions = {
           from: process.env.GMAIL_USER,
           to: this.adminEmail,
@@ -173,7 +190,9 @@ export default class EmailService {
 
         const result = await this.transporter.sendMail(mailOptions);
 
-        console.log("📧 ✅ Email de contact envoyé avec succès via Gmail SMTP!");
+        console.log(
+          "📧 ✅ Email de contact envoyé avec succès via Gmail SMTP!"
+        );
         console.log("📧 MessageId:", result.messageId);
 
         return {
