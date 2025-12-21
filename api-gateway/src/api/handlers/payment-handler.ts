@@ -6,7 +6,6 @@
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
 import { proxyRequest } from "../proxy";
-import { extractCartSessionId } from "../middleware/cart-session";
 
 // Type CartPublicDTO défini localement pour éviter les problèmes de résolution TypeScript
 interface CartPublicDTO {
@@ -67,9 +66,9 @@ export const handleFinalizePayment = async (req: Request, res: Response) => {
   try {
     const { csid } = req.body || {};
 
-    // Extraire le cartSessionId du cookie (via le middleware)
-    const cartSessionId =
-      extractCartSessionId(req) || (req as any).cartSessionId;
+    // Le cartSessionId est déjà extrait par le middleware cartSessionMiddleware
+    // et ajouté à req.cartSessionId
+    const cartSessionId = (req as any).cartSessionId;
 
     // Validation HTTP basique (pas de logique métier)
     if (!csid) {

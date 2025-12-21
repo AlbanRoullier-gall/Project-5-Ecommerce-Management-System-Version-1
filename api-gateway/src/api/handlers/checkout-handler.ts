@@ -5,7 +5,6 @@
 
 import { Request, Response } from "express";
 import { SERVICES } from "../../config";
-import { extractCartSessionId } from "../middleware/cart-session";
 // Type CartPublicDTO défini localement pour éviter les problèmes de résolution TypeScript
 interface CartPublicDTO {
   id: string;
@@ -74,9 +73,9 @@ export const handleCheckoutComplete = async (
   try {
     const body = req.body as CheckoutCompleteRequest;
 
-    // Extraire le cartSessionId du header X-Cart-Session-ID
-    const cartSessionId =
-      extractCartSessionId(req) || (req as any).cartSessionId;
+    // Le cartSessionId est déjà extrait par le middleware cartSessionMiddleware
+    // et ajouté à req.cartSessionId
+    const cartSessionId = (req as any).cartSessionId;
 
     // Validation HTTP basique (pas de logique métier)
     if (!cartSessionId) {
