@@ -32,45 +32,148 @@ export class RateLimitService {
 
   constructor() {
     // Configuration Redis avec gestion d'erreurs robuste
-    let redisConfig: any;
+    // Options communes pour tous les modes de connexion (URL ou host/port)
+    // IMPORTANT: Ces options DOIVENT être appliquées pour éviter les erreurs non gérées
+    const redisOptions = {
+      // Configuration de reconnexion et timeout - CRITIQUE pour éviter les crashes
+      maxRetriesPerRequest: 3, // Limiter à 3 au lieu de 20 par défaut
+      retryStrategy: (times: number) => {
+        // Stratégie de reconnexion avec backoff exponentiel
+        // Arrêter après 10 tentatives pour éviter les boucles infinies
+        if (times > 10) {
+          console.warn(
+            `⚠️ Redis: Arrêt de la reconnexion après ${times} tentatives`
+          );
+          return null; // Arrêter la reconnexion
+        }
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+      },
+      reconnectOnError: (err: Error) => {
+        // Reconnexion automatique sur certaines erreurs
+        const targetError = "READONLY";
+        if (err.message.includes(targetError)) {
+          return true; // Reconnexion
+        }
+        return false; // Pas de reconnexion
+      },
+      connectTimeout: 10000, // 10 secondes
+      commandTimeout: 5000, // 5 secondes par commande
+      family: 4, // Forcer IPv4
+      lazyConnect: true, // Connexion différée pour attacher les listeners d'abord
+      enableOfflineQueue: false, // Désactiver la queue offline pour éviter l'accumulation
+      // Empêcher les erreurs non gérées de faire crasher l'application
+      showFriendlyErrorStack: false,
+      // Désactiver la reconnexion automatique agressive pour éviter les boucles infinies
+      enableReadyCheck: true,
+    };
 
+    // Si REDIS_URL est fourni, parser l'URL et construire la config complète
+    // pour garantir que toutes les options sont appliquées
+    // CRITIQUE: Parser l'URL garantit que maxRetriesPerRequest=3 est appliqué
     if (process.env["REDIS_URL"]) {
-      redisConfig = process.env["REDIS_URL"];
+      try {
+        // Parser l'URL Redis pour extraire les composants
+        // Supporte: redis://, rediss://, redis://:password@host:port/db
+        const redisUrl = process.env["REDIS_URL"];
+        const url = new URL(redisUrl);
+
+        const redisConfig: {
+          host: string;
+          port: number;
+          password?: string;
+          db?: number;
+          maxRetriesPerRequest: number;
+          retryStrategy: (times: number) => number | null;
+          reconnectOnError: (err: Error) => boolean;
+          connectTimeout: number;
+          commandTimeout: number;
+          family: number;
+          lazyConnect: boolean;
+          enableOfflineQueue: boolean;
+          showFriendlyErrorStack: boolean;
+          enableReadyCheck: boolean;
+          tls?: any; // Pour rediss:// (TLS)
+        } = {
+          host: url.hostname,
+          port: parseInt(url.port || "6379"),
+          ...redisOptions, // Appliquer TOUTES les options, y compris maxRetriesPerRequest: 3
+        };
+
+        // Extraire le mot de passe de l'URL si présent
+        if (url.password) {
+          redisConfig.password = decodeURIComponent(url.password);
+        }
+
+        // Extraire la base de données de l'URL si présente (format: redis://host:port/db)
+        if (url.pathname && url.pathname.length > 1) {
+          const db = parseInt(url.pathname.slice(1));
+          if (!isNaN(db)) {
+            redisConfig.db = db;
+          }
+        }
+
+        // Gérer TLS pour rediss://
+        if (url.protocol === "rediss:") {
+          redisConfig.tls = {};
+        }
+
+        this.redis = new Redis(redisConfig);
+        console.log(
+          `✅ Redis: Configuration depuis REDIS_URL (${url.hostname}:${redisConfig.port}) avec maxRetriesPerRequest=${redisConfig.maxRetriesPerRequest}`
+        );
+      } catch (urlError: any) {
+        // Fallback: si le parsing échoue, créer un client avec l'URL et les options
+        // mais en s'assurant que les options sont bien passées comme deuxième paramètre
+        console.warn(
+          `⚠️ Redis: Erreur lors du parsing de REDIS_URL (${urlError.message}), utilisation directe avec options explicites`
+        );
+        // Créer un client avec l'URL et les options explicites
+        // Note: ioredis devrait merger les options, mais on s'assure qu'elles sont présentes
+        this.redis = new Redis(process.env["REDIS_URL"], {
+          ...redisOptions,
+          // Forcer les options critiques
+          maxRetriesPerRequest: 3,
+        });
+        console.log(
+          `✅ Redis: Configuration fallback avec maxRetriesPerRequest=3 (forcé)`
+        );
+      }
     } else {
-      redisConfig = {
+      const redisConfig: {
+        host: string;
+        port: number;
+        db: number;
+        password?: string;
+        maxRetriesPerRequest: number;
+        retryStrategy: (times: number) => number | null;
+        reconnectOnError: (err: Error) => boolean;
+        connectTimeout: number;
+        commandTimeout: number;
+        family: number;
+        lazyConnect: boolean;
+        enableOfflineQueue: boolean;
+        showFriendlyErrorStack: boolean;
+        enableReadyCheck: boolean;
+      } = {
         host: process.env["REDIS_HOST"] || "localhost",
         port: parseInt(process.env["REDIS_PORT"] || "6379"),
         db: parseInt(process.env["REDIS_DB"] || "0"),
-        // Configuration de reconnexion et timeout
-        maxRetriesPerRequest: 3,
-        retryStrategy: (times: number) => {
-          // Stratégie de reconnexion avec backoff exponentiel
-          const delay = Math.min(times * 50, 2000);
-          return delay;
-        },
-        reconnectOnError: (err: Error) => {
-          // Reconnexion automatique sur certaines erreurs
-          const targetError = "READONLY";
-          if (err.message.includes(targetError)) {
-            return true; // Reconnexion
-          }
-          return false; // Pas de reconnexion
-        },
-        connectTimeout: 10000, // 10 secondes
-        commandTimeout: 5000, // 5 secondes par commande
-        family: 4, // Forcer IPv4
-        lazyConnect: false, // Connexion immédiate
-        enableOfflineQueue: false, // Désactiver la queue offline pour éviter l'accumulation
+        ...redisOptions,
       };
 
       if (process.env["REDIS_PASSWORD"]) {
         redisConfig.password = process.env["REDIS_PASSWORD"];
       }
+
+      this.redis = new Redis(redisConfig);
+      console.log(
+        `✅ Redis: Configuration depuis REDIS_HOST/REDIS_PORT avec maxRetriesPerRequest=${redisConfig.maxRetriesPerRequest}`
+      );
     }
 
-    this.redis = new Redis(redisConfig);
-
     // Gestionnaires d'événements Redis pour éviter les "Unhandled error event"
+    // IMPORTANT: Attacher les listeners AVANT de connecter pour éviter les erreurs non gérées
     this.redis.on("connect", () => {
       console.log("✅ Redis: Connexion établie");
       // Ne pas mettre à jour redisAvailable ici, attendre "ready"
@@ -114,6 +217,17 @@ export class RateLimitService {
 
     this.redis.on("end", () => {
       console.warn("⚠️ Redis: Connexion terminée");
+      this.redisAvailable = false;
+    });
+
+    // Connecter Redis après avoir attaché tous les event listeners
+    // Cela évite les "Unhandled error event" si une erreur survient pendant la connexion
+    this.redis.connect().catch((err: Error) => {
+      // Cette erreur sera gérée par le listener "error" ci-dessus
+      console.warn(
+        "⚠️ Redis: Erreur lors de la connexion initiale:",
+        err.message
+      );
       this.redisAvailable = false;
     });
 
