@@ -78,8 +78,23 @@ export const handleCheckoutComplete = async (
     const cartSessionId =
       extractCartSessionId(req) || (req as any).cartSessionId;
 
+    console.log(
+      `[Checkout] Requête reçue - sessionId extrait: ${cartSessionId ? cartSessionId.substring(0, 20) + "..." : "AUCUN"}`
+    );
+    console.log(
+      `[Checkout] Cookies reçus:`,
+      req.cookies ? Object.keys(req.cookies) : "aucun"
+    );
+    console.log(
+      `[Checkout] Headers x-cart-session-id:`,
+      req.headers["x-cart-session-id"]
+    );
+
     // Validation HTTP basique (pas de logique métier)
     if (!cartSessionId) {
+      console.error(
+        `[Checkout] ERREUR: Aucun cartSessionId trouvé dans la requête`
+      );
       res
         .status(400)
         .json(
@@ -131,17 +146,29 @@ export const handleCheckoutComplete = async (
 
     try {
       // Récupérer le panier (contient items + checkoutData)
-      const cartResponse = await fetch(
-        `${SERVICES.cart}/api/cart?sessionId=${cartSessionId}`,
-        {
-          headers: {
-            "X-Service-Request": "api-gateway",
-          },
-        }
+      const cartUrl = `${SERVICES.cart}/api/cart?sessionId=${cartSessionId}`;
+      console.log(
+        `[Checkout] Récupération du panier pour sessionId: ${cartSessionId.substring(
+          0,
+          20
+        )}...`
       );
+      console.log(`[Checkout] URL: ${cartUrl}`);
+
+      const cartResponse = await fetch(cartUrl, {
+        headers: {
+          "X-Service-Request": "api-gateway",
+        },
+      });
 
       if (!cartResponse.ok) {
         if (cartResponse.status === 404) {
+          console.error(
+            `[Checkout] Panier introuvable pour sessionId: ${cartSessionId.substring(
+              0,
+              20
+            )}...`
+          );
           res
             .status(404)
             .json(
@@ -158,7 +185,21 @@ export const handleCheckoutComplete = async (
       const cartData = (await cartResponse.json()) as { cart: CartPublicDTO };
       cart = cartData.cart;
 
+      console.log(
+        `[Checkout] Panier récupéré: ${cart ? cart.items?.length || 0 : 0} items`
+      );
+
       if (!cart || !cart.items || cart.items.length === 0) {
+        console.error(
+          `[Checkout] Panier vide pour sessionId: ${cartSessionId.substring(
+            0,
+            20
+          )}...`
+        );
+        console.error(
+          `[Checkout] Cart data:`,
+          JSON.stringify(cartData, null, 2).substring(0, 500)
+        );
         res
           .status(400)
           .json(createErrorResponse("Panier vide", "Votre panier est vide"));
