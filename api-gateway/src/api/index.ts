@@ -566,6 +566,10 @@ export class ApiRouter {
         }
       },
       async (req: Request, res: Response) => {
+        // Log pour voir si cette route générique est appelée pour /api/payment/finalize
+        if (req.path === "/api/payment/finalize") {
+          console.log(`[API Gateway] ⚠️ Route générique proxy appelée pour /api/payment/finalize - cela ne devrait pas arriver!`);
+        }
         const service = this.getServiceFromPath(req.path);
         if (service) {
           await proxyRequest(req, res, service);
