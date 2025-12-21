@@ -138,15 +138,20 @@ export async function createCustomerAddress(
   customerId: number,
   addressData: AddressCreateDTO
 ): Promise<AddressPublicDTO> {
-  const response = await apiClient.post<
-    ApiResponse<{ address: AddressPublicDTO }>
-  >(`/api/admin/customers/${customerId}/addresses`, addressData);
+  // L'API customer-service retourne l'adresse directement à la racine
+  // Format: { message: "...", address: {...}, timestamp: "...", status: 201 }
+  const response = await apiClient.post<{
+    message?: string;
+    address: AddressPublicDTO;
+    timestamp?: string;
+    status?: number;
+  }>(`/api/admin/customers/${customerId}/addresses`, addressData);
 
-  if (!response.data || !response.data.address) {
+  if (!response || !response.address) {
     throw new Error("Format de réponse invalide pour l'adresse créée");
   }
 
-  return response.data.address;
+  return response.address;
 }
 
 /**
@@ -157,15 +162,20 @@ export async function updateCustomerAddress(
   addressId: number,
   addressData: AddressUpdateDTO
 ): Promise<AddressPublicDTO> {
-  const response = await apiClient.put<
-    ApiResponse<{ address: AddressPublicDTO }>
-  >(`/api/admin/customers/${customerId}/addresses/${addressId}`, addressData);
+  // L'API customer-service retourne l'adresse directement à la racine
+  // Format: { message: "...", address: {...}, timestamp: "...", status: 200 }
+  const response = await apiClient.put<{
+    message?: string;
+    address: AddressPublicDTO;
+    timestamp?: string;
+    status?: number;
+  }>(`/api/admin/customers/${customerId}/addresses/${addressId}`, addressData);
 
-  if (!response.data || !response.data.address) {
+  if (!response || !response.address) {
     throw new Error("Format de réponse invalide pour l'adresse mise à jour");
   }
 
-  return response.data.address;
+  return response.address;
 }
 
 /**

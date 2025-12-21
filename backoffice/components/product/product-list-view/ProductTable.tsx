@@ -25,10 +25,12 @@ interface ProductTableProps {
 /**
  * Composant tableau de produits
  * Affiche la liste des produits dans un tableau avec colonnes :
- * - Produit (image + nom + description)
+ * - Image
+ * - Nom
  * - Catégorie
  * - Prix
  * - TVA
+ * - Stock
  * - Statut
  * - Date de création
  * - Actions (éditer/supprimer)
@@ -65,14 +67,15 @@ const ProductTable: React.FC<ProductTableProps> = ({
   // Empty state handled below inside TableLayout for consistency
 
   const headers: TableHeader[] = [
-    { label: "Produit", width: "25%" },
+    { label: "Image", width: "8%" },
+    { label: "Nom", width: "20%" },
     { label: "Catégorie", width: "12%" },
     { label: "Prix", width: "10%", align: "right" },
     { label: "TVA", width: "8%", className: "mobile-hide", align: "center" },
     { label: "Stock", width: "8%", align: "center" },
     { label: "Statut", width: "10%", align: "center" },
     { label: "Date création", width: "12%", className: "mobile-hide" },
-    { label: "Actions", align: "right", width: "15%" },
+    { label: "Actions", align: "right", width: "12%" },
   ];
 
   return (

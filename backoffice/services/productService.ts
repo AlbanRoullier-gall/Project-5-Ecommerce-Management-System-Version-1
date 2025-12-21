@@ -222,11 +222,24 @@ export async function uploadProductImages(
   productId: number,
   images: ProductImageUploadDTO[]
 ): Promise<ProductImageUploadResponseDTO> {
-  const response = await apiClient.post<ProductImageUploadResponseDTO>(
-    `/api/admin/products/${productId}/images/upload`,
-    images
-  );
-  return response;
+  const response = await apiClient.post<
+    ApiResponse<ProductImageUploadResponseDTO> | ProductImageUploadResponseDTO
+  >(`/api/admin/products/${productId}/images/upload`, images);
+
+  // Gérer les deux formats de réponse possibles
+  if (response && typeof response === "object") {
+    // Si la réponse est encapsulée dans ApiResponse
+    if ("data" in response && response.data) {
+      return response.data as ProductImageUploadResponseDTO;
+    }
+    // Si la réponse est directement ProductImageUploadResponseDTO
+    if ("success" in response || "images" in response) {
+      return response as ProductImageUploadResponseDTO;
+    }
+  }
+
+  // Fallback : retourner la réponse telle quelle
+  return response as ProductImageUploadResponseDTO;
 }
 
 /**

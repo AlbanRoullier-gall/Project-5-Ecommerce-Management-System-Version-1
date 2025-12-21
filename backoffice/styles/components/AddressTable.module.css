@@ -52,6 +52,8 @@
     gap: 0.5rem;
     flex-wrap: wrap;
     justify-content: center;
+    width: 100%;
+    max-width: 100%;
   }
 
   .actionButton {
@@ -68,6 +70,19 @@
     min-width: 44px;
     min-height: 44px;
     background: none;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 480px) {
+    .actions {
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .actionButton {
+      padding: 0.85rem;
+      font-size: 1.1rem;
+    }
   }
 
   .edit {

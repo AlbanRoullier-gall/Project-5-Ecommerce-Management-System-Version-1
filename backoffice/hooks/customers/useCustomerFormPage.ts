@@ -5,11 +5,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
-import {
-  CustomerPublicDTO,
-  CustomerCreateDTO,
-  CustomerUpdateDTO,
-} from "dto";
+import { CustomerPublicDTO, CustomerCreateDTO, CustomerUpdateDTO } from "dto";
 import {
   getCustomer,
   createCustomer,
@@ -96,7 +92,8 @@ export function useCustomerFormPage(
         await executeWithLoading(
           async () => {
             await updateCustomer(customer.customerId, data);
-            await loadCustomer();
+            // Rediriger vers la liste des clients après mise à jour
+            router.push("/customers");
           },
           setIsSaving,
           setError,
@@ -108,7 +105,7 @@ export function useCustomerFormPage(
         );
       }
     },
-    [mode, customer, router, loadCustomer]
+    [mode, customer, router]
   );
 
   const handleCancel = useCallback(() => {

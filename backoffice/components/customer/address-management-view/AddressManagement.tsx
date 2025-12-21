@@ -82,8 +82,8 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
 
     try {
       await handleCreateAddress(createData);
-      setShowAddressForm(false);
-      setEditingAddress(null);
+      // Rediriger vers la page de gestion des clients après création réussie
+      onClose();
     } catch (error) {
       console.error("Error creating address:", error);
     }
@@ -97,8 +97,8 @@ const AddressManagement: React.FC<AddressManagementProps> = ({
 
     try {
       await handleUpdateAddress(editingAddress.addressId, data);
-      setShowAddressForm(false);
-      setEditingAddress(null);
+      // Rediriger vers la page de gestion des clients après mise à jour réussie
+      onClose();
     } catch (error) {
       console.error("Error updating address:", error);
     }

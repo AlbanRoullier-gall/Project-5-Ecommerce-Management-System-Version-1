@@ -97,7 +97,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       {product && product.stock === 0 && (
         <Alert
           type="warning"
-          message="⚠️ Rupture de stock : Ce produit est actuellement en rupture de stock et a été automatiquement désactivé."
+          message="Rupture de stock : Ce produit est actuellement en rupture de stock et a été automatiquement désactivé."
         />
       )}
 

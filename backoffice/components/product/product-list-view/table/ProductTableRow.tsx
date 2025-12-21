@@ -28,10 +28,12 @@ interface ProductTableRowProps {
  * Affiche toutes les informations du produit avec effet hover
  *
  * Colonnes :
- * - Image + nom + description
+ * - Image
+ * - Nom
  * - Catégorie
  * - Prix formaté
  * - Taux TVA
+ * - Stock
  * - Badge de statut cliquable
  * - Date de création
  * - Boutons d'action
@@ -45,41 +47,35 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
 }) => {
   return (
     <TableRow>
+      <TableCell align="center">
+        <div className={styles.thumb}>
+          {product.images && product.images.length > 0 ? (
+            <img
+              src={imageService.getImageUrlById(product.images[0].id)}
+              alt={product.name}
+              className={styles.thumbImage}
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+                const icon = e.currentTarget.parentElement?.querySelector("i");
+                if (icon) {
+                  (icon as HTMLElement).style.display = "inline-block";
+                }
+              }}
+            />
+          ) : null}
+          {(!product.images || product.images.length === 0) && (
+            <i className={`fas fa-image ${styles.thumbIcon}`}></i>
+          )}
+        </div>
+      </TableCell>
       <TableCell>
-        <div className={styles.rowContent}>
-          <div className={styles.thumb}>
-            {product.images && product.images.length > 0 ? (
-              <img
-                src={imageService.getImageUrlById(product.images[0].id)}
-                alt={product.name}
-                className={styles.thumbImage}
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                  const icon =
-                    e.currentTarget.parentElement?.querySelector("i");
-                  if (icon) {
-                    (icon as HTMLElement).style.display = "inline-block";
-                  }
-                }}
-              />
-            ) : null}
-            {(!product.images || product.images.length === 0) && (
-              <i className={`fas fa-image ${styles.thumbIcon}`}></i>
-            )}
-          </div>
-          <div className={styles.info}>
-            <div className={styles.name}>
-              {product.name}
-              {product.stock === 0 && (
-                <span className={styles.stockAlert} title="Rupture de stock">
-                  ⚠️ Rupture de stock
-                </span>
-              )}
-            </div>
-            {product.description && (
-              <div className={styles.desc}>{product.description}</div>
-            )}
-          </div>
+        <div className={styles.name}>
+          <span>{product.name}</span>
+          {product.stock === 0 && (
+            <span className={styles.stockAlert} title="Rupture de stock">
+              Rupture de stock
+            </span>
+          )}
         </div>
       </TableCell>
       <TableCell>

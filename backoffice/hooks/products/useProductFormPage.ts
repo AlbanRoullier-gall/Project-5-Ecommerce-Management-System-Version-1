@@ -129,9 +129,21 @@ export function useProductFormPage(
                   uploadResponse.images.length === 0
                 ) {
                   console.warn("Aucune image n'a été retournée après l'upload");
+                  console.warn("Réponse complète:", uploadResponse);
+                } else {
+                  console.log(
+                    `${uploadResponse.images.length} image(s) créée(s) avec succès`
+                  );
+                  // Attendre un court délai pour s'assurer que les images sont bien persistées
+                  await new Promise((resolve) => setTimeout(resolve, 500));
                 }
               } catch (err: any) {
                 console.error("Erreur lors de l'ajout des images:", err);
+                console.error("Détails de l'erreur:", {
+                  message: err?.message,
+                  status: err?.status,
+                  data: err?.data,
+                });
                 // Afficher l'erreur à l'utilisateur mais ne pas bloquer la création
                 setError(
                   `Le produit a été créé mais l'ajout des images a échoué: ${
@@ -199,8 +211,8 @@ export function useProductFormPage(
               }
             }
 
-            // Recharger les données du produit
-            await loadProduct();
+            // Rediriger vers la liste des produits après mise à jour
+            router.push("/products");
           },
           setIsSaving,
           setError,
@@ -212,7 +224,7 @@ export function useProductFormPage(
         );
       }
     },
-    [mode, product, router, loadProduct]
+    [mode, product, router]
   );
 
   const handleCancel = useCallback(() => {

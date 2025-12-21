@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  CategoryPublicDTO,
-  CategoryCreateDTO,
-  CategoryUpdateDTO,
-} from "dto";
+import { CategoryPublicDTO, CategoryCreateDTO, CategoryUpdateDTO } from "dto";
 import CategoryForm from "./category/CategoryForm";
 import CategoryTable from "./category/CategoryTable";
 import { ManagementSection } from "../../shared";
@@ -75,13 +71,18 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await handleFormSubmit((data, isEdit) => {
+    await handleFormSubmit(async (data, isEdit) => {
       if (isEdit && editingCategory) {
-        onUpdateCategory(editingCategory.id, data);
+        await onUpdateCategory(editingCategory.id, data);
       } else {
-        onAddCategory(data as CategoryCreateDTO);
+        await onAddCategory(data as CategoryCreateDTO);
       }
-      handleCancel();
+      // Rediriger vers la page de gestion des produits après création/mise à jour réussie
+      if (onClose) {
+        onClose();
+      } else {
+        handleCancel();
+      }
     });
   };
 

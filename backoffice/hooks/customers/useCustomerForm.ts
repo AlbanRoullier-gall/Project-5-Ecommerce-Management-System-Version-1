@@ -1,8 +1,4 @@
-import {
-  CustomerPublicDTO,
-  CustomerCreateDTO,
-  CustomerUpdateDTO,
-} from "dto";
+import { CustomerPublicDTO, CustomerCreateDTO, CustomerUpdateDTO } from "dto";
 import { validateCustomer } from "../../services/validationService";
 import { useForm } from "../shared/useForm";
 
@@ -40,13 +36,36 @@ export function useCustomerForm({
     validateFn: validateCustomer,
     transformData: (data, original) => {
       if (original) {
-        // Mode édition : le hook useForm gère déjà la comparaison
-        // On transforme juste phoneNumber pour gérer les chaînes vides
-        const updateData = data as Partial<CustomerCreateDTO>;
-        if (updateData.phoneNumber === "") {
-          updateData.phoneNumber = undefined;
+        // Mode édition : exclure explicitement customerId et autres champs non modifiables
+        // data peut contenir customerId car formData est initialisé avec original
+        const dataWithAny = data as any;
+
+        // Créer un objet CustomerUpdateDTO avec uniquement les champs autorisés
+        const result: CustomerUpdateDTO = {};
+
+        // Inclure uniquement les champs qui existent dans CustomerUpdateDTO
+        if ("firstName" in dataWithAny && dataWithAny.firstName !== undefined) {
+          result.firstName = dataWithAny.firstName;
         }
-        return updateData;
+        if ("lastName" in dataWithAny && dataWithAny.lastName !== undefined) {
+          result.lastName = dataWithAny.lastName;
+        }
+        if ("email" in dataWithAny && dataWithAny.email !== undefined) {
+          result.email = dataWithAny.email;
+        }
+        if (
+          "phoneNumber" in dataWithAny &&
+          dataWithAny.phoneNumber !== undefined
+        ) {
+          result.phoneNumber =
+            dataWithAny.phoneNumber === ""
+              ? undefined
+              : dataWithAny.phoneNumber;
+        }
+
+        // customerId est explicitement exclu - ne jamais l'inclure
+
+        return result;
       } else {
         // Mode création : transformer phoneNumber vide en undefined
         return {
