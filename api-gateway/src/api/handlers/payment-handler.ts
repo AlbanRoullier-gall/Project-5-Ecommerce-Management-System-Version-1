@@ -63,7 +63,9 @@ export const handleCreatePayment = async (req: Request, res: Response) => {
 };
 
 export const handleFinalizePayment = async (req: Request, res: Response) => {
-  console.log(`[Payment Finalize Handler] ✅ Handler appelé pour ${req.method} ${req.path}`);
+  console.log(
+    `[Payment Finalize Handler] ✅ Handler appelé pour ${req.method} ${req.path}`
+  );
   try {
     console.log("[Payment Finalize] Début de la finalisation du paiement");
     const { csid } = req.body || {};

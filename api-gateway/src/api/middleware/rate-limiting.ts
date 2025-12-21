@@ -268,7 +268,13 @@ export const paymentRateLimit = async (
   console.log(`[Payment Rate Limit] Requête: ${req.method} ${req.path}`);
   const user = (req as any).user;
   const cartSessionId = (req as any).cartSessionId;
-  console.log(`[Payment Rate Limit] user: ${user ? `userId=${user.userId}` : "aucun"}, cartSessionId: ${cartSessionId ? cartSessionId.substring(0, 20) + "..." : "aucun"}`);
+  console.log(
+    `[Payment Rate Limit] user: ${
+      user ? `userId=${user.userId}` : "aucun"
+    }, cartSessionId: ${
+      cartSessionId ? cartSessionId.substring(0, 20) + "..." : "aucun"
+    }`
+  );
 
   // Identifier : utilisateur authentifié OU session panier
   let identifier: string;
@@ -282,9 +288,9 @@ export const paymentRateLimit = async (
     // Fallback : utiliser l'IP (limite plus stricte)
     const ip = rateLimitService.getClientIp(req);
     const result = await rateLimitService.checkGetStaticLimit(ip);
-    
+
     setRateLimitHeaders(res, 500, result.remaining, result.resetTime);
-    
+
     if (!result.allowed) {
       console.log(`[Payment Rate Limit] ❌ Limite dépassée pour IP: ${ip}`);
       sendTooManyRequests(
@@ -301,13 +307,23 @@ export const paymentRateLimit = async (
 
   // Utiliser le même service de rate limiting pour les paiements
   // (le service gère les identifiants de manière générique)
-  console.log(`[Payment Rate Limit] Vérification limite pour identifier: ${identifier.substring(0, 30)}...`);
+  console.log(
+    `[Payment Rate Limit] Vérification limite pour identifier: ${identifier.substring(
+      0,
+      30
+    )}...`
+  );
   const result = await rateLimitService.checkPaymentLimit(identifier);
 
   setRateLimitHeaders(res, 5, result.remaining, result.resetTime);
 
   if (!result.allowed) {
-    console.log(`[Payment Rate Limit] ❌ Limite dépassée pour identifier: ${identifier.substring(0, 30)}...`);
+    console.log(
+      `[Payment Rate Limit] ❌ Limite dépassée pour identifier: ${identifier.substring(
+        0,
+        30
+      )}...`
+    );
     sendTooManyRequests(
       res,
       "Trop de requêtes de paiement. Veuillez réessayer dans 5 minutes.",
@@ -316,6 +332,11 @@ export const paymentRateLimit = async (
     return;
   }
 
-  console.log(`[Payment Rate Limit] ✅ Limite OK pour identifier: ${identifier.substring(0, 30)}...`);
+  console.log(
+    `[Payment Rate Limit] ✅ Limite OK pour identifier: ${identifier.substring(
+      0,
+      30
+    )}...`
+  );
   next();
 };
