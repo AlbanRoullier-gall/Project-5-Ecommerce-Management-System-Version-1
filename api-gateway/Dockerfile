@@ -31,7 +31,8 @@ COPY api-gateway/src/ ./src/
 
 # ===== COMPILATION TYPESCRIPT =====
 # Compiler le TypeScript vers JavaScript
-RUN npm run build
+# Utiliser set -e pour s'assurer que le build échoue si la compilation échoue
+RUN set -e && npm run build && ls -la dist/ || (echo "Build failed!" && exit 1)
 
 # ===== OPTIMISATION DE L'IMAGE =====
 # Supprimer les dépendances de développement pour réduire la taille
