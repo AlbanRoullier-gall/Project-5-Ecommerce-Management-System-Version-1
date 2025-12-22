@@ -32,7 +32,8 @@ COPY api-gateway/src/ ./src/
 # ===== COMPILATION TYPESCRIPT =====
 # Compiler le TypeScript vers JavaScript
 # Utiliser set -e pour s'assurer que le build échoue si la compilation échoue
-RUN set -e && npm run build && ls -la dist/ || (echo "Build failed!" && exit 1)
+# En Docker, la structure est /app/src/ donc la sortie sera dist/src/index.js
+RUN set -e && npm run build && (test -f dist/src/index.js || test -f dist/index.js || (echo "Build failed - dist/index.js or dist/src/index.js not found!" && ls -la dist/ && exit 1))
 
 # ===== OPTIMISATION DE L'IMAGE =====
 # Supprimer les dépendances de développement pour réduire la taille
@@ -56,4 +57,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:3020/api/health || exit 1
 
 # ===== COMMANDE DE DÉMARRAGE =====
-CMD ["npm", "start"]
+# En Docker, la structure de sortie est dist/src/index.js
+# Utiliser node directement avec le bon chemin
+CMD ["node", "-r", "tsconfig-paths/register", "dist/src/index.js"]

@@ -2,11 +2,12 @@
   "name": "api-gateway",
   "version": "1.0.0",
   "description": "API Gateway - E-commerce Platform",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "scripts": {
-    "start": "node -r tsconfig-paths/register dist/index.js",
+    "start": "node -r tsconfig-paths/register dist/src/index.js",
     "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/index.ts",
-    "build": "tsc",
+    "build": "tsc && tsc-alias && npm run build:fix-output",
+    "build:fix-output": "node -e \"const fs=require('fs');const path=require('path');const dist='dist';if(fs.existsSync(path.join(dist,'api-gateway','src','index.js'))){const src=path.join(dist,'api-gateway','src');const target=path.join(dist,'src');if(!fs.existsSync(target)){fs.mkdirSync(target,{recursive:true});}fs.readdirSync(src).forEach(f=>{fs.renameSync(path.join(src,f),path.join(target,f));});fs.rmSync(path.join(dist,'api-gateway'),{recursive:true,force:true});}\"",
     "build:watch": "tsc --watch"
   },
   "dependencies": {
@@ -33,6 +34,7 @@
     "@types/uuid": "^10.0.0",
     "nodemon": "^3.0.1",
     "ts-node": "^10.9.1",
+    "tsc-alias": "^1.8.10",
     "typescript": "^5.3.2"
   }
 }
