@@ -8,11 +8,10 @@
 
 import { Request, Response, NextFunction } from "express";
 // Import sanitization utilities from shared-types
-// Using relative path since TypeScript paths might not resolve correctly in Docker
 import {
   sanitizeRequestBody,
   sanitizeObject,
-} from "../../../shared-types/common/sanitize";
+} from "@tfe/shared-types/common/sanitize";
 
 /**
  * Middleware to sanitize request body
