@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import { CustomerPublicDTO } from "dto";
 import { getCustomer } from "../../services/customerService";
-import { normalizeRouterId, executeWithLoading } from "../../utils";
+import { normalizeRouterId, executeWithLoading, pushWithBasePath } from "../../utils";
 
 interface UseCustomerAddressesPageReturn {
   customer: CustomerPublicDTO | null;
@@ -47,7 +47,7 @@ export function useCustomerAddressesPage(
   }, [customerId, loadCustomer]);
 
   const handleClose = useCallback(() => {
-    router.push("/customers");
+    pushWithBasePath(router, "/customers");
   }, [router]);
 
   return {

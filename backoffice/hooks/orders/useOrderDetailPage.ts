@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import { OrderPublicDTO } from "dto";
 import { getOrder } from "../../services/orderService";
-import { normalizeRouterId, executeWithLoading } from "../../utils";
+import { normalizeRouterId, executeWithLoading, pushWithBasePath } from "../../utils";
 
 interface UseOrderDetailPageReturn {
   order: OrderPublicDTO | null;
@@ -47,7 +47,7 @@ export function useOrderDetailPage(
   }, [orderId, loadOrder]);
 
   const handleClose = useCallback(() => {
-    router.push("/orders");
+    pushWithBasePath(router, "/orders");
   }, [router]);
 
   return {

@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { CustomerForm } from "../../components/customer/customer-form-view";
 import { PageLayout } from "../../components/shared";
 import { useCustomerFormPage } from "../../hooks";
+import { pushWithBasePath } from "../../utils";
 
 /**
  * Page d'édition d'un client
@@ -46,7 +47,7 @@ const EditCustomerPage: React.FC = () => {
       loadingMessage="Chargement du client..."
       notFound={!isLoading && !customer}
       notFoundMessage="Client introuvable"
-      onNotFoundClose={() => router.push("/customers")}
+      onNotFoundClose={() => pushWithBasePath(router, "/customers")}
     >
       {customer && (
         <CustomerForm

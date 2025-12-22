@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { ProductForm } from "../../components/product/product-form-view";
 import { PageLayout } from "../../components/shared";
 import { useProductFormPage } from "../../hooks";
+import { pushWithBasePath } from "../../utils";
 
 /**
  * Page d'édition d'un produit
@@ -43,7 +44,7 @@ const EditProductPage: React.FC = () => {
       loadingMessage="Chargement du produit..."
       notFound={!isLoading && !product}
       notFoundMessage="Produit introuvable"
-      onNotFoundClose={() => router.push("/products")}
+      onNotFoundClose={() => pushWithBasePath(router, "/products")}
     >
       {product && (
         <ProductForm

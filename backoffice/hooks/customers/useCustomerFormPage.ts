@@ -11,7 +11,7 @@ import {
   createCustomer,
   updateCustomer,
 } from "../../services/customerService";
-import { normalizeRouterId, executeWithLoading } from "../../utils";
+import { normalizeRouterId, executeWithLoading, pushWithBasePath } from "../../utils";
 
 type CustomerFormMode = "create" | "edit";
 
@@ -75,7 +75,7 @@ export function useCustomerFormPage(
           async () => {
             const createData = data as CustomerCreateDTO;
             await createCustomer(createData);
-            router.push("/customers");
+            pushWithBasePath(router, "/customers");
           },
           setIsSaving,
           setError,
@@ -93,7 +93,7 @@ export function useCustomerFormPage(
           async () => {
             await updateCustomer(customer.customerId, data);
             // Rediriger vers la liste des clients après mise à jour
-            router.push("/customers");
+            pushWithBasePath(router, "/customers");
           },
           setIsSaving,
           setError,
@@ -109,7 +109,7 @@ export function useCustomerFormPage(
   );
 
   const handleCancel = useCallback(() => {
-    router.push("/customers");
+    pushWithBasePath(router, "/customers");
   }, [router]);
 
   return {

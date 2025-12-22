@@ -11,7 +11,7 @@ import {
   updateCategory,
   deleteCategory,
 } from "../../services/productService";
-import { executeWithLoading } from "../../utils";
+import { executeWithLoading, pushWithBasePath } from "../../utils";
 
 interface UseCategoriesPageReturn {
   categories: CategoryPublicDTO[];
@@ -115,7 +115,7 @@ export function useCategoriesPage(): UseCategoriesPageReturn {
   );
 
   const handleClose = useCallback(() => {
-    router.push("/products");
+    pushWithBasePath(router, "/products");
   }, [router]);
 
   return {

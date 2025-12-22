@@ -20,7 +20,7 @@ import {
   deleteProductImage,
 } from "../../services/productService";
 import { filesToUploadDTOs } from "../../utils/imageUtils";
-import { normalizeRouterId, executeWithLoading } from "../../utils";
+import { normalizeRouterId, executeWithLoading, pushWithBasePath } from "../../utils";
 
 type ProductFormMode = "create" | "edit";
 
@@ -154,7 +154,7 @@ export function useProductFormPage(
             }
 
             // Rediriger vers la liste des produits après création
-            router.push("/products");
+            pushWithBasePath(router, "/products");
           },
           setIsSaving,
           setError,
@@ -212,7 +212,7 @@ export function useProductFormPage(
             }
 
             // Rediriger vers la liste des produits après mise à jour
-            router.push("/products");
+            pushWithBasePath(router, "/products");
           },
           setIsSaving,
           setError,
@@ -228,7 +228,7 @@ export function useProductFormPage(
   );
 
   const handleCancel = useCallback(() => {
-    router.push("/products");
+    pushWithBasePath(router, "/products");
   }, [router]);
 
   return {
