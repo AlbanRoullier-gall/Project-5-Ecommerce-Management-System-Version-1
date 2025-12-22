@@ -8,12 +8,11 @@
 
 import { Request, Response, NextFunction } from "express";
 // Import sanitization utilities from shared-types
-// Le tsconfig.json inclut "../shared-types/**/*" donc on peut utiliser un chemin relatif
-// Depuis api-gateway/src/api/middleware/ vers shared-types (à la racine) = ../../../../shared-types/common/sanitize
+// Utiliser le path alias - tsconfig-paths le résoudra à l'exécution
 import {
   sanitizeRequestBody,
   sanitizeObject,
-} from "../../../../shared-types/common/sanitize";
+} from "@tfe/shared-types/common/sanitize";
 
 /**
  * Middleware to sanitize request body
@@ -129,4 +128,3 @@ export function createSanitizationMiddleware(options: {
     }
   };
 }
-
