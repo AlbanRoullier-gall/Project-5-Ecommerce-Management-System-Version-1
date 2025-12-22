@@ -64,7 +64,7 @@ export function useAddressForm({
     original: address || null,
     initialValues,
     validateFn: validateAddressData,
-    ignoreFields: ["addressId", "customerId"], // Exclure ces champs de la comparaison pour les updates
+    // Note: addressId et customerId ne sont pas dans AddressCreateDTO, donc pas besoin de les ignorer
     transformData: (data, original) => {
       if (original) {
         // Mode édition : construire AddressUpdateDTO avec seulement les champs autorisés
