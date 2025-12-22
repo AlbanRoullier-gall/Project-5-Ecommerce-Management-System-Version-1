@@ -9,10 +9,11 @@
 import { Request, Response, NextFunction } from "express";
 // Import sanitization utilities from shared-types
 // Utiliser un chemin relatif car TypeScript ne résout pas les path aliases lors de la compilation
+// Depuis api-gateway/src/api/middleware/ vers shared-types/common/sanitize
 import {
   sanitizeRequestBody,
   sanitizeObject,
-} from "../../../shared-types/common/sanitize";
+} from "../../../../shared-types/common/sanitize";
 
 /**
  * Middleware to sanitize request body
