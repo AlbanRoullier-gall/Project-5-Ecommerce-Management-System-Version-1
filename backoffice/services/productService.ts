@@ -238,8 +238,8 @@ export async function uploadProductImages(
     }
   }
 
-  // Fallback : retourner la réponse telle quelle
-  return response as ProductImageUploadResponseDTO;
+  // Fallback : convertir via unknown pour éviter l'erreur TypeScript
+  return response as unknown as ProductImageUploadResponseDTO;
 }
 
 /**
