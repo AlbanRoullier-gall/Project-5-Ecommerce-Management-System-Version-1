@@ -8,11 +8,12 @@
 
 import { Request, Response, NextFunction } from "express";
 // Import sanitization utilities from shared-types
-// Utiliser le path alias - tsconfig-paths le résoudra à l'exécution
+// Chemin relatif depuis api-gateway/src/api/middleware/ vers shared-types/common/sanitize
+// Dans Docker: /app/src/api/middleware/ -> /app/shared-types/common/sanitize = ../../../shared-types/common/sanitize
 import {
   sanitizeRequestBody,
   sanitizeObject,
-} from "@tfe/shared-types/common/sanitize";
+} from "../../../shared-types/common/sanitize";
 
 /**
  * Middleware to sanitize request body
