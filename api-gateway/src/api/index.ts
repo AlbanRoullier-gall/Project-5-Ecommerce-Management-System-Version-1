@@ -17,6 +17,7 @@ import {
   notFoundHandler,
   errorHandler,
 } from "./middleware/common";
+import { sanitizationMiddleware } from "./middleware/sanitization";
 import {
   getProductsRateLimit,
   getStaticRateLimit,
@@ -103,6 +104,15 @@ export class ApiRouter {
     // Parsing du body (Express gère déjà le Content-Type automatiquement)
     app.use(express.json({ limit: "10mb" }));
     app.use(express.urlencoded({ extended: true }));
+
+    // Sanitization XSS - doit être après le parsing du body mais avant les handlers
+    // Sanitize tous les POST/PUT/PATCH requests pour protéger contre XSS
+    app.use(sanitizationMiddleware);
+
+    // Cart Session Middleware - appliqué globalement mais avec logs réduits
+    // Appliqué sur toutes les routes pour que le frontend reçoive toujours X-Cart-Session-Id
+    // Le middleware est léger (vérifie juste un cookie) donc acceptable globalement
+    app.use(cartSessionMiddleware);
 
     // Rate limiting par type de requête - appliqué de manière sélective sur les routes
     // Plus de rate limiting global, chaque route a son propre middleware
@@ -233,18 +243,14 @@ export class ApiRouter {
         );
         next();
       },
-      cartSessionMiddleware,
+      // Note: cartSessionMiddleware est déjà appliqué globalement
       paymentRateLimit,
       handleFinalizePayment
     );
 
     // Checkout - Route orchestrée pour finaliser le checkout
-    // Applique le middleware cart-session pour extraire le sessionId du header
-    app.post(
-      "/api/checkout/complete",
-      cartSessionMiddleware,
-      handleCheckoutComplete
-    );
+    // Note: cartSessionMiddleware est déjà appliqué globalement
+    app.post("/api/checkout/complete", handleCheckoutComplete);
 
     // Cart Session - Route pour générer un nouveau sessionId (optionnel, le middleware le fait automatiquement)
     // Utile si on veut forcer la création d'une nouvelle session
@@ -476,10 +482,9 @@ export class ApiRouter {
     );
 
     // Routes publiques - Proxy automatique avec rate limiting par type
-    // Appliquer le middleware cart-session pour les routes /api/cart
+    // Note: cartSessionMiddleware est déjà appliqué globalement, pas besoin de le réappliquer ici
     app.all(
       "/api/cart*",
-      cartSessionMiddleware,
       async (req: Request, res: Response, next: NextFunction) => {
         // Appliquer le rate limiting selon la méthode HTTP
         if (req.method === "GET") {

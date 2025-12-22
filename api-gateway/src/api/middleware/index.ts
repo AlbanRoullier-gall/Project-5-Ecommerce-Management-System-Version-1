@@ -42,3 +42,10 @@ export {
   authPasswordResetRateLimit,
   paymentRateLimit,
 } from "./rate-limiting";
+
+// Middleware de sanitization XSS
+export {
+  sanitizationMiddleware,
+  selectiveSanitizationMiddleware,
+  createSanitizationMiddleware,
+} from "./sanitization";

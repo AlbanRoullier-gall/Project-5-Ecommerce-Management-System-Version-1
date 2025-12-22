@@ -147,15 +147,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       setError(null);
-      console.log(
-        "[CartContext] refreshCart: Récupération du panier depuis l'API"
-      );
       const cart = await getCart();
-      console.log(
-        `[CartContext] refreshCart: Panier récupéré - ${
-          cart ? `${cart.itemCount} articles` : "panier null/vide"
-        }`
-      );
       setCart(cart);
       // Si le panier est null, c'est normal (pas de panier existant), ne pas afficher d'erreur
     } catch (err) {
@@ -251,11 +243,16 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
           await refreshCart();
         }
       } catch (err) {
-        logger.error("Erreur lors de la mise à jour de la quantité", err);
         const errorMsg =
           err instanceof Error
             ? err.message
             : "Erreur lors de la mise à jour de la quantité";
+
+        // Vérifier si c'est une erreur de stock (normale, ne pas logger comme erreur)
+        const isStockError =
+          errorMsg.toLowerCase().includes("stock insuffisant") ||
+          errorMsg.toLowerCase().includes("stock unavailable") ||
+          errorMsg.toLowerCase().includes("insufficient stock");
 
         // Si l'article n'existe pas dans le panier, recharger le panier pour avoir l'état à jour
         if (
@@ -289,18 +286,14 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
           }
           // Ne pas propager l'erreur pour les erreurs "article non trouvé"
           return;
-        } else {
-          // Pour les erreurs de stock, ne pas afficher dans CartContext
+        } else if (isStockError) {
+          // Pour les erreurs de stock, ne pas logger comme erreur (c'est normal)
           // Elles seront gérées par useCartItem, useProductCard, useProductPage
-          if (
-            errorMsg.toLowerCase().includes("stock insuffisant") ||
-            errorMsg.toLowerCase().includes("stock unavailable") ||
-            errorMsg.toLowerCase().includes("insufficient stock")
-          ) {
-            // Ne pas afficher l'erreur dans CartContext, juste la propager
-            throw err;
-          }
-          // Pour les autres erreurs, afficher dans CartContext
+          // Ne pas afficher l'erreur dans CartContext, juste la propager
+          throw err;
+        } else {
+          // Pour les autres erreurs, logger et afficher dans CartContext
+          logger.error("Erreur lors de la mise à jour de la quantité", err);
           setError(errorMsg);
           // Re-lancer l'erreur pour que les hooks puissent la capturer
           throw err;

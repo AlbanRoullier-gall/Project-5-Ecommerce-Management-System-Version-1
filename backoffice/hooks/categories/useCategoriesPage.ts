@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
-import {
-  CategoryPublicDTO,
-  CategoryCreateDTO,
-  CategoryUpdateDTO,
-} from "dto";
+import { CategoryPublicDTO, CategoryCreateDTO, CategoryUpdateDTO } from "dto";
 import {
   getCategories,
   createCategory,

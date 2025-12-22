@@ -5,6 +5,7 @@
 
 // Export des types communs
 export * from "./common/BaseItemDTO";
+export * from "./common/sanitize";
 
 // Export des DTOs par service
 export * from "./auth-service";

@@ -194,11 +194,7 @@ export function useProductCard(
         setAvailableStock(updatedStock);
 
         // Si c'est une erreur de stock insuffisant, afficher le message avec le stock disponible
-        if (
-          errorMessage.toLowerCase().includes("stock insuffisant") ||
-          errorMessage.toLowerCase().includes("stock unavailable") ||
-          errorMessage.toLowerCase().includes("insufficient stock")
-        ) {
+        if (isStockError) {
           // Essayer d'extraire le stock disponible depuis le message d'erreur
           // Format attendu: "Stock insuffisant. Stock disponible: X, quantité demandée: Y"
           // ou "Stock insuffisant. Disponible: X, Demandé: Y"
@@ -267,11 +263,6 @@ export function useProductCard(
       await updateQuantity(product.id, quantityInCart + 1);
       // Le useEffect qui écoute quantityInCart rafraîchira automatiquement le stock
     } catch (error: any) {
-      logger.error("Erreur lors de la mise à jour de la quantité", error, {
-        productId: product.id,
-        quantity: quantityInCart + 1,
-      });
-
       // Vérifier si c'est une erreur de stock insuffisant
       // Vérifier dans error.message, error.data.message, et error.data.error
       const errorMessage =
@@ -279,6 +270,19 @@ export function useProductCard(
         error?.data?.message ||
         error?.data?.error ||
         String(error);
+
+      const isStockError =
+        errorMessage.toLowerCase().includes("stock insuffisant") ||
+        errorMessage.toLowerCase().includes("stock unavailable") ||
+        errorMessage.toLowerCase().includes("insufficient stock");
+
+      // Ne pas logger les erreurs de stock (c'est normal)
+      if (!isStockError) {
+        logger.error("Erreur lors de la mise à jour de la quantité", error, {
+          productId: product.id,
+          quantity: quantityInCart + 1,
+        });
+      }
 
       // Toujours rafraîchir le stock en cas d'erreur pour avoir l'état à jour
       try {
@@ -289,11 +293,7 @@ export function useProductCard(
         setAvailableStock(updatedStock);
 
         // Si c'est une erreur de stock insuffisant, afficher le message avec le stock disponible
-        if (
-          errorMessage.toLowerCase().includes("stock insuffisant") ||
-          errorMessage.toLowerCase().includes("stock unavailable") ||
-          errorMessage.toLowerCase().includes("insufficient stock")
-        ) {
+        if (isStockError) {
           // Essayer d'extraire le stock disponible depuis le message d'erreur
           // Format attendu: "Stock insuffisant. Stock disponible: X, quantité demandée: Y"
           // ou "Stock insuffisant. Disponible: X, Demandé: Y"
@@ -367,11 +367,26 @@ export function useProductCard(
       try {
         await updateQuantity(product.id, quantityInCart - 1);
         // Le useEffect qui écoute quantityInCart rafraîchira automatiquement le stock
-      } catch (error) {
-        logger.error("Erreur lors de la mise à jour de la quantité", error, {
-          productId: product.id,
-          quantity: quantityInCart - 1,
-        });
+      } catch (error: any) {
+        // Vérifier si c'est une erreur de stock (ne pas logger)
+        const errorMessage =
+          error?.message ||
+          error?.data?.message ||
+          error?.data?.error ||
+          String(error);
+
+        const isStockError =
+          errorMessage.toLowerCase().includes("stock insuffisant") ||
+          errorMessage.toLowerCase().includes("stock unavailable") ||
+          errorMessage.toLowerCase().includes("insufficient stock");
+
+        // Ne pas logger les erreurs de stock (c'est normal)
+        if (!isStockError) {
+          logger.error("Erreur lors de la mise à jour de la quantité", error, {
+            productId: product.id,
+            quantity: quantityInCart - 1,
+          });
+        }
       }
     }
   }, [product.id, quantityInCart, updateQuantity, removeFromCart]);

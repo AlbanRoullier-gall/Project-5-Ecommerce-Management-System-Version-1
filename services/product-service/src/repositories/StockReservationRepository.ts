@@ -196,7 +196,10 @@ export class StockReservationRepository {
    * @param productId ID du produit
    * @returns Promise<number> Stock disponible
    */
-  async getAvailableStock(productId: number): Promise<number> {
+  async getAvailableStock(
+    productId: number,
+    excludeSessionId?: string
+  ): Promise<number> {
     try {
       // Récupérer le stock réel
       const productResult = await this.pool.query(
@@ -211,14 +214,28 @@ export class StockReservationRepository {
       const realStock = productResult.rows[0].stock || 0;
 
       // Calculer les réservations actives
-      const reservedResult = await this.pool.query(
-        `SELECT COALESCE(SUM(quantity), 0) as total_reserved
-         FROM stock_reservations
-         WHERE product_id = $1 
-         AND status = 'reserved'
-         AND expires_at > NOW()`,
-        [productId]
-      );
+      // Si excludeSessionId est fourni, exclure la réservation de cette session
+      // (utile lors de la mise à jour d'une réservation existante)
+      let query: string;
+      let params: any[];
+      if (excludeSessionId) {
+        query = `SELECT COALESCE(SUM(quantity), 0) as total_reserved
+                 FROM stock_reservations
+                 WHERE product_id = $1 
+                 AND status = 'reserved'
+                 AND expires_at > NOW()
+                 AND session_id != $2`;
+        params = [productId, excludeSessionId];
+      } else {
+        query = `SELECT COALESCE(SUM(quantity), 0) as total_reserved
+                 FROM stock_reservations
+                 WHERE product_id = $1 
+                 AND status = 'reserved'
+                 AND expires_at > NOW()`;
+        params = [productId];
+      }
+
+      const reservedResult = await this.pool.query(query, params);
 
       const totalReserved =
         parseInt(reservedResult.rows[0].total_reserved) || 0;
@@ -264,11 +281,52 @@ export class StockReservationRepository {
 
       // Si la quantité augmente, vérifier le stock disponible
       if (quantityDiff > 0) {
-        const availableStock = await this.getAvailableStock(productId);
+        // Récupérer le stock réel du produit
+        const productResult = await client.query(
+          `SELECT stock FROM products WHERE id = $1`,
+          [productId]
+        );
+
+        if (productResult.rows.length === 0) {
+          await client.query("ROLLBACK");
+          throw new Error(`Produit ${productId} non trouvé`);
+        }
+
+        const realStock = productResult.rows[0].stock || 0;
+
+        // Calculer les réservations actives (en excluant la réservation actuelle)
+        // car on est en train de la mettre à jour
+        const reservedResult = await client.query(
+          `SELECT COALESCE(SUM(quantity), 0) as total_reserved
+           FROM stock_reservations
+           WHERE product_id = $1 
+           AND status = 'reserved'
+           AND expires_at > NOW()
+           AND session_id != $2`,
+          [productId, sessionId]
+        );
+
+        const otherReservations =
+          parseInt(reservedResult.rows[0].total_reserved) || 0;
+
+        // Stock disponible = Stock réel - Autres réservations (sans la nôtre)
+        const availableStock = Math.max(0, realStock - otherReservations);
+
+        // Vérifier que le stock disponible est suffisant pour la différence
         if (availableStock < quantityDiff) {
           await client.query("ROLLBACK");
           throw new Error(
             `Stock insuffisant pour augmenter la quantité. Disponible: ${availableStock}, Demandé: ${quantityDiff}`
+          );
+        }
+
+        // Vérifier aussi que la nouvelle quantité totale ne dépasse pas le stock réel
+        // (protection contre les cas où on pourrait dépasser le stock total)
+        const totalReservedAfterUpdate = otherReservations + newQuantity;
+        if (totalReservedAfterUpdate > realStock) {
+          await client.query("ROLLBACK");
+          throw new Error(
+            `Stock insuffisant. Stock réel: ${realStock}, Quantité totale demandée: ${totalReservedAfterUpdate}`
           );
         }
       }
