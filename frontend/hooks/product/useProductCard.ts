@@ -319,11 +319,7 @@ export function useProductCard(
         }
       } catch (refreshError) {
         // Si le rafraîchissement échoue, vérifier quand même si c'est une erreur de stock
-        if (
-          errorMessage.toLowerCase().includes("stock insuffisant") ||
-          errorMessage.toLowerCase().includes("stock unavailable") ||
-          errorMessage.toLowerCase().includes("insufficient stock")
-        ) {
+        if (isStockError) {
           // Essayer d'extraire le stock depuis le message d'erreur
           const stockMatch = errorMessage.match(
             /(?:Stock disponible|Disponible)[:\s]+(\d+)/i
