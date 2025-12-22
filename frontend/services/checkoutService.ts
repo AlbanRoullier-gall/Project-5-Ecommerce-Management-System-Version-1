@@ -146,6 +146,7 @@ export async function validateCustomerData(
 export async function completeCheckout(payload: {
   successUrl: string;
   cancelUrl: string;
+  termsAccepted: boolean;
 }): Promise<CompleteOrderResult> {
   try {
     const response = await apiClient.post<{

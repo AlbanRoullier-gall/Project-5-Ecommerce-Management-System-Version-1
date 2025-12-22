@@ -91,6 +91,8 @@ export default class OrderService {
     customerId: number;
     paymentIntentId?: string;
     paymentMethod?: string;
+    termsAccepted?: boolean;
+    termsAcceptedAt?: Date | string;
   }): Promise<Order> {
     // Valider que le panier n'est pas vide
     if (!data.cart || !data.cart.items || data.cart.items.length === 0) {
@@ -139,6 +141,12 @@ export default class OrderService {
         paymentIntentId: data.paymentIntentId,
       }),
       paymentMethod: data.paymentMethod || "stripe",
+      ...(data.termsAccepted !== undefined && {
+        termsAccepted: data.termsAccepted,
+      }),
+      ...(data.termsAcceptedAt !== undefined && {
+        termsAcceptedAt: data.termsAcceptedAt,
+      }),
     };
 
     return await this._createOrderFromCartInternal(orderPayload);
@@ -177,6 +185,8 @@ export default class OrderService {
     };
     paymentIntentId?: string;
     paymentMethod: string;
+    termsAccepted?: boolean;
+    termsAcceptedAt?: Date | string;
   }): Promise<Order> {
     const client = await this.pool.connect();
     try {
@@ -243,6 +253,14 @@ export default class OrderService {
         created_at: new Date(),
         updated_at: new Date(),
         payment_intent_id: data.paymentIntentId || null,
+        terms_accepted: data.termsAccepted ?? false,
+        terms_accepted_at: data.termsAcceptedAt
+          ? typeof data.termsAcceptedAt === "string"
+            ? new Date(data.termsAcceptedAt)
+            : data.termsAcceptedAt
+          : data.termsAccepted
+          ? new Date()
+          : null,
       };
 
       const order = await this.orderRepository.createOrder(orderData, client);

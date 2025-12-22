@@ -130,6 +130,47 @@
     gap: 0.8rem;
   }
 
+  .termsSection {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+  }
+
+  .termsLabel {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    cursor: pointer;
+    font-size: 1.3rem;
+    line-height: 1.6;
+  }
+
+  .termsCheckbox {
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
+    cursor: pointer;
+    accent-color: #13686a;
+    margin-top: 0.2rem;
+  }
+
+  .termsText {
+    color: #333;
+    flex: 1;
+  }
+
+  .termsLink {
+    color: #13686a;
+    text-decoration: underline;
+    font-weight: 600;
+  }
+
+  .termsLink:hover {
+    color: #0dd3d1;
+  }
+
   .actions {
     display: flex;
     gap: 1rem;

@@ -23,6 +23,8 @@ interface UseCheckoutOrderSummaryResult {
   billingAddress: any;
   isProcessing: boolean;
   error: string | null;
+  termsAccepted: boolean;
+  setTermsAccepted: (accepted: boolean) => void;
   handleCompleteOrder: () => Promise<void>;
   handleBack: () => void;
   clearError: () => void;
@@ -34,7 +36,13 @@ interface UseCheckoutOrderSummaryResult {
 export function useCheckoutOrderSummary(): UseCheckoutOrderSummaryResult {
   const router = useRouter();
   const { cart, totals } = useCart();
-  const { customerData, addressData, completeOrder } = useCheckout();
+  const {
+    customerData,
+    addressData,
+    completeOrder,
+    termsAccepted,
+    setTermsAccepted,
+  } = useCheckout();
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +86,8 @@ export function useCheckoutOrderSummary(): UseCheckoutOrderSummaryResult {
     billingAddress,
     isProcessing,
     error,
+    termsAccepted,
+    setTermsAccepted,
     handleCompleteOrder,
     handleBack,
     clearError,

@@ -1,0 +1,120 @@
+@layer components {
+  .page {
+    min-height: 100vh;
+    background: #f8f9fa;
+  }
+
+  .main {
+    padding: 3.5rem 2rem 4rem;
+  }
+
+  .content {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: white;
+    padding: 3rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 2.5rem;
+    text-align: center;
+    border-bottom: 3px solid #8b7355;
+    padding-bottom: 1rem;
+  }
+
+  .section {
+    margin-bottom: 2.5rem;
+  }
+
+  .section:last-child {
+    margin-bottom: 0;
+  }
+
+  .sectionTitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #8b7355;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e0e0e0;
+  }
+
+  .subsectionTitle {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .sectionContent {
+    padding-left: 1rem;
+    line-height: 1.8;
+    color: #555;
+  }
+
+  .sectionContent p {
+    margin-bottom: 1rem;
+  }
+
+  .sectionContent p:last-child {
+    margin-bottom: 0;
+  }
+
+  .sectionContent strong {
+    color: #2c3e50;
+    font-weight: 600;
+  }
+
+  .sectionContent ul {
+    margin: 1rem 0;
+    padding-left: 2rem;
+  }
+
+  .sectionContent li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+  }
+
+  .sectionContent a {
+    color: #8b7355;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .sectionContent a:hover {
+    color: #6b5a3f;
+    text-decoration: underline;
+  }
+
+  @media (max-width: 900px) {
+    .main {
+      padding: 2.5rem 1.5rem 3rem;
+    }
+
+    .content {
+      padding: 2rem 1.5rem;
+    }
+
+    .title {
+      font-size: 2rem;
+    }
+
+    .sectionTitle {
+      font-size: 1.25rem;
+    }
+
+    .subsectionTitle {
+      font-size: 1.1rem;
+    }
+
+    .sectionContent {
+      padding-left: 0.5rem;
+    }
+  }
+}

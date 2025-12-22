@@ -46,11 +46,12 @@ interface CartPublicDTO {
 /**
  * Interface pour les données de checkout reçues du frontend
  * Note: Les données checkout (customerData, addressData) sont maintenant récupérées depuis le cart-service
- * Le frontend envoie uniquement les URLs de redirection
+ * Le frontend envoie uniquement les URLs de redirection et le consentement CGV
  */
 interface CheckoutCompleteRequest {
   successUrl: string;
   cancelUrl: string;
+  termsAccepted: boolean;
 }
 
 /**
@@ -97,6 +98,19 @@ export const handleCheckoutComplete = async (
           createErrorResponse(
             "URLs requises",
             "Les URLs de succès et d'annulation sont obligatoires"
+          )
+        );
+      return;
+    }
+
+    // Validation du consentement aux CGV
+    if (!body.termsAccepted) {
+      res
+        .status(400)
+        .json(
+          createErrorResponse(
+            "Consentement requis",
+            "Vous devez accepter les conditions générales de vente pour procéder au paiement"
           )
         );
       return;
@@ -288,6 +302,8 @@ export const handleCheckoutComplete = async (
             metadata: {
               customerId: customerId.toString(),
               cartSessionId: cartSessionId,
+              termsAccepted: "true",
+              termsAcceptedAt: new Date().toISOString(),
             },
           }),
         }

@@ -42,7 +42,8 @@ export default class OrderRepository {
       const query = `
         SELECT id, customer_id, customer_first_name, customer_last_name, customer_email, 
                customer_phone_number, total_amount_ht, total_amount_ttc, 
-               payment_method, notes, delivered, created_at, updated_at
+               payment_method, notes, delivered, terms_accepted, terms_accepted_at,
+               created_at, updated_at
         FROM orders 
         WHERE id = $1
       `;
@@ -162,6 +163,8 @@ export default class OrderRepository {
           o.payment_method, 
           o.notes, 
           o.delivered,
+          o.terms_accepted,
+          o.terms_accepted_at,
           o.created_at, 
           o.updated_at
         FROM orders o
@@ -253,7 +256,8 @@ export default class OrderRepository {
         WHERE id = $2
         RETURNING id, customer_id, customer_first_name, customer_last_name, customer_email, 
                   customer_phone_number, total_amount_ht, total_amount_ttc, 
-                  payment_method, notes, delivered, created_at, updated_at
+                  payment_method, notes, delivered, terms_accepted, terms_accepted_at,
+                  created_at, updated_at
       `;
 
       const result = await this.pool.query(query, [delivered, id]);
@@ -366,6 +370,7 @@ export default class OrderRepository {
           o.customer_phone_number as "customerPhoneNumber",
           o.total_amount_ht as "totalAmountHT", o.total_amount_ttc as "totalAmountTTC",
           o.payment_method as "paymentMethod", o.notes, o.delivered,
+          o.terms_accepted as "termsAccepted", o.terms_accepted_at as "termsAcceptedAt",
           o.created_at as "createdAt", o.updated_at as "updatedAt"
         FROM orders o
         WHERE o.created_at >= $1::timestamp 
@@ -416,12 +421,14 @@ export default class OrderRepository {
     const query = `
       INSERT INTO orders (customer_id, customer_first_name, customer_last_name, customer_email, 
                          customer_phone_number, total_amount_ht, total_amount_ttc, 
-                         payment_method, notes, payment_intent_id, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+                         payment_method, notes, payment_intent_id, terms_accepted, terms_accepted_at,
+                         created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
       ON CONFLICT (payment_intent_id) WHERE payment_intent_id IS NOT NULL DO UPDATE SET updated_at = NOW()
       RETURNING id, customer_id, customer_first_name, customer_last_name, customer_email, 
                 customer_phone_number, total_amount_ht, total_amount_ttc, 
-                payment_method, notes, created_at, updated_at
+                payment_method, notes, terms_accepted, terms_accepted_at,
+                created_at, updated_at
     `;
 
     const values = [
@@ -435,6 +442,10 @@ export default class OrderRepository {
       orderData.payment_method,
       orderData.notes || "",
       (orderData as any).payment_intent_id || null,
+      orderData.terms_accepted ?? false,
+      orderData.terms_accepted_at
+        ? new Date(orderData.terms_accepted_at)
+        : null,
     ];
 
     const executor = client || this.pool;

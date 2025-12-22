@@ -23,6 +23,8 @@ export interface OrderData {
   payment_method: string | null;
   notes: string | null;
   delivered: boolean;
+  terms_accepted: boolean;
+  terms_accepted_at: Date | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -39,6 +41,8 @@ class Order {
   public readonly paymentMethod: string | null;
   public readonly notes: string | null;
   public readonly delivered: boolean;
+  public readonly termsAccepted: boolean;
+  public readonly termsAcceptedAt: Date | null;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -54,6 +58,10 @@ class Order {
     this.paymentMethod = data.payment_method;
     this.notes = data.notes;
     this.delivered = data.delivered;
+    this.termsAccepted = data.terms_accepted ?? false;
+    this.termsAcceptedAt = data.terms_accepted_at
+      ? new Date(data.terms_accepted_at)
+      : null;
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
   }

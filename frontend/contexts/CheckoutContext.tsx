@@ -40,10 +40,12 @@ interface CheckoutContextType {
   customerData: CustomerResolveOrCreateDTO;
   addressData: AddressesCreateDTO;
   isLoading: boolean;
+  termsAccepted: boolean;
 
   // Actions générales
   updateCustomerData: (data: CustomerResolveOrCreateDTO) => void;
   saveCheckoutData: () => Promise<void>;
+  setTermsAccepted: (accepted: boolean) => void;
 
   // Actions spécifiques aux adresses
   updateShippingField: (field: string, value: string) => void;
@@ -101,6 +103,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
   });
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   /**
    * Charge les données checkout depuis le serveur au montage
@@ -333,32 +336,44 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({
         };
       }
 
+      if (!termsAccepted) {
+        return {
+          success: false,
+          error:
+            "Vous devez accepter les conditions générales de vente pour procéder au paiement",
+        };
+      }
+
       // Le cartSessionId est maintenant géré automatiquement via cookie httpOnly
       // Plus besoin de le récupérer depuis localStorage ou de l'envoyer dans le header
       // Le cookie sera envoyé automatiquement par le navigateur
 
       // Les données checkout sont déjà sauvegardées sur le serveur
-      // On envoie juste les URLs de redirection
+      // On envoie juste les URLs de redirection et le consentement CGV
       // Le serveur récupérera les données checkout depuis le cart-service
       const checkoutPayload: {
         successUrl: string;
         cancelUrl: string;
+        termsAccepted: boolean;
       } = {
         successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/checkout/cancel`,
+        termsAccepted: true,
       };
 
       return completeCheckout(checkoutPayload);
     },
-    []
+    [termsAccepted]
   );
 
   const value: CheckoutContextType = {
     customerData,
     addressData,
     isLoading,
+    termsAccepted,
     updateCustomerData,
     saveCheckoutData,
+    setTermsAccepted,
     updateShippingField,
     updateBillingField,
     setUseSameBillingAddress,

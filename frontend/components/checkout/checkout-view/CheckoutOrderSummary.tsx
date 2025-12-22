@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CartItemPublicDTO } from "../../../contexts/CartContext";
 import { FormHeader, Alert, SummaryRow, ItemDisplay } from "../../shared";
 import { useCheckoutOrderSummary } from "../../../hooks";
@@ -13,6 +14,8 @@ export default function CheckoutOrderSummary() {
     billingAddress,
     isProcessing,
     error,
+    termsAccepted,
+    setTermsAccepted,
     handleCompleteOrder,
     handleBack,
     clearError,
@@ -135,6 +138,28 @@ export default function CheckoutOrderSummary() {
         </p>
       </div>
 
+      <div className={styles.termsSection}>
+        <label className={styles.termsLabel}>
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+            className={styles.termsCheckbox}
+          />
+          <span className={styles.termsText}>
+            J'accepte les{" "}
+            <Link
+              href="/conditions-generales"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.termsLink}
+            >
+              conditions générales de vente
+            </Link>
+          </span>
+        </label>
+      </div>
+
       <div className={styles.actions}>
         <button
           type="button"
@@ -148,7 +173,7 @@ export default function CheckoutOrderSummary() {
         <button
           type="button"
           onClick={handleCompleteOrder}
-          disabled={isProcessing}
+          disabled={isProcessing || !termsAccepted}
           className={styles.primary}
         >
           {isProcessing ? (
