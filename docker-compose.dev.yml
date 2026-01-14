@@ -318,7 +318,6 @@ services:
       - ./shared-types:/app/shared-types
       - /app/node_modules
       - /app/.next
-      - /app/tsconfig.tsbuildinfo
     depends_on:
       - api-gateway
 
