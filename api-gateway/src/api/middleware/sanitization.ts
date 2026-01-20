@@ -8,12 +8,11 @@
 
 import { Request, Response, NextFunction } from "express";
 // Import sanitization utilities from shared-types
-// Chemin relatif depuis api-gateway/src/api/middleware/ vers shared-types/common/sanitize
-// Dans Docker: /app/src/api/middleware/ -> /app/shared-types/common/sanitize = ../../../shared-types/common/sanitize
+// Utilisation de l'alias TypeScript pour compatibilité local/Docker
 import {
   sanitizeRequestBody,
   sanitizeObject,
-} from "../../../shared-types/common/sanitize";
+} from "@tfe/shared-types/common/sanitize";
 
 /**
  * Middleware to sanitize request body
