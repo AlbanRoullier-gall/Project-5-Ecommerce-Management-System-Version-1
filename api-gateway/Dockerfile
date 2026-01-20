@@ -28,6 +28,8 @@ RUN npm ci --only=production=false
 # ===== COPIE DU CODE SOURCE =====
 # Copier le code source TypeScript
 COPY api-gateway/src/ ./src/
+# Copier le script de démarrage
+COPY api-gateway/start.js ./
 
 # ===== COMPILATION TYPESCRIPT =====
 # Compiler le TypeScript vers JavaScript
@@ -57,6 +59,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:3020/api/health || exit 1
 
 # ===== COMMANDE DE DÉMARRAGE =====
-# En Docker, la structure de sortie est dist/src/index.js
-# Utiliser node directement avec le bon chemin
-CMD ["node", "-r", "tsconfig-paths/register", "dist/src/index.js"]
+# Utiliser npm start qui utilise start.js pour gérer les deux chemins possibles
+CMD ["npm", "start"]
