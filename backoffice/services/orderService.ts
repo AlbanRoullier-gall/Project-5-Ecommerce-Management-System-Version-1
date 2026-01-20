@@ -195,13 +195,25 @@ export async function deleteCreditNote(creditNoteId: number): Promise<void> {
  */
 export async function exportOrdersYear(year: number): Promise<Blob> {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+  // Fallback: utiliser le token stocké pour passer l'auth si le cookie n'est pas envoyé (cross-domain Railway)
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("auth_token")
+      : null;
+
+  const headers: HeadersInit = {
+    Accept: "application/pdf",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const response = await fetch(
     `${API_URL}/api/admin/exports/orders-year/${year}`,
     {
       method: "GET",
-      headers: {
-        Accept: "application/pdf",
-      },
+      headers,
       credentials: "include",
     }
   );
@@ -218,13 +230,25 @@ export async function exportOrdersYear(year: number): Promise<Blob> {
  */
 export async function exportOrderInvoice(orderId: number): Promise<Blob> {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3020";
+  // Fallback: utiliser le token stocké pour passer l'auth si le cookie n'est pas envoyé (cross-domain Railway)
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("auth_token")
+      : null;
+
+  const headers: HeadersInit = {
+    Accept: "text/html",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const response = await fetch(
     `${API_URL}/api/admin/exports/order/${orderId}/invoice`,
     {
       method: "GET",
-      headers: {
-        Accept: "text/html",
-      },
+      headers,
       credentials: "include",
     }
   );
