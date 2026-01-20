@@ -44,7 +44,20 @@ export const extractToken = (req: Request): string | null => {
   }
   
   // 2. Fallback sur le cookie httpOnly
-  return extractAuthToken(req);
+  const cookieToken = extractAuthToken(req);
+  if (!cookieToken) {
+    // Log en prod pour diagnostiquer les cas où le token n'est pas présent
+    if (process.env["NODE_ENV"] === "production") {
+      console.warn("[extractToken] Aucun token dans Authorization ni cookie", {
+        path: req.path,
+        method: req.method,
+        origin: req.headers.origin,
+        hasAuthorizationHeader: !!authHeader,
+        cookies: Object.keys(req.cookies || {}),
+      });
+    }
+  }
+  return cookieToken;
 };
 
 /**
@@ -63,6 +76,17 @@ export const requireAuth = async (
   const token = extractToken(req);
 
   if (!token) {
+    // Log détaillé pour diagnostiquer l'absence du token (notamment en prod Railway)
+    const authHeader = req.headers.authorization;
+    const cookieKeys = Object.keys(req.cookies || {});
+    console.warn("[requireAuth] Aucun token trouvé", {
+      path: req.path,
+      method: req.method,
+      hasAuthHeader: !!authHeader,
+      authHeaderSample: authHeader ? authHeader.substring(0, 20) + "..." : null,
+      cookies: cookieKeys,
+      origin: req.headers.origin,
+    });
     res.status(401).json({
       error: "Token d'accès requis",
       message: "Vous devez être authentifié pour accéder à cette ressource",
