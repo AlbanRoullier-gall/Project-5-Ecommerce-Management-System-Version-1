@@ -8,11 +8,11 @@
 
 import { Request, Response, NextFunction } from "express";
 // Import sanitization utilities from shared-types
-// Utilisation de l'alias TypeScript pour compatibilité local/Docker
+// Utilisation d'un chemin relatif pour compatibilité local/Docker
 import {
   sanitizeRequestBody,
   sanitizeObject,
-} from "@tfe/shared-types/common/sanitize";
+} from "../../../shared-types/common/sanitize";
 
 /**
  * Middleware to sanitize request body

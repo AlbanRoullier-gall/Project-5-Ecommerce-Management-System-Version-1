@@ -27,6 +27,7 @@
     "paths": {
       "@shared-types": ["./shared-types/index.ts", "../shared-types/index.ts"],
       "@shared-types/*": ["./shared-types/*", "../shared-types/*"],
+      "@tfe/shared-types": ["./shared-types/index.ts", "../shared-types/index.ts"],
       "@tfe/shared-types/*": ["./shared-types/*", "../shared-types/*"]
     }
   },

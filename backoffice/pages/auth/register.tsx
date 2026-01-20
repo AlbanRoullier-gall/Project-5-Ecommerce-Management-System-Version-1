@@ -103,7 +103,7 @@ const RegisterPage: React.FC = () => {
         <div className={pageStyles.brandPanel}>
           <div className={pageStyles.brandLogo}>
             <img
-              src="/images/logoNatureDePierreIcon.svg"
+              src={`${process.env.NEXT_PUBLIC_BASE_PATH || (process.env.NODE_ENV === "production" ? "" : "/admin")}/images/logoNatureDePierreIcon.svg`}
               alt="Logo Nature de Pierre"
               className="auth-logo-img"
             />

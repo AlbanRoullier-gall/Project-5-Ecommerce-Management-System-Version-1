@@ -3,8 +3,14 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import { useAuth } from "../contexts/AuthContext";
 import styles from "../styles/components/Header.module.css";
+
+// Helper pour obtenir le basePath
+const getBasePath = () => {
+  return process.env.NEXT_PUBLIC_BASE_PATH || (process.env.NODE_ENV === "production" ? "" : "/admin");
+};
 
 /**
  * Composant Header du backoffice
@@ -43,7 +49,7 @@ const Header: React.FC = () => {
           <Link href="/" className={styles.brandLink}>
             <Image
               className={styles.logo}
-              src="/images/logoNatureDePierreIcon.svg"
+              src={`${getBasePath()}/images/logoNatureDePierreIcon.svg`}
               alt="Logo Nature de Pierre"
               width={50}
               height={50}
