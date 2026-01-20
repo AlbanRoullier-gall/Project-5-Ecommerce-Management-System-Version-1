@@ -117,7 +117,7 @@ export const SERVICES = {
     process.env["PDF_EXPORT_SERVICE_URL"],
     "http://pdf-export-service:3040",
     "http://localhost:3040",
-    "pdf-export-service"
+    "export-service"
   ),
 } as const;
 
