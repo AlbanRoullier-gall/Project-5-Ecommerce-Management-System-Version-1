@@ -150,11 +150,9 @@ export default class CartService {
         console.error(
           `[CartService] checkProductStock: ⏱️ Timeout de 10s atteint pour productId=${productId}`
         );
-        // En cas de timeout, on laisse passer (le payment-handler validera à nouveau)
-        console.warn(
-          `[CartService] checkProductStock: Timeout - la vérification du stock sera faite lors du paiement`
+        throw new Error(
+          "Vérification du stock temporairement indisponible. Veuillez réessayer."
         );
-        return; // Ne pas bloquer l'ajout au panier en cas de timeout
       }
 
       if (
@@ -164,12 +162,13 @@ export default class CartService {
       ) {
         throw error;
       }
-      // En cas d'erreur de réseau, on laisse passer (le payment-handler validera à nouveau)
-      console.warn(
+      console.error(
         `[CartService] checkProductStock: Impossible de vérifier le stock pour le produit ${productId}:`,
         error.message
       );
-      // Ne pas bloquer l'ajout au panier en cas d'erreur réseau
+      throw new Error(
+        "Impossible de vérifier le stock pour ce produit. Veuillez réessayer."
+      );
     }
   }
 
@@ -275,6 +274,9 @@ export default class CartService {
 
   /**
    * Ajouter un article au panier
+   * Ordre: récupérer le panier d'abord, puis réserver/mettre à jour le stock selon le cas.
+   * - Article déjà dans le panier: mise à jour de la réservation (vérifie le stock pour la hausse).
+   * - Nouvel article: réservation via checkProductStock.
    */
   async addItem(
     sessionId: string,
@@ -289,22 +291,9 @@ export default class CartService {
     );
 
     try {
-      // Vérifier et réserver le stock avant d'ajouter
+      // Étape 1: Récupérer ou créer le panier en premier
       console.log(
-        `[CartService] addItem: Étape 1 - Vérification/réservation du stock pour productId=${itemData.productId}`
-      );
-      await this.checkProductStock(
-        itemData.productId,
-        itemData.quantity,
-        sessionId
-      );
-      console.log(
-        `[CartService] addItem: ✅ Stock vérifié/réservé pour productId=${itemData.productId}`
-      );
-
-      // Récupérer ou créer le panier
-      console.log(
-        `[CartService] addItem: Étape 2 - Récupération/création du panier`
+        `[CartService] addItem: Étape 1 - Récupération/création du panier`
       );
       let cart = await this.getCart(sessionId);
 
@@ -322,20 +311,16 @@ export default class CartService {
         );
       }
 
-      // Vérifier si l'article existe déjà dans le panier
       const existingItem = cart.items.find(
         (item) => item.productId === itemData.productId
       );
+
+      // Étape 2: Vérifier/réserver le stock (selon que l'article est déjà dans le panier ou non)
       if (existingItem) {
-        console.log(
-          `[CartService] addItem: Article existant trouvé, quantité actuelle: ${existingItem.quantity}`
-        );
-        // Si l'article existe, mettre à jour la réservation pour la quantité totale
         const totalQuantity = existingItem.quantity + itemData.quantity;
         console.log(
-          `[CartService] addItem: Mise à jour de la réservation pour quantité totale: ${totalQuantity}`
+          `[CartService] addItem: Article existant, mise à jour réservation → ${totalQuantity}`
         );
-        // Mettre à jour la réservation existante via l'API
         await this.updateStockReservation(
           sessionId,
           itemData.productId,
@@ -343,6 +328,18 @@ export default class CartService {
         );
         console.log(
           `[CartService] addItem: ✅ Réservation mise à jour pour quantité totale`
+        );
+      } else {
+        console.log(
+          `[CartService] addItem: Nouvel article - réservation du stock pour productId=${itemData.productId}`
+        );
+        await this.checkProductStock(
+          itemData.productId,
+          itemData.quantity,
+          sessionId
+        );
+        console.log(
+          `[CartService] addItem: ✅ Stock réservé pour productId=${itemData.productId}`
         );
       }
 

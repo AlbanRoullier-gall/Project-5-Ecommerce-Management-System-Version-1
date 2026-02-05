@@ -167,6 +167,7 @@ export async function handleCheckStock(
     }
 
     // Obtenir le stock disponible (stock réel - réservations actives)
+    // Ne pas utiliser product.stock en fallback : il ne tient pas compte des réservations
     try {
       const availableStockResponse = await fetch(
         `${SERVICES.product}/api/stock/available/${productId}`
@@ -193,26 +194,18 @@ export async function handleCheckStock(
         return;
       }
     } catch (error) {
-      console.warn(
-        "Impossible de récupérer le stock disponible, utilisation du stock brut"
+      console.error(
+        "Impossible de récupérer le stock disponible (stock réel - réservations):",
+        error
       );
     }
 
-    // Fallback: utiliser le stock brut si l'endpoint de stock disponible échoue
-    const availableStock = product.stock ?? 0;
-    const isAvailable = availableStock >= quantity;
-
-    res.status(200).json({
-      success: true,
-      data: {
-        productId: parseInt(productId, 10),
-        availableStock,
-        requestedQuantity: quantity,
-        isAvailable,
-        message: isAvailable
-          ? `Stock disponible: ${availableStock}`
-          : "Stock insuffisant",
-      },
+    // Pas de fallback sur product.stock : il ignorerait les réservations et permettrait la survente
+    res.status(503).json({
+      success: false,
+      error:
+        "Vérification du stock indisponible. Veuillez réessayer dans un instant.",
+      available: false,
     });
   } catch (error: any) {
     console.error("Check stock error:", error);

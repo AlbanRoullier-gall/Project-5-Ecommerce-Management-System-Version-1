@@ -142,6 +142,13 @@ export class CartController {
         res.status(400).json(ResponseMapper.validationError(error.message));
         return;
       }
+      if (
+        error.message.includes("Impossible de vérifier le stock") ||
+        error.message.includes("temporairement indisponible")
+      ) {
+        res.status(503).json(ResponseMapper.validationError(error.message));
+        return;
+      }
       res.status(500).json(ResponseMapper.internalServerError());
     }
   }
