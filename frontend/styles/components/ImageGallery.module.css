@@ -77,11 +77,12 @@
     }
   }
 
-  /* iPhone et petits écrans */
+  /* iPhone et petits écrans : plusieurs images = scroll horizontal fluide */
   @media (max-width: 430px) {
     .container {
       padding: 0.75rem 1rem;
       border-radius: 12px;
+      overflow: hidden;
     }
     .mainWrapper {
       margin-bottom: 0.75rem;
@@ -92,8 +93,11 @@
     }
     .thumbList {
       gap: 0.5rem;
-      padding: 0.25rem 0;
-      -webkit-overflow-scrolling: touch;
+      padding: 0.35rem 0;
+      margin: 0 -0.5rem;
+      padding-left: max(0.5rem, env(safe-area-inset-left));
+      padding-right: max(0.5rem, env(safe-area-inset-right));
+      min-height: 56px;
     }
     .thumbImage,
     .thumbButton {
@@ -114,8 +118,11 @@
     display: flex;
     gap: 0.75rem;
     overflow-x: auto;
+    overflow-y: hidden;
     padding: 0.25rem 0;
     justify-content: center;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
   }
 
   .thumbButton {
@@ -126,6 +133,7 @@
     padding: 0;
     background: #ffffff;
     min-width: 110px;
+    flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     transition: all 0.3s ease;
     transform: scale(1);
@@ -163,5 +171,21 @@
     height: 110px;
     object-fit: cover;
     display: block;
+    pointer-events: none;
+  }
+
+  /* Mobile / iPhone : galerie scrollable avec plusieurs images */
+  @media (max-width: 768px) {
+    .thumbList {
+      justify-content: flex-start;
+      scroll-snap-type: x mandatory;
+      padding-left: 0;
+      padding-right: 0;
+      margin: 0 -0.25rem;
+    }
+    .thumbButton {
+      scroll-snap-align: start;
+      scroll-snap-stop: normal;
+    }
   }
 }
