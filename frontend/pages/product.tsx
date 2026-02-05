@@ -28,6 +28,7 @@ export default function ProductPage() {
     handleDecrement,
     handleGoHome,
     stockError,
+    ruptureDeStock,
   } = useProductPage(product);
 
   if (isLoading) {
@@ -103,10 +104,10 @@ export default function ProductPage() {
               <div className={styles.panel}>
                 <ProductInfo product={product} />
                 <ProductPriceBox product={product} />
-                {stockError && (
+                {(stockError || (ruptureDeStock ? "Rupture de stock" : null)) && (
                   <div className={styles.stockError}>
                     <i className="fas fa-exclamation-triangle"></i>
-                    {stockError}
+                    {stockError || "Rupture de stock"}
                   </div>
                 )}
                 <div className={styles.actions}>
