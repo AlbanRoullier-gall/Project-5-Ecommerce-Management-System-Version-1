@@ -21,7 +21,9 @@ interface UseProductCardResult {
   getImageUrl: () => string;
   canAddToCart: boolean;
   canIncrement: boolean;
-  stockError: string | null; // Message d'erreur uniquement quand l'API retourne une erreur de stock
+  stockError: string | null;
+  /** True quand le stock disponible est à 0 (afficher "Rupture de stock" sur la carte) */
+  ruptureDeStock: boolean;
 }
 
 /**
@@ -147,6 +149,10 @@ export function useProductCard(
 
   // Peut incrémenter si produit actif (le backend validera le stock)
   const canIncrement = product.isActive && realStock > 0;
+
+  /** Rupture de stock : afficher sur la carte uniquement quand stock disponible = 0 */
+  const ruptureDeStock =
+    availableStock !== null && availableStock === 0;
 
   /**
    * Gère l'ajout au panier
@@ -400,5 +406,6 @@ export function useProductCard(
     canAddToCart,
     canIncrement,
     stockError,
+    ruptureDeStock,
   };
 }

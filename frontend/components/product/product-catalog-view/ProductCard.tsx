@@ -22,6 +22,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     canAddToCart,
     canIncrement,
     stockError,
+    ruptureDeStock,
   } = useProductCard(product);
 
   const priceWithVat = product.priceTTC;
@@ -54,10 +55,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
           )}
           <h3 className={styles.title}>{product.name}</h3>
-          {stockError && (
+          {(ruptureDeStock || stockError) && (
             <div className={styles.stockAlertOut}>
               <i className="fas fa-exclamation-triangle"></i>
-              {stockError}
+              {ruptureDeStock ? "Rupture de stock" : stockError}
             </div>
           )}
           <div className={styles.meta}>
