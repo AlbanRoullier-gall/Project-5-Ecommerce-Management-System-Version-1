@@ -3,13 +3,12 @@
  * Encapsule toute la logique métier liée à l'affichage et à la gestion du panier pour un produit
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { ProductPublicDTO } from "../../dto";
 import { useCart } from "../../contexts/CartContext";
 import { imageService } from "../../services/imageService";
 import { logger } from "../../services/logger";
-import * as productService from "../../services/productService";
 
 interface UseProductPageResult {
   quantityInCart: number;
@@ -20,9 +19,7 @@ interface UseProductPageResult {
   handleIncrement: () => Promise<void>;
   handleDecrement: () => Promise<void>;
   handleGoHome: () => void;
-  stockError: string | null;
-  /** True quand on ne peut plus ajouter au panier avec + (stock atteint), sans message d'erreur API */
-  ruptureDeStock: boolean;
+  stockError: string | null; // Message d'erreur uniquement quand l'API retourne une erreur de stock
 }
 
 /**
@@ -36,7 +33,6 @@ export function useProductPage(
     useCart();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [stockError, setStockError] = useState<string | null>(null);
-  const [availableStock, setAvailableStock] = useState<number | null>(null);
 
   /**
    * Trouve l'article dans le panier s'il existe
@@ -45,42 +41,6 @@ export function useProductPage(
     (product &&
       cart?.items?.find((item) => item.productId === product.id)?.quantity) ||
     0;
-
-  /** Stock disponible (après réservations), pour afficher "Rupture de stock" quand on ne peut plus incrémenter */
-  useEffect(() => {
-    if (!product?.id) {
-      setAvailableStock(null);
-      return;
-    }
-    let cancelled = false;
-    productService
-      .getAvailableStock(product.id, product.stock ?? 0)
-      .then((stock) => {
-        if (!cancelled) setAvailableStock(stock);
-      })
-      .catch(() => {
-        if (!cancelled) setAvailableStock(product?.stock ?? 0);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [product?.id, product?.stock]);
-
-  useEffect(() => {
-    if (!product?.id) return;
-    const t = setTimeout(() => {
-      productService
-        .getAvailableStock(product.id, product.stock ?? 0)
-        .then(setAvailableStock)
-        .catch(() => setAvailableStock(product.stock ?? 0));
-    }, 400);
-    return () => clearTimeout(t);
-  }, [quantityInCart, cart, product?.id, product?.stock]);
-
-  const ruptureDeStock =
-    quantityInCart > 0 &&
-    availableStock !== null &&
-    quantityInCart >= availableStock;
 
   /**
    * Gère l'ajout au panier
@@ -229,6 +189,5 @@ export function useProductPage(
     handleDecrement,
     handleGoHome,
     stockError,
-    ruptureDeStock,
   };
 }

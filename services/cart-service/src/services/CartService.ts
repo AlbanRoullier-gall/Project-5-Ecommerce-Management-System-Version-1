@@ -150,9 +150,7 @@ export default class CartService {
         console.error(
           `[CartService] checkProductStock: ⏱️ Timeout de 10s atteint pour productId=${productId}`
         );
-        throw new Error(
-          "Vérification du stock temporairement indisponible. Veuillez réessayer."
-        );
+        throw new Error("Veuillez réessayer.");
       }
 
       if (
@@ -166,9 +164,7 @@ export default class CartService {
         `[CartService] checkProductStock: Impossible de vérifier le stock pour le produit ${productId}:`,
         error.message
       );
-      throw new Error(
-        "Impossible de vérifier le stock pour ce produit. Veuillez réessayer."
-      );
+      throw new Error("Veuillez réessayer.");
     }
   }
 

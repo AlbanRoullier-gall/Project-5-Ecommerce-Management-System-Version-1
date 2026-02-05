@@ -5,7 +5,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useCart, CartItemPublicDTO } from "../../contexts/CartContext";
 import { logger } from "../../services/logger";
-import * as productService from "../../services/productService";
 
 interface UseCartItemResult {
   quantity: number;
@@ -13,44 +12,20 @@ interface UseCartItemResult {
   handleIncrement: () => Promise<void>;
   handleDecrement: () => Promise<void>;
   handleRemove: () => Promise<void>;
-  /** Message d'erreur API ou "Rupture de stock" quand on ne peut plus incrémenter (sans erreur retournée) */
-  stockError: string | null;
+  stockError: string | null; // Message d'erreur uniquement quand l'API retourne une erreur de stock
 }
 
 /**
  * Hook pour gérer l'état et les actions d'un item du panier
  */
 export function useCartItem(item: CartItemPublicDTO): UseCartItemResult {
-  const { updateQuantity, removeFromCart, isLoading, cart } = useCart();
+  const { updateQuantity, removeFromCart, isLoading } = useCart();
   const [stockError, setStockError] = useState<string | null>(null);
-  const [availableStock, setAvailableStock] = useState<number | null>(null);
 
   // Réinitialiser l'erreur de stock quand la quantité change (mise à jour réussie)
   useEffect(() => {
     setStockError(null);
   }, [item.quantity]);
-
-  useEffect(() => {
-    productService
-      .getAvailableStock(String(item.productId), 0)
-      .then(setAvailableStock)
-      .catch(() => setAvailableStock(0));
-  }, [item.productId]);
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      productService
-        .getAvailableStock(String(item.productId), 0)
-        .then(setAvailableStock)
-        .catch(() => setAvailableStock(0));
-    }, 400);
-    return () => clearTimeout(t);
-  }, [item.quantity, cart, item.productId]);
-
-  const ruptureDeStock =
-    availableStock !== null && item.quantity >= availableStock;
-  const displayStockMessage =
-    stockError || (ruptureDeStock ? "Rupture de stock" : null);
 
   /**
    * Gère l'augmentation de la quantité
@@ -153,6 +128,6 @@ export function useCartItem(item: CartItemPublicDTO): UseCartItemResult {
     handleIncrement,
     handleDecrement,
     handleRemove,
-    stockError: displayStockMessage,
+    stockError,
   };
 }

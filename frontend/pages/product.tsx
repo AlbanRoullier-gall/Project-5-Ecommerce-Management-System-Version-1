@@ -16,7 +16,7 @@ export default function ProductPage() {
   const router = useRouter();
   const { productId } = router.query;
   const { product, isLoading, error } = useProduct(
-    productId as string | number | undefined
+    productId as string | number | undefined,
   );
   const {
     quantityInCart,
@@ -104,7 +104,8 @@ export default function ProductPage() {
               <div className={styles.panel}>
                 <ProductInfo product={product} />
                 <ProductPriceBox product={product} />
-                {(stockError || (ruptureDeStock ? "Rupture de stock" : null)) && (
+                {(stockError ||
+                  (ruptureDeStock ? "Rupture de stock" : null)) && (
                   <div className={styles.stockError}>
                     <i className="fas fa-exclamation-triangle"></i>
                     {stockError || "Rupture de stock"}
