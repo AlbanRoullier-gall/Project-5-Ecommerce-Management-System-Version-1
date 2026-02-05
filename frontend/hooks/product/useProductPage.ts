@@ -26,7 +26,7 @@ interface UseProductPageResult {
  * Hook pour gérer la logique de la page produit
  */
 export function useProductPage(
-  product: ProductPublicDTO | null
+  product: ProductPublicDTO | null,
 ): UseProductPageResult {
   const router = useRouter();
   const { cart, addToCart, updateQuantity, removeFromCart, isLoading } =
@@ -64,7 +64,7 @@ export function useProductPage(
         product.vatRate,
         product.name,
         product.description || undefined,
-        imageUrl
+        imageUrl,
       );
     } catch (error: any) {
       // Vérifier si c'est une erreur de stock insuffisant

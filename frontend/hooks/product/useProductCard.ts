@@ -28,7 +28,7 @@ interface UseProductCardResult {
  * Hook pour gérer la logique d'une carte produit
  */
 export function useProductCard(
-  product: ProductPublicDTO
+  product: ProductPublicDTO,
 ): UseProductCardResult {
   const [isHovered, setIsHovered] = useState(false);
   const [availableStock, setAvailableStock] = useState<number | null>(null);
@@ -48,7 +48,7 @@ export function useProductCard(
         // Passer le stock brut comme fallback en cas d'erreur
         const stock = await productService.getAvailableStock(
           product.id,
-          product.stock ?? 0
+          product.stock ?? 0,
         );
         setAvailableStock(stock);
       } catch (error) {
@@ -57,7 +57,7 @@ export function useProductCard(
           error,
           {
             productId: product.id,
-          }
+          },
         );
         // En cas d'erreur, utiliser le stock brut comme fallback
         setAvailableStock(product.stock ?? 0);
@@ -113,7 +113,7 @@ export function useProductCard(
         // Cela prend en compte les réservations libérées (décrément) ou créées (incrément)
         const updatedStock = await productService.getAvailableStock(
           product.id,
-          product.stock ?? 0
+          product.stock ?? 0,
         );
         setAvailableStock(updatedStock);
       } catch (error) {
@@ -123,7 +123,7 @@ export function useProductCard(
           {
             productId: product.id,
             quantityInCart,
-          }
+          },
         );
         // En cas d'erreur, ne pas mettre à jour (garder la valeur précédente)
       }
@@ -169,7 +169,7 @@ export function useProductCard(
         product.vatRate,
         product.name,
         product.description || undefined,
-        imageUrl
+        imageUrl,
       );
       // Le useEffect qui écoute quantityInCart rafraîchira automatiquement le stock
     } catch (error: any) {
@@ -194,7 +194,7 @@ export function useProductCard(
       try {
         const updatedStock = await productService.getAvailableStock(
           product.id,
-          product.stock ?? 0
+          product.stock ?? 0,
         );
         setAvailableStock(updatedStock);
 
@@ -205,7 +205,7 @@ export function useProductCard(
           // ou "Stock insuffisant. Disponible: X, Demandé: Y"
           // ou "Stock insuffisant pour augmenter la quantité. Disponible: X, Demandé: Y"
           const stockMatch = errorMessage.match(
-            /(?:Stock disponible|Disponible)[:\s]+(\d+)/i
+            /(?:Stock disponible|Disponible)[:\s]+(\d+)/i,
           );
           const availableStockFromError = stockMatch
             ? parseInt(stockMatch[1], 10)
@@ -228,7 +228,7 @@ export function useProductCard(
         if (isStockError) {
           // Essayer d'extraire le stock depuis le message d'erreur
           const stockMatch = errorMessage.match(
-            /(?:Stock disponible|Disponible)[:\s]+(\d+)/i
+            /(?:Stock disponible|Disponible)[:\s]+(\d+)/i,
           );
           const availableStockFromError = stockMatch
             ? parseInt(stockMatch[1], 10)
@@ -289,7 +289,7 @@ export function useProductCard(
       try {
         const updatedStock = await productService.getAvailableStock(
           product.id,
-          product.stock ?? 0
+          product.stock ?? 0,
         );
         setAvailableStock(updatedStock);
 
@@ -300,7 +300,7 @@ export function useProductCard(
           // ou "Stock insuffisant. Disponible: X, Demandé: Y"
           // ou "Stock insuffisant pour augmenter la quantité. Disponible: X, Demandé: Y"
           const stockMatch = errorMessage.match(
-            /(?:Stock disponible|Disponible)[:\s]+(\d+)/i
+            /(?:Stock disponible|Disponible)[:\s]+(\d+)/i,
           );
           const availableStockFromError = stockMatch
             ? parseInt(stockMatch[1], 10)
@@ -323,7 +323,7 @@ export function useProductCard(
         if (isStockError) {
           // Essayer d'extraire le stock depuis le message d'erreur
           const stockMatch = errorMessage.match(
-            /(?:Stock disponible|Disponible)[:\s]+(\d+)/i
+            /(?:Stock disponible|Disponible)[:\s]+(\d+)/i,
           );
           const availableStockFromError = stockMatch
             ? parseInt(stockMatch[1], 10)
